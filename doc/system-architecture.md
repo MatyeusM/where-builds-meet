@@ -306,7 +306,8 @@ or expiration transitions, so states with different cadences share those
 transitions while their weighted tick schedules remain exact by default. The expected
 timeline contains the union of possible ticks, with separate damage and hit
 weights. These finite probability branches do not consume the ordinary-event
-loop budget. The DOT's marginal stack distribution is exact; downstream
+loop budget. Without the tiny-state approximation described below, the DOT's
+marginal stack distribution is exact; downstream
 expected-state calculations use marginal hit weights, not a joint distribution
 of every proc, resource cap, and other random buff. Simulations instead rebuild
 concrete timelines, including on-hit resource gains. Proc rolls are memoized by
@@ -337,9 +338,18 @@ it scales with conditional transitions and clears when the shared clock advances
 This preserves same-timestamp refresh/application ordering without individual tick
 timestamps. Exact-cadence expected trackers retain their weighted cadence maps.
 This deliberately approximates tick timing and downstream DOT-sensitive effects,
-but not the stack/expiration transitions or conditional burst probabilities.
-Sampled timelines ignore this option, including their preliminary cutoff discovery.
+but the grid alone does not approximate stack/expiration transitions or conditional burst probabilities.
+Sampled timelines ignore this option and retain exact periodic cadence.
 The generic exact-cadence path remains available for other periodic definitions.
+Shared-clock expected trackers additionally merge released states below `1e-5`
+probability when stack count, damage owner and the 0.1-second expiration bucket
+match. The merged state preserves total mass and uses the weighted mean expiry;
+temporary conditional branches remain isolated until their follow-ups finish.
+Superseded expiration wakeups are removed, not merely left to fire with zero mass.
+This approximates expiry timing and can affect later stack/trigger transitions;
+it never prunes probability. Exact-cadence trackers and simulations are unchanged.
+See [tiny-state merging and its benchmark](rotation-event-loop.md#tiny-expected-state-merging)
+for the diagnostic opt-out, rounding rule, and measured accuracy.
 Expected DOT scheduling keeps one pending tick wakeup per active effect. Applications
 update that wakeup's time/causal ordering instead of rebuilding future tick rows.
 Only when it fires is the current tick probability resolved and a damage row emitted;
@@ -357,15 +367,11 @@ instance only. This lets normal damage-trigger requirements distinguish a
 threshold burst from an expiration burst of the same skill without duplicating
 its damage definition.
 
-Recurring periodic-trigger timelines use a fixed combat cutoff. An explicit Battle
-End takes precedence. Otherwise a preliminary timeline suppresses feedback trigger
-applications to an effect carried in the generating action's effect ancestry and
-omits automatic HP and Dummy Attack events. Its last damage timestamp defines the
-window, including finite DOT tails and initial expiration bursts but excluding
-non-damage cast tails and delays. The full expected or sampled timeline then
-schedules periodic actions, expiration actions, and triggered skills only within
-that window. Dummy Attacks use the same duration and cannot extend it themselves.
-The fallback cutoff includes damage at the boundary; Battle End excludes it.
+Recurring effects use the same event-loop endpoint as ordinary actions. Battle
+End excludes damage at its timestamp. Without Battle End, completing the last
+ordered item ends combat, after same-time final actions and causal follow-ups.
+A trailing explicit Delay extends this window; DOTs, triggered skills, replays,
+and Dummy Attacks cannot extend it. No feedback-suppressed cutoff pass is needed.
 
 ## Runtime Inner Way damage ownership
 
@@ -603,7 +609,9 @@ action has temporary `stat` or `effectiveStat` effects.
 
 ## Combat timeline
 
-`buildRotationTimeline()` turns an ordered rotation into one global event queue.
+`buildRotationTimeline()` implements the [incremental event-loop design](rotation-event-loop.md):
+ordered input, sorted timed input, an expanded-event priority queue, and resolved
+timeline output. It expands one ordered item at a time, never future casts.
 Alongside buffs, debuffs, distance, and current HP, it tracks a map of named
 numeric resources. Resource actions update that map in event order, and each
 action snapshot carries the resource values used by action and setup-effect
@@ -623,10 +631,11 @@ It produces four row kinds:
 - `dot`: generated DOT actions
 - `periodic`: generated non-DOT buff or debuff actions
 
-Base skill casts and Delay events are initially placed sequentially. A Delay
-consumes its configured duration without producing actions or effects, shifts
-all later sequential rows, and counts toward rotation duration when it is the
-last step. Move rows run before a
+Each accepted base cast or explicit Delay schedules a next-item marker at its
+resolved completion time. Cast-time changes update that marker and current-cast
+actions; future ordered rows do not yet exist. A Delay consumes its configured
+duration without producing actions or effects and extends combat when it is the
+last item. Move rows run before a
 following skill's cast start, direct action, or triggered-skill action. Exhausted
 rows run after their attached direct or triggered action. Both are rescheduled
 with that target. Take Damage and other timed manual-event `startTime`
@@ -662,9 +671,11 @@ The timeline owns mutable simulation state while it is being built:
 - action-time state snapshots
 
 The editor and calculator share the timeline's skill-cooldown state. An
-unavailable explicit cast shifts to its ready time. Editor reconciliation
-persists that wait as a protected automatic Delay, so editor timing and
-calculation timing cannot diverge. Unavailable triggered skills are rejected
+unavailable explicit cast waits for its ready time, and a live cooldown reset can
+wake it earlier. Before-cast attachments resolve only once the cast is ready.
+Wait duration is output metadata, never inserted into authored rotation steps.
+Legacy generated waits are removed on load/import with start indexes remapped.
+Unavailable triggered skills are rejected
 because they do not consume rotation time.
 
 Main-tab global-effect controls seed permanent tracked player buffs or target
@@ -699,15 +710,16 @@ use this shared scheduler and differ only in row classification, damage rules,
 and source-cast presentation.
 
 The simulator has a 2,000-event safety limit to prevent accidental infinite
-trigger chains.
+trigger chains. Exceeding it raises an error rather than publishing a truncated
+timeline with a misleading duration.
 
 Setup and Inner Way triggers are indexed by event name once for each timeline
 pass. A damage, healing, or incoming-damage action evaluates only the rules for
-that event while retaining their original data order. Rotations using Auto HP
-or Dummy Attack normally derive their duration from a preliminary resolved
-timeline. When fight-relative timing and an explicit Battle End are present,
-its timestamp supplies the duration directly and skips that preliminary pass;
-rotations without an explicit end retain the resolved-timeline fallback.
+that event while retaining their original data order. Dummy Attack queues its
+next pair of hits dynamically and needs no preliminary duration pass. Auto HP
+still needs a duration to place its percentage steps: fight-relative Battle End
+supplies it directly; otherwise a resolved timeline supplies the final cast/Delay
+endpoint. Fight-relative anchor convergence remains a separate timing dependency.
 
 ## Damage calculation
 
@@ -1026,11 +1038,12 @@ The Rotation Editor renders editable draft steps immediately without running the
 combat timeline builder on the main thread. `editorTimelinePreview.ts` retains
 previous snapshots only for unchanged step objects and preserves current draft
 order while results are pending. A status notice marks potentially stale values.
-After a 100 ms debounce, the existing deterministic worker reconciles automatic
-cooldown delays and builds the structural timeline (`editorTimeline.ts`). Results
+After a 100 ms debounce, the existing deterministic worker builds the structural
+timeline directly from authored input (`editorTimeline.ts`). Results
 are accepted only for the same rotation ID, combat-context key, and draft object
-revision. Saving and further edits do not wait for this request. Generated delay
-changes remap the start anchor, expanded rows, skill focus, and scroll anchor.
+revision. Saving and further edits do not wait for this request. Results never
+replace draft steps or remap editing state. Unreached steps after Battle End remain
+editable placeholders without expanded combat actions.
 The worker retains up to eight prepared timelines, keyed by the normalized bundle
 fingerprint, for one-use reuse by the following baseline calculation. Superseding
 busy work still terminates the worker; an idle worker retains this cache.

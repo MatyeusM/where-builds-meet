@@ -116,7 +116,7 @@ try {
       ObserveDamage: {
         name: "Observe Damage",
         castTime: 18,
-        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 18 }],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 17.9 }],
         tags: ["General"],
       },
     },

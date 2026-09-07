@@ -160,7 +160,7 @@ import {
 } from "./calculations/rotationWorkerClient";
 import {
   pendingEditorTimeline,
-  reconciledEditorStepIndexes,
+  withUnresolvedEditorSteps,
   sameEditorRevision,
   type EditorRevision,
 } from "./editorTimelinePreview";
@@ -217,6 +217,7 @@ import {
   attachedTargetForStep,
   isAutomaticCooldownDelay,
   migrateDrunkenPoetSequences,
+  migrateAutomaticCooldownDelays,
   reorderAttachedEventWithinTarget,
 } from "./rotationEditing";
 import {
@@ -923,7 +924,7 @@ function timelineAnchorTime(timeline: TimelineRow[], startAnchor: { rowId: strin
 }
 
 function migrateRotation(rotation: RotationRecord): RotationRecord {
-  const migrated = migrateDrunkenPoetSequences(normalizeRotation(rotation));
+  const migrated = migrateAutomaticCooldownDelays(migrateDrunkenPoetSequences(normalizeRotation(rotation)));
   const attachedDamageIndexes = migrated.steps.flatMap((step, index) =>
     step.type === "event" && step.event === "TakeDamage" && "before" in step ? [index] : [],
   );
@@ -6346,48 +6347,7 @@ function RotationEditorTab({
           priority: 450,
         });
         if (!current()) return;
-        const normalized =
-          JSON.stringify(result.rotation) === JSON.stringify(requested.rotation) ? requested.rotation : result.rotation;
-        setEditorTimelineState({ ...result, rotation: normalized, revision: { ...requested, rotation: normalized } });
-        if (normalized !== requested.rotation) {
-          const indexes = reconciledEditorStepIndexes(requested.rotation, normalized);
-          const container = rotationScrollRef.current;
-          const focused = document.activeElement;
-          if (container && focused instanceof HTMLSelectElement && container.contains(focused)) {
-            const mapped = indexes.get(Number(focused.dataset.rotationStepIndex));
-            if (mapped !== undefined) pendingSkillFocusRef.current = mapped;
-          }
-          if (container) {
-            const top = container.getBoundingClientRect().top;
-            const visible = Array.from(container.querySelectorAll<HTMLElement>("[data-rotation-step-index]")).find(
-              (element) =>
-                element.getBoundingClientRect().bottom > top && indexes.has(Number(element.dataset.rotationStepIndex)),
-            );
-            if (visible)
-              pendingEventScrollRef.current = {
-                stepIndex: indexes.get(Number(visible.dataset.rotationStepIndex))!,
-                top: visible.getBoundingClientRect().top - top,
-              };
-          }
-          setExpandedSkillRows((previous) => {
-            const prefix = `${requested.id}:rotation-`;
-            const next = new Set<string>();
-            for (const key of previous) {
-              if (!key.startsWith(prefix)) {
-                next.add(key);
-                continue;
-              }
-              const mapped = indexes.get(Number(key.slice(prefix.length)));
-              if (mapped !== undefined) next.add(`${prefix}${mapped}`);
-            }
-            return next;
-          });
-          setRotation((latest) => (latest === requested.rotation ? normalized : latest));
-          setStartAnchor({
-            rowId: `rotation-${normalized.start?.step ?? 0}`,
-            ...(normalized.start?.action === undefined ? {} : { actionIndex: normalized.start.action }),
-          });
-        }
+        setEditorTimelineState({ ...result, rotation: requested.rotation, revision: requested });
       } catch (error) {
         if (!current()) return;
         if (error instanceof Error && error.message.includes("superseded")) {
@@ -6410,7 +6370,10 @@ function RotationEditorTab({
   const structuralTimeline = useMemo(
     () =>
       editorTimelineReady
-        ? editorTimelineState!.timeline
+        ? withUnresolvedEditorSteps(
+            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
+            editorTimelineState!.timeline,
+          )
         : pendingEditorTimeline(
             { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
             editorTimelineState?.revision.id === editingRotationId ? editorTimelineState : undefined,

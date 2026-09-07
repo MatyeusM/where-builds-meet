@@ -112,10 +112,10 @@ try {
   const bounded = buildRotationTimeline(noEnd, () => 0);
   assert.deepEqual(
     bursts(bounded).map((row) => row.startTime),
-    [5],
-    "The first finite expiration burst establishes the cutoff; feedback cannot extend it",
+    [5, 10, 15, 20, 25, 30],
+    "Without Battle End, feedback runs through final cast completion but not afterward",
   );
-  assert.ok(tickRows(bounded).every((row) => row.startTime < 5));
+  assert.ok(tickRows(bounded).every((row) => row.startTime <= 30));
   const dummy = inputFor([0, 14]);
   dummy.rotation.steps = [
     { type: "skill", skill: "Hits" },
@@ -126,8 +126,8 @@ try {
   const dummyRows = buildRotationTimeline(dummy);
   assert.deepEqual(
     dummyRows.filter((row) => row.step.automatic === "dummyAttack").map((row) => row.startTime),
-    [5.5, 5.5, 11.5, 11.5, 17.5, 17.5],
-    "Non-damage tails and recurring effects cannot extend dummy attacks beyond the 19-second finite damage horizon",
+    Array.from({ length: 13 }, (_, i) => 5.5 + i * 6).flatMap((time) => [time, time]),
+    "Dummy attacks continue through the explicit trailing Delay, stopping at ordered completion",
   );
 
   // Explore the concrete random decision tree, including decisions caused by

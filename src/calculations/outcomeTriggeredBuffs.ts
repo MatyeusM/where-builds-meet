@@ -1,4 +1,6 @@
 export const OUTCOME_BUFF_TICKS_PER_SECOND = 10_000;
+const TINY_PERIODIC_STATE_PROBABILITY = 1e-5;
+const PERIODIC_EXPIRATION_BUCKET_TICKS = 0.1 * OUTCOME_BUFF_TICKS_PER_SECOND;
 
 export type ExpectedOutcomeBuffSchedule = Record<string, Record<string, number>>;
 
@@ -86,6 +88,59 @@ export class ExpectedPeriodicTracker {
     private readonly firstTick: number,
     private readonly tickOrigin?: number,
   ) {}
+
+  /** Approximate only released, tiny shared-clock states; never discard probability. */
+  mergeTinyExpirations(time: number) {
+    if (this.tickOrigin === undefined) return false;
+    const states = this.branches.get(undefined);
+    if (!states) return false;
+    const now = outcomeBuffTick(time);
+    const buckets = new Map<string, Array<[string, PeriodicOutcome]>>();
+    for (const entry of states) {
+      const state = entry[1];
+      if (!state.stack || state.expires <= now || state.probability >= TINY_PERIODIC_STATE_PROBABILITY) continue;
+      const key = `${state.stack}:${state.source ?? ""}:${Math.floor(state.expires / PERIODIC_EXPIRATION_BUCKET_TICKS)}`;
+      const bucket = buckets.get(key);
+      if (bucket) bucket.push(entry);
+      else buckets.set(key, [entry]);
+    }
+    let changed = false;
+    for (const bucket of buckets.values()) {
+      if (bucket.length < 2) continue;
+      let probability = 0;
+      let weightedExpiry = 0;
+      let pendingTickProbability = 0;
+      const origin = bucket[0][1].expires;
+      for (const [key, state] of bucket) {
+        probability += state.probability;
+        weightedExpiry += (state.expires - origin) * state.probability;
+        pendingTickProbability += state.pendingTickProbability ?? 0;
+        states.delete(key);
+      }
+      this.add({
+        ...bucket[0][1],
+        probability,
+        pendingTickProbability,
+        expires: origin + Math.round(weightedExpiry / probability),
+      });
+      changed = true;
+    }
+    return changed;
+  }
+
+  /** Live expiration identities, including partitions still executing causal follow-ups. */
+  expirationSchedule() {
+    const result = new Map<string, { time: number; source: string }>();
+    for (const states of this.branches.values())
+      for (const state of states.values()) {
+        if (!state.stack || state.source === undefined) continue;
+        result.set(`${state.expires}:${state.source}`, {
+          time: state.expires / OUTCOME_BUFF_TICKS_PER_SECOND,
+          source: state.source,
+        });
+      }
+    return result;
+  }
 
   apply(
     time: number,

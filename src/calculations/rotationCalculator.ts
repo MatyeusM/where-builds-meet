@@ -1304,7 +1304,7 @@ function calculateBreakdown(
   };
 }
 
-function battleEndCutoff(timeline: TimelineRow[]) {
+function combatCutoff(timeline: TimelineRow[]) {
   const row = timeline
     .filter(
       (candidate) =>
@@ -1314,7 +1314,9 @@ function battleEndCutoff(timeline: TimelineRow[]) {
         candidate.step.event === "BattleEnd",
     )
     .sort((left, right) => compareTimelineTime(left.startTime, right.startTime) || left.order - right.order)[0];
-  return row ? { time: row.startTime, order: row.order } : undefined;
+  if (row) return { time: row.startTime, order: row.order };
+  const end = timeline[0]?.timelineEndTime;
+  return end === undefined ? undefined : { time: end, order: Number.POSITIVE_INFINITY };
 }
 
 const skillStaticRequirementTargets = new Set(["skillTag", "martialArt", "equippedMartialArt"]);
@@ -1495,7 +1497,7 @@ function timelineDamageEntries(
       (anchorActionIndex === undefined ? 0 : Number(anchorRow.actions[anchorActionIndex]?.time ?? 0))
     : 0;
   const anchorOrder = anchorRow ? anchorRow.order + (anchorActionIndex === undefined ? 0 : 10 + anchorActionIndex) : 0;
-  const battleEnd = battleEndCutoff(timeline);
+  const battleEnd = combatCutoff(timeline);
   const damageEntryStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const damageEntries = timeline.flatMap((row) =>
     row.skipped
@@ -2061,9 +2063,10 @@ function timelineTiming(
     ? anchorRow.startTime +
       (startAnchor.actionIndex === undefined ? 0 : Number(anchorRow.actions[startAnchor.actionIndex]?.time ?? 0))
     : 0;
-  const battleEnd = battleEndCutoff(timeline);
+  const battleEnd = combatCutoff(timeline);
   const lastActionTime =
     battleEnd?.time ??
+    timeline[0]?.timelineEndTime ??
     timeline.reduce(
       (latest, row) =>
         row.skipped
@@ -2085,7 +2088,11 @@ function timelineTiming(
   );
   return {
     anchorTime,
-    duration: Math.max(0, (battleEnd ? lastActionTime : Math.max(lastActionTime, lastDamageTime)) - anchorTime),
+    duration: Math.max(
+      0,
+      (timeline[0]?.timelineEndTime ?? (battleEnd ? lastActionTime : Math.max(lastActionTime, lastDamageTime))) -
+        anchorTime,
+    ),
   };
 }
 

@@ -9,9 +9,7 @@ const server = await createServer({
 });
 try {
   const { calculateEditorTimeline } = await server.ssrLoadModule("/src/calculations/editorTimeline.ts");
-  const { pendingEditorTimeline, sameEditorRevision, reconciledEditorStepIndexes } = await server.ssrLoadModule(
-    "/src/editorTimelinePreview.ts",
-  );
+  const { pendingEditorTimeline, sameEditorRevision } = await server.ssrLoadModule("/src/editorTimelinePreview.ts");
   const { calculateRotationBaseline } = await server.ssrLoadModule("/src/calculations/rotationCalculator.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
@@ -35,15 +33,14 @@ try {
     weapons: [],
   };
   const resolved = calculateEditorTimeline(input);
-  assert.equal(resolved.rotation.steps[1].duration, 9);
-  assert.equal(resolved.rotation.start.step, 2);
-  assert.equal(resolved.timeline.find((row) => row.rotationIndex === 2).startTime, 10);
+  assert.equal(resolved.rotation, rotation);
+  assert.equal(resolved.rotation.start.step, 1);
+  assert.equal(resolved.timeline.find((row) => row.rotationIndex === 1).startTime, 10);
   assert.deepEqual(calculateEditorTimeline({ ...input, rotation: resolved.rotation }).rotation, resolved.rotation);
-  assert.equal(reconciledEditorStepIndexes(rotation, resolved.rotation).get(1), 2);
 
   const draft = {
     ...resolved.rotation,
-    steps: [resolved.rotation.steps[2], { type: "skill", skill: "New" }, resolved.rotation.steps[0]],
+    steps: [resolved.rotation.steps[1], { type: "skill", skill: "New" }, resolved.rotation.steps[0]],
   };
   const pending = pendingEditorTimeline({ ...input, rotation: draft }, resolved);
   assert.deepEqual(
@@ -126,7 +123,7 @@ try {
   assert.equal((await second).fingerprint, "latest");
   client.disposeRotationCalculationWorker();
   console.log(
-    "Editor timeline worker probe passed: cooldown reconciliation, anchors, pending edits, stale-result rejection, and baseline reuse.",
+    "Editor timeline worker probe passed: live cooldown waits, stable authored input, anchors, pending edits, stale-result rejection, and baseline reuse.",
   );
 } finally {
   await server.close();

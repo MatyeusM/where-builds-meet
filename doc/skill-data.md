@@ -1568,12 +1568,18 @@ calculations only, all branches share tick boundaries at battle seconds 1, 2,
 and so on (the configured interval). A new application waits for the next strictly
 later boundary, including an application exactly on a boundary. Refreshes preserve
 the next tick. Each boundary emits one row weighted by the probability of eligible
-active branches, not their stack counts. Natural expiration remains at its exact
-timestamp and contributes no tick at that timestamp. There are no partial ticks.
+active branches, not their stack counts. Natural expiration contributes no tick
+at its timestamp. The shared tick grid itself does not round expiration times.
+Expected shared-clock states below `1e-5` probability can separately merge with
+same-stack, same-owner states in the same 0.1-second expiration bucket, using
+their weighted mean expiration. This runtime approximation preserves probability
+mass but may change later refresh/trigger timing; it does not apply to simulation
+or exact-cadence DOTs. See [the merging design](rotation-event-loop.md#tiny-expected-state-merging).
+There are no partial ticks.
 This intentionally approximates DoT damage timing and downstream DoT-sensitive
 effects. Other DOTs keep their existing cadence unless explicitly opted in.
-Simulation ignores the alignment option, including when discovering a fallback
-combat cutoff. Expected fallback discovery uses the shared grid.
+Simulation ignores the alignment option and tiny-state merging. Combat cutoff
+comes from Battle End or completion of the last ordered item.
 
 All DOTs deal one copy of their authored damage per active tick, independent of
 stack count. Weeping Blood's tick has only `phyCoef: 0.02`; absent `attrCoef`,
@@ -1614,13 +1620,13 @@ rather than multiplying the burst probability a second time. This preserves
 the correlation between consuming or expiring a DOT and reapplying it. T3 can
 repeat after the renewed DOT expires, but rolls its 20% chance each time.
 
-Feedback is bounded by Battle End when present. Otherwise a preliminary timeline
-suppresses trigger applications that reapply their originating effect and omits
-automatic Dummy Attacks. Its last damage action establishes the fixed cutoff for
-the full timeline. Initial DOT ticks and initial expiration bursts can establish
-that cutoff; their feedback continuations cannot extend it. Non-damage cast tails
-and Delay events do not extend this window. Damage at the fallback cutoff is
-included; Battle End excludes damage at its timestamp.
+Feedback is bounded by Battle End when present. Otherwise combat ends when the
+last ordered skill finishes casting, or the final explicit Delay completes.
+Same-time final damage and its causal follow-ups are included; later DOT ticks,
+expiration bursts and other feedback are dropped. These generated events never
+extend the window. Battle End excludes damage at its timestamp. The
+[incremental event loop](rotation-event-loop.md) needs no feedback-suppressed
+preliminary timeline to discover this endpoint.
 
 Chance applications extend the existing trigger and periodic scheduler rather
 than creating an Inner-Way-specific event pipeline. The supported expected-state

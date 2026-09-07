@@ -11,7 +11,8 @@ export function isAutomaticCooldownDelay(step: RotationStep | undefined): boolea
   return step?.type === "event" && step.event === "Delay" && step.automatic === "cooldown";
 }
 
-export function withoutAutomaticCooldownDelays(rotation: RotationRecord): RotationRecord {
+export function migrateAutomaticCooldownDelays(rotation: RotationRecord): RotationRecord {
+  if (!rotation.steps.some(isAutomaticCooldownDelay)) return rotation;
   const retainedIndexes = new Map<number, number>();
   const steps = rotation.steps.filter((step, index) => {
     if (isAutomaticCooldownDelay(step)) return false;
@@ -19,10 +20,17 @@ export function withoutAutomaticCooldownDelays(rotation: RotationRecord): Rotati
     return true;
   });
   const startIndex = rotation.start ? retainedIndexes.get(rotation.start.step) : undefined;
+  const nextStartIndex = rotation.start
+    ? [...retainedIndexes].find(([index]) => index > rotation.start!.step)?.[1]
+    : undefined;
+  let start = rotation.start;
+  if (start && startIndex !== undefined) start = { ...start, step: startIndex };
+  if (start && startIndex === undefined) start = { step: nextStartIndex ?? steps.length - 1 };
+  if (!steps.length) start = undefined;
   return {
     ...rotation,
     steps,
-    ...(rotation.start && startIndex !== undefined ? { start: { ...rotation.start, step: startIndex } } : {}),
+    start,
   };
 }
 
@@ -129,32 +137,6 @@ export function migrateDrunkenPoetSequences(rotation: RotationRecord): RotationR
     : undefined;
 
   return { ...rotation, steps: remappedSteps, ...(start ? { start } : {}) };
-}
-
-export function withAutomaticCooldownDelays(rotation: RotationRecord, timeline: TimelineRow[]): RotationRecord {
-  const waits = new Map(
-    timeline.flatMap((row) =>
-      row.kind === "rotation" && row.rotationIndex !== undefined && (row.cooldownWait ?? 0) > 0
-        ? [[row.rotationIndex, row.cooldownWait!] as const]
-        : [],
-    ),
-  );
-  if (!waits.size) return rotation;
-  const steps: RotationStep[] = [];
-  let insertedBeforeStart = 0;
-  rotation.steps.forEach((step, index) => {
-    const wait = waits.get(index);
-    if (wait !== undefined) {
-      steps.push({ type: "event", event: "Delay", duration: wait, automatic: "cooldown" });
-      if (rotation.start && index <= rotation.start.step) insertedBeforeStart += 1;
-    }
-    steps.push(step);
-  });
-  return {
-    ...rotation,
-    steps,
-    ...(rotation.start ? { start: { ...rotation.start, step: rotation.start.step + insertedBeforeStart } } : {}),
-  };
 }
 
 export type AttachedEventPhase = "before" | "after";

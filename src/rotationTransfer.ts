@@ -1,4 +1,5 @@
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline";
+import { migrateAutomaticCooldownDelays } from "./rotationEditing";
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types";
 
 export const rotationExportFormat = "where-builds-meet-rotations";
@@ -260,7 +261,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           ...(typeof startValue.action === "number" ? { action: startValue.action } : {}),
         }
       : undefined;
-  return {
+  return migrateAutomaticCooldownDelays({
     name: candidate.name,
     steps: parsedSteps,
     ...(typeof candidate.targetHP === "number" && Number.isFinite(candidate.targetHP) && candidate.targetHP > 0
@@ -276,7 +277,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
         : {}),
     ...(start ? { start } : {}),
     ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
-  };
+  });
 }
 
 function importedId(originalId: string, usedIds: Set<string>) {

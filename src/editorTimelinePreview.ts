@@ -1,20 +1,27 @@
 import type { RotationRecord, TimelineBuildInput, TimelineRow } from "./calculations/rotationTimeline";
-import { isAutomaticCooldownDelay } from "./rotationEditing";
-
-/** Reconciliation changes generated waits only; editable steps retain their ordinal identity. */
-export function reconciledEditorStepIndexes(before: RotationRecord, after: RotationRecord) {
-  const afterIndexes = after.steps.flatMap((step, index) => (isAutomaticCooldownDelay(step) ? [] : [index]));
-  const mapping = new Map<number, number>();
-  let ordinal = 0;
-  before.steps.forEach((step, index) => {
-    if (!isAutomaticCooldownDelay(step)) mapping.set(index, afterIndexes[ordinal++]);
-  });
-  return mapping;
-}
 
 export type EditorRevision = { id: string; context: string; rotation: RotationRecord };
 export function sameEditorRevision(left: EditorRevision, right: EditorRevision) {
   return left.id === right.id && left.context === right.context && left.rotation === right.rotation;
+}
+
+/** Unreached authored steps remain editable, without expanding their combat actions. */
+export function withUnresolvedEditorSteps(
+  input: Pick<TimelineBuildInput, "rotation" | "skills" | "eventDefinitions">,
+  timeline: TimelineRow[],
+) {
+  const resolved = new Set(timeline.filter((row) => row.kind === "rotation").map((row) => row.rotationIndex));
+  if (resolved.size === input.rotation.steps.length) return timeline;
+  const placeholders = pendingEditorTimeline(input).filter((row) => !resolved.has(row.rotationIndex));
+  return [
+    ...timeline,
+    ...placeholders.map((row) => ({
+      ...row,
+      pendingCalculation: false,
+      skipped: true,
+      startTime: timeline[0]?.timelineEndTime ?? 0,
+    })),
+  ];
 }
 
 /** Editable placeholders only: no event simulation, cooldown math, or effective-stat calculation. */

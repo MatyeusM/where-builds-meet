@@ -9,6 +9,18 @@ base resistance, and 65% Judgement Resistance. Breakthrough 16 grants 15.3%
 Precision and 138 of each base attribute; Breakthrough 17 grants 16.5% Precision
 and 150 of each base attribute.
 
+Combat inclusion and the DPS/HPS duration follow the
+[rotation event-loop endpoint](rotation-event-loop.md). Explicit Battle End
+excludes damage at its timestamp. Otherwise the last ordered cast or explicit
+Delay ends combat, including same-time final actions but dropping later damage,
+healing, DOT ticks, and replays. Generated damage never extends the duration.
+
+Expected shared-clock DOTs use the [tiny-state merging approximation](rotation-event-loop.md#tiny-expected-state-merging):
+compatible states below `1e-5` probability can share a weighted mean expiration
+within a 0.1-second bucket. No probability mass is discarded and damage formulas
+are unchanged, but the resulting expiration/refresh timing is approximate.
+Simulation retains exact sampled timing.
+
 ## Stat resolution
 
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, character talent stats, regional Oddity rewards, attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
@@ -627,7 +639,7 @@ Expected Component =
   + Affinity Damage × Affinity Rate
 ```
 
-The action total is the sum of expected Physical, Bellstrike, Stonesplit, Silkbind, and Bamboocut damage. Rotation total damage is the sum of damage actions at or after the selected start anchor and before the ordered Battle End event, including triggered skills and DOT ticks. An action outside those bounds remains in the timeline but is omitted from damage, hit count, and outcome-rate aggregation. Manual events resolve before skills and damage actions at the same timestamp, so a hit timestamped exactly at Battle End does not count. Actions at the starting timestamp still use timeline order to omit earlier actions in the starting skill. DPS is total damage divided by the time from the selected start anchor to Battle End, or to the final timeline action when Battle End is absent.
+The action total is the sum of expected Physical, Bellstrike, Stonesplit, Silkbind, and Bamboocut damage. Rotation total damage includes resolved damage at or after the selected start anchor and within the combat window, including triggered skills and DOT ticks. Pre-start actions remain visible but are omitted from damage, hit count, and outcome-rate aggregation; actions after combat ends are not resolved. Battle End precedes damage at the same timestamp, so an equal-time hit does not count. Actions at the starting timestamp still use timeline order to omit earlier actions in the starting skill. DPS is total damage divided by the time from the selected start anchor to Battle End, or to completion of the final ordered cast/Delay when Battle End is absent. Final-cast same-time actions count; later DOTs and replays do not extend the duration.
 
 ## Damage-over-time exception
 

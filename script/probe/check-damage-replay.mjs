@@ -93,6 +93,7 @@ try {
           { type: "skill", skill: "ChargedProbe" },
           { type: "skill", skill: "Wait" },
           { type: "skill", skill: "ChargedProbe" },
+          { type: "event", event: "Delay", duration: 5 },
         ],
       },
       skills,
@@ -151,7 +152,15 @@ try {
     result.timeline.filter((row) => row.step.type === "skill" && row.step.skill === "ReplayProbe").length === 2,
     "Each accepted damage event must spawn one visible replay-skill invocation.",
   );
-  assert(closeTo(result.duration, 21.3), "Replay ticks must extend rotation duration when Battle End is absent.");
+  assert(closeTo(result.duration, 23.4), "The explicit trailing Delay, not replay ticks, defines combat duration.");
+  const shortBundle = createBundle();
+  shortBundle.timeline.rotation.steps.pop();
+  const shortResult = calculateRotationBaseline(shortBundle);
+  assert(closeTo(shortResult.duration, 18.4), "Without a trailing Delay combat ends at the final cast completion.");
+  assert(
+    shortResult.baseline.filter((entry) => entry.replay).length === 3,
+    "The final cast's delayed replays must be dropped after combat ends.",
+  );
 
   const withoutDebuff = calculateRotationBaseline(createBundle(false));
   assert(

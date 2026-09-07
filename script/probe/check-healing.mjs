@@ -574,6 +574,7 @@ try {
           { type: "skill", skill: "WorldToSword" },
           { type: "skill", skill: "IncomingHit" },
           { type: "skill", skill: "OverflowHeal" },
+          { type: "event", event: "Delay", duration: 1 },
         ],
       },
       skills: {

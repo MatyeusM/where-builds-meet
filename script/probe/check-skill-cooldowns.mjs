@@ -10,8 +10,7 @@ const viteServer = await createServer({
 
 try {
   const { buildRotationTimeline } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
-  const { isAutomaticCooldownDelay, withAutomaticCooldownDelays } =
-    await viteServer.ssrLoadModule("/src/rotationEditing.ts");
+  const { calculateEditorTimeline } = await viteServer.ssrLoadModule("/src/calculations/editorTimeline.ts");
   const { default: snowpartingSkills } = await viteServer.ssrLoadModule("/data/skill/snowparting-blade.json");
   const { default: phalanxbaneSkills } = await viteServer.ssrLoadModule("/data/skill/phalanxbane-blade.json");
   const { default: mysticSkills } = await viteServer.ssrLoadModule("/data/skill/mystic.json");
@@ -53,11 +52,19 @@ try {
   assert(explicitRows[3].startTime === 12, "The third cast of First must wait for its own window to end.");
   assert(explicitRows[3].cooldownWait === 9, "The timeline must expose the exact wait required by the third cast.");
 
-  const adjusted = withAutomaticCooldownDelays(multiUseRotation, multiUseTimeline);
-  const generated = adjusted.steps[3];
-  assert(isAutomaticCooldownDelay(generated), "Editor reconciliation must materialize a protected cooldown delay.");
-  assert(generated.duration === 9, "The generated delay must preserve the timeline's exact cooldown wait.");
-  assert(adjusted.steps[4].type === "skill", "The generated cooldown delay must be immediately before its skill.");
+  const editor = calculateEditorTimeline({
+    rotation: multiUseRotation,
+    skills: multiUseSkills,
+    eventDefinitions: {},
+    dots: {},
+    effectDefinitions: {},
+    innerWayConditions: [],
+    innerWayRules: [],
+    setupEffects: [],
+    weapons: [],
+  });
+  assert(editor.rotation === multiUseRotation, "Cooldown waits must not rewrite authored rotation steps.");
+  assert(editor.timeline.find((row) => row.rotationIndex === 3).startTime === 12, "Editor uses live cooldown timing.");
 
   const sharedCooldownSkills = {
     Short: { castTime: 1, cooldown: 10, cooldownGroup: "Shared", action: [] },
