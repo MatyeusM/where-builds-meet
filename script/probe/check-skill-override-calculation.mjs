@@ -10,6 +10,44 @@ const viteServer = await createServer({
 
 try {
   const { resolveSkillCalculationDefinitions } = await viteServer.ssrLoadModule("/src/skillOverrides.ts");
+  const { deserializeSkillOverrides, serializeSkillOverrides } =
+    await viteServer.ssrLoadModule("/src/skillOverrides.ts");
+  const migrated = deserializeSkillOverrides({
+    General: {
+      Legacy: {
+        action: [
+          { type: "damage", phyCoef: 2 },
+          { type: "heal", phyCoef: 3 },
+          { type: "damage", phyCoef: 4, attrCoef: 0 },
+        ],
+      },
+    },
+  });
+  const migratedActions = migrated.General.Legacy.action;
+  if (migratedActions[0].attrCoef !== 2 || migratedActions[1].silkbindCoef !== 3 || migratedActions[2].attrCoef !== 0)
+    throw new Error("Legacy overrides must preserve old coefficients without overwriting explicit zero.");
+  const physicalOnly = { DOT: { Bleed: { periodic: { action: [{ type: "damage", phyCoef: 0.02 }] } } } };
+  const reloaded = deserializeSkillOverrides(JSON.parse(serializeSkillOverrides(physicalOnly)));
+  if (reloaded.DOT.Bleed.periodic.action[0].attrCoef !== undefined)
+    throw new Error("New physical-only overrides must remain physical-only after saving and reloading.");
+  const oldStacked = deserializeSkillOverrides({
+    version: 2,
+    overrides: {
+      DOT: {
+        Bleed: {
+          periodic: { stackDamage: true, interval: 1, action: [{ type: "damage", phyCoef: 0.02 }] },
+        },
+      },
+    },
+  });
+  if (
+    oldStacked.DOT.Bleed.periodic.stackDamage !== undefined ||
+    oldStacked.DOT.Bleed.periodic.tickOnExpire !== false ||
+    oldStacked.DOT.Bleed.periodic.action[0].attrCoef !== undefined
+  )
+    throw new Error(
+      "Old stack-damage overrides must preserve expiration behavior and physical-only coefficients, but drop stack scaling.",
+    );
   const { buildRotationTimeline } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { rotationBundleFingerprint } = await viteServer.ssrLoadModule("/src/calculations/rotationCalculationCache.ts");
   const defaults = {
@@ -57,6 +95,7 @@ try {
     throw new Error("Skill overrides did not change the generated calculation timeline.");
 
   const bundleFor = (definitions) => ({
+    weapons: ["snowparting"],
     timeline: {
       rotation: { name: "Probe", steps: [{ type: "skill", skill: "Attack" }] },
       skills: definitions.skills,

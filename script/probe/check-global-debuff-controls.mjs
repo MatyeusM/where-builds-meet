@@ -59,7 +59,7 @@ try {
     castTime: 1,
     action: [
       ...(appliesFearful ? [{ type: "apply", target: "target", value: "FearfulBlade", stack: 1, time: 0 }] : []),
-      { type: "damage", phyCoef: 1, time: 1 },
+      { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
     ],
     tags,
   });

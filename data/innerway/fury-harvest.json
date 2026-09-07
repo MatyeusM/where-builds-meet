@@ -14,30 +14,7 @@
         }
       ]
     },
-    "FuryHarvestT3": {
-      "trigger": [
-        {
-          "event": "damage",
-          "action": [
-            {
-              "type": "addResource",
-              "value": "Vitality",
-              "amount": 0.1
-            }
-          ]
-        },
-        {
-          "event": "takeDamage",
-          "action": [
-            {
-              "type": "addResource",
-              "value": "Vitality",
-              "amount": 0.1
-            }
-          ]
-        }
-      ]
-    },
+    "FuryHarvestT3": {},
     "FuryHarvestT4": {},
     "FuryHarvestT5": {
       "effect": [

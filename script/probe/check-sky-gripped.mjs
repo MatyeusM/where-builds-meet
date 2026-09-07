@@ -20,7 +20,7 @@ try {
   const observer = {
     name: "Observe Kite State",
     castTime: 0.01,
-    action: [{ type: "damage", phyCoef: 0, time: 0.01 }],
+    action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0.01 }],
     modifier: [],
     tags: ["General"],
   };

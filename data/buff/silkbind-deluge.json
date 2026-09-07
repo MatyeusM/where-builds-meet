@@ -16,7 +16,8 @@
           "phyCoef": 0.7721,
           "phyBonus": 214,
           "attrBonus": 116,
-          "time": 0
+          "time": 0,
+          "silkbindCoef": 0.7721
         }
       ]
     },
@@ -47,7 +48,8 @@
           "phyCoef": 1.69,
           "phyBonus": 470,
           "attrBonus": 256,
-          "time": 0
+          "time": 0,
+          "silkbindCoef": 1.69
         }
       ]
     },

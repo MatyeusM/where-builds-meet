@@ -7,9 +7,14 @@ import type {
   RotationActionBreakdown,
 } from "./rotationCalculator";
 import type { TimelineRow } from "./rotationTimeline";
+import type { EditorTimelineResult } from "./editorTimeline";
 
-type WorkerResult = RotationSimulationBaseline | RotationSimulationResult | { metrics: RotationMetrics };
-type RequestMode = "calculation" | "simulation" | "baseline" | "comparisons";
+type WorkerResult =
+  | RotationSimulationBaseline
+  | RotationSimulationResult
+  | { metrics: RotationMetrics }
+  | { editorTimeline: EditorTimelineResult };
+type RequestMode = "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline";
 type RequestOptions = { key?: string; priority?: number; onProgress?: (progress: number) => void };
 
 type CalculationRequest = {
@@ -59,11 +64,15 @@ function getWorker() {
       event: MessageEvent<{
         id: number;
         metrics?: RotationMetrics;
+        editorTimeline?: EditorTimelineResult;
         timeline?: TimelineRow[];
         anchorTime?: number;
         duration?: number;
         actionBreakdowns?: Record<string, RotationActionBreakdown>;
         baseline?: RotationSimulationBaseline["baseline"];
+        compactedInnerWayResults?: boolean;
+        expectedOutcomeBuffSchedule?: RotationSimulationBaseline["expectedOutcomeBuffSchedule"];
+        mysticVitalityDamageScale?: number;
         progress?: number;
         error?: string;
       }>,
@@ -76,6 +85,7 @@ function getWorker() {
       const completed = running.request;
       running = undefined;
       if (event.data.error) completed.reject(new Error(event.data.error));
+      else if (event.data.editorTimeline) completed.resolve({ editorTimeline: event.data.editorTimeline });
       else if (event.data.metrics) {
         if (completed.cacheKey && (completed.mode === "baseline" || completed.baseline))
           workerBaselineKeys.add(completed.cacheKey);
@@ -88,6 +98,13 @@ function getWorker() {
                 duration: event.data.duration ?? 0,
                 actionBreakdowns: event.data.actionBreakdowns ?? {},
                 ...(event.data.baseline ? { baseline: event.data.baseline } : {}),
+                ...(event.data.compactedInnerWayResults ? { compactedInnerWayResults: true } : {}),
+                ...(event.data.expectedOutcomeBuffSchedule
+                  ? { expectedOutcomeBuffSchedule: event.data.expectedOutcomeBuffSchedule }
+                  : {}),
+                ...(event.data.mysticVitalityDamageScale !== undefined
+                  ? { mysticVitalityDamageScale: event.data.mysticVitalityDamageScale }
+                  : {}),
               }
             : { metrics: event.data.metrics },
         );
@@ -164,7 +181,15 @@ function enqueue(
 /** Queue requests by priority and replace stale pending work with the same key. */
 export function requestRotationCalculation(bundle: RotationCalculationBundle, options?: RequestOptions) {
   return new Promise<RotationMetrics>((resolve, reject) => {
-    enqueue({ bundle, mode: "calculation", resolve: (result) => resolve(result.metrics), reject }, options);
+    enqueue(
+      {
+        bundle,
+        mode: "calculation",
+        resolve: (result) => resolve((result as { metrics: RotationMetrics }).metrics),
+        reject,
+      },
+      options,
+    );
   });
 }
 
@@ -200,7 +225,14 @@ export function requestRotationComparisons(
 ) {
   return new Promise<RotationMetrics>((resolve, reject) => {
     enqueue(
-      { bundle, mode: "comparisons", cacheKey, baseline, resolve: (result) => resolve(result.metrics), reject },
+      {
+        bundle,
+        mode: "comparisons",
+        cacheKey,
+        baseline,
+        resolve: (result) => resolve((result as { metrics: RotationMetrics }).metrics),
+        reject,
+      },
       options,
     );
   });
@@ -208,6 +240,8 @@ export function requestRotationComparisons(
 
 /** Stop the active calculation batch so its replacement starts without stale queued work or worker cache. */
 export function supersedeRotationCalculationRequests() {
+  // An idle worker has no stale requests to cancel; retain its prepared editor timeline.
+  if (!running && pending.length === 0) return;
   worker?.terminate();
   worker = undefined;
   workerBaselineKeys = new Set();
@@ -219,4 +253,18 @@ export function disposeRotationCalculationWorker() {
   worker = undefined;
   workerBaselineKeys = new Set();
   rejectAllRequests("Calculation worker disposed");
+}
+
+export function requestEditorTimeline(bundle: RotationSimulationBundle, options?: RequestOptions) {
+  return new Promise<EditorTimelineResult>((resolve, reject) => {
+    enqueue(
+      {
+        bundle,
+        mode: "editorTimeline",
+        resolve: (result) => resolve((result as { editorTimeline: EditorTimelineResult }).editorTimeline),
+        reject,
+      },
+      options,
+    );
+  });
 }

@@ -43,7 +43,7 @@ try {
     derivedStats: calculateDerivedStats(stats, 0),
     effects: [],
   };
-  const action = { type: "damage", time: 1, phyCoef: 1 };
+  const action = { type: "damage", time: 1, phyCoef: 1, attrCoef: 1 };
   const expected = calculateDamageBreakdown(action, context);
   const minimum = calculateSimulatedDamageBreakdown(action, context, () => 0);
   const maximum = calculateSimulatedDamageBreakdown(action, context, () => 1);
@@ -56,7 +56,7 @@ try {
     minimum.total < expected.total && expected.total < maximum.total,
     "Simulation mode must sample around deterministic average damage.",
   );
-  const healingAction = { type: "heal", time: 1, phyCoef: 1 };
+  const healingAction = { type: "heal", time: 1, phyCoef: 1, silkbindCoef: 1 };
   const expectedHealing = calculateHealingBreakdown(healingAction, context);
   const minimumHealing = calculateSimulatedHealingBreakdown(healingAction, context, () => 0);
   const maximumHealing = calculateSimulatedHealingBreakdown(healingAction, context, () => 1);
@@ -141,7 +141,7 @@ try {
             group: true,
             castTime: 1,
             tags: ["Heal"],
-            action: [{ type: "heal", time: 1, phyCoef: 1 }],
+            action: [{ type: "heal", time: 1, phyCoef: 1, silkbindCoef: 1 }],
           },
         },
       },

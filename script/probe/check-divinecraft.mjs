@@ -59,8 +59,8 @@ const context = {
   effects: [],
 };
 const damageFor = (id) =>
-  damage.calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [definitions[id].effect] }).total;
-const baseline = damage.calculateDamageBreakdown({ phyCoef: 1 }, context).total;
+  damage.calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [definitions[id].effect] }).total;
+const baseline = damage.calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context).total;
 assert(Math.abs(damageFor("Fire") / baseline - 1.015) < 1e-9, "Fire HP damage must apply as a 1.5% Category 1 bonus.");
 assert(
   Math.abs(damageFor("WaterFire") / baseline - 1.014) < 1e-9,
@@ -101,10 +101,10 @@ const vitalityAfterHeals = (id) => {
         name: "Healing Sequence",
         castTime: 6.1,
         action: [
-          { type: "heal", phyCoef: 1, time: 0 },
-          { type: "heal", phyCoef: 1, time: 2.9 },
-          { type: "heal", phyCoef: 1, time: 3 },
-          { type: "heal", phyCoef: 1, time: 6 },
+          { type: "heal", phyCoef: 1, silkbindCoef: 1, time: 0 },
+          { type: "heal", phyCoef: 1, silkbindCoef: 1, time: 2.9 },
+          { type: "heal", phyCoef: 1, silkbindCoef: 1, time: 3 },
+          { type: "heal", phyCoef: 1, silkbindCoef: 1, time: 6 },
         ],
       },
       Observe: { name: "Observe", castTime: 0, action: [] },

@@ -59,7 +59,7 @@ try {
     fanDmgBoost: 0.06,
     umbrellaDmgBoost: 0.07,
   };
-  const action = { type: "heal", phyCoef: 1, phyBonus: 10, attrBonus: 20 };
+  const action = { type: "heal", phyCoef: 1, silkbindCoef: 1, phyBonus: 10, attrBonus: 20 };
   const context = {
     stats: martialStats,
     derivedStats: calculateDerivedStats(martialStats, 0),
@@ -71,6 +71,16 @@ try {
     attunement: { physicalPenetration: 20, panaceaMartialHealingBoost: 0.1 },
   };
   const healing = calculateHealingBreakdown(action, context);
+  const physicalOnlyHealing = calculateHealingBreakdown({ type: "heal", phyCoef: 1 }, context);
+  const silkbindOnlyHealing = calculateHealingBreakdown({ type: "heal", silkbindCoef: 1 }, context);
+  const combinedHealing = calculateHealingBreakdown(
+    { type: "heal", phyCoef: 1, silkbindCoef: 2, attrCoef: 100 },
+    context,
+  );
+  assert(
+    closeTo(combinedHealing.total, physicalOnlyHealing.total + 2 * silkbindOnlyHealing.total),
+    "Healing must use independent Physical and Silkbind coefficients and ignore attrCoef.",
+  );
   const physical = 110 * 1.15;
   const silkbind = 70 * 1.05 * 1.1;
   const criticalRate = 0.3;
@@ -167,14 +177,14 @@ try {
       SmallerHeal: {
         name: "Smaller Heal",
         castTime: 1,
-        action: [{ type: "heal", phyCoef: 1, time: 1 }],
+        action: [{ type: "heal", phyCoef: 1, silkbindCoef: 1, time: 1 }],
         modifier: [],
         tags: ["Heal", "MartialArts", "PanaceaFan", "CloudburstHealing"],
       },
       LargerHeal: {
         name: "Larger Heal",
         castTime: 1,
-        action: [{ type: "heal", phyCoef: 2, time: 1 }],
+        action: [{ type: "heal", phyCoef: 2, silkbindCoef: 2, time: 1 }],
         modifier: [],
         tags: ["Heal", "MartialArts", "PanaceaFan"],
       },
@@ -579,8 +589,8 @@ try {
           name: "Overflow Heal",
           castTime: 0.2,
           action: [
-            { type: "heal", phyCoef: 30, time: 0.2 },
-            { type: "heal", phyCoef: 30, time: 0.2 },
+            { type: "heal", phyCoef: 30, silkbindCoef: 30, time: 0.2 },
+            { type: "heal", phyCoef: 30, silkbindCoef: 30, time: 0.2 },
           ],
           tags: ["Heal", "MartialArts", "PanaceaFan"],
         },
@@ -622,12 +632,13 @@ try {
     return snapshot.averagePhysicalAttack * 12 + snapshot.averageSilkbindAttack * 18;
   })();
   const healingPerPhysicalBonus = calculateHealingBreakdown(
-    { type: "heal", phyCoef: 0, phyBonus: 1, attrBonus: 0 },
+    { type: "heal", phyCoef: 0, silkbindCoef: 0, phyBonus: 1, attrBonus: 0 },
     groupHealingContext,
   ).total;
   const groupHealAction = {
     type: "heal",
     phyCoef: 0,
+    silkbindCoef: 0,
     phyBonus: (groupHealingThreshold * 0.7) / healingPerPhysicalBonus,
     attrBonus: 0,
     time: 0.1,
@@ -697,6 +708,7 @@ try {
             {
               type: "heal",
               phyCoef: 0,
+              silkbindCoef: 0,
               phyBonus: (groupHealingThreshold * 1.1) / healingPerPhysicalBonus,
               attrBonus: 0,
               time: 0.1,
@@ -814,6 +826,7 @@ try {
           action: Array.from({ length: 20 }, (_, index) => ({
             type: "heal",
             phyCoef: 30,
+            silkbindCoef: 30,
             time: 0.1 + index * 0.31,
           })),
           tags: ["Heal"],

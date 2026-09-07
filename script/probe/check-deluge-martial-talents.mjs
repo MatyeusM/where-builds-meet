@@ -96,7 +96,7 @@ try {
 
   const precisionStats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 0.8 };
   const precisionBreakdown = calculateDamageBreakdown(
-    { phyCoef: 1 },
+    { phyCoef: 1, attrCoef: 1 },
     {
       stats: precisionStats,
       derivedStats: calculateDerivedStats(precisionStats, 0, {}, ["panaceaFan", "soulshadeUmbrella"]),

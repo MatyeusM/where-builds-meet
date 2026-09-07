@@ -6,6 +6,7 @@ import envigoratedWarrior from "../../data/innerway/envigorated-warrior.json";
 import empiricalEdge from "../../data/innerway/empirical-edge.json";
 import exquisiteScenery from "../../data/innerway/exquisite-scenery.json";
 import frostCladNight from "../../data/innerway/frost-clad-night.json";
+import fivefoldBleed from "../../data/innerway/fivefold-bleed.json";
 import furyHarvest from "../../data/innerway/fury-harvest.json";
 import insightfulStrike from "../../data/innerway/insightful-strike.json";
 import moraleChant from "../../data/innerway/morale-chant.json";
@@ -41,6 +42,7 @@ export const innerWayDefinitions = {
   FuryHarvest: furyHarvest,
   InsightfulStrike: insightfulStrike,
   SeasonalEdge: seasonalEdge,
+  FivefoldBleed: fivefoldBleed,
 } satisfies Record<string, InnerWayDefinition>;
 
 export function innerWayAvailableForTag(innerWay: string, requiredTag?: string) {

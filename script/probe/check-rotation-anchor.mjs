@@ -46,10 +46,10 @@ try {
         castTime: 2,
         tags: [],
         action: [
-          { type: "damage", time: 0, phyCoef: 1 },
-          { type: "damage", time: 1, phyCoef: 1 },
-          { type: "damage", time: 1, phyCoef: 1 },
-          { type: "damage", time: 2, phyCoef: 1 },
+          { type: "damage", time: 0, phyCoef: 1, attrCoef: 1 },
+          { type: "damage", time: 1, phyCoef: 1, attrCoef: 1 },
+          { type: "damage", time: 1, phyCoef: 1, attrCoef: 1 },
+          { type: "damage", time: 2, phyCoef: 1, attrCoef: 1 },
         ],
       },
     },
@@ -110,13 +110,18 @@ try {
   const triggerTimeline = buildRotationTimeline({
     rotation: { name: "Trigger source probe", steps: [{ type: "skill", skill: "SourceSkill" }] },
     skills: {
-      SourceSkill: { name: "Source Skill", castTime: 1, tags: [], action: [{ type: "damage", time: 1, phyCoef: 1 }] },
+      SourceSkill: {
+        name: "Source Skill",
+        castTime: 1,
+        tags: [],
+        action: [{ type: "damage", time: 1, phyCoef: 1, attrCoef: 1 }],
+      },
       TriggeredProbe: {
         name: "Triggered Probe",
         castTime: 0,
         cooldown: 10,
         tags: ["Triggered"],
-        action: [{ type: "damage", time: 0, phyCoef: 1 }],
+        action: [{ type: "damage", time: 0, phyCoef: 1, attrCoef: 1 }],
       },
     },
     eventDefinitions: {},
@@ -145,7 +150,7 @@ try {
         name: "Duration Skill",
         castTime: 1,
         tags: [],
-        action: [{ type: "damage", time: 1, phyCoef: 1 }],
+        action: [{ type: "damage", time: 1, phyCoef: 1, attrCoef: 1 }],
       },
     },
     eventDefinitions: {},
@@ -163,7 +168,7 @@ try {
         name: "Duration Skill",
         castTime: 2,
         tags: [],
-        action: [{ type: "damage", time: 2, phyCoef: 1 }],
+        action: [{ type: "damage", time: 2, phyCoef: 1, attrCoef: 1 }],
       },
     },
   };

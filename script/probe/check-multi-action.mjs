@@ -94,7 +94,7 @@ try {
     Strike: {
       name: "Strike",
       castTime: 2,
-      action: [{ type: "damage", phyCoef: 1, time: 2 }],
+      action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 2 }],
       modifier: [
         {
           requirement: [{ target: "self", value: "Ready" }],
@@ -167,9 +167,9 @@ try {
       name: "Long branch",
       castTime: 2,
       action: [
-        { type: "damage", phyCoef: 1, time: 1 },
-        { type: "damage", phyCoef: 2, time: 1.5 },
-        { type: "damage", phyCoef: 3, time: 2 },
+        { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
+        { type: "damage", phyCoef: 2, attrCoef: 2, time: 1.5 },
+        { type: "damage", phyCoef: 3, attrCoef: 3, time: 2 },
       ],
       modifier: [],
       tags: ["SubAction"],
@@ -177,7 +177,7 @@ try {
     ShortBranch: {
       name: "Short branch",
       castTime: 1,
-      action: [{ type: "damage", phyCoef: 4, time: 1 }],
+      action: [{ type: "damage", phyCoef: 4, attrCoef: 4, time: 1 }],
       modifier: [],
       tags: ["SubAction"],
     },
@@ -237,7 +237,7 @@ try {
     PrimaryEnd: {
       name: "Primary end",
       castTime: 2,
-      action: [{ type: "damage", phyCoef: 2, time: 2 }],
+      action: [{ type: "damage", phyCoef: 2, attrCoef: 2, time: 2 }],
       modifier: [],
       tags: ["SubAction"],
     },
@@ -245,7 +245,7 @@ try {
     FallbackEnd: {
       name: "Fallback end",
       castTime: 1,
-      action: [{ type: "damage", phyCoef: 1, time: 1 }],
+      action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 1 }],
       modifier: [],
       tags: ["SubAction"],
     },
@@ -315,7 +315,7 @@ try {
     BoundSlam: {
       name: "Bound slam",
       castTime: 0.1,
-      action: [{ type: "damage", phyCoef: 1, time: 0 }],
+      action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0 }],
       modifier: [
         {
           requirement: [{ target: "self", value: "InnerPassion" }],

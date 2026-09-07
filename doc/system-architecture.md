@@ -277,6 +277,127 @@ can switch them explicitly before a cast. Ordinary requirements can inspect
 both values, and rows and actions snapshot them so a Mystic follow-up such as
 Ghostly Step - Umbra Dodge can dispatch weapon-specific damage definitions.
 
+## Chance-applied periodic damage
+
+Chance-applied DOTs reuse the trigger application and periodic event scheduler.
+Action chances can be numeric or use the existing `switch` value resolver against
+current requirement state and active condition flags. Both expected and sampled
+paths resolve the same value; simulation timeline-rebuild detection recognizes
+object-valued chances as well as numeric ones.
+The data-defined `onMaxStack` consume-and-trigger transition runs synchronously
+inside both ordinary and trigger-driven effect applications, removing state and
+pending ticks before queuing the burst. The expected tracker uses the same
+threshold predicate, resets only threshold-reaching branches, and weights the
+normal triggered damage skill by the resulting burst probability.
+Existing `time: "expire"` actions also support chance-triggered damage. Concrete
+expiration schedules have a latest-generation identity so refreshes to the same
+timestamp cannot duplicate actions. Natural expiration is validated before state
+pruning, independently of other actions at that clock boundary. Expected DOT
+branches use persistent internal expiry wakeups keyed by expiry time and damage
+owner. A wakeup reads the current probability distribution when it fires; refreshed
+or consumed branches contribute zero. Only a newly introduced expiry is queued,
+not every possible future expiration after each application. Live expiry actions
+reuse the effect-action executor without publishing an expiration-check row.
+`ExpectedPeriodicTracker` extends the outcome-probability infrastructure with a
+distribution over stack count, shared expiration, damage owner, and temporary
+branch identity. Each state carries a map of next-tick timestamps to absolute
+probability mass. Cadence does not affect the supported application, threshold,
+or expiration transitions, so states with different cadences share those
+transitions while their weighted tick schedules remain exact by default. The expected
+timeline contains the union of possible ticks, with separate damage and hit
+weights. These finite probability branches do not consume the ordinary-event
+loop budget. The DOT's marginal stack distribution is exact; downstream
+expected-state calculations use marginal hit weights, not a joint distribution
+of every proc, resource cap, and other random buff. Simulations instead rebuild
+concrete timelines, including on-hit resource gains. Proc rolls are memoized by
+source/action/occurrence within a run so anchor convergence and healing-feedback
+rebuilds do not reroll existing applications. Selecting or comparing an Inner
+Way that can add these events must rebuild the timeline.
+The distribution is partitioned by temporary branch identity inside each effect's
+tracker. A conditional post-burst application detaches and transforms only its
+partition; unrelated partitions retain their states, cadence maps, and merge
+indexes. Ordinary applications still transform all partitions. Releasing a branch
+merges only its states into the unconditioned partition, preserving absolute mass,
+expiry, cadence and owner. Clock-driven ticks and expiration queries inspect all
+applicable states; this is not a global joint-probability engine for unrelated
+buffs or resources. `check-periodic-branch-isolation.mjs` covers overlapping branches,
+conditional chances, owner-specific expiration, and probability conservation.
+`script/probe/benchmark-fivefold-bleed.mjs` measures timeline runtime, output rows,
+peak combat states, and executed tick/expiration checks for dense distinct-cadence hits.
+The exact factorization reduces transition overhead without pruning rare outcomes.
+Weeping Blood additionally opts into `periodic.expectedTickAlignment: "battle"`.
+Expected timelines use one shared cadence at battle seconds 1, 2, and so on,
+with one probability-weighted DOT row per active boundary. New applications wait
+for the next strictly later boundary; refreshes retain it. Expiration and threshold
+times are not rounded, and expired or consumed branches contribute no tick mass.
+Battle-aligned trackers store one shared tick cursor, not per-state cadence maps.
+Each active state's probability supplies tick mass directly. A scalar pending
+probability excludes newly applied mass at the current unprocessed boundary;
+it scales with conditional transitions and clears when the shared clock advances.
+This preserves same-timestamp refresh/application ordering without individual tick
+timestamps. Exact-cadence expected trackers retain their weighted cadence maps.
+This deliberately approximates tick timing and downstream DOT-sensitive effects,
+but not the stack/expiration transitions or conditional burst probabilities.
+Sampled timelines ignore this option, including their preliminary cutoff discovery.
+The generic exact-cadence path remains available for other periodic definitions.
+Expected DOT scheduling keeps one pending tick wakeup per active effect. Applications
+update that wakeup's time/causal ordering instead of rebuilding future tick rows.
+Only when it fires is the current tick probability resolved and a damage row emitted;
+the scheduler then selects the next eligible tick. This also supports exact cadences
+without enumerating their entire future union. Both tick and expiry wakeups retain
+the active-effect identity so removal/reapplication cannot revive stale schedules.
+These internal checks do not consume the ordinary trigger-chain safety budget.
+
+Threshold and expiration bursts retain a temporary expected-state branch identity
+until their damage triggers finish. Reapplications to the originating DOT operate
+conditionally on those branches, preserving the consumed/expired-state correlation
+without weighting the burst probability twice.
+The optional data-defined `onMaxStack.triggerTags` adds skill tags to the spawned
+instance only. This lets normal damage-trigger requirements distinguish a
+threshold burst from an expiration burst of the same skill without duplicating
+its damage definition.
+
+Recurring periodic-trigger timelines use a fixed combat cutoff. An explicit Battle
+End takes precedence. Otherwise a preliminary timeline suppresses feedback trigger
+applications to an effect carried in the generating action's effect ancestry and
+omits automatic HP and Dummy Attack events. Its last damage timestamp defines the
+window, including finite DOT tails and initial expiration bursts but excluding
+non-damage cast tails and delays. The full expected or sampled timeline then
+schedules periodic actions, expiration actions, and triggered skills only within
+that window. Dummy Attacks use the same duration and cannot extend it themselves.
+The fallback cutoff includes damage at the boundary; Battle End excludes it.
+
+## Runtime Inner Way damage ownership
+
+Skill and DOT `damageGroup` metadata names an Inner Way owner. Timeline construction
+creates one read-only `damageGroup` row for each such selected Inner Way, even with
+zero procs. Generated actions use that group's stable row ID as their damage owner;
+they do not retain the attack that caused the proc for attribution. Fivefold Bleed
+shares its owner across DOT states, threshold bursts, and expiration bursts, so
+equivalent probability states from different attacks can merge. Temporary branch
+identities still preserve conditional post-burst behavior.
+
+The shared calculator credits group totals instead of cast totals without changing
+combat timestamps or formulas. `rotationDisplay.ts` places non-expandable group
+summaries after the regular rotation list. Group-owned internal actions never
+become display entries, even if a previous session expanded their group.
+The React editor indexes owner-to-row relationships once per timeline.
+These runtime rows never enter saved rotation steps,
+cooldown waits, attachment anchors, or fight-start selection.
+
+Before publishing a baseline, `compactInnerWayResults.ts` combines single-action
+group damage rows only when their skill, exact timestamp, damage context, resolved
+unit damage, and outcome metadata agree. Damage and hit weights and resolved
+channel totals are summed. No timestamp buckets or probability pruning are used.
+This runs after triggers, outcome effects, attribution, and metrics have resolved;
+it cannot combine threshold/expiration branches before their different T6 behavior.
+The worker cache retains the original timeline. Published baselines carry
+`compactedInnerWayResults`; a comparison using one after a cache miss rebuilds
+the event timeline rather than replaying merged hits. Editor merging treats
+calculated group-owned rows as authoritative so structural rows cannot restore
+discarded contributions or replace summed weights. This reduces result/display
+work, not the cost of constructing the original probability event timeline.
+
 ## Browser persistence
 
 All user settings and editable records use `localStorage`, so they persist across
@@ -901,19 +1022,27 @@ Monte Carlo simulation is involved. `data/path.json` declares `defaultBuild`
 and `graduated` separately so the build loaded by default does not have to be
 the build used as the graduation denominator.
 
-The Rotation Editor rebuilds its draft timeline immediately with the shared
-timeline builder whenever structural rotation content or the combat context
-changes. This main-thread pass is memoized and does not calculate damage, DPS,
-or comparison variants, so adding, removing, or moving a step updates the editor
-without waiting for the worker debounce. The editor overlays calculated target-HP
-snapshots from compatible worker rows onto this structural timeline; row identity
-and structure still come from the immediate draft. The completed worker result supplies
-the action map, metrics, and cached baseline for the table and tooltips.
-Base skills have collapsible action groups. Triggered skills and DOTs do not add
-skill rows; their damage actions inherit the originating base skill's expansion
+The Rotation Editor renders editable draft steps immediately without running the
+combat timeline builder on the main thread. `editorTimelinePreview.ts` retains
+previous snapshots only for unchanged step objects and preserves current draft
+order while results are pending. A status notice marks potentially stale values.
+After a 100 ms debounce, the existing deterministic worker reconciles automatic
+cooldown delays and builds the structural timeline (`editorTimeline.ts`). Results
+are accepted only for the same rotation ID, combat-context key, and draft object
+revision. Saving and further edits do not wait for this request. Generated delay
+changes remap the start anchor, expanded rows, skill focus, and scroll anchor.
+The worker retains up to eight prepared timelines, keyed by the normalized bundle
+fingerprint, for one-use reuse by the following baseline calculation. Superseding
+busy work still terminates the worker; an idle worker retains this cache.
+Calculated state and action damage are overlaid only for a matching fingerprint;
+the previous aggregate totals may remain visible while recalculation is pending.
+Base skills have collapsible action groups. Except for data-defined Inner Way
+damage groups, triggered skills and DOTs do not add skill rows; their damage actions inherit the originating base skill's expansion
 state and contribute to its displayed damage total. A DOT application records
 that source cast, and a later refresh or extension transfers all subsequent ticks
 to the cast that performed it. Nested DOTs inherit the original base cast.
+Fivefold Bleed and Morale Chant instead appear in top-level Inner Way groups;
+expanding an attack never reveals their actions or includes them in its damage.
 A multi-action skill likewise remains one base row. Its component actions are
 flattened into that row, while each sequential component retains its own tags,
 start-time modifier evaluation, and effective cast duration. Component damage
@@ -1084,6 +1213,10 @@ from data.
   requirements and object-valued effects. Effective definitions participate in
   calculation fingerprints, so saving or resetting an override cannot reuse a
   stale baseline or comparison result.
+  The existing storage key now contains a `{ version: 2, overrides }` envelope.
+  Legacy unwrapped overrides copy `phyCoef` into missing damage `attrCoef` or
+  healing `silkbindCoef` fields on load. Version 2 preserves intentionally omitted
+  coefficients as zero, including physical-only damage actions.
 - Manual event definitions and supported weapons are hard-coded.
 - Primary-attribute damage resolution supports the registered Stonesplit and
   Bamboocut martial arts, but Void/Formless Attack folding currently remains

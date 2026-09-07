@@ -13,7 +13,8 @@
           "phyCoef": 0.2954,
           "phyBonus": 42,
           "attrBonus": 0,
-          "time": 0
+          "time": 0,
+          "attrCoef": 0.2954
         }
       ]
     },
@@ -36,7 +37,8 @@
           "phyCoef": 0.2787,
           "phyBonus": 40,
           "attrBonus": 0,
-          "time": 0
+          "time": 0,
+          "attrCoef": 0.2787
         }
       ]
     },

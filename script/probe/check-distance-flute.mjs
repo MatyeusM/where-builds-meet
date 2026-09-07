@@ -171,7 +171,7 @@ try {
     derivedStats: calculateDerivedStats(stats, 0),
     effects: [],
   };
-  const action = { type: "damage", phyCoef: 1 };
+  const action = { type: "damage", phyCoef: 1, attrCoef: 1 };
   const baseline = calculateDamageBreakdown(action, baseContext).total;
   const fluteEffect = fluteDefinitions.Flute.effect[0].effect;
   const damageAt = (distance) =>
@@ -197,7 +197,7 @@ try {
         castTime: 1,
         action: [
           { type: "apply", target: "self", value: "Flute", time: 0 },
-          { type: "damage", phyCoef: 1, time: 0.5 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 },
         ],
         modifier: [],
         tags: [],
@@ -205,7 +205,7 @@ try {
       Probe: {
         name: "Probe",
         castTime: 1,
-        action: [{ type: "damage", phyCoef: 1, time: 0.5 }],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
         modifier: [],
         tags: [],
       },

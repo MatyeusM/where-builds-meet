@@ -3,7 +3,7 @@
 Combat data is split by responsibility:
 
 - `data/skill/`: castable and triggered skills
-- `data/dot/`: damage-over-time definitions
+- `data/dot/`: damage-over-time definitions; Inner Way DOTs such as Weeping Blood belong in `data/dot/innerway.json`.
 - `data/buff/`: player effects
 - `data/debuff/`: target effects and manual encounter states
 - `data/innerway/`: cumulative tier effects, triggers, and modifications
@@ -129,18 +129,19 @@ expiry action and schedules it for the refreshed expiration time.
 {
   "type": "damage",
   "phyCoef": 1.2338,
+  "attrCoef": 1.2338,
   "phyBonus": 342,
   "attrBonus": 186,
   "time": 0.7
 }
 ```
 
-`phyCoef` drives physical and all four attribute paths. `attrBonus` is used only
+`phyCoef` drives physical damage; independent `attrCoef` drives all four attribute paths. Missing coefficients mean zero. `attrBonus` is used only
 by the equipped weapons' primary attribute. See `damage-formula.md`.
 
 ### Heal data
 
-A healing action uses the same coefficient fields and timing as a damage action,
+A healing action uses `phyCoef` for Physical and `silkbindCoef` for Silkbind, with the same timing as a damage action,
 but declares `"type": "heal"`. It resolves Physical and Silkbind healing at
 the action time and contributes to total healing and HPS without contributing
 to damage or DPS. See `damage-formula.md` for the formula and outcome rules.
@@ -196,6 +197,7 @@ runtime cast-time modifier and are hidden from the castable skill list.
 {
   "type": "heal",
   "phyCoef": 4.912,
+  "silkbindCoef": 4.912,
   "phyBonus": 1363,
   "attrBonus": 743,
   "time": 0.975
@@ -339,8 +341,16 @@ removed directly and are regenerated whenever the rotation changes.
 
 Timeline rows record whether a trigger came from a skill, setup effect, or Inner
 Way. Per-cast breakdowns attribute normal triggered-skill and DOT damage to the
-owning explicit cast. Inner Way-triggered damage, currently Morale Chant, stays
-in its own skill group. Repeated casts group by skill, sum damage, and average
+owning explicit cast unless the skill or DOT declares
+`damageGroup: { "id": "FivefoldBleed", "name": "Fivefold Bleed" }` (or the
+corresponding Morale Chant group). When that Inner Way is selected, these actions
+belong to one synthetic `damageGroup` row, not a cast attack. Fivefold Bleed collects
+both Weeping Blood ticks and all Piercing Damage; Morale Chant collects its hits.
+These read-only headers appear at the top even when no proc occurs. Expanding one
+lists its actions chronologically beneath it, with their actual combat timestamps.
+The headers are runtime-only, cannot anchor fight start or attached events, and
+consume no cast time. They do not change persisted rotation steps.
+Repeated casts group by skill, sum damage, and average
 their individual damage-per-effective-cast-time DPS values. A Deflect immediately
 following an explicit skill contributes its effective cast time to that skill's
 sample. Skills with no attributed damage, including Deflect itself, are omitted.
@@ -587,10 +597,14 @@ ignored.
 
 Inner Way triggers may react to either `damage` or `takeDamage` and execute the
 same numeric resource actions used by skills. A missing trigger event continues
-to mean `damage` for existing Inner Ways. Fury Harvest T3 uses two such triggers
-to add `0.1` Vitality after every outgoing damage action and every Take Damage
-event. Fury Harvest T1 adds one conditional Vitality action to Perfect Dodge,
-and T4 adds one to a successful Deflect. T2 grants `33.5` Physical Defense. T5
+to mean `damage` for existing Inner Ways. Fury Harvest T3 instead changes the base
+damage-driven Vitality recovery from `2` to `2.1`, sharing that recovery's existing
+two-second cooldown. It grants nothing on intervening hits and does not add a
+separate Take Damage bonus. The system resource-event `amount` supports the existing
+`switch` format, resolved against active tier/setup conditions at timeline creation.
+Incoming damage retains its ordinary HP-loss-based recovery.
+Fury Harvest T1 adds one conditional Vitality action to Perfect Dodge,
+and T4 adds one to a successful Deflect. T2 grants `35` Physical Defense. T5
 grants `5.1` defensive Physical Resistance; this internal stat also accepts the
 Physical Resistance attunement but is intentionally omitted from the character
 stat display.
@@ -957,7 +971,7 @@ object keeps cadence separate from lifetime and stack behavior:
       "interval": 0.5,
       "firstTick": 0.5,
       "resetOnRefresh": false,
-      "action": [{ "type": "damage", "phyCoef": 0.2787, "phyBonus": 40, "attrBonus": 0, "time": 0 }]
+      "action": [{ "type": "damage", "phyCoef": 0.2787, "attrCoef": 0.2787, "phyBonus": 40, "attrBonus": 0, "time": 0 }]
     },
     "modifier": [],
     "tags": ["DOT", "Mystic"]
@@ -1428,7 +1442,7 @@ keeps general combat tags intact when an individual attunement has a narrower
 scope. Stonebreaker Quake remains tagged `Charged` for other mechanics but is
 excluded from Thundercry Blade's Charged Skill DMG Boost.
 
-Might actions use the same `phyCoef` for physical and attribute damage.
+Might actions explicitly use equal `phyCoef` and `attrCoef` for physical and attribute damage.
 Thundercry Blade's Max-HP talents use segmented stat/effective-stat values and
 per-action tag requirements. Its Critical talent contributes to Effective
 Critical after Judgement Resistance and before the 80% Effective Critical cap;
@@ -1499,6 +1513,144 @@ plus up to `0.25` from Min Physical Attack at `750`. Its Silkbind Attribute
 talent adds `98` Min and `196` Max Silkbind Attack and derives Silkbind
 Penetration at `22 / 328`, capped at `22`. Healing and Critical Healing effects
 are resolved at each heal action's timestamp.
+
+## Fivefold Bleed and chance-applied DOTs
+
+Fivefold Bleed (極樂泣血) is available to Silkbind Deluge. T0 listens to damage
+tagged `DirectDamage` and applies Weeping Blood (泣血) to the target with
+an action-time switched `chance`: 10% at T0–T3 and 15% at T4–T6. DOT ticks are not tagged
+`DirectDamage` and cannot proc it.
+
+The existing `switch` value format is supported for action `chance`:
+`{ "function": "switch", "param1": "FivefoldBleedT4", "param2": { "true": 0.15 }, "fallback": 0.1 }`.
+Chance evaluation exposes active tier/setup conditions as boolean parameters
+alongside the current requirement-state values. Since tiers activate cumulatively,
+T5 and T6 also select the T4 case. The selected finite numeric chance is clamped
+to 0–1 and used by both the expected tracker and simulation rolls. Invalid values
+are rejected rather than silently treated as guaranteed procs. T4 needs no second
+trigger or trigger-ID modifier. Numeric chances, including T3's 20%, are unchanged.
+
+T1 adds `baseDMGBonus: 1` to the `PiercingDamage` skill tag, doubling its base
+damage without changing its coefficient. This affects both threshold and
+expiration bursts. T2 adds `stat.maxPhys: 62.3` through the shared stat pipeline.
+T5 adds `stat.critDmgBonus: 0.035` (3.5 percentage points of Critical DMG Bonus)
+through that same pipeline, applying to all damage rather than only Piercing
+Damage. It does not increase Critical Rate or Critical Healing Bonus.
+T3 modifies Weeping Blood's actions to add
+`{ "type": "trigger", "value": "PiercingDamage", "chance": 0.2, "time": "expire" }`.
+This rolls once per naturally expiring DOT, not per stack. Refreshes invalidate
+the previous expiration schedule, including repeated same-timestamp refreshes;
+removal and five-stack consumption do not fire the expiration action. Natural
+expiration is recognized before pruning at its clock boundary, so unrelated
+same-timestamp actions cannot erase it.
+
+The expected tracker groups active branches by expiration time and damage owner.
+For Fivefold Bleed that owner is always its Inner Way group, not the applying cast.
+One internal wakeup is queued for each distinct expiry/owner pair. When it fires,
+the current probability weights the normal effect-action executor, whose trigger
+action applies the 20% chance. Applications do not rebuild existing expiry schedules.
+Expiration checks themselves produce no timeline rows. Threshold-consumed branches contribute no
+expiration probability. Simulation rolls the expiration trigger using the same
+per-run memoized random source as chance applications.
+
+Weeping Blood lasts five seconds and refreshes the shared duration while
+building stacks. Reaching five consumes every stack and triggers Piercing Damage.
+In simulation, `periodic.resetOnRefresh: false` preserves the original tick cadence. Its first
+tick is at 1.01 seconds and subsequent ticks are one second apart: an isolated
+application ticks at 1.01, 2.01, 3.01, and 4.01. Reapplication at 1.51 seconds
+expires at 6.51, with its next tick still at 2.01. After expiration, a new
+application starts a new cadence. Weeping Blood's `periodic.tickOnExpire: false`
+excludes a tick at its exact expiration timestamp. Other periodic definitions
+retain their existing inclusive endpoint unless this field is explicitly false.
+
+Weeping Blood also declares `periodic.expectedTickAlignment: "battle"`. In expected
+calculations only, all branches share tick boundaries at battle seconds 1, 2,
+and so on (the configured interval). A new application waits for the next strictly
+later boundary, including an application exactly on a boundary. Refreshes preserve
+the next tick. Each boundary emits one row weighted by the probability of eligible
+active branches, not their stack counts. Natural expiration remains at its exact
+timestamp and contributes no tick at that timestamp. There are no partial ticks.
+This intentionally approximates DoT damage timing and downstream DoT-sensitive
+effects. Other DOTs keep their existing cadence unless explicitly opted in.
+Simulation ignores the alignment option, including when discovering a fallback
+combat cutoff. Expected fallback discovery uses the shared grid.
+
+All DOTs deal one copy of their authored damage per active tick, independent of
+stack count. Weeping Blood's tick has only `phyCoef: 0.02`; absent `attrCoef`,
+`phyBonus`, and `attrBonus` contribute zero. The former `periodic.stackDamage`
+field is removed. Saved overrides drop it while preserving its former exclusive
+expiration endpoint via `tickOnExpire: false` when needed.
+
+Its data-defined `onMaxStack: { "consume": "all", "trigger": "PiercingDamage", "triggerTags": ["WeepingBloodMaxStack"] }`
+is handled within the shared application handler, before storing a capped effect.
+The handler removes the effect and its pending periodic events, then queues the
+triggered skill at the application timestamp. Subsequent events cannot observe
+five stacks. Already resolved ticks are not undone; pending ticks at the same
+timestamp are cancelled. The next application starts at one stack with a fresh
+1.01-second first-tick delay in simulation, or the next shared boundary in expected
+calculations. Overflow produces one burst and consumes all stacks.
+Effects without `onMaxStack` retain their existing cap/refresh behavior.
+Optional `onMaxStack.triggerTags` adds tags only to the spawned skill instance,
+so ordinary skill-tag requirements can distinguish threshold bursts from other
+uses of the same skill. The shared skill definition is not modified.
+
+Piercing Damage (刺傷) is a zero-cast-time triggered skill with `phyCoef: 1` and
+no attribute coefficient or flat bonuses. It is tagged `DirectDamage`, not DOT,
+so every burst rolls the ordinary Weeping Blood application chance. T6 adds an
+ordinary damage trigger matching `WeepingBloodMaxStack` that guarantees one stack
+after a five-stack consumption burst only. That burst has the guaranteed stack
+plus the independent 15% Direct Damage chance at T6. A T3 expiration burst has
+only the Direct Damage chance, with no guaranteed T6 stack. New applications
+after consumption or expiration start a fresh simulation cadence, or join the
+next expected grid boundary.
+Expected threshold branches reset to zero and queue the same
+skill with their summed probability as both damage and hit weight; branches not
+reaching the threshold retain their normal expiry and cadence. The supported
+expected threshold payload is a damage-only triggered skill without a cooldown.
+
+The tracker temporarily identifies the branches that produced each burst. Its
+post-hit applications affect only those branches, using conditional chances
+rather than multiplying the burst probability a second time. This preserves
+the correlation between consuming or expiring a DOT and reapplying it. T3 can
+repeat after the renewed DOT expires, but rolls its 20% chance each time.
+
+Feedback is bounded by Battle End when present. Otherwise a preliminary timeline
+suppresses trigger applications that reapply their originating effect and omits
+automatic Dummy Attacks. Its last damage action establishes the fixed cutoff for
+the full timeline. Initial DOT ticks and initial expiration bursts can establish
+that cutoff; their feedback continuations cannot extend it. Non-damage cast tails
+and Delay events do not extend this window. Damage at the fallback cutoff is
+included; Battle End excludes damage at its timestamp.
+
+Chance applications extend the existing trigger and periodic scheduler rather
+than creating an Inner-Way-specific event pipeline. The supported expected-state
+case is a refreshing target DOT applied by non-DOT damage with a preserved
+cadence. Its tracker merges states with equal stack count, expiry, damage owner,
+and temporary branch identity. Each merged state retains absolute probability
+weights for its different next-tick timestamps. Application and threshold
+transitions operate on the shared state, scaling every cadence weight by the
+same chance; tick damage still sums the individual weighted schedules. The
+battle-aligned option collapses these cadence maps to a shared next-tick time;
+the independent stack/expiry distribution must not be replaced by an average stack count.
+The battle-aligned implementation stores its next boundary once per tracker, with
+no per-state cadence maps. Only new probability mass applied exactly at the pending
+boundary is temporarily excluded from that tick; existing active mass keeps its
+eligibility. Advancing the shared clock clears that exclusion. Exact-cadence
+expected DOTs and sampled timelines retain their existing timing representation.
+The scheduler keeps only the next pending tick and computes its probability when
+it fires. Refreshes update the pending check rather than recreating every future
+tick; only actual damage ticks become timeline rows. This scheduling change applies
+to expected exact-cadence DOTs as well as battle-aligned ones, without changing their
+authored timing. Sampled timelines retain the concrete periodic scheduler.
+The tracker emits probability-weighted periodic actions. `damageScale` carries expected
+tick damage probability; `hitProbability` separately carries expected hit count. Neither
+runtime field belongs in authored skill actions. Expected hit counts may be
+fractional. Fivefold Bleed's shared owner allows otherwise equivalent histories
+from different attacks to merge; failed refreshes still retain their own timing
+and probability. Other DOTs keep their existing cast attribution.
+Additive on-hit resource gains use hit probability, not stack count.
+Simulation rebuilds the timeline and rolls applications, using ordinary tracked
+effects and periodic scheduling for each successful proc.
 
 ## Skill Editor categories
 
@@ -1631,8 +1783,9 @@ Each second-set hit uses 50% of the corresponding first-set hit's physical
 coefficient and flat physical bonus.
 
 Etherwrath is available to Bamboocut Kite and Stonesplit Strength. Two pieces
-add `78` minimum physical attack. With four pieces, every damage action adds or
-refreshes one stack of the eight-second Etherwrath buff, up to five stacks,
+add `78` minimum physical attack. With four pieces, every `DirectDamage` action adds or
+refreshes one stack of the eight-second Etherwrath buff, up to five stacks.
+DOT ticks and other damage without `DirectDamage` neither add nor refresh stacks,
 while Perfect Dodge applies five stacks directly. Each stack adds `0.012` to
 the calculation-time attack value multiplier for Physical, Bellstrike,
 Stonesplit, Silkbind, and Bamboocut. At five stacks, actions tagged

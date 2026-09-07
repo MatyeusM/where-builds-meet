@@ -114,7 +114,12 @@ try {
     thunderShockTimeline[0].actionStates[2].debuffs.some((effect) => effect.name === "Vulnerable"),
     "Thunder Shock hit 2 must benefit from Vulnerable applied after hit 1.",
   );
-  const probeSkill = { name: "Probe", castTime: 9, action: [{ type: "damage", phyCoef: 0, time: 9 }], tags: [] };
+  const probeSkill = {
+    name: "Probe",
+    castTime: 9,
+    action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 9 }],
+    tags: [],
+  };
   const shieldAtProbe = (conditions) => {
     const timeline = buildRotationTimeline({
       rotation: {

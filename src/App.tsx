@@ -17,6 +17,7 @@ import { type AttunementStats, type DamageBreakdown } from "./calculations/damag
 import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats";
 import { resolveSwitchValue } from "./calculations/dynamicValues";
 import { UiIcon } from "./UiIcon";
+import { buildTimelineDisplayEntries } from "./rotationDisplay";
 import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea";
 import { publishNotice, dismissNotice } from "./notices";
 const loadBuildTab = () => import("./BuildTab");
@@ -92,6 +93,7 @@ import bamboocutDustDebuffs from "../data/debuff/bamboocut-dust.json";
 import bamboocutKiteDebuffs from "../data/debuff/bamboocut-kite.json";
 import stonesplitMightDebuffs from "../data/debuff/stonesplit-might.json";
 import mysticDots from "../data/dot/mystic.json";
+import innerWayDots from "../data/dot/innerway.json";
 import breakthroughProfiles from "../data/breakthrough.json";
 import systemStats from "../data/system.json";
 import { createBaseAttributeEffects, type BaseAttributeData } from "./data/baseAttributeEffects";
@@ -152,9 +154,17 @@ import {
 } from "./calculations/rotationCalculator";
 import {
   requestRotationBaseline,
+  requestEditorTimeline,
   requestRotationComparisons,
   supersedeRotationCalculationRequests,
 } from "./calculations/rotationWorkerClient";
+import {
+  pendingEditorTimeline,
+  reconciledEditorStepIndexes,
+  sameEditorRevision,
+  type EditorRevision,
+} from "./editorTimelinePreview";
+import type { EditorTimelineResult } from "./calculations/editorTimeline";
 import {
   RotationCalculationCache,
   calculationFingerprint,
@@ -179,6 +189,8 @@ import {
 } from "./calculations/rotationTimeline";
 import {
   resolveSkillCalculationDefinitions,
+  deserializeSkillOverrides,
+  serializeSkillOverrides,
   type EditorCategory,
   type SkillCategory,
   type SkillMap,
@@ -206,8 +218,6 @@ import {
   isAutomaticCooldownDelay,
   migrateDrunkenPoetSequences,
   reorderAttachedEventWithinTarget,
-  withAutomaticCooldownDelays,
-  withoutAutomaticCooldownDelays,
 } from "./rotationEditing";
 import {
   characterProfileMatches,
@@ -374,7 +384,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...innerWayDebuffs,
     ...generalDebuffs,
   } as SkillMap,
-  DOT: mysticDots as SkillMap,
+  DOT: { ...mysticDots, ...innerWayDots } as SkillMap,
 };
 const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   snowparting: "Snowparting",
@@ -579,7 +589,7 @@ const rotationEventOptionIds = [
   "__event:Debuff",
   "__event:MartialArt",
 ];
-const dotDefinitions = mysticDots as Record<string, SkillRecord>;
+const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>;
 const generalDebuffIds = new Set(Object.keys(generalDebuffs));
 const dotEffectIds = new Set(Object.keys(dotDefinitions));
 const effectDefinitions = {
@@ -1658,7 +1668,7 @@ function loadSettings(): CalculatorSettings {
 
 function loadSkillOverrides(): SkillOverrides {
   try {
-    return JSON.parse(getPersistentItem(skillStorageKey) ?? "{}") as SkillOverrides;
+    return deserializeSkillOverrides(JSON.parse(getPersistentItem(skillStorageKey) ?? "{}"));
   } catch {
     return {};
   }
@@ -2325,8 +2335,8 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             <div className="breakdown-table-row" key={row.id}>
               <span>{skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)}</span>
               <strong>{row.casts || ""}</strong>
-              <strong>{row.triggers || ""}</strong>
-              <strong>{row.hits || ""}</strong>
+              <strong>{row.triggers ? formatNumber(row.triggers) : ""}</strong>
+              <strong>{row.hits ? formatNumber(row.hits) : ""}</strong>
               <strong>{formatNumber(row.abrasionRate)}%</strong>
               <strong>{formatNumber(row.normalRate)}%</strong>
               <strong>{formatNumber(row.criticalRate)}%</strong>
@@ -4231,13 +4241,26 @@ function ActionDetails({
         </label>
         <NumberField label={t("ui.app.time")} value={item.time} onChange={(value) => set("time", value)} />
       </div>
-      {type === "damage" && (
+      {(type === "damage" || type === "heal") && (
         <div className="detail-fields detail-fields-four">
           <NumberField
             label={t("ui.app.physicalCoefficient")}
             value={item.phyCoef}
             onChange={(value) => set("phyCoef", value)}
           />
+          {type === "heal" ? (
+            <NumberField
+              label={t("ui.app.silkbindCoefficient")}
+              value={item.silkbindCoef}
+              onChange={(value) => set("silkbindCoef", value)}
+            />
+          ) : (
+            <NumberField
+              label={t("ui.app.attributeCoefficient")}
+              value={item.attrCoef}
+              onChange={(value) => set("attrCoef", value)}
+            />
+          )}
           <NumberField
             label={t("ui.app.physicalBonus")}
             value={item.phyBonus}
@@ -6067,7 +6090,8 @@ function RotationEditorTab({
     persistRotationEntries(nextEntries);
     setError("");
     setStatus(t("ui.app.savedForThisSession"));
-    if (editingRotationId === activeRotationId) void calculateDiffsForRotation(editingRotationId, normalized);
+    if (editingRotationId === activeRotationId && editorTimelineReady)
+      void calculateDiffsForRotation(editingRotationId, normalized);
   }
   function resetRotation() {
     if (rotationLocked) return;
@@ -6302,55 +6326,114 @@ function RotationEditorTab({
   }
 
   const currentCachedResult = rotationResults[editingRotationId]?.result;
-  const cooldownSourceRotation = useMemo(() => withoutAutomaticCooldownDelays(rotation), [rotation]);
-  const cooldownTimeline = useMemo(
-    () =>
-      buildRotationTimeline({
-        ...makeTimelineInput(cooldownSourceRotation),
-        cooldownPolicy: "wait",
-      }),
-    [calculationContextKey, cooldownSourceRotation],
+  const editorRevision: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation };
+  const editorRevisionRef = useRef(editorRevision);
+  editorRevisionRef.current = editorRevision;
+  const [editorTimelineState, setEditorTimelineState] = useState<EditorTimelineResult & { revision: EditorRevision }>();
+  const editorTimelineReady = Boolean(
+    editorTimelineState && sameEditorRevision(editorTimelineState.revision, editorRevision),
   );
-  const cooldownAdjustedRotation = useMemo(
-    () => withAutomaticCooldownDelays(cooldownSourceRotation, cooldownTimeline),
-    [cooldownSourceRotation, cooldownTimeline],
-  );
-  const cooldownAdjustmentKey = `${pathId}:${editingRotationId}:${calculationContextKey}`;
-  const cooldownAdjustmentKeyRef = useRef(cooldownAdjustmentKey);
-  cooldownAdjustmentKeyRef.current = cooldownAdjustmentKey;
   useEffect(() => {
-    if (cooldownAdjustmentKeyRef.current !== cooldownAdjustmentKey) return;
-    if (JSON.stringify(rotation) === JSON.stringify(cooldownAdjustedRotation)) return;
-    setRotation(cooldownAdjustedRotation);
-    if (cooldownAdjustedRotation.start)
-      setStartAnchor({
-        rowId: `rotation-${cooldownAdjustedRotation.start.step}`,
-        ...(cooldownAdjustedRotation.start.action === undefined
-          ? {}
-          : { actionIndex: cooldownAdjustedRotation.start.action }),
-      });
-  }, [cooldownAdjustedRotation, cooldownAdjustmentKey, rotation]);
+    if (editorTimelineReady) return;
+    const requested = editorRevisionRef.current;
+    let cancelled = false;
+    let timer: ReturnType<typeof window.setTimeout>;
+    const current = () => !cancelled && sameEditorRevision(editorRevisionRef.current, requested);
+    const run = async () => {
+      try {
+        const result = await requestEditorTimeline(calculationBundleFor(requested.rotation, false), {
+          key: `editor:${requested.id}`,
+          priority: 450,
+        });
+        if (!current()) return;
+        const normalized =
+          JSON.stringify(result.rotation) === JSON.stringify(requested.rotation) ? requested.rotation : result.rotation;
+        setEditorTimelineState({ ...result, rotation: normalized, revision: { ...requested, rotation: normalized } });
+        if (normalized !== requested.rotation) {
+          const indexes = reconciledEditorStepIndexes(requested.rotation, normalized);
+          const container = rotationScrollRef.current;
+          const focused = document.activeElement;
+          if (container && focused instanceof HTMLSelectElement && container.contains(focused)) {
+            const mapped = indexes.get(Number(focused.dataset.rotationStepIndex));
+            if (mapped !== undefined) pendingSkillFocusRef.current = mapped;
+          }
+          if (container) {
+            const top = container.getBoundingClientRect().top;
+            const visible = Array.from(container.querySelectorAll<HTMLElement>("[data-rotation-step-index]")).find(
+              (element) =>
+                element.getBoundingClientRect().bottom > top && indexes.has(Number(element.dataset.rotationStepIndex)),
+            );
+            if (visible)
+              pendingEventScrollRef.current = {
+                stepIndex: indexes.get(Number(visible.dataset.rotationStepIndex))!,
+                top: visible.getBoundingClientRect().top - top,
+              };
+          }
+          setExpandedSkillRows((previous) => {
+            const prefix = `${requested.id}:rotation-`;
+            const next = new Set<string>();
+            for (const key of previous) {
+              if (!key.startsWith(prefix)) {
+                next.add(key);
+                continue;
+              }
+              const mapped = indexes.get(Number(key.slice(prefix.length)));
+              if (mapped !== undefined) next.add(`${prefix}${mapped}`);
+            }
+            return next;
+          });
+          setRotation((latest) => (latest === requested.rotation ? normalized : latest));
+          setStartAnchor({
+            rowId: `rotation-${normalized.start?.step ?? 0}`,
+            ...(normalized.start?.action === undefined ? {} : { actionIndex: normalized.start.action }),
+          });
+        }
+      } catch (error) {
+        if (!current()) return;
+        if (error instanceof Error && error.message.includes("superseded")) {
+          timer = window.setTimeout(() => void run(), 150);
+          return;
+        }
+        publishNotice({
+          id: "editor-timeline",
+          error: true,
+          message: error instanceof Error ? error.message : t("ui.notices.calculationError"),
+        });
+      }
+    };
+    timer = window.setTimeout(() => void run(), 100);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady]);
   const structuralTimeline = useMemo(
-    () => buildRotationTimeline(makeTimelineInput(rotation)),
-    [
-      calculationContextKey,
-      rotation.autoHP,
-      rotation.dummyAttack,
-      rotation.eventTimeReference,
-      rotation.groupSize,
-      rotation.infiniteVitality,
-      rotation.start,
-      rotation.steps,
-      rotation.targetHP,
-    ],
+    () =>
+      editorTimelineReady
+        ? editorTimelineState!.timeline
+        : pendingEditorTimeline(
+            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
+            editorTimelineState?.revision.id === editingRotationId ? editorTimelineState : undefined,
+          ),
+    [rotation, calculationDefinitions, editingRotationId, editorTimelineReady, editorTimelineState],
   );
   const rotationSkillCount = useMemo(
     () => rotation.steps.filter((step) => step.type === "skill").length,
     [rotation.steps],
   );
   const timeline = useMemo(
-    () => mergeCalculatedTimelineState(structuralTimeline, currentCachedResult?.timeline),
-    [currentCachedResult?.timeline, structuralTimeline],
+    () =>
+      editorTimelineReady && rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint
+        ? mergeCalculatedTimelineState(structuralTimeline, currentCachedResult?.timeline)
+        : structuralTimeline,
+    [
+      currentCachedResult?.timeline,
+      structuralTimeline,
+      editorTimelineReady,
+      editorTimelineState,
+      rotationResults,
+      editingRotationId,
+    ],
   );
   const anchorTime = useMemo(() => timelineAnchorTime(timeline, startAnchor), [startAnchor, timeline]);
   useLayoutEffect(() => {
@@ -6376,7 +6459,9 @@ function RotationEditorTab({
       }
     }
   }, [timeline]);
-  const workerActionBreakdowns = currentCachedResult?.actionBreakdowns ?? {};
+  const editorCalculationReady =
+    editorTimelineReady && rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint;
+  const workerActionBreakdowns = editorCalculationReady ? (currentCachedResult?.actionBreakdowns ?? {}) : {};
   const displayTime = (time: number) => time - anchorTime;
   const calculateTimelineActionBreakdown = (row: TimelineRow, actionIndex: number): RotationActionBreakdown =>
     workerActionBreakdowns[`${row.id}:${actionIndex}`] ?? {
@@ -6397,7 +6482,17 @@ function RotationEditorTab({
       else next.add(key);
       return next;
     });
-  const timelineRowsById = useMemo(() => new Map(timeline.map((row) => [row.id, row])), [timeline]);
+  const damageRowsByOwner = useMemo(() => {
+    const result = new Map<string, TimelineRow[]>();
+    for (const row of timeline) {
+      const owner = row.kind === "rotation" || row.kind === "damageGroup" ? row.id : row.sourceRowId;
+      if (!owner) continue;
+      const rows = result.get(owner) ?? [];
+      rows.push(row);
+      result.set(owner, rows);
+    }
+    return result;
+  }, [timeline]);
   const attachmentTargets = useMemo(() => {
     const triggeredRowsBySourceAndSkill = new Map<string, TimelineRow[]>();
     timeline.forEach((row) => {
@@ -6466,51 +6561,8 @@ function RotationEditorTab({
   }, [timeline]);
   const displayEntries = useMemo(() => {
     const actionsExpanded = (rowId: string) => expandedSkillRows.has(`${editingRotationId}:${rowId}`);
-    const derivedSourceExpanded = (row: TimelineRow) => {
-      if (row.kind === "rotation") return false;
-      const sourceRow = row.sourceRowId ? timelineRowsById.get(row.sourceRowId) : undefined;
-      return Boolean(sourceRow && (sourceRow.step.type !== "skill" || actionsExpanded(sourceRow.id)));
-    };
-
-    return timeline
-      .flatMap((row) => {
-        if (
-          row.step.type === "event" &&
-          row.step.event === "HP" &&
-          "automatic" in row.step &&
-          row.step.automatic === true
-        )
-          return [];
-        if (row.skipped) return [];
-        const entries: Array<{
-          row: TimelineRow;
-          kind: "skill" | "action";
-          time: number;
-          order: number;
-          actionIndex?: number;
-        }> = [];
-        const derivedActionsVisible = derivedSourceExpanded(row);
-        if (row.kind === "rotation") entries.push({ row, kind: "skill", time: row.startTime, order: row.order });
-        row.actions.forEach((action, actionIndex) => {
-          const isStartingAction = startAnchor.rowId === row.id && startAnchor.actionIndex === actionIndex;
-          const actionsVisible =
-            (row.kind !== "rotation" && derivedActionsVisible) ||
-            row.step.type !== "skill" ||
-            actionsExpanded(row.id) ||
-            isStartingAction;
-          if ((action.type === "damage" || action.type === "replay" || action.type === "heal") && actionsVisible)
-            entries.push({
-              row,
-              kind: "action",
-              actionIndex,
-              time: row.startTime + (typeof action.time === "number" ? action.time : 0),
-              order: row.order + 10 + actionIndex,
-            });
-        });
-        return entries;
-      })
-      .sort((left, right) => compareTimelineTime(left.time, right.time) || left.order - right.order);
-  }, [editingRotationId, expandedSkillRows, startAnchor, timeline, timelineRowsById]);
+    return buildTimelineDisplayEntries(timeline, actionsExpanded, startAnchor);
+  }, [editingRotationId, expandedSkillRows, startAnchor, timeline]);
   const showDistanceColumn = useMemo(
     () =>
       rotation.steps.some(
@@ -7091,6 +7143,7 @@ function RotationEditorTab({
 
   useEffect(() => {
     const requestSequence = ++editorPreviewRequestSequenceRef.current;
+    if (!editorTimelineReady) return;
     const timer = window.setTimeout(() => {
       void calculateEditorPreview(editingRotationId, rotation, requestSequence).catch((calculationError) => {
         if (editorPreviewRequestSequenceRef.current !== requestSequence) return;
@@ -7106,7 +7159,7 @@ function RotationEditorTab({
       window.clearTimeout(timer);
       if (editorPreviewRequestSequenceRef.current === requestSequence) editorPreviewRequestSequenceRef.current += 1;
     };
-  }, [calculationContextKey, editingRotationId, rotation]);
+  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady]);
 
   useEffect(() => {
     const entries = rotationEntries.filter((entry) => rotationAvailableForWeapons(entry, settings.weapons));
@@ -7115,6 +7168,7 @@ function RotationEditorTab({
       entries.find((entry) => entry.id === defaultRotationId) ??
       entries[0];
     if (!activeEntry) return;
+    if (activeEntry.id === editingRotationId && !editorTimelineReady) return;
     const activeRotation = activeEntry.id === editingRotationId ? rotation : rotationRecordForEntry(activeEntry);
     const prepared = prepareBaselineCalculation(activeRotation);
     const refreshTarget = `${activeEntry.id}:${prepared.fingerprint}`;
@@ -7142,6 +7196,7 @@ function RotationEditorTab({
     defaultRotationId,
     editingRotationId,
     refreshRetryRevision,
+    editorTimelineReady,
     rotation,
     rotationEntries,
   ]);
@@ -7220,6 +7275,7 @@ function RotationEditorTab({
         </aside>
         {editingEntry ? (
           <div className="rotation-editor-content">
+            {!editorCalculationReady && <p role="status">{t("ui.app.editorCalculating")}</p>}
             <div className="skill-detail-heading">
               <div>
                 {editingName && !rotationLocked ? (
@@ -7428,6 +7484,37 @@ function RotationEditorTab({
                 <div className="rotation-step-list">
                   {displayEntries.map((entry, index) => {
                     const row = entry.row;
+                    if (row.kind === "damageGroup") {
+                      const groupSkillId = row.step.type === "skill" ? row.step.skill : undefined;
+                      const damage =
+                        currentCachedResult?.metrics.breakdown.casts.find((cast) => cast.skillId === groupSkillId)
+                          ?.damage ?? 0;
+                      return (
+                        <div className="rotation-row-group" key={`${row.id}-summary`}>
+                          <div className="rotation-table-row">
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                            <span className="rotation-skill-name">
+                              <RotationSkillName skill={row.skill} fallback={groupSkillId ?? ""} />
+                            </span>
+                            {showDistanceColumn && <span aria-hidden="true" />}
+                            {showSelfHPColumn && <span aria-hidden="true" />}
+                            {showTargetHPColumn && <span aria-hidden="true" />}
+                            {showQiColumn && <span aria-hidden="true" />}
+                            {showHeavensWillColumn && <span aria-hidden="true" />}
+                            {showVitalityColumn && <span aria-hidden="true" />}
+                            <span className="rotation-damage-value" data-mobile-label={t("ui.app.damage")}>
+                              {formatDamageNumber(damage)}
+                            </span>
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                          </div>
+                        </div>
+                      );
+                    }
                     const isAction = entry.kind === "action";
                     const { step, startTime, skill, actions } = row;
                     const castTime = row.effectiveCastTime;
@@ -7596,14 +7683,7 @@ function RotationEditorTab({
                         (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
                       ) ?? [];
                     const skillDamageRows =
-                      row.kind === "rotation"
-                        ? [
-                            row,
-                            ...timeline.filter(
-                              (candidate) => candidate.kind !== "rotation" && candidate.sourceRowId === row.id,
-                            ),
-                          ]
-                        : [row];
+                      !isAction && row.kind === "rotation" ? (damageRowsByOwner.get(row.id) ?? [row]) : [row];
                     const skillExpectedBuffStacks = skillDamageRows.reduce<
                       { time: number; stacks: Record<string, number> } | undefined
                     >((earliest, damageRow) => {
@@ -8659,7 +8739,7 @@ export default function App() {
   };
   const updateSkillOverrides = (nextOverrides: SkillOverrides) => {
     setSkillOverrides(nextOverrides);
-    if (hasSkillOverrides(nextOverrides)) setPersistentItem(skillStorageKey, JSON.stringify(nextOverrides));
+    if (hasSkillOverrides(nextOverrides)) setPersistentItem(skillStorageKey, serializeSkillOverrides(nextOverrides));
     else removePersistentItem(skillStorageKey);
   };
 

@@ -5,6 +5,9 @@ import { randomUUID } from "node:crypto";
 const buildVersion = randomUUID();
 
 export default defineConfig(({ command }) => ({
+  // Calculation probes create separate Vite servers with the default cache path.
+  cacheDir: "node_modules/.vite-app",
+  optimizeDeps: { entries: ["index.html"] },
   plugins: [
     react(),
     {

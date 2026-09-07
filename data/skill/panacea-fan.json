@@ -29,49 +29,56 @@
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 0.125
+        "time": 0.125,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 1.9
+        "time": 1.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 2.9
+        "time": 2.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 3.9
+        "time": 3.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 4.9
+        "time": 4.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 5.9
+        "time": 5.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 6.9
+        "time": 6.9,
+        "silkbindCoef": 2.1705
       }
     ],
     "modifier": [],
@@ -90,49 +97,56 @@
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 0.125
+        "time": 0.125,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 1.9
+        "time": 1.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 2.9
+        "time": 2.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 3.9
+        "time": 3.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 4.9
+        "time": 4.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 5.9
+        "time": 5.9,
+        "silkbindCoef": 2.1705
       },
       {
         "type": "heal",
         "phyCoef": 2.1705,
         "phyBonus": 600,
         "attrBonus": 327,
-        "time": 6.9
+        "time": 6.9,
+        "silkbindCoef": 2.1705
       }
     ],
     "modifier": [],
@@ -151,7 +165,8 @@
         "phyCoef": 11.7766,
         "phyBonus": 3259,
         "attrBonus": 1776,
-        "time": 0.3125
+        "time": 0.3125,
+        "silkbindCoef": 11.7766
       },
       {
         "type": "apply",
@@ -173,7 +188,12 @@
         "type": "trigger",
         "value": "EchoesOfAThousandPlantsFanQQ",
         "time": 0.3125,
-        "requirement": [{ "target": "equippedMartialArt", "value": "soulshadeUmbrella" }]
+        "requirement": [
+          {
+            "target": "equippedMartialArt",
+            "value": "soulshadeUmbrella"
+          }
+        ]
       }
     ],
     "modifier": [],
@@ -192,7 +212,8 @@
         "phyCoef": 11.7766,
         "phyBonus": 3259,
         "attrBonus": 1776,
-        "time": 0.3125
+        "time": 0.3125,
+        "silkbindCoef": 11.7766
       },
       {
         "type": "apply",
@@ -214,7 +235,12 @@
         "type": "trigger",
         "value": "EchoesOfAThousandPlantsFanQQ",
         "time": 0.3125,
-        "requirement": [{ "target": "equippedMartialArt", "value": "soulshadeUmbrella" }]
+        "requirement": [
+          {
+            "target": "equippedMartialArt",
+            "value": "soulshadeUmbrella"
+          }
+        ]
       }
     ],
     "modifier": [],
@@ -232,7 +258,8 @@
         "phyCoef": 0.3955,
         "phyBonus": 109,
         "attrBonus": 59,
-        "time": 0.5625
+        "time": 0.5625,
+        "attrCoef": 0.3955
       }
     ],
     "modifier": [],
@@ -250,7 +277,8 @@
         "phyCoef": 0.2967,
         "phyBonus": 82,
         "attrBonus": 44,
-        "time": 0.45
+        "time": 0.45,
+        "attrCoef": 0.2967
       }
     ],
     "modifier": [],
@@ -268,7 +296,8 @@
         "phyCoef": 0.3955,
         "phyBonus": 109,
         "attrBonus": 59,
-        "time": 0.4875
+        "time": 0.4875,
+        "attrCoef": 0.3955
       }
     ],
     "modifier": [],
@@ -286,7 +315,8 @@
         "phyCoef": 0.89,
         "phyBonus": 246,
         "attrBonus": 134,
-        "time": 0.4625
+        "time": 0.4625,
+        "attrCoef": 0.89
       }
     ],
     "modifier": [],
@@ -304,7 +334,8 @@
         "phyCoef": 1.8767,
         "phyBonus": 519,
         "attrBonus": 283,
-        "time": 0.325
+        "time": 0.325,
+        "silkbindCoef": 1.8767
       }
     ],
     "modifier": [],
@@ -322,7 +353,8 @@
         "phyCoef": 2.4129,
         "phyBonus": 668,
         "attrBonus": 364,
-        "time": 0.25
+        "time": 0.25,
+        "silkbindCoef": 2.4129
       }
     ],
     "modifier": [],
@@ -340,7 +372,8 @@
         "phyCoef": 2.4129,
         "phyBonus": 668,
         "attrBonus": 364,
-        "time": 0.25
+        "time": 0.25,
+        "silkbindCoef": 2.4129
       }
     ],
     "modifier": [],
@@ -358,7 +391,8 @@
         "phyCoef": 3.3512,
         "phyBonus": 928,
         "attrBonus": 506,
-        "time": 0.3375
+        "time": 0.3375,
+        "silkbindCoef": 3.3512
       }
     ],
     "modifier": [],
@@ -375,7 +409,8 @@
         "phyCoef": 1.841,
         "phyBonus": 510,
         "attrBonus": 278,
-        "time": 1.025
+        "time": 1.025,
+        "attrCoef": 1.841
       }
     ],
     "modifier": [],

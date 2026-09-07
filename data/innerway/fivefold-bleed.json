@@ -1,0 +1,53 @@
+{
+  "name": "Fivefold Bleed",
+  "altersTimeline": true,
+  "tags": ["SilkbindDeluge"],
+  "effect": {
+    "FivefoldBleedT0": {
+      "trigger": [
+        {
+          "event": "damage",
+          "requirement": [{ "target": "skillTag", "value": "DirectDamage" }],
+          "action": [
+            {
+              "type": "apply",
+              "target": "target",
+              "value": "WeepingBlood",
+              "chance": {
+                "function": "switch",
+                "param1": "FivefoldBleedT4",
+                "param2": { "true": 0.15 },
+                "fallback": 0.1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "FivefoldBleedT1": {
+      "effect": [
+        { "requirement": [{ "target": "skillTag", "value": "PiercingDamage" }], "effect": { "baseDMGBonus": 1 } }
+      ]
+    },
+    "FivefoldBleedT2": { "effect": [{ "stat": { "maxPhys": 62.3 } }] },
+    "FivefoldBleedT3": {
+      "effect": [
+        {
+          "target": "WeepingBlood",
+          "modify": { "action": [{ "type": "trigger", "value": "PiercingDamage", "chance": 0.2, "time": "expire" }] }
+        }
+      ]
+    },
+    "FivefoldBleedT4": {},
+    "FivefoldBleedT5": { "effect": [{ "stat": { "critDmgBonus": 0.035 } }] },
+    "FivefoldBleedT6": {
+      "trigger": [
+        {
+          "event": "damage",
+          "requirement": [{ "target": "skillTag", "value": "WeepingBloodMaxStack" }],
+          "action": [{ "type": "apply", "target": "target", "value": "WeepingBlood", "stack": 1 }]
+        }
+      ]
+    }
+  }
+}

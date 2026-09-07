@@ -95,9 +95,12 @@ try {
     enemy,
     derivedStats: calculateDerivedStats(damageStats, 0),
   };
-  const baseline = calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [] });
-  const hpEnhanced = calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [hpRule.effect] });
-  const affinityEnhanced = calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [affinityRule.effect] });
+  const baseline = calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [] });
+  const hpEnhanced = calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [hpRule.effect] });
+  const affinityEnhanced = calculateDamageBreakdown(
+    { phyCoef: 1, attrCoef: 1 },
+    { ...context, effects: [affinityRule.effect] },
+  );
   assertClose(hpEnhanced.physical / baseline.physical, 1.2, "Sword Energy HP damage must cap at 20%.");
   assertClose(
     affinityEnhanced.affinity / baseline.affinity,

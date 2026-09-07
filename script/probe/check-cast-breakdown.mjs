@@ -43,7 +43,7 @@ try {
           name: "Base",
           castTime: 2,
           action: [
-            { type: "damage", phyCoef: 1, time: 0 },
+            { type: "damage", phyCoef: 1, attrCoef: 1, time: 0 },
             { type: "trigger", value: "Child", time: 0.5 },
             { type: "consumeResource", value: "Vitality", amount: 10, time: 0 },
           ],
@@ -61,14 +61,14 @@ try {
         Child: {
           name: "Child",
           castTime: 0,
-          action: [{ type: "damage", phyCoef: 1, time: 0 }],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0 }],
           modifier: [],
           tags: ["Triggered"],
         },
         MoraleChant: {
           name: "Morale Chant",
           castTime: 0,
-          action: [{ type: "damage", phyCoef: 1, time: 0 }],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0 }],
           modifier: [],
           tags: ["Triggered"],
         },
@@ -164,7 +164,7 @@ try {
         Hit: {
           name: "Hit",
           castTime: 1,
-          action: [{ type: "damage", phyCoef: 1, time: 0.5 }],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
           modifier: [],
           tags: ["DirectDamage"],
         },
@@ -255,7 +255,7 @@ try {
         Hit: {
           name: "Hit",
           castTime: 1,
-          action: [{ type: "damage", phyCoef: 1, time: 0.5 }],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
           modifier: [],
           tags: ["DirectDamage"],
         },

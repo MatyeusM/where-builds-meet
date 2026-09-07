@@ -9,7 +9,8 @@
         "phyCoef": 0.4843,
         "phyBonus": 134,
         "attrBonus": 73,
-        "time": 0.4
+        "time": 0.4,
+        "attrCoef": 0.4843
       },
       {
         "type": "apply",
@@ -22,7 +23,8 @@
         "phyCoef": 1.13,
         "phyBonus": 313,
         "attrBonus": 171,
-        "time": 1.2
+        "time": 1.2,
+        "attrCoef": 1.13
       },
       {
         "type": "apply",
@@ -46,7 +48,8 @@
         "phyCoef": 0.4843,
         "phyBonus": 134,
         "attrBonus": 73,
-        "time": 0.4
+        "time": 0.4,
+        "attrCoef": 0.4843
       },
       {
         "type": "apply",
@@ -70,7 +73,8 @@
         "phyCoef": 0.3151,
         "phyBonus": 88,
         "attrBonus": 48,
-        "time": 1
+        "time": 1,
+        "attrCoef": 0.3151
       },
       {
         "type": "apply",

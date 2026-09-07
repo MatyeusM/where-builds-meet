@@ -16,14 +16,16 @@
         "phyCoef": 1.9298,
         "phyBonus": 534,
         "attrBonus": 290.8,
-        "time": 2.93
+        "time": 2.93,
+        "attrCoef": 1.9298
       },
       {
         "type": "damage",
         "phyCoef": 2.8947,
         "phyBonus": 801,
         "attrBonus": 436.2,
-        "time": 3.766
+        "time": 3.766,
+        "attrCoef": 2.8947
       }
     ],
     "modifier": [
@@ -60,7 +62,8 @@
         "phyCoef": 1.9298,
         "phyBonus": 534,
         "attrBonus": 290.8,
-        "time": 2.93
+        "time": 2.93,
+        "attrCoef": 1.9298
       }
     ],
     "modifier": [
@@ -90,7 +93,8 @@
         "phyCoef": 1.7562,
         "phyBonus": 485,
         "attrBonus": 265,
-        "time": 0.6875
+        "time": 0.6875,
+        "attrCoef": 1.7562
       }
     ],
     "modifier": [],
@@ -117,7 +121,8 @@
         "phyCoef": 1.7562,
         "phyBonus": 485,
         "attrBonus": 265,
-        "time": 0.6875
+        "time": 0.6875,
+        "attrCoef": 1.7562
       },
       {
         "type": "trigger",
@@ -150,7 +155,8 @@
         "phyCoef": 1.0976,
         "phyBonus": 303,
         "attrBonus": 165,
-        "time": 0
+        "time": 0,
+        "attrCoef": 1.0976
       }
     ],
     "modifier": [],

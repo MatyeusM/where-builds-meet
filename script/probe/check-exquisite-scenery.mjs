@@ -62,7 +62,7 @@ try {
           Hit: {
             name: "Hit",
             castTime: 1,
-            action: [{ type: "damage", phyCoef: 1, phyBonus: 0, attrBonus: 0, time: 1 }],
+            action: [{ type: "damage", phyCoef: 1, attrCoef: 1, phyBonus: 0, attrBonus: 0, time: 1 }],
             modifier: [],
             tags,
           },

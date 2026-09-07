@@ -41,7 +41,8 @@ try {
     derivedStats: calculateDerivedStats(stats, 0),
     effects: [],
   };
-  const damage = (effects) => calculateDamageBreakdown({ phyCoef: 1 }, { ...baseContext, effects }).physical;
+  const damage = (effects) =>
+    calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...baseContext, effects }).physical;
   const baseline = damage([]);
   const reducedDefense = damage([{ defenseBonus: -0.06 }]);
   const reducedResistance = damage([{ physicalResistance: -10 }]);
@@ -58,9 +59,13 @@ try {
     "Defense and resistance reductions must apply through their separate formula stages.",
   );
 
-  const simulatedBaseline = calculateSimulatedDamageBreakdown({ phyCoef: 1 }, { ...baseContext }, () => 0.5).physical;
+  const simulatedBaseline = calculateSimulatedDamageBreakdown(
+    { phyCoef: 1, attrCoef: 1 },
+    { ...baseContext },
+    () => 0.5,
+  ).physical;
   const simulatedCombined = calculateSimulatedDamageBreakdown(
-    { phyCoef: 1 },
+    { phyCoef: 1, attrCoef: 1 },
     { ...baseContext, effects: [{ defenseBonus: -0.06, physicalResistance: -10 }] },
     () => 0.5,
   ).physical;

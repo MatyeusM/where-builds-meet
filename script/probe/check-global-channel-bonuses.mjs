@@ -49,7 +49,7 @@ try {
   };
   const damage = (effects, nextStats = stats) =>
     calculateDamageBreakdown(
-      { phyCoef: 1 },
+      { phyCoef: 1, attrCoef: 1 },
       { ...baseContext, stats: nextStats, derivedStats: calculateDerivedStats(nextStats, 0), effects },
     );
   const baseline = damage([]);

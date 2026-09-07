@@ -19,7 +19,7 @@ try {
   const observer = {
     name: "Observe Heaven's Will",
     castTime: 0.01,
-    action: [{ type: "damage", phyCoef: 0, time: 0.01 }],
+    action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0.01 }],
     modifier: [],
     tags: ["General"],
   };
@@ -33,7 +33,7 @@ try {
   const falcon = {
     name: "Falcon Probe",
     castTime: 0,
-    action: [{ type: "damage", phyCoef: 0, time: 0 }],
+    action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0 }],
     modifier: [],
     tags: ["Falcon"],
   };

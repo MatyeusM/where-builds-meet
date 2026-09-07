@@ -43,15 +43,15 @@ try {
         castTime: 1,
         action: [
           { type: "consumeResource", value: "Vitality", amount: 30, time: 0 },
-          { type: "damage", phyCoef: 1, time: 1 },
-          { type: "heal", phyCoef: 1, time: 1 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
+          { type: "heal", phyCoef: 1, silkbindCoef: 1, time: 1 },
         ],
         tags: ["Mystic"],
       },
       General: {
         name: "General",
         castTime: 1,
-        action: [{ type: "damage", phyCoef: 1, time: 1 }],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 1 }],
         tags: ["General"],
       },
     },

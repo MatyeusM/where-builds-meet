@@ -52,9 +52,8 @@ export function selectSimulationPercentile(runs: SimulationRunResult[], percenti
 }
 
 /**
- * Builds combat events once, then samples only the damage choices that are
- * stochastic. This keeps timing, effects, and all damage formula logic shared
- * with the deterministic rotation calculator.
+ * Reuses combat events for damage-only randomness; healing feedback and chance
+ * applications rebuild concrete timelines for each run.
  */
 export function simulateRotation(
   bundle: RotationSimulationBundle,
@@ -64,7 +63,16 @@ export function simulateRotation(
 ): SimulationSummary {
   const count = Math.max(1, Math.floor(runCount));
   const baseline = calculateRotationBaseline(bundle);
-  const samplesHealingTimeline = baseline.metrics.totalHealing > 0;
+  const samplesTimeline =
+    baseline.metrics.totalHealing > 0 ||
+    [...bundle.timeline.innerWayRules, ...bundle.timeline.setupEffects].some((rule) => {
+      if (!rule.trigger || typeof rule.trigger !== "object") return false;
+      const trigger = rule.trigger as Record<string, unknown>;
+      const actions = trigger.action;
+      return (Array.isArray(actions) ? actions : [actions]).some(
+        (action) => action && typeof action === "object" && action.chance !== undefined,
+      );
+    });
   const runs: SimulationRunResult[] = [];
   const progressStep = Math.max(1, Math.floor(count / 100));
 
@@ -77,7 +85,7 @@ export function simulateRotation(
     let criticalHeals = 0;
     let healCount = 0;
     let mysticDamage = 0;
-    const simulated = samplesHealingTimeline ? calculateSimulatedRotationRun(bundle, random) : undefined;
+    const simulated = samplesTimeline ? calculateSimulatedRotationRun(bundle, random) : undefined;
     const resolvedSequence = simulated?.resolvedSequence ?? calculateRotationDamageSequence(baseline.baseline, random);
     resolvedSequence.forEach(({ entry, breakdown }) => {
       totalDamage += breakdown.total;

@@ -136,6 +136,7 @@ try {
         action: Array.from({ length: 5 }, (_, index) => ({
           type: "damage",
           phyCoef: 1,
+          attrCoef: 1,
           time: index < 4 ? 0 : 0.0001,
         })),
       },

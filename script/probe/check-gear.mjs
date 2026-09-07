@@ -801,15 +801,15 @@ const damageContext = {
   effects: [{ stat: {} }],
 };
 const baselineDamage = damage.calculateDamageBreakdown(
-  { phyCoef: 1 },
+  { phyCoef: 1, attrCoef: 1 },
   { ...damageContext, skillTags: ["Mystic"] },
 ).total;
 const singleTargetDamage = damage.calculateDamageBreakdown(
-  { phyCoef: 1 },
+  { phyCoef: 1, attrCoef: 1 },
   { ...damageContext, skillTags: ["Mystic", "SingleTargetMystic"] },
 ).total;
 const areaDamage = damage.calculateDamageBreakdown(
-  { phyCoef: 1 },
+  { phyCoef: 1, attrCoef: 1 },
   { ...damageContext, skillTags: ["Mystic", "AreaMystic"] },
 ).total;
 assert(

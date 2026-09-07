@@ -50,8 +50,8 @@ try {
     action: [
       { type: "apply", target: "self", value: "SurgingWaves", stack: 1, time: 0 },
       { type: "apply", target: "self", value: "SurgingWaves", stack: 1, time: 2 },
-      { type: "damage", phyCoef: 1, time: 6.9 },
-      { type: "damage", phyCoef: 1, time: 7.1 },
+      { type: "damage", phyCoef: 1, attrCoef: 1, time: 6.9 },
+      { type: "damage", phyCoef: 1, attrCoef: 1, time: 7.1 },
     ],
     modifier: [],
     tags: ["DragonHeadTide"],
@@ -108,8 +108,8 @@ try {
         action: [
           { type: "apply", target: "self", value: "Intoxicated", reapply: false, time: 0 },
           { type: "apply", target: "self", value: "Intoxicated", reapply: false, time: 10 },
-          { type: "damage", phyCoef: 1, time: 29.9 },
-          { type: "damage", phyCoef: 1, time: 30.1 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 29.9 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 30.1 },
         ],
         modifier: [],
         tags: [],

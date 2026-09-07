@@ -1,4 +1,12 @@
 {
+  "PiercingDamage": {
+    "name": "Piercing Damage",
+    "damageGroup": { "id": "FivefoldBleed", "name": "Fivefold Bleed" },
+    "castTime": 0,
+    "action": [{ "type": "damage", "phyCoef": 1, "time": 0 }],
+    "modifier": [],
+    "tags": ["Triggered", "DirectDamage", "PiercingDamage"]
+  },
   "Defense": {
     "name": "Defense",
     "castTime": 0,
@@ -150,6 +158,7 @@
   },
   "MoraleChant": {
     "name": "Morale Chant",
+    "damageGroup": { "id": "MoraleChant", "name": "Morale Chant" },
     "castTime": 0,
     "cooldown": 10,
     "action": [
@@ -158,7 +167,8 @@
         "phyCoef": 1,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0
+        "time": 0,
+        "attrCoef": 1
       }
     ],
     "modifier": [],
@@ -209,7 +219,12 @@
         "stack": 5,
         "reapply": true,
         "time": 0,
-        "requirement": [{ "target": "self", "value": "Etherwrath4P" }]
+        "requirement": [
+          {
+            "target": "self",
+            "value": "Etherwrath4P"
+          }
+        ]
       },
       {
         "type": "trigger",
@@ -318,7 +333,12 @@
         "stack": 5,
         "reapply": true,
         "time": 0,
-        "requirement": [{ "target": "self", "value": "Etherwrath4P" }]
+        "requirement": [
+          {
+            "target": "self",
+            "value": "Etherwrath4P"
+          }
+        ]
       },
       {
         "type": "trigger",

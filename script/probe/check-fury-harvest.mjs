@@ -17,6 +17,7 @@ try {
   const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"));
   const generalBuffs = JSON.parse(await readFile("data/buff/general.json", "utf8"));
   const furyHarvest = JSON.parse(await readFile("data/innerway/fury-harvest.json", "utf8"));
+  const system = JSON.parse(await readFile("data/system.json", "utf8"));
   const assert = (condition, message) => {
     if (!condition) throw new Error(message);
   };
@@ -27,7 +28,7 @@ try {
     (definition.effect ?? []).filter((effect) => effect.stat).map((effect) => ({ stat: effect.stat })),
   );
   const stats = calculateStatsWithEffects(emptyStats, statEffects, 0).stats;
-  assert(stats.physicalDefense === 33.5, "Fury Harvest T2 must increase Physical Defense through the stat pipeline.");
+  assert(stats.physicalDefense === 35, "Fury Harvest T2 must increase Physical Defense through the stat pipeline.");
   assert(
     stats.physicalResistance === 5.1,
     "Fury Harvest T5 must retain its hidden Physical Resistance in the stat pipeline.",
@@ -57,10 +58,10 @@ try {
       DeflectSuccessful: generalSkills.DeflectSuccessful,
       Exchange: {
         name: "Exchange",
-        castTime: 0,
+        castTime: 1,
         action: [
-          { type: "damage", phyCoef: 1, time: 0 },
-          { type: "takeDamage", damage: 100, time: 0 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
+          { type: "takeDamage", damage: 100, time: 1 },
         ],
         modifier: [],
         tags: ["General"],
@@ -82,12 +83,52 @@ try {
     weapons: [],
     initialResources: { Vitality: 0 },
     resourceMaximums: { Vitality: 40 },
+    resourceEvents: system.resourceEvents,
     maxHP: 1000,
   });
 
   assert(
-    timeline.at(-1).actionStates[0].resources.Vitality === 8.2,
-    "Fury Harvest must add one Vitality to successful dodge and deflect gains, then 0.1 to outgoing and incoming damage events.",
+    timeline.at(-1).actionStates[0].resources.Vitality === 14.1,
+    `Dodge and deflect grant 8 total; base damage recovery grants 2.1 and incoming damage retains its ordinary 4; actual ${timeline.at(-1).actionStates[0].resources.Vitality}.`,
+  );
+
+  const recoveryInput = {
+    rotation: { name: "Base recovery cooldown", steps: [{ type: "skill", skill: "Hits" }] },
+    skills: {
+      Hits: {
+        name: "Hits",
+        castTime: 4,
+        tags: ["DirectDamage"],
+        action: [0, 0, 0.5, 1.999, 2, 2.1, 4]
+          .map((time) => ({ type: "damage", phyCoef: 1, time }))
+          .concat([{ type: "setResource", value: "Observed", amount: 1, time: 4 }]),
+      },
+    },
+    dots: {},
+    eventDefinitions: {},
+    effectDefinitions: {},
+    setupEffects: [],
+    weapons: [],
+    innerWayConditions,
+    innerWayRules,
+    initialResources: { Vitality: 0 },
+    resourceMaximums: { Vitality: 40 },
+    resourceEvents: system.resourceEvents,
+  };
+  const recovery = (input) =>
+    buildRotationTimeline(input).find((row) => row.step.skill === "Hits").actionStates[7].resources.Vitality;
+  assert(
+    recovery(recoveryInput) === 6.3,
+    "Only the recovery events at 0, 2 and 4 seconds grant 2.1; intervening hits grant nothing.",
+  );
+  assert(
+    recovery({ ...recoveryInput, innerWayConditions: ["FuryHarvestT0", "FuryHarvestT1", "FuryHarvestT2"] }) === 6,
+    "Below T3 the same cooldown grants the normal 2 Vitality.",
+  );
+  assert(recovery({ ...recoveryInput, resourceEvents: [] }) === 0, "T3 has no independent damage-event resource gain.");
+  assert(
+    recovery({ ...recoveryInput, resourceMaximums: { Vitality: 4 } }) === 4,
+    "The combined recovery respects the resource cap.",
   );
 
   const turnaroundTimeline = buildRotationTimeline({

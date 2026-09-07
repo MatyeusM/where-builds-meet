@@ -9,7 +9,8 @@
         "phyCoef": 1.2503,
         "phyBonus": 347,
         "attrBonus": 189,
-        "time": 0.7125
+        "time": 0.7125,
+        "attrCoef": 1.2503
       },
       {
         "type": "apply",
@@ -32,7 +33,8 @@
             "target": "equippedMartialArt",
             "value": "heavenwill"
           }
-        ]
+        ],
+        "attrCoef": 1.87
       },
       {
         "type": "addResource",
@@ -66,7 +68,8 @@
         "phyCoef": 0.4975,
         "phyBonus": 137,
         "attrBonus": 75,
-        "time": 0.425
+        "time": 0.425,
+        "attrCoef": 0.4975
       },
       {
         "type": "trigger",
@@ -104,7 +107,8 @@
         "phyCoef": 0.4975,
         "phyBonus": 137,
         "attrBonus": 75,
-        "time": 0.425
+        "time": 0.425,
+        "attrCoef": 0.4975
       },
       {
         "type": "trigger",
@@ -131,14 +135,16 @@
         "phyCoef": 0.58045,
         "phyBonus": 160.5,
         "attrBonus": 87.5,
-        "time": 1.3125
+        "time": 1.3125,
+        "attrCoef": 0.58045
       },
       {
         "type": "damage",
         "phyCoef": 0.58045,
         "phyBonus": 160.5,
         "attrBonus": 87.5,
-        "time": 1.375
+        "time": 1.375,
+        "attrCoef": 0.58045
       }
     ],
     "modifier": [],
@@ -155,21 +161,24 @@
         "phyCoef": 0.748,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0.2875
+        "time": 0.2875,
+        "attrCoef": 0.748
       },
       {
         "type": "damage",
         "phyCoef": 0.748,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0.4125
+        "time": 0.4125,
+        "attrCoef": 0.748
       },
       {
         "type": "damage",
         "phyCoef": 0.748,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0.55
+        "time": 0.55,
+        "attrCoef": 0.748
       },
       {
         "type": "addResource",

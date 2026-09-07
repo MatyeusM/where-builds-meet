@@ -42,7 +42,7 @@ try {
   };
   const damage = (attunement, skillTags) =>
     calculateDamageBreakdown(
-      { phyCoef: 1 },
+      { phyCoef: 1, attrCoef: 1 },
       {
         stats,
         attunement,

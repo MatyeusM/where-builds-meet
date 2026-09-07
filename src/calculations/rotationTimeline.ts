@@ -1,6 +1,14 @@
 import type { WeaponFamily, WeaponId } from "../types";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
+import {
+  ExpectedPeriodicTracker,
+  nextBattlePeriodicTick,
+  outcomeBuffTick,
+  outcomeProbability,
+  maxStackActionFor,
+  type MaxStackAction,
+} from "./outcomeTriggeredBuffs";
 import { resolveSegmentValue, resolveSwitchValue, type SwitchValue } from "./dynamicValues";
 import {
   addUnconditionalDamageEffects,
@@ -12,7 +20,10 @@ export type EditableObject = Record<string, unknown>;
 export type PeriodicEffect = {
   interval?: number;
   firstTick?: number;
+  /** Expected timelines only: share interval boundaries relative to battle start. */
+  expectedTickAlignment?: "battle";
   resetOnRefresh?: boolean;
+  tickOnExpire?: boolean;
   action?: unknown[];
 };
 export type SubActionReference = {
@@ -23,6 +34,7 @@ export type SubActionReference = {
 export type SkillRecord = {
   [key: string]: unknown;
   name?: string;
+  damageGroup?: { id: string; name: string };
   shortName?: string;
   group?: boolean;
   castTime?: number | SwitchValue;
@@ -131,8 +143,15 @@ export type InnerWayEffectRule = {
   source: string;
   tier: number;
 };
-export type TimelineRowKind = "rotation" | "trigger" | "dot" | "periodic";
+export type TimelineRowKind = "rotation" | "trigger" | "dot" | "periodic" | "damageGroup";
 export type TimelineRow = {
+  /** Presentation-only placeholder while the editor's worker request is pending. */
+  pendingCalculation?: boolean;
+  feedbackEffects?: string[];
+  expectedBranch?: { effect: string; id: string };
+  expectedExpiration?: { effect: string; source: string; time: number };
+  /** Fractional cast attribution for an expected periodic tick. */
+  sourceDamageWeights?: Record<string, number>;
   id: string;
   kind: TimelineRowKind;
   sourceRowId?: string;
@@ -282,6 +301,7 @@ function timelineRowsRepresentSameStep(left: TimelineRow, right: TimelineRow) {
 
 export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], calculatedTimeline?: TimelineRow[]) {
   if (!calculatedTimeline) return structuralTimeline;
+  const groupIds = new Set(calculatedTimeline.filter((row) => row.kind === "damageGroup").map((row) => row.id));
   const calculatedRows = new Map(calculatedTimeline.map((row) => [row.id, row]));
   const mergeEffectRuntimeState = (structural: TrackedEffect[], calculated: TrackedEffect[]) =>
     structural.map((effect) => {
@@ -331,6 +351,11 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
   const displayedRowIds = new Set<string>();
 
   for (const calculatedRow of calculatedTimeline) {
+    if (calculatedRow.sourceRowId && groupIds.has(calculatedRow.sourceRowId)) {
+      displayedRows.push(calculatedRow);
+      displayedRowIds.add(calculatedRow.id);
+      continue;
+    }
     const structuralRow = mergedStructuralRows.get(calculatedRow.id);
     if (structuralRow && timelineRowsRepresentSameStep(structuralRow, calculatedRow)) {
       displayedRows.push(structuralRow);
@@ -349,6 +374,7 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
   }
 
   for (const structuralRow of mergedStructuralRows.values()) {
+    if (structuralRow.sourceRowId && groupIds.has(structuralRow.sourceRowId)) continue;
     if (!displayedRowIds.has(structuralRow.id)) displayedRows.push(structuralRow);
   }
   return displayedRows.sort(
@@ -360,6 +386,8 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
 }
 
 export type EffectDefinition = {
+  damageGroup?: { id: string; name: string };
+  onMaxStack?: MaxStackAction;
   name?: string;
   shortName?: string;
   description?: string;
@@ -445,7 +473,7 @@ export type TimelineBuildInput = {
 export type ResourceEventRule = {
   event: "damage" | "takeDamage";
   resource: string;
-  amount: number;
+  amount: number | SwitchValue;
   cooldown?: number;
   perMaxHPRatio?: number;
 };
@@ -677,15 +705,29 @@ function resolveCastModifierEffect(effect: EditableObject, buffs: TrackedEffect[
   );
 }
 
-function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime?: number): TimelineRow[] {
+type TimelineLoopBounds = {
+  suppressFeedback?: boolean;
+  cutoff?: number;
+  battleEnd?: boolean;
+  /** Keep the sampled run's inferred cutoff independent of expected-only approximations. */
+  exactPeriodicTiming?: boolean;
+};
+
+function buildRotationTimelinePass(
+  input: TimelineBuildInput,
+  resolvedAnchorTime?: number,
+  procRoll?: (key: string) => number,
+  loopBounds: TimelineLoopBounds = {},
+): TimelineRow[] {
   type TimelineEvent = {
     time: number;
     sortOrder: number[];
-    kind: "start" | "subActionStart" | "action";
+    kind: "start" | "subActionStart" | "action" | "expectedTick" | "expectedExpire";
     row: TimelineRow;
     actionIndex?: number;
     subActionIndex?: number;
     expiresEffect?: { target: "self" | "target" | "player"; name: string; expiresAt: number; scheduleId: number };
+    expectedWakeup?: { name: string; active: ActivePeriodicEffect; source?: string; expirationKey?: string };
   };
   const compareSortOrder = (left: number[], right: number[]) => {
     const sharedLength = Math.min(left.length, right.length);
@@ -695,6 +737,21 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
     return left.length - right.length;
   };
   const { rotation, skills, eventDefinitions, dots, effectDefinitions, innerWayRules, setupEffects, weapons } = input;
+  const selectedInnerWays = new Set(innerWayRules.map((rule) => rule.source));
+  const damageGroups = new Map<string, { id: string; name: string }>();
+  for (const definition of [...Object.values(skills), ...Object.values(dots)]) {
+    const group = definition.damageGroup;
+    if (group && selectedInnerWays.has(group.id)) damageGroups.set(group.id, group);
+  }
+  const damageSource = (definition: Pick<SkillRecord, "damageGroup">, fallback: string) =>
+    definition.damageGroup && damageGroups.has(definition.damageGroup.id)
+      ? `innerway-${definition.damageGroup.id}`
+      : fallback;
+  const beyondLoopEnd = (time: number) =>
+    loopBounds.cutoff !== undefined &&
+    (loopBounds.battleEnd
+      ? compareTimelineTime(time, loopBounds.cutoff) >= 0
+      : compareTimelineTime(time, loopBounds.cutoff) > 0);
   const isSequentialStep = (step: RotationStep) => step.type === "skill" || step.event === "Delay";
   type ExpandedSkillSegment = {
     skillId: string;
@@ -799,6 +856,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
         ? Math.max(0, step.duration)
         : 0;
   const innerWayConditions = new Set(input.innerWayConditions);
+  const conditionParameters = Object.fromEntries(input.innerWayConditions.map((condition) => [condition, true]));
   const subActionChoices = new Map<string, boolean>();
   const rows: TimelineRow[] = [];
   const events = new OrderedQueue<TimelineEvent>(
@@ -1016,7 +1074,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       eventRow.startTime += shift;
     });
     events.mutate((queued) => {
-      if (queued.row === targetRow || attachedRows.has(queued.row)) queued.time += shift;
+      if (!queued.expectedWakeup && (queued.row === targetRow || attachedRows.has(queued.row))) queued.time += shift;
     });
   };
 
@@ -1141,15 +1199,21 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       ([, rate]) => typeof rate === "number" && Number.isFinite(rate) && rate > 0,
     ),
   );
-  const resourceEventRules = (input.resourceEvents ?? []).filter(
-    (rule) =>
-      typeof rule.resource === "string" &&
-      typeof rule.amount === "number" &&
-      Number.isFinite(rule.amount) &&
-      rule.amount >= 0,
-  );
+  const resourceEventParameters = Object.fromEntries([...innerWayConditions].map((condition) => [condition, true]));
+  const resourceEventRules = (input.resourceEvents ?? [])
+    .map((rule) => ({
+      ...rule,
+      amount: typeof rule.amount === "number" ? rule.amount : resolveSwitchValue(rule.amount, resourceEventParameters),
+    }))
+    .filter(
+      (rule): rule is Omit<ResourceEventRule, "amount"> & { amount: number } =>
+        typeof rule.resource === "string" &&
+        typeof rule.amount === "number" &&
+        Number.isFinite(rule.amount) &&
+        rule.amount >= 0,
+    );
   const resourceEventCooldowns = new Map<number, number>();
-  const applyResourceEvent = (eventName: ResourceEventRule["event"], time: number, hpLost = 0) => {
+  const applyResourceEvent = (eventName: ResourceEventRule["event"], time: number, hpLost = 0, probability = 1) => {
     resourceEventRules.forEach((rule, ruleIndex) => {
       if (
         rule.event !== eventName ||
@@ -1157,7 +1221,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
         (resourceEventCooldowns.get(ruleIndex) ?? 0) > time
       )
         return;
-      let amount = rule.amount;
+      let amount = rule.amount * probability;
       if (eventName === "takeDamage") {
         if (!(typeof rule.perMaxHPRatio === "number" && rule.perMaxHPRatio > 0) || maxHP <= 0) return;
         amount *= hpLost / maxHP / rule.perMaxHPRatio;
@@ -1269,6 +1333,14 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
     currentWeapon,
   });
   const skillCooldownKey = (skillId: string, skill = skills[skillId]) => `skill:${skill?.cooldownGroup ?? skillId}`;
+  const resolveActionChance = (value: unknown) => {
+    if (value === undefined) return 1;
+    const resolved =
+      typeof value === "number" ? value : resolveSwitchValue(value, { ...conditionParameters, ...requirementState() });
+    if (typeof resolved !== "number" || !Number.isFinite(resolved))
+      throw new Error("Action chance must resolve to a finite number.");
+    return outcomeProbability(resolved);
+  };
   const skillCooldownDuration = (skill: SkillRecord, modifierEffects: EditableObject[]) => {
     for (let index = modifierEffects.length - 1; index >= 0; index -= 1) {
       const override = modifierEffects[index]?.cooldown;
@@ -1362,14 +1434,20 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
   };
   let nextDerivedOrder = rotation.steps.length * 1000 + 1;
   type ActivePeriodicEffect = {
+    expected?: ExpectedPeriodicTracker;
     definition: EffectDefinition;
     appliedAt: number;
     expiresAt: number;
     sourceRowId: string;
     playerRecipientIndex?: number;
     rows: TimelineRow[];
+    schedulerRow?: TimelineRow;
+    pendingTick?: TimelineEvent;
+    pendingExpirations?: Map<string, TimelineEvent>;
   };
   const activePeriodicEffects: Record<string, ActivePeriodicEffect> = {};
+  const expirationScheduleIds = new Map<string, number>();
+  const procOccurrences = new Map<string, number>();
   const periodicEffectKey = (target: "self" | "target" | "player", name: string, playerRecipientIndex?: number) =>
     target === "player" ? `${target}:${name}:${playerRecipientIndex ?? 0}` : `${target}:${name}`;
   const removePendingPeriodicRows = (
@@ -1396,26 +1474,62 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
     causalSortOrder: number[],
     sourceOrder: number,
     includeCurrentTime = false,
+    resolvedTicks?: Array<ReturnType<ExpectedPeriodicTracker["tickAt"]>>,
   ) => {
+    if (activeEffect.expected && !resolvedTicks) {
+      scheduleExpectedTick(name, activeEffect, afterTime, causalSortOrder, includeCurrentTime);
+      return;
+    }
     const periodic = activeEffect.definition.periodic;
     const interval = typeof periodic?.interval === "number" && periodic.interval > 0 ? periodic.interval : undefined;
-    const firstTick =
-      typeof periodic?.firstTick === "number" && periodic.firstTick >= 0 ? periodic.firstTick : interval;
+    let firstTick = typeof periodic?.firstTick === "number" && periodic.firstTick >= 0 ? periodic.firstTick : interval;
     const baseActions = Array.isArray(periodic?.action) ? (periodic.action as EditableObject[]) : [];
     if (!interval || firstTick === undefined || baseActions.length === 0) return;
+    if (periodic?.expectedTickAlignment === "battle" && !procRoll && !loopBounds.exactPeriodicTiming)
+      firstTick =
+        nextBattlePeriodicTick(activeEffect.appliedAt, interval, resolvedAnchorTime ?? initialAnchorTime) -
+        activeEffect.appliedAt;
     const isDot = Boolean(dots[name]);
     const rowSkill = (dots[name] ?? effectDefinitions[name]) as SkillRecord | undefined;
-    for (let tickIndex = 0; ; tickIndex += 1) {
-      const tickTime = activeEffect.appliedAt + firstTick + tickIndex * interval;
-      if (tickTime > activeEffect.expiresAt + 1e-6) break;
+    const scheduledTicks =
+      resolvedTicks ??
+      Array.from(
+        {
+          length: Math.max(
+            0,
+            Math.floor((activeEffect.expiresAt - activeEffect.appliedAt - firstTick + 1e-6) / interval) + 1,
+          ),
+        },
+        (_, index) => ({
+          time: activeEffect.appliedAt + firstTick + index * interval,
+          probability: undefined,
+          sources: undefined,
+        }),
+      );
+    for (const [tickIndex, tick] of scheduledTicks.entries()) {
+      const tickTime = tick.time;
+      if (beyondLoopEnd(tickTime)) continue;
+      if (periodic?.tickOnExpire === false && tickTime >= activeEffect.expiresAt - 1e-6) continue;
       if (tickTime < afterTime - 1e-6 || (!includeCurrentTime && Math.abs(tickTime - afterTime) <= 1e-6)) continue;
       const derivedId = nextDerivedOrder++;
       const derivedSortOrder = [...causalSortOrder, derivedId];
-      const actions = baseActions.map((action) => ({ ...action, time: 0 }));
+      const actions = baseActions.map((action) => ({
+        ...action,
+        time: 0,
+        ...(tick.probability !== undefined ? { damageScale: tick.probability, hitProbability: tick.probability } : {}),
+      }));
       const row: TimelineRow = {
         id: `${isDot ? "dot" : "periodic"}-${derivedId}`,
         kind: isDot ? "dot" : "periodic",
+        feedbackEffects: [name],
         sourceRowId: activeEffect.sourceRowId,
+        ...(tick.sources
+          ? {
+              sourceDamageWeights: Object.fromEntries(
+                Object.entries(tick.sources).map(([source, weight]) => [source, weight / tick.probability!]),
+              ),
+            }
+          : {}),
         ...(activeEffect.playerRecipientIndex !== undefined
           ? { playerRecipientIndex: activeEffect.playerRecipientIndex }
           : {}),
@@ -1452,6 +1566,33 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       );
     }
   };
+  const scheduleExpectedTick = (
+    name: string,
+    active: ActivePeriodicEffect,
+    afterTime: number,
+    sortOrder: number[],
+    includeCurrentTime = false,
+  ) => {
+    const time = active.expected!.nextTick(afterTime, includeCurrentTime);
+    if (time === undefined || beyondLoopEnd(time)) return;
+    if (active.pendingTick) {
+      events.mutate((queued) => {
+        if (queued !== active.pendingTick) return;
+        queued.time = time;
+        queued.sortOrder = [...sortOrder, nextDerivedOrder++];
+      });
+      return;
+    }
+    const wakeup: TimelineEvent = {
+      time,
+      sortOrder: [...sortOrder, nextDerivedOrder++],
+      kind: "expectedTick",
+      row: active.schedulerRow!,
+      expectedWakeup: { name, active },
+    };
+    active.pendingTick = wakeup;
+    events.push(wakeup);
+  };
   const transferAndReschedulePeriodicEffect = (
     name: string,
     target: "self" | "target" | "player",
@@ -1482,14 +1623,25 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
     sourceOrder: number,
     target: "self" | "target" | "player",
     expiresAt?: number,
+    expectedProbability?: number,
+    publishRow = true,
   ) => {
-    const actions = Array.isArray(definition.action) ? (definition.action as EditableObject[]) : [];
+    const actions = (Array.isArray(definition.action) ? (definition.action as EditableObject[]) : []).filter(
+      (action) =>
+        !beyondLoopEnd(action.time === "expire" ? (expiresAt ?? eventTime) : eventTime + Number(action.time ?? 0)),
+    );
     if (actions.length === 0) return;
     const derivedId = nextDerivedOrder++;
+    if (expectedProbability === undefined && actions.some((action) => action.time === "expire"))
+      expirationScheduleIds.set(periodicEffectKey(target, name), derivedId);
     const derivedSortOrder = [...causalSortOrder, derivedId];
     const row: TimelineRow = {
       id: `effect-${derivedId}`,
       kind: "periodic",
+      feedbackEffects: [name],
+      ...(expectedProbability !== undefined
+        ? { expectedExpiration: { effect: name, source: sourceRowId, time: expiresAt! } }
+        : {}),
       sourceRowId,
       order: sourceOrder + 10,
       step: { type: "skill", skill: name },
@@ -1506,6 +1658,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       skill: definition,
       actions: actions.map((action) => ({
         ...action,
+        ...(expectedProbability !== undefined ? { hitProbability: expectedProbability } : {}),
         ...(action.time === "expire" && expiresAt !== undefined ? { time: expiresAt - eventTime } : {}),
       })),
       buffs: [],
@@ -1513,8 +1666,13 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       modifierEffects: [],
       actionStates: {},
     };
-    rows.push(row);
-    events.push({ time: eventTime, sortOrder: [...derivedSortOrder, 0], kind: "start", row });
+    if (publishRow) rows.push(row);
+    events.push({
+      time: eventTime,
+      sortOrder: [...(expectedProbability !== undefined ? [-1] : []), ...derivedSortOrder, 0],
+      kind: "start",
+      row,
+    });
     row.actions.forEach((action, actionIndex) => {
       const definitionAction = actions[actionIndex];
       if (definitionAction.time === "expire" && expiresAt === undefined) return;
@@ -1523,15 +1681,16 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
           definitionAction.time === "expire"
             ? expiresAt!
             : eventTime + (typeof action.time === "number" ? action.time : 0),
-        sortOrder: [...derivedSortOrder, 1, actionIndex],
+        sortOrder: [...(definitionAction.time === "expire" ? [-1] : []), ...derivedSortOrder, 1, actionIndex],
         kind: "action",
         row,
         actionIndex,
-        ...(definitionAction.time === "expire"
+        ...(definitionAction.time === "expire" && expectedProbability === undefined
           ? { expiresEffect: { target, name, expiresAt: expiresAt!, scheduleId: derivedId } }
           : {}),
       });
     });
+    return row;
   };
   let processedEvents = 0;
   const validatedExpirationSchedules = new Set<number>();
@@ -1632,13 +1791,71 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
     const queueStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
     const event = events.shift()!;
     if (import.meta.env.DEV) finishCalculationPhase("timelineQueueOrdering", queueStartedAt);
-    processedEvents += 1;
+    if (event.expectedWakeup) {
+      const { name, active, source, expirationKey } = event.expectedWakeup;
+      if (activePeriodicEffects[periodicEffectKey("target", name)] !== active) continue;
+      switch (event.kind) {
+        case "expectedTick": {
+          active.pendingTick = undefined;
+          const tick = active.expected!.tickAt(event.time);
+          if (tick.probability > 0)
+            schedulePeriodicActions(name, active, event.time, event.sortOrder, active.schedulerRow!.order, true, [
+              tick,
+            ]);
+          scheduleExpectedTick(name, active, event.time, event.sortOrder);
+          break;
+        }
+        case "expectedExpire": {
+          active.pendingExpirations!.delete(expirationKey!);
+          const probability = active.expected!.expirationProbability(event.time, source!);
+          if (probability <= 0) break;
+          const action = active.definition.action?.filter(
+            (item) => item && typeof item === "object" && (item as EditableObject).time === "expire",
+          );
+          if (action?.length)
+            enqueueEffectActions(
+              name,
+              { ...active.definition, action },
+              event.time,
+              source!,
+              event.sortOrder,
+              active.schedulerRow!.order,
+              "target",
+              event.time,
+              probability,
+              false,
+            );
+          break;
+        }
+      }
+      continue;
+    }
+    if (!event.row.actions.some((action) => typeof action.hitProbability === "number")) processedEvents += 1;
     currentTimelineTime = event.time;
     regenerateResources(event.time);
+    // Natural expiration belongs to the clock boundary, even if another action
+    // at that timestamp happens to be dequeued before the expiration action.
+    for (const [target, effects] of [
+      ["self", buffs],
+      ["target", debuffs],
+    ] as const) {
+      for (const effect of effects) {
+        if (effect.expiresAt === undefined || effect.expiresAt > event.time) continue;
+        const schedule = expirationScheduleIds.get(
+          periodicEffectKey(effect.playerRecipientIndex === undefined ? target : "player", effect.name),
+        );
+        if (schedule !== undefined) validatedExpirationSchedules.add(schedule);
+      }
+    }
     if (event.expiresEffect && !validatedExpirationSchedules.has(event.expiresEffect.scheduleId)) {
       const targetEffects = event.expiresEffect.target === "target" ? debuffs : buffs;
       const current = targetEffects.find((effect) => effect.name === event.expiresEffect!.name);
-      if (current?.expiresAt !== event.expiresEffect.expiresAt) continue;
+      if (
+        current?.expiresAt !== event.expiresEffect.expiresAt ||
+        expirationScheduleIds.get(periodicEffectKey(event.expiresEffect.target, event.expiresEffect.name)) !==
+          event.expiresEffect.scheduleId
+      )
+        continue;
       validatedExpirationSchedules.add(event.expiresEffect.scheduleId);
     }
     const activeBuffs = prune(buffs, event.time);
@@ -1904,6 +2121,15 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
 
     const action = event.row.actions[event.actionIndex ?? -1];
     if (!action) continue;
+    if (event.row.kind === "dot" && event.row.step.type === "skill" && event.row.step.skill) {
+      const active = activePeriodicEffects[periodicEffectKey("target", event.row.step.skill)];
+      if (active?.expected) {
+        active.expected.consumeTick(event.time);
+        active.rows = active.rows.filter((row) => row !== event.row);
+      }
+    }
+    if (event.row.kind === "dot" && action.type === "damage" && action.damageScale === undefined)
+      action.damageScale = 1;
     event.row.actionStates[event.actionIndex ?? -1] = {
       buffs: [...buffs],
       debuffs: [...debuffs],
@@ -2016,8 +2242,18 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       sourceRowId?: string,
       attachedTriggerOrdinal?: number,
       triggerSource: "skill" | "setup" | "innerWay" = "skill",
+      probability?: number,
+      expectedBranch?: TimelineRow["expectedBranch"],
+      effectSource?: string,
+      triggerTags?: string[],
     ) => {
-      const triggeredSkill = skills[skillId];
+      if (beyondLoopEnd(event.time)) return false;
+      const definition = skills[skillId];
+      const triggeredSkill =
+        definition && triggerTags?.length
+          ? { ...definition, tags: [...(definition.tags ?? []), ...triggerTags] }
+          : definition;
+      if (triggeredSkill) sourceRowId = damageSource(triggeredSkill, sourceRowId ?? event.row.id);
       const key = skillCooldownKey(skillId, triggeredSkill);
       if (!triggeredSkill || (cooldowns[key] ?? 0) > event.time) return false;
       const actions = Array.isArray(triggeredSkill.action) ? (triggeredSkill.action as EditableObject[]) : [];
@@ -2027,6 +2263,10 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       const row: TimelineRow = {
         id: `trigger-${derivedId}`,
         kind: "trigger",
+        feedbackEffects: effectSource
+          ? [...(event.row.feedbackEffects ?? []), effectSource]
+          : event.row.feedbackEffects,
+        ...(expectedBranch ? { expectedBranch } : {}),
         sourceRowId,
         triggerSource,
         order: rowOrder,
@@ -2042,7 +2282,12 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
         currentWeapon,
         effectiveCastTime: resolveSkillCastTime(triggeredSkill, requirementState()),
         skill: triggeredSkill,
-        actions: actions.map((item) => ({ ...item })),
+        actions: actions.map((item) => ({
+          ...item,
+          ...(probability !== undefined && item.type === "damage"
+            ? { damageScale: Number(item.damageScale ?? 1) * probability, hitProbability: probability }
+            : {}),
+        })),
         buffs: [...buffs],
         debuffs: [...debuffs],
         modifierEffects: [],
@@ -2078,6 +2323,39 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
           });
       }
       if (typeof triggeredSkill.cooldown === "number") cooldowns[key] = event.time + triggeredSkill.cooldown;
+      return true;
+    };
+    const resolveMaxStackApplication = (
+      name: string,
+      definition: EffectDefinition,
+      resultingStack: number,
+      target: "self" | "target" | "player",
+      sourceRowId: string,
+      playerRecipientIndex?: number,
+    ) => {
+      const threshold = maxStackActionFor(resultingStack, definition.maxStack, definition.onMaxStack);
+      if (!threshold) return false;
+      const remaining = (target === "target" ? debuffs : buffs).filter(
+        (effect) => effect.name !== name || effect.playerRecipientIndex !== playerRecipientIndex,
+      );
+      if (target === "target") setDebuffs(remaining);
+      else setBuffs(remaining);
+      const key = periodicEffectKey(target, name, playerRecipientIndex);
+      const periodic = activePeriodicEffects[key];
+      if (periodic) removePendingPeriodicRows(periodic, event.time, true);
+      delete activePeriodicEffects[key];
+      accumulatorStates.delete(name);
+      if (definition.cooldown !== undefined) cooldowns[name] = event.time + definition.cooldown;
+      enqueueTriggeredSkill(
+        threshold.trigger,
+        sourceRowId,
+        undefined,
+        "skill",
+        undefined,
+        undefined,
+        name,
+        threshold.triggerTags,
+      );
       return true;
     };
     const emitCustomEvent = (eventName: string) => {
@@ -2120,6 +2398,16 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       }
     };
     const applyTriggerAction = (triggerAction: EditableObject, triggerSource: "setup" | "innerWay") => {
+      if (
+        loopBounds.suppressFeedback &&
+        triggerAction.type === "apply" &&
+        typeof triggerAction.value === "string" &&
+        event.row.feedbackEffects?.includes(triggerAction.value)
+      )
+        return;
+      const hitProbability = typeof action.hitProbability === "number" ? action.hitProbability : 1;
+      if (triggerAction.type === "addResource" && typeof triggerAction.amount === "number" && hitProbability !== 1)
+        triggerAction = { ...triggerAction, amount: triggerAction.amount * hitProbability };
       if (applyResourceAction(triggerAction, event.row)) return;
       if (triggerAction.type === "clearCD" && typeof triggerAction.value === "string") {
         cooldowns[triggerAction.value] = event.time;
@@ -2163,8 +2451,109 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       const targetEffects = triggerAction.target === "target" ? debuffs : buffs;
       const periodicTarget = triggerAction.target === "target" ? "target" : "self";
       const definition = getModifiedEffectDefinition(triggerAction.value, buffs, debuffs, skillTags);
+      const applicationSource = damageSource(definition, event.row.sourceRowId ?? event.row.id);
       const duration = typeof triggerAction.duration === "number" ? triggerAction.duration : definition.duration;
       const baseStack = typeof triggerAction.stack === "number" ? triggerAction.stack : 1;
+      const conditionalBranch =
+        event.row.expectedBranch?.effect === triggerAction.value ? event.row.expectedBranch.id : undefined;
+      if (triggerAction.chance !== undefined || conditionalBranch !== undefined) {
+        const chance = resolveActionChance(triggerAction.chance);
+        if (chance <= 0) return;
+        if (procRoll) {
+          const key = `${event.row.sourceRowId ?? event.row.id}:${event.row.step.type === "skill" ? event.row.step.skill : "event"}:${event.actionIndex}:${triggerSource}:${triggerAction.value}`;
+          const occurrence = procOccurrences.get(key) ?? 0;
+          procOccurrences.set(key, occurrence + 1);
+          if (procRoll(`${key}:${occurrence}`) >= chance) return;
+        } else {
+          const periodic = definition.periodic;
+          if (
+            event.row.kind === "dot" ||
+            !dots[triggerAction.value] ||
+            triggerAction.target !== "target" ||
+            !duration ||
+            !periodic?.interval ||
+            periodic.resetOnRefresh ||
+            definition.refresh === false
+          )
+            throw new Error("Chance applications require a refreshing target DOT with a preserved cadence.");
+          const key = periodicEffectKey("target", triggerAction.value);
+          const activeEffect: ActivePeriodicEffect = activePeriodicEffects[key] ?? {
+            definition,
+            appliedAt: event.time,
+            expiresAt: event.time + duration,
+            sourceRowId: applicationSource,
+            rows: [],
+          };
+          activeEffect.expected ??= new ExpectedPeriodicTracker(
+            periodic.interval,
+            periodic.firstTick ?? periodic.interval,
+            periodic.expectedTickAlignment === "battle" && !loopBounds.exactPeriodicTiming
+              ? (resolvedAnchorTime ?? initialAnchorTime)
+              : undefined,
+          );
+          const emittedBranch = `threshold-${nextDerivedOrder++}`;
+          const thresholdProbability = activeEffect.expected.apply(
+            event.time,
+            conditionalBranch !== undefined ? chance : chance * hitProbability,
+            duration,
+            definition.maxStack ?? 1,
+            baseStack,
+            applicationSource,
+            definition.onMaxStack,
+            emittedBranch,
+            conditionalBranch,
+          );
+          activeEffect.expiresAt = event.time + duration;
+          activeEffect.definition = definition;
+          activeEffect.schedulerRow = event.row;
+          removePendingPeriodicRows(activeEffect, event.time, true);
+          activePeriodicEffects[key] = activeEffect;
+          schedulePeriodicActions(
+            triggerAction.value,
+            activeEffect,
+            event.time,
+            event.sortOrder,
+            event.row.order + (event.actionIndex ?? 0),
+            true,
+          );
+          const expirationActions = definition.action?.filter(
+            (action) => action && typeof action === "object" && (action as EditableObject).time === "expire",
+          );
+          if (expirationActions?.length) {
+            const expiry = event.time + duration;
+            const expirationKey = `${outcomeBuffTick(expiry)}:${applicationSource}`;
+            activeEffect.pendingExpirations ??= new Map();
+            if (!beyondLoopEnd(expiry) && !activeEffect.pendingExpirations.has(expirationKey)) {
+              const wakeup: TimelineEvent = {
+                time: expiry,
+                kind: "expectedExpire",
+                row: event.row,
+                sortOrder: [-1, ...event.sortOrder, nextDerivedOrder++],
+                expectedWakeup: {
+                  name: triggerAction.value,
+                  active: activeEffect,
+                  source: applicationSource,
+                  expirationKey,
+                },
+              };
+              activeEffect.pendingExpirations.set(expirationKey, wakeup);
+              events.push(wakeup);
+            }
+          }
+          if (thresholdProbability > 0 && definition.onMaxStack)
+            enqueueTriggeredSkill(
+              definition.onMaxStack.trigger,
+              event.row.sourceRowId ?? event.row.id,
+              undefined,
+              "skill",
+              thresholdProbability,
+              { effect: triggerAction.value, id: emittedBranch },
+              triggerAction.value,
+              definition.onMaxStack.triggerTags,
+            );
+          return;
+        }
+      }
       const additional =
         triggerAction.additionalStack &&
         typeof triggerAction.additionalStack === "object" &&
@@ -2193,10 +2582,20 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
         undefined,
         triggerAction.value,
         [...buffs, ...debuffs],
-        fallbackSourceRowId,
+        damageSource(definition, fallbackSourceRowId),
       );
       const existing = targetEffects.find((effect) => effect.name === triggerAction.value);
       if (existing && triggerAction.reapply === false) return;
+      if (
+        resolveMaxStackApplication(
+          triggerAction.value,
+          definition,
+          (existing?.stack ?? 0) + baseStack + additionalStack,
+          periodicTarget,
+          collection.sourceRowId,
+        )
+      )
+        return;
       const next = applyTrackedEffect(
         targetEffects,
         triggerAction.value,
@@ -2215,7 +2614,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       const appliedEffect = next.find((effect) => effect.name === triggerAction.value);
       if (definition.periodic && appliedEffect?.expiresAt !== undefined) {
         const key = periodicEffectKey(periodicTarget, triggerAction.value);
-        const effectSourceRowId = event.row.sourceRowId ?? event.row.id;
+        const effectSourceRowId = applicationSource;
         if (existing && activePeriodicEffects[key] && definition.refresh !== false) {
           transferAndReschedulePeriodicEffect(
             triggerAction.value,
@@ -2338,8 +2737,12 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
       runSetupTriggers("damage");
       runInnerWayTriggers("damage");
+      if (event.row.expectedBranch) {
+        const branch = event.row.expectedBranch;
+        activePeriodicEffects[periodicEffectKey("target", branch.effect)]?.expected?.releaseBranch(branch.id);
+      }
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt);
-      applyResourceEvent("damage", event.time);
+      applyResourceEvent("damage", event.time, 0, Number(action.hitProbability ?? 1));
     }
     if (action.type === "heal") {
       const healingKey = `${event.row.id}:${event.actionIndex ?? -1}`;
@@ -2363,12 +2766,42 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt);
     }
     if (action.type === "trigger" && typeof action.value === "string") {
+      const chance = resolveActionChance(action.chance);
+      if (chance <= 0) continue;
+      let probability = Number(action.hitProbability ?? 1) * chance;
+      let expectedBranch: TimelineRow["expectedBranch"];
+      if (!procRoll && event.row.expectedExpiration) {
+        const expiration = event.row.expectedExpiration;
+        expectedBranch = { effect: expiration.effect, id: `expiration-${nextDerivedOrder++}` };
+        probability =
+          activePeriodicEffects[periodicEffectKey("target", expiration.effect)]?.expected?.expire(
+            expiration.time,
+            expiration.source,
+            chance,
+            expectedBranch.id,
+          ) ?? 0;
+        if (probability <= 0) continue;
+      }
+      if (procRoll && chance < 1) {
+        const key = `${event.row.sourceRowId ?? event.row.id}:${event.row.step.type === "skill" ? event.row.step.skill : "event"}:${event.actionIndex}:trigger:${action.value}`;
+        const occurrence = procOccurrences.get(key) ?? 0;
+        procOccurrences.set(key, occurrence + 1);
+        if (procRoll(`${key}:${occurrence}`) >= chance) continue;
+        probability = 1;
+      }
       const triggerOrdinal =
         event.row.kind === "rotation"
           ? event.row.actions.slice(0, (event.actionIndex ?? 0) + 1).filter((candidate) => candidate.type === "trigger")
               .length - 1
           : undefined;
-      enqueueTriggeredSkill(action.value, event.row.sourceRowId ?? event.row.id, triggerOrdinal);
+      enqueueTriggeredSkill(
+        action.value,
+        event.row.sourceRowId ?? event.row.id,
+        triggerOrdinal,
+        "skill",
+        probability === 1 ? undefined : probability,
+        expectedBranch,
+      );
     }
     if (action.type === "emitEvent" && typeof action.value === "string") emitCustomEvent(action.value);
     if ((action.type === "apply" || action.type === "extend") && typeof action.value === "string") {
@@ -2397,9 +2830,21 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
         event.row.skill,
         action.value,
         [...buffs, ...debuffs],
-        fallbackSourceRowId,
+        damageSource(definition, fallbackSourceRowId),
       );
       const shouldApply = action.type === "apply" && (!existing || action.reapply !== false);
+      if (
+        shouldApply &&
+        resolveMaxStackApplication(
+          action.value,
+          definition,
+          (existing?.stack ?? 0) + (typeof action.stack === "number" ? action.stack : 1),
+          periodicTarget,
+          collection.sourceRowId,
+          playerRecipientIndex,
+        )
+      )
+        continue;
       const next =
         action.type === "extend" && typeof duration === "number"
           ? extendTrackedEffect(targetEffects, action.value, duration, event.time)
@@ -2425,7 +2870,7 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       );
       if (shouldApply && definition.periodic && appliedEffect?.expiresAt !== undefined) {
         const key = periodicEffectKey(periodicTarget, action.value, playerRecipientIndex);
-        const effectSourceRowId = event.row.sourceRowId ?? event.row.id;
+        const effectSourceRowId = damageSource(definition, event.row.sourceRowId ?? event.row.id);
         if (existing && activePeriodicEffects[key] && definition.refresh !== false) {
           transferAndReschedulePeriodicEffect(
             action.value,
@@ -2514,6 +2959,28 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
       left.order - right.order ||
       (left.kind === "rotation" ? -1 : right.kind === "rotation" ? 1 : 0),
   );
+  const firstRow = sortedRows[0];
+  if (firstRow) {
+    const groupRows: TimelineRow[] = [...damageGroups.values()].map((group, index) => ({
+      ...firstRow,
+      id: `innerway-${group.id}`,
+      kind: "damageGroup",
+      step: { type: "skill", skill: group.id },
+      skill: { name: group.name, action: [], tags: [] },
+      sourceRowId: undefined,
+      sourceDamageWeights: undefined,
+      rotationIndex: undefined,
+      skipped: false,
+      order: -1000 + index,
+      effectiveCastTime: 0,
+      actions: [],
+      actionStates: {},
+      buffs: [],
+      debuffs: [],
+      resourceConsumption: undefined,
+    }));
+    sortedRows.unshift(...groupRows);
+  }
   if (sortedRows[0]) {
     const resourceNames = new Set([
       ...Object.keys(initialResources),
@@ -2538,12 +3005,17 @@ function buildRotationTimelinePass(input: TimelineBuildInput, resolvedAnchorTime
   return sortedRows;
 }
 
-function buildRotationTimelineResolved(input: TimelineBuildInput): TimelineRow[] {
-  if (input.rotation.eventTimeReference !== "battleStart") return buildRotationTimelinePass(input);
+function buildRotationTimelineResolved(
+  input: TimelineBuildInput,
+  procRoll?: (key: string) => number,
+  loopBounds: TimelineLoopBounds = {},
+): TimelineRow[] {
+  if (input.rotation.eventTimeReference !== "battleStart")
+    return buildRotationTimelinePass(input, undefined, procRoll, loopBounds);
   let anchorTime: number | undefined;
   let rows: TimelineRow[] = [];
   for (let pass = 0; pass < 8; pass += 1) {
-    rows = buildRotationTimelinePass(input, anchorTime);
+    rows = buildRotationTimelinePass(input, anchorTime, procRoll, loopBounds);
     const anchorRow = rows.find((row) => row.id === `rotation-${input.rotation.start?.step ?? 0}`);
     const actionIndex = input.rotation.start?.action;
     const nextAnchorTime = anchorRow
@@ -2552,7 +3024,7 @@ function buildRotationTimelineResolved(input: TimelineBuildInput): TimelineRow[]
     if (anchorTime !== undefined && compareTimelineTime(nextAnchorTime, anchorTime) === 0) return rows;
     anchorTime = nextAnchorTime;
   }
-  return buildRotationTimelinePass(input, anchorTime);
+  return buildRotationTimelinePass(input, anchorTime, procRoll, loopBounds);
 }
 
 type AutomaticEventTiming = { anchorTime: number; duration: number };
@@ -2574,11 +3046,8 @@ function automaticEventTimingFromRows(input: TimelineBuildInput, rows: TimelineR
             ? latest
             : Math.max(
                 latest,
-                row.step.type === "event" && row.step.event === "Delay"
-                  ? row.startTime + row.effectiveCastTime
-                  : row.startTime,
                 ...row.actions.flatMap((action) =>
-                  typeof action.time === "number" ? [row.startTime + action.time] : [],
+                  action.type === "damage" && typeof action.time === "number" ? [row.startTime + action.time] : [],
                 ),
               ),
         anchorTime,
@@ -2629,24 +3098,47 @@ function automaticDummyAttackRotation(input: TimelineBuildInput, timing: Automat
   return { ...input.rotation, steps: [...input.rotation.steps, ...automaticSteps] };
 }
 
-export function buildRotationTimeline(input: TimelineBuildInput): TimelineRow[] {
-  if (!input.rotation.autoHP && !input.rotation.dummyAttack) return buildRotationTimelineResolved(input);
+export function buildRotationTimeline(input: TimelineBuildInput, procRoll?: (key: string) => number): TimelineRow[] {
+  const hasPeriodicTrigger = input.innerWayRules.some((rule) => {
+    const actions = rule.trigger?.action;
+    return (Array.isArray(actions) ? actions : [actions]).some(
+      (action) =>
+        action &&
+        typeof action === "object" &&
+        action.type === "apply" &&
+        typeof action.value === "string" &&
+        input.dots[action.value],
+    );
+  });
+  if (!hasPeriodicTrigger && !input.rotation.autoHP && !input.rotation.dummyAttack)
+    return buildRotationTimelineResolved(input, procRoll);
   const automaticTiming =
     explicitBattleEndTiming(input.rotation) ??
     automaticEventTimingFromRows(
       input,
-      buildRotationTimelineResolved({
-        ...input,
-        rotation: { ...input.rotation, autoHP: false, dummyAttack: false },
-      }),
+      buildRotationTimelineResolved(
+        {
+          ...input,
+          rotation: { ...input.rotation, autoHP: false, dummyAttack: false },
+        },
+        undefined,
+        { suppressFeedback: true, exactPeriodicTiming: Boolean(procRoll) },
+      ),
     );
   let resolvedRotation = input.rotation;
   if (input.rotation.autoHP)
     resolvedRotation = automaticTargetHPRotation({ ...input, rotation: resolvedRotation }, automaticTiming);
   if (input.rotation.dummyAttack)
     resolvedRotation = automaticDummyAttackRotation({ ...input, rotation: resolvedRotation }, automaticTiming);
-  return buildRotationTimelineResolved({
-    ...input,
-    rotation: resolvedRotation,
-  });
+  return buildRotationTimelineResolved(
+    {
+      ...input,
+      rotation: resolvedRotation,
+    },
+    procRoll,
+    {
+      cutoff: automaticTiming.anchorTime + automaticTiming.duration,
+      battleEnd: input.rotation.steps.some((step) => step.type === "event" && step.event === "BattleEnd"),
+    },
+  );
 }

@@ -38,7 +38,7 @@ try {
     name: "Three-hit probe",
     castTime: 1.5,
     tags: ["MartialArts"],
-    action: [0.5, 1, 1.5].map((time) => ({ type: "damage", phyCoef: 1, time })),
+    action: [0.5, 1, 1.5].map((time) => ({ type: "damage", phyCoef: 1, attrCoef: 1, time })),
   };
   const hawkwingDefinition = {
     name: "Hawkwing",
@@ -109,7 +109,7 @@ try {
           name: "Heal",
           castTime: 0,
           tags: ["Heal"],
-          action: [{ type: "heal", phyCoef: 1, time: 0 }],
+          action: [{ type: "heal", phyCoef: 1, silkbindCoef: 1, time: 0 }],
         },
       },
     },

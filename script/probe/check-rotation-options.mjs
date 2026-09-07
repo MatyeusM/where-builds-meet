@@ -54,7 +54,7 @@ try {
       ObserveHP: {
         name: "Observe HP",
         castTime: 10,
-        action: Array.from({ length: 11 }, (_, time) => ({ type: "damage", phyCoef: 1, time })),
+        action: Array.from({ length: 11 }, (_, time) => ({ type: "damage", phyCoef: 1, attrCoef: 1, time })),
         tags: ["General"],
       },
     },
@@ -85,10 +85,10 @@ try {
         castTime: 2,
         action: [
           { type: "consumeResource", value: "Vitality", amount: 50, time: 0 },
-          { type: "damage", phyCoef: 1, time: 1 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
           { type: "addResource", value: "Vitality", amount: 10, time: 1 },
           { type: "consumeResource", value: "Vitality", amount: "all", time: 2 },
-          { type: "damage", phyCoef: 1, time: 2 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 2 },
         ],
         tags: ["Mystic"],
       },
@@ -116,7 +116,7 @@ try {
       ObserveDamage: {
         name: "Observe Damage",
         castTime: 18,
-        action: [{ type: "damage", phyCoef: 1, time: 18 }],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 18 }],
         tags: ["General"],
       },
     },

@@ -30,7 +30,7 @@ try {
   const skill = {
     name: "Probe Hit",
     castTime: 0.1,
-    action: [{ type: "damage", phyCoef: 1, time: 0.1 }],
+    action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 }],
     modifier: [],
     tags: ["DirectDamage"],
   };

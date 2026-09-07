@@ -78,7 +78,7 @@ try {
     affinityRate: 0.2,
   };
   const breakdown = calculateDamageBreakdown(
-    { phyCoef: 0, phyBonus: 0, attrBonus: 0 },
+    { phyCoef: 0, attrCoef: 0, phyBonus: 0, attrBonus: 0 },
     {
       stats: emptyStats,
       attunement: {},

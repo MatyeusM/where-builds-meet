@@ -9,7 +9,7 @@
     {
       "event": "damage",
       "resource": "Vitality",
-      "amount": 2,
+      "amount": { "function": "switch", "param1": "FuryHarvestT3", "param2": { "true": 2.1 }, "fallback": 2 },
       "cooldown": 2
     },
     {

@@ -15,7 +15,7 @@ try {
   const assert = (condition, message) => {
     if (!condition) throw new Error(message);
   };
-  const damage = (time) => ({ type: "damage", phyCoef: 1, phyBonus: 0, attrBonus: 0, time });
+  const damage = (time) => ({ type: "damage", phyCoef: 1, attrCoef: 1, phyBonus: 0, attrBonus: 0, time });
   const skills = {
     Prefight: {
       name: "Prefight",

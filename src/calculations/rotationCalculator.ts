@@ -176,6 +176,8 @@ export type RotationSimulationBundle = {
 };
 
 export type RotationSimulationResult = {
+  /** Published results may merge equivalent grouped damage; rebuild before event replay. */
+  compactedInnerWayResults?: boolean;
   metrics: RotationMetrics;
   timeline: TimelineRow[];
   anchorTime: number;
@@ -497,7 +499,7 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
           expectedHawkwing!.resolveAffinity(
             entry.hawkwing,
             tick,
-            breakdown.outcomeRates?.[entry.hawkwing.outcome] ?? 0,
+            (breakdown.outcomeRates?.[entry.hawkwing.outcome] ?? 0) * Number(entry.action.hitProbability ?? 1),
           );
       }
       if (entry.insightfulStrike) {
@@ -507,8 +509,10 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
           expectedInsightfulStrike!.resolveAffinity(
             entry.insightfulStrike,
             tick,
-            (inactiveBreakdown ?? breakdown).outcomeRates?.[entry.insightfulStrike.outcome] ?? 0,
-            (activeBreakdown ?? breakdown).outcomeRates?.[entry.insightfulStrike.outcome] ?? 0,
+            ((inactiveBreakdown ?? breakdown).outcomeRates?.[entry.insightfulStrike.outcome] ?? 0) *
+              Number(entry.action.hitProbability ?? 1),
+            ((activeBreakdown ?? breakdown).outcomeRates?.[entry.insightfulStrike.outcome] ?? 0) *
+              Number(entry.action.hitProbability ?? 1),
           );
       }
     }
@@ -912,12 +916,15 @@ function calculateBreakdown(
       tags: string[];
     }
   >();
+  const damageGroupRowIds = new Set(timeline.filter((row) => row.kind === "damageGroup").map((row) => row.id));
   const castRows = timeline.filter(
     (row) =>
       !row.skipped &&
       row.step.type === "skill" &&
       row.step.skill &&
-      (row.kind === "rotation" || (row.kind === "trigger" && row.triggerSource === "innerWay")),
+      (row.kind === "rotation" ||
+        row.kind === "damageGroup" ||
+        (row.kind === "trigger" && row.triggerSource === "innerWay" && !damageGroupRowIds.has(row.sourceRowId ?? ""))),
   );
   const casts = new Map(
     castRows.map((row) => [
@@ -949,9 +956,9 @@ function calculateBreakdown(
     const cast = casts.get(row.id);
     if (cast) cast.castTime += followingRow.effectiveCastTime;
   });
-  const owningCastId = (row: TimelineRow) => {
-    if (casts.has(row.id)) return row.id;
-    let sourceId = row.sourceRowId;
+  const owningCastId = (row: TimelineRow, overrideSourceId?: string) => {
+    if (!overrideSourceId && casts.has(row.id)) return row.id;
+    let sourceId = overrideSourceId ?? row.sourceRowId;
     const visited = new Set<string>();
     while (sourceId && !visited.has(sourceId)) {
       if (casts.has(sourceId)) return sourceId;
@@ -996,7 +1003,8 @@ function calculateBreakdown(
       tags: row.skill?.tags ?? [],
     };
     if (row.kind === "rotation") current.casts += 1;
-    else if (hasCountedDamage) current.triggers += 1;
+    else if (hasCountedDamage)
+      current.triggers += Number(row.actions.find((action) => action.type === "damage")?.hitProbability ?? 1);
     if (row.kind === "rotation") currentHealing.casts += 1;
     else if (hasCountedHealing) currentHealing.triggers += 1;
     row.actions.forEach((action, actionIndex) => {
@@ -1005,17 +1013,24 @@ function calculateBreakdown(
         if (!breakdown) return;
         const castId = owningCastId(row);
         const cast = castId ? casts.get(castId) : undefined;
-        if (cast) cast.damage += breakdown.total;
+        if (row.sourceDamageWeights) {
+          for (const [source, weight] of Object.entries(row.sourceDamageWeights)) {
+            const sourceCastId = owningCastId(row, source);
+            const sourceCast = sourceCastId ? casts.get(sourceCastId) : undefined;
+            if (sourceCast) sourceCast.damage += breakdown.total * weight;
+          }
+        } else if (cast) cast.damage += breakdown.total;
         Object.entries(breakdown.buffedDamageBySource ?? {}).forEach(([sourceRowId, damage]) => {
           const sourceCast = casts.get(sourceRowId);
           if (sourceCast) sourceCast.buffedDamage += damage;
         });
-        current.hits += 1;
+        const hitProbability = Number(action.hitProbability ?? 1);
+        current.hits += hitProbability;
         current.damage += breakdown.total;
-        current.abrasionTotal += breakdown.outcomeRates?.abrasion ?? 0;
-        current.normalTotal += breakdown.outcomeRates?.normal ?? 0;
-        current.criticalTotal += breakdown.outcomeRates?.critical ?? 0;
-        current.affinityTotal += breakdown.outcomeRates?.affinity ?? 0;
+        current.abrasionTotal += (breakdown.outcomeRates?.abrasion ?? 0) * hitProbability;
+        current.normalTotal += (breakdown.outcomeRates?.normal ?? 0) * hitProbability;
+        current.criticalTotal += (breakdown.outcomeRates?.critical ?? 0) * hitProbability;
+        current.affinityTotal += (breakdown.outcomeRates?.affinity ?? 0) * hitProbability;
       } else if (action.type === "heal") {
         const actionId = `${row.id}:${actionIndex}`;
         const breakdown = actionBreakdowns[actionId];
@@ -2186,7 +2201,12 @@ export function calculateSimulatedRotationRun(
     resolvedHealing: undefined,
     accumulatorThresholds: undefined,
   };
-  let timeline = buildRotationTimeline(structuralInput);
+  const procRolls = new Map<string, number>();
+  const procRoll = (key: string) => {
+    if (!procRolls.has(key)) procRolls.set(key, random());
+    return procRolls.get(key)!;
+  };
+  let timeline = buildRotationTimeline(structuralInput, procRoll);
   let resolution = timelineDamageEntries(
     timeline,
     structuralInput,
@@ -2201,7 +2221,7 @@ export function calculateSimulatedRotationRun(
   const runtime = healingTimelineRuntime(timeline, resolvedSequence);
   if (runtime) {
     const resolvedTimelineInput = { ...bundle.timeline, ...runtime.timeline };
-    timeline = buildRotationTimeline(resolvedTimelineInput);
+    timeline = buildRotationTimeline(resolvedTimelineInput, procRoll);
     resolution = timelineDamageEntries(
       timeline,
       resolvedTimelineInput,
@@ -2222,9 +2242,12 @@ export function calculateSimulatedRotationRun(
   };
 }
 
-export function calculateRotationBaseline(bundle: RotationSimulationBundle): RotationSimulationBaseline {
+export function calculateRotationBaseline(
+  bundle: RotationSimulationBundle,
+  preparedTimeline?: TimelineRow[],
+): RotationSimulationBaseline {
   const timelineStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-  let timeline = buildRotationTimeline(bundle.timeline);
+  let timeline = preparedTimeline ?? buildRotationTimeline(bundle.timeline);
   if (import.meta.env.DEV) finishCalculationPhase("timelineConstruction", timelineStartedAt);
   const initialTimingStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const { anchorTime } = timelineTiming(timeline, bundle.startAnchor);
@@ -2378,7 +2401,8 @@ export function calculateRotationComparisons(
     const usesWorldToSword = timelineInput.rotation.steps.some(
       (step) => step.type === "skill" && step.skill === "WorldToSword",
     );
-    const rebuildStructuralTimeline = Boolean(variant.timeline) || usesWorldToSword;
+    const rebuildStructuralTimeline =
+      Boolean(variant.timeline) || usesWorldToSword || Boolean(baselineResult.compactedInnerWayResults);
     const timelineStartedAt = import.meta.env.DEV && rebuildStructuralTimeline ? startCalculationPhase() : 0;
     let variantTimeline = rebuildStructuralTimeline
       ? buildRotationTimeline({

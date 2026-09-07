@@ -227,6 +227,7 @@
           },
           "trigger": {
             "event": "damage",
+            "requirement": [{ "target": "skillTag", "value": "DirectDamage" }],
             "action": {
               "type": "apply",
               "target": "self",

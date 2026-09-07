@@ -52,8 +52,8 @@ try {
       name: "Charged Probe",
       castTime: 0.2,
       action: [
-        { type: "damage", phyCoef: 1, time: 0.1 },
-        { type: "damage", phyCoef: 2, time: 0.2 },
+        { type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 },
+        { type: "damage", phyCoef: 2, attrCoef: 2, time: 0.2 },
       ],
       modifier: [],
       tags: ["DirectDamage", "Charged"],

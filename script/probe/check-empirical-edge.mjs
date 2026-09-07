@@ -114,7 +114,7 @@ try {
     name: "Cognition probe",
     castTime: 2,
     tags: ["DirectDamage", "MartialArtEffect"],
-    action: [0, 0.5, 1, 2].map((time) => ({ type: "damage", time, phyCoef: 0 })),
+    action: [0, 0.5, 1, 2].map((time) => ({ type: "damage", time, phyCoef: 0, attrCoef: 0 })),
   };
   const timeline = buildRotationTimeline({
     rotation: { name: "Cognition probe", steps: [{ type: "skill", skill: "Probe" }] },

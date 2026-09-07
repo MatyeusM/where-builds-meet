@@ -8,16 +8,20 @@ import {
   type RotationSimulationBundle,
 } from "./rotationCalculator";
 import { withCalculationBenchmark } from "./calculationBenchmark";
+import { compactInnerWayResults } from "./compactInnerWayResults";
+import { calculateEditorTimeline } from "./editorTimeline";
+import { rotationBundleFingerprint } from "./rotationCalculationCache";
 
 type WorkerRequest = {
   id: number;
   bundle: RotationCalculationBundle | RotationSimulationBundle;
-  mode?: "calculation" | "simulation" | "baseline" | "comparisons";
+  mode?: "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline";
   cacheKey?: string;
   baseline?: RotationSimulationBaseline;
 };
 
 const baselineCache = new Map<string, RotationSimulationBaseline>();
+const editorTimelineCache = new Map<string, ReturnType<typeof calculateEditorTimeline>["timeline"]>();
 
 function benchmarkLabel(
   mode: NonNullable<WorkerRequest["mode"]>,
@@ -42,12 +46,31 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     const mode = event.data.mode ?? "calculation";
     const calculate = () => {
       switch (mode) {
+        case "editorTimeline": {
+          const editorBundle = bundle as RotationSimulationBundle;
+          const editorTimeline = calculateEditorTimeline(editorBundle.timeline);
+          const start = editorTimeline.rotation.start;
+          const fingerprint = rotationBundleFingerprint({
+            ...editorBundle,
+            timeline: { ...editorBundle.timeline, rotation: editorTimeline.rotation },
+            startAnchor: {
+              rowId: `rotation-${start?.step ?? 0}`,
+              ...(start?.action === undefined ? {} : { actionIndex: start.action }),
+            },
+          });
+          editorTimelineCache.set(fingerprint, editorTimeline.timeline);
+          if (editorTimelineCache.size > 8) editorTimelineCache.delete(editorTimelineCache.keys().next().value!);
+          return { editorTimeline: { ...editorTimeline, fingerprint } };
+        }
         case "baseline": {
           if (!cacheKey) throw new Error("A baseline cache key is required");
-          const calculated = calculateRotationBaseline(bundle as RotationSimulationBundle);
+          const fingerprint = rotationBundleFingerprint(bundle as RotationSimulationBundle);
+          const prepared = editorTimelineCache.get(fingerprint);
+          editorTimelineCache.delete(fingerprint);
+          const calculated = calculateRotationBaseline(bundle as RotationSimulationBundle, prepared);
           baselineCache.set(cacheKey, calculated);
           if (baselineCache.size > 64) baselineCache.delete(baselineCache.keys().next().value!);
-          return calculated;
+          return compactInnerWayResults(calculated);
         }
         case "comparisons": {
           if (!cacheKey) throw new Error("A comparison cache key is required");

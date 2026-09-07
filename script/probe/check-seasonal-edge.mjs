@@ -72,7 +72,7 @@ try {
         name: "Martial hit",
         castTime: 0.1,
         tags: ["MartialArts"],
-        action: [{ type: "damage", phyCoef: 1, time: 0.1 }],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 }],
       },
       MysticHit: {
         name: "Mystic hit",
@@ -80,7 +80,7 @@ try {
         tags: ["Mystic"],
         action: [
           { type: "consumeResource", value: "Vitality", amount: 20, time: 0 },
-          { type: "damage", phyCoef: 1, time: 0.1 },
+          { type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 },
         ],
       },
     },
@@ -191,7 +191,7 @@ try {
         ...timeline.skills,
         Conversion: {
           ...timeline.skills.Conversion,
-          action: [{ type: "heal", phyCoef: 0, time: 0 }],
+          action: [{ type: "heal", phyCoef: 0, silkbindCoef: 0, time: 0 }],
         },
       },
       setupEffects: [

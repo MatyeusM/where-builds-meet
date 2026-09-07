@@ -29,7 +29,8 @@
         "phyCoef": 3.1956,
         "phyBonus": 459,
         "attrBonus": 0,
-        "time": 1.26
+        "time": 1.26,
+        "attrCoef": 3.1956
       },
       {
         "type": "apply",
@@ -79,14 +80,16 @@
         "phyCoef": 3.1956,
         "phyBonus": 459,
         "attrBonus": 0,
-        "time": 1.26
+        "time": 1.26,
+        "attrCoef": 3.1956
       },
       {
         "type": "damage",
         "phyCoef": 3.9058,
         "phyBonus": 561,
         "attrBonus": 0,
-        "time": 2.05
+        "time": 2.05,
+        "attrCoef": 3.9058
       },
       {
         "type": "apply",
@@ -135,14 +138,16 @@
         "phyCoef": 0.5406,
         "phyBonus": 77,
         "attrBonus": 0,
-        "time": 0.5
+        "time": 0.5,
+        "attrCoef": 0.5406
       },
       {
         "type": "damage",
         "phyCoef": 3.2435,
         "phyBonus": 465,
         "attrBonus": 0,
-        "time": 1.15
+        "time": 1.15,
+        "attrCoef": 3.2435
       },
       {
         "type": "apply",
@@ -548,7 +553,8 @@
         "phyCoef": 1.0231,
         "phyBonus": 146,
         "attrBonus": 0,
-        "time": 0.425
+        "time": 0.425,
+        "attrCoef": 1.0231
       },
       {
         "type": "apply",
@@ -625,7 +631,8 @@
         "phyCoef": 1.0231,
         "phyBonus": 146,
         "attrBonus": 0,
-        "time": 0.3125
+        "time": 0.3125,
+        "attrCoef": 1.0231
       },
       {
         "type": "apply",
@@ -702,7 +709,8 @@
         "phyCoef": 1.0231,
         "phyBonus": 146,
         "attrBonus": 0,
-        "time": 0.425
+        "time": 0.425,
+        "attrCoef": 1.0231
       },
       {
         "type": "apply",
@@ -779,7 +787,8 @@
         "phyCoef": 1.0231,
         "phyBonus": 146,
         "attrBonus": 0,
-        "time": 0.475
+        "time": 0.475,
+        "attrCoef": 1.0231
       },
       {
         "type": "apply",
@@ -863,7 +872,8 @@
         "phyCoef": 1.7052,
         "phyBonus": 244,
         "attrBonus": 0,
-        "time": 0.5875
+        "time": 0.5875,
+        "attrCoef": 1.7052
       },
       {
         "type": "trigger",
@@ -930,7 +940,8 @@
         "phyCoef": 0.7016,
         "phyBonus": 100,
         "attrBonus": 0,
-        "time": 0
+        "time": 0,
+        "attrCoef": 0.7016
       },
       {
         "type": "extend",
@@ -952,7 +963,8 @@
         "phyCoef": 1.6078,
         "phyBonus": 230,
         "attrBonus": 0,
-        "time": 0
+        "time": 0,
+        "attrCoef": 1.6078
       }
     ],
     "modifier": [],
@@ -995,7 +1007,8 @@
         "phyCoef": 1.3604,
         "phyBonus": 195.5,
         "attrBonus": 0,
-        "time": 1.3375
+        "time": 1.3375,
+        "attrCoef": 1.3604
       },
       {
         "type": "extend",
@@ -1079,7 +1092,8 @@
         "phyCoef": 1.28345,
         "phyBonus": 186,
         "attrBonus": 0,
-        "time": 1.3375
+        "time": 1.3375,
+        "attrCoef": 1.28345
       },
       {
         "type": "extend",
@@ -1163,7 +1177,8 @@
         "phyCoef": 1.3604,
         "phyBonus": 195.5,
         "attrBonus": 0,
-        "time": 1.3375
+        "time": 1.3375,
+        "attrCoef": 1.3604
       },
       {
         "type": "extend",
@@ -1185,14 +1200,16 @@
         "phyCoef": 1.3604,
         "phyBonus": 195.5,
         "attrBonus": 0,
-        "time": 2.7375
+        "time": 2.7375,
+        "attrCoef": 1.3604
       },
       {
         "type": "damage",
         "phyCoef": 1.4992,
         "phyBonus": 215,
         "attrBonus": 0,
-        "time": 2.7375
+        "time": 2.7375,
+        "attrCoef": 1.4992
       },
       {
         "type": "extend",
@@ -1273,7 +1290,8 @@
         "phyCoef": 1.28345,
         "phyBonus": 186,
         "attrBonus": 0,
-        "time": 1.3375
+        "time": 1.3375,
+        "attrCoef": 1.28345
       },
       {
         "type": "extend",
@@ -1295,14 +1313,16 @@
         "phyCoef": 1.28345,
         "phyBonus": 186,
         "attrBonus": 0,
-        "time": 2.7375
+        "time": 2.7375,
+        "attrCoef": 1.28345
       },
       {
         "type": "damage",
         "phyCoef": 1.4144,
         "phyBonus": 205,
         "attrBonus": 0,
-        "time": 2.7375
+        "time": 2.7375,
+        "attrCoef": 1.4144
       },
       {
         "type": "extend",
@@ -1433,14 +1453,16 @@
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 1.35
+        "time": 1.35,
+        "attrCoef": 1.4696
       },
       {
         "type": "damage",
         "phyCoef": 3.919,
         "phyBonus": 830,
         "attrBonus": 0,
-        "time": 3.275
+        "time": 3.275,
+        "attrCoef": 3.919
       },
       {
         "type": "apply",
@@ -1481,35 +1503,40 @@
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 0.55
+        "time": 0.55,
+        "attrCoef": 1.4696
       },
       {
         "type": "damage",
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 3.025
+        "time": 3.025,
+        "attrCoef": 1.4696
       },
       {
         "type": "damage",
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 5.525
+        "time": 5.525,
+        "attrCoef": 1.4696
       },
       {
         "type": "damage",
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 8.0625
+        "time": 8.0625,
+        "attrCoef": 1.4696
       },
       {
         "type": "damage",
         "phyCoef": 1.4696,
         "phyBonus": 310,
         "attrBonus": 0,
-        "time": 10.55
+        "time": 10.55,
+        "attrCoef": 1.4696
       }
     ],
     "modifier": [],
@@ -1705,7 +1732,8 @@
         "phyCoef": 12.595814,
         "phyBonus": 1259.5814,
         "attrBonus": 0,
-        "time": 4.7375
+        "time": 4.7375,
+        "attrCoef": 12.595814
       },
       {
         "type": "apply",
@@ -1735,7 +1763,8 @@
         "phyCoef": 0.9539,
         "phyBonus": 467,
         "attrBonus": 0,
-        "time": 0.4375
+        "time": 0.4375,
+        "attrCoef": 0.9539
       },
       {
         "type": "apply",
@@ -1784,63 +1813,72 @@
         "phyCoef": 2.546,
         "phyBonus": 365,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 2.546
       },
       {
         "type": "damage",
         "phyCoef": 0.7638,
         "phyBonus": 109.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.7638
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "apply",
@@ -1889,126 +1927,144 @@
         "phyCoef": 2.546,
         "phyBonus": 365,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 2.546
       },
       {
         "type": "damage",
         "phyCoef": 0.7638,
         "phyBonus": 109.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.7638
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 0.2546,
         "phyBonus": 36.5,
         "attrBonus": 0,
-        "time": 1.1625
+        "time": 1.1625,
+        "attrCoef": 0.2546
       },
       {
         "type": "damage",
         "phyCoef": 1.273,
         "phyBonus": 182.5,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 1.273
       },
       {
         "type": "damage",
         "phyCoef": 0.3819,
         "phyBonus": 54.75,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.3819
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "damage",
         "phyCoef": 0.1273,
         "phyBonus": 18.25,
         "attrBonus": 0,
-        "time": 1.6125
+        "time": 1.6125,
+        "attrCoef": 0.1273
       },
       {
         "type": "apply",
@@ -2037,7 +2093,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2052,7 +2109,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2067,7 +2125,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2082,7 +2141,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2097,7 +2157,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2112,7 +2173,8 @@
         "phyCoef": 2.0416,
         "phyBonus": 312,
         "attrBonus": 0,
-        "time": 0.8
+        "time": 0.8,
+        "attrCoef": 2.0416
       }
     ],
     "modifier": [],
@@ -2183,7 +2245,8 @@
         "phyCoef": 2.0368,
         "phyBonus": 292,
         "attrBonus": 0,
-        "time": 0.5
+        "time": 0.5,
+        "attrCoef": 2.0368
       }
     ],
     "modifier": [],

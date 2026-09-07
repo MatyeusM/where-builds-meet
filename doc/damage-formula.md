@@ -227,12 +227,12 @@ two runs. Session-configured custom percentile rows use the same selection rule.
 
 ## Per-outcome damage
 
-For an action with physical coefficient `C`, physical bonus `Bp`, attribute bonus `Ba`, and outcome-specific attacks `P` and `Ai`:
+For an action with physical coefficient `Cp` (`phyCoef`), attribute coefficient `Ca` (`attrCoef`), physical bonus `Bp`, attribute bonus `Ba`, and outcome-specific attacks `P` and `Ai`:
 
 ```text
 Adjusted Enemy Defense = Enemy Defense × (1 + sum(active defenseBonus))
-Base Physical = C × (P − Adjusted Enemy Defense) + Bp
-Base Attribute i = C × Ai + (Ba when i is the primary path, otherwise 0)
+Base Physical = Cp × (P − Adjusted Enemy Defense) + Bp
+Base Attribute i = Ca × Ai + (Ba when i is the primary path, otherwise 0)
 ```
 
 `defenseBonus` is a signed percentage adjustment. A negative value lowers
@@ -259,7 +259,48 @@ Attribute i =
   × Outcome Multiplier
 ```
 
-The action's `attrBonus` is added only to the primary path. The same action `phyCoef` is used by physical damage and all four attribute paths.
+The action's `attrBonus` is added only to the primary path. Physical and attribute coefficients are independent; an omitted coefficient is zero. Existing actions explicitly retain equal coefficients. The primary attribute still receives its usual 1.5 path multiplier; other attributes receive 1.
+
+### Periodic probability scaling
+
+All DOTs deal their authored damage once per active tick, regardless of stack count.
+Stacks can still determine effect transitions, including Weeping Blood's five-stack
+consumption, but do not multiply tick damage. For expected chance DOTs the timeline
+supplies `damageScale` equal to the probability of a tick. This multiplies every
+damage channel after ordinary formula resolution; `hitProbability` carries the same
+probability for hit counts and outcome triggers. A multi-stack tick is one hit.
+The expected tracker factors cadence into weighted schedules inside each
+stack/expiry state: a cadence of probability mass `p` at any positive stack count
+contributes `p` to both tick damage scale and hit probability. This is an
+exact representation change by default, with no probability truncation.
+Weeping Blood opts into a battle-aligned expected tick grid: at seconds 1, 2,
+and so on, its damage scale is the summed probability of branches eligible to
+tick. Stack count does not multiply that value. This approximates DOT timing
+and hit-time effects in expected calculations; simulations retain the exact
+application-relative cadence. Stack, threshold, and expiration probabilities
+remain unrounded.
+An `onMaxStack` burst resolves as a separate ordinary damage action, weighted by
+its trigger probability in expected calculations. Weeping Blood consumes at
+five stacks, so it never produces a five-stack tick.
+Fivefold Bleed T1 adds 100% Base DMG Bonus to Piercing Damage, and T2 adds
+62.3 Max Physical Attack. T3's natural-expiration burst has expected weight
+`P(DOT expires at this time) × 0.2`; it uses the same Piercing Damage formula
+and T1 bonus as the five-stack burst, not the DOT damage multiplier.
+Piercing Damage is Direct Damage and rolls the normal Weeping Blood chance.
+At T6 only a five-stack consumption burst also guarantees one post-hit stack;
+an expiration burst has only the independent Direct Damage chance.
+These applications are conditional
+on the branches that produced the burst: their probabilities must not be
+multiplied by its hit weight again. Renewed expiration bursts continue to use
+the 20% chance, within the fixed timeline cutoff described in `skill-data.md`.
+Weeping Blood and Piercing Damage are attributed to the Fivefold Bleed damage
+group, and Morale Chant to its own group. Group ownership does not change the
+hit-time formula, proc probability, or rotation total; it removes these actions
+from the damage credited to an individual cast.
+Published grouped results may combine equivalent same-time damage contributions
+after all event processing and metrics are complete. Their channel damage and hit
+weights are additive; no combined hit is fed back into triggers or outcome-state
+trackers. Exact event timelines remain authoritative for calculation and simulation.
 
 ## Healing
 
@@ -277,10 +318,12 @@ Physical Healing =
   × (1 + Physical Penetration / 200)
 
 Silkbind Healing =
-  (Average Silkbind Attack × Physical Coefficient + Attribute Bonus)
+  (Average Silkbind Attack × Silkbind Coefficient + Attribute Bonus)
   × (1 + Silkbind Penetration / 200)
   × (1 + Silkbind Healing Bonus)
 ```
+
+Healing uses `phyCoef` for Physical and `silkbindCoef` for Silkbind, with omitted coefficients treated as zero. It does not use `attrCoef` or other attribute attacks.
 
 Calculation-time Physical and Silkbind Attack Bonus effects multiply their
 respective average attack before the coefficient. Matching healing attunements

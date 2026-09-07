@@ -42,8 +42,25 @@ try {
     effects: [],
   };
   const damage = (effects, isDot, skillTags = []) =>
-    calculateDamageBreakdown({ phyCoef: 1 }, { ...baseContext, skillTags, effects, isDot });
+    calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...baseContext, skillTags, effects, isDot });
   const baselineDirect = damage([], false);
+  const physicalOnly = calculateDamageBreakdown({ phyCoef: 0.02 }, { ...baseContext, isDot: true });
+  const physicalOnlyRolled = calculateSimulatedDamageBreakdown(
+    { phyCoef: 0.02 },
+    { ...baseContext, isDot: true },
+    () => 0.5,
+  );
+  for (const result of [physicalOnly, physicalOnlyRolled]) {
+    assert(
+      closeTo(result.physical, 2) && closeTo(result.total, 2),
+      "Physical-only DOT must ignore attribute attack when attrCoef is omitted.",
+    );
+  }
+  const independent = calculateDamageBreakdown({ phyCoef: 0.02, attrCoef: 0.5 }, baseContext);
+  assert(
+    closeTo(independent.physical, 2) && closeTo(independent.bellstrike, 50),
+    "Physical and attribute coefficients must resolve independently.",
+  );
   const baselineDot = damage([], true);
   const directWithBonus = damage([{ dotDamage: 0.25 }], false);
   const dotWithBonus = damage([{ dotDamage: 0.25 }], true);
@@ -56,12 +73,12 @@ try {
     "Multiple dotDamage effects must add within the DOT category.",
   );
   const simulatedBaseline = calculateSimulatedDamageBreakdown(
-    { phyCoef: 1 },
+    { phyCoef: 1, attrCoef: 1 },
     { ...baseContext, isDot: true },
     () => 0.5,
   );
   const simulatedWithBonus = calculateSimulatedDamageBreakdown(
-    { phyCoef: 1 },
+    { phyCoef: 1, attrCoef: 1 },
     { ...baseContext, effects: [{ dotDamage: 0.25 }], isDot: true },
     () => 0.5,
   );

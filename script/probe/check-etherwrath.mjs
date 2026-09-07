@@ -31,7 +31,6 @@ try {
     "Etherwrath 2-piece must add 78 minimum Physical Attack.",
   );
   assert(fourPiece.condition === "Etherwrath4P", "Etherwrath 4-piece must expose its setup condition.");
-  assert(fourPiece.trigger.event === "damage", "Etherwrath 4-piece must trigger on every damage action.");
   assert(buff.duration === 8 && buff.maxStack === 5, "Etherwrath must last eight seconds and cap at five stacks.");
   assert(buff.stackEffects.length === 5, "Etherwrath must define all five cumulative stack states.");
   assert(
@@ -71,6 +70,7 @@ try {
     action: Array.from({ length: 6 }, (_, index) => ({
       type: "damage",
       phyCoef: 0,
+      attrCoef: 0,
       phyBonus: 0,
       attrBonus: 0,
       time: index + 1,
@@ -81,7 +81,7 @@ try {
   const observe = {
     name: "Etherwrath observer",
     castTime: 0,
-    action: [{ type: "damage", phyCoef: 0, phyBonus: 0, attrBonus: 0, time: 0 }],
+    action: [{ type: "damage", phyCoef: 0, attrCoef: 0, phyBonus: 0, attrBonus: 0, time: 0 }],
     modifier: [],
     tags: ["DirectDamage"],
   };
@@ -127,6 +127,59 @@ try {
     "Perfect Dodge must apply five Etherwrath stacks directly.",
   );
 
+  const dots = (await viteServer.ssrLoadModule("/data/dot/innerway.json")).default;
+  const directAndDot = {
+    name: "Direct hit and bleed",
+    castTime: 0,
+    tags: ["DirectDamage"],
+    action: [
+      { type: "damage", phyCoef: 1, time: 0 },
+      { type: "apply", target: "target", value: "WeepingBlood", time: 0 },
+    ],
+  };
+  const watch = {
+    name: "Non-direct observers",
+    castTime: 9,
+    tags: [],
+    action: [2, 9].map((time) => ({ type: "damage", phyCoef: 1, time })),
+  };
+  const dotInput = timelineInput(
+    {
+      name: "DOT exclusion",
+      steps: [
+        { type: "skill", skill: "Start" },
+        { type: "skill", skill: "Watch" },
+      ],
+    },
+    { Start: directAndDot, Watch: watch },
+  );
+  dotInput.dots = dots;
+  dotInput.effectDefinitions = { ...kiteBuffs, ...dots };
+  const dotTimeline = buildRotationTimeline(dotInput);
+  const watched = dotTimeline.find((row) => row.step.skill === "Watch");
+  const activeStack = watched.actionStates[0].buffs.find((effect) => effect.name === "Etherwrath");
+  assert(
+    activeStack?.stack === 1 && activeStack.expiresAt === 8,
+    "A DOT tick must neither add nor refresh Etherwrath stacks.",
+  );
+  assert(
+    !watched.actionStates[1].buffs.some((effect) => effect.name === "Etherwrath"),
+    "DOT and untagged damage must not keep Etherwrath alive.",
+  );
+  const dotOnly = buildRotationTimeline({
+    ...dotInput,
+    skills: {
+      ...dotInput.skills,
+      Start: { ...directAndDot, action: directAndDot.action.filter((action) => action.type !== "damage") },
+    },
+  });
+  assert(
+    dotOnly.every((row) =>
+      Object.values(row.actionStates).every((state) => !state.buffs.some((effect) => effect.name === "Etherwrath")),
+    ),
+    "DOT-only and untagged damage cannot initially activate Etherwrath.",
+  );
+
   const stats = {
     ...emptyStats,
     minPhys: 100,
@@ -166,7 +219,7 @@ try {
   const splitMaxStackEffects = splitUnconditionalDamageEffectRules(maxStackEffects);
   const attackEffects = maxStackEffects.filter((effect) => !effect.requirement).map((effect) => effect.effect);
   const penetrationEffects = maxStackEffects.filter((effect) => effect.requirement).map((effect) => effect.effect);
-  const action = { phyCoef: 1, phyBonus: 0, attrBonus: 0 };
+  const action = { phyCoef: 1, attrCoef: 1, phyBonus: 0, attrBonus: 0 };
   const baseline = calculateDamageBreakdown(action, baseContext).total;
   const attackBoosted = calculateDamageBreakdown(action, { ...baseContext, effects: attackEffects }).total;
   const aggregateBoosted = calculateDamageBreakdown(action, {
@@ -196,7 +249,9 @@ try {
     "Martial Art Effects at five stacks must gain six penetration in every damage channel.",
   );
 
-  console.log("Etherwrath set, stack, dodge, attack, and penetration checks passed.");
+  console.log(
+    "Etherwrath Direct Damage stacks, DOT/non-direct exclusion, dodge, attack, and penetration checks passed.",
+  );
 } finally {
   await viteServer.close();
 }

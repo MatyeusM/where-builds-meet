@@ -10,7 +10,8 @@
         "phyCoef": 1.6218,
         "phyBonus": 232,
         "attrBonus": 0,
-        "time": "expire"
+        "time": "expire",
+        "attrCoef": 1.6218
       },
       {
         "type": "apply",
@@ -21,7 +22,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Mystic", "AreaMystic", "LeapingToad"],
+    "tags": ["Mystic", "DirectDamage", "AreaMystic", "LeapingToad"],
     "refresh": false
   },
   "LesserToadVenom": {
@@ -35,11 +36,12 @@
         "phyCoef": 1.6218,
         "phyBonus": 232,
         "attrBonus": 0,
-        "time": "expire"
+        "time": "expire",
+        "attrCoef": 1.6218
       }
     ],
     "modifier": [],
-    "tags": ["Mystic", "AreaMystic", "LeapingToad"],
+    "tags": ["Mystic", "DirectDamage", "AreaMystic", "LeapingToad"],
     "refresh": false
   }
 }

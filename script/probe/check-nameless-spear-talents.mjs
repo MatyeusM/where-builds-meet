@@ -77,8 +77,11 @@ try {
     enemy,
     derivedStats: calculateDerivedStats(damageStats, 0),
   };
-  const baseline = calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [] });
-  const enhanced = calculateDamageBreakdown({ phyCoef: 1 }, { ...context, effects: [affinityRule.effect] });
+  const baseline = calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [] });
+  const enhanced = calculateDamageBreakdown(
+    { phyCoef: 1, attrCoef: 1 },
+    { ...context, effects: [affinityRule.effect] },
+  );
   assertClose(enhanced.affinity / baseline.affinity, 1.18, "Affinity DMG Up must cap at 18% at 30% Affinity Rate.");
 
   console.log("Nameless Spear talent calculation checks passed.");

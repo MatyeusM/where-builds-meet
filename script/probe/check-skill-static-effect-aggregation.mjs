@@ -48,9 +48,9 @@ try {
             name: "Charged Multi-hit",
             castTime: 0.2,
             action: [
-              { type: "damage", phyCoef: 1, time: 0.1 },
+              { type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 },
               { type: "apply", target: "target", value: "Vulnerable", time: 0.1 },
-              { type: "damage", phyCoef: 1, time: 0.2 },
+              { type: "damage", phyCoef: 1, attrCoef: 1, time: 0.2 },
             ],
             modifier: [],
             tags: ["DirectDamage", "Charged"],
@@ -58,7 +58,7 @@ try {
           UntaggedHit: {
             name: "Untagged Hit",
             castTime: 0.1,
-            action: [{ type: "damage", phyCoef: 1, time: 0.1 }],
+            action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 }],
             modifier: [],
             tags: ["DirectDamage"],
           },

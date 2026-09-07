@@ -127,10 +127,11 @@ function calculateHealingBreakdownInternal(
   healingBonus += attunement.healingBonus;
 
   const coefficient = numberValue(action.phyCoef);
+  const silkbindCoefficient = numberValue(action.silkbindCoef);
   const physical =
     (averagePhysicalAttack * coefficient + numberValue(action.phyBonus)) * (1 + physicalPenetration / 200);
   const silkbind =
-    (averageSilkbindAttack * coefficient + numberValue(action.attrBonus)) *
+    (averageSilkbindAttack * silkbindCoefficient + numberValue(action.attrBonus)) *
     (1 + silkbindPenetration / 200) *
     (1 + stats.silkbindHealingBonus);
   const criticalRate = Math.min(

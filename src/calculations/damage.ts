@@ -58,6 +58,11 @@ export const ENEMY_DEFENSE = 405;
 export type DamageAction = {
   type?: unknown;
   phyCoef?: unknown;
+  attrCoef?: unknown;
+  silkbindCoef?: unknown;
+  /** Runtime periodic stack/probability weight, applied after resolving attack channels. */
+  damageScale?: unknown;
+  hitProbability?: unknown;
   phyBonus?: unknown;
   attrBonus?: unknown;
   coef?: unknown;
@@ -199,6 +204,7 @@ function calculateDamageBreakdownInternal(
     return resolved;
   };
   const coefficient = numberValue(action.phyCoef);
+  const attributeCoefficient = numberValue(action.attrCoef);
   const physicalBonus = context.isDot ? 0 : numberValue(action.phyBonus);
   const attributeBonus = context.isDot ? 0 : numberValue(action.attrBonus);
   const path = mainAttributeForWeapons(weapons);
@@ -334,8 +340,11 @@ function calculateDamageBreakdownInternal(
     skillWeaponArtBonus +
     mysticSkillBonus +
     resolvedEffects.innerWayDmgBonus;
-  const physicalSharedBonus = (1 + resolvedEffects.baseDmgBonus) * (1 + damageBonusCategory1) * (1 + attunementBonus);
+  const damageScale = action.damageScale === undefined ? 1 : numberValue(action.damageScale);
+  const physicalSharedBonus =
+    damageScale * (1 + resolvedEffects.baseDmgBonus) * (1 + damageBonusCategory1) * (1 + attunementBonus);
   const attributeSharedBonus =
+    damageScale *
     (1 + resolvedEffects.baseDmgBonus) *
     (1 + damageBonusCategory1 + resolvedEffects.attributeDmgBonus) *
     (1 + attunementBonus);
@@ -359,7 +368,7 @@ function calculateDamageBreakdownInternal(
       (total, [minAttack, maxAttack, penetration, damageBonus, attribute, resistance]) => {
         const attack = attackValue(minAttack, maxAttack, mode);
         const damage =
-          (coefficient * attack + (attribute === path ? attributeBonus : 0)) *
+          (attributeCoefficient * attack + (attribute === path ? attributeBonus : 0)) *
           penetrationMultiplier(penetration + (attribute === path ? attunementFormlessPenetration : 0), resistance) *
           (1 + damageBonus) *
           (attribute === path ? 1.5 : 1);

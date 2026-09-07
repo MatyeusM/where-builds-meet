@@ -34,7 +34,7 @@ try {
   const physicalPenetrationOutput = (physicalPenetration, calculate) => {
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1, physicalPenetration };
     return calculate(
-      { type: calculate === calculateHealingBreakdown ? "heal" : "damage", phyCoef: 1 },
+      { type: calculate === calculateHealingBreakdown ? "heal" : "damage", phyCoef: 1, attrCoef: 1 },
       {
         stats,
         attunement: {},
