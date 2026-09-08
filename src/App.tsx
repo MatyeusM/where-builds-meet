@@ -18,6 +18,7 @@ import { resolveAttunementStats, type AttunementOverrides } from "./calculations
 import { resolveSwitchValue } from "./calculations/dynamicValues";
 import { UiIcon } from "./UiIcon";
 import { buildTimelineDisplayEntries } from "./rotationDisplay";
+import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay";
 import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea";
 import { publishNotice, dismissNotice } from "./notices";
 const loadBuildTab = () => import("./BuildTab");
@@ -2087,6 +2088,17 @@ function PriorityPanel({
   showMaxRoll?: boolean;
   showHealing?: boolean;
 }) {
+  const [statMode, setStatMode] = useState<StatPriorityMode>("max");
+  const isStatPriority = calculationCategory === "statPriority";
+  const displayedRows = useMemo(
+    () => statPriorityDisplayRows(rows, isStatPriority ? statMode : "max"),
+    [rows, isStatPriority, statMode],
+  );
+  const modeLabels = {
+    max: t("ui.app.priorityModeMax"),
+    relayed: t("ui.buildTab.relayedOptionLabel"),
+    both: t("ui.app.priorityModeBoth"),
+  };
   return (
     <section className="panel priority-panel">
       <div className="panel-heading">
@@ -2094,6 +2106,19 @@ function PriorityPanel({
           <h2>{title}</h2>
           <CalculationStatus category={calculationCategory} />
         </div>
+        {isStatPriority && (
+          <button
+            type="button"
+            className="button button-secondary priority-mode-control"
+            onClick={() => setStatMode(nextStatPriorityMode)}
+            aria-label={t("ui.app.priorityModeSwitch", {
+              current: modeLabels[statMode],
+              next: modeLabels[nextStatPriorityMode(statMode)],
+            })}
+          >
+            {modeLabels[statMode]}
+          </button>
+        )}
       </div>
       {rows.length > 0 ? (
         <div
@@ -2101,7 +2126,9 @@ function PriorityPanel({
         >
           <div className="priority-header">
             <span>{t("ui.app.name")}</span>
-            {showMaxRoll && <span>{t("ui.app.maxRoll")}</span>}
+            {showMaxRoll && (
+              <span>{isStatPriority && statMode !== "max" ? t("ui.app.priorityRoll") : t("ui.app.maxRoll")}</span>
+            )}
             <span>{t("ui.app.throughputDeltaHeader", { throughput: t("system.dps") })}</span>
             <span>{t("ui.app.throughputPercentageHeader", { throughput: t("system.dps") })}</span>
             {showHealing ? (
@@ -2115,9 +2142,24 @@ function PriorityPanel({
               </>
             ) : null}
           </div>
-          {rows.map((row, index) => (
-            <div className={`priority-row ${sectionBreakAt === index ? "priority-section-start" : ""}`} key={row.label}>
-              <span>{gameText(row.label)}</span>
+          {displayedRows.map((row, index) => (
+            <div
+              className={`priority-row ${sectionBreakAt === index ? "priority-section-start" : ""}`}
+              key={`${row.label}-${row.rollKind}`}
+            >
+              <span>
+                {gameText(row.label)}
+                {isStatPriority && statMode === "both" && row.rollKind === "relayed" && (
+                  <span
+                    className="priority-relayed-indicator"
+                    role="img"
+                    aria-label={t("ui.buildTab.relayedOptionLabel")}
+                    title={t("ui.buildTab.relayedOptionLabel")}
+                  >
+                    <UiIcon name="arrowUp" />
+                  </span>
+                )}
+              </span>
               {showMaxRoll && (
                 <strong className="priority-max-roll">
                   {row.maxRoll === undefined ? "—" : formatNumber(row.maxRoll)}

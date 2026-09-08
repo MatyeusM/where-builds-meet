@@ -305,6 +305,22 @@
 
   .priority-panel .panel-heading {
     margin-block-end: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .priority-mode-control {
+    flex: 0 0 auto;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .priority-relayed-indicator {
+    display: inline-flex;
+    margin-inline-start: var(--space-xs);
+    color: var(--primary);
+    font-size: 1.125rem;
+    line-height: 1;
+    vertical-align: middle;
+    text-shadow: 0 0 8px oklch(from var(--primary) l c h / 0.45);
   }
 
   .priority-list {

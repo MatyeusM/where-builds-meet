@@ -1006,6 +1006,13 @@ variant would only produce a redundant zero-difference result. Weapon and armor
 set comparison generation likewise omits the currently selected tier.
 
 Each priority row stores absolute and percentage changes for both DPS and HPS.
+The Stats Priority panel has a local Max / Relayed / Max + Relayed display mode,
+defaulting to Max. Relayed rows linearly scale the cached Max roll, DPS/HPS delta,
+and both percentage changes by the shared `relayedAffixMultiplier` (currently 0.94).
+These are predictions, not recalculated variants; the mode is not part of
+worker requests or calculation fingerprints. Combined mode ranks separate Max and
+Relayed rows together, marking only Relayed affix names with the Build tab's up-arrow
+icon rather than text labels. Attunement and Inner Way priorities are unchanged.
 All priority rows sort by DPS change first and use HPS change as the tie-breaker.
 Character-stat and attunement priorities use descending order. Inner Ways are
 removed, so their rows use ascending order to show the largest lost DPS first,

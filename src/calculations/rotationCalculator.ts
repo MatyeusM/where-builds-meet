@@ -733,7 +733,10 @@ function calculatePriorityRows(
   return sortRotationPriorityRows(rows, order);
 }
 
-export function sortRotationPriorityRows(rows: RotationPriority[], order: "ascending" | "descending" = "descending") {
+export function sortRotationPriorityRows<T extends RotationPriority>(
+  rows: T[],
+  order: "ascending" | "descending" = "descending",
+) {
   const direction = order === "ascending" ? 1 : -1;
   return [...rows].sort(
     (left, right) =>
