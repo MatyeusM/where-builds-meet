@@ -1546,9 +1546,11 @@ same-timestamp actions cannot erase it.
 
 The expected tracker groups active branches by expiration time and damage owner.
 For Fivefold Bleed that owner is always its Inner Way group, not the applying cast.
-One internal wakeup is queued for each distinct expiry/owner pair. When it fires,
+One internal wakeup per effect tracks the earliest live list-head expiry. When it fires,
 the current probability weights the normal effect-action executor, whose trigger
-action applies the 20% chance. Applications do not rebuild existing expiry schedules.
+action applies the 20% chance. Matching owners are resolved together, then the next
+expiration is scheduled. Applications update the pending wakeup without rebuilding
+all future expiry schedules.
 Expiration checks themselves produce no timeline rows. Threshold-consumed branches contribute no
 expiration probability. Simulation rolls the expiration trigger using the same
 per-run memoized random source as chance applications.

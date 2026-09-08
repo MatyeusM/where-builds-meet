@@ -1,3 +1,4 @@
+import { fivefoldBenchmarkBundle } from "./fivefold-benchmark-fixture.mjs";
 import { createServer } from "vite";
 import assert from "node:assert/strict";
 
@@ -8,76 +9,13 @@ const server = await createServer({
   logLevel: "silent",
 });
 try {
-  const load = async (path) => (await server.ssrLoadModule(path)).default;
   const { buildRotationTimeline } = await server.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { calculateRotationBaseline, calculateSimulatedRotationRun } = await server.ssrLoadModule(
     "/src/calculations/rotationCalculator.ts",
   );
-  const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
-  const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
-  const way = await load("/data/innerway/fivefold-bleed.json");
-  const dots = await load("/data/dot/innerway.json");
-  const { PiercingDamage } = await load("/data/skill/general.json");
-  const rules = Object.values(way.effect).flatMap((definition, tier) => [
-    ...(definition.effect ?? []).map((effect) => ({
-      ...effect,
-      effect: effect.effect ?? effect,
-      source: "FivefoldBleed",
-      tier,
-    })),
-    ...(definition.trigger ?? []).map((trigger) => ({ trigger, effect: {}, source: "FivefoldBleed", tier })),
-  ]);
-  const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
   for (const count of process.argv.slice(2).length ? process.argv.slice(2).map(Number) : [400]) {
-    const end = (count - 1) * 0.137 + 5;
-    const input = {
-      rotation: {
-        name: "Cadence stress",
-        steps: [
-          { type: "skill", skill: "Hits" },
-          { type: "event", event: "BattleEnd", startTime: end },
-        ],
-      },
-      skills: {
-        PiercingDamage,
-        Hits: {
-          name: "Hits",
-          castTime: end,
-          tags: ["DirectDamage"],
-          action: Array.from({ length: count }, (_, i) => ({ type: "damage", phyCoef: 1, time: i * 0.137 })),
-        },
-      },
-      dots,
-      effectDefinitions: dots,
-      eventDefinitions: { BattleEnd: { name: "Battle End", action: [] } },
-      innerWayRules: rules,
-      innerWayConditions: Object.keys(way.effect),
-      setupEffects: [],
-      weapons: [],
-    };
-    const bundle = {
-      timeline: input,
-      stats,
-      attunement: {},
-      enemy: {
-        name: "Probe",
-        level: 96,
-        defense: 0,
-        physicalResistance: 0,
-        bellstrikeResistance: 0,
-        stonesplitResistance: 0,
-        silkbindResistance: 0,
-        bamboocutResistance: 0,
-        judgementResistance: 0,
-      },
-      derivedStats: calculateDerivedStats(stats, 0),
-      weapons: [],
-      startAnchor: { rowId: "rotation-0" },
-      statPriority: [],
-      attunementPriority: [],
-      innerWayPriority: [],
-      setupComparisons: {},
-    };
+    const bundle = await fivefoldBenchmarkBundle(server, count);
+    const input = bundle.timeline;
     const samples = { exact: [], merged: [] };
     const output = {};
     for (let run = 0; run < 10; run++) {

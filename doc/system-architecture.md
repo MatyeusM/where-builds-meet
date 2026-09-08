@@ -293,14 +293,24 @@ Existing `time: "expire"` actions also support chance-triggered damage. Concrete
 expiration schedules have a latest-generation identity so refreshes to the same
 timestamp cannot duplicate actions. Natural expiration is validated before state
 pruning, independently of other actions at that clock boundary. Expected DOT
-branches use persistent internal expiry wakeups keyed by expiry time and damage
-owner. A wakeup reads the current probability distribution when it fires; refreshed
-or consumed branches contribute zero. Only a newly introduced expiry is queued,
-not every possible future expiration after each application. Live expiry actions
+branches keep one pending expiry wakeup per effect, selected from sorted list heads.
+Applications, branch release and tiny-state merging update that wakeup in place.
+When it fires, matching owners supply their current probability, and the next
+live expiration is scheduled. Live expiry actions
 reuse the effect-action executor without publishing an expiration-check row.
 `ExpectedPeriodicTracker` extends the outcome-probability infrastructure with a
 distribution over stack count, shared expiration, damage owner, and temporary
-branch identity. Each state carries a map of next-tick timestamps to absolute
+branch identity. Within each branch and owner, stack-indexed sorted lists hold
+expiration and absolute probability; inactive mass is a scalar. Applications walk
+stacks downward, scale failed applications in place and aggregate successful mass
+into one new entry per destination stack. Indexed linked lists backed by shared
+numeric arrays recycle slots without allocating per-state objects. Packed arrays
+remain available through the diagnostic `expectedPeriodicStorage` input.
+Tiny-state compaction retains nodes and unlinks others during linear bucket
+traversals; it does not rebuild groups and search to reinsert each result.
+Branch release merges sorted lists with one forward cursor and a direct-tail
+fast path for current-expiration follow-ups, avoiding repeated prefix searches.
+Exact-cadence states also carry maps of next-tick timestamps to absolute
 probability mass. Cadence does not affect the supported application, threshold,
 or expiration transitions, so states with different cadences share those
 transitions while their weighted tick schedules remain exact by default. The expected

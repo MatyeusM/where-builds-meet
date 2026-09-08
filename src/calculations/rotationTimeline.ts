@@ -453,6 +453,8 @@ function boostDamageCollection(
 }
 
 export type TimelineBuildInput = {
+  /** Storage comparison for the stack-indexed expected tracker. */
+  expectedPeriodicStorage?: "packed" | "indexed";
   /** Diagnostic opt-out for the expected shared-clock tiny-state approximation. */
   expectedPeriodicStateMerging?: boolean;
   rotation: RotationRecord;
@@ -734,7 +736,7 @@ function buildRotationTimelinePass(
     actionIndex?: number;
     subActionIndex?: number;
     expiresEffect?: { target: "self" | "target" | "player"; name: string; expiresAt: number; scheduleId: number };
-    expectedWakeup?: { name: string; active: ActivePeriodicEffect; source?: string; expirationKey?: string };
+    expectedWakeup?: { name: string; active: ActivePeriodicEffect };
   };
   const compareSortOrder = (left: number[], right: number[]) => {
     const sharedLength = Math.min(left.length, right.length);
@@ -1487,7 +1489,8 @@ function buildRotationTimelinePass(
     rows: TimelineRow[];
     schedulerRow?: TimelineRow;
     pendingTick?: TimelineEvent;
-    pendingExpirations?: Map<string, TimelineEvent>;
+    pendingExpiration?: TimelineEvent;
+    expirationAfter?: number;
   };
   const activePeriodicEffects: Record<string, ActivePeriodicEffect> = {};
   const expirationScheduleIds = new Map<string, number>();
@@ -1635,30 +1638,38 @@ function buildRotationTimelinePass(
     active.pendingTick = wakeup;
     events.push(wakeup);
   };
+  const scheduleExpectedExpiration = (name: string, active: ActivePeriodicEffect, sortOrder: number[]) => {
+    const hasExpirationActions = active.definition.action?.some(
+      (action) => action && typeof action === "object" && (action as EditableObject).time === "expire",
+    );
+    if (!hasExpirationActions) return;
+    const time = active.expected!.nextExpiration(active.expirationAfter);
+    if (time === undefined) {
+      if (active.pendingExpiration) events.remove((event) => event === active.pendingExpiration);
+      active.pendingExpiration = undefined;
+      return;
+    }
+    if (active.pendingExpiration) {
+      if (active.pendingExpiration.time !== time)
+        events.mutate((event) => {
+          if (event === active.pendingExpiration) event.time = time;
+        });
+      return;
+    }
+    const wakeup: TimelineEvent = {
+      time,
+      kind: "expectedExpire",
+      row: active.schedulerRow!,
+      sortOrder: [-1, ...sortOrder, nextDerivedOrder++],
+      expectedWakeup: { name, active },
+    };
+    active.pendingExpiration = wakeup;
+    events.push(wakeup);
+  };
   const mergeTinyExpectedStates = (name: string, active: ActivePeriodicEffect, time: number, sortOrder: number[]) => {
-    if (input.expectedPeriodicStateMerging === false || !active.expected?.mergeTinyExpirations(time)) return;
-    scheduleExpectedTick(name, active, time, sortOrder, true);
-    if (!active.pendingExpirations) return;
-    const schedule = active.expected.expirationSchedule();
-    const obsolete = new Set<TimelineEvent>();
-    for (const [key, wakeup] of active.pendingExpirations) {
-      if (schedule.has(key)) continue;
-      obsolete.add(wakeup);
-      active.pendingExpirations.delete(key);
-    }
-    if (obsolete.size) events.remove((event) => obsolete.has(event));
-    for (const [expirationKey, expiration] of schedule) {
-      if (active.pendingExpirations.has(expirationKey)) continue;
-      const wakeup: TimelineEvent = {
-        time: expiration.time,
-        kind: "expectedExpire",
-        row: active.schedulerRow!,
-        sortOrder: [-1, ...sortOrder, nextDerivedOrder++],
-        expectedWakeup: { name, active, source: expiration.source, expirationKey },
-      };
-      active.pendingExpirations.set(expirationKey, wakeup);
-      events.push(wakeup);
-    }
+    if (input.expectedPeriodicStateMerging !== false && active.expected?.mergeTinyExpirations(time))
+      scheduleExpectedTick(name, active, time, sortOrder, true);
+    scheduleExpectedExpiration(name, active, sortOrder);
   };
   const transferAndReschedulePeriodicEffect = (
     name: string,
@@ -1940,7 +1951,7 @@ function buildRotationTimelinePass(
       continue;
     }
     if (event.expectedWakeup) {
-      const { name, active, source, expirationKey } = event.expectedWakeup;
+      const { name, active } = event.expectedWakeup;
       if (activePeriodicEffects[periodicEffectKey("target", name)] !== active) continue;
       switch (event.kind) {
         case "expectedTick": {
@@ -1954,25 +1965,29 @@ function buildRotationTimelinePass(
           break;
         }
         case "expectedExpire": {
-          active.pendingExpirations!.delete(expirationKey!);
-          const probability = active.expected!.expirationProbability(event.time, source!);
-          if (probability <= 0) break;
+          active.pendingExpiration = undefined;
+          active.expirationAfter = event.time;
           const action = active.definition.action?.filter(
             (item) => item && typeof item === "object" && (item as EditableObject).time === "expire",
           );
           if (action?.length)
-            enqueueEffectActions(
-              name,
-              { ...active.definition, action },
-              event.time,
-              source!,
-              event.sortOrder,
-              active.schedulerRow!.order,
-              "target",
-              event.time,
-              probability,
-              false,
-            );
+            for (const source of active.expected!.expirationSources(event.time)) {
+              const probability = active.expected!.expirationProbability(event.time, source);
+              if (!(probability > 0)) continue;
+              enqueueEffectActions(
+                name,
+                { ...active.definition, action },
+                event.time,
+                source,
+                event.sortOrder,
+                active.schedulerRow!.order,
+                "target",
+                event.time,
+                probability,
+                false,
+              );
+            }
+          scheduleExpectedExpiration(name, active, event.sortOrder);
           break;
         }
       }
@@ -2562,6 +2577,7 @@ function buildRotationTimelinePass(
             periodic.interval,
             periodic.firstTick ?? periodic.interval,
             periodic.expectedTickAlignment === "battle" ? (resolvedAnchorTime ?? initialAnchorTime) : undefined,
+            input.expectedPeriodicStorage,
           );
           const emittedBranch = `threshold-${nextDerivedOrder++}`;
           const thresholdProbability = activeEffect.expected.apply(
@@ -2588,30 +2604,7 @@ function buildRotationTimelinePass(
             event.row.order + (event.actionIndex ?? 0),
             true,
           );
-          const expirationActions = definition.action?.filter(
-            (action) => action && typeof action === "object" && (action as EditableObject).time === "expire",
-          );
-          if (expirationActions?.length) {
-            const expiry = event.time + duration;
-            const expirationKey = `${outcomeBuffTick(expiry)}:${applicationSource}`;
-            activeEffect.pendingExpirations ??= new Map();
-            if (!activeEffect.pendingExpirations.has(expirationKey)) {
-              const wakeup: TimelineEvent = {
-                time: expiry,
-                kind: "expectedExpire",
-                row: event.row,
-                sortOrder: [-1, ...event.sortOrder, nextDerivedOrder++],
-                expectedWakeup: {
-                  name: triggerAction.value,
-                  active: activeEffect,
-                  source: applicationSource,
-                  expirationKey,
-                },
-              };
-              activeEffect.pendingExpirations.set(expirationKey, wakeup);
-              events.push(wakeup);
-            }
-          }
+          scheduleExpectedExpiration(triggerAction.value, activeEffect, event.sortOrder);
           if (conditionalBranch === undefined)
             mergeTinyExpectedStates(triggerAction.value, activeEffect, event.time, event.sortOrder);
           if (thresholdProbability > 0 && definition.onMaxStack)

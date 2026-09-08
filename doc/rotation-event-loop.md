@@ -49,6 +49,63 @@ dependencies, not a general preliminary probability pass for every rotation.
 
 ## Verification
 
+### Stack-indexed periodic probability storage
+
+Each temporary causal partition has an inactive-probability scalar and, per damage
+owner, a stack-indexed collection of sorted `(expiration, probability)` lists.
+For a hit, visit stack counts downward. Scale each entry's failure mass in place,
+sum its success mass, then insert one destination entry at the refreshed expiration.
+Equal expirations merge. Threshold-burst mass is published only after processing
+the original application, so it cannot receive that same application again.
+Conditional follow-ups transform only their partition; release merges it back.
+Exact cadence weights and shared-grid pending-tick weights travel with the mass.
+
+The default storage is an indexed linked list backed by parallel JavaScript numeric
+arrays and a recycled-slot free list. Head removal, tail append and equal-tail
+merging are O(1); finding an arbitrary insertion/merge position is still O(n).
+Tiny-state merging does not use arbitrary insertion: each expiration bucket is
+visited twice, once to compute its aggregate and once to retain a survivor and
+unlink the other eligible nodes in O(1) each. If significant states lie between
+tiny states, move their payloads through the survivor slot during that traversal
+to preserve sorted order without reinsertion. Equal mean/significant expirations
+combine exactly as before. No temporary grouping maps or node-index sets are built.
+Branch release uses a forward-only sorted merge, O(n + m), with O(1) work per
+visited node rather than O(n) insertion searches per source entry. Current-expiry
+follow-ups use the tail directly. Fixed-duration chronological applications also
+append or merge at the tail; the generic variable-duration application path retains
+one ordered traversal when its new expiration precedes the tail.
+These complexity guarantees apply to the default indexed backend; diagnostic packed
+arrays still shift elements for middle edits. Exact-cadence payload maps additionally
+require traversal of their cadence entries; shared-grid states have scalar payloads.
+Each effect retains one pending expiry wakeup selected from its list heads, not
+one wakeup for every future expiration. Due owners use the normal effect-action
+executor. A dispatched-time cursor prevents duplicate wakeups while those actions
+resolve. Tiny-state merging remains the only additional expiration approximation.
+
+`TimelineBuildInput.expectedPeriodicStorage` accepts `"indexed"` (default) or
+`"packed"` for diagnostics. Packed arrays use a head cursor and linear compaction,
+with contiguous traversal but potentially shifting middle insertions.
+`node script/probe/benchmark-periodic-state-storage.mjs 400` compares both against
+committed reference `78537e2` using the same fixture, rotating run order, discarding
+six warm-up rounds and reporting medians from six measured rounds. A local run:
+
+| Storage              | Timeline | Total baseline |
+| -------------------- | -------: | -------------: |
+| Previous state maps  |   135 ms |         151 ms |
+| Packed arrays        |    64 ms |          79 ms |
+| Indexed linked lists |    63 ms |          80 ms |
+
+All produced 1,342 timeline rows, 1,739 damage entries and 1,280 Piercing entries;
+total damage was 56,551.976896 with relative differences below `3e-15` for both
+total and Inner Way damage. These are machine-local timings, not latency guarantees.
+An earlier paired run measured 164 / 104 / 92 ms total respectively. Both new
+backends materially improve on the reference; their relative advantage varies
+between runs. Indexed lists remain the default with constant-time unlinking and
+slot reuse, while packed arrays remain available for comparison.
+`check-periodic-state-storage.mjs` compares both backends to the committed tracker
+across randomized owners, gains, refreshes, expirations, conditional follow-ups and
+exact/shared cadences, and verifies sorted insertion and recycled-slot isolation.
+
 ### Tiny expected-state merging
 
 Expected shared-clock DOT trackers merge released states with individual absolute
@@ -60,8 +117,8 @@ States still in a temporary causal branch, already expired states, significant
 states and exact-cadence trackers are not approximated. Simulation is unchanged.
 
 Merging runs after ordinary applications or after conditional burst follow-ups
-release their branch. The scheduler removes superseded expiration wakeups and
-adds the merged identities while retaining unchanged wakeups. Probability is not
+release their branch. The scheduler updates the effect's earliest-expiration
+wakeup to reflect the merged lists. Probability is not
 discarded; expiration timing and its interaction with later hits are approximated.
 `TimelineBuildInput.expectedPeriodicStateMerging: false` disables this new
 approximation for comparisons, without disabling the existing shared DOT grid.

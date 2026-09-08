@@ -37,7 +37,8 @@ try {
   close(merged.expirationProbability(5.14, "owner"), 5e-7);
   close(merged.expirationProbability(5.11, "owner"), 0);
   close(merged.expirationProbability(5.16, "owner"), 0);
-  assert.deepEqual([...merged.expirationSchedule().values()], [{ time: 5.14, source: "owner" }]);
+  assert.equal(merged.nextExpiration(), 5.14);
+  assert.deepEqual([...merged.expirationSources(5.14)], ["owner"]);
   close(merged.apply(0.3, 1, 5, 5, 4, "owner", threshold, "burst"), 5e-7);
   close(merged.apply(0.4, 1, 5, 5, 5, "owner", threshold, "all"), 1);
 
