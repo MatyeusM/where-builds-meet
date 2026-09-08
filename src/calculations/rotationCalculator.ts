@@ -40,6 +40,7 @@ import {
   addUnconditionalDamageEffects,
   splitStaticDamageEffect,
   subtractUnconditionalDamageEffects,
+  collectUnconditionalStatEffects,
   type UnconditionalDamageEffects,
 } from "./unconditionalDamageEffects";
 import {
@@ -1444,7 +1445,7 @@ function variantStatState(
         raw[key as keyof CharacterStats] + final[key as keyof CharacterStats],
       ]),
     ) as CharacterStats;
-    return applyStatEffects(final, [{ stat: collectEffectiveStatEffects(ordinary, resolved) }]);
+    return { stat: final, effectiveStat: collectEffectiveStatEffects(ordinary, resolved) };
   };
   const oldFinal = finalContributions(state.rawStats, state.effects);
   const nextFinal = finalContributions(rawStats, effects);
@@ -1452,13 +1453,26 @@ function variantStatState(
     Object.keys(emptyStats)
       .map((key) => {
         const field = key as keyof CharacterStats;
-        return [key, rawStats[field] - state.rawStats[field] + nextFinal[field] - oldFinal[field]];
+        return [key, rawStats[field] - state.rawStats[field] + nextFinal.stat[field] - oldFinal.stat[field]];
+      })
+      .filter(([, value]) => value !== 0),
+  );
+  const effectiveDelta = Object.fromEntries(
+    Object.keys(emptyStats)
+      .map((key) => {
+        const field = key as keyof CharacterStats;
+        return [key, (nextFinal.effectiveStat[field] ?? 0) - (oldFinal.effectiveStat[field] ?? 0)];
       })
       .filter(([, value]) => value !== 0),
   );
   return {
     rawStats,
-    stats: calculateActionStats(state.stats, [{ stat: delta }], state.enemy.judgementResistance, state.weapons),
+    stats: calculateActionStats(
+      state.stats,
+      [{ stat: delta, effectiveStat: effectiveDelta }],
+      state.enemy.judgementResistance,
+      state.weapons,
+    ),
   };
 }
 
@@ -1505,14 +1519,11 @@ function timelineDamageEntries(
       .filter((effect) => globalNames.has(effect.name) && (effect.playerRecipientIndex ?? 0) === 0)
       .map((effect) => effect.unconditionalDamageEffects),
   );
-  const globalStats = Object.fromEntries(
-    Object.entries(globalContributions)
-      .filter(([key]) => key.startsWith("stat."))
-      .map(([key, value]) => [key.slice(5), value]),
-  );
-  const buffedStats = Object.keys(globalStats).length
-    ? calculateActionStats(sheet.stats, [{ stat: globalStats }], state.enemy.judgementResistance, state.weapons)
-    : sheet.stats;
+  const globalStats = collectUnconditionalStatEffects(globalContributions);
+  const buffedStats =
+    Object.keys(globalStats.stat).length || Object.keys(globalStats.effectiveStat).length
+      ? calculateActionStats(sheet.stats, [globalStats], state.enemy.judgementResistance, state.weapons)
+      : sheet.stats;
   const calculationSetupEffects = setupEffects.flatMap((effect) => {
     if (!requirementIsUnconditional(effect.requirement)) return [effect];
     const split = splitStaticStatEffect(unwrappedEffect(effect));
@@ -1738,7 +1749,11 @@ function timelineDamageEntries(
             unconditionalDamageEffects: addUnconditionalDamageEffects(
               subtractUnconditionalDamageEffects(
                 actionState.unconditionalDamageEffects,
-                Object.fromEntries(Object.entries(globalContributions).filter(([key]) => key.startsWith("stat."))),
+                Object.fromEntries(
+                  Object.entries(globalContributions).filter(
+                    ([key]) => key.startsWith("stat.") || key.startsWith("effectiveStat."),
+                  ),
+                ),
               ),
               skillStaticEffects.aggregated,
             ),

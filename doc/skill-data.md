@@ -933,9 +933,13 @@ Conditional effects on temporary buffs remain `stat`, even when an Inner Way
 modifies their definitions. `rawStat` does not make a temporary buff permanent.
 
 `stat` and `effectiveStat` supply contributions to the owning stage of the
-[stat snapshot pipeline](stat-pipeline.md). Effective contributions are folded
-into the complete snapshot before final ranges/rates are derived; they are not
-a separate runtime stat map that later passes can discard. Martial-art talent
+[stat snapshot pipeline](stat-pipeline.md). `stat` changes ordinary fields;
+`effectiveStat` changes only their derived counterparts. Effective entries resolve
+against the same ordinary snapshot, then their summed bonuses are applied before
+range normalization and rate calculations. The complete snapshot retains these
+additive inputs as `effectiveStatBonuses` so later stages can rederive fields
+without losing them or adding them to ordinary stats. Food uses `effectiveStat`.
+Martial-art talent
 formulas read immutable `rawStats`, after flat attribute talents but before
 later talent bonuses and food, including amounts
 behind skill or combat conditions. Use ordinary raw source names such as

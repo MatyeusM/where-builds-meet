@@ -20,12 +20,14 @@ base inputs / solved override offsets
    bow/ring, Inner Ways, martial-art flat min/max attribute bonuses, and
    five-attribute conversions through explicit `rawStat` effects. It contains ordinary
    stats, without effective ranges or final outcome rates.
-2. `stats` adds the remaining martial-art `stat`/`effectiveStat` bonuses and food.
+2. `stats` adds the remaining martial-art `stat` bonuses to ordinary fields and
+   collects `effectiveStat` bonuses, including food, as effective-only inputs.
    This is the second martial-art pass: every talent formula reads the
    same immutable `rawStats`, including talent amounts behind skill or combat
    conditions. Thus all raw flat attribute bonuses are present before scaling,
    but physical-attack talent results and food do not feed other talents.
-   Talent and food order cannot change those amounts. Effective
+   Talent and food order cannot change those amounts. Effective bonuses do not
+   change ordinary fields or feed formulas that read ordinary stats. Effective
    attack ranges and final rates are fields on this complete object, not a
    separate runtime stat map. This is the character-sheet and worker snapshot.
 3. `buffedStats` copies `stats` and adds fixed unconditional contributions from
@@ -40,8 +42,15 @@ base inputs / solved override offsets
 
 The `derivedStats` property retained by compatibility callers aliases the same
 complete object as `stats`. It must not become a separately maintained map.
-Food's `effectiveStat` contribution is incorporated into the complete snapshot,
-so a later skill or temporary-buff pass cannot discard it.
+The complete snapshot retains additive `effectiveStatBonuses` alongside ordinary
+and derived fields. Later stages carry those inputs forward, collect their own
+effective bonuses, then derive ranges/rates from ordinary values plus the combined
+bonuses. They never add bonuses to an already-normalized attack range. Food
+therefore survives skill and temporary-buff passes without changing ordinary stats.
+For example, ordinary physical attack of `2000 / 1900` with food's `120 / 240`
+stays `2000 / 1900`, while effective attack becomes `2120 / 2140` before the
+minimum/maximum check. All effective entries in a stage resolve against the same
+ordinary snapshot before any are applied.
 
 `rawStat` is an unconditional character contribution, not a temporary combat
 effect. Inner Way T2/T5 bonuses, arsenal, two-piece weapon/armor sets, bow/ring
@@ -55,7 +64,8 @@ bonuses but not Formless Attack, which is folded into effective attack later.
 ## Combat contributions and expiration
 
 The existing tracked-effect aggregate also carries finite numeric `stat` and
-`effectiveStat` contributions, flattened as `stat.<field>`. Update these amounts
+`effectiveStat` contributions, flattened separately as `stat.<field>` and
+`effectiveStat.<field>`. Update these amounts
 when effects are applied, change stacks, are consumed, or expire. Damage and
 healing do not re-evaluate each unconditional rule on every action. Conditional,
 formula-valued, or content-modified rules retain contextual evaluation.
@@ -78,7 +88,8 @@ have separate field names and retain their ordinary inputs naturally.
 ## Comparison variants and overrides
 
 Comparison variants copy the resolved `stats`, apply the changed contribution
-delta, and recompute effective fields and final rates. They do not rerun the
+delta separately for ordinary stats and effective bonuses, and recompute effective
+fields and final rates. They do not rerun the
 baseline unconditional stat pass. For changes to source attributes or setup
 effects, compute old/new raw and talent contribution differences before applying
 the delta. Each variant then gets its own global and skill baselines.
@@ -86,7 +97,9 @@ the delta. Each variant then gets its own global and skill baselines.
 Timeline reuse is independent of stat copying: reuse only when timing, triggers,
 effects, stacks, cooldowns, and DOTs cannot change. Otherwise rebuild events.
 
-Persisted Main-tab overrides remain final-value overrides. The shared override
+Persisted Main-tab overrides remain final-value overrides of the editable ordinary
+fields; food increases their effective counterparts without changing those overrides.
+The shared override
 solver determines input offsets before producing the sheet. Worker inputs carry
 the complete sheet plus raw stats and these base offsets for variant deltas.
 Legacy raw-input diagnostic bundles are normalized once at the worker boundary.

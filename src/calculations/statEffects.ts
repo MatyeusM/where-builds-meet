@@ -178,13 +178,7 @@ export function calculateStatsWithEffects(
   const finalEffects = effects.map((effect) =>
     effect.statStage === "talent" ? resolveRawStatFormulas(effect, rawStats) : effect,
   );
-  const ordinary = applyStatEffects(rawStats, finalEffects);
-  // Effective-stat data is an additive contribution, not a second runtime stat map.
-  const effective = collectEffectiveStatEffects(ordinary, finalEffects);
-  const withEffective = applyStatEffects(ordinary, [{ stat: effective }]);
-  const initialDerived = calculateDerivedStats(withEffective, judgementResistance, {}, weapons);
-  const finalOrdinary = applyDerivedStatEffects(withEffective, finalEffects, initialDerived);
-  const stats = resolveCompleteStats(finalOrdinary, judgementResistance, weapons);
+  const stats = calculateActionStats(rawStats, finalEffects, judgementResistance, weapons);
   return { rawStats, stats, derivedStats: stats };
 }
 
@@ -196,17 +190,23 @@ export function calculateRawStats(baseStats: CharacterStats, effects: StatEffect
   );
 }
 
-export type ResolvedStats = CharacterStats & DerivedStats & { uncappedDirectCrit: number };
+export type ResolvedStats = CharacterStats &
+  DerivedStats & {
+    uncappedDirectCrit: number;
+    effectiveStatBonuses: Partial<CharacterStats>;
+  };
 
 export function resolveCompleteStats(
   stats: CharacterStats,
   judgementResistance: number,
   weapons: WeaponId[] = [],
+  effectiveStatBonuses: Partial<CharacterStats> = {},
 ): ResolvedStats {
   return {
     ...stats,
-    ...calculateDerivedStats(stats, judgementResistance, {}, weapons),
+    ...calculateDerivedStats(stats, judgementResistance, effectiveStatBonuses, weapons),
     uncappedDirectCrit: stats.directCrit,
+    effectiveStatBonuses,
   };
 }
 
@@ -236,13 +236,18 @@ export function calculateActionStats(
   weapons: WeaponId[],
 ): ResolvedStats {
   const ordinary = applyStatEffects(skillStats, effects);
-  const effective = collectEffectiveStatEffects(ordinary, effects);
-  const withEffective = applyStatEffects(ordinary, [{ stat: effective }]);
-  const initialDerived = calculateDerivedStats(withEffective, judgementResistance, {}, weapons);
+  // Carry additive inputs, never normalized ranges, into the next immutable snapshot.
+  // Every new effective formula reads ordinary stats before any effective bonus is applied.
+  const effective = collectEffectiveStatEffects(ordinary, [
+    { effectiveStat: (skillStats as Partial<ResolvedStats>).effectiveStatBonuses },
+    ...effects,
+  ]);
+  const initialDerived = calculateDerivedStats(ordinary, judgementResistance, effective, weapons);
   return resolveCompleteStats(
-    applyDerivedStatEffects(withEffective, effects, initialDerived),
+    applyDerivedStatEffects(ordinary, effects, initialDerived),
     judgementResistance,
     weapons,
+    effective,
   );
 }
 

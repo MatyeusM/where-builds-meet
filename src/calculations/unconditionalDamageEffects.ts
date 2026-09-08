@@ -31,7 +31,9 @@ export const unconditionalDamageEffectFields = [
 ] as const;
 
 export type UnconditionalDamageEffectField =
-  (typeof unconditionalDamageEffectFields)[number] | `stat.${keyof CharacterStats}`;
+  | (typeof unconditionalDamageEffectFields)[number]
+  | `stat.${keyof CharacterStats}`
+  | `effectiveStat.${keyof CharacterStats}`;
 export type UnconditionalDamageEffects = Partial<Record<UnconditionalDamageEffectField, number>>;
 
 export type StaticDamageEffectSplit = {
@@ -42,7 +44,26 @@ export type StaticDamageEffectSplit = {
 const unconditionalDamageEffectFieldSet = new Set<string>([
   ...unconditionalDamageEffectFields,
   ...Object.keys(emptyStats).map((key) => `stat.${key}`),
+  ...Object.keys(emptyStats).map((key) => `effectiveStat.${key}`),
 ]);
+
+/** Preserve ordinary and effective contribution ownership through the lifecycle aggregate. */
+export function collectUnconditionalStatEffects(effects: UnconditionalDamageEffects = {}) {
+  const stat: Partial<CharacterStats> = {};
+  const effectiveStat: Partial<CharacterStats> = {};
+  for (const [key, value] of Object.entries(effects)) {
+    const [stage, field] = key.split(".");
+    switch (stage) {
+      case "stat":
+        stat[field as keyof CharacterStats] = value;
+        break;
+      case "effectiveStat":
+        effectiveStat[field as keyof CharacterStats] = value;
+        break;
+    }
+  }
+  return { stat, effectiveStat };
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -115,7 +136,7 @@ export function splitUnconditionalDamageEffectRules(rules: unknown[] | undefined
     }
     const fields = Object.entries(rule.effect).flatMap(([field, value]) =>
       (field === "stat" || field === "effectiveStat") && isObject(value)
-        ? Object.entries(value).map(([key, amount]) => [`stat.${key}`, amount] as const)
+        ? Object.entries(value).map(([key, amount]) => [`${field}.${key}`, amount] as const)
         : [[field, value] as const],
     );
     if (

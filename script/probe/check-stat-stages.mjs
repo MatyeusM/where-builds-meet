@@ -7,6 +7,7 @@ const server = await createServer({
   server: { middlewareMode: true },
   appType: "custom",
   logLevel: "silent",
+  optimizeDeps: { noDiscovery: true, include: [] },
 });
 try {
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
@@ -17,6 +18,7 @@ try {
     "/src/calculations/rotationCalculator.ts",
   );
   const { resolveActionStatContext } = await server.ssrLoadModule("/src/calculations/actionStats.ts");
+  const { calculateRawHealingAttackSnapshot } = await server.ssrLoadModule("/src/calculations/healing.ts");
   const food = {
     ...JSON.parse(await readFile("data/food.json", "utf8")).SimmeringFishSlices.effect,
     statStage: "food",
@@ -26,18 +28,44 @@ try {
   const rawBonus = { rawStat: { minPhys: 100 } };
   const rawFirst = calculateStatsWithEffects(base, [talent, food, rawBonus], 0, []);
   assert.equal(rawFirst.rawStats.minPhys, 1100);
-  assert.equal(rawFirst.stats.minPhys, 1330, "Raw bonus feeds the talent before food is added");
+  assert.equal(rawFirst.stats.minPhys, 1210, "Raw bonus feeds the talent without food changing ordinary stats");
+  assert.equal(rawFirst.stats.effectiveMinPhys, 1330);
   assert.deepEqual(rawFirst, calculateStatsWithEffects(base, [rawBonus, food, talent], 0, []));
   const lateBonus = calculateStatsWithEffects(base, [talent, { stat: { minPhys: 100 } }], 0, []);
   assert.equal(lateBonus.rawStats.minPhys, 1000, "Ordinary stat additions do not enter rawStats");
   assert.equal(lateBonus.stats.minPhys, 1200, "Later stat additions do not feed talent formulas");
   const sheet = calculateStatsWithEffects(base, [talent, food], 0, []);
   assert.equal(sheet.rawStats.minPhys, 1000);
-  assert.equal(sheet.stats.minPhys, 1220);
-  assert.equal(sheet.stats.maxPhys, 2240);
+  assert.equal(sheet.stats.minPhys, 1100);
+  assert.equal(sheet.stats.maxPhys, 2000);
   assert.equal(sheet.stats.effectiveMinPhys, 1220);
+  assert.equal(sheet.stats.effectiveMaxPhys, 2240);
   assert.equal(sheet.stats, sheet.derivedStats, "Derived fields live in the same object");
   assert.deepEqual(sheet, calculateStatsWithEffects(base, [food, talent], 0, []));
+  const invertedBase = { ...base, minPhys: 2000, maxPhys: 1900 };
+  const invertedSheet = calculateStatsWithEffects(invertedBase, [food], 0, []);
+  assert.equal(invertedSheet.stats.minPhys, 2000);
+  assert.equal(invertedSheet.stats.maxPhys, 1900);
+  assert.equal(invertedSheet.stats.effectiveMinPhys, 2120);
+  assert.equal(invertedSheet.stats.effectiveMaxPhys, 2140, "Food is added before min/max normalization");
+  const effectiveFormula = { effectiveStat: { minPhys: { formula: { source: "minPhys", multiplier: 0.1 } } } };
+  const combinedEffective = calculateStatsWithEffects(invertedBase, [food, effectiveFormula], 0, []);
+  assert.equal(combinedEffective.stats.effectiveMinPhys, 2320, "Effective formulas read ordinary stats");
+  assert.equal(combinedEffective.stats.effectiveMaxPhys, 2320, "All effective entries precede normalization");
+  assert.deepEqual(combinedEffective, calculateStatsWithEffects(invertedBase, [effectiveFormula, food], 0, []));
+  const restored = calculateActionStats(structuredClone(invertedSheet.stats), [], 0, []);
+  assert.deepEqual(restored, invertedSheet.stats, "Worker cloning and later derivation preserve effective inputs");
+  const raisedMinimum = calculateActionStats(restored, [{ stat: { minPhys: 100 } }], 0, []);
+  assert.equal(raisedMinimum.minPhys, 2100);
+  assert.equal(raisedMinimum.maxPhys, 1900);
+  assert.equal(raisedMinimum.effectiveMaxPhys, 2220);
+  const raisedMaximum = calculateActionStats(raisedMinimum, [{ effectiveStat: { maxPhys: 50 } }], 0, []);
+  assert.equal(
+    raisedMaximum.effectiveMaxPhys,
+    2220,
+    "Re-derivation uses uncapped inputs, not the previous 2220 maximum",
+  );
+  assert.equal(calculateRawHealingAttackSnapshot({ stats: restored, weapons: [] }).averagePhysicalAttack, 2130);
   const twoTalents = calculateStatsWithEffects(base, [talent, talent], 0, []);
   assert.equal(twoTalents.stats.minPhys, 1200, "Both talents must read raw 1000, not each other's output");
   const capped = calculateStatsWithEffects({ ...base, directCrit: 0.25 }, [], 0, []);
@@ -47,6 +75,7 @@ try {
   assert.equal(calculateActionStats(capped.stats, [{ stat: { directCrit: -0.1 } }], 0, []).directCrit, 0.15);
   const override = calculateStatsWithOverrides(base, [talent, food], 0, { minPhys: 1500 }, []);
   assert.ok(Math.abs(override.stats.minPhys - 1500) < 1e-5, "Stored final-value overrides remain honored");
+  assert.ok(Math.abs(override.stats.effectiveMinPhys - 1620) < 1e-5, "Food remains above an ordinary stat override");
   const enemy = {
     level: 96,
     defense: 0,
@@ -59,7 +88,7 @@ try {
   };
   const definitions = {
     Global: { duration: 5, maxStack: 1, effect: [{ effect: { stat: { minPhys: 50, maxPhys: 50 } } }] },
-    Temporary: { duration: 0.5, maxStack: 1, effect: [{ effect: { stat: { minPhys: 100, maxPhys: 100 } } }] },
+    Temporary: { duration: 0.5, maxStack: 1, effect: [{ effect: { effectiveStat: { minPhys: 100, maxPhys: 100 } } }] },
   };
   const setupEffects = [
     food,
@@ -112,10 +141,16 @@ try {
     .filter((entry) => entry.action.type === "damage")
     .map((entry) => result.actionBreakdowns[entry.id].total);
   assert.deepEqual(damages, [1740, 1840, 1740], "Food survives skill/global/action stages and temporary expiration");
-  assert.equal(entries[0].context.stats.minPhys, 1180, "Skill baseline includes the global contribution exactly once");
+  assert.equal(
+    entries[0].context.stats.minPhys,
+    1060,
+    "Skill baseline includes the ordinary global contribution exactly once",
+  );
   const healed = entries.find((entry) => entry.action.type === "heal");
   assert.equal(result.actionBreakdowns[healed.id].healing.total, 1740);
   const during = resolveActionStatContext(entries[1].context);
+  assert.equal(during.stats.minPhys, 1060, "Tracked effective bonuses do not increase ordinary stats");
+  assert.equal(during.stats.effectiveMinPhys, 1280);
   const repeat = resolveActionStatContext({ ...entries[1].context, effects: [...entries[1].context.effects] });
   assert.equal(during.stats, repeat.stats, "Unchanged numerical combat contributions reuse the resolved action stats");
   const variants = { ...bundle, setupComparisons: { food: [{ label: "None", setupEffects: setupEffects.slice(1) }] } };
@@ -153,7 +188,40 @@ try {
     -540,
     "Food removal adjusts a copied sheet without losing skill/global bonuses",
   );
-  assert.equal(bundle.stats.minPhys, 1120, "Baseline sheet remains immutable");
+  assert.equal(bundle.stats.minPhys, 1000, "Baseline sheet remains immutable");
+  const effectiveGlobal = calculateRotationBaseline({
+    ...bundle,
+    timeline: {
+      ...bundle.timeline,
+      effectDefinitions: {
+        ...definitions,
+        Global: { ...definitions.Global, effect: [{ effect: { effectiveStat: { minPhys: 50, maxPhys: 50 } } }] },
+      },
+    },
+  });
+  assert.equal(totalDamage(effectiveGlobal), totalDamage(result), "Global effective contributions apply exactly once");
+  assert.equal(effectiveGlobal.baseline[0].context.stats.minPhys, 1010);
+  const invertedBundle = {
+    ...bundle,
+    stats: invertedSheet.stats,
+    rawStats: invertedSheet.rawStats,
+    baseStats: invertedBase,
+    derivedStats: invertedSheet.stats,
+    timeline: {
+      ...bundle.timeline,
+      setupEffects: [food],
+      initialBuffs: [],
+      skills: { Hit: { ...bundle.timeline.skills.Hit, action: [{ type: "damage", phyCoef: 1, time: 0 }] } },
+    },
+    setupComparisons: { food: [{ label: "None", setupEffects: [] }] },
+  };
+  const invertedBaseline = calculateRotationBaseline(invertedBundle);
+  assert.equal(totalDamage(invertedBaseline), 2130);
+  assert.equal(
+    calculateRotationComparisons(invertedBundle, invertedBaseline).setupComparisons.food[0].dpsDifference,
+    -130,
+    "Food removal recalculates the inverted range from ordinary inputs",
+  );
   // Real Kite talent formulas: resource-conditioned modifiers must not erase food or skill bonuses.
   const gauntlets = JSON.parse(await readFile("data/martial-art/heavenwill-gauntlets.json", "utf8"));
   const rope = JSON.parse(await readFile("data/martial-art/skygrasp-rope-dart.json", "utf8"));
@@ -198,7 +266,8 @@ try {
     };
     const kite = calculateRotationBaseline(kiteBundle);
     const context = resolveActionStatContext(kite.baseline[0].context);
-    assert.equal(context.stats.minPhys, 1050 + (withFood ? 120 : 0));
+    assert.equal(context.stats.minPhys, 1050);
+    assert.equal(context.stats.effectiveMinPhys, 1050 + (withFood ? 120 : 0));
     assert.equal(context.stats.effectiveCritDmgBonus, 0.3, "Talent source remains raw, independent of food and buffs");
   }
   console.log(

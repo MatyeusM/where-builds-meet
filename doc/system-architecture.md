@@ -517,7 +517,7 @@ calculation adds global, skill, and current combat contributions:
 ```text
 base inputs / solved override offsets
   -> rawStats (rawStat contributions, including flat martial-art attributes)
-  -> stats (raw-sourced martial-art talents, food, effective/final fields)
+  -> stats (raw-sourced talents, effective-only food inputs, effective/final fields)
   -> buffedStats (global buffs/debuffs)
   -> skillStats (skill-tag contributions)
   -> actionStats (current combat contributions)
@@ -574,8 +574,12 @@ overridden final value. This means later baseline input changes cannot move an
 override, while overridden source stats still feed formula-derived stats.
 
 The complete character-sheet `stats` is sent to the worker alongside `rawStats`
-and solved base offsets. Comparison variants copy that sheet and apply changed
-contribution deltas, then recompute effective fields. They do not reconstruct
+and solved base offsets. Each complete snapshot retains `effectiveStatBonuses` as
+additive derivation inputs, separate from ordinary fields. Food changes effective
+attack without changing ordinary or displayed editable attack. Each stage resolves
+all effective entries before adding their totals and normalizing ranges/rates.
+Comparison variants copy that sheet and apply changed ordinary and effective
+contribution deltas separately, then recompute effective fields. They do not reconstruct
 the baseline sheet from unconditional effects. Modified stats therefore remain
 responsive in delta calculations.
 

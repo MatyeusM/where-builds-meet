@@ -2,7 +2,7 @@ import attunementJson from "../../data/attunement.json";
 import { weaponArtBonus, type DamageAction, type DamageContext } from "./damage";
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues";
 import { calculateDerivedStats, mainAttributeForWeapons } from "./effectiveStats";
-import { resolveFormulaValue, type StatFormula } from "./statEffects";
+import { resolveFormulaValue, type ResolvedStats, type StatFormula } from "./statEffects";
 import { resolveActionStatContext } from "./actionStats";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 
@@ -87,7 +87,12 @@ function resolveHealingAttackState(context: DamageContext) {
 
 /** Character-sheet attack averages used by thresholds that ignore combat-time effects. */
 export function calculateRawHealingAttackSnapshot(context: Pick<DamageContext, "stats" | "weapons">) {
-  const derivedStats = calculateDerivedStats(context.stats, 0, {}, context.weapons);
+  const derivedStats = calculateDerivedStats(
+    context.stats,
+    0,
+    (context.stats as Partial<ResolvedStats>).effectiveStatBonuses,
+    context.weapons,
+  );
   const averagePhysicalAttack = (derivedStats.effectiveMinPhys + derivedStats.effectiveMaxPhys) / 2;
   const averageSilkbindAttack = (derivedStats.effectiveMinSilkbind + derivedStats.effectiveMaxSilkbind) / 2;
   return { averagePhysicalAttack, averageSilkbindAttack };

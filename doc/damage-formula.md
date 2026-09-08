@@ -28,7 +28,8 @@ The simulation input starts from zero, then the calculator applies innate charac
 1. Build `rawStats` from explicit `rawStat` permanent contributions, including
    flat martial-art min/max attribute bonuses, and five-attribute conversions.
 2. Build `stats`: remaining martial-art talent formulas read immutable `rawStats`; add
-   talents and food, then effective ranges and final rates on this same object.
+   ordinary talent bonuses change ordinary fields; food and other `effectiveStat`
+   bonuses change only effective ranges and rates on this same object.
 3. Build `buffedStats` with selected global buff/debuff stat contributions.
 4. Build cached `skillStats` for each effective action-tag signature.
 5. Copy that baseline into `actionStats`, add the current combat contribution,
@@ -46,14 +47,23 @@ A manually edited Main-tab stat is stored as a final-value override. The calcula
 For physical, Bellstrike, Stonesplit, Silkbind, and Bamboocut attack:
 
 ```text
-Effective Minimum = Minimum
-Effective Maximum = max(Minimum, Maximum)
+Effective Minimum = Minimum + Summed Effective Minimum Bonuses
+Effective Maximum = max(Effective Minimum, Maximum + Summed Effective Maximum Bonuses)
 ```
+
+All effective contributions are resolved before this check and leave ordinary
+stats unchanged. Food's `+120 / +240` on ordinary physical attack `2000 / 1900`
+produces effective attack `2120 / 2140`. Additive effective inputs are retained
+on each stat snapshot so subsequent stages recompute from the unnormalized inputs.
 
 Void/Formless Attack is folded into the equipped path's primary attribute after
 that attribute's first minimum/maximum normalization:
 
 ```text
+Min Primary = Ordinary Min Primary + Summed Effective Min Primary Bonuses
+Max Primary = Ordinary Max Primary + Summed Effective Max Primary Bonuses
+Min Void/Formless = Ordinary Min Void/Formless + Summed Effective Min Void/Formless Bonuses
+Max Void/Formless = Ordinary Max Void/Formless + Summed Effective Max Void/Formless Bonuses
 Normalized Primary Maximum = max(Min Primary, Max Primary)
 Effective Min Primary = Min Primary + Min Void/Formless
 Effective Max Primary = max(
@@ -106,7 +116,8 @@ unconditional attack bonus can use the aggregate while a conditional
 penetration rule from the same stack tier is still evaluated on hit.
 
 The worker receives the complete character-sheet snapshot, including food's
-`effectiveStat` contributions. Selected global buffs/debuffs produce
+effective-only additive inputs in `effectiveStatBonuses`. Ordinary character-sheet
+stats exclude those bonuses. Selected global buffs/debuffs produce
 `buffedStats`. Already-applied sheet and global stat contributions are excluded
 from later additions, so neither disappears nor applies twice on a later pass.
 Numeric combat-stat contributions use the tracked-effect lifecycle aggregate;

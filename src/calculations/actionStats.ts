@@ -1,5 +1,6 @@
 import type { DamageContext } from "./damage";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
+import { collectUnconditionalStatEffects } from "./unconditionalDamageEffects";
 import {
   calculateActionStats,
   type ResolvedStats,
@@ -19,10 +20,8 @@ export function resolveActionStatContext(context: DamageContext): DamageContext 
     if (effect.stat || effect.effectiveStat)
       contributions.push(effect as StatEffectContainer & EffectiveStatEffectContainer);
   }
-  const fixed: Record<string, number> = {};
-  for (const [key, value] of Object.entries(context.unconditionalDamageEffects ?? {}))
-    if (key.startsWith("stat.")) fixed[key.slice(5)] = value;
-  if (Object.keys(fixed).length) contributions.push({ stat: fixed });
+  const fixed = collectUnconditionalStatEffects(context.unconditionalDamageEffects);
+  if (Object.keys(fixed.stat).length || Object.keys(fixed.effectiveStat).length) contributions.push(fixed);
   if (import.meta.env.DEV) finishCalculationPhase("damageStatEffectDetection", detectionStarted);
   if (!contributions.length) {
     if (import.meta.env.DEV) finishCalculationPhase("damageStatResolution", started);
