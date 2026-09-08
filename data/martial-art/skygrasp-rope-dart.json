@@ -57,8 +57,6 @@
       "effect": [
         {
           "stat": {
-            "minBamboocut": 98,
-            "maxBamboocut": 196,
             "bamboocutPenetration": {
               "formula": {
                 "source": "minBamboocut",
@@ -66,6 +64,10 @@
                 "max": 22
               }
             }
+          },
+          "rawStat": {
+            "minBamboocut": 98,
+            "maxBamboocut": 196
           }
         }
       ]

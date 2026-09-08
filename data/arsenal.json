@@ -2,7 +2,7 @@
   "General": {
     "name": "General",
     "effect": {
-      "stat": {
+      "rawStat": {
         "minPhys": 131,
         "maxPhys": 263
       }
@@ -11,7 +11,7 @@
   "Bellstrike": {
     "name": "Bellstrike",
     "effect": {
-      "stat": {
+      "rawStat": {
         "minBellstrike": 131,
         "maxBellstrike": 263
       }
@@ -20,7 +20,7 @@
   "Stonesplit": {
     "name": "Stonesplit",
     "effect": {
-      "stat": {
+      "rawStat": {
         "minStonesplit": 131,
         "maxStonesplit": 263
       }
@@ -29,7 +29,7 @@
   "Silkbind": {
     "name": "Silkbind",
     "effect": {
-      "stat": {
+      "rawStat": {
         "minSilkbind": 131,
         "maxSilkbind": 263
       }
@@ -38,7 +38,7 @@
   "Bamboocut": {
     "name": "Bamboocut",
     "effect": {
-      "stat": {
+      "rawStat": {
         "minBamboocut": 131,
         "maxBamboocut": 263
       }

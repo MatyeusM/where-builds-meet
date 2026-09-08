@@ -25,8 +25,9 @@ Simulation retains exact sampled timing.
 
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, character talent stats, regional Oddity rewards, attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
 
-1. Build `rawStats` from permanent contributions and five-attribute conversions.
-2. Build `stats`: martial-art talent formulas read immutable `rawStats`; add
+1. Build `rawStats` from explicit `rawStat` permanent contributions, including
+   flat martial-art min/max attribute bonuses, and five-attribute conversions.
+2. Build `stats`: remaining martial-art talent formulas read immutable `rawStats`; add
    talents and food, then effective ranges and final rates on this same object.
 3. Build `buffedStats` with selected global buff/debuff stat contributions.
 4. Build cached `skillStats` for each effective action-tag signature.

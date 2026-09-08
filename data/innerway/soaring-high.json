@@ -31,7 +31,7 @@
     "SoaringHighT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "minPhys": 77.9
           }
         }
@@ -85,7 +85,7 @@
     "SoaringHighT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "directCrit": 0.046
           }
         }

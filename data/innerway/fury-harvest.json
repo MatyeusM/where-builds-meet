@@ -8,7 +8,7 @@
     "FuryHarvestT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "physicalDefense": 35
           }
         }
@@ -19,7 +19,7 @@
     "FuryHarvestT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "physicalResistance": 5.1
           }
         }

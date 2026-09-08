@@ -59,7 +59,7 @@
     "InsightfulStrikeT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "minPhys": 23.3,
             "maxPhys": 46.7
           }
@@ -107,7 +107,7 @@
     "InsightfulStrikeT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "physicalPenetration": 5.1
           }
         }

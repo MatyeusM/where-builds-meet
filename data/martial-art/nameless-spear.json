@@ -79,8 +79,6 @@
       "effect": [
         {
           "stat": {
-            "minBellstrike": 98,
-            "maxBellstrike": 196,
             "bellstrikeDmgBonus": {
               "formula": {
                 "source": "maxBellstrike",
@@ -88,6 +86,10 @@
                 "max": 0.11
               }
             }
+          },
+          "rawStat": {
+            "minBellstrike": 98,
+            "maxBellstrike": 196
           }
         }
       ]

@@ -8,7 +8,7 @@
     "EnvigoratedWarriorT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "minPhys": 70.1
           }
         }
@@ -19,7 +19,7 @@
     "EnvigoratedWarriorT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "physicalPenetration": 5.1
           }
         }

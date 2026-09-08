@@ -54,8 +54,6 @@
       "effect": [
         {
           "stat": {
-            "minStonesplit": 98,
-            "maxStonesplit": 196,
             "stonesplitPenetration": {
               "formula": {
                 "source": "minStonesplit",
@@ -63,6 +61,10 @@
                 "max": 22
               }
             }
+          },
+          "rawStat": {
+            "minStonesplit": 98,
+            "maxStonesplit": 196
           }
         }
       ]

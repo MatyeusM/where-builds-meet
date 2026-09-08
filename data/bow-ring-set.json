@@ -2,13 +2,13 @@
   "None": {
     "name": "None",
     "effect": {
-      "stat": {}
+      "rawStat": {}
     }
   },
   "Precision": {
     "name": "Precision",
     "effect": {
-      "stat": {
+      "rawStat": {
         "precision": 0.04
       }
     }
@@ -16,7 +16,7 @@
   "Critical": {
     "name": "Critical",
     "effect": {
-      "stat": {
+      "rawStat": {
         "crit": 0.045
       }
     }
@@ -24,7 +24,7 @@
   "Affinity": {
     "name": "Affinity",
     "effect": {
-      "stat": {
+      "rawStat": {
         "affinity": 0.022
       }
     }

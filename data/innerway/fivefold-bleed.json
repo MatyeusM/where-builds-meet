@@ -29,7 +29,7 @@
         { "requirement": [{ "target": "skillTag", "value": "PiercingDamage" }], "effect": { "baseDMGBonus": 1 } }
       ]
     },
-    "FivefoldBleedT2": { "effect": [{ "stat": { "maxPhys": 62.3 } }] },
+    "FivefoldBleedT2": { "effect": [{ "rawStat": { "maxPhys": 62.3 } }] },
     "FivefoldBleedT3": {
       "effect": [
         {
@@ -39,7 +39,7 @@
       ]
     },
     "FivefoldBleedT4": {},
-    "FivefoldBleedT5": { "effect": [{ "stat": { "critDmgBonus": 0.035 } }] },
+    "FivefoldBleedT5": { "effect": [{ "rawStat": { "critDmgBonus": 0.035 } }] },
     "FivefoldBleedT6": {
       "trigger": [
         {

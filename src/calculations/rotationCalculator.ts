@@ -44,6 +44,7 @@ import {
 } from "./unconditionalDamageEffects";
 import {
   calculateStatsWithEffects,
+  calculateRawStats,
   calculateActionStats,
   resolveRawStatFormulas,
   applyStatEffects,
@@ -1375,6 +1376,8 @@ function splitStaticStatEffect(effect: EditableObject): {
   remaining?: EditableObject;
 } {
   const statEffect: StatEffectContainer & EffectiveStatEffectContainer = {};
+  if (effect.rawStat && typeof effect.rawStat === "object" && !Array.isArray(effect.rawStat))
+    statEffect.rawStat = effect.rawStat as StatEffectContainer["rawStat"];
   if (effect.statStage === "talent" || effect.statStage === "food") statEffect.statStage = effect.statStage;
   if (effect.stat && typeof effect.stat === "object" && !Array.isArray(effect.stat))
     statEffect.stat = effect.stat as StatEffectContainer["stat"];
@@ -1383,9 +1386,10 @@ function splitStaticStatEffect(effect: EditableObject): {
 
   const remaining = { ...effect };
   delete remaining.stat;
+  delete remaining.rawStat;
   delete remaining.effectiveStat;
   delete remaining.statStage;
-  const hasStatEffect = Boolean(statEffect.stat || statEffect.effectiveStat);
+  const hasStatEffect = Boolean(statEffect.rawStat || statEffect.stat || statEffect.effectiveStat);
   if (Object.keys(remaining).every((key) => key === "id")) return hasStatEffect ? { statEffect } : {};
   return {
     ...(hasStatEffect ? { statEffect } : {}),
@@ -1428,18 +1432,12 @@ function variantStatState(
 ) {
   if (!variant.stats && !variant.setupEffects && !variant.innerWayRules && !variant.timeline) return state;
   const effects = unconditionalStatEffects(setup, rules);
-  const rawStats = applyStatEffects(
-    variant.stats ?? state.baseStats,
-    effects.filter((effect) => !effect.statStage),
-  );
+  const rawStats = calculateRawStats(variant.stats ?? state.baseStats, effects);
   const finalContributions = (raw: CharacterStats, all: typeof effects) => {
     const resolved = all.map((effect) =>
       effect.statStage === "talent" ? resolveRawStatFormulas(effect, raw) : effect,
     );
-    const final = applyStatEffects(
-      emptyStats,
-      resolved.filter((effect) => effect.statStage),
-    );
+    const final = applyStatEffects(emptyStats, resolved);
     const ordinary = Object.fromEntries(
       Object.keys(emptyStats).map((key) => [
         key,

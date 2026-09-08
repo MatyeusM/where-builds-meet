@@ -22,7 +22,7 @@
     "AdaptiveSteelT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "maxBellstrike": 39.8
           }
         }
@@ -32,7 +32,7 @@
     "AdaptiveSteelT4": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "bellstrikeDmgBonus": 0.03
           }
         }

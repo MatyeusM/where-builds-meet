@@ -59,7 +59,7 @@
     "ThroatPiercingArtT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "minStonesplit": 13.3,
             "maxStonesplit": 26.5
           }
@@ -80,7 +80,7 @@
     "ThroatPiercingArtT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "stonesplitPenetration": 6
           }
         }

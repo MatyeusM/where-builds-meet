@@ -6,7 +6,7 @@ export type BaseAttributeData = Record<BaseAttributeKey, Partial<Record<keyof Ch
 
 export function createBaseAttributeEffects(baseAttributeData: BaseAttributeData): StatEffectContainer[] {
   return Object.entries(baseAttributeData).map(([source, conversions]) => ({
-    stat: Object.fromEntries(
+    rawStat: Object.fromEntries(
       Object.entries(conversions).map(([target, multiplier]) => [target, { formula: { source, multiplier } }]),
     ) as StatEffectValues,
   }));

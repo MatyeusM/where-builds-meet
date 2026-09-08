@@ -516,14 +516,14 @@ calculation adds global, skill, and current combat contributions:
 
 ```text
 base inputs / solved override offsets
-  -> rawStats (permanent contributions and attribute conversions)
+  -> rawStats (rawStat contributions, including flat martial-art attributes)
   -> stats (raw-sourced martial-art talents, food, effective/final fields)
   -> buffedStats (global buffs/debuffs)
   -> skillStats (skill-tag contributions)
   -> actionStats (current combat contributions)
 ```
 
-Equipped gear contributes one data-derived `stat` effect to this same pipeline.
+Equipped gear contributes one data-derived `rawStat` effect to this same pipeline.
 Direct Critical Rate is capped at `0.2` (20%) in this shared pipeline and again
 when effective per-action values are resolved, so displayed stats, overrides,
 setup effects, and damage calculations cannot bypass the cap. The complete

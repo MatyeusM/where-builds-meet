@@ -20,7 +20,7 @@
       "2": {
         "name": "2",
         "effect": {
-          "stat": {
+          "rawStat": {
             "minPhys": 78
           }
         }
@@ -69,7 +69,7 @@
       "2": {
         "name": "2",
         "effect": {
-          "stat": {
+          "rawStat": {
             "precision": 0.08
           }
         }
@@ -89,7 +89,12 @@
             }
           },
           {
-            "requirement": [{ "target": "self", "value": "Shield" }],
+            "requirement": [
+              {
+                "target": "self",
+                "value": "Shield"
+              }
+            ],
             "effect": {
               "critDmgBonus": 0.15
             }
@@ -112,7 +117,7 @@
       "2": {
         "name": "2",
         "effect": {
-          "stat": {
+          "rawStat": {
             "crit": 0.09
           }
         }
@@ -126,7 +131,13 @@
             }
           },
           {
-            "requirement": [{ "target": "selfHPPercentage", "comparison": ">=", "amount": 100 }],
+            "requirement": [
+              {
+                "target": "selfHPPercentage",
+                "comparison": ">=",
+                "amount": 100
+              }
+            ],
             "effect": {
               "stat": {
                 "crit": 0.05
@@ -163,7 +174,7 @@
       "2": {
         "name": "2",
         "effect": {
-          "stat": {
+          "rawStat": {
             "affinity": 0.045
           }
         }
@@ -213,7 +224,7 @@
       "2": {
         "name": "2",
         "effect": {
-          "stat": {
+          "rawStat": {
             "minPhys": 78
           }
         }
@@ -227,7 +238,12 @@
           },
           "trigger": {
             "event": "damage",
-            "requirement": [{ "target": "skillTag", "value": "DirectDamage" }],
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "DirectDamage"
+              }
+            ],
             "action": {
               "type": "apply",
               "target": "self",

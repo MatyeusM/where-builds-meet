@@ -23,6 +23,14 @@ try {
   };
   const talent = { statStage: "talent", stat: { minPhys: { formula: { source: "minPhys", multiplier: 0.1 } } } };
   const base = { ...emptyStats, minPhys: 1000, maxPhys: 2000, precision: 1 };
+  const rawBonus = { rawStat: { minPhys: 100 } };
+  const rawFirst = calculateStatsWithEffects(base, [talent, food, rawBonus], 0, []);
+  assert.equal(rawFirst.rawStats.minPhys, 1100);
+  assert.equal(rawFirst.stats.minPhys, 1330, "Raw bonus feeds the talent before food is added");
+  assert.deepEqual(rawFirst, calculateStatsWithEffects(base, [rawBonus, food, talent], 0, []));
+  const lateBonus = calculateStatsWithEffects(base, [talent, { stat: { minPhys: 100 } }], 0, []);
+  assert.equal(lateBonus.rawStats.minPhys, 1000, "Ordinary stat additions do not enter rawStats");
+  assert.equal(lateBonus.stats.minPhys, 1200, "Later stat additions do not feed talent formulas");
   const sheet = calculateStatsWithEffects(base, [talent, food], 0, []);
   assert.equal(sheet.rawStats.minPhys, 1000);
   assert.equal(sheet.stats.minPhys, 1220);
@@ -112,6 +120,34 @@ try {
   assert.equal(during.stats, repeat.stats, "Unchanged numerical combat contributions reuse the resolved action stats");
   const variants = { ...bundle, setupComparisons: { food: [{ label: "None", setupEffects: setupEffects.slice(1) }] } };
   const compared = calculateRotationComparisons(variants, result);
+  const rawSetup = [talent, rawBonus];
+  const rawSheet = calculateStatsWithEffects(base, rawSetup, 0, []);
+  const rawBundle = {
+    ...bundle,
+    stats: rawSheet.stats,
+    rawStats: rawSheet.rawStats,
+    timeline: { ...bundle.timeline, setupEffects: rawSetup },
+    setupComparisons: { arsenal: [{ label: "Remove raw bonus", setupEffects: [talent] }] },
+  };
+  const rawBaseline = calculateRotationBaseline(rawBundle);
+  const rawComparison = calculateRotationComparisons(rawBundle, rawBaseline);
+  const removedSheet = calculateStatsWithEffects(base, [talent], 0, []);
+  const removedBaseline = calculateRotationBaseline({
+    ...rawBundle,
+    stats: removedSheet.stats,
+    rawStats: removedSheet.rawStats,
+    timeline: { ...rawBundle.timeline, setupEffects: [talent] },
+    setupComparisons: {},
+  });
+  const totalDamage = (output) =>
+    output.baseline
+      .filter((entry) => entry.action.type === "damage")
+      .reduce((sum, entry) => sum + output.actionBreakdowns[entry.id].total, 0);
+  assert.equal(
+    rawComparison.setupComparisons.arsenal[0].dpsDifference,
+    totalDamage(removedBaseline) - totalDamage(rawBaseline),
+    "Copied-sheet raw variants must match rebuilding the sheet, including changed talent amounts",
+  );
   assert.equal(
     compared.setupComparisons.food[0].dpsDifference,
     -540,
@@ -123,6 +159,22 @@ try {
   const rope = JSON.parse(await readFile("data/martial-art/skygrasp-rope-dart.json", "utf8"));
   const martial = [...gauntlets.talent, ...rope.talent].flatMap((t) =>
     t.effect.map((effect) => ({ ...effect, statStage: "talent" })),
+  );
+  const attributeBase = { ...base, minBamboocut: 100, maxBamboocut: 200, minVoidAttack: 50, maxVoidAttack: 100 };
+  const unconditionalMartial = martial.filter((effect) => !effect.requirement);
+  const attributes = calculateStatsWithEffects(attributeBase, unconditionalMartial, 0, ["heavenwill", "skygrasp"]);
+  assert.equal(
+    attributes.rawStats.minBamboocut,
+    296,
+    "Both martial arts contribute flat attribute attack before scaling",
+  );
+  assert.equal(attributes.stats.minBamboocut, 296, "Raw attribute bonuses are not applied twice");
+  assert.equal(attributes.stats.effectiveMinBamboocut, 346, "Formless is still folded into final attack");
+  assert.ok(Math.abs(attributes.stats.bamboocutDmgBonus - (296 * 0.11) / 328) < 1e-9);
+  assert.ok(Math.abs(attributes.stats.bamboocutPenetration - (296 * 22) / 328) < 1e-9);
+  assert.deepEqual(
+    attributes,
+    calculateStatsWithEffects(attributeBase, [...unconditionalMartial].reverse(), 0, ["heavenwill", "skygrasp"]),
   );
   for (const withFood of [false, true]) {
     const setup = [...martial, ...(withFood ? [food] : [])];

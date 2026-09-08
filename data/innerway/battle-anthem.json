@@ -22,7 +22,7 @@
     "BattleAnthemT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "affinity": 0.041
           }
         }
@@ -47,7 +47,7 @@
     "BattleAnthemT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "affinityDmgBonus": 0.052
           }
         }

@@ -873,7 +873,7 @@ priority removal to reuse baseline event state:
     "MoraleChantT0": {},
     "MoraleChantT1": {},
     "MoraleChantT2": {
-      "effect": [{ "stat": { "minPhys": 24.8, "maxPhys": 49.6 } }]
+      "effect": [{ "rawStat": { "minPhys": 24.8, "maxPhys": 49.6 } }]
     }
   }
 }
@@ -922,13 +922,22 @@ Rules are processed in tier order on a damage event. Therefore an earlier-tier
 trigger can apply a stack before a later-tier trigger checks the stack count on
 the same event.
 
-## Stat and effective-stat effects
+## Raw-stat, stat, and effective-stat effects
+
+`rawStat` contributes during `rawStats`, before martial-art scaling formulas.
+Use it for permanent progression, gear, Inner Way character bonuses, arsenal,
+two-piece sets, bow/ring sets, and martial-art flat min/max attribute attack.
+Other martial-art bonuses remain `stat` or `effectiveStat` in the second pass.
+An effect can contain both early and later fields; each is applied exactly once.
+Conditional effects on temporary buffs remain `stat`, even when an Inner Way
+modifies their definitions. `rawStat` does not make a temporary buff permanent.
 
 `stat` and `effectiveStat` supply contributions to the owning stage of the
 [stat snapshot pipeline](stat-pipeline.md). Effective contributions are folded
 into the complete snapshot before final ranges/rates are derived; they are not
 a separate runtime stat map that later passes can discard. Martial-art talent
-formulas read immutable `rawStats`, before talents and food, including amounts
+formulas read immutable `rawStats`, after flat attribute talents but before
+later talent bonuses and food, including amounts
 behind skill or combat conditions. Use ordinary raw source names such as
 `minStonesplit`, not `effectiveMinStonesplit`, for those talents.
 
@@ -1536,8 +1545,8 @@ trigger or trigger-ID modifier. Numeric chances, including T3's 20%, are unchang
 
 T1 adds `baseDMGBonus: 1` to the `PiercingDamage` skill tag, doubling its base
 damage without changing its coefficient. This affects both threshold and
-expiration bursts. T2 adds `stat.maxPhys: 62.3` through the shared stat pipeline.
-T5 adds `stat.critDmgBonus: 0.035` (3.5 percentage points of Critical DMG Bonus)
+expiration bursts. T2 adds `rawStat.maxPhys: 62.3` through the shared stat pipeline.
+T5 adds `rawStat.critDmgBonus: 0.035` (3.5 percentage points of Critical DMG Bonus)
 through that same pipeline, applying to all damage rather than only Piercing
 Damage. It does not increase Critical Rate or Critical Healing Bonus.
 T3 modifies Weeping Blood's actions to add

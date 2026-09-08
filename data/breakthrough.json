@@ -10,7 +10,7 @@
     "bamboocutResistance": 0,
     "judgementResistance": 0.65,
     "levelBonusStats": {
-      "stat": {
+      "rawStat": {
         "precision": 0.153,
         "agility": 138,
         "power": 138,
@@ -31,7 +31,7 @@
     "bamboocutResistance": 0,
     "judgementResistance": 0.65,
     "levelBonusStats": {
-      "stat": {
+      "rawStat": {
         "precision": 0.165,
         "agility": 150,
         "power": 150,

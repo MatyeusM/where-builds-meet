@@ -17,11 +17,15 @@ base inputs / solved override offsets
 ## Stage ownership
 
 1. `rawStats` adds permanent character progression, gear, set stats, arsenal,
-   bow/ring, Inner Ways, and five-attribute conversions. It contains ordinary
+   bow/ring, Inner Ways, martial-art flat min/max attribute bonuses, and
+   five-attribute conversions through explicit `rawStat` effects. It contains ordinary
    stats, without effective ranges or final outcome rates.
-2. `stats` adds martial-art talents and food. Every talent formula reads the
+2. `stats` adds the remaining martial-art `stat`/`effectiveStat` bonuses and food.
+   This is the second martial-art pass: every talent formula reads the
    same immutable `rawStats`, including talent amounts behind skill or combat
-   conditions. Talent and food order cannot change those amounts. Effective
+   conditions. Thus all raw flat attribute bonuses are present before scaling,
+   but physical-attack talent results and food do not feed other talents.
+   Talent and food order cannot change those amounts. Effective
    attack ranges and final rates are fields on this complete object, not a
    separate runtime stat map. This is the character-sheet and worker snapshot.
 3. `buffedStats` copies `stats` and adds fixed unconditional contributions from
@@ -38,6 +42,15 @@ The `derivedStats` property retained by compatibility callers aliases the same
 complete object as `stats`. It must not become a separately maintained map.
 Food's `effectiveStat` contribution is incorporated into the complete snapshot,
 so a later skill or temporary-buff pass cannot discard it.
+
+`rawStat` is an unconditional character contribution, not a temporary combat
+effect. Inner Way T2/T5 bonuses, arsenal, two-piece weapon/armor sets, bow/ring
+sets, progression, gear inputs, and attribute conversions use it. Inner Way
+modifiers of temporary buffs (for example Concentration's Direct Affinity)
+remain ordinary `stat` effects on those buffs, not permanent raw contributions.
+Each effect may contain both `rawStat` and `stat`; each field is applied only in
+its own stage. Source selection is explicit: `minBamboocut` includes all raw
+bonuses but not Formless Attack, which is folded into effective attack later.
 
 ## Combat contributions and expiration
 

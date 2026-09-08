@@ -46,7 +46,7 @@
     "EmpiricalEdgeT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "minPhys": 23.3,
             "maxPhys": 46.7
           }
@@ -76,7 +76,7 @@
     "EmpiricalEdgeT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "physDmgBonus": 0.025
           }
         }

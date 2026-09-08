@@ -55,8 +55,6 @@
       "effect": [
         {
           "stat": {
-            "minBamboocut": 98,
-            "maxBamboocut": 196,
             "bamboocutDmgBonus": {
               "formula": {
                 "source": "minBamboocut",
@@ -64,6 +62,10 @@
                 "max": 0.11
               }
             }
+          },
+          "rawStat": {
+            "minBamboocut": 98,
+            "maxBamboocut": 196
           }
         }
       ]

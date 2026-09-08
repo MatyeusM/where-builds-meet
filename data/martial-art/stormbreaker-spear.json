@@ -8,8 +8,6 @@
       "effect": [
         {
           "stat": {
-            "minStonesplit": 98,
-            "maxStonesplit": 196,
             "stonesplitDmgBonus": {
               "formula": {
                 "source": "minStonesplit",
@@ -17,6 +15,10 @@
                 "max": 0.11
               }
             }
+          },
+          "rawStat": {
+            "minStonesplit": 98,
+            "maxStonesplit": 196
           }
         }
       ]

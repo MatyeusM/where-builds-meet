@@ -8,7 +8,7 @@
     "SteadfastDevotionT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "crit": 0.081
           }
         }
@@ -19,7 +19,7 @@
     "SteadfastDevotionT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "critDmgBonus": 0.04
           }
         }

@@ -16,7 +16,11 @@ export type StatFormula = {
 export type FormulaStatValue = { formula: StatFormula };
 export type SegmentStatValue = { function: "segment"; param1: string | number; param2: number[]; param3: number[] };
 export type StatEffectValues = Partial<Record<keyof CharacterStats, number | FormulaStatValue | SegmentStatValue>>;
-export type StatEffectContainer = { stat?: StatEffectValues; statStage?: "talent" | "food" };
+export type StatEffectContainer = {
+  rawStat?: StatEffectValues;
+  stat?: StatEffectValues;
+  statStage?: "talent" | "food";
+};
 export type EffectiveStatEffectContainer = { effectiveStat?: StatEffectValues };
 export type StatConversion = { from: string; to: string; ratio: number; max?: number };
 export type StatConversionEffectContainer = { convert?: StatConversion | StatConversion[] };
@@ -170,19 +174,26 @@ export function calculateStatsWithEffects(
   judgementResistance: number,
   weapons: WeaponId[] = [],
 ) {
-  const rawEffects = effects.filter((effect) => !effect.statStage);
-  const rawStats = applyStatEffects(baseStats, rawEffects);
-  const finalEffects = effects
-    .filter((effect) => effect.statStage)
-    .map((effect) => (effect.statStage === "talent" ? resolveRawStatFormulas(effect, rawStats) : effect));
+  const rawStats = calculateRawStats(baseStats, effects);
+  const finalEffects = effects.map((effect) =>
+    effect.statStage === "talent" ? resolveRawStatFormulas(effect, rawStats) : effect,
+  );
   const ordinary = applyStatEffects(rawStats, finalEffects);
   // Effective-stat data is an additive contribution, not a second runtime stat map.
-  const effective = collectEffectiveStatEffects(ordinary, [...rawEffects, ...finalEffects]);
+  const effective = collectEffectiveStatEffects(ordinary, finalEffects);
   const withEffective = applyStatEffects(ordinary, [{ stat: effective }]);
   const initialDerived = calculateDerivedStats(withEffective, judgementResistance, {}, weapons);
-  const finalOrdinary = applyDerivedStatEffects(withEffective, [...rawEffects, ...finalEffects], initialDerived);
+  const finalOrdinary = applyDerivedStatEffects(withEffective, finalEffects, initialDerived);
   const stats = resolveCompleteStats(finalOrdinary, judgementResistance, weapons);
   return { rawStats, stats, derivedStats: stats };
+}
+
+/** Only explicitly declared raw contributions can feed the talent formula snapshot. */
+export function calculateRawStats(baseStats: CharacterStats, effects: StatEffectContainer[]) {
+  return applyStatEffects(
+    baseStats,
+    effects.map((effect) => ({ stat: effect.rawStat })),
+  );
 }
 
 export type ResolvedStats = CharacterStats & DerivedStats & { uncappedDirectCrit: number };

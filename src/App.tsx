@@ -784,11 +784,15 @@ function innerWayEffectRulesFor(
               ? (item.modify as EditableObject)
               : undefined,
           effect:
-            item.stat && typeof item.stat === "object" && !Array.isArray(item.stat)
-              ? { stat: item.stat as EditableObject }
-              : item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
-                ? (item.effect as EditableObject)
-                : {},
+            item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
+              ? (item.effect as EditableObject)
+              : Object.fromEntries(
+                  ["rawStat", "stat", "effectiveStat"].flatMap((field) =>
+                    item[field] && typeof item[field] === "object" && !Array.isArray(item[field])
+                      ? [[field, item[field]]]
+                      : [],
+                  ),
+                ),
           source: innerWay,
           tier: currentTier,
         }));
@@ -1119,7 +1123,7 @@ type SetupEffect = StatEffectContainer &
   };
 type BreakthroughProfile = EnemyProfile & {
   levelBonusStats: SetupEffect & {
-    stat: {
+    rawStat: {
       precision: number;
       agility: number;
       power: number;
@@ -1828,7 +1832,11 @@ function rotationEntryDisplayName(entry: RotationEntry) {
 
 function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEffectContainer, buildSetup: BuildSetup) {
   const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays)
-    .filter((rule) => requirementIsUnconditional(rule.requirement) && (rule.effect.stat || rule.effect.effectiveStat))
+    .filter(
+      (rule) =>
+        requirementIsUnconditional(rule.requirement) &&
+        (rule.effect.rawStat || rule.effect.stat || rule.effect.effectiveStat),
+    )
     .map((rule) => rule.effect as StatEffectContainer);
   // A setup effect with requirements is a per-action rule. It is resolved by
   // the rotation calculator against the current skill and timeline state and
@@ -1895,7 +1903,7 @@ function buildGraduationBundle(environment: GraduationEnvironment): RotationSimu
   const settings: CalculatorSettings = { weapons, breakthrough: environment.breakthrough };
   const buildSetup = normalizeBuildSetup(build.setup);
   const equippedGear = calculateEquippedGearEffects(buildPresetInventory(build), weapons, false);
-  const gearStatEffect: StatEffectContainer = { stat: equippedGear.stats };
+  const gearStatEffect: StatEffectContainer = { rawStat: equippedGear.stats };
   const setupEffects = selectedSetupEffects(
     settings,
     gearStatEffect,
@@ -1906,7 +1914,11 @@ function buildGraduationBundle(environment: GraduationEnvironment): RotationSimu
   const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, pathId);
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId);
   const innerWayStatEffects = innerWayRules
-    .filter((rule) => requirementIsUnconditional(rule.requirement) && (rule.effect.stat || rule.effect.effectiveStat))
+    .filter(
+      (rule) =>
+        requirementIsUnconditional(rule.requirement) &&
+        (rule.effect.rawStat || rule.effect.stat || rule.effect.effectiveStat),
+    )
     .map((rule) => rule.effect as StatEffectContainer);
   const unconditionalSetupEffects = setupEffects.filter(
     (effect) => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
@@ -3370,10 +3382,10 @@ function StatsTab({
                   </button>
                   <span className="breakthrough-detail-tooltip" id="breakthrough-details" role="tooltip">
                     <span>
-                      {t("ui.app.precision")} {formatNumber(breakthrough.levelBonusStats.stat.precision * 100)}%
+                      {t("ui.app.precision")} {formatNumber(breakthrough.levelBonusStats.rawStat.precision * 100)}%
                     </span>
                     <span>
-                      {t("ui.app.baseAttributes")} {breakthrough.levelBonusStats.stat.agility}
+                      {t("ui.app.baseAttributes")} {breakthrough.levelBonusStats.rawStat.agility}
                     </span>
                     <span>
                       {t("ui.app.gearTier")} {breakthrough.level}
@@ -8537,7 +8549,7 @@ export default function App() {
     [activeGearInventory, settings.weapons, activeBuild?.isDefault],
   );
   const gearStatEffect = useMemo<StatEffectContainer>(
-    () => ({ stat: equippedGearEffects.stats }),
+    () => ({ rawStat: equippedGearEffects.stats }),
     [equippedGearEffects],
   );
   const globalStatState = useMemo(

@@ -23,7 +23,12 @@
       "name": "Heavy Attack Healing Boost",
       "effect": [
         {
-          "requirement": [{ "target": "skillTag", "value": "Heavy" }],
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "Heavy"
+            }
+          ],
           "effect": {
             "healingBonus": {
               "formula": {
@@ -42,8 +47,14 @@
       "effect": [
         {
           "requirement": [
-            { "target": "equippedMartialArt", "value": "soulshadeUmbrella" },
-            { "target": "skillTag", "value": "Mystic" }
+            {
+              "target": "equippedMartialArt",
+              "value": "soulshadeUmbrella"
+            },
+            {
+              "target": "skillTag",
+              "value": "Mystic"
+            }
           ],
           "effect": {
             "convert": {
@@ -60,8 +71,6 @@
       "effect": [
         {
           "stat": {
-            "minSilkbind": 98,
-            "maxSilkbind": 196,
             "silkbindDmgBonus": {
               "formula": {
                 "source": "minSilkbind",
@@ -76,6 +85,10 @@
                 "max": 0.11
               }
             }
+          },
+          "rawStat": {
+            "minSilkbind": 98,
+            "maxSilkbind": 196
           }
         }
       ]

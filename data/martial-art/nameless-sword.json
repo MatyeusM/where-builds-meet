@@ -87,8 +87,6 @@
       "effect": [
         {
           "stat": {
-            "minBellstrike": 98,
-            "maxBellstrike": 196,
             "bellstrikePenetration": {
               "formula": {
                 "source": "maxBellstrike",
@@ -96,6 +94,10 @@
                 "max": 22
               }
             }
+          },
+          "rawStat": {
+            "minBellstrike": 98,
+            "maxBellstrike": 196
           }
         }
       ]

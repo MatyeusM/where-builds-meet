@@ -38,7 +38,7 @@
     "BreakingPointT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "precision": 0.072
           }
         }
@@ -58,7 +58,7 @@
     "BreakingPointT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "directCrit": 0.041
           }
         }

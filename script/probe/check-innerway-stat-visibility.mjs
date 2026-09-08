@@ -73,18 +73,23 @@ try {
       if (!tierDefinition?.effect) continue;
       for (const effect of tierDefinition.effect) {
         assert(
-          effect.stat && !effect.requirement && !effect.target && !effect.modify,
+          effect.rawStat && !effect.requirement && !effect.target && !effect.modify,
           `${definition.name} T${tier} must express its unconditional bonus through the shared stat pipeline.`,
         );
-        for (const stat of Object.keys(effect.stat)) {
+        for (const stat of Object.keys(effect.rawStat)) {
           assert(stat in emptyStats, `${definition.name} T${tier} uses unknown stat ${stat}.`);
           assert(
             stat === "physicalPenetration" || stat === "physicalResistance" || visibleStats.has(stat),
             `${definition.name} T${tier} stat ${stat} must be visible in its Stats-page section.`,
           );
-          const resolvedStats = calculateStatsWithEffects(emptyStats, [effect], 0).stats;
+          const resolved = calculateStatsWithEffects(emptyStats, [effect], 0);
+          const resolvedStats = resolved.stats;
           assert(
-            effect.stat[stat] === 0 || resolvedStats[stat] !== emptyStats[stat],
+            resolved.rawStats[stat] === effect.rawStat[stat],
+            `${definition.name} T${tier} must contribute before talent formulas.`,
+          );
+          assert(
+            effect.rawStat[stat] === 0 || resolvedStats[stat] !== emptyStats[stat],
             `${definition.name} T${tier} stat ${stat} must affect the shared character-stat result.`,
           );
         }

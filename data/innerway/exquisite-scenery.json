@@ -8,7 +8,7 @@
     "ExquisiteSceneryT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "crit": 0.09
           }
         }
@@ -28,7 +28,7 @@
     "ExquisiteSceneryT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "critDmgBonus": 0.044
           }
         }

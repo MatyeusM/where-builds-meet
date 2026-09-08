@@ -17,7 +17,7 @@
     "SkyGrippedT2": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "crit": 0.081
           }
         }
@@ -51,7 +51,7 @@
     "SkyGrippedT5": {
       "effect": [
         {
-          "stat": {
+          "rawStat": {
             "critDmgBonus": 0.04
           }
         }
