@@ -42,7 +42,18 @@ import {
   subtractUnconditionalDamageEffects,
   type UnconditionalDamageEffects,
 } from "./unconditionalDamageEffects";
-import { calculateStatsWithEffects, type EffectiveStatEffectContainer, type StatEffectContainer } from "./statEffects";
+import {
+  calculateStatsWithEffects,
+  calculateActionStats,
+  resolveRawStatFormulas,
+  applyStatEffects,
+  collectEffectiveStatEffects,
+  requirementIsUnconditional,
+  type ResolvedStats,
+  type EffectiveStatEffectContainer,
+  type StatEffectContainer,
+} from "./statEffects";
+import { emptyStats } from "../data/statDefinitions";
 import { outcomeBuffTick, type ExpectedOutcomeBuffSchedule } from "./outcomeTriggeredBuffs";
 import { ExpectedHawkwingTracker, SimulatedHawkwingTracker, hawkwingEffectFor, type HawkwingEffect } from "./hawkwing";
 import {
@@ -165,9 +176,13 @@ export type RotationSimulationBundle = {
   timeline: TimelineBuildInput;
   startAnchor: { rowId: string; actionIndex?: number };
   stats: CharacterStats;
+  /** Complete sheet inputs supplied by the UI; omitted by raw-input diagnostic callers. */
+  rawStats?: CharacterStats;
+  baseStats?: CharacterStats;
   attunement: AttunementStats;
   enemy: EnemyProfile;
-  derivedStats: DamageContext["derivedStats"];
+  /** Legacy raw-input probe field; production bundles send effective/final fields inside stats. */
+  derivedStats?: DamageContext["derivedStats"];
   weapons: WeaponId[];
   statPriority: RotationSimulationVariant[];
   attunementPriority: RotationSimulationVariant[];
@@ -1351,12 +1366,8 @@ function requirementIsSkillStatic(requirement: unknown): boolean {
 
 function unwrappedEffect(effect: EditableObject): EditableObject {
   return effect.effect && typeof effect.effect === "object" && !Array.isArray(effect.effect)
-    ? (effect.effect as EditableObject)
+    ? { ...(effect.effect as EditableObject), ...(effect.statStage ? { statStage: effect.statStage } : {}) }
     : effect;
-}
-
-function requirementIsUnconditional(requirement: unknown) {
-  return requirement === undefined || requirement === null || (Array.isArray(requirement) && requirement.length === 0);
 }
 
 function splitStaticStatEffect(effect: EditableObject): {
@@ -1364,6 +1375,7 @@ function splitStaticStatEffect(effect: EditableObject): {
   remaining?: EditableObject;
 } {
   const statEffect: StatEffectContainer & EffectiveStatEffectContainer = {};
+  if (effect.statStage === "talent" || effect.statStage === "food") statEffect.statStage = effect.statStage;
   if (effect.stat && typeof effect.stat === "object" && !Array.isArray(effect.stat))
     statEffect.stat = effect.stat as StatEffectContainer["stat"];
   if (effect.effectiveStat && typeof effect.effectiveStat === "object" && !Array.isArray(effect.effectiveStat))
@@ -1372,7 +1384,8 @@ function splitStaticStatEffect(effect: EditableObject): {
   const remaining = { ...effect };
   delete remaining.stat;
   delete remaining.effectiveStat;
-  const hasStatEffect = Object.keys(statEffect).length > 0;
+  delete remaining.statStage;
+  const hasStatEffect = Boolean(statEffect.stat || statEffect.effectiveStat);
   if (Object.keys(remaining).every((key) => key === "id")) return hasStatEffect ? { statEffect } : {};
   return {
     ...(hasStatEffect ? { statEffect } : {}),
@@ -1380,10 +1393,81 @@ function splitStaticStatEffect(effect: EditableObject): {
   };
 }
 
+function unconditionalStatEffects(setup: EditableObject[], rules: InnerWayEffectRule[]) {
+  return [
+    ...setup.filter((effect) => requirementIsUnconditional(effect.requirement)).map(unwrappedEffect),
+    ...rules.filter((rule) => requirementIsUnconditional(rule.requirement)).map((rule) => rule.effect),
+  ].flatMap((effect) => {
+    const split = splitStaticStatEffect(effect);
+    return split.statEffect ? [split.statEffect] : [];
+  });
+}
+
+/** UI bundles already carry the completed sheet; raw-input probes use this same preparation boundary. */
+function rotationStatState(bundle: RotationSimulationBundle) {
+  const effects = unconditionalStatEffects(bundle.timeline.setupEffects, bundle.timeline.innerWayRules);
+  const prepared = bundle.rawStats
+    ? undefined
+    : calculateStatsWithEffects(bundle.stats, effects, bundle.enemy.judgementResistance, bundle.weapons);
+  return {
+    stats: prepared?.stats ?? (bundle.stats as ResolvedStats),
+    rawStats: bundle.rawStats ?? prepared!.rawStats,
+    baseStats: bundle.baseStats ?? bundle.stats,
+    effects,
+    attunement: bundle.attunement,
+    enemy: bundle.enemy,
+    weapons: bundle.weapons,
+  };
+}
+
+function variantStatState(
+  state: ReturnType<typeof rotationStatState>,
+  setup: EditableObject[],
+  rules: InnerWayEffectRule[],
+  variant: RotationSimulationVariant,
+) {
+  if (!variant.stats && !variant.setupEffects && !variant.innerWayRules && !variant.timeline) return state;
+  const effects = unconditionalStatEffects(setup, rules);
+  const rawStats = applyStatEffects(
+    variant.stats ?? state.baseStats,
+    effects.filter((effect) => !effect.statStage),
+  );
+  const finalContributions = (raw: CharacterStats, all: typeof effects) => {
+    const resolved = all.map((effect) =>
+      effect.statStage === "talent" ? resolveRawStatFormulas(effect, raw) : effect,
+    );
+    const final = applyStatEffects(
+      emptyStats,
+      resolved.filter((effect) => effect.statStage),
+    );
+    const ordinary = Object.fromEntries(
+      Object.keys(emptyStats).map((key) => [
+        key,
+        raw[key as keyof CharacterStats] + final[key as keyof CharacterStats],
+      ]),
+    ) as CharacterStats;
+    return applyStatEffects(final, [{ stat: collectEffectiveStatEffects(ordinary, resolved) }]);
+  };
+  const oldFinal = finalContributions(state.rawStats, state.effects);
+  const nextFinal = finalContributions(rawStats, effects);
+  const delta = Object.fromEntries(
+    Object.keys(emptyStats)
+      .map((key) => {
+        const field = key as keyof CharacterStats;
+        return [key, rawStats[field] - state.rawStats[field] + nextFinal[field] - oldFinal[field]];
+      })
+      .filter(([, value]) => value !== 0),
+  );
+  return {
+    rawStats,
+    stats: calculateActionStats(state.stats, [{ stat: delta }], state.enemy.judgementResistance, state.weapons),
+  };
+}
+
 function timelineDamageEntries(
   timeline: TimelineRow[],
   input: TimelineBuildInput,
-  state: Pick<RotationSimulationBundle, "stats" | "attunement" | "enemy" | "derivedStats" | "weapons">,
+  state: ReturnType<typeof rotationStatState>,
   startAnchor: RotationSimulationBundle["startAnchor"],
   overrides: RotationSimulationVariant = { label: "" },
   updateTimelineState = false,
@@ -1400,7 +1484,7 @@ function timelineDamageEntries(
     rule.listen?.event === "damage" ? [{ key: `${rule.source}:T${rule.tier}:${index}`, rule }] : [],
   );
   const conditions = new Set(overrides.innerWayConditions ?? input.innerWayConditions);
-  const setupEffects = overrides.setupEffects ?? input.setupEffects;
+  let setupEffects = overrides.setupEffects ?? input.setupEffects;
   const hawkwing = hawkwingEffectFor(setupEffects, input.effectDefinitions);
   const insightfulStrike = insightfulStrikeEffectFor(rules, input.effectDefinitions);
   const seasonalEdge = seasonalEdgeEffectFor(rules, input.effectDefinitions);
@@ -1410,22 +1494,27 @@ function timelineDamageEntries(
     seasonalEdge && !input.rotation.infiniteVitality
       ? applySeasonalVitalityRanges(timeline, seasonalWindows, input.resourceMaximums?.Vitality, updateTimelineState)
       : undefined;
-  const baseStats = overrides.stats ?? state.stats;
-  const characterStaticEffects = [
-    ...setupEffects.filter((effect) => requirementIsUnconditional(effect.requirement)).map(unwrappedEffect),
-    ...rules.filter((rule) => requirementIsUnconditional(rule.requirement)).map((rule) => rule.effect),
-  ].flatMap((effect) => {
-    const split = splitStaticStatEffect(effect);
-    return split.statEffect ? [split.statEffect] : [];
-  });
-  const characterStaticState = characterStaticEffects.length
-    ? calculateStatsWithEffects(baseStats, characterStaticEffects, state.enemy.judgementResistance, state.weapons)
-    : {
-        stats: baseStats,
-        derivedStats: overrides.stats
-          ? calculateDerivedStats(baseStats, state.enemy.judgementResistance, {}, state.weapons)
-          : state.derivedStats,
-      };
+  const sheet = variantStatState(state, setupEffects, rules, overrides);
+  setupEffects = setupEffects.map((effect) =>
+    effect.statStage === "talent" ? resolveRawStatFormulas(effect, sheet.rawStats) : effect,
+  );
+  // Global fixed stat contributions belong to buffedStats, not to each action.
+  const globalNames = new Set(
+    [...(input.initialBuffs ?? []), ...(input.initialDebuffs ?? [])].map((effect) => effect.name),
+  );
+  const globalContributions = addUnconditionalDamageEffects(
+    ...[...(timeline[0]?.buffs ?? []), ...(timeline[0]?.debuffs ?? [])]
+      .filter((effect) => globalNames.has(effect.name) && (effect.playerRecipientIndex ?? 0) === 0)
+      .map((effect) => effect.unconditionalDamageEffects),
+  );
+  const globalStats = Object.fromEntries(
+    Object.entries(globalContributions)
+      .filter(([key]) => key.startsWith("stat."))
+      .map(([key, value]) => [key.slice(5), value]),
+  );
+  const buffedStats = Object.keys(globalStats).length
+    ? calculateActionStats(sheet.stats, [{ stat: globalStats }], state.enemy.judgementResistance, state.weapons)
+    : sheet.stats;
   const calculationSetupEffects = setupEffects.flatMap((effect) => {
     if (!requirementIsUnconditional(effect.requirement)) return [effect];
     const split = splitStaticStatEffect(unwrappedEffect(effect));
@@ -1475,16 +1564,11 @@ function timelineDamageEntries(
         remaining.push(damageSplit.remaining);
     }
     const staticState = statEffects.length
-      ? calculateStatsWithEffects(
-          characterStaticState.stats,
-          statEffects,
-          state.enemy.judgementResistance,
-          state.weapons,
-        )
-      : characterStaticState;
+      ? calculateActionStats(buffedStats, statEffects, state.enemy.judgementResistance, state.weapons)
+      : buffedStats;
     const resolved = {
-      stats: staticState.stats,
-      derivedStats: staticState.derivedStats,
+      stats: staticState,
+      derivedStats: staticState,
       aggregated,
       remaining,
     };
@@ -1654,7 +1738,10 @@ function timelineDamageEntries(
             derivedStats: skillStaticEffects.derivedStats,
             effects: effectsForState(buffs, debuffs, resources),
             unconditionalDamageEffects: addUnconditionalDamageEffects(
-              actionState.unconditionalDamageEffects,
+              subtractUnconditionalDamageEffects(
+                actionState.unconditionalDamageEffects,
+                Object.fromEntries(Object.entries(globalContributions).filter(([key]) => key.startsWith("stat."))),
+              ),
               skillStaticEffects.aggregated,
             ),
             distance: actionState.distance,
@@ -2199,13 +2286,7 @@ export function calculateSimulatedRotationRun(
   duration: number;
   mysticVitalityDamageScale: number;
 } {
-  const state = {
-    stats: bundle.stats,
-    attunement: bundle.attunement,
-    enemy: bundle.enemy,
-    derivedStats: bundle.derivedStats,
-    weapons: bundle.weapons,
-  };
+  const state = rotationStatState(bundle);
   const structuralInput = {
     ...bundle.timeline,
     resolvedHealing: undefined,
@@ -2262,13 +2343,7 @@ export function calculateRotationBaseline(
   const initialTimingStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const { anchorTime } = timelineTiming(timeline, bundle.startAnchor);
   if (import.meta.env.DEV) finishCalculationPhase("timingResolution", initialTimingStartedAt);
-  const state = {
-    stats: bundle.stats,
-    attunement: bundle.attunement,
-    enemy: bundle.enemy,
-    derivedStats: bundle.derivedStats,
-    weapons: bundle.weapons,
-  };
+  const state = rotationStatState(bundle);
   const damagePipelineStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   let baselineResolution = timelineDamageEntries(
     timeline,
@@ -2392,13 +2467,7 @@ export function calculateRotationComparisons(
   baselineResult: RotationSimulationBaseline,
   onProgress?: (completed: number, total: number) => void,
 ): RotationMetrics {
-  const state = {
-    stats: bundle.stats,
-    attunement: bundle.attunement,
-    enemy: bundle.enemy,
-    derivedStats: bundle.derivedStats,
-    weapons: bundle.weapons,
-  };
+  const state = rotationStatState(bundle);
   const totalVariants =
     bundle.statPriority.length +
     bundle.attunementPriority.length +

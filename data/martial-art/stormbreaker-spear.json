@@ -12,7 +12,7 @@
             "maxStonesplit": 196,
             "stonesplitDmgBonus": {
               "formula": {
-                "source": "effectiveMinStonesplit",
+                "source": "minStonesplit",
                 "multiplier": 0.0003353658536585366,
                 "max": 0.11
               }

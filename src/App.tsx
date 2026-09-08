@@ -200,6 +200,7 @@ import {
 import { setupSelectionChangesTimeline } from "./data/scriptDefinitions";
 import {
   calculateStatsWithOverrides,
+  requirementIsUnconditional,
   type CharacterStatOverrides,
   type EffectiveStatEffectContainer,
   type StatEffectContainer,
@@ -1416,7 +1417,9 @@ function scriptEffectFor(value: string) {
 
 function selectedMartialArtEffects(settings: CalculatorSettings) {
   return Array.from(new Set(settings.weapons)).flatMap((weapon) =>
-    (martialArtDefinitions[weapon]?.talent ?? []).flatMap((talent) => talent.effect ?? []),
+    (martialArtDefinitions[weapon]?.talent ?? []).flatMap((talent) =>
+      (talent.effect ?? []).map((effect) => ({ ...effect, statStage: "talent" as const })),
+    ),
   );
 }
 
@@ -1445,7 +1448,7 @@ function selectedSetupEffects(
     bowRingSetEffectFor(selectedBuildSetup.bowRingSet),
     ...setEffectsFor(selectedBuildSetup.weaponSets, typedWeaponSetDefinitions, settings, pathId),
     ...setEffectsFor(selectedBuildSetup.armorSets, typedArmorSetDefinitions, settings, pathId),
-    foodEffect,
+    { ...foodEffect, statStage: "food" as const },
     scriptEffect,
     divinecraftEffect,
     gearStatEffect,
@@ -1693,6 +1696,7 @@ const percentageAttunementKeys = new Set<keyof AttunementStats>(
 type CharacterState = {
   stats: CharacterStats;
   rawStats: CharacterStats;
+  baseStats: CharacterStats;
   attunementStats: AttunementStats;
   displayedAttunementStats: AttunementStats;
   settings: CalculatorSettings;
@@ -1824,13 +1828,13 @@ function rotationEntryDisplayName(entry: RotationEntry) {
 
 function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEffectContainer, buildSetup: BuildSetup) {
   const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays)
-    .filter((rule) => !rule.requirement && rule.effect.stat)
+    .filter((rule) => requirementIsUnconditional(rule.requirement) && (rule.effect.stat || rule.effect.effectiveStat))
     .map((rule) => rule.effect as StatEffectContainer);
   // A setup effect with requirements is a per-action rule. It is resolved by
   // the rotation calculator against the current skill and timeline state and
   // must not leak into the always-visible character-stat baseline.
   const unconditionalSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup).filter(
-    (effect) => !("requirement" in effect) || !effect.requirement,
+    (effect) => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
   );
   return [...unconditionalSetupEffects, ...innerWayStatEffects];
 }
@@ -1902,9 +1906,11 @@ function buildGraduationBundle(environment: GraduationEnvironment): RotationSimu
   const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, pathId);
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId);
   const innerWayStatEffects = innerWayRules
-    .filter((rule) => !rule.requirement && rule.effect.stat)
+    .filter((rule) => requirementIsUnconditional(rule.requirement) && (rule.effect.stat || rule.effect.effectiveStat))
     .map((rule) => rule.effect as StatEffectContainer);
-  const unconditionalSetupEffects = setupEffects.filter((effect) => !("requirement" in effect) || !effect.requirement);
+  const unconditionalSetupEffects = setupEffects.filter(
+    (effect) => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
+  );
   const enemy = breakthroughProfile(settings);
   const statState = calculateStatsWithOverrides(
     emptyStats,
@@ -1947,10 +1953,11 @@ function buildGraduationBundle(environment: GraduationEnvironment): RotationSimu
       maxHP: statState.stats.maxHp,
     },
     startAnchor: rotationAnchor,
-    stats: statState.baseStats,
+    stats: statState.stats,
+    rawStats: statState.rawStats,
+    baseStats: statState.baseStats,
     attunement: { ...defaultAttunementStats, ...equippedGear.attunement },
     enemy,
-    derivedStats: statState.derivedStats,
     weapons,
     statPriority: [],
     attunementPriority: [],
@@ -5565,7 +5572,8 @@ function RotationEditorTab({
 }) {
   const {
     stats: displayedCharacterStats,
-    rawStats: rawCharacterStats,
+    baseStats: rawCharacterStats,
+    rawStats: talentFormulaStats,
     attunementStats,
     settings,
     enemy,
@@ -6743,10 +6751,11 @@ function RotationEditorTab({
     return {
       timeline: makeTimelineInput(rotationRecord, innerWayConditions, innerWayEffectRules, baselineSetupEffects),
       startAnchor: rotationAnchor,
-      stats: rawCharacterStats,
+      stats: displayedCharacterStats,
+      rawStats: talentFormulaStats,
+      baseStats: rawCharacterStats,
       attunement: attunementStats,
       enemy,
-      derivedStats,
       weapons: settings.weapons,
       statPriority: includeDiffs
         ? Object.entries(priorityCharacter).map(([key, amount]) => {
@@ -8547,7 +8556,8 @@ export default function App() {
   const character = useMemo(
     () => ({
       stats: displayedStats,
-      rawStats: globalStatState.baseStats,
+      rawStats: globalStatState.rawStats,
+      baseStats: globalStatState.baseStats,
       attunementStats: resolvedAttunementStats.calculation,
       displayedAttunementStats: resolvedAttunementStats.displayed,
       settings,
@@ -8560,6 +8570,7 @@ export default function App() {
     [
       displayedStats,
       globalStatState.baseStats,
+      globalStatState.rawStats,
       resolvedAttunementStats,
       settings,
       enemy,

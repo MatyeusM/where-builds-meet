@@ -1,7 +1,8 @@
 import type { CharacterStats, WeaponId } from "../types";
 import { calculateDerivedStats, type DerivedStats } from "./effectiveStats";
 import { resolveSegmentValue } from "./dynamicValues";
-import { applyCharacterStatCaps, calculationStatMaximum } from "./statCaps";
+import { calculationStatMaximum } from "./statCaps";
+import { emptyStats } from "../data/statDefinitions";
 
 export type StatFormula = {
   source: string;
@@ -15,7 +16,7 @@ export type StatFormula = {
 export type FormulaStatValue = { formula: StatFormula };
 export type SegmentStatValue = { function: "segment"; param1: string | number; param2: number[]; param3: number[] };
 export type StatEffectValues = Partial<Record<keyof CharacterStats, number | FormulaStatValue | SegmentStatValue>>;
-export type StatEffectContainer = { stat?: StatEffectValues };
+export type StatEffectContainer = { stat?: StatEffectValues; statStage?: "talent" | "food" };
 export type EffectiveStatEffectContainer = { effectiveStat?: StatEffectValues };
 export type StatConversion = { from: string; to: string; ratio: number; max?: number };
 export type StatConversionEffectContainer = { convert?: StatConversion | StatConversion[] };
@@ -77,7 +78,11 @@ export function resolveFormulaValue(formula: StatFormula, sources: Record<string
 }
 
 export function applyStatEffects(baseStats: CharacterStats, effects: StatEffectContainer[]) {
-  const adjustedStats = { ...baseStats };
+  const adjustedStats = Object.fromEntries(
+    Object.keys(emptyStats).map((key) => [key, baseStats[key as keyof CharacterStats]]),
+  ) as CharacterStats;
+  const uncapped = (baseStats as Partial<ResolvedStats>).uncappedDirectCrit;
+  if (uncapped !== undefined) adjustedStats.directCrit = uncapped;
   const statEffects = effects.flatMap((effect) => (effect.stat ? [effect.stat] : []));
 
   // Apply fixed values first so formulas read the character's fully adjusted
@@ -102,7 +107,7 @@ export function applyStatEffects(baseStats: CharacterStats, effects: StatEffectC
       adjustedStats[statKey] = normalizeInternalValue(adjustedStats[statKey] + resolved);
     }),
   );
-  return applyCharacterStatCaps(adjustedStats);
+  return adjustedStats;
 }
 
 export function applyDerivedStatEffects(
@@ -133,7 +138,7 @@ export function applyDerivedStatEffects(
       adjustedStats[statKey] = normalizeInternalValue(adjustedStats[statKey] + resolved);
     }),
   );
-  return applyCharacterStatCaps(adjustedStats);
+  return adjustedStats;
 }
 
 export function collectEffectiveStatEffects(stats: CharacterStats, effects: EffectiveStatEffectContainer[]) {
@@ -155,24 +160,79 @@ export function collectEffectiveStatEffects(stats: CharacterStats, effects: Effe
   return result;
 }
 
+export function requirementIsUnconditional(requirement: unknown) {
+  return requirement === undefined || requirement === null || (Array.isArray(requirement) && requirement.length === 0);
+}
+
 export function calculateStatsWithEffects(
   baseStats: CharacterStats,
   effects: Array<StatEffectContainer & EffectiveStatEffectContainer>,
   judgementResistance: number,
   weapons: WeaponId[] = [],
 ) {
-  const directlyAdjustedStats = applyStatEffects(baseStats, effects);
-  const initialEffectiveStat = collectEffectiveStatEffects(directlyAdjustedStats, effects);
-  const initialDerivedStats = calculateDerivedStats(
-    directlyAdjustedStats,
+  const rawEffects = effects.filter((effect) => !effect.statStage);
+  const rawStats = applyStatEffects(baseStats, rawEffects);
+  const finalEffects = effects
+    .filter((effect) => effect.statStage)
+    .map((effect) => (effect.statStage === "talent" ? resolveRawStatFormulas(effect, rawStats) : effect));
+  const ordinary = applyStatEffects(rawStats, finalEffects);
+  // Effective-stat data is an additive contribution, not a second runtime stat map.
+  const effective = collectEffectiveStatEffects(ordinary, [...rawEffects, ...finalEffects]);
+  const withEffective = applyStatEffects(ordinary, [{ stat: effective }]);
+  const initialDerived = calculateDerivedStats(withEffective, judgementResistance, {}, weapons);
+  const finalOrdinary = applyDerivedStatEffects(withEffective, [...rawEffects, ...finalEffects], initialDerived);
+  const stats = resolveCompleteStats(finalOrdinary, judgementResistance, weapons);
+  return { rawStats, stats, derivedStats: stats };
+}
+
+export type ResolvedStats = CharacterStats & DerivedStats & { uncappedDirectCrit: number };
+
+export function resolveCompleteStats(
+  stats: CharacterStats,
+  judgementResistance: number,
+  weapons: WeaponId[] = [],
+): ResolvedStats {
+  return {
+    ...stats,
+    ...calculateDerivedStats(stats, judgementResistance, {}, weapons),
+    uncappedDirectCrit: stats.directCrit,
+  };
+}
+
+/** Talent amounts always read the same raw character snapshot, even inside conditional effect modifiers. */
+export function resolveRawStatFormulas<T>(value: T, rawStats: CharacterStats): T {
+  if (Array.isArray(value)) return value.map((item) => resolveRawStatFormulas(item, rawStats)) as T;
+  if (!value || typeof value !== "object") return value;
+  const object = value as Record<string, unknown>;
+  if (object.formula && typeof object.formula === "object") {
+    const resolved = resolveFormulaValue(object.formula as StatFormula, rawStats);
+    if (resolved !== undefined) return resolved as T;
+  }
+  if (object.function === "segment" && typeof object.param1 === "string" && object.param1 in rawStats) {
+    const resolved = resolveSegmentValue(object, rawStats);
+    if (resolved !== undefined) return resolved as T;
+  }
+  return Object.fromEntries(
+    Object.entries(object).map(([key, child]) => [key, resolveRawStatFormulas(child, rawStats)]),
+  ) as T;
+}
+
+/** Copy the immutable skill baseline, add current uncapped contributions, then derive final fields. */
+export function calculateActionStats(
+  skillStats: CharacterStats,
+  effects: Array<StatEffectContainer & EffectiveStatEffectContainer>,
+  judgementResistance: number,
+  weapons: WeaponId[],
+): ResolvedStats {
+  const ordinary = applyStatEffects(skillStats, effects);
+  const effective = collectEffectiveStatEffects(ordinary, effects);
+  const withEffective = applyStatEffects(ordinary, [{ stat: effective }]);
+  const initialDerived = calculateDerivedStats(withEffective, judgementResistance, {}, weapons);
+  return resolveCompleteStats(
+    applyDerivedStatEffects(withEffective, effects, initialDerived),
     judgementResistance,
-    initialEffectiveStat,
     weapons,
   );
-  const stats = applyDerivedStatEffects(directlyAdjustedStats, effects, initialDerivedStats);
-  const effectiveStat = collectEffectiveStatEffects(stats, effects);
-  const derivedStats = calculateDerivedStats(stats, judgementResistance, effectiveStat, weapons);
-  return { stats, effectiveStat, derivedStats };
 }
 
 export type CharacterStatOverrides = Partial<CharacterStats>;

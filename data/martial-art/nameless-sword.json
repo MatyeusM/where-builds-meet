@@ -91,7 +91,7 @@
             "maxBellstrike": 196,
             "bellstrikePenetration": {
               "formula": {
-                "source": "effectiveMaxBellstrike",
+                "source": "maxBellstrike",
                 "multiplier": 0.033587786259542,
                 "max": 22
               }

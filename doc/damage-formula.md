@@ -25,11 +25,16 @@ Simulation retains exact sampled timing.
 
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, character talent stats, regional Oddity rewards, attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
 
-1. Add fixed `stat` values.
-2. Resolve `stat` formulas whose source is another base stat.
-3. Calculate effective attack ranges and rates.
-4. Resolve `stat` formulas whose source is a derived stat.
-5. Add `effectiveStat` values and calculate the final derived stats.
+1. Build `rawStats` from permanent contributions and five-attribute conversions.
+2. Build `stats`: martial-art talent formulas read immutable `rawStats`; add
+   talents and food, then effective ranges and final rates on this same object.
+3. Build `buffedStats` with selected global buff/debuff stat contributions.
+4. Build cached `skillStats` for each effective action-tag signature.
+5. Copy that baseline into `actionStats`, add the current combat contribution,
+   and derive final values before damage or healing.
+
+See [Stat snapshot pipeline](stat-pipeline.md) for stage ownership, lifecycle
+aggregation, conditional effects, overrides, and comparison variants.
 
 Fixed effects are applied before formulas, regardless of JSON order. Internal floating-point results are normalized to nine decimal places.
 
@@ -99,11 +104,13 @@ content that can be modified. Mixed definitions are split rule by rule, so an
 unconditional attack bonus can use the aggregate while a conditional
 penetration rule from the same stack tier is still evaluated on hit.
 
-Before action-specific resolution, unconditional `stat` and `effectiveStat`
-effects are applied once to the raw character inputs. This character-static
-snapshot includes permanent progression, gear, breakthrough, unconditional
-setup selections, and unconditional Inner Way stats. Those effects are removed
-from the action effect list rather than being applied again for every hit.
+The worker receives the complete character-sheet snapshot, including food's
+`effectiveStat` contributions. Selected global buffs/debuffs produce
+`buffedStats`. Already-applied sheet and global stat contributions are excluded
+from later additions, so neither disappears nor applies twice on a later pass.
+Numeric combat-stat contributions use the tracked-effect lifecycle aggregate;
+the action resolver derives values from the immutable skill baseline, not the
+previous action's capped result.
 
 Setup and Inner Way rules whose complete requirements depend only on skill tags,
 the skill's martial-art tag, or the equipped martial-art pair are resolved once

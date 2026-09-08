@@ -2,7 +2,8 @@ import attunementJson from "../../data/attunement.json";
 import { weaponArtBonus, type DamageAction, type DamageContext } from "./damage";
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues";
 import { calculateDerivedStats, mainAttributeForWeapons } from "./effectiveStats";
-import { calculateStatsWithEffects, resolveFormulaValue, type StatFormula } from "./statEffects";
+import { resolveFormulaValue, type StatFormula } from "./statEffects";
+import { resolveActionStatContext } from "./actionStats";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 
 type AttunementDefinition = {
@@ -68,16 +69,8 @@ function matchingAttunementStats(context: DamageContext) {
 }
 
 function resolveHealingAttackState(context: DamageContext) {
-  const hasStatEffects = context.effects.some(
-    (effect) =>
-      (effect.stat && typeof effect.stat === "object") ||
-      (effect.effectiveStat && typeof effect.effectiveStat === "object"),
-  );
-  const calculated = hasStatEffects
-    ? calculateStatsWithEffects(context.stats, context.effects, context.enemy.judgementResistance, context.weapons)
-    : undefined;
-  const stats = calculated?.stats ?? context.stats;
-  const derivedStats = calculated?.derivedStats ?? context.derivedStats;
+  const stats = context.stats;
+  const derivedStats = context.derivedStats;
   const unconditional = context.unconditionalDamageEffects ?? {};
   let physicalAttackBonus = unconditional.physicalAttackBonus ?? 0;
   let silkbindAttackBonus = unconditional.silkbindAttackBonus ?? 0;
@@ -162,7 +155,7 @@ function calculateHealingBreakdownInternal(
 
 /** Resolve one expected healing action from the same hit-time stats and effects used by damage actions. */
 export function calculateHealingBreakdown(action: DamageAction, context: DamageContext): HealingBreakdown {
-  return calculateHealingBreakdownInternal(action, context);
+  return calculateHealingBreakdownInternal(action, resolveActionStatContext(context));
 }
 
 /** Resolve one sampled Normal/Critical healing action for a simulation run. */
@@ -171,5 +164,5 @@ export function calculateSimulatedHealingBreakdown(
   context: DamageContext,
   random: () => number,
 ): HealingBreakdown {
-  return calculateHealingBreakdownInternal(action, context, random);
+  return calculateHealingBreakdownInternal(action, resolveActionStatContext(context), random);
 }

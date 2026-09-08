@@ -59,7 +59,7 @@
             "maxBamboocut": 196,
             "bamboocutDmgBonus": {
               "formula": {
-                "source": "effectiveMinBamboocut",
+                "source": "minBamboocut",
                 "multiplier": 0.0003353658536585366,
                 "max": 0.11
               }

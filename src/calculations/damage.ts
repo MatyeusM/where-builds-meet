@@ -3,18 +3,16 @@ import attunementJson from "../../data/attunement.json";
 import { calculateRates, mainAttributeForWeapons } from "./effectiveStats";
 import type { DerivedStats } from "./effectiveStats";
 import {
-  calculateStatsWithEffects,
   applyStatConversions,
   resolveFormulaValue,
-  type EffectiveStatEffectContainer,
   type StatConversionEffectContainer,
-  type StatEffectContainer,
   type StatFormula,
 } from "./statEffects";
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 import type { UnconditionalDamageEffects } from "./unconditionalDamageEffects";
+import { resolveActionStatContext } from "./actionStats";
 
 type AttunementDefinition = {
   effect?: { stat?: Record<string, number>; tags?: string[]; excludeTags?: string[] };
@@ -150,27 +148,8 @@ function calculateDamageBreakdownInternal(
   random?: () => number,
 ): DamageBreakdown {
   const { stats: baseStats, attunement, skillTags, weapons, enemy, derivedStats: baseDerivedStats, effects } = context;
-  const statResolutionStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-  const statEffectDetectionStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-  const hasStatEffects = effects.some(
-    (effect) =>
-      (effect.stat && typeof effect.stat === "object") ||
-      (effect.effectiveStat && typeof effect.effectiveStat === "object"),
-  );
-  if (import.meta.env.DEV) finishCalculationPhase("damageStatEffectDetection", statEffectDetectionStartedAt);
-  const statPipelineStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-  const calculatedStats = hasStatEffects
-    ? calculateStatsWithEffects(
-        baseStats,
-        effects as Array<StatEffectContainer & EffectiveStatEffectContainer>,
-        enemy.judgementResistance,
-        weapons,
-      )
-    : undefined;
-  const stats = calculatedStats?.stats ?? baseStats;
-  const derivedStats = calculatedStats?.derivedStats ?? baseDerivedStats;
-  if (import.meta.env.DEV) finishCalculationPhase("damageStatPipeline", statPipelineStartedAt);
-  if (import.meta.env.DEV) finishCalculationPhase("damageStatResolution", statResolutionStartedAt);
+  const stats = baseStats;
+  const derivedStats = baseDerivedStats;
   const effectAggregationStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const effectValue = (value: unknown) => {
     if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -521,7 +500,7 @@ function calculateDamageBreakdownInternal(
 }
 
 export function calculateDamageBreakdown(action: DamageAction, context: DamageContext): DamageBreakdown {
-  return calculateDamageBreakdownInternal(action, context);
+  return calculateDamageBreakdownInternal(action, resolveActionStatContext(context));
 }
 
 export function calculateSimulatedDamageBreakdown(
@@ -529,7 +508,9 @@ export function calculateSimulatedDamageBreakdown(
   context: DamageContext,
   random: () => number = Math.random,
 ): DamageBreakdown & { outcome: DamageOutcome } {
-  return calculateDamageBreakdownInternal(action, context, random) as DamageBreakdown & { outcome: DamageOutcome };
+  return calculateDamageBreakdownInternal(action, resolveActionStatContext(context), random) as DamageBreakdown & {
+    outcome: DamageOutcome;
+  };
 }
 
 export function calculateDamage(action: DamageAction, context: DamageContext) {

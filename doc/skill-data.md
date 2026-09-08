@@ -892,8 +892,8 @@ reuses the baseline timeline and is valid only when every option changes
 damage/stat evaluation without changing combat events or tracked state.
 One set option may provide either one setup-effect object or an array of setup
 effects. Arrays allow unconditional stats and action-time rules to coexist in
-the same tier. An explicit empty `requirement` array is an always-active
-action-time rule that remains outside the displayed character-stat pipeline.
+the same tier. An explicit empty `requirement` array is unconditional: its stat
+fields belong to the character sheet, while damage fields remain action effects.
 Rain Whisper four-piece uses one for its unconditional Critical DMG bonus and a
 Shield requirement for its additional Critical DMG bonus.
 
@@ -924,9 +924,13 @@ the same event.
 
 ## Stat and effective-stat effects
 
-`stat` changes the base character object before effective values are calculated.
-`effectiveStat` changes only the effective calculation and does not alter the
-editable base value.
+`stat` and `effectiveStat` supply contributions to the owning stage of the
+[stat snapshot pipeline](stat-pipeline.md). Effective contributions are folded
+into the complete snapshot before final ranges/rates are derived; they are not
+a separate runtime stat map that later passes can discard. Martial-art talent
+formulas read immutable `rawStats`, before talents and food, including amounts
+behind skill or combat conditions. Use ordinary raw source names such as
+`minStonesplit`, not `effectiveMinStonesplit`, for those talents.
 
 ```json
 {

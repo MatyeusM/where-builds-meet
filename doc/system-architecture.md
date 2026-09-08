@@ -510,25 +510,24 @@ martial-art pair.
 
 ## Character stat pipeline
 
-`calculateStatsWithEffects()` is the canonical path from simulation base stats
-to the character values used for damage:
+The authoritative stage contract is [Stat snapshot pipeline](stat-pipeline.md).
+`calculateStatsWithEffects()` builds the raw and character-sheet snapshots;
+calculation adds global, skill, and current combat contributions:
 
 ```text
-simulation base stats
-  -> fixed base-stat effects
-  -> base-stat formula effects
-  -> character stat caps
-  -> initial effective stats
-  -> derived-source formula effects
-  -> character stat caps
-  -> effectiveStat effects
-  -> final stats + final derived stats
+base inputs / solved override offsets
+  -> rawStats (permanent contributions and attribute conversions)
+  -> stats (raw-sourced martial-art talents, food, effective/final fields)
+  -> buffedStats (global buffs/debuffs)
+  -> skillStats (skill-tag contributions)
+  -> actionStats (current combat contributions)
 ```
 
 Equipped gear contributes one data-derived `stat` effect to this same pipeline.
 Direct Critical Rate is capped at `0.2` (20%) in this shared pipeline and again
 when effective per-action values are resolved, so displayed stats, overrides,
-setup effects, and damage calculations cannot bypass the cap.
+setup effects, and damage calculations cannot bypass the cap. The complete
+snapshot retains its uncapped input so removing contributions remains correct.
 With no overrides, the simulation base is the empty character and all displayed
 stats come from the innate character system, character talents, gear, Inner
 Ways, martial-art talents, arsenal, bow/ring set, weapon and armor sets, food, and
@@ -574,10 +573,11 @@ shared pipeline and solves the simulation base offset required to produce every
 overridden final value. This means later baseline input changes cannot move an
 override, while overridden source stats still feed formula-derived stats.
 
-The solved simulation base—not an overlaid display object—is sent to the worker.
-The active baseline effects reconstruct the overridden value there, while setup,
-priority, and other comparison variants apply their changed effects to the same
-base. Modified stats therefore remain responsive in delta calculations.
+The complete character-sheet `stats` is sent to the worker alongside `rawStats`
+and solved base offsets. Comparison variants copy that sheet and apply changed
+contribution deltas, then recompute effective fields. They do not reconstruct
+the baseline sheet from unconditional effects. Modified stats therefore remain
+responsive in delta calculations.
 
 The compact Character Profile selector treats `Calculated` as an immutable
 reset profile. Loading it clears character, attunement, and build-setup
@@ -954,14 +954,12 @@ visible without being double-counted in the formula remainder.
 Stat resolution separately reports effect detection and shared stat-pipeline
 execution. Effect aggregation reports damage-effect fields, resolved channel
 snapshots, matching attunements, and shared multiplier construction.
-Effect resolution uses three explicit layers. Unconditional character effects
-from progression, oddities, gear, breakthrough, setup choices, and unconditional
-Inner Way tiers are resolved once into a character-static stat and derived-stat
-snapshot for each baseline or comparison variant. Effects whose requirements
-depend only on the effective action tags or equipped martial arts are then
-resolved once per distinct tag signature into a skill-static stat snapshot and
-numeric damage aggregate. Only timeline-dependent buffs, debuffs, resources,
-HP/Qi state, distance, and action modifiers remain in each hit's effect list.
+Effect resolution follows `rawStats → stats → buffedStats → skillStats →
+actionStats`, as specified in [Stat snapshot pipeline](stat-pipeline.md).
+The worker receives the complete sheet; variants apply contribution deltas to
+a copy. Selected global stat contributions form the next baseline. Skill-tag
+rules are cached per signature. Only timeline-dependent buffs, debuffs,
+resources, HP/Qi state, distance, and action modifiers require hit-time context.
 
 Unconditional finite numeric fields from tracked buffs and debuffs are split
 from their definitions and maintained as a timeline-state aggregate at effect

@@ -61,7 +61,7 @@
             "maxBamboocut": 196,
             "bamboocutPenetration": {
               "formula": {
-                "source": "effectiveMinBamboocut",
+                "source": "minBamboocut",
                 "multiplier": 0.06707317073170732,
                 "max": 22
               }

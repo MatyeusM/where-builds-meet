@@ -58,7 +58,7 @@
             "maxStonesplit": 196,
             "stonesplitPenetration": {
               "formula": {
-                "source": "effectiveMinStonesplit",
+                "source": "minStonesplit",
                 "multiplier": 0.06707317073170732,
                 "max": 22
               }

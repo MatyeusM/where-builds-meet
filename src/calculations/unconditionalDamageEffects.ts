@@ -1,3 +1,6 @@
+import type { CharacterStats } from "../types";
+import { emptyStats } from "../data/statDefinitions";
+
 export const unconditionalDamageEffectFields = [
   "physicalAttackBonus",
   "bellstrikeAttackBonus",
@@ -27,7 +30,8 @@ export const unconditionalDamageEffectFields = [
   "attributeDMGBonus",
 ] as const;
 
-export type UnconditionalDamageEffectField = (typeof unconditionalDamageEffectFields)[number];
+export type UnconditionalDamageEffectField =
+  (typeof unconditionalDamageEffectFields)[number] | `stat.${keyof CharacterStats}`;
 export type UnconditionalDamageEffects = Partial<Record<UnconditionalDamageEffectField, number>>;
 
 export type StaticDamageEffectSplit = {
@@ -35,7 +39,10 @@ export type StaticDamageEffectSplit = {
   remaining?: Record<string, unknown>;
 };
 
-const unconditionalDamageEffectFieldSet = new Set<string>(unconditionalDamageEffectFields);
+const unconditionalDamageEffectFieldSet = new Set<string>([
+  ...unconditionalDamageEffectFields,
+  ...Object.keys(emptyStats).map((key) => `stat.${key}`),
+]);
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -106,7 +113,11 @@ export function splitUnconditionalDamageEffectRules(rules: unknown[] | undefined
       remaining.push(rule);
       continue;
     }
-    const fields = Object.entries(rule.effect);
+    const fields = Object.entries(rule.effect).flatMap(([field, value]) =>
+      (field === "stat" || field === "effectiveStat") && isObject(value)
+        ? Object.entries(value).map(([key, amount]) => [`stat.${key}`, amount] as const)
+        : [[field, value] as const],
+    );
     if (
       fields.length === 0 ||
       fields.some(

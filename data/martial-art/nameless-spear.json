@@ -83,7 +83,7 @@
             "maxBellstrike": 196,
             "bellstrikeDmgBonus": {
               "formula": {
-                "source": "effectiveMaxBellstrike",
+                "source": "maxBellstrike",
                 "multiplier": 0.0001679389312977099,
                 "max": 0.11
               }
