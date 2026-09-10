@@ -225,7 +225,7 @@ try {
   // Real Kite talent formulas: resource-conditioned modifiers must not erase food or skill bonuses.
   const gauntlets = JSON.parse(await readFile("data/martial-art/heavenwill-gauntlets.json", "utf8"));
   const rope = JSON.parse(await readFile("data/martial-art/skygrasp-rope-dart.json", "utf8"));
-  const martial = [...gauntlets.talent, ...rope.talent].flatMap((t) =>
+  const martial = [...gauntlets.talent[13], ...rope.talent[13]].flatMap((t) =>
     t.effect.map((effect) => ({ ...effect, statStage: "talent" })),
   );
   const attributeBase = { ...base, minBamboocut: 100, maxBamboocut: 200, minVoidAttack: 50, maxVoidAttack: 100 };

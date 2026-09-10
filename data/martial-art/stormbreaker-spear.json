@@ -3,25 +3,40 @@
   "weapon": "Spear",
   "tag": "StormbreakerSpear",
   "talent": [
-    {
-      "name": "Stonesplit Attribute Up",
-      "effect": [
-        {
-          "stat": {
-            "stonesplitDmgBonus": {
-              "formula": {
-                "source": "minStonesplit",
-                "multiplier": 0.0003353658536585366,
-                "max": 0.11
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "name": "Stonesplit Attribute Up",
+        "effect": [
+          {
+            "stat": {
+              "stonesplitDmgBonus": {
+                "formula": {
+                  "source": "minStonesplit",
+                  "multiplier": 0.0003353658536585366,
+                  "max": 0.11
+                }
               }
+            },
+            "rawStat": {
+              "minStonesplit": 98,
+              "maxStonesplit": 196
             }
-          },
-          "rawStat": {
-            "minStonesplit": 98,
-            "maxStonesplit": 196
           }
-        }
-      ]
-    }
+        ]
+      }
+    ]
   ]
 }

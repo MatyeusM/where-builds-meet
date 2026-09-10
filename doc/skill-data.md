@@ -7,7 +7,7 @@ Combat data is split by responsibility:
 - `data/buff/`: player effects
 - `data/debuff/`: target effects and manual encounter states
 - `data/innerway/`: cumulative tier effects, triggers, and modifications
-- `data/martial-art/`: weapon talent arrays
+- `data/martial-art/`: weapon talent arrays indexed by talent rank
 - `data/rotation/`: default rotation records
 - `data/divinecraft.json`: selectable Divinecraft setup effects and availability
 - `data/script.json`: selectable Script effects, threshold requirements, and timeline triggers
@@ -15,6 +15,38 @@ Combat data is split by responsibility:
 Maps use stable internal IDs as keys. References such as `trigger.value`,
 `apply.value`, and `modify.target` must use those IDs. User-facing text belongs
 in `name` and `description`.
+
+## Datamined martial-art identity and progression
+
+`local/datamine/wwm-martial-arts-normal.json` is the processed local reference.
+Use `martialArts[].id` and `name` for identity. The complete numeric-ID to name
+and internal `WeaponId` mapping for its 20 martial arts lives in
+`data/official/profile-map.json` under `martialArts`. This includes Riven
+Twinblades (`20503`) and Skystrike Gauntlets (`20902`).
+The existing internal IDs remain authoritative for saved builds and rotations.
+
+Breakthroughs 16 and 17 declare `martialArtTalentRank: 13` in
+`data/breakthrough.json`. Find a source rank by its `talents.ranks[].unlockLevel`,
+not by array position or `requiredWorldLevel`. Its ordered `talentIds` are the
+complete active selection at that rank, not cumulative additions to earlier
+ranks. Resolve each ID against that martial art's `talents.definitions[].id`.
+Talent IDs can change between ranks, and a later rank can add talents.
+
+Only interpreted source fields are relevant; ignore every `versions` subtree.
+Runtime `talent` is a two-dimensional array: `talent[rank]` contains that rank's
+complete ordered talent objects, each with `name` and its existing `effect` array.
+Ranks 0 through 12 are explicit empty arrays; rank 13 contains the previously
+curated talents with their values unchanged. This structural migration does not
+import additional datamined talents or revise their numerical effects.
+
+`martialArtEffectsForRank` in `src/data/martialArtTalents.ts` selects the array
+using the selected breakthrough's `martialArtTalentRank`, deduplicates equipped
+martial arts, and marks the resulting effects with `statStage: "talent"` for the
+shared stat and worker timeline pipelines. Each rank is independent: empty or
+missing ranks contribute no effects and never fall back to another rank. To add
+a future rank, populate its array slot and assign that rank to a breakthrough.
+No runtime talent-ID lookup is needed. These definitions are bundled data, not
+stored user data; saved build and rotation IDs remain unchanged.
 
 ## Separation of behavior
 
@@ -47,6 +79,7 @@ type SkillDefinition = {
   cooldown?: number;
   cooldownGroup?: string;
   cooldownUses?: number;
+  cooldownRecovery?: "window" | "independent";
   action: SkillAction[];
   subAction?: Array<{
     value: string | string[];
@@ -332,8 +365,15 @@ ready; triggered skills remain rejected while unavailable. Cooldowns are keyed
 by `cooldownGroup` when declared and otherwise by skill ID. Separate definitions
 with the same group therefore read, consume, and clear one shared window.
 `cooldownUses` permits that many casts in the window, which starts with the first
-cast. A matching skill modifier may override `cooldown` while its requirements
-pass.
+cast. This is the default `cooldownRecovery: "window"` behavior. With
+`cooldownRecovery: "independent"`, `cooldownUses` is instead the charge capacity.
+The skill starts with all charges available, and each accepted cast or trigger
+spends one charge with its own recovery timestamp. For a 15-second cooldown,
+casts at 0, 2, and 4 seconds recover at 15, 17, and 19 seconds. With no charges,
+explicit casts wait for the earliest recovery; triggers are rejected. Shared
+groups use the same charge pool and must declare consistent capacity and recovery
+mode. A matching skill modifier may override a cast's `cooldown`; already pending
+recoveries retain their original timestamps.
 
 The rotation editor materializes each cooldown wait as a protected Delay step with
 `automatic: "cooldown"`; these generated steps cannot be edited, moved, or
@@ -441,6 +481,22 @@ This clears the named effect/application cooldown at that timestamp.
 It also clears a skill cooldown with the same identifier. Inner-way and setup
 trigger actions support `clearCD`, so an on-damage rule can reset a skill or
 effect cooldown without a triggered helper skill.
+
+An optional positive integer `charges` limits a skill reset to that many spent
+uses. For independent recovery it cancels the earliest pending recovery timers,
+after excluding charges that have already recovered naturally; other timers are
+unchanged. Restoring at full capacity does not bank additional charges. Omitting
+`charges` retains the existing full reset. The same action works directly and
+inside setup or Inner Way triggers, and wakes a waiting cast when a charge becomes
+available. Infernal Twinblades uses
+`{ "type": "clearCD", "value": "AddledMind", "charges": 1 }`.
+
+Setup triggers also accept `event: "skillStart"`. They run once after an accepted
+cast starts and its cooldown and cast-start state resolve, before its timed
+actions. This includes triggered skills and skills without actions, but excludes
+periodic effect rows and rotation events. The trigger's ordinary `requirement`
+matches the starting skill's own tags. Its `cooldown` is shared across all skills
+matching that setup trigger, independently of the cooldown it clears.
 
 ### Set self HP and take damage
 
@@ -725,6 +781,26 @@ adjusted time = max(0, original time + sum(castTimeModifier))
 
 A modifier `duration` can override the duration of effects applied by that cast.
 Modifiers do not consume states; use a timed `consume` action for consumption.
+
+Setup effects may declare `buffDurationBonus`, an additive decimal ratio, with
+ordinary `requirement` rules. For self/player buff applications, the timeline
+resolves the duration from the action override, cast modifier, or modified buff
+definition, then multiplies it by `max(0, 1 + sum(matching buffDurationBonus))`.
+The requirement's skill tags come from the originating cast, including through
+nested triggered skills and their setup/Inner Way applications. This buff-source
+context is separate from damage attribution and does not add tags to triggered
+damage. Other requirement state is evaluated at application time.
+Reapplications retain the buff's normal refresh behavior. Permanent effects,
+target debuffs, unrelated active buffs, and explicit `extend` amounts are unchanged.
+An ordinary later refresh resolves its own source and duration afresh.
+
+Infernal Twinblades' Perfect Dodge Enhancement uses `buffDurationBonus: 0.4`
+for the `PerfectDodge` source tag. Both dodge variants share one `skillStart`
+trigger that restores one `AddledMind` charge, with a separate 30-second trigger cooldown.
+The duration bonus is independent of that cooldown and includes indirect dodge
+buffs such as Disintegration. Addled Mind uses a 15-second cooldown, three uses,
+and independent recovery. Its cast time and action data are still pending.
+
 Modifier values may use `byStack` to capture a buff or debuff's stack count at
 cast start:
 

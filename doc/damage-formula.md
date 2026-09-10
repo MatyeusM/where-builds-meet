@@ -8,6 +8,9 @@ Breakthroughs 16 and 17 currently share a Level 96 enemy with 408 defense, zero
 base resistance, and 65% Judgement Resistance. Breakthrough 16 grants 15.3%
 Precision and 138 of each base attribute; Breakthrough 17 grants 16.5% Precision
 and 150 of each base attribute.
+Both profiles select martial-art talent rank 13 through `martialArtTalentRank`.
+Each equipped martial art contributes only its `talent[rank]` effects; ranks are
+not cumulative. The current rank-13 arrays retain the existing talent values.
 
 Combat inclusion and the DPS/HPS duration follow the
 [rotation event-loop endpoint](rotation-event-loop.md). Explicit Battle End

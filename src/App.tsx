@@ -66,6 +66,7 @@ import {
   type WeaponId,
 } from "./types";
 import type { DerivedStats } from "./calculations/effectiveStats";
+import { martialArtEffectsForRank, type MartialArtTalent } from "./data/martialArtTalents";
 import snowpartingSkills from "../data/skill/snowparting-blade.json";
 import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json";
 import thundercrySkills from "../data/skill/thundercry-blade.json";
@@ -1118,10 +1119,12 @@ type SetupEffect = StatEffectContainer &
     condition?: string;
     requirement?: unknown;
     trigger?: EditableObject;
+    buffDurationBonus?: number;
     target?: string;
     modify?: EditableObject;
   };
 type BreakthroughProfile = EnemyProfile & {
+  martialArtTalentRank: number;
   levelBonusStats: SetupEffect & {
     rawStat: {
       precision: number;
@@ -1321,7 +1324,7 @@ type MartialArtDefinition = {
   name: string;
   weapon: WeaponFamily;
   tag: string;
-  talent: Array<{ name: string; effect?: SetupEffect[] }>;
+  talent: MartialArtTalent<SetupEffect>[][];
 };
 const martialArtDefinitions: Record<WeaponId, MartialArtDefinition> = {
   snowparting: snowpartingMartialArt as MartialArtDefinition,
@@ -1420,10 +1423,10 @@ function scriptEffectFor(value: string) {
 }
 
 function selectedMartialArtEffects(settings: CalculatorSettings) {
-  return Array.from(new Set(settings.weapons)).flatMap((weapon) =>
-    (martialArtDefinitions[weapon]?.talent ?? []).flatMap((talent) =>
-      (talent.effect ?? []).map((effect) => ({ ...effect, statStage: "talent" as const })),
-    ),
+  return martialArtEffectsForRank(
+    martialArtDefinitions,
+    settings.weapons,
+    breakthroughProfile(settings).martialArtTalentRank,
   );
 }
 

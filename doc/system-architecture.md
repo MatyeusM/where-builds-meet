@@ -551,6 +551,16 @@ updates enemy inputs and replaces the level-derived Precision and five base
 attributes through the same shared effect pipeline. Breakthrough 17 is selected
 on every page load. The user may switch to Breakthrough 16 for the current page
 session, but Breakthrough is not written to browser storage or character profiles.
+Each breakthrough also declares `martialArtTalentRank`: breakthroughs 16 and 17
+both use rank 13. The shared `martialArtEffectsForRank` selector reads the
+two-dimensional `talent[rank]` array for each distinct equipped martial art and
+passes its effects into the existing setup pipeline. Ranks 0–12 are empty;
+rank 13 preserves the curated talent effects. Empty or absent ranks grant no
+talents. Rank selection reads the breakthrough field directly rather than
+deriving a rank from enemy level or the datamine's world-level unlock requirements.
+Changing rank therefore changes the setup effects used to build stats, worker
+inputs, and calculation fingerprints; timeline-affecting talents are selected
+before constructing a new baseline.
 The hidden base stat `heavensWillRegen` is also resolved through this pipeline.
 It is passed into the timeline as the per-second regeneration rate for the
 numeric `HeavensWill` resource rather than exposed as an editable combat stat.
@@ -691,6 +701,25 @@ Wait duration is output metadata, never inserted into authored rotation steps.
 Legacy generated waits are removed on load/import with start indexes remapped.
 Unavailable triggered skills are rejected
 because they do not consume rotation time.
+
+One skill-cooldown state map, keyed by skill or shared group, stores either a
+shared usage window or sorted independent charge recovery timestamps. Explicit
+casts, triggered casts, and component cooldown recording use the same tracker.
+The ordinary cooldown-ready requirement reads the tracker's next availability,
+so a skill with any charge remaining is ready. Partial `clearCD` actions restore
+the requested number of uses and preserve other pending recoveries; full resets
+clear the state. Restores use the existing waiting-cast rescheduling mechanism,
+and an independent cast's cooldown modifier affects only its newly spent charge.
+
+Setup `skillStart` triggers reuse the action trigger executor once per accepted
+cast, before its timed actions, without inserting a visible action. Their
+per-setup cooldown state is shared across matching skills. Buff duration setup
+rules resolve in both ordinary and trigger-driven applications. Triggered skill
+rows carry the originating cast's `buffSourceSkillTags` separately from damage
+ownership and damage tags, allowing duration bonuses to follow nested triggers
+even when a triggered skill changes its damage group. These rules execute within
+the shared worker timeline; comparisons that change them require a rebuilt
+timeline rather than reusing baseline effect snapshots.
 
 Main-tab global-effect controls seed permanent tracked player buffs or target
 debuffs into this initial state at their configured stack count. They therefore
@@ -1158,7 +1187,7 @@ tier, and a tagged path exposes and calculates only Inner Ways carrying its tag.
 ### Breakthrough
 
 Add a complete breakthrough entry to `data/breakthrough.json`. Each entry combines
-an `EnemyProfile` with a `levelBonusStats` effect. The Main-tab selector reads the
+an `EnemyProfile`, a `levelBonusStats` effect, and `martialArtTalentRank`. The Main-tab selector reads the
 entry keys, while its detail block above Inner Ways shows the level bonus and enemy
 properties. Breakthrough is transient Main-tab state and is intentionally not
 part of build data, character profiles, or browser storage.

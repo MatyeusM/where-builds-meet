@@ -41,6 +41,7 @@ export type SkillRecord = {
   cooldown?: number;
   cooldownGroup?: string;
   cooldownUses?: number;
+  cooldownRecovery?: "window" | "independent";
   duration?: number;
   collectBoostDamage?: string;
   subAction?: Array<string | SubActionReference>;
@@ -159,6 +160,8 @@ export type TimelineRow = {
   /** Recipient of a periodic player-target effect. Zero is self. */
   playerRecipientIndex?: number;
   triggerSource?: "skill" | "setup" | "innerWay";
+  /** Original cast tags for buff duration rules, independent of damage ownership and damage tags. */
+  buffSourceSkillTags?: string[];
   rotationIndex?: number;
   order: number;
   step: RotationStep;
@@ -1331,8 +1334,12 @@ function buildRotationTimelinePass(
     lastResourceRegenerationTime = Math.max(lastResourceRegenerationTime, time);
   };
   const cooldowns: Record<string, number> = {};
-  const skillCooldownWindows: Record<string, { expiresAt: number; uses: number }> = {};
+  const skillCooldownStates: Record<
+    string,
+    { recovery: "window"; expiresAt: number; uses: number } | { recovery: "independent"; readyTimes: number[] }
+  > = {};
   const setupTriggerCooldowns = new Map<number, number>();
+  const buffDurationRules = setupEffects.filter((effect) => typeof effect.buffDurationBonus === "number");
   const setupTriggersByEvent = new Map<string, Array<{ setupIndex: number; trigger: EditableObject }>>();
   setupEffects.forEach((setup, setupIndex) => {
     const trigger =
@@ -1367,6 +1374,32 @@ function buildRotationTimelinePass(
     currentMartialArt,
     currentWeapon,
   });
+  const applicationDuration = (
+    duration: number | undefined,
+    target: unknown,
+    row: TimelineRow,
+    skillTags: string[],
+  ) => {
+    if (duration === undefined || target === "target") return duration;
+    const sourceTags = row.buffSourceSkillTags ?? skillTags;
+    let bonus = 0;
+    for (const rule of buffDurationRules) {
+      if (
+        requirementsPass(
+          rule.requirement,
+          buffs,
+          debuffs,
+          sourceTags,
+          innerWayConditions,
+          weapons,
+          resources,
+          requirementState(),
+        )
+      )
+        bonus += rule.buffDurationBonus as number;
+    }
+    return duration * Math.max(0, 1 + bonus);
+  };
   const skillCooldownKey = (skillId: string, skill = skills[skillId]) => `skill:${skill?.cooldownGroup ?? skillId}`;
   const resolveActionChance = (value: unknown) => {
     if (value === undefined) return 1;
@@ -1384,24 +1417,68 @@ function buildRotationTimelinePass(
     return skill.cooldown;
   };
   const skillCooldownReadyAt = (key: string, time: number, uses: number) => {
-    const window = skillCooldownWindows[key];
-    if (!window || compareTimelineTime(time, window.expiresAt) >= 0 || window.uses < uses) return time;
-    return window.expiresAt;
-  };
-  const recordSkillCooldownCast = (key: string, time: number, duration: number, uses: number) => {
-    const window = skillCooldownWindows[key];
-    if (!window || compareTimelineTime(time, window.expiresAt) >= 0) {
-      skillCooldownWindows[key] = { expiresAt: time + duration, uses: 1 };
-      cooldowns[key] = uses === 1 ? time + duration : time;
-      return;
+    const state = skillCooldownStates[key];
+    if (!state) return time;
+    switch (state.recovery) {
+      case "window":
+        if (compareTimelineTime(time, state.expiresAt) >= 0 || state.uses < uses) return time;
+        return state.expiresAt;
+      case "independent": {
+        const pending = state.readyTimes.filter((readyAt) => compareTimelineTime(readyAt, time) > 0);
+        return pending.length < uses ? time : pending[0];
+      }
     }
-    window.uses = Math.min(uses, window.uses + 1);
-    cooldowns[key] = window.uses >= uses ? window.expiresAt : time;
   };
-  const clearSkillCooldown = (skillId: string, time: number) => {
+  const recordSkillCooldownCast = (
+    key: string,
+    time: number,
+    duration: number,
+    uses: number,
+    recovery: SkillRecord["cooldownRecovery"] = "window",
+  ) => {
+    const state = skillCooldownStates[key];
+    switch (recovery) {
+      case "window":
+        if (state?.recovery === "window" && compareTimelineTime(time, state.expiresAt) < 0)
+          state.uses = Math.min(uses, state.uses + 1);
+        else skillCooldownStates[key] = { recovery, expiresAt: time + duration, uses: 1 };
+        break;
+      case "independent": {
+        const readyTimes = state?.recovery === "independent" ? state.readyTimes : [];
+        skillCooldownStates[key] = {
+          recovery,
+          readyTimes: [...readyTimes.filter((readyAt) => compareTimelineTime(readyAt, time) > 0), time + duration].sort(
+            (left, right) => left - right,
+          ),
+        };
+        break;
+      }
+    }
+    cooldowns[key] = skillCooldownReadyAt(key, time, uses);
+  };
+  const clearSkillCooldown = (skillId: string, time: number, charges?: number) => {
     const key = skillCooldownKey(skillId);
-    cooldowns[key] = time;
+    const state = skillCooldownStates[key];
+    if (charges === undefined) delete skillCooldownStates[key];
+    else if (state) {
+      const restored = Math.max(0, Math.floor(charges));
+      switch (state.recovery) {
+        case "window":
+          state.uses = Math.max(0, state.uses - restored);
+          if (state.uses === 0) delete skillCooldownStates[key];
+          break;
+        case "independent":
+          // Restore the next recovering charge; all other recovery timestamps stay intact.
+          state.readyTimes = state.readyTimes
+            .filter((readyAt) => compareTimelineTime(readyAt, time) > 0)
+            .slice(restored);
+          break;
+      }
+    }
+    const readyAt = skillCooldownReadyAt(key, time, Math.max(1, Math.floor(skills[skillId]?.cooldownUses ?? 1)));
+    cooldowns[key] = readyAt;
     if (
+      compareTimelineTime(readyAt, time) <= 0 &&
       waitingCast &&
       waitingCast.row.step.type === "skill" &&
       skillCooldownKey(waitingCast.row.step.skill ?? "", waitingCast.row.skill) === key
@@ -1412,7 +1489,6 @@ function buildRotationTimelinePass(
       });
       waitingCast.row.cooldownWait = time - waitingCast.requestedAt;
     }
-    delete skillCooldownWindows[key];
   };
   const prune = (effects: TrackedEffect[], time: number) =>
     effects.some((effect) => effect.expiresAt !== undefined && effect.expiresAt <= time)
@@ -2088,7 +2164,13 @@ function buildRotationTimelinePass(
           : { type: "inactive", time: segmentStartOffset + segment.baseCastTime };
       });
       if (selectedId && typeof selectedSkill?.cooldown === "number")
-        cooldowns[`skill:${selectedId}`] = event.time + selectedSkill.cooldown;
+        recordSkillCooldownCast(
+          skillCooldownKey(selectedId, selectedSkill),
+          event.time,
+          selectedSkill.cooldown,
+          Math.max(1, Math.floor(selectedSkill.cooldownUses ?? 1)),
+          selectedSkill.cooldownRecovery,
+        );
       const inactiveActionIndexes = new Set(segment.actionIndexes.slice(selectedActions.length));
       (directAttachments.get(event.row.id) ?? []).forEach(({ eventRow, target }) => {
         if (typeof target.action !== "number" || !inactiveActionIndexes.has(target.action)) return;
@@ -2182,7 +2264,13 @@ function buildRotationTimelinePass(
       resolvedRows.add(event.row);
       if (waitingCast?.row === event.row) waitingCast = undefined;
       if (event.row.kind === "rotation" && event.row.step.type === "skill" && typeof cooldownDuration === "number")
-        recordSkillCooldownCast(cooldownKey, event.time, cooldownDuration, cooldownUses);
+        recordSkillCooldownCast(
+          cooldownKey,
+          event.time,
+          cooldownDuration,
+          cooldownUses,
+          event.row.skill?.cooldownRecovery,
+        );
       if (
         event.row.step.type === "skill" &&
         event.row.skill?.tags?.includes("MartialArts") &&
@@ -2205,23 +2293,30 @@ function buildRotationTimelinePass(
       event.row.unconditionalDamageEffects = { ...unconditionalDamageEffects };
       if (multiActionSegments.has(event.row.id)) {
         if (event.row.kind === "rotation") scheduleNextOrdered(event.row);
-        continue;
+      } else {
+        resolveStartBoundActionValues(
+          event.row,
+          event.row.actions.map((_action, actionIndex) => actionIndex),
+        );
+        event.row.modifierEffects = skillModifiers;
+        const baseCastTime =
+          event.row.step.type === "event" && event.row.step.event === "Delay"
+            ? Math.max(0, event.row.step.duration)
+            : resolveSkillCastTime(event.row.skill, requirementState());
+        applyCastTimingModifiers(event.row, baseCastTime);
+        if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row);
       }
-      resolveStartBoundActionValues(
-        event.row,
-        event.row.actions.map((_action, actionIndex) => actionIndex),
-      );
-      event.row.modifierEffects = skillModifiers;
-      const baseCastTime =
-        event.row.step.type === "event" && event.row.step.event === "Delay"
-          ? Math.max(0, event.row.step.duration)
-          : resolveSkillCastTime(event.row.skill, requirementState());
-      applyCastTimingModifiers(event.row, baseCastTime);
-      if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row);
-      continue;
+      if (
+        !setupTriggersByEvent.has("skillStart") ||
+        event.row.step.type !== "skill" ||
+        (event.row.kind !== "rotation" && event.row.kind !== "trigger")
+      )
+        continue;
     }
 
-    const action = event.row.actions[event.actionIndex ?? -1];
+    // Lifecycle triggers share the ordinary action executor without adding a stored or displayed action.
+    const action: EditableObject | undefined =
+      event.kind === "start" ? { type: "skillStart" } : event.row.actions[event.actionIndex ?? -1];
     if (!action) continue;
     if (event.row.kind === "dot" && event.row.step.type === "skill" && event.row.step.skill) {
       const active = activePeriodicEffects[periodicEffectKey("target", event.row.step.skill)];
@@ -2232,19 +2327,20 @@ function buildRotationTimelinePass(
     }
     if (event.row.kind === "dot" && action.type === "damage" && action.damageScale === undefined)
       action.damageScale = 1;
-    event.row.actionStates[event.actionIndex ?? -1] = {
-      buffs: [...buffs],
-      debuffs: [...debuffs],
-      distance,
-      currentHP,
-      currentHPRatio,
-      targetHPRatio,
-      targetQiRatio,
-      resources: { ...resources },
-      currentMartialArt,
-      currentWeapon,
-      unconditionalDamageEffects: { ...unconditionalDamageEffects },
-    };
+    if (event.kind === "action")
+      event.row.actionStates[event.actionIndex ?? -1] = {
+        buffs: [...buffs],
+        debuffs: [...debuffs],
+        distance,
+        currentHP,
+        currentHPRatio,
+        targetHPRatio,
+        targetQiRatio,
+        resources: { ...resources },
+        currentMartialArt,
+        currentWeapon,
+        unconditionalDamageEffects: { ...unconditionalDamageEffects },
+      };
     const skillTags = event.row.actionSkillTags?.[event.actionIndex ?? -1] ?? event.row.skill?.tags ?? [];
     const resolutionKey = actionResolutionKey(event.row, event.actionIndex ?? -1);
     const requirementPasses = startResolvedActionRequirements.has(resolutionKey)
@@ -2267,7 +2363,7 @@ function buildRotationTimelinePass(
       continue;
     if (action.type === "clearCD" && typeof action.value === "string") {
       cooldowns[action.value] = event.time;
-      clearSkillCooldown(action.value, event.time);
+      clearSkillCooldown(action.value, event.time, typeof action.charges === "number" ? action.charges : undefined);
       continue;
     }
     if (action.type === "move" && typeof action.distance === "number" && Number.isFinite(action.distance)) {
@@ -2355,7 +2451,9 @@ function buildRotationTimelinePass(
           : definition;
       if (triggeredSkill) sourceRowId = damageSource(triggeredSkill, sourceRowId ?? event.row.id);
       const key = skillCooldownKey(skillId, triggeredSkill);
-      if (!triggeredSkill || (cooldowns[key] ?? 0) > event.time) return false;
+      if (!triggeredSkill) return false;
+      const uses = Math.max(1, Math.floor(triggeredSkill.cooldownUses ?? 1));
+      if (compareTimelineTime(skillCooldownReadyAt(key, event.time, uses), event.time) > 0) return false;
       const actions = Array.isArray(triggeredSkill.action) ? (triggeredSkill.action as EditableObject[]) : [];
       const derivedId = nextDerivedOrder++;
       const derivedSortOrder = [...event.sortOrder, derivedId];
@@ -2366,6 +2464,7 @@ function buildRotationTimelinePass(
         ...(expectedBranch ? { expectedBranch } : {}),
         sourceRowId,
         triggerSource,
+        buffSourceSkillTags: event.row.buffSourceSkillTags ?? skillTags,
         order: rowOrder,
         step: { type: "skill", skill: skillId },
         startTime: event.time,
@@ -2419,7 +2518,8 @@ function buildRotationTimelinePass(
             queueAttachedEvent(attachment, targetTime, targetSortOrder, targetDisplayOrder);
           });
       }
-      if (typeof triggeredSkill.cooldown === "number") cooldowns[key] = event.time + triggeredSkill.cooldown;
+      if (typeof triggeredSkill.cooldown === "number")
+        recordSkillCooldownCast(key, event.time, triggeredSkill.cooldown, uses, triggeredSkill.cooldownRecovery);
       return true;
     };
     const resolveMaxStackApplication = (
@@ -2500,7 +2600,11 @@ function buildRotationTimelinePass(
       if (applyResourceAction(triggerAction, event.row)) return;
       if (triggerAction.type === "clearCD" && typeof triggerAction.value === "string") {
         cooldowns[triggerAction.value] = event.time;
-        clearSkillCooldown(triggerAction.value, event.time);
+        clearSkillCooldown(
+          triggerAction.value,
+          event.time,
+          typeof triggerAction.charges === "number" ? triggerAction.charges : undefined,
+        );
         return;
       }
       if (triggerAction.type === "consume" && typeof triggerAction.value === "string") {
@@ -2541,7 +2645,12 @@ function buildRotationTimelinePass(
       const periodicTarget = triggerAction.target === "target" ? "target" : "self";
       const definition = getModifiedEffectDefinition(triggerAction.value, buffs, debuffs, skillTags);
       const applicationSource = damageSource(definition, event.row.sourceRowId ?? event.row.id);
-      const duration = typeof triggerAction.duration === "number" ? triggerAction.duration : definition.duration;
+      const duration = applicationDuration(
+        typeof triggerAction.duration === "number" ? triggerAction.duration : definition.duration,
+        triggerAction.target,
+        event.row,
+        skillTags,
+      );
       const baseStack = typeof triggerAction.stack === "number" ? triggerAction.stack : 1;
       const conditionalBranch =
         event.row.expectedBranch?.effect === triggerAction.value ? event.row.expectedBranch.id : undefined;
@@ -2778,6 +2887,10 @@ function buildRotationTimelinePass(
           .forEach((triggerAction) => applyTriggerAction(triggerAction, "innerWay"));
       });
     };
+    if (event.kind === "start") {
+      runSetupTriggers("skillStart");
+      continue;
+    }
     if (action.type === "takeDamage" && typeof action.damage === "number" && Number.isFinite(action.damage)) {
       const avoidsTakeDamage = rows.some(
         (row) =>
@@ -2883,12 +2996,10 @@ function buildRotationTimelinePass(
         event.row.actionModifierEffects?.[event.actionIndex ?? -1] ?? event.row.modifierEffects
       ).find((effect) => typeof effect.duration === "number");
       const definition = getModifiedEffectDefinition(action.value, buffs, debuffs, skillTags);
-      const duration =
-        typeof action.duration === "number"
-          ? action.duration
-          : typeof modifierDuration?.duration === "number"
-            ? modifierDuration.duration
-            : definition.duration;
+      let duration = definition.duration;
+      if (typeof modifierDuration?.duration === "number") duration = modifierDuration.duration;
+      if (typeof action.duration === "number") duration = action.duration;
+      if (action.type === "apply") duration = applicationDuration(duration, action.target, event.row, skillTags);
       const existing = targetEffects.find(
         (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
       );

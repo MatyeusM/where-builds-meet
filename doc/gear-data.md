@@ -244,7 +244,10 @@ not derive these meanings from numeric adjacency alone.
 
 Version 2 of the bookmarklet envelope carries the complete dashboard `roleInfo`
 object for inspecting additional profile fields. Known official martial-art and
-Inner Way IDs are recorded in `data/official/profile-map.json`. `kongfuMain`
+Inner Way IDs are recorded in `data/official/profile-map.json`. Its martial-art
+map includes all 20 numeric IDs, names, and internal weapon keys from
+`local/datamine/wwm-martial-arts-normal.json`; entries do not imply that every
+martial art's combat skills and talents are already implemented. `kongfuMain`
 and `kongfuSub` identify the equipped martial-art pair and are preferred over
 affix inference when both are supported. Import first matches that unordered
 pair to a path in `data/path.json`, then uses the path's canonical left/right

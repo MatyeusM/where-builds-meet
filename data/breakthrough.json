@@ -1,6 +1,7 @@
 {
   "16": {
     "name": "16",
+    "martialArtTalentRank": 13,
     "level": 96,
     "defense": 408,
     "physicalResistance": 0,
@@ -22,6 +23,7 @@
   },
   "17": {
     "name": "17",
+    "martialArtTalentRank": 13,
     "level": 96,
     "defense": 408,
     "physicalResistance": 0,

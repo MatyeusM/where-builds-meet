@@ -2,5 +2,52 @@
   "name": "Infernal Twinblades",
   "weapon": "DualBlades",
   "tag": "InfernalTwinblades",
-  "talent": []
+  "talent": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "name": "Perfect Dodge Enhancement",
+        "effect": [
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "PerfectDodge"
+              }
+            ],
+            "buffDurationBonus": 0.4
+          },
+          {
+            "trigger": {
+              "event": "skillStart",
+              "requirement": [
+                {
+                  "target": "skillTag",
+                  "value": "PerfectDodge"
+                }
+              ],
+              "cooldown": 30,
+              "action": {
+                "type": "clearCD",
+                "value": "AddledMind",
+                "charges": 1
+              }
+            }
+          }
+        ]
+      }
+    ]
+  ]
 }

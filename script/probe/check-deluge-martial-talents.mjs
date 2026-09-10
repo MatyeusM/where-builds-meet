@@ -23,7 +23,7 @@ try {
     if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message} Expected ${expected}, received ${actual}.`);
   };
   const statEffects = (definition) =>
-    definition.talent.flatMap((talent) => talent.effect ?? []).filter((effect) => effect.stat);
+    definition.talent[13].flatMap((talent) => talent.effect ?? []).filter((effect) => effect.stat);
 
   const panaceaStats = calculateStatsWithEffects(
     { ...emptyStats, agility: 280, minSilkbind: 230 },
@@ -54,16 +54,16 @@ try {
     "Soulshade Umbrella must reach its Silkbind Penetration cap at 328 Min.",
   );
 
-  const heavyHealing = panaceaFan.talent
+  const heavyHealing = panaceaFan.talent[13]
     .flatMap((talent) => talent.effect ?? [])
     .find((effect) => effect.effect?.healingBonus);
-  const mysticBuff = soulshadeUmbrella.talent
+  const mysticBuff = soulshadeUmbrella.talent[13]
     .flatMap((talent) => talent.effect ?? [])
     .find((effect) => effect.effect?.dmgBonus);
-  const criticalHealing = soulshadeUmbrella.talent
+  const criticalHealing = soulshadeUmbrella.talent[13]
     .flatMap((talent) => talent.effect ?? [])
     .find((effect) => effect.effect?.criticalHealingBonus);
-  const mysticPrecision = panaceaFan.talent
+  const mysticPrecision = panaceaFan.talent[13]
     .flatMap((talent) => talent.effect ?? [])
     .find((effect) => effect.effect?.convert?.from === "abrasionRate");
   if (!heavyHealing || !mysticBuff || !criticalHealing || !mysticPrecision)

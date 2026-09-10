@@ -1,13 +1,25 @@
 {
   "martialArts": {
+    "10101": { "name": "Strategic Sword", "weapon": "strategicSword" },
+    "10102": { "name": "Nameless Sword", "weapon": "namelessSword" },
+    "10201": { "name": "Heavenquaker Spear", "weapon": "heavenquakerSpear" },
+    "10202": { "name": "Nameless Spear", "weapon": "namelessSpear" },
+    "10301": { "name": "Panacea Fan", "weapon": "panaceaFan" },
+    "10302": { "name": "Inkwell Fan", "weapon": "inkwellFan" },
+    "20103": { "name": "Stormbreaker Spear", "weapon": "stormbreaker" },
     "20401": { "name": "Thundercry Blade", "weapon": "thundercry" },
     "20402": { "name": "Phalanxbane Blade", "weapon": "phalanxbane" },
-    "20103": { "name": "Stormbreaker Spear", "weapon": "stormbreaker" },
+    "20501": { "name": "Infernal Twinblades", "weapon": "infernalTwinblades" },
+    "20503": { "name": "Riven Twinblades", "weapon": "rivenTwinblades" },
+    "20601": { "name": "Vernal Umbrella", "weapon": "vernalUmbrella" },
+    "20602": { "name": "Soulshade Umbrella", "weapon": "soulshadeUmbrella" },
+    "20603": { "name": "Everspring Umbrella", "weapon": "everspring" },
+    "20701": { "name": "Mortal Rope Dart", "weapon": "mortalRopeDart" },
+    "20702": { "name": "Unfettered Rope Dart", "weapon": "unfettered" },
+    "20703": { "name": "Skygrasp Rope Dart", "weapon": "skygrasp" },
     "20801": { "name": "Snowparting Blade", "weapon": "snowparting" },
     "20901": { "name": "Heavenwill Gauntlets", "weapon": "heavenwill" },
-    "20703": { "name": "Skygrasp Rope Dart", "weapon": "skygrasp" },
-    "10301": { "name": "Panacea Fan", "weapon": "panaceaFan" },
-    "20602": { "name": "Soulshade Umbrella", "weapon": "soulshadeUmbrella" }
+    "20902": { "name": "Skystrike Gauntlets", "weapon": "skystrikeGauntlets" }
   },
   "innerWays": {
     "551": { "name": "Frost-Clad Night", "innerWay": "FrostCladNight" },

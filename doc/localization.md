@@ -33,6 +33,11 @@ English display name.
 Generated locale JSON must not be edited directly. Add a locale by adding its
 column to the CSV, filling translations, and running the extractor.
 
+Martial-art talent keys include both array indexes, for example
+`data.martialArt.infernalTwinblades.talent.13.0.name`. The migration from flat
+talent arrays inserts rank 13 into the existing catalog keys while retaining
+every translated value; generated locale assets follow the same key change.
+
 ## Runtime selection
 
 The application resolves the locale once before React mounts:

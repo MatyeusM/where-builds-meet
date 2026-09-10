@@ -19,7 +19,7 @@ try {
   const assertClose = (actual, expected, message) => {
     if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message} Expected ${expected}, received ${actual}.`);
   };
-  const effects = namelessSword.talent.flatMap((talent) => talent.effect ?? []);
+  const effects = namelessSword.talent[13].flatMap((talent) => talent.effect ?? []);
   const statResult = calculateStatsWithEffects({ ...emptyStats, momentum: 280, maxBellstrike: 459 }, effects, 0);
   assertClose(statResult.stats.maxPhys, 73.9, "Momentum scaling must grant the capped Max Physical Attack bonus.");
   assertClose(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.");

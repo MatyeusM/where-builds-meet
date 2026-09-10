@@ -19,7 +19,7 @@ try {
   const assertClose = (actual, expected, message) => {
     if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message} Expected ${expected}, received ${actual}.`);
   };
-  const effects = namelessSpear.talent.flatMap((talent) => talent.effect ?? []);
+  const effects = namelessSpear.talent[13].flatMap((talent) => talent.effect ?? []);
   const statResult = calculateStatsWithEffects(
     { ...emptyStats, momentum: 280, affinity: 0.257, maxBellstrike: 459 },
     effects,

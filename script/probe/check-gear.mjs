@@ -980,7 +980,9 @@ assert(
 );
 const defaultCriticalEffects = [
   ...systemEffects,
-  ...phalanxbaneMartialArt.talent.flatMap((talent) => talent.effect ?? []),
+  ...phalanxbaneMartialArt.talent[breakthroughProfiles["17"].martialArtTalentRank].flatMap(
+    (talent) => talent.effect ?? [],
+  ),
   { stat: presetEffects.stats },
   steadfastDevotion.effect.SteadfastDevotionT2.effect[0],
 ];
