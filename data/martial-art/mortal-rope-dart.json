@@ -27,7 +27,11 @@
           {
             "stat": {
               "crit": {
-                "formula": { "source": "agility", "multiplier": 0.000304, "max": 0.08512 }
+                "formula": {
+                  "source": "agility",
+                  "multiplier": 0.000304,
+                  "max": 0.08512
+                }
               }
             }
           }
@@ -37,18 +41,41 @@
         "name": "Rodent Damage Enhancement",
         "effect": [
           {
-            "requirement": [{ "target": "skillTag", "value": "Rodent" }],
-            "effect": { "stat": { "physDmgBonus": 0.09, "bamboocutDmgBonus": 0.09 } }
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "Rodent"
+              }
+            ],
+            "effect": {
+              "stat": {
+                "physDmgBonus": 0.09,
+                "bamboocutDmgBonus": 0.09
+              }
+            }
           },
           {
-            "requirement": [{ "target": "skillTag", "value": "Rodent" }],
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "Rodent"
+              }
+            ],
             "effect": {
               "stat": {
                 "physDmgBonus": {
-                  "formula": { "source": "minPhys", "multiplier": 0.00016, "max": 0.12 }
+                  "formula": {
+                    "source": "minPhys",
+                    "multiplier": 0.00016,
+                    "max": 0.12
+                  }
                 },
                 "bamboocutDmgBonus": {
-                  "formula": { "source": "minPhys", "multiplier": 0.00016, "max": 0.12 }
+                  "formula": {
+                    "source": "minPhys",
+                    "multiplier": 0.00016,
+                    "max": 0.12
+                  }
                 }
               }
             }
@@ -59,17 +86,24 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
-            "rawStat": { "minBamboocut": 98, "maxBamboocut": 196 },
+            "rawStat": {
+              "maxBamboocut": 196,
+              "minBamboocut": 98
+            },
             "stat": {
               "bamboocutDmgBonus": {
-                "formula": { "source": "minBamboocut", "multiplier": 0.000336, "max": 0.11 }
+                "formula": {
+                  "source": "minBamboocut",
+                  "multiplier": 0.000336,
+                  "max": 0.11
+                }
               }
             }
           }
         ]
       },
       {
-        "name": "Attr. Attack DMG UP",
+        "name": "Attr. Attack DMG Up",
         "effect": []
       }
     ]

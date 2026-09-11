@@ -555,7 +555,7 @@ Each breakthrough also declares `martialArtTalentRank`: breakthroughs 16 and 17
 both use rank 13. The shared `martialArtEffectsForRank` selector reads the
 two-dimensional `talent[rank]` array for each distinct equipped martial art and
 passes its effects into the existing setup pipeline. Ranks 0–12 are empty;
-rank 13 preserves the curated talent effects. Empty or absent ranks grant no
+rank 13 contains the datamined talent selection and supported effects. Empty or absent ranks grant no
 talents. Rank selection reads the breakthrough field directly rather than
 deriving a rank from enemy level or the datamine's world-level unlock requirements.
 Changing rank therefore changes the setup effects used to build stats, worker

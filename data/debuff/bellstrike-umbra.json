@@ -2,7 +2,7 @@
   "SoulShaken": {
     "name": "Soul-Shaken",
     "shortName": "SS",
-    "description": "Increases DoT damage taken by 5% per stack, plus an additional 5% per stack if the source is Umbra.",
+    "description": "Increases DoT damage taken by 5% per stack, another 5% from Strategic Sword or Heavenquaker Spear, and another 10% for High Bleed.",
     "duration": 18,
     "maxStack": 5,
     "shared": true,
@@ -20,7 +20,7 @@
               "operand": [
                 {
                   "target": "martialArt",
-                  "value": "HeavenquakerSpear"
+                  "value": "HeavenQuakerSpear"
                 },
                 {
                   "target": "martialArt",
@@ -32,6 +32,17 @@
           "effect": {
             "dotDamage": 0.05
           }
+        },
+        {
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "HighBleed"
+            }
+          ],
+          "effect": {
+            "dotDamage": 0.1
+          }
         }
       ],
       [
@@ -47,7 +58,7 @@
               "operand": [
                 {
                   "target": "martialArt",
-                  "value": "HeavenquakerSpear"
+                  "value": "HeavenQuakerSpear"
                 },
                 {
                   "target": "martialArt",
@@ -58,6 +69,17 @@
           ],
           "effect": {
             "dotDamage": 0.1
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "HighBleed"
+            }
+          ],
+          "effect": {
+            "dotDamage": 0.2
           }
         }
       ],
@@ -74,7 +96,7 @@
               "operand": [
                 {
                   "target": "martialArt",
-                  "value": "HeavenquakerSpear"
+                  "value": "HeavenQuakerSpear"
                 },
                 {
                   "target": "martialArt",
@@ -86,6 +108,17 @@
           "effect": {
             "dotDamage": 0.15
           }
+        },
+        {
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "HighBleed"
+            }
+          ],
+          "effect": {
+            "dotDamage": 0.3
+          }
         }
       ],
       [
@@ -101,7 +134,7 @@
               "operand": [
                 {
                   "target": "martialArt",
-                  "value": "HeavenquakerSpear"
+                  "value": "HeavenQuakerSpear"
                 },
                 {
                   "target": "martialArt",
@@ -112,6 +145,17 @@
           ],
           "effect": {
             "dotDamage": 0.2
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "HighBleed"
+            }
+          ],
+          "effect": {
+            "dotDamage": 0.4
           }
         }
       ],
@@ -128,7 +172,7 @@
               "operand": [
                 {
                   "target": "martialArt",
-                  "value": "HeavenquakerSpear"
+                  "value": "HeavenQuakerSpear"
                 },
                 {
                   "target": "martialArt",
@@ -139,6 +183,17 @@
           ],
           "effect": {
             "dotDamage": 0.25
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "skillTag",
+              "value": "HighBleed"
+            }
+          ],
+          "effect": {
+            "dotDamage": 0.5
           }
         }
       ]

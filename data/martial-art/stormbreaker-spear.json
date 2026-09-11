@@ -18,24 +18,40 @@
     [],
     [
       {
+        "name": "Max Battle Will Increase",
+        "effect": []
+      },
+      {
+        "name": "Max HP Up",
+        "effect": []
+      },
+      {
+        "name": "DMG Reduction Enhancement",
+        "effect": []
+      },
+      {
         "name": "Stonesplit Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxStonesplit": 196,
+              "minStonesplit": 98
+            },
             "stat": {
               "stonesplitDmgBonus": {
                 "formula": {
                   "source": "minStonesplit",
-                  "multiplier": 0.0003353658536585366,
+                  "multiplier": 0.000336,
                   "max": 0.11
                 }
               }
-            },
-            "rawStat": {
-              "minStonesplit": 98,
-              "maxStonesplit": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

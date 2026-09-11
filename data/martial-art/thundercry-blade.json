@@ -18,10 +18,42 @@
     [],
     [
       {
-        "name": "Charged and Varied Combo Enhancement",
+        "name": "Charge Calculation Enhancement",
         "effect": [
           {
             "requirement": [
+              {
+                "target": "skillTag",
+                "value": "ThundercryBlade"
+              },
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "skillTag",
+                    "value": "Charged"
+                  },
+                  {
+                    "target": "skillTag",
+                    "value": "VariedCombo"
+                  }
+                ]
+              }
+            ],
+            "effect": {
+              "convert": {
+                "from": "abrasionRate",
+                "to": "normalRate",
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "ThundercryBlade"
+              },
               {
                 "operator": "or",
                 "operand": [
@@ -42,9 +74,12 @@
                 "function": "segment",
                 "param1": "maxHp",
                 "param2": [
-                  4999, 9999, 14999, 19999, 24999, 29999, 34999, 39999, 44999, 49999, 54999, 59999, 64999, 69999, 74999,
-                  79999, 84999, 89999, 94999, 99999, 104999, 109999, 114999, 119999, 124999, 129999, 134999, 139999,
-                  144999, 149999
+                  4999.999999999, 9999.999999999, 14999.999999999, 19999.999999999, 24999.999999999, 29999.999999999,
+                  34999.999999999, 39999.999999999, 44999.999999999, 49999.999999999, 54999.999999999, 59999.999999999,
+                  64999.999999999, 69999.999999999, 74999.999999999, 79999.999999999, 84999.999999999, 89999.999999999,
+                  94999.999999999, 99999.999999999, 104999.999999999, 109999.999999999, 114999.999999999,
+                  119999.999999999, 124999.999999999, 129999.999999999, 134999.999999999, 139999.999999999,
+                  144999.999999999, 149999.999999999
                 ],
                 "param3": [
                   0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100,
@@ -56,26 +91,42 @@
         ]
       },
       {
-        "name": "Power Physical Attack Up",
-        "effect": [
-          {
-            "stat": {
-              "maxPhys": {
-                "formula": {
-                  "source": "power",
-                  "multiplier": 0.2639285714285714,
-                  "max": 73.9
-                }
-              }
-            }
-          }
-        ]
+        "name": "Physical Attack Up",
+        "effect": []
       },
       {
-        "name": "Charged and Varied Combo Critical Rate Up",
+        "name": "Charge Critical Hit Enhancement",
         "effect": [
           {
             "requirement": [
+              {
+                "target": "skillTag",
+                "value": "ThundercryBlade"
+              },
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "skillTag",
+                    "value": "Charged"
+                  },
+                  {
+                    "target": "skillTag",
+                    "value": "VariedCombo"
+                  }
+                ]
+              }
+            ],
+            "effectiveStat": {
+              "effectiveCritBonus": 0.09
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "ThundercryBlade"
+              },
               {
                 "operator": "or",
                 "operand": [
@@ -95,9 +146,11 @@
                 "function": "segment",
                 "param1": "maxHp",
                 "param2": [
-                  5999, 11999, 17999, 23999, 29999, 35999, 41999, 47999, 53999, 59999, 65999, 71999, 77999, 83999, 89999
+                  5999.999999999, 11999.999999999, 17999.999999999, 23999.999999999, 29999.999999999, 35999.999999999,
+                  41999.999999999, 47999.999999999, 53999.999999999, 59999.999999999, 65999.999999999, 71999.999999999,
+                  77999.999999999, 83999.999999999, 89999.999999999
                 ],
-                "param3": [0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.2, 0.21, 0.22, 0.23, 0.24]
+                "param3": [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
               }
             }
           }
@@ -107,21 +160,25 @@
         "name": "Stonesplit Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxStonesplit": 196,
+              "minStonesplit": 98
+            },
             "stat": {
               "stonesplitPenetration": {
                 "formula": {
                   "source": "minStonesplit",
-                  "multiplier": 0.06707317073170732,
+                  "multiplier": 0.0672,
                   "max": 22
                 }
               }
-            },
-            "rawStat": {
-              "minStonesplit": 98,
-              "maxStonesplit": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

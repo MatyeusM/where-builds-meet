@@ -135,7 +135,7 @@ try {
       `Breakthrough ${profile.name} selects both real rank-13 attribute talents`,
     );
     assert(
-      Math.abs(sheet.stats.bamboocutDmgBonus - (296 * 0.11) / 328) < 1e-9,
+      Math.abs(sheet.stats.bamboocutDmgBonus - 296 * 0.000336) < 1e-9,
       "Ranked talent formulas still read the shared raw-stat stage",
     );
   }

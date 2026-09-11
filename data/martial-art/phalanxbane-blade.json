@@ -18,6 +18,10 @@
     [],
     [
       {
+        "name": "Max Blade Momentum Up",
+        "effect": []
+      },
+      {
         "name": "Critical Rate Up",
         "effect": [
           {
@@ -25,8 +29,8 @@
               "crit": {
                 "formula": {
                   "source": "agility",
-                  "multiplier": 0.0003035714285714286,
-                  "max": 0.085
+                  "multiplier": 0.000304,
+                  "max": 0.08512
                 }
               }
             }
@@ -34,31 +38,30 @@
         ]
       },
       {
-        "name": "Iron Guard Penetration Up",
+        "name": "Iron Guards Penetration Up",
         "effect": [
           {
-            "target": "IronGuard",
-            "modify": {
-              "effect": [
-                {
-                  "effect": {
-                    "physicalPenetration": {
-                      "formula": {
-                        "source": "minPhys",
-                        "multiplier": 0.016,
-                        "max": 12
-                      }
-                    },
-                    "stonesplitPenetration": {
-                      "formula": {
-                        "source": "minPhys",
-                        "multiplier": 0.016,
-                        "max": 12
-                      }
-                    }
-                  }
+            "requirement": [
+              {
+                "target": "self",
+                "value": "IronGuard"
+              }
+            ],
+            "effect": {
+              "physicalPenetration": {
+                "formula": {
+                  "source": "minPhys",
+                  "multiplier": 0.016,
+                  "max": 12
                 }
-              ]
+              },
+              "stonesplitPenetration": {
+                "formula": {
+                  "source": "minPhys",
+                  "multiplier": 0.016,
+                  "max": 12
+                }
+              }
             }
           }
         ]
@@ -67,21 +70,25 @@
         "name": "Stonesplit Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxStonesplit": 196,
+              "minStonesplit": 98
+            },
             "stat": {
               "stonesplitPenetration": {
                 "formula": {
                   "source": "minStonesplit",
-                  "multiplier": 0.06707317073170732,
+                  "multiplier": 0.0672,
                   "max": 22
                 }
               }
-            },
-            "rawStat": {
-              "minStonesplit": 98,
-              "maxStonesplit": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

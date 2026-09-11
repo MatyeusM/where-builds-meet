@@ -39,6 +39,18 @@ Simulation retains exact sampled timing.
 
 ## Stat resolution
 
+All martial arts now use the interpreted rank-13 conversion rates, including
+`0.264` Physical Attack per base-attribute point (cap `73.92`), `0.000304`
+Critical Rate (cap `0.08512`), and `0.000152` Affinity Rate (cap `0.04256`).
+Attribute talents add 98 minimum and 196 maximum raw attack. Penetration scales
+at `0.0672` from minimum attack or `0.0336` from maximum attack, capped at 22;
+attribute damage/healing scales at `0.000336` from minimum or `0.000168` from
+maximum, capped at 11%. Displayed source thresholds such as 328 and 655 are
+rounded descriptions; the exact conversion rates determine the calculation.
+The higher-of-Body-or-Power conversions remain deferred rather than using Power
+alone. See the [rank-13 audit](martial-art-talent-audit.md) for conditional
+effects, existing shared behavior, and all unresolved talent portions.
+
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, character talent stats, regional Oddity rewards, attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
 
 1. Build `rawStats` from explicit `rawStat` permanent contributions, including

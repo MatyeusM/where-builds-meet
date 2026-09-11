@@ -17,19 +17,22 @@ try {
   const { emptyStats } = await viteServer.ssrLoadModule("/src/data/statDefinitions.ts");
 
   const assertClose = (actual, expected, message) => {
-    if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message} Expected ${expected}, received ${actual}.`);
+    if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-9)
+      throw new Error(`${message} Expected ${expected}, received ${actual}.`);
   };
-  const effects = namelessSpear.talent[13].flatMap((talent) => talent.effect ?? []);
+  const effects = namelessSpear.talent[13].flatMap((talent) =>
+    (talent.effect ?? []).map((effect) => ({ ...effect, statStage: "talent" })),
+  );
   const statResult = calculateStatsWithEffects(
-    { ...emptyStats, momentum: 280, affinity: 0.257, maxBellstrike: 459 },
+    { ...emptyStats, momentum: 280, affinity: 0.25744, maxBellstrike: 459 },
     effects,
     0,
   );
-  assertClose(statResult.stats.affinity, 0.3, "Momentum scaling must grant at most 4.3% Affinity Rate.");
+  assertClose(statResult.stats.affinity, 0.3, "Momentum scaling must grant at most 4.256% Affinity Rate.");
   assertClose(
     statResult.stats.maxEndurance,
-    20,
-    "Max Endurance Up must include its base 10 and its 10-point Affinity cap.",
+    17,
+    "Max Endurance Up must use raw Affinity before the talent's Affinity conversion.",
   );
   assertClose(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.");
   assertClose(statResult.stats.maxBellstrike, 655, "Bellstrike Attribute Up must grant Max Bellstrike Attack.");
@@ -56,7 +59,7 @@ try {
   )
     throw new Error("Affinity DMG Up must work with Endless Gale while low Endurance remains unsimulated.");
 
-  const damageStats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, affinity: 0.3 };
+  const damageStats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, affinity: 1 };
   const enemy = {
     name: "Probe",
     level: 96,
@@ -82,7 +85,11 @@ try {
     { phyCoef: 1, attrCoef: 1 },
     { ...context, effects: [affinityRule.effect] },
   );
-  assertClose(enhanced.affinity / baseline.affinity, 1.18, "Affinity DMG Up must cap at 18% at 30% Affinity Rate.");
+  assertClose(
+    enhanced.physical / baseline.physical,
+    1 + baseline.outcomeRates.affinity * 0.18,
+    "Affinity DMG Up must cap at 18% above 30% Affinity Rate.",
+  );
 
   console.log("Nameless Spear talent calculation checks passed.");
 } finally {

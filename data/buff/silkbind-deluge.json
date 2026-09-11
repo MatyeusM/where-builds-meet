@@ -84,5 +84,26 @@
         }
       }
     ]
+  },
+  "SoulshadeExhaustedBoost": {
+    "name": "Soulshade Exhausted Damage Boost",
+    "description": "Increases damage against Exhausted targets by 5%.",
+    "duration": 5,
+    "maxStack": 1,
+    "refresh": true,
+    "showCoverage": true,
+    "effect": [
+      {
+        "requirement": [
+          {
+            "target": "target",
+            "value": "Exhausted"
+          }
+        ],
+        "effect": {
+          "dmgBonus": 0.05
+        }
+      }
+    ]
   }
 }

@@ -44,5 +44,10 @@
       ]
     ],
     "refresh": true
+  },
+  "Soulbreak": {
+    "name": "Soulbreak",
+    "maxStack": 1,
+    "showCoverage": true
   }
 }

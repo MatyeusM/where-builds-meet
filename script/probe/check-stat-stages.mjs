@@ -238,8 +238,8 @@ try {
   );
   assert.equal(attributes.stats.minBamboocut, 296, "Raw attribute bonuses are not applied twice");
   assert.equal(attributes.stats.effectiveMinBamboocut, 346, "Formless is still folded into final attack");
-  assert.ok(Math.abs(attributes.stats.bamboocutDmgBonus - (296 * 0.11) / 328) < 1e-9);
-  assert.ok(Math.abs(attributes.stats.bamboocutPenetration - (296 * 22) / 328) < 1e-9);
+  assert.ok(Math.abs(attributes.stats.bamboocutDmgBonus - 296 * 0.000336) < 1e-9);
+  assert.ok(Math.abs(attributes.stats.bamboocutPenetration - 296 * 0.0672) < 1e-9);
   assert.deepEqual(
     attributes,
     calculateStatsWithEffects(attributeBase, [...unconditionalMartial].reverse(), 0, ["heavenwill", "skygrasp"]),

@@ -82,6 +82,7 @@ import generalBuffs from "../data/buff/general.json";
 import stonesplitStrengthBuffs from "../data/buff/stonesplit-strength.json";
 import stonesplitMightBuffs from "../data/buff/stonesplit-might.json";
 import bamboocutWindBuffs from "../data/buff/bamboocut-wind.json";
+import bamboocutDraughtBuffs from "../data/buff/bamboocut-draught.json";
 import bamboocutKiteBuffs from "../data/buff/bamboocut-kite.json";
 import silkbindDelugeBuffs from "../data/buff/silkbind-deluge.json";
 import bellstrikeUmbraBuffs from "../data/buff/bellstrike-umbra.json";
@@ -375,6 +376,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...stonesplitStrengthBuffs,
     ...stonesplitMightBuffs,
     ...bamboocutWindBuffs,
+    ...bamboocutDraughtBuffs,
     ...bamboocutKiteBuffs,
     ...silkbindDelugeBuffs,
     ...bellstrikeUmbraBuffs,
@@ -604,6 +606,7 @@ const effectDefinitions = {
   ...stonesplitStrengthBuffs,
   ...stonesplitMightBuffs,
   ...bamboocutWindBuffs,
+  ...bamboocutDraughtBuffs,
   ...bamboocutKiteBuffs,
   ...silkbindDelugeBuffs,
   ...bellstrikeUmbraBuffs,
@@ -669,6 +672,7 @@ const manualBuffDefinitions = {
   ...stonesplitStrengthBuffs,
   ...stonesplitMightBuffs,
   ...bamboocutWindBuffs,
+  ...bamboocutDraughtBuffs,
   ...bamboocutKiteBuffs,
   ...silkbindDelugeBuffs,
   ...bellstrikeUmbraBuffs,

@@ -18,6 +18,10 @@
     [],
     [
       {
+        "name": "Water Clone Enhancement",
+        "effect": []
+      },
+      {
         "name": "Critical Rate Up",
         "effect": [
           {
@@ -25,8 +29,8 @@
               "crit": {
                 "formula": {
                   "source": "agility",
-                  "multiplier": 0.0003035714285714286,
-                  "max": 0.085
+                  "multiplier": 0.000304,
+                  "max": 0.08512
                 }
               }
             }
@@ -44,37 +48,23 @@
               }
             ],
             "effect": {
+              "healingBonus": 0.05
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "Heavy"
+              }
+            ],
+            "effect": {
               "healingBonus": {
                 "formula": {
                   "source": "minPhys",
                   "multiplier": 0.0003333333333333333,
-                  "offset": 0.05,
-                  "max": 0.3
+                  "max": 0.25
                 }
-              }
-            }
-          }
-        ]
-      },
-      {
-        "name": "Mystic Precision Enhancement",
-        "effect": [
-          {
-            "requirement": [
-              {
-                "target": "equippedMartialArt",
-                "value": "soulshadeUmbrella"
-              },
-              {
-                "target": "skillTag",
-                "value": "Mystic"
-              }
-            ],
-            "effect": {
-              "convert": {
-                "from": "abrasionRate",
-                "to": "normalRate",
-                "ratio": 1
               }
             }
           }
@@ -84,25 +74,43 @@
         "name": "Silkbind Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxSilkbind": 196,
+              "minSilkbind": 98
+            },
             "stat": {
               "silkbindDmgBonus": {
                 "formula": {
                   "source": "minSilkbind",
-                  "multiplier": 0.0003353658536585366,
+                  "multiplier": 0.000336,
                   "max": 0.11
                 }
               },
               "silkbindHealingBonus": {
                 "formula": {
                   "source": "minSilkbind",
-                  "multiplier": 0.0003353658536585366,
+                  "multiplier": 0.000336,
                   "max": 0.11
                 }
               }
-            },
-            "rawStat": {
-              "minSilkbind": 98,
-              "maxSilkbind": 196
+            }
+          }
+        ]
+      },
+      {
+        "name": "Attribute Attack Enhancement",
+        "effect": []
+      },
+      {
+        "name": "Mystic Precision Enhancement",
+        "effect": [
+          {
+            "requirement": [
+              { "target": "equippedMartialArt", "value": "soulshadeUmbrella" },
+              { "target": "skillTag", "value": "Mystic" }
+            ],
+            "effect": {
+              "convert": { "from": "abrasionRate", "to": "normalRate", "ratio": 1 }
             }
           }
         ]

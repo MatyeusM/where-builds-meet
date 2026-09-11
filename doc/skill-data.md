@@ -35,9 +35,17 @@ Talent IDs can change between ranks, and a later rank can add talents.
 Only interpreted source fields are relevant; ignore every `versions` subtree.
 Runtime `talent` is a two-dimensional array: `talent[rank]` contains that rank's
 complete ordered talent objects, each with `name` and its existing `effect` array.
-Ranks 0 through 12 are explicit empty arrays; rank 13 contains the previously
-curated talents with their values unchanged. This structural migration does not
-import additional datamined talents or revise their numerical effects.
+Ranks 0 through 12 are explicit empty arrays. Rank 13 contains all five source
+talents for every martial art, using interpreted conversion rates and bonuses.
+Talent objects have no IDs. Empty effect arrays represent either behavior already
+implemented elsewhere or deferred behavior, as distinguished in the
+[rank-13 audit report](martial-art-talent-audit.md).
+
+Panacea Fan additionally retains `Mystic Precision Enhancement` as a sixth
+rank-13 entry. The user confirmed this existing game behavior despite its absence
+from the datamined talent list. With Soulshade Umbrella equipped, Mystic actions
+convert all Abrasion probability to Normal probability using the existing
+`convert` effect. Preserve this intentional exception during future data audits.
 
 `martialArtEffectsForRank` in `src/data/martialArtTalents.ts` selects the array
 using the selected breakthrough's `martialArtTalentRank`, deduplicates equipped
@@ -1511,26 +1519,26 @@ may instead use `compareTo` with another numeric runtime state such as
 Nameless Sword's Qi Struggle Enhancement records `0.1` Qi DMG Bonus, which remains
 inactive until Qi damage is simulated. Sword Energy attacks gain `0.02` HP damage
 per 100 Max Physical Attack, capped at `0.2`. Physical Attack Up converts Momentum
-to Max Physical Attack at `0.2639285714285714` per point, capped at `73.9`.
+to Max Physical Attack at `0.264` per point, capped at `73.92`.
 
 Sword Qi Affinity Enhancement applies only to `SwordEnergy` attacks when target Qi
 is below 40% or Qi Imbalance is active. It grants `0.00012` Affinity DMG Bonus per
 Max Physical Attack, capped at `0.18` at 1500. Bellstrike Attribute Up grants 98
 Min and 196 Max Bellstrike Attack, then grants Bellstrike Penetration from resolved
-Max Bellstrike Attack at `22 / 655` per point, capped at 22.
+raw Max Bellstrike Attack at `0.0336` per point, capped at 22.
 
 Nameless Spear's Affinity Rate Up converts Momentum to Affinity at
-`0.043 / 280` per point, capped at `0.043`. Max Endurance Up grants 10 Endurance,
+`0.000152` per point, capped at `0.04256`. Max Endurance Up grants 10 Endurance,
 then one more for every complete two percentage points of Affinity above 10%, up
-to another 10 at 30%. The Affinity formula is evaluated before this dependent
-Endurance segment.
+to another 10 at 30%. The Endurance segment reads raw Affinity, excluding the
+separate talent's Affinity bonus, under the shared talent-stage contract.
 
 Affinity DMG Up grants `0.6` Affinity DMG Bonus per point of Affinity, capped at
 `0.18` at 30%, while Endless Gale is active or Endurance is below 60%. The
 `endurancePercentage` requirement is stored for the latter condition but remains
 inert until Endurance state is simulated. Bellstrike Attribute Up grants 98 Min
 and 196 Max Bellstrike Attack, then grants Bellstrike DMG Bonus from resolved Max
-Bellstrike Attack at `0.11 / 655` per point, capped at `0.11`.
+Bellstrike Attack at `0.000168` per point, capped at `0.11`.
 
 ### Stonesplit Might definition status
 
@@ -1643,18 +1651,18 @@ and appears in the appropriate Stats-page total. Physical Penetration is
 included in Attunement Stats, while Physical Resistance remains
 calculation-only and is intentionally omitted from the page.
 
-Panacea Fan converts Agility to Critical Rate at `0.085 / 280`, capped at
-`0.085`. Heavy-tagged healing stores a `0.05` base Healing Bonus plus up to
+Panacea Fan converts Agility to Critical Rate at `0.000304`, capped at
+`0.08512`. Heavy-tagged healing stores a separate `0.05` base Healing Bonus plus up to
 `0.25` from Min Physical Attack at `750`. Its Silkbind Attribute talent adds
 `98` Min and `196` Max Silkbind Attack, then derives both Silkbind DMG Bonus and
-the recorded `silkbindHealingBonus` stat at `0.11 / 328`, capped at `0.11`.
+the recorded `silkbindHealingBonus` stat at `0.000336`, capped at `0.11`.
 
 Soulshade Umbrella grants Mystic-tagged actions `0.2` DMG Bonus while Panacea
-Fan is equipped. It converts Agility to Min Physical Attack at `73.9 / 280`,
-capped at `73.9`. Special-tagged healing stores a `0.05` Critical Healing Bonus
+Fan is equipped. It converts Agility to Min Physical Attack at `0.264`,
+capped at `73.92`. Special-tagged healing stores a separate `0.05` Critical Healing Bonus
 plus up to `0.25` from Min Physical Attack at `750`. Its Silkbind Attribute
 talent adds `98` Min and `196` Max Silkbind Attack and derives Silkbind
-Penetration at `22 / 328`, capped at `22`. Healing and Critical Healing effects
+Penetration at `0.0672`, capped at `22`. Healing and Critical Healing effects
 are resolved at each heal action's timestamp.
 
 ## Fivefold Bleed and chance-applied DOTs

@@ -18,6 +18,10 @@
     [],
     [
       {
+        "name": "Increased Heaven's Will Gain",
+        "effect": []
+      },
+      {
         "name": "Critical Rate Up",
         "effect": [
           {
@@ -25,8 +29,8 @@
               "crit": {
                 "formula": {
                   "source": "agility",
-                  "multiplier": 0.0003035714285714286,
-                  "max": 0.085
+                  "multiplier": 0.000304,
+                  "max": 0.08512
                 }
               }
             }
@@ -41,7 +45,7 @@
               {
                 "target": "resource",
                 "value": "HeavensWill",
-                "comparison": ">=",
+                "comparison": ">",
                 "amount": 1
               }
             ],
@@ -70,21 +74,25 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxBamboocut": 196,
+              "minBamboocut": 98
+            },
             "stat": {
               "bamboocutPenetration": {
                 "formula": {
                   "source": "minBamboocut",
-                  "multiplier": 0.06707317073170732,
+                  "multiplier": 0.0672,
                   "max": 22
                 }
               }
-            },
-            "rawStat": {
-              "minBamboocut": 98,
-              "maxBamboocut": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

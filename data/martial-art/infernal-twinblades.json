@@ -68,11 +68,23 @@
         "name": "Flamelash Damage Enhancement",
         "effect": [
           {
-            "requirement": [{ "target": "self", "value": "Flamelash" }],
-            "effect": { "critDmgBonus": 0.05 }
+            "requirement": [
+              {
+                "target": "self",
+                "value": "Flamelash"
+              }
+            ],
+            "effect": {
+              "critDmgBonus": 0.05
+            }
           },
           {
-            "requirement": [{ "target": "self", "value": "Flamelash" }],
+            "requirement": [
+              {
+                "target": "self",
+                "value": "Flamelash"
+              }
+            ],
             "effect": {
               "critDmgBonus": {
                 "formula": {
@@ -89,7 +101,10 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
-            "rawStat": { "minBamboocut": 98, "maxBamboocut": 196 },
+            "rawStat": {
+              "maxBamboocut": 196,
+              "minBamboocut": 98
+            },
             "stat": {
               "bamboocutPenetration": {
                 "formula": {
@@ -103,7 +118,7 @@
         ]
       },
       {
-        "name": "Attr. Attack DMG UP",
+        "name": "Attr. Attack DMG Up",
         "effect": []
       }
     ]

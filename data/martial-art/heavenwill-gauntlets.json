@@ -18,6 +18,26 @@
     [],
     [
       {
+        "name": "Perfect Dodge Enhancement",
+        "effect": [
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "VileCondemned"
+              }
+            ],
+            "effect": {
+              "convert": {
+                "from": "abrasionRate",
+                "to": "normalRate",
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      },
+      {
         "name": "Physical Attack Up",
         "effect": [
           {
@@ -25,8 +45,8 @@
               "minPhys": {
                 "formula": {
                   "source": "agility",
-                  "multiplier": 0.2639285714285714,
-                  "max": 73.9
+                  "multiplier": 0.264,
+                  "max": 73.92
                 }
               }
             }
@@ -68,21 +88,25 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxBamboocut": 196,
+              "minBamboocut": 98
+            },
             "stat": {
               "bamboocutDmgBonus": {
                 "formula": {
                   "source": "minBamboocut",
-                  "multiplier": 0.0003353658536585366,
+                  "multiplier": 0.000336,
                   "max": 0.11
                 }
               }
-            },
-            "rawStat": {
-              "minBamboocut": 98,
-              "maxBamboocut": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

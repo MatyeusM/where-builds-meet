@@ -1,138 +1,116 @@
+import assert from "node:assert/strict";
 import { createServer } from "vite";
 
-const viteServer = await createServer({
-  root: process.cwd(),
+const server = await createServer({
   configFile: false,
   server: { middlewareMode: true },
   appType: "custom",
   logLevel: "silent",
 });
-
+const close = (actual, expected, message) =>
+  assert(Math.abs(actual - expected) < 1e-9, `${message}: ${actual} != ${expected}`);
 try {
-  const panaceaFan = (await viteServer.ssrLoadModule("/data/martial-art/panacea-fan.json")).default;
-  const soulshadeUmbrella = (await viteServer.ssrLoadModule("/data/martial-art/soulshade-umbrella.json")).default;
-  const { calculateStatsWithEffects, resolveFormulaValue } = await viteServer.ssrLoadModule(
+  const panacea = (await server.ssrLoadModule("/data/martial-art/panacea-fan.json")).default;
+  const soulshade = (await server.ssrLoadModule("/data/martial-art/soulshade-umbrella.json")).default;
+  const { martialArtEffectsForRank } = await server.ssrLoadModule("/src/data/martialArtTalents.ts");
+  const { calculateStatsWithEffects, resolveFormulaValue } = await server.ssrLoadModule(
     "/src/calculations/statEffects.ts",
   );
-  const { calculateDamageBreakdown } = await viteServer.ssrLoadModule("/src/calculations/damage.ts");
-  const { calculateDerivedStats } = await viteServer.ssrLoadModule("/src/calculations/effectiveStats.ts");
-  const { requirementsPass } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
-  const { emptyStats } = await viteServer.ssrLoadModule("/src/data/statDefinitions.ts");
-
-  const assertClose = (actual, expected, message) => {
-    if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message} Expected ${expected}, received ${actual}.`);
+  const { calculateDamageBreakdown } = await server.ssrLoadModule("/src/calculations/damage.ts");
+  const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
+  const { requirementsPass } = await server.ssrLoadModule("/src/calculations/rotationTimeline.ts");
+  const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
+  const arts = { panaceaFan: panacea, soulshadeUmbrella: soulshade };
+  for (const weapon of Object.keys(arts)) {
+    const effects = martialArtEffectsForRank(arts, [weapon], 13).filter((e) => !e.requirement);
+    const stats = calculateStatsWithEffects({ ...emptyStats, agility: 280, minSilkbind: 230 }, effects, 0).stats;
+    close(stats.minSilkbind, 328, "Attribute talent enters raw minimum");
+    close(stats.maxSilkbind, 196, "Attribute talent enters raw maximum");
+    switch (weapon) {
+      case "panaceaFan":
+        close(stats.crit, 0.08512, "Panacea Critical Rate cap");
+        close(stats.silkbindDmgBonus, 0.11, "Panacea attribute damage cap");
+        close(stats.silkbindHealingBonus, 0.11, "Panacea attribute healing cap");
+        break;
+      case "soulshadeUmbrella":
+        close(stats.minPhys, 73.92, "Soulshade Physical Attack cap");
+        close(stats.silkbindPenetration, 22, "Soulshade penetration cap");
+        break;
+    }
+  }
+  const effectsFor = (weapons, tags) =>
+    martialArtEffectsForRank(arts, weapons, 13)
+      .filter((e) => requirementsPass(e.requirement, [], [], tags, new Set(), weapons))
+      .map((e) => e.effect ?? e);
+  for (const [minPhys, bonus] of [
+    [0, 0.05],
+    [375, 0.175],
+    [750, 0.3],
+    [1000, 0.3],
+  ]) {
+    for (const [weapon, tag, otherTag, key] of [
+      ["panaceaFan", "Heavy", "Light", "healingBonus"],
+      ["soulshadeUmbrella", "Special", "Heavy", "criticalHealingBonus"],
+    ]) {
+      const value = (tags) =>
+        effectsFor([weapon], tags).reduce((sum, e) => {
+          switch (typeof e[key]) {
+            case "number":
+              return sum + e[key];
+            case "object":
+              return sum + (e[key]?.formula ? resolveFormulaValue(e[key].formula, { minPhys }) : 0);
+            default:
+              return sum;
+          }
+        }, 0);
+      close(value([tag]), bonus, "Base and scaling healing bonuses sum and cap");
+      close(value([otherTag]), 0, "Healing bonus requires its attack tag");
+    }
+  }
+  const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 0.8 };
+  const enemy = {
+    name: "Probe",
+    level: 96,
+    defense: 0,
+    physicalResistance: 0,
+    bellstrikeResistance: 0,
+    stonesplitResistance: 0,
+    silkbindResistance: 0,
+    bamboocutResistance: 0,
+    judgementResistance: 0,
   };
-  const statEffects = (definition) =>
-    definition.talent[13].flatMap((talent) => talent.effect ?? []).filter((effect) => effect.stat);
-
-  const panaceaStats = calculateStatsWithEffects(
-    { ...emptyStats, agility: 280, minSilkbind: 230 },
-    statEffects(panaceaFan),
-    0,
-  ).stats;
-  assertClose(panaceaStats.crit, 0.085, "Panacea Fan must reach its Critical Rate cap at 280 Agility.");
-  assertClose(panaceaStats.minSilkbind, 328, "Panacea Fan must add Min Silkbind Attack.");
-  assertClose(panaceaStats.maxSilkbind, 196, "Panacea Fan must add Max Silkbind Attack.");
-  assertClose(panaceaStats.silkbindDmgBonus, 0.11, "Panacea Fan must reach its Silkbind DMG cap at 328 Min.");
-  assertClose(
-    panaceaStats.silkbindHealingBonus,
-    0.11,
-    "Panacea Fan must preserve its Silkbind Healing cap in character stats.",
-  );
-
-  const soulshadeStats = calculateStatsWithEffects(
-    { ...emptyStats, agility: 280, minSilkbind: 230 },
-    statEffects(soulshadeUmbrella),
-    0,
-  ).stats;
-  assertClose(soulshadeStats.minPhys, 73.9, "Soulshade Umbrella must reach its Min Physical cap at 280 Agility.");
-  assertClose(soulshadeStats.minSilkbind, 328, "Soulshade Umbrella must add Min Silkbind Attack.");
-  assertClose(soulshadeStats.maxSilkbind, 196, "Soulshade Umbrella must add Max Silkbind Attack.");
-  assertClose(
-    soulshadeStats.silkbindPenetration,
-    22,
-    "Soulshade Umbrella must reach its Silkbind Penetration cap at 328 Min.",
-  );
-
-  const heavyHealing = panaceaFan.talent[13]
-    .flatMap((talent) => talent.effect ?? [])
-    .find((effect) => effect.effect?.healingBonus);
-  const mysticBuff = soulshadeUmbrella.talent[13]
-    .flatMap((talent) => talent.effect ?? [])
-    .find((effect) => effect.effect?.dmgBonus);
-  const criticalHealing = soulshadeUmbrella.talent[13]
-    .flatMap((talent) => talent.effect ?? [])
-    .find((effect) => effect.effect?.criticalHealingBonus);
-  const mysticPrecision = panaceaFan.talent[13]
-    .flatMap((talent) => talent.effect ?? [])
-    .find((effect) => effect.effect?.convert?.from === "abrasionRate");
-  if (!heavyHealing || !mysticBuff || !criticalHealing || !mysticPrecision)
-    throw new Error("Deluge conditional talent effects are missing.");
-
-  const requirementPasses = (requirement, tags, martialArts) =>
-    requirementsPass(requirement, [], [], tags, new Set(), martialArts, {});
-  if (
-    !requirementPasses(heavyHealing.requirement, ["Heavy"], ["panaceaFan", "soulshadeUmbrella"]) ||
-    requirementPasses(heavyHealing.requirement, ["Light"], ["panaceaFan", "soulshadeUmbrella"])
-  )
-    throw new Error("Panacea Fan healing must be restricted to Heavy-tagged actions.");
-  if (
-    !requirementPasses(mysticBuff.requirement, ["Mystic"], ["panaceaFan", "soulshadeUmbrella"]) ||
-    requirementPasses(mysticBuff.requirement, ["Mystic"], ["soulshadeUmbrella", "inkwellFan"]) ||
-    requirementPasses(mysticBuff.requirement, ["MartialArts"], ["panaceaFan", "soulshadeUmbrella"])
-  )
-    throw new Error("Soulshade Umbrella's damage bonus must require both Panacea Fan and a Mystic action.");
-  if (
-    !requirementPasses(criticalHealing.requirement, ["Special"], ["panaceaFan", "soulshadeUmbrella"]) ||
-    requirementPasses(criticalHealing.requirement, ["Heavy"], ["panaceaFan", "soulshadeUmbrella"])
-  )
-    throw new Error("Soulshade Umbrella Critical Healing must be restricted to Special-tagged actions.");
-  if (
-    !requirementPasses(mysticPrecision.requirement, ["Mystic"], ["panaceaFan", "soulshadeUmbrella"]) ||
-    requirementPasses(mysticPrecision.requirement, ["Mystic"], ["panaceaFan", "inkwellFan"]) ||
-    requirementPasses(mysticPrecision.requirement, ["MartialArts"], ["panaceaFan", "soulshadeUmbrella"])
-  )
-    throw new Error("Panacea Fan's outcome conversion must require both Soulshade Umbrella and a Mystic action.");
-
-  const precisionStats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 0.8 };
-  const precisionBreakdown = calculateDamageBreakdown(
-    { phyCoef: 1, attrCoef: 1 },
-    {
-      stats: precisionStats,
-      derivedStats: calculateDerivedStats(precisionStats, 0, {}, ["panaceaFan", "soulshadeUmbrella"]),
-      enemy: {
-        name: "Deluge talent probe",
-        level: 96,
-        defense: 0,
-        physicalResistance: 0,
-        bellstrikeResistance: 0,
-        stonesplitResistance: 0,
-        silkbindResistance: 0,
-        bamboocutResistance: 0,
-        judgementResistance: 0,
+  const damage = (weapons, tags = ["Mystic"], includePrecision = true) =>
+    calculateDamageBreakdown(
+      { phyCoef: 1 },
+      {
+        stats,
+        derivedStats: calculateDerivedStats(stats, 0),
+        enemy,
+        attunement: {},
+        weapons,
+        skillTags: tags,
+        buffs: [],
+        effects: effectsFor(weapons, tags).filter((effect) => includePrecision || !effect.convert),
       },
-      weapons: ["panaceaFan", "soulshadeUmbrella"],
-      skillTags: ["Mystic"],
-      buffs: [],
-      effects: [mysticPrecision.effect],
-      attunement: {},
-    },
+    );
+  const alone = damage(["soulshadeUmbrella"]);
+  const paired = damage(["soulshadeUmbrella", "panaceaFan"]);
+  close(
+    damage(["soulshadeUmbrella", "panaceaFan"], ["Mystic"], false).total / alone.total,
+    1.2,
+    "Paired Mystic damage bonus remains 20% independently of Precision",
   );
-  assertClose(precisionBreakdown.outcomeRates.abrasion, 0, "Mystic Precision must remove all Abrasion chance.");
-  assertClose(precisionBreakdown.outcomeRates.normal, 1, "Mystic Precision must convert Abrasion into Normal chance.");
-
-  assertClose(
-    resolveFormulaValue(heavyHealing.effect.healingBonus.formula, { minPhys: 750 }),
-    0.3,
-    "Heavy healing must include its base bonus and capped Min Physical scaling.",
+  close(paired.outcomeRates.abrasion, 0, "Mystic Precision removes Abrasion with both martial arts equipped");
+  close(paired.outcomeRates.normal, 1, "Mystic Precision transfers Abrasion probability to Normal");
+  close(damage(["panaceaFan"]).outcomeRates.abrasion, 0.2, "Panacea alone does not grant Mystic Precision");
+  close(
+    damage(["soulshadeUmbrella", "panaceaFan"], ["Light"]).outcomeRates.abrasion,
+    0.2,
+    "Mystic Precision does not affect non-Mystic attacks",
   );
-  assertClose(
-    resolveFormulaValue(criticalHealing.effect.criticalHealingBonus.formula, { minPhys: 750 }),
-    0.3,
-    "Critical healing must include its base bonus and capped Min Physical scaling.",
+  console.log(
+    "Deluge talents: datamined stats, healing caps/tag gating, Mystic bonus, and conditional Mystic Precision passed.",
   );
-
-  console.log("Deluge martial-art talent behavior checks passed.");
 } finally {
-  await viteServer.close();
+  await server.close();
 }

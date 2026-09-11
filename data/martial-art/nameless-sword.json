@@ -34,11 +34,13 @@
             ],
             "effect": {
               "hpDMGBonus": {
-                "formula": {
-                  "source": "maxPhys",
-                  "multiplier": 0.0002,
-                  "max": 0.2
-                }
+                "function": "segment",
+                "param1": "maxPhys",
+                "param2": [
+                  99.999999999, 199.999999999, 299.999999999, 399.999999999, 499.999999999, 599.999999999,
+                  699.999999999, 799.999999999, 899.999999999, 999.999999999
+                ],
+                "param3": [0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2]
               }
             }
           }
@@ -52,8 +54,8 @@
               "maxPhys": {
                 "formula": {
                   "source": "momentum",
-                  "multiplier": 0.2639285714285714,
-                  "max": 73.9
+                  "multiplier": 0.264,
+                  "max": 73.92
                 }
               }
             }
@@ -100,21 +102,25 @@
         "name": "Bellstrike Attribute Up",
         "effect": [
           {
+            "rawStat": {
+              "maxBellstrike": 196,
+              "minBellstrike": 98
+            },
             "stat": {
               "bellstrikePenetration": {
                 "formula": {
                   "source": "maxBellstrike",
-                  "multiplier": 0.033587786259542,
+                  "multiplier": 0.0336,
                   "max": 22
                 }
               }
-            },
-            "rawStat": {
-              "minBellstrike": 98,
-              "maxBellstrike": 196
             }
           }
         ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
       }
     ]
   ]

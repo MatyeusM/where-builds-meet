@@ -95,7 +95,7 @@ try {
     "Soul-Shaken stack 5 must provide 25% general and 25% Umbra DOT vulnerability.",
   );
   assert(
-    requirementsPass(umbraRule.requirement, [], [], ["HeavenquakerSpear"], new Set()),
+    requirementsPass(umbraRule.requirement, [], [], ["HeavenQuakerSpear"], new Set()),
     "Heavenquaker Spear must satisfy Soul-Shaken's Umbra requirement.",
   );
   assert(
@@ -107,6 +107,20 @@ try {
     "Non-Umbra martial arts must not receive Soul-Shaken's conditional bonus.",
   );
 
+  for (const [tags, multiplier] of [
+    [["StrategicSword", "DOT", "HighBleed"], 2],
+    [["Other", "DOT", "HighBleed"], 1.75],
+    [["HeavenQuakerSpear", "DOT"], 1.5],
+    [["Other", "DOT"], 1.25],
+  ]) {
+    const selected = fifthStack
+      .filter((rule) => requirementsPass(rule.requirement, [], [], tags, new Set()))
+      .map((rule) => rule.effect ?? rule);
+    assert(
+      closeTo(damage(selected, true).total / baselineDot.total, multiplier),
+      "Soul-Shaken's High Bleed bonus adds once and respects source tags",
+    );
+  }
   console.log("DOT damage and Soul-Shaken checks passed.");
 } finally {
   await viteServer.close();

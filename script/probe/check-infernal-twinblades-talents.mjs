@@ -346,7 +346,7 @@ try {
       skillTags: ["MartialArts", "InfernalTwinblades"],
       weapons: ["infernalTwinblades"],
       buffs: [],
-      effects: talent.talent[13].find((entry) => entry.name === "Attr. Attack DMG UP").effect,
+      effects: talent.talent[13].find((entry) => entry.name === "Attr. Attack DMG Up").effect,
     },
   );
   close(attributeDamage.bellstrike, 100, "Non-primary attribute damage is retained");
