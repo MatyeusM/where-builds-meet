@@ -19,6 +19,7 @@ try {
   const { buildRotationTimeline } = await server.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const mapping = (await read("data/official/profile-map.json")).martialArts;
+  const system = await read("data/system.json");
   const arts = {};
   for (const filename of await readdir("data/martial-art")) {
     const art = await read(`data/martial-art/${filename}`);
@@ -134,6 +135,7 @@ try {
         innerWayRules: [],
         setupEffects: talentEffects(weapon, name),
         weapons: [weapon],
+        initialResources: system.initialResources,
         ...options.timeline,
       },
       startAnchor: { rowId: "rotation-0" },
@@ -161,6 +163,12 @@ try {
       close(damage.physical, expected, `${weapon} strict one-bar threshold`);
     }
   }
+  const snowpartingStart = run("snowparting", "Critical DMG Up", [], { stats: { crit: 0.6 } });
+  close(
+    snowpartingStart.damage.physical,
+    1126,
+    "System starting Blade Momentum enables Snowparting's 21% Critical DMG bonus at 60% Critical Rate",
+  );
   for (const minPhys of [49, 50, 749, 750, 1000]) {
     for (const [weapon, name, tags] of [
       ["inkwellFan", "Heavy Attack Pursuit Enhancement", ["MoonShatterSpring"]],
@@ -262,6 +270,16 @@ try {
       ...extra,
     });
   const observe = { castTime: 0, action: [{ type: "damage", phyCoef: 1, time: 0 }] };
+  const startingResourceRows = timeline(
+    [],
+    [cast("Observe"), delay(60), cast("Observe")],
+    { Observe: observe },
+    { initialResources: system.initialResources },
+  ).filter((row) => row.step.skill === "Observe");
+  for (const row of startingResourceRows) {
+    close(row.actionStates[0].resources.BladeMomentum, 4, "Blade Momentum stays at four without resource actions");
+    close(row.actionStates[0].resources.BattleWill, 4, "Battle Will stays at four without resource actions");
+  }
   const rows = timeline(
     [
       ...talentEffects("rivenTwinblades", "Increased Binge Point Gain"),

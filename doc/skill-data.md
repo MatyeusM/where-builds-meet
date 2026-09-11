@@ -601,6 +601,12 @@ actions can update them:
 { "type": "consumeResource", "value": "HeavensWill", "amount": 1, "time": 2 }
 ```
 
+`system.json.initialResources` starts Blade Momentum (`BladeMomentum`) and
+Battle Will (`BattleWill`) at the user-confirmed value of `4`. Both stay fixed
+and hidden in the UI while their generation, spending, and caps remain
+unimplemented. This activates Snowparting Blade's rank-13 Critical DMG Up
+condition (`BladeMomentum > 1`) through the existing resource requirement.
+
 `setResource` replaces the value, `addResource` increases it, and
 `consumeResource` decreases it. A `consumeResource` action may use `"all"` as
 its amount to set the resource to zero. Results are normally clamped to zero

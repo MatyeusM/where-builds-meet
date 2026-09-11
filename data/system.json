@@ -1,6 +1,8 @@
 {
   "initialResources": {
-    "HeavensWill": 2
+    "HeavensWill": 2,
+    "BladeMomentum": 4,
+    "BattleWill": 4
   },
   "resourceMaximums": {
     "HeavensWill": 4
