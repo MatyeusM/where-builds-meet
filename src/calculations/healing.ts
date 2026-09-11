@@ -5,9 +5,10 @@ import { calculateDerivedStats, mainAttributeForWeapons } from "./effectiveStats
 import { resolveFormulaValue, type ResolvedStats, type StatFormula } from "./statEffects";
 import { resolveActionStatContext } from "./actionStats";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
+import { attunementMatchesSkill, type AttunementTagFilter } from "./attunementStats";
 
 type AttunementDefinition = {
-  effect?: { stat?: Record<string, number>; tags?: string[]; excludeTags?: string[] };
+  effect?: AttunementTagFilter & { stat?: Record<string, number> };
 };
 
 const attunementDefinitions = attunementJson as Record<string, AttunementDefinition>;
@@ -56,10 +57,7 @@ function matchingAttunementStats(context: DamageContext) {
   let healingBonus = 0;
   for (const [key, value] of Object.entries(context.attunement)) {
     const definition = attunementDefinitions[key];
-    const requiredTags = definition?.effect?.tags;
-    if (requiredTags && !requiredTags.every((tag) => context.skillTags.includes(tag))) continue;
-    const excludedTags = definition?.effect?.excludeTags;
-    if (excludedTags?.some((tag) => context.skillTags.includes(tag))) continue;
+    if (!attunementMatchesSkill(definition?.effect, context.skillTags)) continue;
     const stats = definition?.effect?.stat;
     physicalPenetration += value * numberValue(stats?.physicalPenetration);
     formlessPenetration += value * numberValue(stats?.formlessPenetration);

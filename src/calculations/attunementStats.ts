@@ -2,6 +2,20 @@ import type { AttunementStats } from "./damage";
 
 export type AttunementOverrides = Partial<AttunementStats>;
 
+export type AttunementTagFilter = {
+  /** All entries must match; a nested array matches any one of its tags. */
+  tags?: Array<string | string[]>;
+  excludeTags?: string[];
+};
+
+export function attunementMatchesSkill(filter: AttunementTagFilter | undefined, skillTags: string[]) {
+  const included =
+    filter?.tags?.every((tag) =>
+      typeof tag === "string" ? skillTags.includes(tag) : tag.some((alternative) => skillTags.includes(alternative)),
+    ) ?? true;
+  return included && !filter?.excludeTags?.some((tag) => skillTags.includes(tag));
+}
+
 /** Keep UI overrides final while hit calculation inputs exclude bonuses applied through character stats. */
 export function resolveAttunementStats(
   defaults: AttunementStats,

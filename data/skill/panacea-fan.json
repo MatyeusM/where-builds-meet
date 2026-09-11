@@ -82,7 +82,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Heal", "HOT", "MartialArts", "Fan", "PanaceaFan", "CloudburstHealing"],
+    "tags": ["Heal", "HOT", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "CloudburstHealing"],
     "martialArt": "panaceaFan",
     "weapon": "Fan"
   },
@@ -150,7 +150,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Heal", "HOT", "MartialArts", "Fan", "PanaceaFan", "CloudburstHealing"],
+    "tags": ["Heal", "HOT", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "CloudburstHealing"],
     "martialArt": "panaceaFan",
     "weapon": "Fan"
   },
@@ -197,7 +197,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Heal", "MartialArts", "Fan", "PanaceaFan", "EndlessCloud"],
+    "tags": ["Heal", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "EndlessCloud"],
     "martialArt": "panaceaFan",
     "weapon": "Fan"
   },
@@ -244,7 +244,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Heal", "MartialArts", "Fan", "PanaceaFan", "EndlessCloud"],
+    "tags": ["Heal", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "EndlessCloud"],
     "martialArt": "panaceaFan",
     "weapon": "Fan"
   },

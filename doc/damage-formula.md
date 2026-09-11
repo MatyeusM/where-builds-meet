@@ -535,8 +535,12 @@ Attunement definitions in `data/attunement.json` provide the target stat and
 required skill-match tags. Armor definitions target `attunementDMGBonus`;
 matching values are summed and applied through the standalone
 `1 + matching Attunement DMG Bonus` multiplier above. Charged, varied-combo,
-and martial-art boosts apply only when all configured tags are present on the
-skill. Physical and Formless Penetration target their corresponding penetration
+and martial-art boosts require every `effect.tags` entry: strings match exactly,
+and nested arrays match any one listed tag. Matching multiple alternatives
+still applies each attunement once. Damage and healing share this matching rule.
+Panacea/Soulshade Martial Art healing boosts require singular `MartialArt`,
+which covers Fan Q/QQ (including cancels) and Umbrella Q only.
+Physical and Formless Penetration target their corresponding penetration
 channels and have no skill-match restriction.
 
 The shared result is then multiplied by a channel-specific global multiplier:

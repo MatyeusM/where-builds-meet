@@ -134,7 +134,7 @@
       }
     ],
     "modifier": [],
-    "tags": ["Heal", "MartialArts", "Umbrella", "SoulshadeUmbrella", "FloatingGrace"],
+    "tags": ["Heal", "MartialArts", "MartialArt", "Umbrella", "SoulshadeUmbrella", "FloatingGrace"],
     "martialArt": "soulshadeUmbrella",
     "weapon": "Umbrella"
   }

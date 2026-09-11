@@ -7,6 +7,7 @@ import gearSetJson from "../data/gear-set.json";
 import armorSetJson from "../data/armor-set.json";
 import statJson from "../data/stat.json";
 import type { AttunementStats } from "./calculations/damage";
+import type { AttunementTagFilter } from "./calculations/attunementStats";
 import { getPersistentItem } from "./persistentStorage";
 import { normalizeStoredWeaponIds, weaponIds, type CharacterStats, type WeaponId } from "./types";
 
@@ -123,10 +124,8 @@ export type GearValueDefinition = {
 export type AttunementDefinition = GearValueDefinition & {
   implemented?: boolean;
   tags: string[];
-  effect: {
+  effect: AttunementTagFilter & {
     stat: Record<string, number>;
-    tags?: string[];
-    excludeTags?: string[];
   };
 };
 

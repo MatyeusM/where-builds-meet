@@ -84,7 +84,7 @@ try {
   const physical = 110 * 1.15;
   const silkbind = 70 * 1.05 * 1.1;
   const criticalRate = 0.3;
-  const expected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.31;
+  const expected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.21;
   assert(
     closeTo(healing.total, expected),
     `Healing must apply both attack channels, penetration, general healing, All Martial Arts, and matching Art of Fan bonuses (${JSON.stringify(healing)} !== ${expected}).`,
@@ -94,7 +94,7 @@ try {
     attunement: { ...context.attunement, panaceaHealingSkillBoost: 0.06 },
   });
   assert(
-    closeTo(panaceaHeavyAttunement.total, expected * (1.37 / 1.31)),
+    closeTo(panaceaHeavyAttunement.total, expected * (1.27 / 1.21)),
     "Panacea Fan Healing Skill Boost must add General Healing Bonus to Fan Heavy healing.",
   );
   const panaceaSpecialAttunement = calculateHealingBreakdown(action, {
@@ -111,7 +111,7 @@ try {
     skillTags: ["Heal", "MartialArts", "Special", "Fan", "PanaceaFan"],
   });
   assert(
-    closeTo(panaceaSpecialAttunement.total / panaceaSpecialBaseline.total, 1.37 / 1.31),
+    closeTo(panaceaSpecialAttunement.total / panaceaSpecialBaseline.total, 1.27 / 1.21),
     "Panacea Fan Special Skill Healing Boost must match Special healing while the Heavy-only boost remains inactive.",
   );
   const soulshadeSpecialBaseline = calculateHealingBreakdown(action, {
@@ -136,7 +136,7 @@ try {
     ...context,
     attunement: { ...context.attunement, formlessPenetration: 10 },
   });
-  const expectedSilkbindPenetrationIncrease = 70 * 0.05 * 1.1 * (1 + criticalRate * 0.7) * 1.31;
+  const expectedSilkbindPenetrationIncrease = 70 * 0.05 * 1.1 * (1 + criticalRate * 0.7) * 1.21;
   assert(
     closeTo(silkbindPenetrationHealing.total - healing.total, expectedSilkbindPenetrationIncrease) &&
       closeTo(formlessPenetrationHealing.total - healing.total, expectedSilkbindPenetrationIncrease),
@@ -179,7 +179,7 @@ try {
         castTime: 1,
         action: [{ type: "heal", phyCoef: 1, silkbindCoef: 1, time: 1 }],
         modifier: [],
-        tags: ["Heal", "MartialArts", "PanaceaFan", "CloudburstHealing"],
+        tags: ["Heal", "MartialArts", "MartialArt", "PanaceaFan", "CloudburstHealing"],
       },
       LargerHeal: {
         name: "Larger Heal",

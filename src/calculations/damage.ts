@@ -13,13 +13,34 @@ import { finishCalculationPhase, startCalculationPhase } from "./calculationBenc
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 import type { UnconditionalDamageEffects } from "./unconditionalDamageEffects";
 import { resolveActionStatContext } from "./actionStats";
+import { attunementMatchesSkill, type AttunementTagFilter } from "./attunementStats";
 
 type AttunementDefinition = {
-  effect?: { stat?: Record<string, number>; tags?: string[]; excludeTags?: string[] };
+  effect?: AttunementTagFilter & { stat?: Record<string, number> };
 };
 const attunementDefinitions = attunementJson as Record<string, AttunementDefinition>;
 
 export type AttunementStats = {
+  namelessSwordMartialBoost: number;
+  namelessSwordChargedBoost: number;
+  namelessSwordSpecialBoost: number;
+  namelessSpearChargedBoost: number;
+  namelessSpearSpecialBoost: number;
+  strategicSwordMartialBoost: number;
+  strategicSwordSpecialBoost: number;
+  strategicSwordBleedingBoost: number;
+  heavenquakerMartialBoost: number;
+  heavenquakerChargedBoost: number;
+  inkwellChargedBoost: number;
+  inkwellSpecialPursuitBoost: number;
+  vernalMartialBoost: number;
+  vernalProjectile280304Boost: number;
+  vernalProjectile280305Boost: number;
+  infernalMartialBoost: number;
+  infernalEmpoweredLightBoost: number;
+  infernalSpecialBoost: number;
+  mortalMartialBoost: number;
+  mortalRodentBoost: number;
   physicalPenetration: number;
   formlessPenetration: number;
   physicalResistance: number;
@@ -296,10 +317,7 @@ function calculateDamageBreakdownInternal(
   let attunementFormlessPenetration = 0;
   for (const [key, value] of Object.entries(attunement)) {
     const definition = attunementDefinitions[key];
-    const matchTags = definition?.effect?.tags;
-    if (matchTags && !matchTags.every((tag) => skillTags.includes(tag))) continue;
-    const excludeTags = definition?.effect?.excludeTags;
-    if (excludeTags?.some((tag) => skillTags.includes(tag))) continue;
+    if (!attunementMatchesSkill(definition?.effect, skillTags)) continue;
     const effectStats = definition?.effect?.stat;
     const addAttunementStat = (target: string) => {
       const multiplier = effectStats?.[target];

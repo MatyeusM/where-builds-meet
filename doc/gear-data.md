@@ -20,6 +20,18 @@ An attunement whose game effect is known but not simulated remains selectable
 with `implemented: false` and an empty `effect.stat` object. This preserves the
 gear data without silently applying an invented calculation.
 
+The supplied PvE attunement catalog maps all 45 official IDs through
+`data/official/affix-map.json` to the stable keys in `data/attunement.json`.
+Twenty definitions are added: eighteen use tagged damage bonuses,
+and two preserve only identity until their effects are clarified. The five
+Tier 96 Deluge IDs reuse existing healing definitions. Confirmed matching
+corrections cover Inkwell Special/Pursuit, Heavenwill Light/Heavy Varied Combo,
+and Panacea/Soulshade Martial Art healing. Names and older ID aliases are preserved.
+Source `min` and `format`
+are not imported; armor maximum rolls remain level-based in `data/stat.json`
+(Tier 96 uses `0.06`). See [deferred attunements](attunement-audit.md) for
+unresolved effects and proposed changes to existing definitions.
+
 Each record in `gear` contains:
 
 - `name` and compatible `slots`

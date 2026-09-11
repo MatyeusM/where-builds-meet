@@ -1593,11 +1593,21 @@ combinations keep the rule from affecting an attack tagged with only one half
 of a category. Its `baseDMGBonus` is a separate multiplier from ordinary
 `dmgBonus` effects.
 
-Attunement effects match every entry in `effect.tags` and reject an action when
-any entry in the optional `effect.excludeTags` appears on that action. This
+Attunement effects match every entry in `effect.tags`. A string requires that
+tag; a nested array requires at least one tag from that array. For example,
+`["InkwellFan", ["Special", "Pursuit"]]` matches Inkwell Special or Pursuit,
+while `["HeavenwillGauntlets", "VariedCombo", ["Light", "Heavy"]]` requires a
+Light or Heavy Varied Combo. Matching both alternatives applies the bonus once.
+Both damage and healing use the shared `attunementMatchesSkill` matcher.
+An action is rejected when any entry in `effect.excludeTags` appears. This
 keeps general combat tags intact when an individual attunement has a narrower
 scope. Stonebreaker Quake remains tagged `Charged` for other mechanics but is
 excluded from Thundercry Blade's Charged Skill DMG Boost.
+
+Panacea and Soulshade Martial Art healing attunements require singular
+`MartialArt`. Cloudburst Healing (Fan Q), Endless Cloud (Fan QQ), their cancel
+variants, and Floating Grace (Umbrella Q) carry that tag. Special and Heavy
+healing retain broad `MartialArts` but do not receive these attunements.
 
 Might actions explicitly use equal `phyCoef` and `attrCoef` for physical and attribute damage.
 Thundercry Blade's Max-HP talents use segmented stat/effective-stat values and
