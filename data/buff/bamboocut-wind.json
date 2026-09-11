@@ -1,4 +1,9 @@
 {
+  "Flamelash": {
+    "name": "Flamelash",
+    "maxStack": 1,
+    "showCoverage": true
+  },
   "Disintegration": {
     "name": "Disintegration",
     "shortName": "Dis",

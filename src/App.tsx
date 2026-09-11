@@ -92,6 +92,7 @@ import bellstrikeSplendorDebuffs from "../data/debuff/bellstrike-splendor.json";
 import bellstrikeUmbraDebuffs from "../data/debuff/bellstrike-umbra.json";
 import innerWayDebuffs from "../data/debuff/innerway.json";
 import bamboocutDustDebuffs from "../data/debuff/bamboocut-dust.json";
+import bamboocutWindDebuffs from "../data/debuff/bamboocut-wind.json";
 import bamboocutKiteDebuffs from "../data/debuff/bamboocut-kite.json";
 import stonesplitMightDebuffs from "../data/debuff/stonesplit-might.json";
 import mysticDots from "../data/dot/mystic.json";
@@ -384,6 +385,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...bellstrikeSplendorDebuffs,
     ...bellstrikeUmbraDebuffs,
     ...bamboocutDustDebuffs,
+    ...bamboocutWindDebuffs,
     ...bamboocutKiteDebuffs,
     ...innerWayDebuffs,
     ...generalDebuffs,
@@ -611,6 +613,7 @@ const effectDefinitions = {
   ...bellstrikeSplendorDebuffs,
   ...bellstrikeUmbraDebuffs,
   ...bamboocutDustDebuffs,
+  ...bamboocutWindDebuffs,
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
   ...generalDebuffs,
@@ -678,6 +681,7 @@ const manualDebuffDefinitions = {
   ...bellstrikeSplendorDebuffs,
   ...bellstrikeUmbraDebuffs,
   ...bamboocutDustDebuffs,
+  ...bamboocutWindDebuffs,
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
   ...manualGeneralDebuffs,

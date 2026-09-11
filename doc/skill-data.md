@@ -801,6 +801,56 @@ The duration bonus is independent of that cooldown and includes indirect dodge
 buffs such as Disintegration. Addled Mind uses a 15-second cooldown, three uses,
 and independent recovery. Its cast time and action data are still pending.
 
+Infernal Twinblades rank 13 contains all five talents in source order, using
+the rank array directly without talent IDs. The implemented effects are:
+
+- Physical Attack Up: `0.264 × Agility`, capped at `73.92` at 280 Agility.
+- Flamelash Damage Enhancement: while the self buff `Flamelash` is active,
+  add a fixed 5% Critical DMG Bonus and a separate
+  `min(0.25, raw Min Physical Attack × 0.25 / 750)` scaling effect, for a total
+  talent bonus of 30% at 750 Min Physical Attack. Both effects require Flamelash.
+- Bamboocut Attribute Up: add 98 Min and 196 Max Bamboocut Attack as `rawStat`,
+  then add `0.0672 × raw Min Bamboocut Attack` penetration, capped at 22.
+- Attr. Attack DMG UP: already supplied by the shared attribute damage channels
+  and primary-path 1.5 Bamboocut multiplier. Its `effect` array is deliberately
+  empty to avoid applying a second multiplier or additive damage bonus.
+
+These conversions use the interpreted source rates without rounding them to
+match older talents' hand-entered caps. Formula inputs use the existing immutable
+raw-stat stage, including flat attribute talents but excluding later talent and
+food bonuses. Flamelash is a status usable through the existing manual Buff event;
+it has no default expiration and can be consumed or given an application duration
+by skill data. Automatic Flamelash entry/exit awaits Infernal skill data. No new
+mode lifecycle is inferred here. Perfect Dodge's wider success window and longer
+breath-hold remain unimplemented: the simulator does not currently resolve dodge
+input windows or track breath-hold duration.
+
+Mortal Rope Dart rank 13 likewise contains five talents in source order without
+talent IDs. Critical Rate Up grants `0.000304 × Agility`, capped at `0.08512`
+(8.512%) at 280 Agility. Bamboocut Attribute Up adds 98 Min and 196 Max
+Bamboocut Attack as `rawStat`, then grants `0.000336 × raw Min Bamboocut Attack`
+Bamboocut DMG Bonus, capped at 11%. These are the interpreted datamine rates.
+
+Rodent Damage Enhancement uses the existing `skillTag: Rodent` requirement.
+It adds separate fixed 9% and scaling `min(0.12, raw Min Physical Attack × 0.00016)`
+Physical and Bamboocut DMG Bonus effects. At 750 raw Min Physical Attack the
+total Rodent bonus is 21% in each of those channels; other attribute channels
+and attacks without the tag receive no Rodent bonus. The formulas use the
+shared raw-stat stage. Mortal Rope Dart's skill definitions are still pending;
+its rodent damage actions must carry `Rodent` to activate these effects.
+
+Attr. Attack DMG UP is already covered by the shared primary-path multiplier
+and therefore has an empty effect array. Bone Corrosion Enhancement retains an
+empty effect array pending Bladebound Thread and Coiled Dragon skill data.
+The `BoneCorrosion` debuff in `data/debuff/bamboocut-wind.json` is available in
+the Skill Editor and manual Debuff events. It lasts five seconds, caps at one
+stack, refreshes on reapplication, and is not party-shared. Its existing
+`qiDMGBonus` field stores 5% for the applier plus another 35% for actions tagged
+`Light`, totaling 40%. This follows the same field used by Qi Imbalance and
+Vulnerable. Qi damage is not calculated yet, so these stored bonuses do not
+alter damage output. The two skills can apply the debuff using ordinary target
+application actions once their skill definitions are available.
+
 Modifier values may use `byStack` to capture a buff or debuff's stack count at
 cast start:
 

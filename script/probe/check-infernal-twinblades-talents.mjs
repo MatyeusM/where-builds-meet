@@ -16,6 +16,12 @@ const close = (actual, expected, message) =>
 
 try {
   const { buildRotationTimeline } = await server.ssrLoadModule("/src/calculations/rotationTimeline.ts");
+  const { martialArtEffectsForRank } = await server.ssrLoadModule("/src/data/martialArtTalents.ts");
+  const { calculateStatsWithEffects } = await server.ssrLoadModule("/src/calculations/statEffects.ts");
+  const { calculateRotationBaseline } = await server.ssrLoadModule("/src/calculations/rotationCalculator.ts");
+  const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
+  const { calculateDamageBreakdown } = await server.ssrLoadModule("/src/calculations/damage.ts");
+  const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const general = await readJson("data/skill/general.json");
   const talent = await readJson("data/martial-art/infernal-twinblades.json");
   const effects = {
@@ -65,7 +71,7 @@ try {
     },
     EmptyDodge: { castTime: 0, tags: ["PerfectDodge"], action: [] },
   };
-  const setupEffects = talent.talent[13].flatMap((entry) => entry.effect ?? []);
+  const setupEffects = martialArtEffectsForRank({ infernalTwinblades: talent }, ["infernalTwinblades"], 13);
   const build = (steps, extra = {}) =>
     buildRotationTimeline({
       rotation: { name: "Infernal Twinblades talent probe", steps },
@@ -187,8 +193,168 @@ try {
     5,
     "Triggered dodge wakes a pending cast before its old cooldown",
   );
+
+  const unconditional = setupEffects.filter((effect) => !effect.requirement);
+  for (const [agility, bonus] of [
+    [0, 0],
+    [140, 36.96],
+    [280, 73.92],
+    [560, 73.92],
+  ]) {
+    const sheet = calculateStatsWithEffects({ ...emptyStats, agility, minPhys: 100, maxPhys: 1000 }, unconditional, 0);
+    close(sheet.stats.minPhys, 100 + bonus, "Agility talent scales and caps at the datamined rate");
+  }
+  for (const [baseMin, penetration] of [
+    [0, 6.5856],
+    [102, 13.44],
+    [230, 22],
+    [500, 22],
+  ]) {
+    const sheet = calculateStatsWithEffects(
+      { ...emptyStats, minBamboocut: baseMin, maxBamboocut: 1000 },
+      [...unconditional, { statStage: "food", effectiveStat: { minBamboocut: 100 } }],
+      0,
+      ["infernalTwinblades"],
+    );
+    close(sheet.rawStats.minBamboocut, baseMin + 98, "Flat Min Bamboocut enters raw stats once");
+    close(sheet.rawStats.maxBamboocut, 1196, "Flat Max Bamboocut enters raw stats once");
+    close(
+      sheet.stats.bamboocutPenetration,
+      penetration,
+      "Penetration includes flat talents and excludes effective food",
+    );
+  }
+  const enemy = {
+    name: "Probe",
+    level: 96,
+    defense: 0,
+    physicalResistance: 0,
+    bellstrikeResistance: 0,
+    stonesplitResistance: 0,
+    silkbindResistance: 0,
+    bamboocutResistance: 0,
+    judgementResistance: 0,
+  };
+  const calculate = (minPhys, active, extra = {}) => {
+    const stats = { ...emptyStats, agility: 280, minPhys, maxPhys: 2000, precision: 1, crit: 1, ...extra.stats };
+    return calculateRotationBaseline({
+      timeline: {
+        rotation: {
+          name: "Flamelash",
+          steps: [
+            ...(active ? [{ type: "event", event: "Buff", before: { action: "start" }, buff: "Flamelash" }] : []),
+            cast("Hit"),
+          ],
+        },
+        skills: {
+          Hit: {
+            castTime: 1,
+            tags: ["MartialArts", "InfernalTwinblades"],
+            action: [{ type: "damage", phyCoef: 1, time: 0 }],
+          },
+        },
+        eventDefinitions: { Buff: { action: [{ type: "apply", target: "self", time: 0 }] } },
+        dots: {},
+        effectDefinitions: effects,
+        innerWayConditions: [],
+        innerWayRules: [],
+        setupEffects,
+        weapons: ["infernalTwinblades"],
+        ...extra.timeline,
+      },
+      startAnchor: { rowId: active ? "rotation-1" : "rotation-0" },
+      stats,
+      derivedStats: calculateDerivedStats(stats, 0),
+      enemy,
+      attunement: {},
+      weapons: ["infernalTwinblades"],
+      statPriority: [],
+      attunementPriority: [],
+      innerWayPriority: [],
+      setupComparisons: {},
+    });
+  };
+  for (const [minPhys, bonus] of [
+    [0, 0.05],
+    [375, 0.175],
+    [750, 0.3],
+    [1000, 0.3],
+  ]) {
+    const ordinary = calculate(minPhys, false);
+    const enhanced = calculate(minPhys, true);
+    const criticalRate = Object.values(ordinary.actionBreakdowns)[0].outcomeRates.critical;
+    close(
+      enhanced.metrics.totalDamage - ordinary.metrics.totalDamage,
+      ((minPhys + 73.92 + 2000) / 2) * criticalRate * bonus,
+      "Flamelash gates critical damage and scales from raw attack before the Agility talent",
+    );
+  }
+  close(
+    calculate(750, true, { stats: { crit: 0 } }).metrics.totalDamage,
+    calculate(750, false, { stats: { crit: 0 } }).metrics.totalDamage,
+    "Flamelash does not increase normal-hit damage",
+  );
+  const lifecycle = calculate(750, false, {
+    timeline: {
+      rotation: {
+        name: "Flamelash lifecycle",
+        steps: [
+          cast("Hit"),
+          cast("Enter"),
+          cast("Hit"),
+          delay(1),
+          cast("Hit"),
+          cast("Enter"),
+          cast("Hit"),
+          cast("Exit"),
+          cast("Hit"),
+        ],
+      },
+      skills: {
+        Hit: { castTime: 1, action: [{ type: "damage", phyCoef: 1, time: 0 }] },
+        Enter: { castTime: 0, action: [apply("Flamelash", { duration: 2 })] },
+        Exit: { castTime: 0, action: [{ type: "consume", target: "self", value: "Flamelash", stack: "all", time: 0 }] },
+      },
+    },
+  });
+  const damage = lifecycle.timeline
+    .filter((row) => row.step.skill === "Hit")
+    .map((row) => lifecycle.actionBreakdowns[`${row.id}:0`].total);
+  assert(damage[1] > damage[0] && damage[3] > damage[0], "Existing status applications enable Flamelash damage");
+  close(damage[2], damage[0], "Expiration removes the bonus at its exact boundary");
+  close(damage[4], damage[0], "Consumption removes the bonus before the following hit");
+
+  const attributeStats = {
+    ...emptyStats,
+    precision: 1,
+    minBellstrike: 100,
+    maxBellstrike: 100,
+    minStonesplit: 100,
+    maxStonesplit: 100,
+    minSilkbind: 100,
+    maxSilkbind: 100,
+    minBamboocut: 100,
+    maxBamboocut: 100,
+  };
+  const attributeDamage = calculateDamageBreakdown(
+    { phyCoef: 0, attrCoef: 1 },
+    {
+      stats: attributeStats,
+      derivedStats: calculateDerivedStats(attributeStats, 0, {}, ["infernalTwinblades"]),
+      enemy,
+      attunement: {},
+      skillTags: ["MartialArts", "InfernalTwinblades"],
+      weapons: ["infernalTwinblades"],
+      buffs: [],
+      effects: talent.talent[13].find((entry) => entry.name === "Attr. Attack DMG UP").effect,
+    },
+  );
+  close(attributeDamage.bellstrike, 100, "Non-primary attribute damage is retained");
+  close(attributeDamage.stonesplit, 100, "Stonesplit damage remains a normal attribute channel");
+  close(attributeDamage.silkbind, 100, "Silkbind damage remains a normal attribute channel");
+  close(attributeDamage.bamboocut, 150, "Bamboocut receives exactly one 50% primary multiplier");
   console.log(
-    "Infernal Twinblades: dodge buff durations, trigger ancestry, refresh behavior, and shared 30-second reset passed.",
+    "Infernal Twinblades: rank-13 stat scaling, conditional Flamelash damage, status lifecycle, attribute channels, dodge durations, and charge reset passed.",
   );
 } finally {
   await server.close();

@@ -10,7 +10,20 @@ Precision and 138 of each base attribute; Breakthrough 17 grants 16.5% Precision
 and 150 of each base attribute.
 Both profiles select martial-art talent rank 13 through `martialArtTalentRank`.
 Each equipped martial art contributes only its `talent[rank]` effects; ranks are
-not cumulative. The current rank-13 arrays retain the existing talent values.
+not cumulative. Infernal Twinblades' rank-13 conversions use the interpreted
+datamine rates: 0.264 Min Physical Attack per Agility (capped at 73.92), and
+0.0672 Bamboocut Penetration per raw Min Bamboocut Attack (capped at 22).
+Its Flamelash status enables 5% Critical DMG Bonus plus up to another 25%,
+scaling from raw Min Physical Attack and capped at 750. Its attribute-damage
+talent is already included in the primary-path multiplier described below.
+
+Mortal Rope Dart rank 13 grants `0.000304 × Agility` Critical Rate (capped at
+8.512%), 98 Min and 196 Max raw Bamboocut Attack, and
+`0.000336 × raw Min Bamboocut Attack` Bamboocut DMG Bonus (capped at 11%).
+Actions tagged `Rodent` gain a fixed 9% plus up to another 12% Physical and
+Bamboocut DMG Bonus, scaling at `0.00016 × raw Min Physical Attack` to the cap
+at 750. This uses the existing additive channel bonuses and raw-stat stages.
+Its Attr. Attack DMG UP also uses the shared primary-path multiplier.
 
 Combat inclusion and the DPS/HPS duration follow the
 [rotation event-loop endpoint](rotation-event-loop.md). Explicit Battle End

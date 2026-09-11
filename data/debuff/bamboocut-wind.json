@@ -1,0 +1,18 @@
+{
+  "BoneCorrosion": {
+    "name": "Bone Corrosion",
+    "description": "Increases Qi damage from the applier by 5%, or 40% for Light Attacks.",
+    "duration": 5,
+    "maxStack": 1,
+    "refresh": true,
+    "shared": false,
+    "showCoverage": true,
+    "effect": [
+      { "qiDMGBonus": 0.05 },
+      {
+        "requirement": [{ "target": "skillTag", "value": "Light" }],
+        "effect": { "qiDMGBonus": 0.35 }
+      }
+    ]
+  }
+}
