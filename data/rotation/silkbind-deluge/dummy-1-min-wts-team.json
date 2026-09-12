@@ -43,7 +43,7 @@
     },
     {
       "type": "skill",
-      "skill": "EndlessCloud"
+      "skill": "EndlessCloudCancel"
     },
     {
       "type": "skill",
@@ -255,7 +255,7 @@
     },
     {
       "type": "skill",
-      "skill": "EndlessCloud"
+      "skill": "EndlessCloudCancel"
     },
     {
       "type": "skill",

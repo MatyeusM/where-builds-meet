@@ -17,7 +17,7 @@ points in the UI and stored as decimal ratios: an input of `6.2` is stored as
 `0.062`.
 
 An attunement whose game effect is known but not simulated remains selectable
-with `implemented: false` and an empty `effect.stat` object. This preserves the
+with an empty `effect.stat` object. This preserves the
 gear data without silently applying an invented calculation.
 
 The supplied PvE attunement catalog maps all 45 official IDs through

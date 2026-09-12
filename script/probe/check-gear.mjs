@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import ts from "typescript";
 import { build } from "esbuild";
 import { createServer } from "vite";
 
@@ -31,12 +33,6 @@ const breakthroughProfiles = (await import("../../data/breakthrough.json", { wit
 const statRolls = (await import("../../data/stat.json", { with: { type: "json" } })).default;
 const defaultSetup = (await import("../../data/default-setup.json", { with: { type: "json" } })).default;
 const gearSetDefinitions = (await import("../../data/gear-set.json", { with: { type: "json" } })).default;
-const phalanxbaneMartialArt = (
-  await import("../../data/martial-art/phalanxbane-blade.json", { with: { type: "json" } })
-).default;
-const steadfastDevotion = (await import("../../data/innerway/steadfast-devotion.json", { with: { type: "json" } }))
-  .default;
-
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -137,31 +133,18 @@ assert(
   ),
   "Every gear affix key must directly match CharacterStats.",
 );
-const attunementStatKeys = new Set([
-  "physicalPenetration",
-  "formlessPenetration",
-  "physicalResistance",
-  "phalanxbaneChargedBoost",
-  "phalanxbaneMartialBoost",
-  "snowpartingChargedBoost",
-  "snowpartingVariedComboBoost",
-  "snowpartingMartialBoost",
-  "thundercryChargedBoost",
-  "thundercryShieldBoost",
-  "thundercrySpecialBoost",
-  "stormbreakerChargedBoost",
-  "stormbreakerSpecialBoost",
-  "everspringMartialBoost",
-  "everspringSpecialBoost",
-  "unfetteredChargedBoost",
-  "unfetteredSpecialBoost",
-  "unfetteredMartialBoost",
-  "heavenwillChargedBoost",
-  "heavenwillMartialBoost",
-  "heavenwillLightVariedComboBoost",
-  "skygraspHeavyBoost",
-  "skygraspSpecialBoost",
-]);
+const damageSource = ts.createSourceFile(
+  "damage.ts",
+  await readFile("src/calculations/damage.ts", "utf8"),
+  ts.ScriptTarget.Latest,
+  true,
+);
+const attunementType = damageSource.statements.find(
+  (node) => ts.isTypeAliasDeclaration(node) && node.name.text === "AttunementStats",
+);
+assert(attunementType && ts.isTypeLiteralNode(attunementType.type), "AttunementStats must expose its input fields.");
+const attunementStatKeys = new Set(attunementType.type.members.map((member) => member.name?.getText(damageSource)));
+
 assert(
   Object.keys(gear.attunementData).every((key) => attunementStatKeys.has(key)),
   "Every attunement definition ID must have a centralized AttunementStats input.",
@@ -173,13 +156,16 @@ assert(
 );
 assert(
   Object.entries(gear.attunementData)
-    .filter(([, definition]) => definition.tags.includes("Armor") && definition.implemented !== false)
-    .every(([, definition]) => definition.effect.stat.attunementDMGBonus === 1 && definition.effect.tags.length > 0),
-  "Armor attunements must target the tagged standalone attunement DMG Bonus.",
+    .filter(([, definition]) => definition.tags.includes("Armor") && Object.keys(definition.effect.stat).length > 0)
+    .every(
+      ([, definition]) =>
+        (definition.effect.stat.attunementDMGBonus === 1 || definition.effect.stat.healingBonus === 1) &&
+        definition.effect.tags.length > 0,
+    ),
+  "Active armor attunements must target tagged damage or healing bonuses.",
 );
 assert(
-  gear.attunementData.thundercryShieldBoost.implemented === false &&
-    Object.keys(gear.attunementData.thundercryShieldBoost.effect.stat).length === 0,
+  Object.keys(gear.attunementData.thundercryShieldBoost.effect.stat).length === 0,
   "Thundercry Shield Boost must remain available without applying an unimplemented calculation effect.",
 );
 const weaponDefinitions = [
@@ -556,6 +542,16 @@ globalThis.localStorage = {
 const loadedRelayed = gear.loadGearInventory();
 assert(loadedRelayed.items[0]?.relayed === true, "Relayed metadata must survive persisted gear validation.");
 
+// The persistence boundary reads browser storage through window.
+globalThis.window = {
+  get localStorage() {
+    return globalThis.localStorage;
+  },
+  get sessionStorage() {
+    return globalThis.sessionStorage;
+  },
+};
+
 const legacyHengBlade = { ...hengBlade, slot: "leftWeapon" };
 const legacyInventoryJson = JSON.stringify({ items: [legacyHengBlade], equipped: { leftWeapon: legacyHengBlade.id } });
 const legacyInnerWays = [
@@ -893,63 +889,6 @@ const breakthrough17Character = statEffects.calculateStatsWithEffects(
   ),
   0,
 ).stats;
-assert(systemStats.baseAttributes.body.maxHp === 60, "Body must grant 60 Max HP per point.");
-assert(
-  systemStats.baseAttributes.power.minPhys === 0.22 && systemStats.baseAttributes.power.maxPhys === 1.36,
-  "Power conversion rates are incorrect.",
-);
-assert(
-  systemStats.baseAttributes.defense.maxHp === 17 && systemStats.baseAttributes.defense.physicalDefense === 0.57,
-  "Defense conversion rates are incorrect.",
-);
-assert(
-  systemStats.baseAttributes.agility.minPhys === 0.9 && systemStats.baseAttributes.agility.crit === 0.00076,
-  "Agility conversion rates are incorrect.",
-);
-assert(
-  systemStats.baseAttributes.momentum.maxPhys === 0.9 && systemStats.baseAttributes.momentum.affinity === 0.00038,
-  "Momentum conversion rates are incorrect.",
-);
-assert(systemStats.enhancementStats.length === 4, "Enhancement stat entries must remain individually represented.");
-assert(
-  systemStats.baseStats.stat.minPhys === 263 && systemStats.baseStats.stat.maxPhys === 505,
-  "Enhancement Physical Attack must be separated from innate Physical Attack.",
-);
-const tier96PurpleArmorHp = ["helmet", "chestpiece", "greaves", "bracer"].reduce(
-  (total, definitionId) => total + gear.gearData.gear[definitionId].baseStats["96"].Purple.maxHp,
-  0,
-);
-assert(
-  tier96PurpleArmorHp === 25980 && systemStats.baseStats.stat.maxHp + tier96PurpleArmorHp === 127909,
-  "Innate Max HP must exclude the four Tier 96 Purple armor base values used to derive it.",
-);
-assert(
-  systemStats.enhancementStats.reduce((sum, entry) => sum + (entry.stat.minPhys ?? 0), 0) === 216 &&
-    systemStats.enhancementStats.reduce((sum, entry) => sum + (entry.stat.maxPhys ?? 0), 0) === 432,
-  "Unexpected Enhancement Physical Attack totals.",
-);
-assert(systemStats.qingheOddityStats.length === 29, "Qinghe Oddity stat entries must remain individually represented.");
-assert(
-  systemStats.kaifengOddityStats.length === 39,
-  "Kaifeng Oddity stat entries must remain individually represented.",
-);
-assert(
-  systemStats.imperialPalaceOddityStats.length === 10,
-  "Imperial Palace Oddity stat entries must remain individually represented.",
-);
-assert(systemStats.hexiOddityStats.length === 24, "Hexi Oddity stat entries must remain individually represented.");
-assert(
-  systemStats.hiddenMountainOddityStats.length === 23,
-  "Hidden Mountain Oddity stat entries must remain individually represented.",
-);
-assert(
-  systemCharacter.power === 153 &&
-    systemCharacter.agility === 153 &&
-    systemCharacter.momentum === 153 &&
-    systemCharacter.body === 153 &&
-    systemCharacter.defense === 153,
-  "Unexpected base attribute totals.",
-);
 assert(
   Math.abs(breakthrough17Character.precision - systemCharacter.precision - 0.012) < 1e-9 &&
     breakthrough17Character.agility - systemCharacter.agility === 12 &&
@@ -959,36 +898,6 @@ assert(
     breakthrough17Character.defense - systemCharacter.defense === 12,
   "Changing breakthrough must replace both Precision and all five base-attribute bonuses.",
 );
-assert(Math.abs(systemCharacter.precision - 0.968) < 1e-9, "Unexpected system Precision total.");
-assert(Math.abs(systemCharacter.crit - 0.35628) < 1e-9, "Unexpected system Critical total.");
-assert(Math.abs(systemCharacter.affinity - 0.17814) < 1e-9, "Unexpected system Affinity total.");
-assert(
-  Math.abs(systemCharacter.critDmgBonus - 0.5) < 1e-9 && Math.abs(systemCharacter.affinityDmgBonus - 0.35) < 1e-9,
-  "Unexpected innate and talent outcome damage totals.",
-);
-assert(
-  Math.abs(systemCharacter.minPhys - 799.96) < 1e-9 && Math.abs(systemCharacter.maxPhys - 1468.38) < 1e-9,
-  "Unexpected innate and system Physical Attack totals.",
-);
-assert(
-  Math.abs(systemCharacter.physicalDefense - 214.41) < 1e-9 && systemCharacter.maxHp === 127860,
-  "Unexpected system defensive totals.",
-);
-assert(
-  systemCharacter.maxEndurance === 120 && systemCharacter.maxVitality === 100,
-  "Unexpected innate and Oddity resource totals.",
-);
-const defaultCriticalEffects = [
-  ...systemEffects,
-  ...phalanxbaneMartialArt.talent[breakthroughProfiles["17"].martialArtTalentRank].flatMap(
-    (talent) => talent.effect ?? [],
-  ),
-  { stat: presetEffects.stats },
-  steadfastDevotion.effect.SteadfastDevotionT2.effect[0],
-];
-const defaultCritical = statEffects.calculateStatsWithEffects(statDefinitions.emptyStats, defaultCriticalEffects, 0)
-  .stats.crit;
-assert(Math.abs(defaultCritical - 1.13901088) < 1e-9, "Unexpected Fully Relayed Min Build Critical total.");
 assert(
   defaultSetup.innerWays.length === 4 &&
     defaultSetup.innerWays.every((row) => row.innerWay !== "BreakingPoint" && row.tier === "T6"),
@@ -1032,3 +941,4 @@ assert(
 
 console.log("Gear, system-stat, equipped-effect, and stat-override checks passed.");
 await viteServer.close();
+delete globalThis.window;

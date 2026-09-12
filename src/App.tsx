@@ -1902,11 +1902,14 @@ function graduationEnvironmentFingerprint(environment: GraduationEnvironment) {
   });
 }
 
-function buildGraduationBundle(environment: GraduationEnvironment): RotationSimulationBundle | undefined {
+export function buildPresetRotationBundle(
+  environment: GraduationEnvironment,
+  buildId: string,
+): RotationSimulationBundle | undefined {
   const { pathId } = environment;
   const path = typedPathDefinitions[pathId];
-  if (!path || path.graduated === "empty") return undefined;
-  const build = defaultBuildPresets.find((candidate) => candidate.id === path.graduated);
+  if (!path || buildId === "empty") return undefined;
+  const build = defaultBuildPresets.find((candidate) => candidate.id === buildId);
   const configuredWeapons = path.lockedWeapons ?? build?.martialArts;
   if (!build || configuredWeapons?.length !== 2) return undefined;
 
@@ -6988,7 +6991,7 @@ function RotationEditorTab({
       divinecraft: currentDivinecraft,
       skillOverrides,
     };
-    const bundle = buildGraduationBundle(environment);
+    const bundle = buildPresetRotationBundle(environment, typedPathDefinitions[environment.pathId].graduated);
     return bundle
       ? {
           bundle,

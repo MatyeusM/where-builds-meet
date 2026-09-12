@@ -17,7 +17,7 @@ try {
   const assert = (condition, message) => {
     if (!condition) throw new Error(message);
   };
-  const build = (rotation, skills, innerWayConditions = []) =>
+  const build = (rotation, skills, innerWayConditions = [], overrides = {}) =>
     buildRotationTimeline({
       rotation,
       skills,
@@ -29,6 +29,7 @@ try {
       setupEffects: [],
       weapons: [],
       cooldownPolicy: "wait",
+      ...overrides,
     });
 
   const multiUseSkills = {
@@ -65,6 +66,76 @@ try {
   });
   assert(editor.rotation === multiUseRotation, "Cooldown waits must not rewrite authored rotation steps.");
   assert(editor.timeline.find((row) => row.rotationIndex === 3).startTime === 12, "Editor uses live cooldown timing.");
+
+  const delays = (rows) =>
+    rows.filter((row) => row.step.type === "event" && row.step.event === "Delay" && row.step.automatic === "cooldown");
+  const editorWait = delays(editor.timeline);
+  assert(
+    editorWait.length === 1 && editorWait[0].startTime === 3 && editorWait[0].step.duration === 9,
+    "The editor must show the elapsed cooldown wait as one automatic Delay row.",
+  );
+  assert(
+    editorWait[0].rotationIndex === undefined &&
+      editorWait[0].actions.length === 0 &&
+      editorWait[0].effectiveCastTime === 9,
+    "Generated waits have no editable step index or combat actions and display their actual duration.",
+  );
+  const { mergeCalculatedTimelineState } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
+  assert(
+    delays(mergeCalculatedTimelineState(editor.timeline, multiUseTimeline)).length === 1,
+    "Merging calculated results retains exactly one displayed wait.",
+  );
+  const waitSkills = { Wait: { castTime: 1, cooldown: 10, action: [] } };
+  const waitSteps = [
+    { type: "skill", skill: "Wait" },
+    { type: "skill", skill: "Wait" },
+  ];
+  const resetRows = build(
+    { name: "Reset during wait", steps: [...waitSteps, { type: "event", event: "Controlled", startTime: 4 }] },
+    waitSkills,
+    [],
+    {
+      eventDefinitions: { Controlled: { castTime: 0, action: [{ type: "clearCD", value: "Wait", time: 0 }] } },
+    },
+  );
+  assert(
+    delays(resetRows).length === 1 &&
+      delays(resetRows)[0].step.duration === 3 &&
+      resetRows.find((row) => row.rotationIndex === 1).startTime === 4,
+    "An early cooldown reset shortens the displayed wait without delaying the accepted cast.",
+  );
+  const cutoffRows = build(
+    { name: "End during wait", steps: [...waitSteps, { type: "event", event: "BattleEnd", startTime: 5 }] },
+    waitSkills,
+    [],
+    {
+      eventDefinitions: { BattleEnd: { castTime: 0, action: [] } },
+    },
+  );
+  assert(
+    delays(cutoffRows).length === 1 &&
+      delays(cutoffRows)[0].startTime === 1 &&
+      delays(cutoffRows)[0].step.duration === 4,
+    "An unfinished cooldown wait ends at Battle End.",
+  );
+  const { withUnresolvedEditorSteps } = await viteServer.ssrLoadModule("/src/editorTimelinePreview.ts");
+  const cutoffPreview = withUnresolvedEditorSteps(
+    {
+      rotation: { name: "End during wait", steps: [...waitSteps, { type: "event", event: "BattleEnd", startTime: 5 }] },
+      skills: waitSkills,
+      eventDefinitions: {},
+    },
+    cutoffRows,
+  );
+  assert(
+    cutoffPreview.some((row) => row.rotationIndex === 1 && row.skipped),
+    "A generated wait must not hide the editor placeholder for the cast cut off by Battle End.",
+  );
+  assert(
+    delays(build({ name: "Skip unavailable", steps: waitSteps }, waitSkills, [], { cooldownPolicy: "skip" })).length ===
+      0,
+    "Skipped casts do not produce wait rows.",
+  );
 
   const sharedCooldownSkills = {
     Short: { castTime: 1, cooldown: 10, cooldownGroup: "Shared", action: [] },

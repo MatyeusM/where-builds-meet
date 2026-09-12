@@ -383,9 +383,16 @@ groups use the same charge pool and must declare consistent capacity and recover
 mode. A matching skill modifier may override a cast's `cooldown`; already pending
 recoveries retain their original timestamps.
 
-The rotation editor materializes each cooldown wait as a protected Delay step with
-`automatic: "cooldown"`; these generated steps cannot be edited, moved, or
-removed directly and are regenerated whenever the rotation changes.
+The timeline exposes each elapsed cooldown wait as a protected Delay row with
+`automatic: "cooldown"`, its start time, and its actual duration. A cooldown reset
+shortens the row, and Battle End clips an unfinished wait. These generated rows
+cannot be edited, moved, or removed directly; they do not enter saved rotation
+steps or add time to the simulation.
+
+The solo and team Dummy 1 Min WTS presets use Endless Cloud [Cancel]. This
+variant retains its healing and Morning Drizzle applications but omits the
+Echoes of a Thousand Plants trigger. Full Endless Cloud triggers Echoes at
+its 0.9375-second cast end and starts the shared Umbrella Special cooldown.
 
 Timeline rows record whether a trigger came from a skill, setup effect, or Inner
 Way. Per-cast breakdowns attribute normal triggered-skill and DOT damage to the

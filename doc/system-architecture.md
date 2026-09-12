@@ -697,7 +697,10 @@ The timeline owns mutable simulation state while it is being built:
 The editor and calculator share the timeline's skill-cooldown state. An
 unavailable explicit cast waits for its ready time, and a live cooldown reset can
 wake it earlier. Before-cast attachments resolve only once the cast is ready.
-Wait duration is output metadata, never inserted into authored rotation steps.
+Elapsed waits appear as protected automatic Delay rows in the shared timeline,
+with no authored step index. Their durations reflect early cooldown resets and
+the combat cutoff. They describe time already spent waiting and never enter
+the event queue or authored rotation steps.
 Legacy generated waits are removed on load/import with start indexes remapped.
 Unavailable triggered skills are rejected
 because they do not consume rotation time.
@@ -1240,8 +1243,10 @@ are not implemented. Planner-only
 paths remain visible, carry a Planner Only badge, and are disabled until Dev mode
 is enabled. Bellstrike Splendor and Umbra, Silkbind Jade and Deluge, and Bamboocut
 Dust and Draught currently use this state. Their fixed martial-art pairs and physical weapon
-families are available to Settings and Build, but they intentionally have no
-path-specific skill, talent, set, or attunement definitions yet. Mixed is the final
+families are available to Settings and Build. Planner-only status does not imply
+that all supporting data is absent: talents and attunements may already be
+registered while combat skill definitions remain incomplete. See the martial-art
+talent and attunement audit documents for their implementation status. Mixed is the final
 selector option and is Dev-only. Kite is available without Dev mode, while Wind
 remains a WIP path.
 
@@ -1283,8 +1288,10 @@ from data.
   Bamboocut martial arts, but Void/Formless Attack folding currently remains
   Stonesplit-only.
 - DMG Bonus Category 2 is specified but not implemented.
-- There is no automated test suite yet; `npm run build` is the current type and
-  production-bundle verification step.
+- `npm run build` includes deterministic DPS snapshot checks for every available
+  path, alongside preset, localization, type, and production-bundle verification.
+  A change of 5% or more in either direction requires review; see
+  [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
 ### Rotation editor calculation lifecycle
 
@@ -1387,3 +1394,12 @@ npm run preview
 `npm run build` performs TypeScript project compilation followed by a Vite
 production build into `dist/`. No API keys, database, server process, or runtime
 configuration are required for GitHub Pages hosting.
+
+### Preset DPS regression gate
+
+The exported `buildPresetRotationBundle` in `App.tsx` builds a selected preset
+using the same setup, gear, stats, definitions, and timeline inputs as the
+Graduation comparison. Graduation supplies the path's graduated build ID;
+the headless DPS snapshot runner supplies its default build ID and explicit
+environment settings. Both use the centralized rotation calculator.
+See [DPS snapshots](dps-snapshots.md) for coverage and the review/update workflow.

@@ -1033,6 +1033,7 @@ function buildRotationTimelinePass(
   let timedCursor = 0;
   let nextOrderedEvent: TimelineEvent | undefined;
   let waitingCast: { row: TimelineRow; requestedAt: number } | undefined;
+  const cooldownDelayRows = new Map<TimelineRow, TimelineRow>();
 
   type ResolvedAttachment = { eventRow: TimelineRow; target: AttachedEventTarget; placement: "before" | "after" };
   const directAttachments = new Map<string, ResolvedAttachment[]>();
@@ -2016,7 +2017,32 @@ function buildRotationTimelinePass(
           scheduleNextOrdered(row);
           continue;
         }
-        waitingCast ??= { row, requestedAt: event.time };
+        if (!waitingCast) {
+          waitingCast = { row, requestedAt: event.time };
+          cooldownDelayRows.set(row, {
+            id: `cooldown-${row.id}`,
+            kind: "rotation",
+            order: row.order,
+            step: { type: "event", event: "Delay", duration: 0, automatic: "cooldown" },
+            startTime: event.time,
+            effectiveCastTime: 0,
+            skill: { name: "Event: Delay", castTime: 0, action: [], tags: ["Event"] },
+            actions: [],
+            actionStates: {},
+            modifierEffects: [],
+            distance,
+            currentHP,
+            currentHPRatio,
+            targetHPRatio,
+            targetQiRatio,
+            resources: { ...resources },
+            currentMartialArt,
+            currentWeapon,
+            buffs: [...buffs],
+            debuffs: [...debuffs],
+            unconditionalDamageEffects: { ...unconditionalDamageEffects },
+          });
+        }
         row.cooldownWait = readyAt - waitingCast.requestedAt;
         row.startTime = readyAt;
         events.push({ ...event, time: readyAt });
@@ -3139,6 +3165,15 @@ function buildRotationTimelinePass(
     row.actions = row.actions.map((action, index) =>
       row.actionStates[index] ? action : { ...action, type: "inactive" },
     );
+  // Describe elapsed waits without adding events or changing saved rotation steps.
+  for (const [cast, delay] of cooldownDelayRows) {
+    const duration = Math.max(0, Math.min(cast.startTime, timelineEndTime) - delay.startTime);
+    if (compareTimelineTime(duration, 0) <= 0) continue;
+    delay.step = { type: "event", event: "Delay", duration, automatic: "cooldown" };
+    delay.effectiveCastTime = duration;
+    rows.push(delay);
+    resolvedRows.add(delay);
+  }
   const sortedRows = rows
     .filter((row) => resolvedRows.has(row))
     .sort(

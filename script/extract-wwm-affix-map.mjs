@@ -58,11 +58,22 @@ const internalAffixKeys = {
 // reference site's source map. Keep these at the generation boundary so a
 // regenerated runtime map cannot silently lose supported current-season gear.
 const observedOfficialAffixMap = {
+  279551: "driftcleaveDeepdazeBoost",
+  279552: "skystrikeSpecialBoost",
+  279553: "skystrikeMartialBoost",
+  279554: "rivenLightBoost",
+  279555: "rivenMartialBoost",
   279751: "heavenwillChargedBoost",
   279752: "heavenwillMartialBoost",
   279753: "heavenwillLightVariedComboBoost",
   279754: "skygraspHeavyBoost",
   279755: "skygraspSpecialBoost",
+  280301: "inkwellChargedBoost",
+  280302: "inkwellSpecialPursuitBoost",
+  280303: "vernalMartialBoost",
+  280304: "vernalProjectile280304Boost",
+  280305: "vernalProjectile280305Boost",
+  280306: "vernalLightHeavyVariedComboBoost",
   9793003: "defense",
   9793006: "body",
   9793031: "gauntletDmgBoost",

@@ -122,7 +122,6 @@ export type GearValueDefinition = {
 };
 
 export type AttunementDefinition = GearValueDefinition & {
-  implemented?: boolean;
   tags: string[];
   effect: AttunementTagFilter & {
     stat: Record<string, number>;

@@ -11,12 +11,18 @@ const close = (actual, expected, label) =>
   assert(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-9, `${label}: ${actual} != ${expected}`);
 try {
   const { parseOfficialGearExport } = await server.ssrLoadModule("/src/officialGearImport.ts");
-  const { mergeImportedBuildState, calculateEquippedGearEffects } = await server.ssrLoadModule("/src/gear.ts");
+  const { mergeImportedBuildState, calculateEquippedGearEffects, maxGearRoll } =
+    await server.ssrLoadModule("/src/gear.ts");
   const { calculateDamageBreakdown } = await server.ssrLoadModule("/src/calculations/damage.ts");
   const { calculateHealingBreakdown } = await server.ssrLoadModule("/src/calculations/healing.ts");
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const cases = [
+    [279551, "driftcleaveDeepdazeBoost"],
+    [279552, "skystrikeSpecialBoost"],
+    [279553, "skystrikeMartialBoost"],
+    [279554, "rivenLightBoost"],
+    [279555, "rivenMartialBoost"],
     [279751, "heavenwillChargedBoost"],
     [279752, "heavenwillMartialBoost"],
     [279753, "heavenwillLightVariedComboBoost"],
@@ -57,6 +63,7 @@ try {
     [280303, "vernalMartialBoost"],
     [280304, "vernalProjectile280304Boost"],
     [280305, "vernalProjectile280305Boost"],
+    [280306, "vernalLightHeavyVariedComboBoost"],
     [280501, "infernalMartialBoost"],
     [280502, "infernalEmpoweredLightBoost"],
     [280503, "infernalSpecialBoost"],
@@ -130,6 +137,11 @@ try {
   const damage = (attunement, tags) =>
     calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context(attunement, tags)).total;
   const matchingCases = [
+    [279551, ["Deepdaze"]],
+    [279552, ["SkystrikeGauntlets", "Special"]],
+    [279553, ["SkystrikeGauntlets", "MartialArt"]],
+    [279554, ["RivenTwinblades", "Light"]],
+    [279555, ["RivenTwinblades", "MartialArt"]],
     [280001, ["NamelessSword", "MartialArt"]],
     [280002, ["NamelessSword", "Charged"]],
     [280003, ["NamelessSword", "Special"]],
@@ -141,7 +153,14 @@ try {
     [280104, ["HeavenQuakerSpear", "MartialArt"]],
     [280105, ["HeavenQuakerSpear", "Charged"]],
     [280301, ["InkwellFan", "Charged"]],
+    [280302, ["InkwellFan", "Special"]],
+    [280302, ["InkwellFan", "Pursuit"]],
     [280303, ["VernalUmbrella", "MartialArt"]],
+    [280304, ["VernalUmbrella", "FrequentProjectile"]],
+    [280305, ["VernalUmbrella", "FrequentProjectile"]],
+    [280306, ["VernalUmbrella", "Light"]],
+    [280306, ["VernalUmbrella", "Heavy"]],
+    [280306, ["VernalUmbrella", "VariedCombo"]],
     [280501, ["InfernalTwinblades", "MartialArt"]],
     [280502, ["InfernalTwinblades", "Light", "Empowered"]],
     [280503, ["InfernalTwinblades", "Special"]],
@@ -149,13 +168,38 @@ try {
     [280505, ["MortalRopeDart", "Rodent"]],
   ];
   for (const [id, tags] of matchingCases) {
+    const key = cases.find(([candidate]) => candidate === id)[1];
+    const maxRoll = maxGearRoll(key, "attunement", false, 96);
+    close(
+      damage({ [key]: maxRoll }, tags) / damage({}, tags),
+      1.06,
+      `Level 96 maximum for ${id} boosts matching damage by 6%`,
+    );
     close(damage(imported.get(id), tags) / damage({}, tags), 1.047, `Imported ${id} boosts matching damage once`);
     for (let index = 0; index < tags.length; index++) {
       const missing = tags.filter((_, i) => i !== index);
       close(
         damage(imported.get(id), missing),
         damage({}, missing),
-        `Imported ${id} requires its weapon and attack classification`,
+        `Imported ${id} requires every configured skill tag`,
+      );
+    }
+  }
+  for (const buffs of [[], ["InebriateDeepdaze"]]) {
+    for (const tags of [
+      ["Deepdaze"],
+      ["SkystrikeGauntlets", "Deepdaze"],
+      ["RivenTwinblades", "Deepdaze"],
+      ["SkystrikeGauntlets"],
+      ["RivenTwinblades"],
+      ["InebriateDeepdaze"],
+    ]) {
+      const baseline = calculateDamageBreakdown({ phyCoef: 1 }, { ...context({}, tags), buffs }).total;
+      const boosted = calculateDamageBreakdown({ phyCoef: 1 }, { ...context(imported.get(279551), tags), buffs }).total;
+      close(
+        boosted / baseline,
+        tags.includes("Deepdaze") ? 1.047 : 1,
+        `Driftcleave matches the Deepdaze skill tag independently of buffs: ${tags}`,
       );
     }
   }
@@ -165,6 +209,14 @@ try {
     [280302, ["InkwellFan", "Special", "Pursuit"], true],
     [280302, ["InkwellFan", "Charged"], false],
     [280302, ["Special", "Pursuit"], false],
+    [280304, ["VernalUmbrella", "Projectile", "Ballistic"], false],
+    [280305, ["VernalUmbrella", "Projectile", "Ballistic"], false],
+    [280304, ["SoulshadeUmbrella", "FrequentProjectile"], false],
+    [280305, ["SoulshadeUmbrella", "FrequentProjectile"], false],
+    [280306, ["VernalUmbrella", "Light", "Heavy", "VariedCombo"], true],
+    [280306, ["VernalUmbrella", "MartialArt"], false],
+    [280306, ["VernalUmbrella", "FrequentProjectile"], false],
+    [280306, ["InkwellFan", "Light", "Heavy", "VariedCombo"], false],
     [279753, ["HeavenwillGauntlets", "Light", "VariedCombo"], true],
     [279753, ["HeavenwillGauntlets", "Heavy", "VariedCombo"], true],
     [279753, ["HeavenwillGauntlets", "Light", "Heavy", "VariedCombo"], true],
@@ -175,7 +227,7 @@ try {
   ]) {
     close(damage(imported.get(id), tags) / damage({}, tags), matches ? 1.047 : 1, `${id}: ${tags.join(" + ")}`);
   }
-  for (const id of [280304, 280305, 280201]) {
+  for (const id of [280201]) {
     const tags = [
       "InkwellFan",
       "Special",
@@ -219,7 +271,7 @@ try {
     }
   }
   console.log(
-    "All 45 official attunement IDs import and retain rolls; new damage effects, deferred entries, and existing healing effects passed.",
+    `All ${cases.length} official attunement IDs import and retain rolls; new damage effects, deferred entries, and existing healing effects passed.`,
   );
 } finally {
   await server.close();

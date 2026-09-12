@@ -62,6 +62,10 @@ npm run build
 
 Simulation changes should also receive a focused calculation check.
 
+The build includes `npm run test:dps`, which blocks DPS changes of 5% or more
+for any implemented path. Review failures before updating accepted baselines;
+see [DPS regression snapshots](doc/dps-snapshots.md) for inputs and update commands.
+
 ### Contributing translations
 
 Translations are maintained in [`locales/translations.csv`](locales/translations.csv). Edit only the column for the locale you are translating; keep the `key` and English source columns unchanged. A translation can be submitted partially—blank cells automatically fall back to English.

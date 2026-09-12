@@ -56,6 +56,22 @@ try {
     weapons: ["panaceaFan", "soulshadeUmbrella"],
   };
   const timeline = buildRotationTimeline(timelineInput);
+  for (const preset of [
+    rotation,
+    (await viteServer.ssrLoadModule("/data/rotation/silkbind-deluge/dummy-1-min-wts-team.json")).default,
+  ]) {
+    const rows = buildRotationTimeline({ ...timelineInput, rotation: preset });
+    assert(
+      !rows.some((row) => row.step.skill === "EchoesOfAThousandPlantsFanQQ"),
+      "Cancelled Fan QQ must not trigger Echoes in either WTS preset.",
+    );
+    assert(
+      rows
+        .filter((row) => row.kind === "rotation" && row.step.skill === "EchoesOfAThousandPlants")
+        .every((row) => !row.cooldownWait),
+      "Cancelled Fan QQ must leave the preset's manual Umbrella Special available.",
+    );
+  }
   const deflectRows = timeline.filter(
     (row) => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "DeflectSuccessful",
   );

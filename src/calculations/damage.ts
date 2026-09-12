@@ -21,6 +21,11 @@ type AttunementDefinition = {
 const attunementDefinitions = attunementJson as Record<string, AttunementDefinition>;
 
 export type AttunementStats = {
+  driftcleaveDeepdazeBoost: number;
+  skystrikeSpecialBoost: number;
+  skystrikeMartialBoost: number;
+  rivenLightBoost: number;
+  rivenMartialBoost: number;
   namelessSwordMartialBoost: number;
   namelessSwordChargedBoost: number;
   namelessSwordSpecialBoost: number;
@@ -36,6 +41,7 @@ export type AttunementStats = {
   vernalMartialBoost: number;
   vernalProjectile280304Boost: number;
   vernalProjectile280305Boost: number;
+  vernalLightHeavyVariedComboBoost: number;
   infernalMartialBoost: number;
   infernalEmpoweredLightBoost: number;
   infernalSpecialBoost: number;

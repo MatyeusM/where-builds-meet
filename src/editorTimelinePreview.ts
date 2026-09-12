@@ -10,7 +10,11 @@ export function withUnresolvedEditorSteps(
   input: Pick<TimelineBuildInput, "rotation" | "skills" | "eventDefinitions">,
   timeline: TimelineRow[],
 ) {
-  const resolved = new Set(timeline.filter((row) => row.kind === "rotation").map((row) => row.rotationIndex));
+  const resolved = new Set(
+    timeline
+      .filter((row) => row.kind === "rotation" && row.rotationIndex !== undefined)
+      .map((row) => row.rotationIndex),
+  );
   if (resolved.size === input.rotation.steps.length) return timeline;
   const placeholders = pendingEditorTimeline(input).filter((row) => !resolved.has(row.rotationIndex));
   return [
@@ -31,7 +35,7 @@ export function pendingEditorTimeline(
 ): TimelineRow[] {
   const oldByStep = new Map(
     previous?.timeline
-      .filter((row) => row.kind === "rotation")
+      .filter((row) => row.kind === "rotation" && row.rotationIndex !== undefined)
       .map((row) => [previous.rotation.steps[row.rotationIndex ?? -1], row]),
   );
   const sourceIds = new Map<string, string>();

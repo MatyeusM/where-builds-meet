@@ -187,7 +187,7 @@
       {
         "type": "trigger",
         "value": "EchoesOfAThousandPlantsFanQQ",
-        "time": 0.3125,
+        "time": 0.9375,
         "requirement": [
           {
             "target": "equippedMartialArt",
@@ -230,17 +230,6 @@
         "stack": 1,
         "reapply": true,
         "time": 0.3125
-      },
-      {
-        "type": "trigger",
-        "value": "EchoesOfAThousandPlantsFanQQ",
-        "time": 0.3125,
-        "requirement": [
-          {
-            "target": "equippedMartialArt",
-            "value": "soulshadeUmbrella"
-          }
-        ]
       }
     ],
     "modifier": [],

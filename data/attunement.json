@@ -96,7 +96,6 @@
   "thundercryShieldBoost": {
     "name": "Thundercry Blade - Shield Boost",
     "percentage": true,
-    "implemented": false,
     "tags": ["Armor", "StonesplitMight", "ThundercryBlade"],
     "effect": {
       "stat": {},
@@ -249,7 +248,6 @@
   "panaceaMartialHealingBoost": {
     "name": "Panacea Fan - Martial Art Skill Healing Boost",
     "percentage": true,
-    "implemented": true,
     "tags": ["Armor", "SilkbindDeluge", "PanaceaFan"],
     "effect": {
       "stat": {
@@ -261,7 +259,6 @@
   "panaceaSpecialHealingBoost": {
     "name": "Panacea Fan - Special Skill Healing Boost",
     "percentage": true,
-    "implemented": true,
     "tags": ["Armor", "SilkbindDeluge", "PanaceaFan"],
     "effect": {
       "stat": {
@@ -273,7 +270,6 @@
   "panaceaHealingSkillBoost": {
     "name": "Panacea Fan - Healing Skill Boost",
     "percentage": true,
-    "implemented": true,
     "tags": ["Armor", "SilkbindDeluge", "PanaceaFan"],
     "effect": {
       "stat": {
@@ -285,7 +281,6 @@
   "soulshadeMartialHealingBoost": {
     "name": "Soulshade Umbrella - Martial Art Skill Healing Boost",
     "percentage": true,
-    "implemented": true,
     "tags": ["Armor", "SilkbindDeluge", "SoulshadeUmbrella"],
     "effect": {
       "stat": {
@@ -297,7 +292,6 @@
   "soulshadeSpecialHealingBoost": {
     "name": "Soulshade Umbrella - Special Skill Healing Boost",
     "percentage": true,
-    "implemented": true,
     "tags": ["Armor", "SilkbindDeluge", "SoulshadeUmbrella"],
     "effect": {
       "stat": {
@@ -450,19 +444,28 @@
   "vernalProjectile280304Boost": {
     "name": "Vernal Umbrella - Frequent Projectile DMG Boost",
     "percentage": true,
-    "implemented": false,
     "tags": ["Armor", "SilkbindJade", "VernalUmbrella"],
     "effect": {
-      "stat": {}
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["VernalUmbrella", "FrequentProjectile"]
     }
   },
   "vernalProjectile280305Boost": {
     "name": "Vernal Umbrella Frequent Projectile DMG Boost",
     "percentage": true,
-    "implemented": false,
     "tags": ["Armor", "SilkbindJade", "VernalUmbrella"],
     "effect": {
-      "stat": {}
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["VernalUmbrella", "FrequentProjectile"]
+    }
+  },
+  "vernalLightHeavyVariedComboBoost": {
+    "name": "Vernal Umbrella - Light/Heavy Attack & Varied Combo DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "SilkbindJade", "VernalUmbrella"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["VernalUmbrella", ["Light", "Heavy", "VariedCombo"]]
     }
   },
   "infernalMartialBoost": {
@@ -518,6 +521,51 @@
         "attunementDMGBonus": 1
       },
       "tags": ["MortalRopeDart", "Rodent"]
+    }
+  },
+  "driftcleaveDeepdazeBoost": {
+    "name": "Driftcleave - Deepdaze Skill DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "BamboocutDraught", "SkystrikeGauntlets", "RivenTwinblades"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["Deepdaze"]
+    }
+  },
+  "skystrikeSpecialBoost": {
+    "name": "Skystrike Gauntlets - Special Skill DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "BamboocutDraught", "SkystrikeGauntlets"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["SkystrikeGauntlets", "Special"]
+    }
+  },
+  "skystrikeMartialBoost": {
+    "name": "Skystrike Gauntlets - Martial Art Skill DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "BamboocutDraught", "SkystrikeGauntlets"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["SkystrikeGauntlets", "MartialArt"]
+    }
+  },
+  "rivenLightBoost": {
+    "name": "Riven Twinblades - Light Attack DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "BamboocutDraught", "RivenTwinblades"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["RivenTwinblades", "Light"]
+    }
+  },
+  "rivenMartialBoost": {
+    "name": "Riven Twinblades - Martial Art Skill DMG Boost",
+    "percentage": true,
+    "tags": ["Armor", "BamboocutDraught", "RivenTwinblades"],
+    "effect": {
+      "stat": { "attunementDMGBonus": 1 },
+      "tags": ["RivenTwinblades", "MartialArt"]
     }
   }
 }
