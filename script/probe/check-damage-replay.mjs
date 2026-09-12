@@ -123,6 +123,19 @@ try {
   };
 
   const result = calculateRotationBaseline(createBundle());
+  const healingBundle = createBundle();
+  healingBundle.timeline.skills = {
+    ...skills,
+    ChargedProbe: {
+      ...skills.ChargedProbe,
+      action: [...skills.ChargedProbe.action, { type: "heal", phyBonus: 1, time: 0.2 }],
+    },
+  };
+  const withHealing = calculateRotationBaseline(healingBundle);
+  assert(
+    closeTo(withHealing.metrics.totalDamage, result.metrics.totalDamage),
+    "Live healing resolution must preserve cached source damage for every delayed replay.",
+  );
   const normalEntries = result.baseline.filter((entry) => !entry.replay);
   const replayEntries = result.baseline.filter((entry) => entry.replay);
   assert(normalEntries.length === 4, "The probe must retain all four ordinary damage actions.");

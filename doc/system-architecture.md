@@ -800,7 +800,7 @@ periodic heal assigned to a teammate
 also assumes that teammate is full, but contributes its complete healing rather
 than the group-heal one-fifth weight. Buff accumulators subscribe to explicitly named internal events;
 the timeline does not broadcast every combat action. World to Sword snapshots
-its threshold from the raw Physical/Silkbind character-stat ranges, accepts `overheal`, and
+its threshold from fully buffed Physical/Silkbind attack at its own cast event, accepts `overheal`, and
 checks only on overheal or a Qi Blade's delayed `QiBladeCheck`. Expected and
 simulation modes both reset the accumulator after a launch. Healing received
 during the cooldown remains stored until the delayed check can launch the next
@@ -1403,3 +1403,28 @@ Graduation comparison. Graduation supplies the path's graduated build ID;
 the headless DPS snapshot runner supplies its default build ID and explicit
 environment settings. Both use the centralized rotation calculator.
 See [DPS snapshots](dps-snapshots.md) for coverage and the review/update workflow.
+
+### Chronological healing and cast snapshots
+
+`createTimelineEntryBuilder` supplies the same action contexts to ordinary damage
+reporting and the live healing traversal. A worker-local `TimelineActionResolverFactory`
+creates a fresh outcome resolver for each timeline pass. Accepted damage, healing,
+and accumulator-application actions resolve in event order; healing immediately
+restores self HP and feeds the existing accumulator, and generated Qi Blades re-enter
+that same traversal. The final reporting pass reuses those resolved actions, including
+sampled outcomes, instead of rolling them again. The existing replay reporting remains
+responsible for replay damage.
+
+Accumulator threshold coefficients live in buff data. WTS snapshots buffed Physical
+and Silkbind attack at its own application, including current Hawkwing/Etherwrath
+bonuses; the tracked buff retains `accumulatorThreshold` for that activation.
+Each recast snapshots again. Expected Hawkwing stacks approximate the threshold;
+sampled runs use actual stacks. Hawkwing now declares `altersTimeline` because its
+attack bonus affects both healing and WTS conversion. No nearby damage/healing
+entry is used as a substitute cast context.
+
+Timeline anchor/automatic-event preparation can rebuild a pass. Sampled rolls are
+memoized per action within the run; resolver state restarts for each traversal.
+The callback is never part of a serialized bundle. `npm run test:wts` verifies cast
+ordering, buff changes, recasts, food, proc feedback, and periodic heals created after
+Qi Blades, alongside the existing healing checks.

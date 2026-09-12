@@ -17,6 +17,10 @@
     },
     {
       "type": "skill",
+      "skill": "EchoesOfAThousandPlants"
+    },
+    {
+      "type": "skill",
       "skill": "DragonsBreathSmolder2"
     },
     {
@@ -50,11 +54,12 @@
     },
     {
       "type": "skill",
-      "skill": "EmeraldDewtouch2"
+      "skill": "EmeraldDewtouch2Cancel"
     },
     {
-      "type": "skill",
-      "skill": "EmeraldDewtouch3Cancel"
+      "type": "event",
+      "event": "Delay",
+      "duration": 0.3
     },
     {
       "type": "skill",
@@ -99,7 +104,7 @@
     {
       "type": "event",
       "event": "Delay",
-      "duration": 0.64
+      "duration": 0.74
     },
     {
       "type": "skill",
@@ -146,13 +151,13 @@
       "skill": "JumpHeavy"
     },
     {
-      "type": "skill",
-      "skill": "CloudburstHealingCancel"
-    },
-    {
       "type": "event",
       "event": "Delay",
-      "duration": 0.66
+      "duration": 0.4
+    },
+    {
+      "type": "skill",
+      "skill": "CloudburstHealingCancel"
     },
     {
       "type": "skill",
@@ -282,11 +287,11 @@
     },
     {
       "type": "skill",
-      "skill": "DrunkenPoet5HitsCancel"
+      "skill": "JumpHeavy"
     },
     {
       "type": "skill",
-      "skill": "Deflect"
+      "skill": "JumpHeavy"
     },
     {
       "type": "event",

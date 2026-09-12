@@ -118,6 +118,8 @@ export type TrackedEffect = {
   maxStack?: number;
   /** Remaining successful triggers for a finite effect listener. */
   remainingTriggers?: number;
+  /** Frozen attack conversion threshold for this activation. */
+  accumulatorThreshold?: number;
   persistent?: boolean;
   sourceRowId?: string;
   collectBoostDamage?: string;
@@ -412,6 +414,7 @@ export type EffectDefinition = {
   action?: unknown[];
   periodic?: PeriodicEffect;
   accumulator?: {
+    threshold?: { physical: number; silkbind: number };
     event?: string;
     checkEvent?: string;
   };
@@ -479,9 +482,19 @@ export type TimelineBuildInput = {
   resourceEvents?: ResourceEventRule[];
   maxHP?: number;
   cooldownPolicy?: "skip" | "wait";
-  resolvedHealing?: Record<string, ResolvedHealingState>;
-  accumulatorThresholds?: Record<string, number>;
 };
+
+/** Runtime callbacks stay inside the worker; they are never included in serialized calculation bundles. */
+export type TimelineActionResolverFactory = (input: TimelineBuildInput) => (
+  row: TimelineRow,
+  actionIndex: number,
+) =>
+  | {
+      healing?: ResolvedHealingState;
+      damage?: number;
+      accumulatorThreshold?: number;
+    }
+  | undefined;
 
 export type ResourceEventRule = {
   event: "damage" | "takeDamage";
@@ -722,7 +735,9 @@ function buildRotationTimelinePass(
   input: TimelineBuildInput,
   resolvedAnchorTime?: number,
   procRoll?: (key: string) => number,
+  createActionResolver?: TimelineActionResolverFactory,
 ): TimelineRow[] {
+  const resolveAction = createActionResolver?.(input);
   type TimelineEvent = {
     time: number;
     sortOrder: number[];
@@ -2387,6 +2402,7 @@ function buildRotationTimelinePass(
     if (typeof action.cooldown === "number" && (cooldowns[actionCooldownKey] ?? 0) > event.time) continue;
     if (action.type === "apply" && typeof action.value === "string" && (cooldowns[action.value] ?? 0) > event.time)
       continue;
+    const resolvedAction = event.kind === "action" ? resolveAction?.(event.row, event.actionIndex ?? -1) : undefined;
     if (action.type === "clearCD" && typeof action.value === "string") {
       cooldowns[action.value] = event.time;
       clearSkillCooldown(action.value, event.time, typeof action.charges === "number" ? action.charges : undefined);
@@ -2950,10 +2966,11 @@ function buildRotationTimelinePass(
       }
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt);
       applyResourceEvent("damage", event.time, 0, Number(action.hitProbability ?? 1));
+      if (resolvedAction?.damage && typeof input.rotation.targetHP === "number" && input.rotation.targetHP > 0)
+        targetHPRatio = Math.max(0, targetHPRatio - resolvedAction.damage / input.rotation.targetHP);
     }
     if (action.type === "heal") {
-      const healingKey = `${event.row.id}:${event.actionIndex ?? -1}`;
-      const resolvedHealing = input.resolvedHealing?.[healingKey];
+      const resolvedHealing = resolvedAction?.healing;
       if (resolvedHealing) {
         resolvedHealing.self.forEach((healing) => {
           const rawHealing = typeof healing === "number" && Number.isFinite(healing) ? Math.max(0, healing) : 0;
@@ -3068,6 +3085,13 @@ function buildRotationTimelinePass(
                 finiteListenerTriggerLimit(definition),
               )
             : targetEffects;
+      const snapshotThreshold = resolvedAction?.accumulatorThreshold;
+      if (shouldApply && definition.accumulator && typeof snapshotThreshold === "number") {
+        const applied = next.find(
+          (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
+        );
+        if (applied) applied.accumulatorThreshold = snapshotThreshold;
+      }
       if (action.target === "target") setDebuffs(next);
       else setBuffs(next);
       const appliedEffect = next.find(
@@ -3131,7 +3155,7 @@ function buildRotationTimelinePass(
       }
       if (shouldApply && appliedEffect) {
         if (definition.accumulator) {
-          const threshold = input.accumulatorThresholds?.[`${event.row.id}:${event.actionIndex ?? -1}`];
+          const threshold = resolvedAction?.accumulatorThreshold;
           if (typeof threshold === "number" && Number.isFinite(threshold) && threshold > 0) {
             accumulatorStates.set(action.value, {
               threshold,
@@ -3229,12 +3253,17 @@ function buildRotationTimelinePass(
   return sortedRows;
 }
 
-function buildRotationTimelineResolved(input: TimelineBuildInput, procRoll?: (key: string) => number): TimelineRow[] {
-  if (input.rotation.eventTimeReference !== "battleStart") return buildRotationTimelinePass(input, undefined, procRoll);
+function buildRotationTimelineResolved(
+  input: TimelineBuildInput,
+  procRoll?: (key: string) => number,
+  createActionResolver?: TimelineActionResolverFactory,
+): TimelineRow[] {
+  if (input.rotation.eventTimeReference !== "battleStart")
+    return buildRotationTimelinePass(input, undefined, procRoll, createActionResolver);
   let anchorTime: number | undefined;
   let rows: TimelineRow[] = [];
   for (let pass = 0; pass < 8; pass += 1) {
-    rows = buildRotationTimelinePass(input, anchorTime, procRoll);
+    rows = buildRotationTimelinePass(input, anchorTime, procRoll, createActionResolver);
     const anchorRow = rows.find((row) => row.id === `rotation-${input.rotation.start?.step ?? 0}`);
     const actionIndex = input.rotation.start?.action;
     const nextAnchorTime = anchorRow
@@ -3243,7 +3272,7 @@ function buildRotationTimelineResolved(input: TimelineBuildInput, procRoll?: (ke
     if (anchorTime !== undefined && compareTimelineTime(nextAnchorTime, anchorTime) === 0) return rows;
     anchorTime = nextAnchorTime;
   }
-  return buildRotationTimelinePass(input, anchorTime, procRoll);
+  return buildRotationTimelinePass(input, anchorTime, procRoll, createActionResolver);
 }
 
 type AutomaticEventTiming = { anchorTime: number; duration: number };
@@ -3286,8 +3315,12 @@ function automaticTargetHPRotation(input: TimelineBuildInput, timing: AutomaticE
   return { ...input.rotation, steps: [...input.rotation.steps, ...automaticSteps] };
 }
 
-export function buildRotationTimeline(input: TimelineBuildInput, procRoll?: (key: string) => number): TimelineRow[] {
-  if (!input.rotation.autoHP) return buildRotationTimelineResolved(input, procRoll);
+export function buildRotationTimeline(
+  input: TimelineBuildInput,
+  procRoll?: (key: string) => number,
+  createActionResolver?: TimelineActionResolverFactory,
+): TimelineRow[] {
+  if (!input.rotation.autoHP) return buildRotationTimelineResolved(input, procRoll, createActionResolver);
   const automaticTiming =
     explicitBattleEndTiming(input.rotation) ??
     automaticEventTimingFromRows(
@@ -3298,6 +3331,7 @@ export function buildRotationTimeline(input: TimelineBuildInput, procRoll?: (key
           rotation: { ...input.rotation, autoHP: false, dummyAttack: false },
         },
         procRoll,
+        createActionResolver,
       ),
     );
   let resolvedRotation = input.rotation;
@@ -3309,5 +3343,6 @@ export function buildRotationTimeline(input: TimelineBuildInput, procRoll?: (key
       rotation: resolvedRotation,
     },
     procRoll,
+    createActionResolver,
   );
 }

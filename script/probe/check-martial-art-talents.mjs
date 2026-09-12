@@ -305,26 +305,84 @@ try {
     5,
     "Heavenquaker trigger applies capped Soul-Shaken stacks",
   );
-  const graceRows = timeline(
-    talentEffects("soulshadeUmbrella", "Buff Enhancement"),
-    [cast("Grace"), cast("Observe"), delay(5), cast("Observe")],
-    {
+  for (const [grace, baseBonus] of [
+    ["FloatingGrace", 0.1],
+    ["FloatingGraceDeluge", 0.24],
+  ]) {
+    const graceSkills = {
       Grace: {
         castTime: 0,
-        action: [{ type: "apply", target: "self", value: "FloatingGrace", duration: 12, time: 0 }],
+        action: [{ type: "apply", target: "self", value: grace, duration: 12, reapply: true, time: 0 }],
       },
+      Exhaust: {
+        castTime: 0,
+        action: [{ type: "apply", target: "target", value: "Exhausted", duration: 1, reapply: true, time: 0 }],
+      },
+      LongExhaust: {
+        castTime: 0,
+        action: [{ type: "apply", target: "target", value: "Exhausted", duration: 30, reapply: true, time: 0 }],
+      },
+      ConsumeGrace: { castTime: 0, action: [{ type: "consume", target: "self", value: grace, stack: "all", time: 0 }] },
       Observe: observe,
-    },
-  );
-  const observed = graceRows.filter((r) => r.step.skill === "Observe");
-  assert(
-    observed[0].buffs.some((b) => b.name === "SoulshadeExhaustedBoost"),
-    "Floating Grace applies the talent buff",
-  );
-  assert(
-    !observed[1].buffs.some((b) => b.name === "SoulshadeExhaustedBoost"),
-    "Talent buff ends while longer Floating Grace remains",
-  );
+    };
+    const graceSteps = [
+      cast("Grace"),
+      cast("Observe"),
+      cast("Exhaust"),
+      cast("Observe"),
+      delay(1.1),
+      cast("Observe"),
+      cast("LongExhaust"),
+      delay(5.1),
+      cast("Observe"),
+      cast("ConsumeGrace"),
+      cast("Observe"),
+      cast("Grace"),
+      cast("Observe"),
+      delay(12.1),
+      cast("Observe"),
+    ];
+    const graceRun = (enabled, extra = {}) =>
+      run("soulshadeUmbrella", "Buff Enhancement", [], {
+        timeline: {
+          rotation: { name: "Floating Grace exhaustion conditions", steps: graceSteps },
+          skills: graceSkills,
+          setupEffects: enabled ? talentEffects("soulshadeUmbrella", "Buff Enhancement") : [],
+          ...extra,
+        },
+      }).result;
+    const ordinary = graceRun(false);
+    const talented = graceRun(true);
+    const damage = (result) =>
+      result.baseline
+        .filter((entry) => entry.action.type === "damage")
+        .map((entry) => result.actionBreakdowns[entry.id].physical);
+    const ordinaryDamage = damage(ordinary);
+    const talentedDamage = damage(talented);
+    assert.equal(talentedDamage.length, 7);
+    for (let index = 0; index < talentedDamage.length; index++) {
+      const bonusActive = [1, 3, 5].includes(index);
+      close(
+        talentedDamage[index],
+        ordinaryDamage[index] * (bonusActive ? (1 + baseBonus + 0.05) / (1 + baseBonus) : 1),
+        `${grace}: Exhausted and Floating Grace must overlap; bonus follows consumption, expiry and reapplication`,
+      );
+    }
+    assert(
+      talented.timeline.every((row) => !row.buffs.some((buff) => buff.name === "SoulshadeExhaustedBoost")),
+      "The talent must not create a separate visible buff",
+    );
+    const permanent = {
+      rotation: { name: "Permanent Floating Grace", steps: [cast("Observe")] },
+      initialBuffs: [{ name: grace, stack: 1, persistent: true }],
+      initialDebuffs: [{ name: "Exhausted", stack: 1 }],
+    };
+    close(
+      damage(graceRun(true, permanent))[0],
+      (damage(graceRun(false, permanent))[0] * (1 + baseBonus + 0.05)) / (1 + baseBonus),
+      `${grace}: a supplied permanent buff receives the equipped Soulshade talent without needing a cast`,
+    );
+  }
   console.log(
     "All martial arts: conversions, raw attributes, thresholds, tag isolation, conditional damage, and talent triggers passed.",
   );

@@ -203,10 +203,17 @@ calculations use expected recipient healing, while simulations independently
 roll every recipient's healing outcome and uniform `0.92`-to-`1.08` final-healing
 fluctuation. Both modes reset accumulated overhealing to zero after
 each launch and continue accepting healing during the 0.3-second launch
-cooldown. The threshold derives from character-sheet Min/Max Physical and
-effective Min/Max Silkbind Attack. For Deluge, Min/Max Void Attack is converted
-into the effective Silkbind range before the threshold is calculated.
-Combat-time effects and attack multipliers do not alter it.
+cooldown. The accumulator's `threshold: { physical: 12, silkbind: 18 }` supplies
+coefficients for the fully buffed attack snapshot taken at the WTS application
+(timestamp zero in its cast). The shared resolver includes food, effective ranges,
+Void-to-Silkbind conversion, and active attack multipliers. It uses WTS's own
+requirements and buffs, never the context of a nearby heal or damage action.
+The resulting threshold remains fixed until the next application.
+Healing and attack snapshots resolve synchronously inside the chronological
+combat traversal, so earlier Qi Blades can affect later casts and healing through
+Hawkwing/Etherwrath. Generated periodic-row IDs are not used to join healing
+between different timeline passes. Expected Hawkwing stacks remain an approximation;
+simulations retain the sampled stacks from the same run.
 Both modes enforce the
 buff's 12-second lifetime and 20-blade limit. Finite accumulator listeners expose
 their remaining successful-trigger budget on the tracked buff for timeline UI;
@@ -217,6 +224,14 @@ Critical Rate. Its four-piece effect retains that bonus and, while Self HP is
 full, adds another 5% Critical Rate plus 15% Critical Healing Bonus and 15%
 Critical DMG Bonus. The set is timeline-affecting because its healing changes
 can alter World to Sword's Qi Blade schedule.
+
+Soulshade Umbrella's Buff Enhancement appends an Exhausted-target-only 5% damage
+bonus to both `FloatingGrace` and `FloatingGraceDeluge` using their existing effect
+modifiers. It does not apply a separate buff or start a separate timer. The extra
+bonus is active only while the parent Floating Grace buff and target Exhausted
+state overlap, and ends immediately when either ends. It also works with a
+permanent Floating Grace supplied through the global controls while the Soulshade
+talent is equipped.
 
 Panacea Fan's Fourfold Inquiry light-attack chain is stored as four independently
 castable stages. Each stage carries the shared `FourfoldInquiry` and `Light`

@@ -38,13 +38,17 @@
           {
             "target": "FloatingGrace",
             "modify": {
-              "action": [
+              "effect": [
                 {
-                  "type": "apply",
-                  "target": "self",
-                  "value": "SoulshadeExhaustedBoost",
-                  "stack": 1,
-                  "time": 0
+                  "requirement": [
+                    {
+                      "target": "target",
+                      "value": "Exhausted"
+                    }
+                  ],
+                  "effect": {
+                    "dmgBonus": 0.05
+                  }
                 }
               ]
             }
@@ -52,13 +56,17 @@
           {
             "target": "FloatingGraceDeluge",
             "modify": {
-              "action": [
+              "effect": [
                 {
-                  "type": "apply",
-                  "target": "self",
-                  "value": "SoulshadeExhaustedBoost",
-                  "stack": 1,
-                  "time": 0
+                  "requirement": [
+                    {
+                      "target": "target",
+                      "value": "Exhausted"
+                    }
+                  ],
+                  "effect": {
+                    "dmgBonus": 0.05
+                  }
                 }
               ]
             }

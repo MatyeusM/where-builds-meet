@@ -92,8 +92,6 @@
   "data.buff.silkbindDeluge.MorningDrizzle.description": "Heals once per second for 5 seconds, beginning immediately.",
   "data.buff.silkbindDeluge.MorningDrizzle.name": "Morning Drizzle",
   "data.buff.silkbindDeluge.MorningDrizzle.shortName": "MD",
-  "data.buff.silkbindDeluge.SoulshadeExhaustedBoost.description": "Increases damage against Exhausted targets by 5%.",
-  "data.buff.silkbindDeluge.SoulshadeExhaustedBoost.name": "Soulshade Exhausted Damage Boost",
   "data.buff.stonesplitMight.Breakthrough.description": "Increases Charged Skill damage by 42%.",
   "data.buff.stonesplitMight.Breakthrough.name": "Breakthrough",
   "data.buff.stonesplitMight.Breakthrough.shortName": "Breakthrough",

@@ -18,7 +18,7 @@ try {
     "/src/calculations/rotationCalculator.ts",
   );
   const { resolveActionStatContext } = await server.ssrLoadModule("/src/calculations/actionStats.ts");
-  const { calculateRawHealingAttackSnapshot } = await server.ssrLoadModule("/src/calculations/healing.ts");
+  const { calculateHealingAttackSnapshot } = await server.ssrLoadModule("/src/calculations/healing.ts");
   const food = {
     ...JSON.parse(await readFile("data/food.json", "utf8")).SimmeringFishSlices.effect,
     statStage: "food",
@@ -65,7 +65,16 @@ try {
     2220,
     "Re-derivation uses uncapped inputs, not the previous 2220 maximum",
   );
-  assert.equal(calculateRawHealingAttackSnapshot({ stats: restored, weapons: [] }).averagePhysicalAttack, 2130);
+  assert.equal(
+    calculateHealingAttackSnapshot({
+      stats: restored,
+      derivedStats: restored,
+      weapons: [],
+      effects: [],
+      enemy: { judgementResistance: 0 },
+    }).averagePhysicalAttack,
+    2130,
+  );
   const twoTalents = calculateStatsWithEffects(base, [talent, talent], 0, []);
   assert.equal(twoTalents.stats.minPhys, 1200, "Both talents must read raw 1000, not each other's output");
   const capped = calculateStatsWithEffects({ ...base, directCrit: 0.25 }, [], 0, []);

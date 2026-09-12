@@ -9,7 +9,7 @@ const viteServer = await createServer({
 });
 
 try {
-  const { calculateRawHealingAttackSnapshot, calculateHealingBreakdown } =
+  const { calculateHealingAttackSnapshot, calculateHealingBreakdown } =
     await viteServer.ssrLoadModule("/src/calculations/healing.ts");
   const { calculateRotationBaseline, calculateRotationSimulation, calculateSimulatedRotationRun } =
     await viteServer.ssrLoadModule("/src/calculations/rotationCalculator.ts");
@@ -629,7 +629,7 @@ try {
     attunement: {},
   };
   const groupHealingThreshold = (() => {
-    const snapshot = calculateRawHealingAttackSnapshot(groupHealingContext);
+    const snapshot = calculateHealingAttackSnapshot(groupHealingContext);
     return snapshot.averagePhysicalAttack * 12 + snapshot.averageSilkbindAttack * 18;
   })();
   const healingPerPhysicalBonus = calculateHealingBreakdown(
@@ -688,12 +688,12 @@ try {
   const groupQiBladeCount = (result) =>
     result.timeline.filter((row) => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "QiBlade")
       .length;
-  const rawThresholdResult = calculateRotationBaseline({
+  const buffedThresholdResult = calculateRotationBaseline({
     ...worldToSwordBundle,
     timeline: {
       ...worldToSwordBundle.timeline,
       rotation: {
-        name: "Raw WTS threshold probe",
+        name: "Buffed WTS threshold probe",
         steps: [
           { type: "skill", skill: "WorldToSword" },
           { type: "skill", skill: "RawThresholdHeal" },
@@ -722,8 +722,8 @@ try {
     },
   });
   assert(
-    groupQiBladeCount(rawThresholdResult) === 1,
-    "World to Sword's threshold must use raw character attacks rather than combat-time attack multipliers.",
+    groupQiBladeCount(buffedThresholdResult) === 0,
+    "World to Sword's cast snapshot must include attack multipliers, raising the threshold for a fixed heal.",
   );
   assert(
     groupQiBladeCount(soloGroupHealing) === 0 &&

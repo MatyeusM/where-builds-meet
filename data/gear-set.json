@@ -152,7 +152,7 @@
   },
   "Hawkwing": {
     "name": "Hawkwing",
-    "altersTimeline": false,
+    "altersTimeline": true,
     "tags": [
       "BellstrikeSplendor",
       "BellstrikeUmbra",

@@ -23,7 +23,7 @@ try {
   const { buildRotationTimeline } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { mergeCalculatedTimelineState } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { calculateRotationBaseline } = await viteServer.ssrLoadModule("/src/calculations/rotationCalculator.ts");
-  const { calculateRawHealingAttackSnapshot } = await viteServer.ssrLoadModule("/src/calculations/healing.ts");
+  const { calculateHealingAttackSnapshot } = await viteServer.ssrLoadModule("/src/calculations/healing.ts");
   const { calculateDerivedStats } = await viteServer.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await viteServer.ssrLoadModule("/src/data/statDefinitions.ts");
   const assert = (condition, message) => {
@@ -103,8 +103,14 @@ try {
     maxSilkbind: 500,
     precision: 1,
   };
-  const voidSnapshot = calculateRawHealingAttackSnapshot({
+  const voidSnapshot = calculateHealingAttackSnapshot({
     stats: { ...stats, minVoidAttack: 100, maxVoidAttack: 200 },
+    derivedStats: calculateDerivedStats({ ...stats, minVoidAttack: 100, maxVoidAttack: 200 }, 0, {}, [
+      "panaceaFan",
+      "soulshadeUmbrella",
+    ]),
+    effects: [],
+    enemy: { judgementResistance: 0 },
     weapons: ["panaceaFan", "soulshadeUmbrella"],
   });
   assert(

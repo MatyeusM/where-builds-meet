@@ -442,17 +442,24 @@ teammate copy contributes its full Per-Recipient Healing. Morning Drizzle uses
 this single-target rule; its independently timed copies do not use the group-heal
 one-fifth multiplier.
 
-World to Sword derives its conversion threshold from the raw character stats in
-the calculation bundle:
+World to Sword snapshots fully buffed attack when its application action executes at cast time:
 
 ```text
 Qi Blade Threshold =
-  12 × Raw Average Physical Attack + 18 × Raw Average Silkbind Attack
+  12 × Cast-Time Average Physical Attack + 18 × Cast-Time Average Silkbind Attack
 ```
 
-The raw averages use the stored Min/Max Physical and Min/Max Silkbind ranges.
-Combat-time stat effects, effective-stat additions, and percentage attack
-multipliers do not change this threshold.
+The shared action-stat resolver includes food, effective attack ranges, Void-to-Silkbind
+conversion, active flat attack bonuses, and Physical/Silkbind attack multipliers.
+Hawkwing contributes its current Physical Attack bonus; Etherwrath contributes its
+current attack bonuses. Healing bonuses, penetration, and damage bonuses do not enter
+the threshold. Skill-specific effects are evaluated against WTS itself.
+The value is frozen for that activation. Later buff applications, expirations, and
+stack changes do not alter it; recasting captures a new value.
+Expected calculations use expected Hawkwing stacks at the cast timestamp, an
+approximation rather than an exact distribution of resulting Qi Blade counts.
+Simulation uses that run's sampled stacks. Qi Blade damage continues to resolve
+at each hit's own timestamp.
 
 Every recipient's healing number enters the accumulator separately. Expected
 calculations use that recipient's expected healing; simulations roll each
@@ -554,6 +561,11 @@ Bellstrike Global Multiplier =
 ```
 
 All effects in this global category add together before forming the multiplier.
+With Soulshade Umbrella's Buff Enhancement talent, active Floating Grace adds
+another `dmgBonus: 0.05` only against an Exhausted target. This is part of Floating
+Grace's damage bonus (including its Deluge variant), with no separate buff or
+five-second timer.
+
 `Exhausted` supplies `globalDmgBonus: 0.1`. Qi Imbalance conditionally supplies
 `globalHPDMGBonus: 0.08` for every HP-damage channel and an additional
 `globalBellstrikeDMGBonus: 0.08` for Bellstrike only. The character stat
