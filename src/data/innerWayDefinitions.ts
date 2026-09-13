@@ -1,3 +1,7 @@
+import eonpour from "../../data/innerway/eonpour.json";
+import skyspeak from "../../data/innerway/skyspeak.json";
+import mistwing from "../../data/innerway/mistwing.json";
+import volutefit from "../../data/innerway/volutefit.json";
 import adaptiveSteel from "../../data/innerway/adaptive-steel.json";
 import artOfResistance from "../../data/innerway/art-of-resistance.json";
 import battleAnthem from "../../data/innerway/battle-anthem.json";
@@ -43,6 +47,10 @@ export const innerWayDefinitions = {
   InsightfulStrike: insightfulStrike,
   SeasonalEdge: seasonalEdge,
   FivefoldBleed: fivefoldBleed,
+  Eonpour: eonpour,
+  Skyspeak: skyspeak,
+  Mistwing: mistwing,
+  Volutefit: volutefit,
 } satisfies Record<string, InnerWayDefinition>;
 
 export function innerWayAvailableForTag(innerWay: string, requiredTag?: string) {

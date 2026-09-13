@@ -1,0 +1,30 @@
+{
+  "name": "Skyspeak",
+  "altersTimeline": true,
+  "tags": ["BamboocutDraught"],
+  "effect": {
+    "SkyspeakT0": {},
+    "SkyspeakT1": {},
+    "SkyspeakT2": {
+      "effect": [
+        {
+          "rawStat": {
+            "crit": 0.081
+          }
+        }
+      ]
+    },
+    "SkyspeakT3": {},
+    "SkyspeakT4": {},
+    "SkyspeakT5": {
+      "effect": [
+        {
+          "rawStat": {
+            "critDmgBonus": 0.04
+          }
+        }
+      ]
+    },
+    "SkyspeakT6": {}
+  }
+}

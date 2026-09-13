@@ -8576,8 +8576,14 @@ export default function App() {
     () =>
       resolveAttunementStats(defaultAttunementStats, equippedGearEffects.attunement, attunementOverrides, {
         physicalPenetration: displayedStats.physicalPenetration,
+        formlessPenetration: displayedStats.formlessPenetration,
       }),
-    [attunementOverrides, displayedStats.physicalPenetration, equippedGearEffects.attunement],
+    [
+      attunementOverrides,
+      displayedStats.physicalPenetration,
+      displayedStats.formlessPenetration,
+      equippedGearEffects.attunement,
+    ],
   );
   const character = useMemo(
     () => ({

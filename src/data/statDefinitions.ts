@@ -114,4 +114,5 @@ export const emptyStats = Object.fromEntries(allStatDefinitions.map(({ key }) =>
 emptyStats.effectiveCritBonus = 0;
 emptyStats.heavensWillRegen = 0;
 emptyStats.physicalPenetration = 0;
+emptyStats.formlessPenetration = 0;
 emptyStats.physicalResistance = 0;

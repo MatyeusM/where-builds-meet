@@ -1,0 +1,31 @@
+{
+  "name": "Volutefit",
+  "altersTimeline": true,
+  "tags": ["BamboocutDraught"],
+  "effect": {
+    "VolutefitT0": {},
+    "VolutefitT1": {},
+    "VolutefitT2": {
+      "effect": [
+        {
+          "rawStat": {
+            "minVoidAttack": 14.7,
+            "maxVoidAttack": 29.5
+          }
+        }
+      ]
+    },
+    "VolutefitT3": {},
+    "VolutefitT4": {},
+    "VolutefitT5": {
+      "effect": [
+        {
+          "rawStat": {
+            "formlessPenetration": 6
+          }
+        }
+      ]
+    },
+    "VolutefitT6": {}
+  }
+}

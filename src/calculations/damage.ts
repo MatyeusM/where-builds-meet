@@ -320,7 +320,7 @@ function calculateDamageBreakdownInternal(
   const attunementAggregationStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   let attunementBonus = 0;
   let attunementPhysicalPenetration = 0;
-  let attunementFormlessPenetration = 0;
+  let attunementFormlessPenetration = stats.formlessPenetration;
   for (const [key, value] of Object.entries(attunement)) {
     const definition = attunementDefinitions[key];
     if (!attunementMatchesSkill(definition?.effect, skillTags)) continue;

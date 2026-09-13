@@ -1,0 +1,31 @@
+{
+  "name": "Mistwing",
+  "altersTimeline": true,
+  "tags": ["BamboocutDraught"],
+  "effect": {
+    "MistwingT0": {},
+    "MistwingT1": {},
+    "MistwingT2": {
+      "effect": [
+        {
+          "rawStat": {
+            "minPhys": 23.3,
+            "maxPhys": 46.7
+          }
+        }
+      ]
+    },
+    "MistwingT3": {},
+    "MistwingT4": {},
+    "MistwingT5": {
+      "effect": [
+        {
+          "rawStat": {
+            "physDmgBonus": 0.025
+          }
+        }
+      ]
+    },
+    "MistwingT6": {}
+  }
+}

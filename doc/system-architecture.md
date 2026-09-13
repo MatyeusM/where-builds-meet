@@ -1150,7 +1150,7 @@ header-level Dev toggle is enabled. The application currently recognizes:
 
 - Snowparting, Phalanxbane, Thundercry, Stormbreaker, Heavenwill, Mystic, General, Buff, Debuff, and DOT editor categories
 - twenty martial-art IDs across Heng Blade, Mo Blade, Sword, Spear, Umbrella, Fan, Rope Dart, Gauntlet, and Dual Blades weapon families
-- six Inner Ways
+- 22 Inner Ways, including four Draught definitions with T2/T5 raw-stat effects; see `skill-data.md`
 - eight available Divinecraft definitions, including a no-effect choice
 - seven Script definitions plus a no-effect choice
 - Exhausted, Controlled, Shield Broken, Battle End, Move, Self HP, Take Damage, target HP, Qi, Buff, and Debuff manual events

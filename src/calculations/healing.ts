@@ -111,7 +111,7 @@ function calculateHealingBreakdownInternal(
   const attunement = matchingAttunementStats(context);
   physicalPenetration += attunement.physicalPenetration;
   if (mainAttributeForWeapons(context.weapons) === "silkbind") {
-    silkbindPenetration += attunement.formlessPenetration;
+    silkbindPenetration += stats.formlessPenetration + attunement.formlessPenetration;
   }
   healingBonus += attunement.healingBonus;
 

@@ -79,7 +79,10 @@ try {
         for (const stat of Object.keys(effect.rawStat)) {
           assert(stat in emptyStats, `${definition.name} T${tier} uses unknown stat ${stat}.`);
           assert(
-            stat === "physicalPenetration" || stat === "physicalResistance" || visibleStats.has(stat),
+            stat === "physicalPenetration" ||
+              stat === "formlessPenetration" ||
+              stat === "physicalResistance" ||
+              visibleStats.has(stat),
             `${definition.name} T${tier} stat ${stat} must be visible in its Stats-page section.`,
           );
           const resolved = calculateStatsWithEffects(emptyStats, [effect], 0);

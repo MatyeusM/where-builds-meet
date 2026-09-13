@@ -1084,6 +1084,28 @@ Rules are processed in tier order on a damage event. Therefore an earlier-tier
 trigger can apply a stack before a later-tier trigger checks the stack count on
 the same event.
 
+### Draught Inner Ways
+
+The updated `local/datamine/wwm-inner-way-normal.json` supplies Eonpour (701),
+Skyspeak (702), Mistwing (703), and Volutefit (704). Unnamed ID 651 remains
+excluded. Each definition is eligible for `BamboocutDraught` and Mixed and
+implements only T2 and T5 through the shared `rawStat` pipeline. T2 uses the
+fixed Solo Level 16 table value; breakthrough selection does not change it.
+
+| Inner Way | T2                                    | T5                          |
+| --------- | ------------------------------------- | --------------------------- |
+| Eonpour   | +77.9 Min Physical Attack             | +4.6% Direct Critical Rate  |
+| Skyspeak  | +8.1% Critical Rate                   | +4% Critical DMG Bonus      |
+| Mistwing  | +23.3 Min / +46.7 Max Physical Attack | +2.5% Physical Damage Bonus |
+| Volutefit | +14.7 Min / +29.5 Max Formless Attack | +6 Formless Penetration     |
+
+Formless Attack uses the existing `minVoidAttack`/`maxVoidAttack` fields.
+Raw Formless Penetration adds to the equipped path's primary attribute for
+damage and, on Silkbind paths, healing. The displayed attunement total includes
+this raw contribution; its calculation input excludes it to avoid double counting.
+Tiers are cumulative, so T5 and T6 retain T2. T0, T1, T3, T4, and T6 contain no
+additional mechanics.
+
 ## Raw-stat, stat, and effective-stat effects
 
 `rawStat` contributes during `rawStats`, before martial-art scaling formulas.
