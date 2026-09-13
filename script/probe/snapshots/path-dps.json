@@ -20,8 +20,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 57510.446134939324,
-      "totalDamage": 3450626.7680963594,
+      "dps": 57543.291161331,
+      "totalDamage": 3452597.46967986,
       "duration": 60
     },
     "silkbindDeluge": {
@@ -43,8 +43,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 37965.06517492787,
-      "totalDamage": 2277903.9104956724,
+      "dps": 38054.665790211046,
+      "totalDamage": 2283279.9474126627,
       "duration": 60
     },
     "stonesplitMight": {
@@ -66,8 +66,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 76316.18897923369,
-      "totalDamage": 4578971.338754022,
+      "dps": 76333.79356573727,
+      "totalDamage": 4580027.613944236,
       "duration": 60
     },
     "stonesplitStrength": {
@@ -89,8 +89,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66798.12693143047,
-      "totalDamage": 4007887.6158858277,
+      "dps": 66830.93330547572,
+      "totalDamage": 4009855.9983285433,
       "duration": 60
     }
   }
