@@ -1,0 +1,55 @@
+{
+  "name": "Echoes of Oblivion",
+  "altersTimeline": true,
+  "tags": ["BamboocutWind"],
+  "effect": {
+    "EchoesOfOblivionT0": {},
+    "EchoesOfOblivionT1": {},
+    "EchoesOfOblivionT2": {
+      "effect": [
+        {
+          "rawStat": {
+            "crit": {
+              "bySoloLevel": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                0.017,
+                0.023,
+                0.031,
+                0.039,
+                0.046,
+                0.046,
+                0.046,
+                0.054,
+                0.063,
+                0.074,
+                0.082,
+                0.086,
+                0.09,
+                0.097,
+                0.104,
+                0.113,
+                0.121
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "EchoesOfOblivionT3": {},
+    "EchoesOfOblivionT4": {},
+    "EchoesOfOblivionT5": {
+      "effect": [
+        {
+          "rawStat": {
+            "critDmgBonus": 0.044
+          }
+        }
+      ]
+    },
+    "EchoesOfOblivionT6": {}
+  }
+}

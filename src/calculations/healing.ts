@@ -118,7 +118,9 @@ function calculateHealingBreakdownInternal(
   const coefficient = numberValue(action.phyCoef);
   const silkbindCoefficient = numberValue(action.silkbindCoef);
   const physical =
-    (averagePhysicalAttack * coefficient + numberValue(action.phyBonus)) * (1 + physicalPenetration / 200);
+    (averagePhysicalAttack * coefficient + numberValue(action.phyBonus)) *
+    (1 + physicalPenetration / 200) *
+    (1 + stats.physicalHealingBonus);
   const silkbind =
     (averageSilkbindAttack * silkbindCoefficient + numberValue(action.attrBonus)) *
     (1 + silkbindPenetration / 200) *

@@ -15,7 +15,8 @@ try {
   );
   const { calculateDerivedStats } = await load("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await load("/src/data/statDefinitions.ts");
-  const way = (await load("/data/innerway/fivefold-bleed.json")).default;
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
+  const way = innerWayDefinitionForSoloLevel((await load("/data/innerway/fivefold-bleed.json")).default, 17);
   const dots = (await load("/data/dot/innerway.json")).default;
   const { PiercingDamage: piercingDefinition } = (await load("/data/skill/general.json")).default;
   // Keep the original independent-history oracle; full feedback is tested separately.

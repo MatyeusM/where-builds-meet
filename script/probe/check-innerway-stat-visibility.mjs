@@ -16,6 +16,9 @@ try {
   const { calculateDamageBreakdown } = await viteServer.ssrLoadModule("/src/calculations/damage.ts");
   const { calculateHealingBreakdown } = await viteServer.ssrLoadModule("/src/calculations/healing.ts");
   const { resolveAttunementStats } = await viteServer.ssrLoadModule("/src/calculations/attunementStats.ts");
+  const { innerWayDefinitions, innerWayDefinitionForSoloLevel } = await viteServer.ssrLoadModule(
+    "/src/data/innerWayDefinitions.ts",
+  );
   const visibleStats = new Set(allStatDefinitions.map(({ key }) => key));
   const innerWayFiles = (await readdir("data/innerway")).filter((fileName) => fileName.endsWith(".json"));
   const assert = (condition, message) => {
@@ -67,7 +70,15 @@ try {
   );
 
   for (const fileName of innerWayFiles) {
-    const definition = JSON.parse(await readFile(`data/innerway/${fileName}`, "utf8"));
+    const definition = innerWayDefinitionForSoloLevel(
+      JSON.parse(await readFile(`data/innerway/${fileName}`, "utf8")),
+      17,
+    );
+    const id = Object.keys(definition.effect)[0].replace(/T0$/, "");
+    assert(
+      innerWayDefinitions[id]?.name === definition.name,
+      `${fileName} must be registered under its tier ID prefix.`,
+    );
     for (const tier of [2, 5]) {
       const tierDefinition = Object.entries(definition.effect ?? {}).find(([key]) => key.endsWith(`T${tier}`))?.[1];
       if (!tierDefinition?.effect) continue;

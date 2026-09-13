@@ -18,9 +18,10 @@ try {
   const { compactInnerWayResults } = await server.ssrLoadModule("/src/calculations/compactInnerWayResults.ts");
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
   const ways = {
-    FivefoldBleed: await load("/data/innerway/fivefold-bleed.json"),
-    MoraleChant: await load("/data/innerway/morale-chant.json"),
+    FivefoldBleed: innerWayDefinitionForSoloLevel(await load("/data/innerway/fivefold-bleed.json"), 17),
+    MoraleChant: innerWayDefinitionForSoloLevel(await load("/data/innerway/morale-chant.json"), 17),
   };
   const general = await load("/data/skill/general.json");
   const dots = await load("/data/dot/innerway.json");

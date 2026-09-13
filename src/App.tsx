@@ -101,7 +101,12 @@ import innerWayDots from "../data/dot/innerway.json";
 import breakthroughProfiles from "../data/breakthrough.json";
 import systemStats from "../data/system.json";
 import { createBaseAttributeEffects, type BaseAttributeData } from "./data/baseAttributeEffects";
-import { innerWayAvailableForTag, innerWayDefinitions, innerWayEntriesForTag } from "./data/innerWayDefinitions";
+import {
+  innerWayAvailableForTag,
+  innerWayDefinitions,
+  innerWayEntriesForTag,
+  innerWayDefinitionForSoloLevel,
+} from "./data/innerWayDefinitions";
 import defaultSetup from "../data/default-setup.json";
 import {
   beginRotationCalculation,
@@ -765,12 +770,16 @@ function innerWayConditionsFor(
 
 function innerWayEffectRulesFor(
   selectedInnerWays: BuildSetup["innerWays"],
+  soloLevel: number,
   pathId = loadSelectedPath(),
 ): InnerWayEffectRule[] {
   const selected = selectedInnerWays.filter(({ innerWay }) => innerWayAvailableForPath(innerWay, pathId));
   return selected.flatMap(({ innerWay, tier }) => {
     if (!innerWay || !innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions]) return [];
-    const definition = innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions] as {
+    const definition = innerWayDefinitionForSoloLevel(
+      innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions],
+      soloLevel,
+    ) as {
       effect?: Record<string, { effect?: unknown[]; trigger?: unknown[]; listen?: unknown[] }>;
     };
     const tierNumber = Number(tier.slice(1));
@@ -1132,6 +1141,7 @@ type SetupEffect = StatEffectContainer &
     modify?: EditableObject;
   };
 type BreakthroughProfile = EnemyProfile & {
+  soloLevel: number;
   martialArtTalentRank: number;
   levelBonusStats: SetupEffect & {
     rawStat: {
@@ -1842,7 +1852,7 @@ function rotationEntryDisplayName(entry: RotationEntry) {
 }
 
 function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEffectContainer, buildSetup: BuildSetup) {
-  const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays)
+  const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel)
     .filter(
       (rule) =>
         requirementIsUnconditional(rule.requirement) &&
@@ -1925,7 +1935,7 @@ export function buildPresetRotationBundle(
     { food: environment.food, divinecraft: environment.divinecraft, script: environment.script },
     pathId,
   );
-  const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, pathId);
+  const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId);
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId);
   const innerWayStatEffects = innerWayRules
     .filter(
@@ -5610,7 +5620,11 @@ function RotationEditorTab({
   } = character;
   const rotationSkillIds = useMemo(() => selectableRotationSkillIds(settings.weapons), [settings.weapons]);
   const innerWayConditions = useMemo(() => innerWayConditionsFor(buildSetup.innerWays), [buildSetup.innerWays]);
-  const innerWayEffectRules = useMemo(() => innerWayEffectRulesFor(buildSetup.innerWays), [buildSetup.innerWays]);
+  const soloLevel = breakthroughProfile(settings).soloLevel;
+  const innerWayEffectRules = useMemo(
+    () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel),
+    [buildSetup.innerWays, soloLevel],
+  );
   const calculationDefinitions = useMemo(
     () => resolveSkillCalculationDefinitions(defaultSkillMaps, effectDefinitions, dotDefinitions, skillOverrides),
     [skillOverrides],

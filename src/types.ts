@@ -21,6 +21,8 @@ export type CharacterStats = {
   formlessPenetration: number;
   /** Defensive flat resistance; intentionally omitted from the character-stat UI. */
   physicalResistance: number;
+  /** Character-sheet reduction; Take Damage events already specify resolved damage. */
+  physicalDmgReduction: number;
   maxEndurance: number;
   maxVitality: number;
   /** Heaven's Will generated per second. */
@@ -45,6 +47,8 @@ export type CharacterStats = {
   silkbindDmgBonus: number;
   /** Multiplier applied to the Silkbind component of healing actions. */
   silkbindHealingBonus: number;
+  /** Multiplier applied to the physical component of healing actions. */
+  physicalHealingBonus: number;
   /** Base bonus used by Critical healing outcomes before action-specific effects. */
   criticalHealingBonus: number;
   bamboocutDmgBonus: number;

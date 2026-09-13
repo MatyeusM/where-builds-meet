@@ -551,6 +551,12 @@ updates enemy inputs and replaces the level-derived Precision and five base
 attributes through the same shared effect pipeline. Breakthrough 17 is selected
 on every page load. The user may switch to Breakthrough 16 for the current page
 session, but Breakthrough is not written to browser storage or character profiles.
+Each breakthrough declares its own `soloLevel` for Inner Way stat tables.
+`innerWayDefinitionForSoloLevel` resolves those tables to numeric raw-stat
+effects before character-sheet and worker calculation. Breakthroughs 16 and 17
+select Solo Levels 16 and 17. The live rotation rule memo depends on Solo Level,
+so switching breakthrough replaces the Inner Way bonuses and invalidates the
+normal calculation inputs. These levels are independent of martial-art rank.
 Each breakthrough also declares `martialArtTalentRank`: breakthroughs 16 and 17
 both use rank 13. The shared `martialArtEffectsForRank` selector reads the
 two-dimensional `talent[rank]` array for each distinct equipped martial art and
@@ -1150,7 +1156,7 @@ header-level Dev toggle is enabled. The application currently recognizes:
 
 - Snowparting, Phalanxbane, Thundercry, Stormbreaker, Heavenwill, Mystic, General, Buff, Debuff, and DOT editor categories
 - twenty martial-art IDs across Heng Blade, Mo Blade, Sword, Spear, Umbrella, Fan, Rope Dart, Gauntlet, and Dual Blades weapon families
-- 22 Inner Ways, including four Draught definitions with T2/T5 raw-stat effects; see `skill-data.md`
+- 56 catalog Inner Ways, including four Draught definitions with T2/T5 raw-stat effects; see the coverage notes in `skill-data.md`
 - eight available Divinecraft definitions, including a no-effect choice
 - seven Script definitions plus a no-effect choice
 - Exhausted, Controlled, Shield Broken, Battle End, Move, Self HP, Take Damage, target HP, Qi, Buff, and Debuff manual events
@@ -1190,7 +1196,7 @@ tier, and a tagged path exposes and calculates only Inner Ways carrying its tag.
 ### Breakthrough
 
 Add a complete breakthrough entry to `data/breakthrough.json`. Each entry combines
-an `EnemyProfile`, a `levelBonusStats` effect, and `martialArtTalentRank`. The Main-tab selector reads the
+an `EnemyProfile`, a `levelBonusStats` effect, `soloLevel`, and `martialArtTalentRank`. The Main-tab selector reads the
 entry keys, while its detail block above Inner Ways shows the level bonus and enemy
 properties. Breakthrough is transient Main-tab state and is intentionally not
 part of build data, character profiles, or browser storage.

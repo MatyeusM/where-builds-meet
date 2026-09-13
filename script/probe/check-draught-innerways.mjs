@@ -8,7 +8,9 @@ const server = await createServer({
   logLevel: "silent",
 });
 try {
-  const { innerWayEntriesForTag } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
+  const { innerWayEntriesForTag, innerWayDefinitionForSoloLevel } = await server.ssrLoadModule(
+    "/src/data/innerWayDefinitions.ts",
+  );
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const { calculateStatsWithEffects } = await server.ssrLoadModule("/src/calculations/statEffects.ts");
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
@@ -49,7 +51,12 @@ try {
   });
   const close = (actual, expected, message) =>
     assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`);
-  const draught = new Map(innerWayEntriesForTag("BamboocutDraught"));
+  const draught = new Map(
+    innerWayEntriesForTag("BamboocutDraught").map(([id, definition]) => [
+      id,
+      innerWayDefinitionForSoloLevel(definition, 17),
+    ]),
+  );
   for (const id of ["Eonpour", "Skyspeak", "Mistwing", "Volutefit"]) {
     assert.ok(draught.has(id), `${id} must be selectable on Draught`);
     const definition = draught.get(id);

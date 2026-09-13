@@ -39,6 +39,13 @@ export const survivalStats: StatDefinition[] = [
   { key: "defense", label: "Defense" },
   { key: "maxHp", label: "Max HP" },
   { key: "physicalDefense", label: "Physical Defense" },
+  {
+    key: "physicalDmgReduction",
+    label: "Physical DMG Reduction",
+    unit: "%",
+    showUnitInLabel: false,
+    showUnitInInput: true,
+  },
   { key: "maxEndurance", label: "Max Endurance" },
   { key: "maxVitality", label: "Max Vitality" },
 ];
@@ -79,6 +86,13 @@ export const defenseStats: StatDefinition[] = [
     showUnitInInput: true,
   },
   { key: "bamboocutDmgBonus", label: "Bamboocut DMG Bonus", unit: "%", showUnitInLabel: false, showUnitInInput: true },
+  {
+    key: "physicalHealingBonus",
+    label: "Physical Healing Bonus",
+    unit: "%",
+    showUnitInLabel: false,
+    showUnitInInput: true,
+  },
   { key: "allMartialArts", label: "All Martial Arts", unit: "%", showUnitInLabel: false, showUnitInInput: true },
   { key: "vsBossDmg", label: "vs Boss DMG", unit: "%", showUnitInLabel: false, showUnitInInput: true },
   { key: "moBladeDmgBoost", label: "Art of Mo Blade", unit: "%", showUnitInLabel: false, showUnitInInput: true },

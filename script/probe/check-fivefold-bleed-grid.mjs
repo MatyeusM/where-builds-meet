@@ -11,7 +11,11 @@ try {
   const { buildRotationTimeline } = await server.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { ExpectedPeriodicTracker } = await server.ssrLoadModule("/src/calculations/outcomeTriggeredBuffs.ts");
   const dots = (await server.ssrLoadModule("/data/dot/innerway.json")).default;
-  const way = (await server.ssrLoadModule("/data/innerway/fivefold-bleed.json")).default;
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
+  const way = innerWayDefinitionForSoloLevel(
+    (await server.ssrLoadModule("/data/innerway/fivefold-bleed.json")).default,
+    17,
+  );
   const { PiercingDamage } = (await server.ssrLoadModule("/data/skill/general.json")).default;
   const rules = (tier) =>
     Object.values(way.effect)

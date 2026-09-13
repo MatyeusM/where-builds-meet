@@ -3,7 +3,8 @@ export async function fivefoldBenchmarkBundle(server, count) {
   const load = async (path) => (await server.ssrLoadModule(path)).default;
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
-  const way = await load("/data/innerway/fivefold-bleed.json");
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
+  const way = innerWayDefinitionForSoloLevel(await load("/data/innerway/fivefold-bleed.json"), 17);
   const dots = await load("/data/dot/innerway.json");
   const { PiercingDamage } = await load("/data/skill/general.json");
   const rules = Object.values(way.effect).flatMap((definition, tier) => [

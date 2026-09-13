@@ -19,7 +19,8 @@
         "body": 138,
         "defense": 138
       }
-    }
+    },
+    "soloLevel": 16
   },
   "17": {
     "name": "17",
@@ -41,6 +42,7 @@
         "body": 150,
         "defense": 150
       }
-    }
+    },
+    "soloLevel": 17
   }
 }

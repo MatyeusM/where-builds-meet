@@ -60,8 +60,58 @@
       "effect": [
         {
           "rawStat": {
-            "minStonesplit": 13.3,
-            "maxStonesplit": 26.5
+            "minStonesplit": {
+              "bySoloLevel": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                2.5,
+                3.5,
+                4.5,
+                5.7,
+                6.7,
+                6.7,
+                6.7,
+                8,
+                9.3,
+                10.9,
+                12.1,
+                12.7,
+                13.3,
+                14.3,
+                15.4,
+                16.7,
+                17.9
+              ]
+            },
+            "maxStonesplit": {
+              "bySoloLevel": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                5.1,
+                6.9,
+                9.1,
+                11.5,
+                13.5,
+                13.5,
+                13.5,
+                16,
+                18.7,
+                21.7,
+                24.1,
+                25.3,
+                26.5,
+                28.5,
+                30.8,
+                33.3,
+                35.9
+              ]
+            }
           }
         }
       ]

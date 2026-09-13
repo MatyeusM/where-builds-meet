@@ -53,6 +53,12 @@ effects, existing shared behavior, and all unresolved talent portions.
 
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, character talent stats, regional Oddity rewards, attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
 
+Inner Way stat tables resolve using the selected breakthrough's `soloLevel`,
+independently of `martialArtTalentRank`, before these stages. A table contributes
+only its selected level; fixed bonuses remain constant. For example, Eonpour
+T2 contributes 74.4 Min Physical Attack at Solo Level 16 and 77.9 at Solo Level 17.
+The resolved bonuses therefore feed both raw-sourced talents and worker comparisons.
+
 1. Build `rawStats` from explicit `rawStat` permanent contributions, including
    flat martial-art min/max attribute bonuses, and five-attribute conversions.
 2. Build `stats`: remaining martial-art talent formulas read immutable `rawStats`; add
@@ -69,6 +75,15 @@ aggregation, conditional effects, overrides, and comparison variants.
 Fixed effects are applied before formulas, regardless of JSON order. Internal floating-point results are normalized to nine decimal places.
 
 A manually edited Main-tab stat is stored as a final-value override. The calculator solves the base-stat offset that makes the shared pipeline produce that exact value under the current baseline inputs. Changing the active build, Inner Ways, food, or another baseline input causes the offset to be solved again, so the modified final value remains fixed. The solved base is also used for comparison variants; adding or removing a tested effect therefore still changes the stat and contributes to the reported DPS delta.
+
+Physical DMG Reduction is retained as a raw character-sheet ratio. Explicit
+Take Damage events already specify resolved HP loss; they do not apply this
+stat, Physical Defense, or Physical Resistance again.
+
+Formless Penetration from raw character stats adds to matching attunement
+penetration on the equipped primary attribute only. Its displayed Attunement
+Stats total includes the character bonus, while the attunement calculation
+input excludes that bonus to prevent double counting.
 
 ### Effective attack ranges
 
@@ -375,6 +390,7 @@ Average Silkbind Attack = (Effective Min Silkbind + Effective Max Silkbind) / 2
 Physical Healing =
   (Average Physical Attack × Physical Coefficient + Physical Bonus)
   × (1 + Physical Penetration / 200)
+  × (1 + Physical Healing Bonus)
 
 Silkbind Healing =
   (Average Silkbind Attack × Silkbind Coefficient + Attribute Bonus)
@@ -391,7 +407,8 @@ art, Special Skill additionally requires `Special`, and Panacea Fan Healing
 Skill requires `Heavy`. Physical
 Penetration combines its Weapon attunement value with matching calculation-time
 effects. Silkbind Penetration combines its resolved character-stat value with
-matching calculation-time effects. Formless Penetration converts to the equipped
+matching calculation-time effects. Formless Penetration sums its raw character-stat and matching attunement
+contributions once, then converts to the equipped
 path's primary attribute before healing is resolved, so it contributes to
 Silkbind Healing when Silkbind is the primary attribute.
 

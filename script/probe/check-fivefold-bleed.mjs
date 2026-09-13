@@ -16,7 +16,11 @@ try {
   const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
   const { innerWayAvailableForTag } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
-  const way = (await server.ssrLoadModule("/data/innerway/fivefold-bleed.json")).default;
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
+  const way = innerWayDefinitionForSoloLevel(
+    (await server.ssrLoadModule("/data/innerway/fivefold-bleed.json")).default,
+    17,
+  );
   const dots = (await server.ssrLoadModule("/data/dot/innerway.json")).default;
   // Retain exact-cadence regression coverage; the battle-grid probe tests the authored approximation.
   const exactDots = structuredClone(dots);

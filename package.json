@@ -16,7 +16,7 @@
     "test:wts": "node script/probe/check-wts-cast-snapshot.mjs && node script/probe/check-healing.mjs && node script/probe/check-damage-replay.mjs",
     "test:dps": "node script/probe/check-dps-snapshot-guard.mjs && node script/probe/check-dps-snapshots.mjs",
     "snapshots:dps:update": "node script/probe/check-dps-snapshots.mjs --update",
-    "test:innerways": "node script/probe/check-innerway-filter.mjs && node script/probe/check-innerway-stat-visibility.mjs && node script/probe/check-draught-innerways.mjs"
+    "test:innerways": "node script/probe/check-innerway-filter.mjs && node script/probe/check-innerway-stat-visibility.mjs && node script/probe/check-draught-innerways.mjs && node script/probe/check-innerway-solo-level.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans": "^5.3.0",

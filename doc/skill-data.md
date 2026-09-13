@@ -1084,13 +1084,45 @@ Rules are processed in tier order on a damage event. Therefore an earlier-tier
 trigger can apply a stack before a later-tier trigger checks the stack count on
 the same event.
 
+### Inner Way catalog coverage
+
+All 56 named records from `local/datamine/wwm-inner-way-normal.json` are
+registered; unnamed ID 651 is excluded. Newly registered entries implement
+T2/T5 stat bonuses only. Existing combat mechanics remain unchanged. All T2
+bonuses use their datamined Solo Level table, and T5 bonuses remain fixed.
+Battle Anthem now follows the source's 4% Affinity Rate at Solo Level 17,
+replacing its previous fixed 4.1%.
+
+### Solo Level stat tables
+
+Inner Way raw-stat values may be a fixed number or an object containing
+`bySoloLevel`, an array indexed by the actual Solo Level. Index 0 is unused;
+`null` entries mean no bonus at that level. The source catalog arrays are
+one-based in meaning: source index 15 is Solo Level 16 and source index 16 is
+Solo Level 17. Runtime arrays prepend a null slot so selection uses
+`bySoloLevel[soloLevel]` directly. Percentages remain decimal ratios.
+
+Each breakthrough profile declares `soloLevel` separately from
+`martialArtTalentRank`. Current breakthroughs 16 and 17 select Solo Levels 16
+and 17 while both retain martial-art talent rank 13. There is no rank-based
+fallback or interpolation for Inner Way bonuses.
+
+`innerWayDefinitionForSoloLevel` resolves the tables without modifying the
+imported definitions. Character stats, live rotations, preset comparisons,
+and worker bundles all consume these resolved numeric `rawStat` effects.
+Only one level's value contributes; cumulative Inner Way tiers still apply.
+Null entries contribute zero, and missing or invalid levels are rejected.
+Changing Solo Level refreshes the memoized rules and calculation inputs;
+final-stat overrides remain exact through the existing override solver.
+
 ### Draught Inner Ways
 
 The updated `local/datamine/wwm-inner-way-normal.json` supplies Eonpour (701),
 Skyspeak (702), Mistwing (703), and Volutefit (704). Unnamed ID 651 remains
 excluded. Each definition is eligible for `BamboocutDraught` and Mixed and
-implements only T2 and T5 through the shared `rawStat` pipeline. T2 uses the
-fixed Solo Level 16 table value; breakthrough selection does not change it.
+implements only T2 and T5 through the shared `rawStat` pipeline. T2 follows
+the selected breakthrough's Solo Level. The following T2 examples are for
+Solo Level 17; Eonpour instead grants 74.4 Min Physical Attack at Solo Level 16.
 
 | Inner Way | T2                                    | T5                          |
 | --------- | ------------------------------------- | --------------------------- |
