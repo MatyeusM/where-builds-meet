@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 
-export const dpsSnapshotTolerance = 0.05;
+export const dpsSnapshotTolerance = 0.01;
 
 export function compareDpsSnapshots(expected, actual) {
   const failures = [];
@@ -26,7 +26,7 @@ export function compareDpsSnapshots(expected, actual) {
     const delta = after.dps - before.dps;
     if (Math.abs(delta) >= before.dps * dpsSnapshotTolerance) {
       failures.push(
-        `${pathId}: DPS ${before.dps.toFixed(2)} -> ${after.dps.toFixed(2)} (${delta >= 0 ? "+" : ""}${((delta / before.dps) * 100).toFixed(2)}%); limit is less than 5% in either direction.`,
+        `${pathId}: DPS ${before.dps.toFixed(2)} -> ${after.dps.toFixed(2)} (${delta >= 0 ? "+" : ""}${((delta / before.dps) * 100).toFixed(2)}%); limit is less than ${dpsSnapshotTolerance * 100}% in either direction.`,
       );
     }
   }

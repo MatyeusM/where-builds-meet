@@ -20,4 +20,4 @@
 - Run `npm run format` after editing supported source, data, or documentation files. Treat `npm run format:check` as the repository formatting gate.
 - Run `npm run build` after code or data changes, plus a focused calculation check for simulation changes.
 
-- `npm run test:dps` compares each implemented path against its accepted DPS snapshot and is part of `npm run build`. A change of 5% or more in either direction is a review gate. Explain the affected path, old/new DPS, and cause, then wait for the user to decide whether the change is correct before updating that snapshot. Never refresh snapshots merely to make a failed check pass.
+- `npm run test:dps` compares each implemented path against its accepted DPS snapshot and is part of `npm run build`. A change of 1% or more in either direction is a review gate. Explain the affected path, old/new DPS, and cause, then wait for the user to decide whether the change is correct before updating that snapshot. Never refresh snapshots merely to make a failed check pass.

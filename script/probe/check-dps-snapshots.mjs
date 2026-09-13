@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { createServer } from "vite";
 import { format } from "prettier";
-import { compareDpsSnapshots } from "./dps-snapshot-guard.mjs";
+import { compareDpsSnapshots, dpsSnapshotTolerance } from "./dps-snapshot-guard.mjs";
 
 const snapshotFile = new URL("./snapshots/path-dps.json", import.meta.url);
 const paths = JSON.parse(await readFile(new URL("../../data/path.json", import.meta.url), "utf8"));
@@ -116,7 +116,7 @@ try {
       throw new Error(
         `${failures.join("\n")}\nReview each change. Fix regressions; update only paths whose changes have been confirmed correct. Never refresh snapshots automatically to make this check pass.`,
       );
-    console.log("All implemented paths remain within 5% of their accepted DPS snapshots.");
+    console.log(`All implemented paths remain within ${dpsSnapshotTolerance * 100}% of their accepted DPS snapshots.`);
   }
 } finally {
   await server.close();

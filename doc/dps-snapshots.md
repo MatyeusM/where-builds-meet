@@ -18,7 +18,7 @@ stat, rate, damage, or DPS formulas or reads a user's browser storage.
 The snapshot records the fixture identifiers/settings, expected DPS, total
 damage, and duration. The gate fails when:
 
-- DPS increases or decreases by **5% or more** from the accepted snapshot.
+- DPS increases or decreases by **1% or more** from the accepted snapshot.
 - An implemented path is missing a baseline, or snapshot coverage disappears.
 - A selected build, rotation, martial-art pair, or fixed environment changes.
 - A result or baseline has non-finite, zero, or negative DPS, damage, or duration.

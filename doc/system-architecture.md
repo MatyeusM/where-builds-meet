@@ -1296,7 +1296,7 @@ from data.
 - DMG Bonus Category 2 is specified but not implemented.
 - `npm run build` includes deterministic DPS snapshot checks for every available
   path, alongside preset, localization, type, and production-bundle verification.
-  A change of 5% or more in either direction requires review; see
+  A change of 1% or more in either direction requires review; see
   [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
 ### Rotation editor calculation lifecycle
