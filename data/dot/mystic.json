@@ -10,11 +10,11 @@
       "action": [
         {
           "type": "damage",
-          "phyCoef": 0.2954,
-          "phyBonus": 42,
+          "phyCoef": 0.295453116,
+          "phyBonus": 44.622032,
           "attrBonus": 0,
           "time": 0,
-          "attrCoef": 0.2954
+          "attrCoef": 0.295453116
         }
       ]
     },
@@ -34,11 +34,11 @@
       "action": [
         {
           "type": "damage",
-          "phyCoef": 0.2787,
-          "phyBonus": 40,
+          "phyCoef": 0.278739392453,
+          "phyBonus": 42.497766037723,
           "attrBonus": 0,
           "time": 0,
-          "attrCoef": 0.2787
+          "attrCoef": 0.278739392453
         }
       ]
     },

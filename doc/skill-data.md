@@ -16,6 +16,50 @@ Maps use stable internal IDs as keys. References such as `trigger.value`,
 `apply.value`, and `modify.target` must use those IDs. User-facing text belongs
 in `name` and `description`.
 
+## Mystic attack coefficients at level 71
+
+Implemented Mystic attacks use level 71 from
+`local/datamine/wwm-skills-mystic-skills-offensive.json`. Read the normal,
+layer-zero `curves` entry, or `enlightenmentCurves` for Smolder, Dragon Head -
+Tide, and Ghostly Step - Umbra. `byLevel` arrays are indexed by level minus one,
+including enlightenment arrays with null entries before level 51; `aggregated`
+contains level-independent values. Normal and grey curves agree for these attacks.
+
+Multiply `SKILL_POWER_W_ATK`, `SKILL_POWER_PRO_ATK`, and `SKILL_ADD_W_ATK`
+independently to obtain `phyCoef`, `attrCoef`, and `phyBonus`. Keep derived
+values to 12 decimal places; do not round them to tooltip precision. Attribute
+flat bonuses remain zero. Level-51 damage increases are already in the curves.
+
+| Mystic / source skill ID       | Per-action baseline multipliers                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Soaring Spin / 2300058         | 0.45, 0.55                                                                                      |
+| Leaping Toad / 2300053         | Flip 0.04; lunge 0.24; both venom explosions 0.12                                               |
+| Drunken Poet / 2300045         | First four strikes 0.105 each; fifth 0.175; Combustion explosion 0.072; Smolder explosion 0.165 |
+| Dragon's Breath / 2300032      | Each breath 0.245; additional second-hit damage 0.27; each burn tick 0.0532                     |
+| Flute of the Tides / 2300075   | Existing early hit and following ripples 0.1125 × 2; main impact 0.3 × 2                        |
+| Dragon Head - Tide / 2300064   | Enlightenment baseline × 1.1 × 0.7                                                              |
+| Ghostly Step - Umbra / 2300065 | 1, for every implemented weapon's afterimage                                                    |
+| Bursting Nine / 2300081        | First volley 1, 0.3, then seven × 0.1; second volley halves each corresponding value            |
+| World to Sword / 2300082       | Qi Blade 1 × 2                                                                                  |
+| Serene Breeze / 20000104       | 1                                                                                               |
+
+Flute and Qi Blade include their non-player-target doubling. Flute's existing
+early hit is retained; the coefficient update does not establish its timing or
+add attacks. Smolder uses the enlightenment baseline for both direct hits and
+ticks. Its tick multiplier deliberately remains 0.0532: the user observed
+27.87% + 42 per tick, matching the derived 0.278739392453 + 42.497766037723.
+The datamine behavior's 0.045 multiplier conflicts with this observation and
+must not replace the confirmed value without new evidence. The existing DOT
+damage formula ignores authored flat bonuses, so updating the burn bonus data
+does not make it contribute to simulated ticks.
+
+Tide's user-confirmed pre-multiplier baseline is 16.3591422641509 physical and
+attribute coefficient plus 2483.50943396226 flat physical bonus. Its 1.1 upgrade
+and 0.7 enlightenment reduction yield 12.596539543396 and 1912.30226415094.
+Surging Waves, missing-HP bonuses, and Exhausted-target doubling remain separate
+effects. The level-71 coefficient update preserves all existing cast, hit,
+cancel, trigger, and periodic timings.
+
 ## Datamined martial-art identity and progression
 
 `local/datamine/wwm-martial-arts-normal.json` is the processed local reference.
@@ -2021,17 +2065,11 @@ skill cooldown, so resetting End Hit does not also reset the refund. The
 triggered refund resolves immediately after the End Hit actions and remains
 subject to the four-point Heaven's Will cap.
 
-Bursting Nine is a 1.3-second Mystic skill whose nine hits currently land at
-cast end. Its first hit uses physical coefficient `2.546` and `365` flat
-physical bonus. The second hit uses 30% of both values (`0.7638` and `109.5`),
-while hits three through nine each use 10% (`0.2546` and `36.5`). Its
-Single-Target or Area classification remains unset until that mechanic is
-confirmed.
-
-Bursting Nine 2 Shots uses a 1.7-second cast. Its first nine hits retain the
-base skill's values and land at 1.3 seconds, then a second set lands at cast end.
-Each second-set hit uses 50% of the corresponding first-set hit's physical
-coefficient and flat physical bonus.
+Bursting Nine's nine projectiles use the level-71 baseline and repeated-hit
+factors documented above. Bursting Nine 2 Shots adds a second volley at half
+the corresponding first-volley damage. Cast and hit times remain defined in
+`data/skill/mystic.json`. Its Single-Target or Area classification remains
+unset until that mechanic is confirmed.
 
 Etherwrath is available to Bamboocut Kite and Stonesplit Strength. Two pieces
 add `78` minimum physical attack. With four pieces, every `DirectDamage` action adds or
