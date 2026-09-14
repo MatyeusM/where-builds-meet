@@ -1153,6 +1153,24 @@ fields belong to the character sheet, while damage fields remain action effects.
 Rain Whisper four-piece uses one for its unconditional Critical DMG bonus and a
 Shield requirement for its additional Critical DMG bonus.
 
+The set catalog includes all 12 weapon sets, 12 armor sets, and three bow/ring
+sets from `local/datamine/wwm-item-sets-{weapon,armor,bow-ring}.json`. Two-piece
+bonuses use the fixed level-96 tier, independently of equipped gear level.
+Physical attack bonuses retain the exact datamined `77.8`, replacing the former
+rounded `78` for Cleftpeak and Etherwrath; percentage bonuses retain the source ratios.
+Armor bonuses add `39` Physical Defense (`physicalDefense`, not the Defense
+attribute) or `2960` Max HP through `rawStat`. Max-HP sets rebuild comparison
+timelines because HP can affect healing, overhealing, and triggered events.
+Four-piece options include their two-piece stats exactly once. Existing
+four-piece mechanics are preserved; newly registered sets currently provide
+only their two-piece stats even when four pieces are selected.
+
+Swallowcall is eligible for Bamboocut Wind, Infernal Twinblades, and Mortal Rope
+Dart. Other existing eligibility tags are preserved; newly registered sets
+without an assigned path retain empty tags. Bow/ring sets retain the functional names and persisted IDs `Precision`,
+`Critical`, and `Affinity`, corresponding to Fletchlodge, Stringshock, and
+Shadowchase, so existing builds and overrides retain their choices.
+
 Selecting tier `Tn` activates every tier condition and rule from T0 through Tn.
 Tier entries may contain:
 
@@ -2206,7 +2224,7 @@ the corresponding first-volley damage. Cast and hit times remain defined in
 unset until that mechanic is confirmed.
 
 Etherwrath is available to Bamboocut Kite and Stonesplit Strength. Two pieces
-add `78` minimum physical attack. With four pieces, every `DirectDamage` action adds or
+add `77.8` minimum physical attack. With four pieces, every `DirectDamage` action adds or
 refreshes one stack of the eight-second Etherwrath buff, up to five stacks.
 DOT ticks and other damage without `DirectDamage` neither add nor refresh stacks,
 while Perfect Dodge applies five stacks directly. Each stack adds `0.012` to

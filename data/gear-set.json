@@ -21,7 +21,7 @@
         "name": "2",
         "effect": {
           "rawStat": {
-            "minPhys": 78
+            "minPhys": 77.8
           }
         }
       },
@@ -29,7 +29,7 @@
         "name": "4",
         "effect": {
           "stat": {
-            "minPhys": 78
+            "minPhys": 77.8
           },
           "trigger": {
             "event": "damage",
@@ -225,7 +225,7 @@
         "name": "2",
         "effect": {
           "rawStat": {
-            "minPhys": 78
+            "minPhys": 77.8
           }
         }
       },
@@ -234,7 +234,7 @@
         "effect": {
           "condition": "Etherwrath4P",
           "stat": {
-            "minPhys": 78
+            "minPhys": 77.8
           },
           "trigger": {
             "event": "damage",
@@ -251,6 +251,195 @@
               "stack": 1,
               "reapply": true
             }
+          }
+        }
+      }
+    }
+  },
+  "Jadeware": {
+    "name": "Jadeware",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "maxPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "maxPhys": 77.8
+          }
+        }
+      }
+    }
+  },
+  "SwiftGale": {
+    "name": "Swift Gale",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "maxPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "maxPhys": 77.8
+          }
+        }
+      }
+    }
+  },
+  "SwayingHeights": {
+    "name": "Swaying Heights",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      }
+    }
+  },
+  "Swallowcall": {
+    "name": "Swallowcall",
+    "altersTimeline": false,
+    "tags": ["BamboocutWind", "InfernalTwinblades", "MortalRopeDart"],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      }
+    }
+  },
+  "Mistwillow": {
+    "name": "Mistwillow",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "precision": 0.08
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "precision": 0.08
+          }
+        }
+      }
+    }
+  },
+  "Starweave": {
+    "name": "Starweave",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      }
+    }
+  },
+  "Tiltrim": {
+    "name": "Tiltrim",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "minPhys": 77.8
           }
         }
       }

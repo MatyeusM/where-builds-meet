@@ -17,19 +17,26 @@
       },
       "2": {
         "name": "2",
-        "effect": {}
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
       },
       "4": {
         "name": "4",
         "effect": {
-          "condition": "FormBend4"
+          "condition": "FormBend4",
+          "rawStat": {
+            "physicalDefense": 39
+          }
         }
       }
     }
   },
   "Moonflare": {
     "name": "Moonflare",
-    "altersTimeline": false,
+    "altersTimeline": true,
     "tags": ["SilkbindDeluge", "PanaceaFan", "SoulshadeUmbrella"],
     "options": {
       "0": {
@@ -38,11 +45,19 @@
       },
       "2": {
         "name": "2",
-        "effect": {}
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
       },
       "4": {
         "name": "4",
-        "effect": {}
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
       }
     }
   },
@@ -57,11 +72,262 @@
       },
       "2": {
         "name": "2",
-        "effect": {}
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
       },
       "4": {
         "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "Eaglerise": {
+    "name": "Eaglerise",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
         "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "RippleStep": {
+    "name": "Ripple Step",
+    "altersTimeline": true,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      }
+    }
+  },
+  "FlawlessGuardian": {
+    "name": "Flawless Guardian",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "BeyondtheChill": {
+    "name": "Beyond the Chill",
+    "altersTimeline": true,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      }
+    }
+  },
+  "Whirlsnow": {
+    "name": "Whirlsnow",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "Jadeclasp": {
+    "name": "Jadeclasp",
+    "altersTimeline": true,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "maxHp": 2960
+          }
+        }
+      }
+    }
+  },
+  "Ebonward": {
+    "name": "Ebonward",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "Honorbound": {
+    "name": "Honorbound",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      }
+    }
+  },
+  "Brimflow": {
+    "name": "Brimflow",
+    "altersTimeline": false,
+    "tags": [],
+    "options": {
+      "0": {
+        "name": "0",
+        "effect": {}
+      },
+      "2": {
+        "name": "2",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
+      },
+      "4": {
+        "name": "4",
+        "effect": {
+          "rawStat": {
+            "physicalDefense": 39
+          }
+        }
       }
     }
   }
