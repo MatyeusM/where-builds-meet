@@ -1,0 +1,401 @@
+{
+  "AddledMind": {
+    "name": "Addled Mind",
+    "description": "Three charges, each recovering in 15 seconds. Cast timing and attack effects are not yet available.",
+    "cooldown": 15,
+    "cooldownUses": 3,
+    "cooldownRecovery": "independent",
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades"]
+  },
+  "InfernalLight1": {
+    "name": "Dual Blade - Light Attack",
+    "shortName": "A1",
+    "castTime": 0.43,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.339,
+        "phyCoef": 0.42049,
+        "attrCoef": 0.42049,
+        "phyBonus": 117,
+        "attrBonus": 64
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight1"]
+  },
+  "InfernalLight2": {
+    "name": "Dual Blade - Light Attack",
+    "shortName": "A2",
+    "castTime": 0.47,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.242,
+        "phyCoef": 0.22542,
+        "attrCoef": 0.22542,
+        "phyBonus": 63,
+        "attrBonus": 34
+      },
+      {
+        "type": "damage",
+        "time": 0.343,
+        "phyCoef": 0.22542,
+        "attrCoef": 0.22542,
+        "phyBonus": 63,
+        "attrBonus": 34
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight2"]
+  },
+  "InfernalLight3": {
+    "name": "Dual Blade - Light Attack",
+    "shortName": "A3",
+    "castTime": 0.6,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.248,
+        "phyCoef": 0.2886,
+        "attrCoef": 0.2886,
+        "phyBonus": 80.5,
+        "attrBonus": 43.5
+      },
+      {
+        "type": "damage",
+        "time": 0.419,
+        "phyCoef": 0.2886,
+        "attrCoef": 0.2886,
+        "phyBonus": 80.5,
+        "attrBonus": 43.5
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight3"]
+  },
+  "InfernalLight4": {
+    "name": "Dual Blade - Light Attack",
+    "shortName": "A4",
+    "castTime": 0.529,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.167,
+        "phyCoef": 0.254095,
+        "attrCoef": 0.254095,
+        "phyBonus": 71,
+        "attrBonus": 38.5
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight4"]
+  },
+  "InfernalFlamelashLight1": {
+    "name": "Blade of Heaven's Wrath",
+    "shortName": "FA1",
+    "castTime": 0.357,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.104,
+        "phyCoef": 0.32359,
+        "attrCoef": 0.32359,
+        "phyBonus": 90,
+        "attrBonus": 49
+      },
+      {
+        "type": "damage",
+        "time": 0.328,
+        "phyCoef": 0.32359,
+        "attrCoef": 0.32359,
+        "phyBonus": 90,
+        "attrBonus": 49
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight1",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight2": {
+    "name": "Blade of Heaven's Wrath",
+    "shortName": "FA2",
+    "castTime": 0.5,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.294,
+        "phyCoef": 0.9012,
+        "attrCoef": 0.9012,
+        "phyBonus": 250,
+        "attrBonus": 136
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight2",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight3": {
+    "name": "Blade of Heaven's Wrath",
+    "shortName": "FA3",
+    "castTime": 0.8,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.253,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.31,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.368,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.423,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.478,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.535,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.59,
+        "phyCoef": 0.1734624,
+        "attrCoef": 0.1734624,
+        "phyBonus": 48.12,
+        "attrBonus": 26.16
+      },
+      {
+        "type": "damage",
+        "time": 0.646,
+        "phyCoef": 0.2312832,
+        "attrCoef": 0.2312832,
+        "phyBonus": 64.16,
+        "attrBonus": 34.88
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight3",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight4": {
+    "name": "Blade of Heaven's Wrath",
+    "shortName": "FA4",
+    "castTime": 0.96,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.345,
+        "phyCoef": 0.347164,
+        "attrCoef": 0.347164,
+        "phyBonus": 96.2,
+        "attrBonus": 52.4
+      },
+      {
+        "type": "damage",
+        "time": 0.447,
+        "phyCoef": 0.347164,
+        "attrCoef": 0.347164,
+        "phyBonus": 96.2,
+        "attrBonus": 52.4
+      },
+      {
+        "type": "damage",
+        "time": 0.544,
+        "phyCoef": 0.347164,
+        "attrCoef": 0.347164,
+        "phyBonus": 96.2,
+        "attrBonus": 52.4
+      },
+      {
+        "type": "damage",
+        "time": 0.644,
+        "phyCoef": 0.347164,
+        "attrCoef": 0.347164,
+        "phyBonus": 96.2,
+        "attrBonus": 52.4
+      },
+      {
+        "type": "damage",
+        "time": 0.823,
+        "phyCoef": 0.347164,
+        "attrCoef": 0.347164,
+        "phyBonus": 96.2,
+        "attrBonus": 52.4
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight4",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight5": {
+    "name": "Blade of Heaven's Wrath",
+    "shortName": "FA5",
+    "castTime": 1.401,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.342,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0.342,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "RodentRampage"
+          },
+          {
+            "target": "self",
+            "value": "Flamelash"
+          },
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT6"
+          }
+        ]
+      },
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0.342,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "RodentRampage"
+          },
+          {
+            "target": "self",
+            "value": "Flamelash"
+          },
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT6"
+          }
+        ]
+      },
+      {
+        "type": "damage",
+        "time": 0.443,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 0.541,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 0.641,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 1.023,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight5",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  }
+}

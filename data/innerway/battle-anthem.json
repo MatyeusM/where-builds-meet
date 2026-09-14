@@ -1,7 +1,7 @@
 {
   "name": "Battle Anthem",
   "altersTimeline": false,
-  "tags": ["StonesplitMight"],
+  "tags": ["StonesplitMight", "BellstrikeSplendor"],
   "effect": {
     "BattleAnthemT0": {
       "effect": [
@@ -85,7 +85,7 @@
             "dmgBonus": {
               "function": "segment",
               "param1": "enduranceLost",
-              "param2": [9, 19, 29, 39, 49],
+              "param2": [10, 20, 30, 40, 50],
               "param3": [0, 0.02, 0.04, 0.06, 0.08, 0.1]
             }
           }

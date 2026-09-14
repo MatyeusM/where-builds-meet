@@ -54,7 +54,7 @@ export function resolveSegmentValue(value: unknown, parameters: DynamicParameter
       !Number.isFinite(result)
     )
       return undefined;
-    if (parameter <= threshold) return result;
+    if (parameter < threshold) return result;
   }
   const overflowResult = results[thresholds.length];
   return typeof overflowResult === "number" && Number.isFinite(overflowResult) ? overflowResult : undefined;

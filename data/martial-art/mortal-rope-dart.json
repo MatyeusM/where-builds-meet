@@ -19,7 +19,24 @@
     [
       {
         "name": "Bone Corrosion Enhancement",
-        "effect": []
+        "effect": [
+          {
+            "trigger": {
+              "event": "damage",
+              "requirement": [
+                {
+                  "target": "skillTag",
+                  "value": "BladeboundThread"
+                }
+              ],
+              "action": {
+                "type": "apply",
+                "target": "target",
+                "value": "BoneCorrosion"
+              }
+            }
+          }
+        ]
       },
       {
         "name": "Critical Rate Up",

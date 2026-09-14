@@ -1,7 +1,14 @@
 {
   "name": "Envigorated Warrior",
   "altersTimeline": false,
-  "tags": ["StonesplitStrength", "BamboocutKite", "SilkbindDeluge"],
+  "tags": [
+    "StonesplitStrength",
+    "BamboocutKite",
+    "SilkbindDeluge",
+    "BamboocutWind",
+    "BamboocutDust",
+    "BamboocutDraught"
+  ],
   "effect": {
     "EnvigoratedWarriorT0": {},
     "EnvigoratedWarriorT1": {},

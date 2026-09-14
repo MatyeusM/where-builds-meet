@@ -565,6 +565,24 @@ inside setup or Inner Way triggers, and wakes a waiting cast when a charge becom
 available. Infernal Twinblades uses
 `{ "type": "clearCD", "value": "AddledMind", "charges": 1 }`.
 
+Inner Way damage triggers may declare `hitWindow: { "count": 6, "seconds": 2 }`
+and a separate `cooldown`. Each trigger owns a bounded list of its most recent
+qualifying hit timestamps and its next available time inside the timeline build.
+The window includes its lower boundary using the normal timeline time comparison.
+Multiple damage actions at one timestamp count separately. Hits continue to enter
+the window during cooldown; a ready trigger checks the window on the next
+qualifying damage event, without scheduling a timer or clearing its hit history.
+A proc starts its cooldown even when the affected skill is already fully charged.
+
+Expected hit windows count only definite damage actions. Any action carrying
+`hitProbability` is excluded, even when that value is one, so changes in expected
+proc probabilities cannot move cooldown-reset timing. Ordinary damage scaling
+without hit-probability metadata does not change the count. This does not remove
+probabilistic damage from DPS or change other triggers. Sampled simulation counts
+actual successful proc hits; failed procs emit no hits. Healing and non-damage
+actions never enter a hit window. The current timeline represents one target,
+so the counter is local to that target without adding target identifiers.
+
 Setup triggers also accept `event: "skillStart"`. They run once after an accepted
 cast starts and its cooldown and cast-start state resolve, before its timed
 actions. This includes triggered skills and skills without actions, but excludes
@@ -879,7 +897,10 @@ for the `PerfectDodge` source tag. Both dodge variants share one `skillStart`
 trigger that restores one `AddledMind` charge, with a separate 30-second trigger cooldown.
 The duration bonus is independent of that cooldown and includes indirect dodge
 buffs such as Disintegration. Addled Mind uses a 15-second cooldown, three uses,
-and independent recovery. Its cast time and action data are still pending.
+and independent recovery. Its cooldown-only definition is registered in
+`data/skill/infernal-twinblades.json` and exposed in the Infernal skill category.
+Cast time and actions remain absent until measured, so the current placeholder
+spends a charge at zero cast time and contributes no damage or mode changes.
 
 Infernal Twinblades rank 13 contains all five talents in source order, using
 the rank array directly without talent IDs. The implemented effects are:
@@ -916,20 +937,49 @@ It adds separate fixed 9% and scaling `min(0.12, raw Min Physical Attack × 0.00
 Physical and Bamboocut DMG Bonus effects. At 750 raw Min Physical Attack the
 total Rodent bonus is 21% in each of those channels; other attribute channels
 and attacks without the tag receive no Rodent bonus. The formulas use the
-shared raw-stat stage. Mortal Rope Dart's skill definitions are still pending;
-its rodent damage actions must carry `Rodent` to activate these effects.
+shared raw-stat stage. The Rodent attack in `data/skill/mortal-rope-dart.json`
+carries `Rodent` and `MortalRopeDart`, activating its talent and attunement bonuses.
+
+Infernal Twinblades exposes A1–A4 (Dual Blade - Light Attack / 雙刀・輕擊)
+and FA1–FA5 (Blade of Heaven's Wrath / 天怒刀法) as independent castable stages.
+Each stage uses the supplied interrupt time as its cast time and retains every
+local hit's Level 100 physical/attribute coefficients and flat bonuses. End
+animation times are unused. FA stages also carry `Empowered` for their light
+attack attunement. Select the manual Flamelash buff for Flamelash-dependent
+bonuses and marks; these stages do not invent its entry or exit lifecycle.
+
+Rodent Rampage (鼠鼠生威), Mortal Rope Dart Special, casts in 0.541 seconds,
+applies its self buff at 0.541 seconds, and has no cooldown. The buff lasts ten
+seconds, caps at one stack, and refreshes its expiration. Its existing accumulator
+uses numeric `threshold: 2`, a `damage` event requirement for Martial Arts Light
+attacks, and `oncePerSkill: true`. Only the first damage action of each stage
+counts, including separate stages inside a multi-action skill. Infernal Twinblades
+and Mortal Rope Dart contribute two counter units per stage; other martial arts
+contribute one through a `switch` amount on `currentMartialArt`. The listener
+launches one Rodent at threshold and resets progress. A refresh preserves progress
+through `resetOnRefresh: false`; expiration or removal clears it. Probability-weighted
+expected proc rows do not advance this counter; actual sampled hits may do so.
+
+Rodent has zero cast time and inherits the current martial art without switching
+weapons. Its independent physical and attribute coefficients both use distance
+segments `[5, 12]` with results `[0.63, 0.57, 0.6]`. It carries neither `Light`
+nor `Empowered`, so it cannot recursively trigger itself or apply Sin/Karma.
+Echoes T6 adds two ordinary conditional Rodent trigger actions at FA5's first hit
+(0.342 seconds). They require Rodent Rampage, Flamelash, and T6. Together with the
+buff's normal trigger this produces three Rodent attacks for FA5, not three per
+damage hit. These definite hits may contribute to Echoes T4.
 
 Attr. Attack DMG UP is already covered by the shared primary-path multiplier
-and therefore has an empty effect array. Bone Corrosion Enhancement retains an
-empty effect array pending Bladebound Thread and Coiled Dragon skill data.
+and therefore has an empty effect array. Bone Corrosion Enhancement uses a
+rank-13 damage trigger on `BladeboundThread` to apply Bone Corrosion after the
+hit. Coiled Dragon application still awaits its skill data.
 The `BoneCorrosion` debuff in `data/debuff/bamboocut-wind.json` is available in
 the Skill Editor and manual Debuff events. It lasts five seconds, caps at one
 stack, refreshes on reapplication, and is not party-shared. Its existing
 `qiDMGBonus` field stores 5% for the applier plus another 35% for actions tagged
 `Light`, totaling 40%. This follows the same field used by Qi Imbalance and
 Vulnerable. Qi damage is not calculated yet, so these stored bonuses do not
-alter damage output. The two skills can apply the debuff using ordinary target
-application actions once their skill definitions are available.
+alter damage output. The talent uses the existing target application action.
 
 Modifier values may use `byStack` to capture a buff or debuff's stack count at
 cast start:
@@ -1066,9 +1116,9 @@ the modification are checked before it is applied.
 ## Inner Ways
 
 Inner Way files contain a display `name`, path eligibility `tags`, and an
-`effect` map keyed by tier ID. They also require `altersTimeline`; all current
-Inner Ways conservatively set it to true, while a future false value allows
-priority removal to reuse baseline event state:
+`effect` map keyed by tier ID. They also require `altersTimeline`; true conservatively rebuilds the timeline,
+while false allows priority removal to reuse baseline event state only when
+combat events cannot change:
 
 ```json
 {
@@ -1128,14 +1178,98 @@ Rules are processed in tier order on a damage event. Therefore an earlier-tier
 trigger can apply a stack before a later-tier trigger checks the stack count on
 the same event.
 
-### Inner Way catalog coverage
+### Inner Way catalog coverage and Echoes of Oblivion
 
-All 56 named records from `local/datamine/wwm-inner-way-normal.json` are
-registered; unnamed ID 651 is excluded. Newly registered entries implement
-T2/T5 stat bonuses only. Existing combat mechanics remain unchanged. All T2
-bonuses use their datamined Solo Level table, and T5 bonuses remain fixed.
-Battle Anthem now follows the source's 4% Affinity Rate at Solo Level 17,
-replacing its previous fixed 4.1%.
+The catalog import uses `local/datamine/wwm-inner-way-normal.json`: all 56 named
+records are registered, excluding unnamed ID 651. Existing IDs and combat
+mechanics are retained. All T2 bonuses use the datamined Solo Level table; T5
+bonuses remain fixed because the source supplies no level tables for them.
+Battle Anthem uses the datamined 4% Affinity Rate at Solo Level 17, replacing
+the previous fixed 4.1%.
+Other tiers of newly imported records remain empty unless documented below.
+
+The six requested path allowlists are stored in the existing `tags` arrays.
+Memberships for Might, Strength, Deluge, and Kite are preserved. Definitions
+without a path assignment remain accessible in Mixed. The four Draught records
+now implement their datamined T2/T5 bonuses as described below.
+
+Echoes of Oblivion (451) currently implements these confirmed effects using
+existing conditional effects, tracked buffs, definition modifications, and
+skill application actions:
+
+- T0: normal Infernal Twinblades Light Attacks apply Sin after damage;
+  Flamelash Light Attacks apply Karma instead. Each mark lasts three seconds,
+  has one maximum stack, and refreshes on reapplication.
+  Infernal Twinblades Light Attacks ignore 10% of Physical Defense while
+  the target has Sin. The rule uses `martialArt: InfernalTwinblades`,
+  `skillTag: Light`, and `defenseBonus: -0.1`.
+- T1: damage against a target with both Sin and Karma applies or refreshes
+  Samsara after the hit. Samsara lasts 15 seconds and adds 5% HP damage.
+  The duration comes from the catalog's English rank description.
+- T2: Solo Level-based Critical Rate (9% at Solo Level 17); T5: fixed 4.4% Critical DMG Bonus, both `rawStat`.
+- T3: both Perfect Dodge variants apply Samsara at time zero when
+  `EchoesOfOblivionT3` is selected. This uses the same conditional skill-action
+  mechanism as their other Inner Way bonuses; the existing Infernal dodge
+  duration talent extends this application to 21 seconds.
+- T4: six definite damage hits within two seconds restore one Addled Mind
+  charge, with a ten-second trigger cooldown. Addled Mind recovers each of its
+  three charges independently after 15 seconds. This trigger reuses `clearCD`
+  with `charges: 1` and can wake an explicit cast waiting for a charge. The
+  dodge talent has its own separate 30-second cooldown.
+- T6: Flamelash Light Attacks apply both Sin and Karma. This upgrades the
+  existing T0 Sin trigger through a tier requirement without applying it twice.
+  T6 also appends another 5% HP damage to Samsara, for 10% total, and triggers
+  two extra Rodent attacks at FA5's first hit while Rodent Rampage is active.
+
+Sin and Karma use the user-confirmed three-second duration and one-stack cap.
+Their application rules require both the Infernal Twinblades martial-art tag
+and the Light Attack tag; Heavy Attacks and other martial arts cannot apply
+either mark. Flamelash remains a manually selectable self status until the
+Infernal skill definitions supply its lifecycle. Manual Sin/Karma applications
+also use the three-second expiration. Marks apply after damage; the later T1
+trigger can observe marks applied by T0 on the same hit and grant Samsara,
+which affects subsequent hits.
+
+Bladebound Thread [Cancel] (牽繩引刃, RD Q) is Mortal Rope Dart's martial-art
+skill. It casts in 0.385 seconds with an eight-second cooldown shared under
+`BladeboundThread`. At 0.385 seconds it deals one hit with physical and attribute
+coefficients 0.0621375, physical bonus 17.5, and attribute bonus 9.5, then applies
+Vendetta Token to self. It carries `MartialArt` for the matching attunement.
+
+Vendetta Token (仇殺令) is a ten-second, one-stack refreshing self buff. Its
+Rodent-only `baseDMGBonus: 0.5` adds 50% base damage. The datamine's “Vendetta
+Mark” means this same buff; there is no separate target mark or second status.
+
+Vendetta (452) implements the following supported effects:
+
+- T0: Rodent Rampage retains its 25-second duration. Vendetta Token becomes
+  15 seconds total, following the confirmed correction to its duration text.
+- T1: Vendetta Token becomes 20 seconds total, retained at higher tiers.
+- T2: Solo Level-based Min Physical Attack; T5: 5.1 Physical Penetration,
+  both using existing raw-stat effects.
+- T6: while Vendetta Token is active, Rodent attacks gain another 30% damage
+  through `dmgBonus`. This is separate from Token's 50% base-damage bonus.
+
+All Tokens of Gratitude recovery, restoration, consumption, and T4 resource
+calculations are intentionally ignored at the user's request. Charging Stance
+still lacks skill data. T6's enemy-healing reduction is outside the current
+combat model.
+
+T3's Rodent Hunt remains the next mechanism to discuss. It records Rodent damage
+for 15 seconds and pays out 30% on expiry. Reapplying Bladebound Thread must
+settle the old record immediately and start a new window. The existing per-hit
+replay cannot express this recording-window lifecycle; it needs an extension
+that retains final resolved damage without applying damage bonuses twice.
+
+Remaining Echoes work is deliberately unimplemented:
+
+- Karma resistance ignore is 10 flat in T0–T4 text but 10% in the T6 main
+  description. Its value/units need confirmation before implementing it.
+- T3 Karma Flame generation can use the existing numeric-resource actions;
+  the resource definition, cap, spending, and Flamelash behavior need data.
+
+Run `npm run test:innerways` for registration/filtering, raw-stat channels,
+attunement override separation, and the supported Echoes lifecycle checks.
 
 ### Solo Level stat tables
 
@@ -1399,21 +1533,21 @@ Burning Heart sections reset to 1m after their final cast.
 
 ### Dynamic effect values
 
-`segment` maps a numeric parameter through ordered inclusive upper bounds:
+`segment` maps a numeric parameter through ordered exclusive upper bounds:
 
 ```json
 {
   "function": "segment",
   "param1": "distance",
-  "param2": [1, 2],
+  "param2": [2, 3],
   "param3": [0.02, 0.03, 0.04]
 }
 ```
 
-For each threshold `param2[n]`, a parameter less than or equal to that threshold
-uses `param3[n]`. A parameter greater than the last threshold uses the final
+For each threshold `param2[n]`, a parameter strictly less than that threshold
+uses `param3[n]`. A parameter equal to or greater than the last threshold uses the final
 `param3` entry, so `param3` must contain one more value than `param2`. Flute
-uses integer distance thresholds for its distance-based `dmgBonus`.
+uses `[2, 3, 4, 5, 6, 7, 8, 9]` for its distance-based `dmgBonus`: 2% below 2m, 3% from 2m to below 3m, and so on.
 
 Stat and effective-stat effects use the same function with character-stat
 parameters and explicit thresholds:
@@ -1422,13 +1556,13 @@ parameters and explicit thresholds:
 {
   "function": "segment",
   "param1": "maxHp",
-  "param2": [4999, 9999, 14999],
+  "param2": [5000, 10000, 15000],
   "param3": [0, 4, 8, 12]
 }
 ```
 
-This example returns 0 below 5,000 Max HP, 4 from 5,000 through 9,999, 8 from
-10,000 through 14,999, and the final value from 15,000 onward. Setup effects
+This example returns 0 below 5,000 Max HP, 4 from 5,000 to below 10,000, 8 from
+10,000 to below 15,000, and the final value from 15,000 onward. Setup effects
 with a `requirement` remain per-action rules: the worker resolves them against
 the damage action's tags and state, and they are excluded from the global
 character-stat display. Timing values can likewise use action-time thresholds:
@@ -1445,7 +1579,7 @@ character-stat display. Timing values can likewise use action-time thresholds:
 `actionTime` resolves independently for the skill's original cast time and each
 original action time before timing modifiers are applied. Thus a segmented
 `castTimeModifier` may adjust early and late actions by different amounts.
-Damage effects may similarly segment the current `distance` parameter.
+Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the current `distance` parameter in both expected and sampled calculations. Rodent coefficients use `[5, 12]` with `[0.63, 0.57, 0.6]`. Dragon's Breath retains its inclusive first-hit timing through the equivalent exclusive bound `1.3375000000000001` (the next representable number after `1.3375`).
 
 `switch` selects a value from an explicit keyed table. `param1` names the
 timeline-state value to inspect, `param2` maps possible values to results, and
@@ -1778,9 +1912,9 @@ matching actions alongside its separate active `dmgBonus` effect.
 Royal Remedy T0 grants Cloudburst Healing, including its cancel variant, `0.1`
 general Healing Bonus. T1 reacts to every `heal` action from a skill tagged
 `CloudburstHealing` and restores `2` Vitality, so all seven Fan Q heal ticks
-grant the resource independently. T2 adds `0.086` Effective Critical Rate and
-T5 adds `0.046` Direct Critical Rate. Seasonal Edge T2 adds `24.8` Min Physical
-Attack and `49.6` Max Physical Attack, while T5 adds `0.028` Physical DMG Bonus.
+grant the resource independently. T2 adds Solo Level-based Critical Rate (9% at Solo Level 17) and
+T5 adds `0.046` Direct Critical Rate. Seasonal Edge T2 adds Solo Level-based
+Physical Attack (25.9 Min and 51.9 Max at Solo Level 17), while T5 adds `0.028` Physical DMG Bonus.
 The T2 and T5 bonuses are unconditional stat effects resolved by the shared
 character-stat pipeline. Every Inner Way T2 and T5 stat bonus uses this form
 and appears in the appropriate Stats-page total. Physical Penetration is

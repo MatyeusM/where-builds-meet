@@ -1618,10 +1618,11 @@ function createTimelineEntryBuilder(
   const damageEntryStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const entriesForAction = (row: TimelineRow, actionIndex: number) => {
     const action = row.actions[actionIndex];
-    const accumulatorSnapshot =
+    const accumulatorThreshold =
       action.type === "apply" && action.target !== "target" && typeof action.value === "string"
         ? input.effectDefinitions[action.value]?.accumulator?.threshold
         : undefined;
+    const accumulatorSnapshot = typeof accumulatorThreshold === "object" ? accumulatorThreshold : undefined;
     if (action.type !== "damage" && action.type !== "heal" && !accumulatorSnapshot) return [];
     const actionTime = row.startTime + Number(action.time ?? 0);
     const actionOrder = row.order + 10 + actionIndex;

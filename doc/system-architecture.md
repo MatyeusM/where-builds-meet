@@ -689,6 +689,13 @@ causal order.
 Timestamps within `0.0001s` are treated as equal so rounded rotation data and floating-point arithmetic
 cannot place a displayed equal-time skill ahead of its event.
 
+Inner Way triggers can retain a rolling hit window and an independent proc
+cooldown within each timeline build. Window state is bounded by the configured
+hit count and updated on eligible damage events, including during cooldown.
+Probability-weighted expected damage is excluded from these windows; ordinary
+DPS evaluation is unchanged. This uses the existing trigger action executor and
+charge-reset wakeup path, with no additional scheduled polling events.
+
 The timeline owns mutable simulation state while it is being built:
 
 - active player buffs
@@ -804,8 +811,13 @@ assumed full and each contribute one-fifth of their own healing number to World
 to Sword. Every recipient emits a separate accumulator event. A single-target
 periodic heal assigned to a teammate
 also assumes that teammate is full, but contributes its complete healing rather
-than the group-heal one-fifth weight. Buff accumulators subscribe to explicitly named internal events;
-the timeline does not broadcast every combat action. World to Sword snapshots
+than the group-heal one-fifth weight. Buff accumulators subscribe to named events. Damage actions also feed a
+requirement-filtered count: numeric thresholds, data-defined increments, and
+`oncePerSkill` let Rodent Rampage count the first damage hit of each attack
+stage, including multi-action components. Its accumulator preserves progress on
+refresh and clears it on expiry or removal. Probability-weighted expected proc
+rows do not advance the damage counter. Threshold objects continue to request
+attack snapshots, while numeric thresholds work directly in the timeline. World to Sword snapshots
 its threshold from fully buffed Physical/Silkbind attack at its own cast event, accepts `overheal`, and
 checks only on overheal or a Qi Blade's delayed `QiBladeCheck`. Expected and
 simulation modes both reset the accumulator after a launch. Healing received
@@ -1285,9 +1297,11 @@ from data.
   requirements and object-valued effects. Effective definitions participate in
   calculation fingerprints, so saving or resetting an override cannot reuse a
   stale baseline or comparison result.
-  The existing storage key now contains a `{ version: 2, overrides }` envelope.
+  The existing storage key now contains a `{ version: 3, overrides }` envelope. Older segment thresholds migrate from
+  inclusive to exclusive bounds using the next representable number, preserving
+  saved calculation behavior. New authored tables use exact exclusive breakpoints.
   Legacy unwrapped overrides copy `phyCoef` into missing damage `attrCoef` or
-  healing `silkbindCoef` fields on load. Version 2 preserves intentionally omitted
+  healing `silkbindCoef` fields on load. Versions 2 and 3 preserve intentionally omitted
   coefficients as zero, including physical-only damage actions.
 - Manual event definitions and supported weapons are hard-coded.
 - Primary-attribute damage resolution supports the registered Stonesplit and

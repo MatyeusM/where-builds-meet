@@ -77,6 +77,8 @@ import panaceaSkills from "../data/skill/panacea-fan.json";
 import soulshadeSkills from "../data/skill/soulshade-umbrella.json";
 import mysticSkills from "../data/skill/mystic.json";
 import generalSkills from "../data/skill/general.json";
+import infernalSkills from "../data/skill/infernal-twinblades.json";
+import mortalSkills from "../data/skill/mortal-rope-dart.json";
 import mysticBuffs from "../data/buff/mystic.json";
 import generalBuffs from "../data/buff/general.json";
 import stonesplitStrengthBuffs from "../data/buff/stonesplit-strength.json";
@@ -367,6 +369,8 @@ const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Skygrasp: skygraspSkills as SkillMap,
   Panacea: panaceaSkills as SkillMap,
   Soulshade: soulshadeSkills as SkillMap,
+  Infernal: infernalSkills as SkillMap,
+  Mortal: mortalSkills as SkillMap,
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
 };
@@ -408,6 +412,8 @@ const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   skygrasp: "Skygrasp",
   panaceaFan: "Panacea",
   soulshadeUmbrella: "Soulshade",
+  infernalTwinblades: "Infernal",
+  mortalRopeDart: "Mortal",
 };
 const rotationEventDefinitions: Record<string, SkillRecord> = {
   Controlled: {
@@ -566,6 +572,8 @@ const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Skygrasp: "skygraspRopeDart",
   Panacea: "panaceaFan",
   Soulshade: "soulshadeUmbrella",
+  Infernal: "infernalTwinblades",
+  Mortal: "mortalRopeDart",
   Mystic: "mystic",
   General: "general",
 };
@@ -5238,6 +5246,10 @@ function SkillEditorTab({
         return "Snowparting Blade";
       case "Phalanxbane":
         return "Phalanxbane Blade";
+      case "Infernal":
+        return "Infernal Twinblades";
+      case "Mortal":
+        return "Mortal Rope Dart";
       case "Soulshade":
         return "Soulshade Umbrella";
       case "Panacea":

@@ -1,9 +1,18 @@
 {
   "PiercingDamage": {
     "name": "Piercing Damage",
-    "damageGroup": { "id": "FivefoldBleed", "name": "Fivefold Bleed" },
+    "damageGroup": {
+      "id": "FivefoldBleed",
+      "name": "Fivefold Bleed"
+    },
     "castTime": 0,
-    "action": [{ "type": "damage", "phyCoef": 1, "time": 0 }],
+    "action": [
+      {
+        "type": "damage",
+        "phyCoef": 1,
+        "time": 0
+      }
+    ],
     "modifier": [],
     "tags": ["Triggered", "DirectDamage", "PiercingDamage"]
   },
@@ -158,7 +167,10 @@
   },
   "MoraleChant": {
     "name": "Morale Chant",
-    "damageGroup": { "id": "MoraleChant", "name": "Morale Chant" },
+    "damageGroup": {
+      "id": "MoraleChant",
+      "name": "Morale Chant"
+    },
     "castTime": 0,
     "cooldown": 10,
     "action": [
@@ -284,6 +296,18 @@
           "resolveAt": "skillStart"
         },
         "time": 0
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Samsara",
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT3"
+          }
+        ]
       }
     ],
     "modifier": [],
@@ -398,6 +422,18 @@
           "resolveAt": "skillStart"
         },
         "time": 0
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Samsara",
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT3"
+          }
+        ]
       }
     ],
     "modifier": [],

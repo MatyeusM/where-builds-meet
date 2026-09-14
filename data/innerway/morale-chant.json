@@ -1,7 +1,17 @@
 {
   "name": "Morale Chant",
   "altersTimeline": true,
-  "tags": ["StonesplitStrength", "StonesplitMight", "BamboocutKite", "SilkbindDeluge"],
+  "tags": [
+    "StonesplitStrength",
+    "StonesplitMight",
+    "BamboocutKite",
+    "SilkbindDeluge",
+    "BellstrikeSplendor",
+    "BellstrikeUmbra",
+    "SilkbindJade",
+    "BamboocutWind",
+    "BamboocutDust"
+  ],
   "effect": {
     "MoraleChantT0": {
       "trigger": [

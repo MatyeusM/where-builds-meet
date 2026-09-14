@@ -3,8 +3,32 @@
   "altersTimeline": true,
   "tags": ["BamboocutWind"],
   "effect": {
-    "VendettaT0": {},
-    "VendettaT1": {},
+    "VendettaT0": {
+      "effect": [
+        {
+          "target": "RodentRampage",
+          "modify": {
+            "duration": 25
+          }
+        },
+        {
+          "target": "VendettaToken",
+          "modify": {
+            "duration": 15
+          }
+        }
+      ]
+    },
+    "VendettaT1": {
+      "effect": [
+        {
+          "target": "VendettaToken",
+          "modify": {
+            "duration": 20
+          }
+        }
+      ]
+    },
     "VendettaT2": {
       "effect": [
         {
@@ -50,6 +74,27 @@
         }
       ]
     },
-    "VendettaT6": {}
+    "VendettaT6": {
+      "effect": [
+        {
+          "target": "VendettaToken",
+          "modify": {
+            "effect": [
+              {
+                "requirement": [
+                  {
+                    "target": "skillTag",
+                    "value": "Rodent"
+                  }
+                ],
+                "effect": {
+                  "dmgBonus": 0.3
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
   }
 }

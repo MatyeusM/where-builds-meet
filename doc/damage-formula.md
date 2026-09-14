@@ -24,6 +24,12 @@ Actions tagged `Rodent` gain a fixed 9% plus up to another 12% Physical and
 Bamboocut DMG Bonus, scaling at `0.00016 × raw Min Physical Attack` to the cap
 at 750. This uses the existing additive channel bonuses and raw-stat stages.
 Its Attr. Attack DMG UP also uses the shared primary-path multiplier.
+Rodent's physical and attribute coefficients are both 0.63 below 5m, 0.57 from
+5m to below 12m, and 0.6 at 12m or more. Rodent Rampage launches it once per
+Infernal/Mortal light-attack stage and once per two stages of other martial arts.
+Echoes T6 adds two more launches on FA5's first hit while the buff and Flamelash
+are active. Expected and sampled calculations use the same definite trigger
+schedule; individual damage outcomes remain mode-dependent.
 
 Combat inclusion and the DPS/HPS duration follow the
 [rotation event-loop endpoint](rotation-event-loop.md). Explicit Battle End
@@ -337,6 +343,13 @@ The action's `attrBonus` is added only to the primary path. Physical and attribu
 
 ### Periodic probability scaling
 
+Echoes of Oblivion T4 deliberately excludes all probability-weighted damage
+actions from its expected six-hit window, even when a row reaches probability
+one. Their expected damage remains included in DPS. Only definite hit events
+can reset Addled Mind in expected timelines; sampled simulation counts actual
+successful proc hits. This keeps expected charge-reset timing independent of
+chance estimates.
+
 All DOTs deal their authored damage once per active tick, regardless of stack count.
 Stacks can still determine effect transitions, including Weeping Blood's five-stack
 consumption, but do not multiply tick damage. For expected chance DOTs the timeline
@@ -531,7 +544,7 @@ Take Damage events subtract an absolute amount. Damage effects continue to read
 the derived percentage at hit time.
 
 Dynamic stat and effective-stat values may use `function: "segment"` with
-`param1: "maxHp"`. Its explicit inclusive thresholds are stored in `param2`
+`param1: "maxHp"`. Its explicit exclusive thresholds are stored in `param2`
 and corresponding results in `param3`; values beyond the final threshold use
 the final result. Thundercry Blade uses this for its Charged/Varied Combo Max
 Physical Attack and Effective Critical Rate talents. The
@@ -540,8 +553,10 @@ matching damage actions rather than adding them to the displayed global stats.
 
 Numeric damage-effect values may also use the data-defined `segment` function.
 When `param1` is `distance`, the action's distance snapshot is compared against
-the inclusive upper bounds in `param2`; the matching value comes from the same
-index in `param3`, and values above every bound use its extra final entry.
+the exclusive upper bounds in `param2`; the matching value comes from the same
+index in `param3`, and values equal to or above every bound use its extra final entry. Damage-action
+`phyCoef` and `attrCoef` use the same resolver and the action's distance snapshot,
+including in sampled damage calculations.
 
 The selected Divinecraft contributes its `hpDMGBonus` through this category.
 Divinecraft `qiDMGBonus` and healing-triggered Vitality gain are retained in
@@ -601,7 +616,11 @@ actions, even when the casting skill applies or extends a DOT. Soul-Shaken uses
 this field for its general DOT vulnerability and its additional Umbra-source
 vulnerability.
 
-DMG Bonus Category 2 is reserved for effects such as Mortal Rope Dart Vendetta Token, but it is not implemented in the calculator yet.
+Vendetta Token uses `baseDMGBonus: 0.5` for Rodent-tagged attacks, following the
+confirmed base-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
+while the same self buff is active. These bonuses belong to separate existing
+categories: without other bonuses they multiply to `1.5 × 1.3 = 1.95`.
+Other attacks receive neither bonus. No Category 2 multiplier is introduced.
 
 ### Outcome multiplier
 

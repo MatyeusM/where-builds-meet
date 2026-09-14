@@ -10,6 +10,8 @@ export type SkillCategory =
   | "Skygrasp"
   | "Panacea"
   | "Soulshade"
+  | "Infernal"
+  | "Mortal"
   | "Mystic"
   | "General";
 export type EditorCategory = SkillCategory | "Buff" | "Debuff" | "DOT";
@@ -18,7 +20,8 @@ export type SkillOverrides = Partial<Record<EditorCategory, SkillMap>>;
 export function deserializeSkillOverrides(value: unknown): SkillOverrides {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const stored = value as Record<string, unknown>;
-  const currentCoefficients = stored.version === 2;
+  const currentCoefficients = stored.version === 2 || stored.version === 3;
+  const exclusiveSegments = stored.version === 3;
   const migrate = (entry: unknown): unknown => {
     if (Array.isArray(entry)) return entry.map(migrate);
     if (!entry || typeof entry !== "object") return entry;
@@ -26,6 +29,27 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     if (record.stackDamage !== undefined) {
       if (record.stackDamage === true && record.tickOnExpire === undefined) record.tickOnExpire = false;
       delete record.stackDamage;
+    }
+    if (
+      !exclusiveSegments &&
+      record.function === "segment" &&
+      Array.isArray(record.param2) &&
+      Array.isArray(record.param3)
+    ) {
+      // The next representable number preserves every finite input of the old <= comparison.
+      const bytes = new DataView(new ArrayBuffer(8));
+      const maxIndex = record.param2.indexOf(Number.MAX_VALUE);
+      if (maxIndex >= 0) {
+        record.param2 = record.param2.slice(0, maxIndex);
+        record.param3 = record.param3.slice(0, maxIndex + 1);
+      }
+      record.param2 = (record.param2 as unknown[]).map((threshold) => {
+        if (typeof threshold !== "number" || !Number.isFinite(threshold)) return threshold;
+        if (threshold === 0) return Number.MIN_VALUE;
+        bytes.setFloat64(0, threshold);
+        bytes.setBigUint64(0, bytes.getBigUint64(0) + (threshold > 0 ? 1n : -1n));
+        return bytes.getFloat64(0);
+      });
     }
     switch (record.type) {
       case "damage":
@@ -41,7 +65,7 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
 }
 
 export function serializeSkillOverrides(overrides: SkillOverrides) {
-  return JSON.stringify({ version: 2, overrides });
+  return JSON.stringify({ version: 3, overrides });
 }
 
 export function resolveSkillCalculationDefinitions(

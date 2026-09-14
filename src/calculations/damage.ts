@@ -209,8 +209,8 @@ function calculateDamageBreakdownInternal(
     if (import.meta.env.DEV) finishCalculationPhase("damageEffectDynamicValueResolution", dynamicValueStartedAt);
     return resolved;
   };
-  const coefficient = numberValue(action.phyCoef);
-  const attributeCoefficient = numberValue(action.attrCoef);
+  const coefficient = effectValue(action.phyCoef);
+  const attributeCoefficient = effectValue(action.attrCoef);
   const physicalBonus = context.isDot ? 0 : numberValue(action.phyBonus);
   const attributeBonus = context.isDot ? 0 : numberValue(action.attrBonus);
   const path = mainAttributeForWeapons(weapons);

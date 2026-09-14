@@ -12,7 +12,8 @@ const viteServer = await createServer({
 try {
   const { buildRotationTimeline } = await viteServer.ssrLoadModule("/src/calculations/rotationTimeline.ts");
   const { calculateRotationBaseline } = await viteServer.ssrLoadModule("/src/calculations/rotationCalculator.ts");
-  const { calculateDamageBreakdown } = await viteServer.ssrLoadModule("/src/calculations/damage.ts");
+  const { calculateDamageBreakdown, calculateSimulatedDamageBreakdown } =
+    await viteServer.ssrLoadModule("/src/calculations/damage.ts");
   const { calculateDerivedStats } = await viteServer.ssrLoadModule("/src/calculations/effectiveStats.ts");
   const { emptyStats } = await viteServer.ssrLoadModule("/src/data/statDefinitions.ts");
   const assert = (condition, message) => {
@@ -180,6 +181,40 @@ try {
   assert(closeTo(damageAt(5) / baseline, 1.08), "Flute must grant 8% at 5m.");
   assert(closeTo(damageAt(9) / baseline, 1.2), "Flute must grant 20% at 9m.");
   assert(closeTo(damageAt(99) / baseline, 1.2), "Flute must cap at the final distance value.");
+
+  assert(closeTo(damageAt(1.999) / baseline, 1.02), "Flute remains at 2% below 2m.");
+  assert(closeTo(damageAt(2) / baseline, 1.03), "Flute advances to 3% at exactly 2m.");
+  const coefficient = { function: "segment", param1: "distance", param2: [5, 12], param3: [0.63, 0.57, 0.6] };
+  const coefficientStats = { ...stats, minBamboocut: 80, maxBamboocut: 80 };
+  for (const [distance, expected] of [
+    [4.999, 0.63],
+    [5, 0.57],
+    [11.999, 0.57],
+    [12, 0.6],
+    [20, 0.6],
+  ]) {
+    const context = {
+      ...baseContext,
+      distance,
+      stats: coefficientStats,
+      derivedStats: calculateDerivedStats(coefficientStats, 0),
+    };
+    for (const field of ["phyCoef", "attrCoef"]) {
+      const dynamicAction = { type: "damage", [field]: coefficient };
+      const numericAction = { type: "damage", [field]: expected };
+      for (const calculate of [
+        calculateDamageBreakdown,
+        (a, c) => calculateSimulatedDamageBreakdown(a, c, () => 0.5),
+      ]) {
+        const reference = calculate(numericAction, context).total;
+        assert(reference > 0, field + " must contribute damage in this probe.");
+        assert(
+          closeTo(calculate(dynamicAction, context).total, reference),
+          field + " must resolve the distance snapshot at " + distance,
+        );
+      }
+    }
+  }
 
   const integratedTimeline = {
     rotation: {

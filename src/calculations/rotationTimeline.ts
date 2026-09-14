@@ -414,9 +414,13 @@ export type EffectDefinition = {
   action?: unknown[];
   periodic?: PeriodicEffect;
   accumulator?: {
-    threshold?: { physical: number; silkbind: number };
+    threshold?: number | { physical: number; silkbind: number };
     event?: string;
     checkEvent?: string;
+    amount?: number | SwitchValue;
+    requirement?: unknown;
+    oncePerSkill?: boolean;
+    resetOnRefresh?: boolean;
   };
   listen?: Array<{
     event?: string;
@@ -1189,6 +1193,9 @@ function buildRotationTimelinePass(
   };
   const setBuffs = (next: TrackedEffect[]) => {
     buffs = prepareTrackedEffects(next);
+    for (const name of accumulatorStates.keys()) {
+      if (!buffs.some((effect) => effect.name === name)) accumulatorStates.delete(name);
+    }
     refreshUnconditionalDamageEffects();
   };
   const setDebuffs = (next: TrackedEffect[]) => {
@@ -1369,6 +1376,7 @@ function buildRotationTimelinePass(
     ]);
   });
   const innerWayTriggersByEvent = new Map<string, InnerWayEffectRule[]>();
+  const innerWayTriggerStates = new Map<InnerWayEffectRule, { hits: number[]; readyAt: number }>();
   innerWayRules.forEach((rule) => {
     const triggerEvent = rule.trigger?.event ?? "damage";
     if (triggerEvent === "damageOutcome" || typeof triggerEvent !== "string") return;
@@ -2629,9 +2637,60 @@ function buildRotationTimelinePass(
       for (const activeBuff of buffs) {
         const definition = effectDefinitions[activeBuff.name];
         const accumulatorDefinition = definition?.accumulator;
-        const accumulator = accumulatorStates.get(activeBuff.name);
-        if (!accumulatorDefinition || accumulatorDefinition.event !== eventName || !accumulator) continue;
-        accumulator.accumulated += amount;
+        if (!accumulatorDefinition || accumulatorDefinition.event !== eventName) continue;
+        if (
+          !requirementsPass(
+            accumulatorDefinition.requirement,
+            buffs,
+            debuffs,
+            skillTags,
+            innerWayConditions,
+            weapons,
+            resources,
+            requirementState(),
+          )
+        )
+          continue;
+        if (accumulatorDefinition.oncePerSkill) {
+          const stage = multiActionSegments
+            .get(event.row.id)
+            ?.find((segment) => segment.actionIndexes.includes(event.actionIndex ?? -1));
+          const firstDamageIndex = stage
+            ? stage.actionIndexes.find((index) => event.row.actions[index]?.type === "damage")
+            : event.row.actions.findIndex((entry) => entry.type === "damage");
+          if (event.actionIndex !== firstDamageIndex) continue;
+        }
+        let accumulator = accumulatorStates.get(activeBuff.name);
+        if (
+          !accumulator &&
+          typeof accumulatorDefinition.threshold === "number" &&
+          accumulatorDefinition.threshold > 0
+        ) {
+          accumulator = {
+            threshold: accumulatorDefinition.threshold,
+            accumulated: 0,
+            firedTriggers: 0,
+            nextReadyAt: event.time,
+            sourceRowId: activeBuff.sourceRowId ?? event.row.id,
+            expiresAt: activeBuff.expiresAt,
+          };
+          accumulatorStates.set(activeBuff.name, accumulator);
+        }
+        if (!accumulator) continue;
+        const configuredAmount = accumulatorDefinition.amount;
+        let increment: unknown;
+        switch (typeof configuredAmount) {
+          case "undefined":
+            increment = amount;
+            break;
+          case "number":
+            increment = configuredAmount;
+            break;
+          default:
+            increment = resolveSwitchValue(configuredAmount, requirementState());
+        }
+        if (typeof increment !== "number" || !Number.isFinite(increment) || increment <= 0) continue;
+        accumulator.accumulated += increment;
         if (accumulatorDefinition.checkEvent) emitCustomEvent(accumulatorDefinition.checkEvent);
       }
     };
@@ -2921,12 +2980,43 @@ function buildRotationTimelinePass(
           : rule.trigger?.action && typeof rule.trigger.action === "object"
             ? [rule.trigger.action]
             : [];
+        const hitWindow = rule.trigger?.hitWindow as { count: number; seconds: number } | undefined;
+        const triggerCooldown = rule.trigger?.cooldown;
+        let triggerState: { hits: number[]; readyAt: number } | undefined;
+        if (hitWindow || typeof triggerCooldown === "number") {
+          triggerState = innerWayTriggerStates.get(rule);
+          if (!triggerState) {
+            triggerState = { hits: [], readyAt: Number.NEGATIVE_INFINITY };
+            innerWayTriggerStates.set(rule, triggerState);
+          }
+          if (hitWindow) {
+            // Expected probability-weighted rows do not count, even at probability one.
+            // Sampled timelines contain concrete successful procs and may count those hits.
+            if (action.type !== "damage" || (!procRoll && action.hitProbability !== undefined)) return;
+            if (
+              !Number.isInteger(hitWindow.count) ||
+              hitWindow.count < 1 ||
+              !Number.isFinite(hitWindow.seconds) ||
+              hitWindow.seconds < 0
+            )
+              return;
+            triggerState.hits = triggerState.hits.filter(
+              (time) => compareTimelineTime(time, event.time - hitWindow.seconds) >= 0,
+            );
+            triggerState.hits.push(event.time);
+            if (triggerState.hits.length > hitWindow.count) triggerState.hits.shift();
+            if (triggerState.hits.length < hitWindow.count) return;
+          }
+          if (compareTimelineTime(event.time, triggerState.readyAt) < 0) return;
+        }
         triggerActions
           .filter(
             (triggerAction): triggerAction is EditableObject =>
               Boolean(triggerAction) && typeof triggerAction === "object" && !Array.isArray(triggerAction),
           )
           .forEach((triggerAction) => applyTriggerAction(triggerAction, "innerWay"));
+        if (triggerState && typeof triggerCooldown === "number" && triggerCooldown > 0 && triggerActions.length > 0)
+          triggerState.readyAt = event.time + triggerCooldown;
       });
     };
     if (event.kind === "start") {
@@ -2958,6 +3048,7 @@ function buildRotationTimelinePass(
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
       runSetupTriggers("damage");
       runInnerWayTriggers("damage");
+      if (procRoll || action.hitProbability === undefined) accumulateEventValue("damage", 1);
       if (event.row.expectedBranch) {
         const branch = event.row.expectedBranch;
         const active = activePeriodicEffects[periodicEffectKey("target", branch.effect)];
@@ -3155,13 +3246,20 @@ function buildRotationTimelinePass(
       }
       if (shouldApply && appliedEffect) {
         if (definition.accumulator) {
-          const threshold = resolvedAction?.accumulatorThreshold;
+          const threshold =
+            typeof definition.accumulator.threshold === "number"
+              ? definition.accumulator.threshold
+              : resolvedAction?.accumulatorThreshold;
           if (typeof threshold === "number" && Number.isFinite(threshold) && threshold > 0) {
+            const previous =
+              existing && definition.accumulator.resetOnRefresh === false
+                ? accumulatorStates.get(action.value)
+                : undefined;
             accumulatorStates.set(action.value, {
               threshold,
-              accumulated: 0,
-              firedTriggers: 0,
-              nextReadyAt: event.time,
+              accumulated: previous?.accumulated ?? 0,
+              firedTriggers: previous?.firedTriggers ?? 0,
+              nextReadyAt: previous?.nextReadyAt ?? event.time,
               sourceRowId: collection.sourceRowId,
               expiresAt: appliedEffect.expiresAt,
             });

@@ -1245,7 +1245,7 @@
           "castTimeModifier": {
             "function": "segment",
             "param1": "actionTime",
-            "param2": [1.3375],
+            "param2": [1.3375000000000001],
             "param3": [-0.7, -1]
           }
         }
@@ -1358,7 +1358,7 @@
           "castTimeModifier": {
             "function": "segment",
             "param1": "actionTime",
-            "param2": [1.3375],
+            "param2": [1.3375000000000001],
             "param3": [-0.7, -1]
           }
         }

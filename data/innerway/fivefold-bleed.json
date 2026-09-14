@@ -1,7 +1,7 @@
 {
   "name": "Fivefold Bleed",
   "altersTimeline": true,
-  "tags": ["SilkbindDeluge"],
+  "tags": ["SilkbindDeluge", "BamboocutWind"],
   "effect": {
     "FivefoldBleedT0": {
       "trigger": [

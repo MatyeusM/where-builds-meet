@@ -22,7 +22,7 @@ try {
   const { calculateEditorTimeline } = await server.ssrLoadModule("/src/calculations/editorTimeline.ts");
   const general = JSON.parse(await readFile("data/skill/general.json", "utf8"));
   const talent = JSON.parse(await readFile("data/martial-art/infernal-twinblades.json", "utf8"));
-  const charged = { castTime: 0, cooldown: 15, cooldownUses: 3, cooldownRecovery: "independent", action: [] };
+  const charged = JSON.parse(await readFile("data/skill/infernal-twinblades.json", "utf8")).AddledMind;
   const skills = {
     ...general,
     AddledMind: charged,
