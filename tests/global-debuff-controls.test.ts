@@ -1,0 +1,173 @@
+import { describe, expect, it } from "vitest";
+
+// Ported from script/probe/check-global-debuff-controls.mjs.
+describe("global-debuff-controls", () => {
+  it("Global debuff control and conditional-effect checks passed", async () => {
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
+    const { emptyStats } = await import("../src/data/statDefinitions.ts");
+    const { defaultGlobalDebuffs, globalBuffTimelineEffects, globalDebuffTimelineEffects, normalizeGlobalDebuffs } =
+      await import("../src/globalDebuffs.ts");
+    const delugeBuffs = (await import("../data/buff/silkbind-deluge.json")).default;
+    const generalDebuffs = (await import("../data/debuff/general.json")).default;
+    const strengthDebuffs = (await import("../data/debuff/stonesplit-strength.json")).default;
+    const mightDebuffs = (await import("../data/debuff/stonesplit-might.json")).default;
+    const splendorDebuffs = (await import("../data/debuff/bellstrike-splendor.json")).default;
+    const umbraDebuffs = (await import("../data/debuff/bellstrike-umbra.json")).default;
+    const dustDebuffs = (await import("../data/debuff/bamboocut-dust.json")).default;
+    const innerWayDebuffs = (await import("../data/debuff/innerway.json")).default;
+    const effectDefinitions = {
+      ...delugeBuffs,
+      ...generalDebuffs,
+      ...strengthDebuffs,
+      ...mightDebuffs,
+      ...splendorDebuffs,
+      ...umbraDebuffs,
+      ...dustDebuffs,
+      ...innerWayDebuffs,
+    };
+    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9;
+    const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 };
+    const enemy = {
+      name: "Probe",
+      level: 96,
+      defense: 408,
+      physicalResistance: 0,
+      bellstrikeResistance: 0,
+      stonesplitResistance: 0,
+      silkbindResistance: 0,
+      bamboocutResistance: 0,
+      judgementResistance: 0,
+    };
+    const exhaustedEvent = {
+      name: "Exhausted",
+      castTime: 0,
+      action: [{ type: "apply", target: "target", value: "Exhausted", stack: 1, time: 0 }],
+      tags: ["Event"],
+    };
+    const hit = (tags = [], appliesFearful = false) => ({
+      name: "Hit",
+      castTime: 1,
+      action: [
+        ...(appliesFearful ? [{ type: "apply", target: "target", value: "FearfulBlade", stack: 1, time: 0 }] : []),
+        { type: "damage", phyCoef: 1, attrCoef: 1, time: 1 },
+      ],
+      tags,
+    });
+    const result = (initialDebuffs, tags = [], exhausted = false, appliesFearful = false, initialBuffs = []) => {
+      const steps = exhausted
+        ? [
+            { type: "event", event: "Exhausted", startTime: 0 },
+            { type: "skill", skill: "Hit" },
+          ]
+        : [{ type: "skill", skill: "Hit" }];
+      const skillIndex = exhausted ? 1 : 0;
+      return calculateRotationBaseline({
+        timeline: {
+          rotation: { name: "Probe", steps, start: { step: skillIndex } },
+          skills: { Hit: hit(tags, appliesFearful) },
+          eventDefinitions: { Exhausted: exhaustedEvent },
+          dots: {},
+          effectDefinitions,
+          innerWayConditions: [],
+          innerWayRules: [],
+          setupEffects: [],
+          weapons: [],
+          initialDebuffs,
+          initialBuffs,
+        },
+        startAnchor: { rowId: `rotation-${skillIndex}` },
+        stats,
+        attunement: {},
+        enemy,
+        derivedStats: calculateDerivedStats(stats, 0),
+        weapons: [],
+        statPriority: [],
+        attunementPriority: [],
+        innerWayPriority: [],
+        setupComparisons: {},
+      }).metrics.dps;
+    };
+
+    expect(
+      JSON.stringify(normalizeGlobalDebuffs(null)) === JSON.stringify(defaultGlobalDebuffs),
+      "Missing stored controls must migrate to the all-off default.",
+    ).toBeTruthy();
+    const phantomEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, phantomChime: true });
+    expect(
+      phantomEffects[0]?.name === "PhantomChime" && phantomEffects[0]?.stack === 5 && phantomEffects[0]?.persistent,
+      "Phantom Chime On must initialize a permanent maximum-stack debuff.",
+    ).toBeTruthy();
+    const soulEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, soulShaken: true });
+    expect(
+      soulEffects[0]?.name === "SoulShaken" && soulEffects[0]?.stack === 5 && soulEffects[0]?.persistent,
+      "Soul-Shaken On must initialize a permanent maximum-stack debuff.",
+    ).toBeTruthy();
+    const qingyiEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, qingyisCharm: "T6" });
+    expect(
+      qingyiEffects[0]?.name === "QingyisCharmT6" && qingyiEffects[0]?.stack === 5 && qingyiEffects[0]?.persistent,
+      "Bitter Seasons T6 must initialize its permanent maximum-stack debuff.",
+    ).toBeTruthy();
+
+    const baseline = result([]);
+    const mixedGraceEffects = globalBuffTimelineEffects({ ...defaultGlobalDebuffs, floatingGrace: "mixed" });
+    const delugeGraceEffects = globalBuffTimelineEffects({ ...defaultGlobalDebuffs, floatingGrace: "deluge" });
+    expect(
+      mixedGraceEffects[0]?.name === "FloatingGrace" && mixedGraceEffects[0]?.persistent,
+      "Floating Grace Mixed must initialize the permanent 10% base buff.",
+    ).toBeTruthy();
+    expect(
+      delugeGraceEffects[0]?.name === "FloatingGraceDeluge" && delugeGraceEffects[0]?.persistent,
+      "Floating Grace Deluge must initialize the permanent 24% Deluge buff.",
+    ).toBeTruthy();
+    expect(
+      closeTo(result([], [], false, false, mixedGraceEffects) / baseline, 1.1),
+      "Floating Grace Mixed must increase general damage by 10%.",
+    ).toBeTruthy();
+    expect(
+      closeTo(result([], [], false, false, delugeGraceEffects) / baseline, 1.24),
+      "Floating Grace Deluge must increase general damage by 24%.",
+    ).toBeTruthy();
+    const phantom = result(phantomEffects);
+    expect(
+      closeTo(phantom / baseline, 1.05),
+      "Phantom Chime must reduce flat Physical Resistance through the full rotation path.",
+    ).toBeTruthy();
+    const qingyi = result(qingyiEffects);
+    expect(
+      closeTo(qingyi, (1000 - 408 * 0.94) * 1.05),
+      "Qingyi's Charm T6 must combine defense and Physical Resistance reductions.",
+    ).toBeTruthy();
+
+    const vulnerableEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, vulnerable: true });
+    expect(
+      closeTo(result(vulnerableEffects) / baseline, 1.08),
+      "Vulnerable must give its shared 8% to non-Might damage.",
+    ).toBeTruthy();
+    expect(
+      closeTo(result(vulnerableEffects, ["StormbreakerSpear"]) / baseline, 1.16),
+      "Vulnerable must give an additional 8% to Might damage.",
+    ).toBeTruthy();
+    const fearfulEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, fearfulBlade: true });
+    expect(
+      closeTo(result(fearfulEffects, ["SnowpartingBlade"]) / baseline, 1.08),
+      "Fearful Blade must give its conditional 8% to Strength damage.",
+    ).toBeTruthy();
+    expect(
+      closeTo(result(fearfulEffects, ["SnowpartingBlade"], false, true) / baseline, 1.08),
+      "A rotation-applied Fearful Blade must merge with the permanent global debuff instead of doubling it.",
+    ).toBeTruthy();
+
+    const qiEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, qiImbalance: true });
+    expect(
+      closeTo(result(qiEffects) / baseline, 1),
+      "Qi Imbalance's HP bonus must remain inactive outside Exhausted.",
+    ).toBeTruthy();
+    const exhaustedBaseline = result([], [], true);
+    const exhaustedQi = result(qiEffects, [], true);
+    expect(
+      closeTo(exhaustedQi / exhaustedBaseline, 1.18 / 1.1),
+      "Qi Imbalance must add 8% to the global category during Exhausted.",
+    ).toBeTruthy();
+  });
+});

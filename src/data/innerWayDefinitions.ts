@@ -124,7 +124,8 @@ export const innerWayDefinitions = {
 export function innerWayAvailableForTag(innerWay: string, requiredTag?: string) {
   if (!innerWay || !requiredTag) return true;
   const definition = innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions] as
-    InnerWayDefinition | undefined;
+    | InnerWayDefinition
+    | undefined;
   return definition?.tags?.includes(requiredTag) === true;
 }
 

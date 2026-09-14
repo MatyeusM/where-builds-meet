@@ -331,7 +331,7 @@ indexes. Ordinary applications still transform all partitions. Releasing a branc
 merges only its states into the unconditioned partition, preserving absolute mass,
 expiry, cadence and owner. Clock-driven ticks and expiration queries inspect all
 applicable states; this is not a global joint-probability engine for unrelated
-buffs or resources. `check-periodic-branch-isolation.mjs` covers overlapping branches,
+buffs or resources. `tests/periodic-branch-isolation.test.ts` covers overlapping branches,
 conditional chances, owner-specific expiration, and probability conservation.
 `script/probe/benchmark-fivefold-bleed.mjs` measures timeline runtime, output rows,
 peak combat states, and executed tick/expiration checks for dense distinct-cadence hits.

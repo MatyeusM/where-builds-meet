@@ -142,7 +142,15 @@ export function normalizeStoredWeaponIds(value: unknown): WeaponId[] {
   return isLegacyUniversal ? [...weaponIds] : parsed;
 }
 export type WeaponFamily =
-  "HengBlade" | "MoBlade" | "Spear" | "Umbrella" | "RopeDart" | "Gauntlet" | "Sword" | "Fan" | "DualBlades";
+  | "HengBlade"
+  | "MoBlade"
+  | "Spear"
+  | "Umbrella"
+  | "RopeDart"
+  | "Gauntlet"
+  | "Sword"
+  | "Fan"
+  | "DualBlades";
 
 export type StatKey = keyof CharacterStats;
 

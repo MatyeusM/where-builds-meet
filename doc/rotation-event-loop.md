@@ -102,7 +102,7 @@ An earlier paired run measured 164 / 104 / 92 ms total respectively. Both new
 backends materially improve on the reference; their relative advantage varies
 between runs. Indexed lists remain the default with constant-time unlinking and
 slot reuse, while packed arrays remain available for comparison.
-`check-periodic-state-storage.mjs` compares both backends to the committed tracker
+`tests/periodic-state-storage.test.ts` compares both backends to the committed tracker
 across randomized owners, gains, refreshes, expirations, conditional follow-ups and
 exact/shared cadences, and verifies sorted insertion and recycled-slot isolation.
 
@@ -140,7 +140,7 @@ variation does not establish an additional speedup over the former threshold.
 
 ### Incremental scheduling
 
-`script/probe/check-incremental-timeline.mjs` checks live cooldown-reset wakeups,
+`tests/incremental-timeline.test.ts` checks live cooldown-reset wakeups,
 attachment timing, cast/Delay/Battle End cutoffs, lazy expansion, editable
 unreached steps, timed-only encounters, and legacy wait migration.
 The replay and healing probes give delayed follow-ups an explicit combat window.

@@ -1,5 +1,15 @@
 export type UiIconName =
-  "active" | "arrowUp" | "chevronDown" | "chevronRight" | "close" | "edit" | "plus" | "reset" | "trash" | "up" | "down";
+  | "active"
+  | "arrowUp"
+  | "chevronDown"
+  | "chevronRight"
+  | "close"
+  | "edit"
+  | "plus"
+  | "reset"
+  | "trash"
+  | "up"
+  | "down";
 
 export function UiIcon({ name }: { name: UiIconName }) {
   let content;

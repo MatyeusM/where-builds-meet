@@ -111,6 +111,6 @@ Legacy raw-input diagnostic bundles are normalized once at the worker boundary.
 - `rotationCalculator.ts`: variant deltas, global baseline, and skill cache.
 - `unconditionalDamageEffects.ts`: shared lifecycle contribution aggregate.
 - `actionStats.ts`: shared damage/healing action snapshot and cache.
-- `script/probe/check-stat-stages.mjs`: observable stage boundaries, food
+- `tests/stat-stages.test.ts`: observable stage boundaries, food
   retention, raw talent sources, global application, buff expiration, comparisons,
   healing, and uncapped-input preservation.

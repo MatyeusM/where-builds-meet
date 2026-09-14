@@ -78,15 +78,15 @@ export function resolveSkillCalculationDefinitions(
     {},
     ...(Object.entries(defaultSkillMaps) as Array<[SkillCategory, SkillMap]>).map(([category, definitions]) => ({
       ...definitions,
-      ...(overrides[category] ?? {}),
+      ...overrides[category],
     })),
   ) as SkillMap;
-  const dots = { ...defaultDotDefinitions, ...(overrides.DOT ?? {}) };
+  const dots = { ...defaultDotDefinitions, ...overrides.DOT };
   const effectDefinitions = {
     ...defaultEffectDefinitions,
-    ...(overrides.Buff ?? {}),
-    ...(overrides.Debuff ?? {}),
-    ...(overrides.DOT ?? {}),
+    ...overrides.Buff,
+    ...overrides.Debuff,
+    ...overrides.DOT,
   } as Record<string, EffectDefinition>;
   return { skills, dots, effectDefinitions };
 }

@@ -722,7 +722,7 @@ export function duplicateBuildState(
   if (!source.isDefault) {
     return {
       ...current,
-      entries: [...current.entries, { ...baseEntry, equipped: { ...(source.equipped ?? {}) } }],
+      entries: [...current.entries, { ...baseEntry, equipped: { ...source.equipped } }],
     };
   }
 

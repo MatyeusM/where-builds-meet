@@ -39,11 +39,14 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
 
       - name: Check deployment update behavior
-        run: node script/probe/check-deployment-updates.mjs
+        run: npx vitest run tests/deployment-updates.test.ts
 
       - name: Configure Pages
         id: pages

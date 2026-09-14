@@ -50,8 +50,7 @@
   .rotation-list-heading .button {
     inline-size: auto;
     min-inline-size: 0;
-    padding-inline-end: 6px;
-    padding-inline-start: 6px;
+    padding-inline: 6px;
     line-height: 1.15;
     text-align: center;
     white-space: nowrap;
@@ -488,8 +487,7 @@
   .rotation-skill-select-wrap > .rotation-skill-label {
     position: absolute;
     inset-block-start: 50%;
-    inset-inline-end: 34px;
-    inset-inline-start: 10px;
+    inset-inline: 10px 34px;
     z-index: 1;
     transform: translateY(-50%);
     pointer-events: none;
@@ -559,8 +557,7 @@
 
   .rotation-distance-input-wrap .rotation-event-time {
     inline-size: 52px;
-    padding-inline-end: 5px;
-    padding-inline-start: 5px;
+    padding-inline: 5px;
   }
 
   .rotation-effect-select {
@@ -800,13 +797,16 @@
     .rotation-table {
       min-inline-size: 920px;
     }
+
     .rotation-table.show-distance,
     .rotation-table.show-hp {
       min-inline-size: 982px;
     }
+
     .rotation-table.show-distance.show-hp {
       min-inline-size: 1055px;
     }
+
     .rotation-table-header,
     .rotation-table-row,
     .rotation-action-row {
@@ -815,6 +815,7 @@
         170px;
       gap: 8px;
     }
+
     .rotation-table.show-distance .rotation-table-header,
     .rotation-table.show-distance .rotation-table-row,
     .rotation-table.show-distance .rotation-action-row,
@@ -825,6 +826,7 @@
         26px 36px 92px 82px minmax(110px, 1.5fr) 66px minmax(140px, 0.9fr) minmax(80px, 1fr) minmax(80px, 1fr)
         170px;
     }
+
     .rotation-table.show-distance.show-hp .rotation-table-header,
     .rotation-table.show-distance.show-hp .rotation-table-row,
     .rotation-table.show-distance.show-hp .rotation-action-row {
@@ -832,9 +834,11 @@
         26px 36px 92px 82px minmax(110px, 1.5fr) 66px 66px minmax(140px, 0.9fr) minmax(80px, 1fr)
         minmax(80px, 1fr) 170px;
     }
+
     .rotation-event-time {
       inline-size: 82px;
     }
+
     .rotation-distance-input-wrap .rotation-event-time {
       inline-size: 45px;
     }
@@ -846,6 +850,7 @@
       max-block-size: none;
       grid-template-columns: 1fr;
     }
+
     .rotation-list {
       block-size: 260px;
       max-block-size: 260px;
@@ -853,14 +858,17 @@
       border-inline-end: 0;
       border-block-end: 1px solid var(--border);
     }
+
     .rotation-basic-fields,
     .rotation-step-fields {
       grid-template-columns: 1fr;
     }
+
     .viewport-page-shell .rotation-editor-layout {
       block-size: 100%;
       grid-template-rows: 180px minmax(0, 1fr);
     }
+
     .viewport-page-shell .rotation-list {
       block-size: 180px;
       max-block-size: 180px;

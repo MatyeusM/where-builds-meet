@@ -4,7 +4,6 @@ import {
   type AttachedEventTarget,
   type RotationRecord,
   type RotationStep,
-  type TimelineRow,
 } from "./calculations/rotationTimeline";
 
 export function isAutomaticCooldownDelay(step: RotationStep | undefined): boolean {

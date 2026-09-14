@@ -6,31 +6,59 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate:presets && npm run test:innerways && npm run test:wts && npm run test:sets && npm run test:dps && npm run i18n:check && tsc -b && vite build",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
+    "build": "npm run validate:presets && npm run test:innerways && npm run test:wts && npm run test:sets && npm run test:dps && npm run i18n:check && npm run test && tsc -b && vite build",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint && stylelint \"src/**/*.css\"",
+    "lint:fix": "oxlint --fix && stylelint --fix \"src/**/*.css\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b",
+    "prepare": "husky",
     "i18n:extract": "node script/i18n/extract.mjs",
     "i18n:check": "node script/i18n/extract.mjs --check",
-    "validate:presets": "node script/probe/check-preset-eligibility.mjs",
+    "validate:presets": "vitest run tests/preset-eligibility.test.ts",
     "preview": "vite preview",
-    "test:wts": "node script/probe/check-wts-cast-snapshot.mjs && node script/probe/check-healing.mjs && node script/probe/check-damage-replay.mjs && node script/probe/check-damage-recording.mjs",
-    "test:dps": "node script/probe/check-dps-snapshot-guard.mjs && node script/probe/check-dps-snapshots.mjs",
-    "snapshots:dps:update": "node script/probe/check-dps-snapshots.mjs --update",
-    "test:innerways": "node script/probe/check-innerway-filter.mjs && node script/probe/check-innerway-stat-visibility.mjs && node script/probe/check-innerway-catalog.mjs && node script/probe/check-echoes-t4.mjs && node script/probe/check-rodent-rampage.mjs && node script/probe/check-vendetta.mjs && node script/probe/check-draught-innerways.mjs && node script/probe/check-innerway-solo-level.mjs",
-    "test:sets": "node script/probe/check-weapon-set-four-piece.mjs"
+    "test:wts": "vitest run tests/wts-cast-snapshot.test.ts tests/healing.test.ts tests/damage-replay.test.ts tests/damage-recording.test.ts",
+    "test:sets": "vitest run tests/weapon-set-four-piece.test.ts",
+    "test:dps": "vitest run tests/dps-snapshot-guard.test.ts tests/dps-snapshots.test.ts",
+    "snapshots:dps:update": "vitest run tests/dps-snapshots.test.ts",
+    "test:innerways": "vitest run tests/innerway-filter.test.ts tests/innerway-stat-visibility.test.ts tests/innerway-catalog.test.ts tests/echoes-t4.test.ts tests/rodent-rampage.test.ts tests/vendetta.test.ts tests/draught-innerways.test.ts tests/innerway-solo-level.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans": "^5.3.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.2",
-    "prettier": "3.9.6",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.3"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "esbuild": "^0.28.2",
+    "husky": "^9.1.7",
+    "jsdom": "^30.0.1",
+    "lint-staged": "^17.5.1",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
+    "stylelint": "^17.15.0",
+    "stylelint-config-standard": "^40.0.0",
+    "typescript": "^7.0.2",
+    "typescript-classic": "npm:typescript@^5.9.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": [
+      "oxlint --fix",
+      "oxfmt --write"
+    ],
+    "*.{json,jsonc,md}": [
+      "oxfmt --write"
+    ],
+    "*.css": [
+      "stylelint --fix",
+      "oxfmt --write"
+    ]
   }
 }
