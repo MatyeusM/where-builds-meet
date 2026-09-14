@@ -1150,8 +1150,9 @@ One set option may provide either one setup-effect object or an array of setup
 effects. Arrays allow unconditional stats and action-time rules to coexist in
 the same tier. An explicit empty `requirement` array is unconditional: its stat
 fields belong to the character sheet, while damage fields remain action effects.
-Rain Whisper four-piece uses one for its unconditional Critical DMG bonus and a
-Shield requirement for its additional Critical DMG bonus.
+Rain Whisper four-piece uses one for its unconditional Critical DMG and Critical
+Healing bonuses and a Shield requirement for the additional bonuses. Its
+`altersTimeline` flag is true because healing can change overhealing and triggered events.
 
 The set catalog includes all 12 weapon sets, 12 armor sets, and three bow/ring
 sets from `local/datamine/wwm-item-sets-{weapon,armor,bow-ring}.json`. Two-piece
@@ -1161,9 +1162,10 @@ rounded `78` for Cleftpeak and Etherwrath; percentage bonuses retain the source 
 Armor bonuses add `39` Physical Defense (`physicalDefense`, not the Defense
 attribute) or `2960` Max HP through `rawStat`. Max-HP sets rebuild comparison
 timelines because HP can affect healing, overhealing, and triggered events.
-Four-piece options include their two-piece stats exactly once. Existing
-four-piece mechanics are preserved; newly registered sets currently provide
-only their two-piece stats even when four pieces are selected.
+Four-piece options include their two-piece stats exactly once. Implemented
+four-piece effects and unresolved cases are listed in the
+[weapon-set four-piece audit](weapon-set-four-piece.md). Deferred options
+continue to provide only their two-piece stats.
 
 Swallowcall is eligible for Bamboocut Wind, Infernal Twinblades, and Mortal Rope
 Dart. Other existing eligibility tags are preserved; newly registered sets

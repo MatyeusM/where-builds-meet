@@ -40,14 +40,15 @@
               "stack": 1,
               "reapply": true
             }
-          }
+          },
+          "condition": "Cleftpeak4P"
         }
       }
     }
   },
   "RainWhisper": {
     "name": "Rain Whisper",
-    "altersTimeline": false,
+    "altersTimeline": true,
     "tags": [
       "StonesplitStrength",
       "StonesplitMight",
@@ -85,7 +86,8 @@
           {
             "requirement": [],
             "effect": {
-              "critDmgBonus": 0.1
+              "critDmgBonus": 0.1,
+              "criticalHealingBonus": 0.1
             }
           },
           {
@@ -96,7 +98,8 @@
               }
             ],
             "effect": {
-              "critDmgBonus": 0.15
+              "critDmgBonus": 0.15,
+              "criticalHealingBonus": 0.15
             }
           }
         ]
@@ -329,11 +332,85 @@
       },
       "4": {
         "name": "4",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
+        "effect": [
+          {
+            "rawStat": {
+              "minPhys": 77.8
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">",
+                "amount": 50
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.05
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">=",
+                "amount": 55
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.01
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">=",
+                "amount": 60
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.01
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">=",
+                "amount": 65
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.01
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">=",
+                "amount": 70
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.01
+            }
+          },
+          {
+            "requirement": [
+              {
+                "target": "targetHPPercentage",
+                "comparison": ">=",
+                "amount": 75
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.01
+            }
           }
-        }
+        ]
       }
     }
   },
@@ -356,11 +433,74 @@
       },
       "4": {
         "name": "4",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
+        "effect": [
+          {
+            "rawStat": {
+              "minPhys": 77.8
+            }
+          },
+          {
+            "requirement": [
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "skillTag",
+                    "value": "Light"
+                  },
+                  {
+                    "target": "skillTag",
+                    "value": "Rodent"
+                  }
+                ]
+              }
+            ],
+            "effect": {
+              "hpDMGBonus": 0.12
+            }
+          },
+          {
+            "requirement": [
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "skillTag",
+                    "value": "Light"
+                  },
+                  {
+                    "target": "skillTag",
+                    "value": "Rodent"
+                  }
+                ]
+              },
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "targetQiPercentage",
+                    "comparison": "<",
+                    "amount": 40
+                  },
+                  {
+                    "target": "target",
+                    "value": "BoneCorrosion"
+                  },
+                  {
+                    "target": "target",
+                    "value": "QiImbalance"
+                  }
+                ]
+              }
+            ],
+            "effect": {
+              "stat": {
+                "physDmgBonus": 0.06,
+                "bamboocutDmgBonus": 0.06
+              }
+            }
           }
-        }
+        ]
       }
     }
   },
