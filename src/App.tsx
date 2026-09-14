@@ -1634,7 +1634,8 @@ function loadStats(): CharacterStats {
     const currentSaved = localStorage.getItem(storageKey);
     const isLegacy = currentSaved === null;
     const saved = JSON.parse(currentSaved ?? localStorage.getItem(legacyStorageKey) ?? "null") as
-      (Partial<CharacterStats> & Record<string, unknown> & { attributeDmgBonus?: unknown }) | null;
+      | (Partial<CharacterStats> & Record<string, unknown> & { attributeDmgBonus?: unknown })
+      | null;
     if (!saved) return { ...emptyStats };
     const legacyAttributeBonus =
       typeof saved.attributeDmgBonus === "number" && Number.isFinite(saved.attributeDmgBonus)
@@ -2738,7 +2739,7 @@ function StatsTab({
   useEffect(() => setPersistentItem(divinecraftStorageKey, divinecraft), [divinecraft]);
   useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs]);
 
-  const { arsenal, bowRingSet, weaponSets, armorSets, innerWays } = buildSetup;
+  const { arsenal, bowRingSet, innerWays } = buildSetup;
   const currentProfileData = {
     statOverrides,
     attunementOverrides,
@@ -4309,7 +4310,7 @@ function ActionDetails({
   }
   function setConsumeResolveAtSkillStart(enabled: boolean) {
     if (!firstConsume) return;
-    const nextValue = { ...(consumeValueObject ?? {}) };
+    const nextValue = { ...consumeValueObject };
     if (enabled) nextValue.resolveAt = "skillStart";
     else delete nextValue.resolveAt;
     set("value", nextValue);
@@ -5087,10 +5088,7 @@ function SkillEditorTab({
     else dismissNotice("skill-save");
   };
 
-  const skills = useMemo(
-    () => ({ ...defaultEditorMaps[category], ...(overrides[category] ?? {}) }),
-    [category, overrides],
-  );
+  const skills = useMemo(() => ({ ...defaultEditorMaps[category], ...overrides[category] }), [category, overrides]);
   const skillIds = useMemo(() => Object.keys(skills), [skills]);
   const editorModified = hasSkillOverrides(overrides);
   const visibleCategories = useMemo<EditorCategory[]>(() => {
@@ -5199,7 +5197,7 @@ function SkillEditorTab({
             : {}),
         };
       }
-      const nextCategoryOverrides = { ...(overrides[category] ?? {}) };
+      const nextCategoryOverrides = { ...overrides[category] };
       if (JSON.stringify(updatedSkill) === JSON.stringify(defaultEditorMaps[category][selectedSkill])) {
         delete nextCategoryOverrides[selectedSkill];
       } else {
@@ -5221,7 +5219,7 @@ function SkillEditorTab({
   }
 
   function restoreDefault() {
-    const nextCategoryOverrides = { ...(overrides[category] ?? {}) };
+    const nextCategoryOverrides = { ...overrides[category] };
     delete nextCategoryOverrides[selectedSkill];
     const nextOverrides: SkillOverrides = { ...overrides };
     if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides;
@@ -5625,7 +5623,6 @@ function RotationEditorTab({
     attunementStats,
     settings,
     enemy,
-    derivedStats,
     innerWayRevision: _innerWayRevision,
     gearStatEffect,
     buildSetup,
@@ -5796,9 +5793,6 @@ function RotationEditorTab({
 
   function findSkill(skillId: string) {
     return calculationDefinitions.skills[skillId];
-  }
-  function findDot(dotId: string) {
-    return calculationDefinitions.dots[dotId];
   }
 
   function updateStep(index: number, changes: Record<string, unknown>) {
@@ -7548,7 +7542,7 @@ function RotationEditorTab({
                   <span>{t("ui.app.actions")}</span>
                 </div>
                 <div className="rotation-step-list">
-                  {displayEntries.map((entry, index) => {
+                  {displayEntries.map((entry) => {
                     const row = entry.row;
                     if (row.kind === "damageGroup") {
                       const groupSkillId = row.step.type === "skill" ? row.step.skill : undefined;
@@ -7582,7 +7576,7 @@ function RotationEditorTab({
                       );
                     }
                     const isAction = entry.kind === "action";
-                    const { step, startTime, skill, actions } = row;
+                    const { step, startTime, skill } = row;
                     const castTime = row.effectiveCastTime;
                     const effectNames = (
                       effects: Array<{

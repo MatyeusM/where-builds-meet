@@ -53,8 +53,7 @@
     flex: 0 0 auto;
     flex-wrap: wrap;
     margin-block-start: 12px;
-    padding-block-start: 10px;
-    padding-block-end: 0;
+    padding-block: 10px 0;
   }
 
   .main-tabs {
@@ -271,9 +270,11 @@
     .app-layout:has(.results-column-with-healing) {
       grid-template-columns: minmax(0, 44rem) minmax(41.5rem, 1fr);
     }
+
     .app-layout:has(.results-column-with-healing) .middle-stats-column {
       grid-column: 1;
     }
+
     .app-layout:has(.results-column-with-healing) .results-column {
       grid-column: 2;
       grid-row: 1 / span 2;
@@ -284,9 +285,11 @@
     .app-layout {
       grid-template-columns: minmax(0, 44rem) minmax(17.5rem, 1fr);
     }
+
     .middle-stats-column {
       grid-column: 1;
     }
+
     .results-column {
       grid-column: 2;
       grid-row: 1 / span 2;
@@ -298,6 +301,7 @@
     .app-layout:has(.results-column-with-healing) {
       grid-template-columns: 1fr;
     }
+
     .middle-stats-column,
     .results-column,
     .app-layout:has(.results-column-with-healing) .middle-stats-column,
@@ -305,6 +309,7 @@
       grid-column: auto;
       grid-row: auto;
     }
+
     .results-column {
       position: static;
     }
@@ -315,16 +320,20 @@
       inline-size: min(100% - 20px, 1100px);
       padding-block-start: 22px;
     }
+
     .page-header {
       display: block;
     }
+
     .page-header-controls {
       justify-content: start;
       margin-block-start: 18px;
     }
+
     .main-tabs {
       overflow-x: auto;
     }
+
     .main-tabs button {
       flex: 0 0 auto;
     }

@@ -115,7 +115,7 @@ export function subtractUnconditionalDamageEffects(
   total: UnconditionalDamageEffects | undefined,
   removed: UnconditionalDamageEffects | undefined,
 ): UnconditionalDamageEffects {
-  if (!removed) return { ...(total ?? {}) };
+  if (!removed) return { ...total };
   const negative = Object.fromEntries(
     Object.entries(removed).map(([field, value]) => [field, -value]),
   ) as UnconditionalDamageEffects;

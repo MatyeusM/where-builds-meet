@@ -581,14 +581,17 @@
     .skill-editor-layout {
       grid-template-columns: 1fr;
     }
+
     .skill-list {
       max-block-size: 230px;
       border-inline-end: 0;
       border-block-end: 1px solid var(--border);
     }
+
     .json-editor-grid {
       grid-template-columns: 1fr;
     }
+
     .effect-value-editor {
       grid-template-columns: 1fr;
     }
@@ -598,6 +601,7 @@
     .skill-basic-fields {
       grid-template-columns: 1fr;
     }
+
     .editor-field-wide {
       grid-column: auto;
     }

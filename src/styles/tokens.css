@@ -59,7 +59,6 @@
     --primary-soft: oklch(from var(--primary) l c h / 0.13);
     --primary-active: oklch(from var(--primary) l c h / 0.22);
     --primary-contrast: oklch(0.18 0.02 60);
-
     --secondary: oklch(0.74 0.09 250);
     --secondary-soft: oklch(from var(--secondary) l c h / 0.16);
 
@@ -67,7 +66,6 @@
     --error: oklch(0.72 0.15 25);
     --error-soft: oklch(from var(--error) l c h / 0.14);
     --error-border: oklch(from var(--error) l c h / 0.45);
-
     --success: oklch(0.78 0.13 145);
     --success-soft: oklch(from var(--success) l c h / 0.14);
     --healing-negative: oklch(0.62 0.14 310);

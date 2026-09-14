@@ -1,9 +1,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const source = await readFile("wwm/js/app.formatted.js", "utf8");
-let existing = {};
+let _existing = {};
 try {
-  existing = JSON.parse(await readFile("data/skills.json", "utf8"));
+  _existing = JSON.parse(await readFile("data/skills.json", "utf8"));
 } catch {}
 const arrayFn = source
   .match(/function _0x2f83\(\) \{[\s\S]*?\n\}\nfunction Td/)?.[0]
@@ -32,7 +32,7 @@ function decode(text) {
 function number(value) {
   return Number(value.startsWith("-") ? -Number.parseInt(value.slice(1), 16) : Number.parseInt(value, 16));
 }
-function resolve(match, kind, first, second) {
+function resolve(match, kind, first, _second) {
   const offset = kind === "p" ? 0x337 : 0x2b6;
   const index = number(first) - offset;
   const value = values[(index + SHIFT) % values.length];

@@ -2,7 +2,7 @@
 
 `npm run test:dps` calculates every path whose `data/path.json` status is
 `available` and compares it to the accepted values in
-`script/probe/snapshots/path-dps.json`. The check runs inside `npm run build`,
+`tests/snapshots/path-dps.json`. The check runs inside `npm run build`,
 on pull requests, and on pushes to `main`. A failed build also blocks the
 existing release deployment workflow.
 

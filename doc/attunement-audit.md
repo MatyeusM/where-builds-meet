@@ -66,7 +66,7 @@ are authored. Heavenquaker retains canonical `HeavenQuakerSpear` capitalization.
 
 ## Verification
 
-`script/probe/check-attunement-import.mjs` checks the catalog's official IDs through
+`tests/attunement-import.test.ts` checks the catalog's official IDs through
 import, saved-gear validation, equipped aggregation, roll normalization, and
 calculation. It verifies level-96 maximum-roll damage, alternative matching, missing-tag rejection, single
 application when both alternatives match, inactive definitions, and healing

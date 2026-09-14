@@ -1,6 +1,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import ts from "typescript";
+// The build typechecks with TypeScript 7, whose package no longer exposes the
+// classic compiler API. These build-tool scripts keep using it via alias.
+import ts from "typescript-classic";
 import { readCatalog, writeCatalog } from "./catalog.mjs";
 
 const root = process.cwd();

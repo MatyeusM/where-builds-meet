@@ -209,7 +209,6 @@ export function itemToDraft(item: GearItem): GearDraft {
 }
 
 export function GearEditor({
-  definition,
   definitionId,
   definitionName,
   editingExisting,

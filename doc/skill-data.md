@@ -671,7 +671,7 @@ Preset rotations approximate linear target-Qi loss within each depletion
 segment. They attach 59% and 40% Qi events to the nearest damage actions at,
 respectively, 41% and 60% of the interval from the previous Exhausted expiration
 (or fight start for the first segment) to the next 0% Qi event. The
-`check-rotation-qi-ramps.mjs` probe verifies one of each marker per depletion.
+`tests/rotation-qi-ramps.test.ts` verifies one of each marker per depletion.
 
 ### Numeric resources
 

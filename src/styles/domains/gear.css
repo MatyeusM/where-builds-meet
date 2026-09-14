@@ -510,8 +510,7 @@
   .gear-card-actions .button {
     min-inline-size: min(100%, 5rem);
     flex: 1 1 5rem;
-    padding-inline-end: 6px;
-    padding-inline-start: 6px;
+    padding-inline: 6px;
   }
 
   .add-gear-card {
@@ -847,6 +846,7 @@
     .build-manager-layout {
       grid-template-columns: 1fr;
     }
+
     .build-list {
       block-size: 260px;
       max-block-size: 260px;
@@ -854,22 +854,28 @@
       border-inline-end: 0;
       border-block-end: 1px solid var(--border);
     }
+
     .build-editor-content {
       padding: 14px;
     }
+
     .build-detail-heading {
       align-items: stretch;
       flex-direction: column;
     }
+
     .detail-active-actions {
       justify-content: space-between;
     }
+
     .detail-active-button {
       align-self: flex-start;
     }
+
     .viewport-page-shell .build-manager-layout {
       grid-template-rows: 180px minmax(0, 1fr);
     }
+
     .viewport-page-shell .build-list {
       block-size: 180px;
       max-block-size: 180px;
@@ -883,15 +889,19 @@
     .gear-ocr-grid {
       grid-template-columns: 1fr;
     }
+
     .gear-value-editor {
       grid-template-columns: 1fr 120px;
     }
+
     .gear-ocr-heading {
       flex-direction: column;
     }
+
     .gear-ocr-dropzone {
       min-block-size: 280px;
     }
+
     .attunement-field {
       grid-template-columns: minmax(0, 1fr) 6rem;
     }

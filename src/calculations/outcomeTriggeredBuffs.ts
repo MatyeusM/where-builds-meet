@@ -285,7 +285,9 @@ export class ExpectedPeriodicTracker {
       for (let index = list.head; index >= 0; index = list.next(index)) {
         const times = list.cadences[index];
         if (!times) continue;
-        for (const [next, mass] of [...times]) {
+        // Snapshot: the loop deletes and re-inserts entries in `times`, so it must not iterate the live map.
+        const pending = [...times];
+        for (const [next, mass] of pending) {
           if (next > tick) continue;
           const advanced = next + (Math.floor((tick - next) / interval) + 1) * interval;
           times.delete(next);

@@ -11,7 +11,6 @@ import {
   type RotationMetrics,
   type RotationPriority,
 } from "./rotationMetrics";
-import { calculateDerivedStats } from "./effectiveStats";
 import {
   buildRotationTimeline,
   compareTimelineTime,
@@ -215,16 +214,6 @@ const emptyBreakdown = (): DamageBreakdown => ({
 function replayBreakdown(damage: number): DamageBreakdown {
   const total = Math.max(0, damage);
   return { physical: total, bellstrike: 0, stonesplit: 0, silkbind: 0, bamboocut: 0, total };
-}
-
-function scaleHealingBreakdown(healing: HealingBreakdown, multiplier: number): HealingBreakdown {
-  if (multiplier === 1) return healing;
-  return {
-    ...healing,
-    physical: healing.physical * multiplier,
-    silkbind: healing.silkbind * multiplier,
-    total: healing.total * multiplier,
-  };
 }
 
 function combineHealingBreakdowns(recipients: HealingBreakdown[]): HealingBreakdown {
@@ -720,11 +709,6 @@ function vitalityDamageScale(
         0,
       )
     : scaleForEndingVitality(summary.final);
-}
-
-function adjustedDamageTotal(sequence: ResolvedRotationDamageSequence, mysticDamageScale: number) {
-  const total = sumResolvedSequence(sequence).total;
-  return total - mysticDamageInResolvedSequence(sequence) * (1 - mysticDamageScale);
 }
 
 function sumEntries(entries: RotationDamageEntry[]) {
@@ -1615,7 +1599,6 @@ function createTimelineEntryBuilder(
     : 0;
   const anchorOrder = anchorRow ? anchorRow.order + (anchorActionIndex === undefined ? 0 : 10 + anchorActionIndex) : 0;
   const battleEnd = combatCutoff(timeline);
-  const damageEntryStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
   const entriesForAction = (row: TimelineRow, actionIndex: number) => {
     const action = row.actions[actionIndex];
     const accumulatorThreshold =
@@ -1737,7 +1720,7 @@ function createTimelineEntryBuilder(
             )
             .map((rule) => rule.modify!);
           const definition = [...setupModifiers, ...innerWayModifiers].reduce(mergeEffectDefinition, {
-            ...(input.effectDefinitions[tracked.name] ?? {}),
+            ...input.effectDefinitions[tracked.name],
           });
           return effectsForTrackedEffect(tracked.stack, definition);
         })
@@ -2077,7 +2060,7 @@ function timelineDamageEntries(
         typeof sourceEntry.damageEvent?.requirementState.targetQiPercentage === "number"
           ? sourceEntry.damageEvent.requirementState.targetQiPercentage / 100
           : 1,
-      resources: { ...(sourceEntry.damageEvent?.resources ?? {}) },
+      resources: { ...sourceEntry.damageEvent?.resources },
       effectiveCastTime: typeof replaySkill.castTime === "number" ? replaySkill.castTime : 0,
       skill: replaySkill,
       actions: replayActions,
@@ -2111,8 +2094,8 @@ function timelineDamageEntries(
         timelineTime: actionTime,
         timelineOrder: actionOrder,
         sourceRowId: sourceEntry.sourceRowId,
-        activeBuffStacks: { ...(sourceEntry.activeBuffStacks ?? {}) },
-        activeDebuffStacks: { ...(sourceEntry.activeDebuffStacks ?? {}) },
+        activeBuffStacks: { ...sourceEntry.activeBuffStacks },
+        activeDebuffStacks: { ...sourceEntry.activeDebuffStacks },
         replay: { sourceEntryIds: [sourceEntry.id!], coef: action.coef },
         updateTargetHPRatio: (ratio: number) => {
           context.targetHPRatio = ratio;

@@ -16,5 +16,3 @@ self.addEventListener("message", (event: MessageEvent<SimulationRequest>) => {
     self.postMessage({ id, type: "error", error: error instanceof Error ? error.message : String(error) });
   }
 });
-
-export {};

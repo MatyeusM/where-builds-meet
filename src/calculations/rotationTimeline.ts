@@ -4,7 +4,6 @@ import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 import {
   ExpectedPeriodicTracker,
   nextBattlePeriodicTick,
-  outcomeBuffTick,
   outcomeProbability,
   maxStackActionFor,
   type MaxStackAction,
@@ -549,7 +548,7 @@ export function mergeEffectDefinition(definition: EffectDefinition, modify: Edit
     ...(definition.periodic || modify.periodic
       ? {
           periodic: {
-            ...(definition.periodic ?? {}),
+            ...definition.periodic,
             ...(modify.periodic && typeof modify.periodic === "object" && !Array.isArray(modify.periodic)
               ? (modify.periodic as PeriodicEffect)
               : {}),
@@ -1254,10 +1253,7 @@ function buildRotationTimelinePass(
     return Math.min(resourceMaximums[name] ?? Number.POSITIVE_INFINITY, Math.max(lowerBound, rounded));
   };
   let resources: ResourceState = Object.fromEntries(
-    Object.entries({ Qi: 100, ...(input.initialResources ?? {}) }).map(([name, value]) => [
-      name,
-      clampResource(name, value),
-    ]),
+    Object.entries({ Qi: 100, ...input.initialResources }).map(([name, value]) => [name, clampResource(name, value)]),
   );
   infiniteResources.forEach((name) => {
     resources[name] = resourceMaximums[name] ?? resources[name] ?? Number.MAX_SAFE_INTEGER;
@@ -1328,7 +1324,7 @@ function buildRotationTimelinePass(
     if (action.type === "consumeResource") {
       const spent = action.amount === "all" ? Math.max(0, resources[action.value] ?? 0) : action.amount;
       row.resourceConsumption = {
-        ...(row.resourceConsumption ?? {}),
+        ...row.resourceConsumption,
         [action.value]: (row.resourceConsumption?.[action.value] ?? 0) + spent,
       };
     }
@@ -1591,7 +1587,7 @@ function buildRotationTimelinePass(
       )
       .map((rule) => rule.modify!);
     return [...setupModifiers, ...innerWayModifiers].reduce(mergeEffectDefinition, {
-      ...(effectDefinitions[name] ?? {}),
+      ...effectDefinitions[name],
     });
   };
   let nextDerivedOrder = rotation.steps.length * 1000 + 1;
