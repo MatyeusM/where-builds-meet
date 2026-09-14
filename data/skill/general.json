@@ -160,6 +160,20 @@
             "value": "FuryHarvestT4"
           }
         ]
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Cleftpeak",
+        "stack": 5,
+        "reapply": true,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "Cleftpeak4P"
+          }
+        ]
       }
     ],
     "modifier": [],

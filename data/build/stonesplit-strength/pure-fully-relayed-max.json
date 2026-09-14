@@ -15,7 +15,7 @@
         "tier": "T6"
       },
       {
-        "innerWay": "EnvigoratedWarrior",
+        "innerWay": "BreakingPoint",
         "tier": "T6"
       },
       {
@@ -27,7 +27,9 @@
       "Cleftpeak": 4,
       "RainWhisper": 0
     },
-    "armorSets": { "Formbend": 0 },
+    "armorSets": {
+      "Formbend": 0
+    },
     "bowRingSet": "Precision",
     "arsenal": "Stonesplit"
   },
@@ -46,16 +48,16 @@
           "value": 73.132
         },
         {
-          "key": "crit",
-          "value": 0.0846
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "hengBladeDmgBoost",
           "value": 0.05828
         },
         {
-          "key": "precision",
-          "value": 0.0752
+          "key": "crit",
+          "value": 0.0846
         }
       ],
       "attunement": {
@@ -170,8 +172,8 @@
           "value": 73.132
         },
         {
-          "key": "crit",
-          "value": 0.0846
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "agility",

@@ -502,6 +502,23 @@
                   {
                     "target": "skillTag",
                     "value": "VariedCombo"
+                  },
+                  {
+                    "operator": "or",
+                    "operand": [
+                      {
+                        "target": "martialArt",
+                        "value": "SnowpartingBlade"
+                      },
+                      {
+                        "target": "martialArt",
+                        "value": "ThundercryBlade"
+                      },
+                      {
+                        "target": "martialArt",
+                        "value": "VernalUmbrella"
+                      }
+                    ]
                   }
                 ],
                 [
@@ -512,6 +529,23 @@
                   {
                     "target": "skillTag",
                     "value": "VariedCombo"
+                  },
+                  {
+                    "operator": "or",
+                    "operand": [
+                      {
+                        "target": "martialArt",
+                        "value": "SnowpartingBlade"
+                      },
+                      {
+                        "target": "martialArt",
+                        "value": "ThundercryBlade"
+                      },
+                      {
+                        "target": "martialArt",
+                        "value": "VernalUmbrella"
+                      }
+                    ]
                   }
                 ],
                 {

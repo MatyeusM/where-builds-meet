@@ -1047,7 +1047,8 @@ definitions declare `altersTimeline`; a set comparison provides a replacement
 timeline when any timeline-changing set has a different tier between the
 current and replacement selections. This checks both the incoming set and sets
 removed to satisfy the four-piece limit. Cleftpeak and Formbend currently opt
-in, while a Rain Whisper-only tier change reuses the baseline timeline. Every
+in. Rain Whisper also opts in because its Critical Healing bonuses can change
+overhealing and healing-triggered events. Every
 replacement timeline resolves its own start anchor and duration for DPS; only
 timeline-reusing variants share the baseline duration.
 

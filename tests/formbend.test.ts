@@ -4,8 +4,7 @@ import { describe, expect, it } from "vitest";
 describe("formbend", () => {
   it("Art of Resistance and Formbend duration checks passed", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const { defaultBuildSetup, normalizeBuildSetup, selectSetTier, setSelectionChangesTimeline, weaponSetDefinitions } =
-      await import("../src/gear.ts");
+    const { defaultBuildSetup, normalizeBuildSetup } = await import("../src/gear.ts");
     const thundercrySkills = (await import("../data/skill/thundercry-blade.json")).default;
     const stormbreakerSkills = (await import("../data/skill/stormbreaker-spear.json")).default;
     const generalSkills = (await import("../data/skill/general.json")).default;
@@ -18,26 +17,6 @@ describe("formbend", () => {
     expect(
       migrated.weaponSets.Cleftpeak === 2 && migrated.weaponSets.RainWhisper === 2 && migrated.armorSets.Formbend === 0,
       "Legacy gearSets must migrate without losing the new armor-set default.",
-    ).toBeTruthy();
-    const cleftpeakToRainWhisper = selectSetTier(
-      { Cleftpeak: 4, RainWhisper: 0 },
-      "RainWhisper",
-      4,
-      weaponSetDefinitions,
-    );
-    expect(
-      setSelectionChangesTimeline({ Cleftpeak: 4, RainWhisper: 0 }, cleftpeakToRainWhisper, weaponSetDefinitions),
-      "Replacing Cleftpeak with Rain Whisper must rebuild the timeline because Cleftpeak is removed.",
-    ).toBeTruthy();
-    const rainWhisperTierChange = selectSetTier(
-      { Cleftpeak: 0, RainWhisper: 2 },
-      "RainWhisper",
-      4,
-      weaponSetDefinitions,
-    );
-    expect(
-      !setSelectionChangesTimeline({ Cleftpeak: 0, RainWhisper: 2 }, rainWhisperTierChange, weaponSetDefinitions),
-      "A Rain Whisper-only tier change must continue to reuse the baseline timeline.",
     ).toBeTruthy();
     const vulnerableDefinitions = (await import("../data/debuff/stonesplit-might.json")).default;
     const thunderShockTimeline = buildRotationTimeline({

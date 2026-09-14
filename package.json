@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate:presets && npm run test:innerways && npm run test:wts && npm run test:dps && npm run i18n:check && npm run test && tsc -b && vite build",
+    "build": "npm run validate:presets && npm run test:innerways && npm run test:wts && npm run test:sets && npm run test:dps && npm run i18n:check && npm run test && tsc -b && vite build",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint && stylelint \"src/**/*.css\"",
@@ -20,6 +20,7 @@
     "validate:presets": "vitest run tests/preset-eligibility.test.ts",
     "preview": "vite preview",
     "test:wts": "vitest run tests/wts-cast-snapshot.test.ts tests/healing.test.ts tests/damage-replay.test.ts tests/damage-recording.test.ts",
+    "test:sets": "vitest run tests/weapon-set-four-piece.test.ts",
     "test:dps": "vitest run tests/dps-snapshot-guard.test.ts tests/dps-snapshots.test.ts",
     "snapshots:dps:update": "vitest run tests/dps-snapshots.test.ts",
     "test:innerways": "vitest run tests/innerway-filter.test.ts tests/innerway-stat-visibility.test.ts tests/innerway-catalog.test.ts tests/echoes-t4.test.ts tests/rodent-rampage.test.ts tests/vendetta.test.ts tests/draught-innerways.test.ts tests/innerway-solo-level.test.ts"

@@ -634,7 +634,8 @@ Critical and affinity bonuses multiply physical and every attribute component.
 Rain Whisper four-piece contributes 10% `critDmgBonus` as an unconditional
 compute-time effect, so it does not alter the displayed character Critical DMG
 stat. It adds a separate 15% `critDmgBonus` to damage actions whose hit-time
-state contains the player Shield.
+state contains the player Shield. The same conditions grant 10% and 15%
+`criticalHealingBonus`; normal healing receives no bonus.
 
 ### Path multiplier
 
@@ -784,4 +785,4 @@ The defensive base-attribute relationships are:
 1 Defense = 17 HP + 0.57 Physical Defense
 ```
 
-Inner Way priority is calculated by removing each selected Inner Way and measuring the resulting DPS loss. Every current Inner Way declares `altersTimeline: true`, so these removals conservatively rebuild the timeline. Setup comparisons replace the selected setup option with the candidate and omit the already-active choice. Weapon and armor set comparisons rebuild when any changed tier belongs to a definition with `altersTimeline: true`, including a timeline-changing set removed by the replacement. A Rain Whisper-only change reuses the baseline timeline, but replacing Cleftpeak with Rain Whisper rebuilds it. Script comparisons use the same two-sided rule: they rebuild when either the selected baseline Script or the candidate has `altersTimeline: true`. Revelry carries that flag because Take Damage can apply its buff; comparisons between the other damage-only Scripts reuse the baseline timeline.
+Inner Way priority is calculated by removing each selected Inner Way and measuring the resulting DPS loss. Every current Inner Way declares `altersTimeline: true`, so these removals conservatively rebuild the timeline. Setup comparisons replace the selected setup option with the candidate and omit the already-active choice. Weapon and armor set comparisons rebuild when any changed tier belongs to a definition with `altersTimeline: true`, including a timeline-changing set removed by the replacement. Rain Whisper changes also rebuild the timeline because its Critical Healing bonuses can change overhealing and healing-triggered events. Script comparisons use the same two-sided rule: they rebuild when either the selected baseline Script or the candidate has `altersTimeline: true`. Revelry carries that flag because Take Damage can apply its buff; comparisons between the other damage-only Scripts reuse the baseline timeline.
