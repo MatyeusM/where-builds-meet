@@ -1273,11 +1273,24 @@ calculations are intentionally ignored at the user's request. Charging Stance
 still lacks skill data. T6's enemy-healing reduction is outside the current
 combat model.
 
-T3's Rodent Hunt remains the next mechanism to discuss. It records Rodent damage
-for 15 seconds and pays out 30% on expiry. Reapplying Bladebound Thread must
-settle the old record immediately and start a new window. The existing per-hit
-replay cannot express this recording-window lifecycle; it needs an extension
-that retains final resolved damage without applying damage bonuses twice.
+T3 applies Rodent Hunt at Bladebound Thread's hit. This target effect records
+Rodent damage for 15 seconds and pays out 30% on expiry. Reapplication settles
+the previous window immediately, then starts a fresh window. Token refresh and
+extension actions cannot delay its settlement. FA5's extra Rodent attacks count;
+unrelated damage and settlement damage do not.
+
+A timed effect's `recording` declares `event: "damage"`, a normal `requirement`
+filter, and `action: { "type": "trigger", "value": "RodentHuntDamage" }`.
+Its expiry action is `{ "type": "resolveRecording", "target": "target",
+"value": "RodentHunt", "time": "expire" }`. Both expiry and reapplication call
+the same resolver, which closes the activation before enqueueing its replay.
+Each activation retains matching damage-entry IDs; the triggered `Replayed`
+skill receives those references, and its `replay.coef` multiplies their resolved
+sum. Empty windows produce no damage. Activation IDs prevent stale expiry
+events from settling a replacement window. The window excludes hits at its
+expiry timestamp; generated settlement damage obeys the normal combat cutoff.
+Sky Gripped still records only its first eligible hit, using the same replay
+calculation with a single source reference.
 
 Remaining Echoes work is deliberately unimplemented:
 

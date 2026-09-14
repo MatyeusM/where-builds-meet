@@ -58,10 +58,34 @@
         "target": "self",
         "value": "VendettaToken",
         "time": 0.385
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "RodentHunt",
+        "time": 0.385,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "VendettaT3"
+          }
+        ]
       }
     ],
     "martialArt": "mortalRopeDart",
     "weapon": "RopeDart",
     "tags": ["DirectDamage", "MartialArts", "MortalRopeDart", "RopeDart", "MartialArt", "BladeboundThread"]
+  },
+  "RodentHuntDamage": {
+    "name": "Rodent Hunt",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "replay",
+        "time": 0,
+        "coef": 0.3
+      }
+    ],
+    "tags": ["Triggered", "Replayed"]
   }
 }

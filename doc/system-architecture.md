@@ -1448,3 +1448,14 @@ memoized per action within the run; resolver state restarts for each traversal.
 The callback is never part of a serialized bundle. `npm run test:wts` verifies cast
 ordering, buff changes, recasts, food, proc feedback, and periodic heals created after
 Qi Blades, alongside the existing healing checks.
+
+## Damage recording windows
+
+Timed recording effects use the existing event queue and expiry scheduling.
+Expiry and reapplication share one resolver; activation IDs reject stale expiry
+events. A window stores damage-entry references, and the shared replay calculator
+resolves their sum from the current expected or sampled run. Recording-dependent
+calculations use the live combat traversal, also used for healing and accumulator
+snapshots, so settlement affects target HP before subsequent actions. Comparison
+variants rebuild that traversal and resolve their own source damage. Runtime
+recording IDs and source references are not persisted in user rotations.

@@ -86,7 +86,7 @@ export type RotationDamageEntry = {
   sourceRowId?: string;
   activeBuffStacks?: Record<string, number>;
   activeDebuffStacks?: Record<string, number>;
-  replay?: { sourceEntryId: string; coef: number };
+  replay?: { sourceEntryIds: string[]; coef: number };
   hawkwing?: HawkwingEffect;
   insightfulStrike?: InsightfulStrikeEffect;
   seasonalEdge?: SeasonalEdgeEntryState;
@@ -252,7 +252,7 @@ function calculateRotationDamageEntry(
 ): RotationActionBreakdown {
   let breakdown: RotationActionBreakdown;
   if (entry.replay) {
-    const sourceDamage = resolved.get(entry.replay.sourceEntryId)?.total ?? 0;
+    const sourceDamage = entry.replay.sourceEntryIds.reduce((total, id) => total + (resolved.get(id)?.total ?? 0), 0);
     breakdown = replayBreakdown(sourceDamage * entry.replay.coef);
   } else if (entry.action.type === "heal") {
     const healingContext = {
@@ -1623,7 +1623,14 @@ function createTimelineEntryBuilder(
         ? input.effectDefinitions[action.value]?.accumulator?.threshold
         : undefined;
     const accumulatorSnapshot = typeof accumulatorThreshold === "object" ? accumulatorThreshold : undefined;
-    if (action.type !== "damage" && action.type !== "heal" && !accumulatorSnapshot) return [];
+    const replay =
+      action.type === "replay" &&
+      row.skill?.tags?.includes("Replayed") &&
+      Array.isArray(action.replaySourceEntryIds) &&
+      typeof action.coef === "number"
+        ? { sourceEntryIds: action.replaySourceEntryIds as string[], coef: action.coef }
+        : undefined;
+    if (action.type !== "damage" && action.type !== "heal" && !accumulatorSnapshot && !replay) return [];
     const actionTime = row.startTime + Number(action.time ?? 0);
     const actionOrder = row.order + 10 + actionIndex;
     const anchorTimeOrder = compareTimelineTime(actionTime, anchorTime);
@@ -1815,6 +1822,7 @@ function createTimelineEntryBuilder(
         id: `${row.id}:${actionIndex}`,
         action,
         ...(accumulatorSnapshot ? { accumulatorSnapshot } : {}),
+        ...(replay ? { replay } : {}),
         context,
         timelineTime: actionTime,
         timelineOrder: actionOrder,
@@ -2105,7 +2113,7 @@ function timelineDamageEntries(
         sourceRowId: sourceEntry.sourceRowId,
         activeBuffStacks: { ...(sourceEntry.activeBuffStacks ?? {}) },
         activeDebuffStacks: { ...(sourceEntry.activeDebuffStacks ?? {}) },
-        replay: { sourceEntryId: sourceEntry.id!, coef: action.coef },
+        replay: { sourceEntryIds: [sourceEntry.id!], coef: action.coef },
         updateTargetHPRatio: (ratio: number) => {
           context.targetHPRatio = ratio;
           replayRow.targetHPRatio = ratio;
@@ -2253,8 +2261,8 @@ function timelineTiming(
   };
 }
 
-/** Resolve healing and accumulator snapshots in the same event traversal that creates their procs. */
-function resolveHealingTimeline(
+/** Resolve combat values in the event traversal that creates their dependent procs and replays. */
+function resolveCombatTimeline(
   structuralTimeline: TimelineRow[],
   input: TimelineBuildInput,
   state: ReturnType<typeof rotationStatState>,
@@ -2270,7 +2278,7 @@ function resolveHealingTimeline(
           action.type === "heal" ||
           (action.type === "apply" &&
             typeof action.value === "string" &&
-            input.effectDefinitions[action.value]?.accumulator),
+            (input.effectDefinitions[action.value]?.accumulator || input.effectDefinitions[action.value]?.recording)),
       ),
     )
   )
@@ -2347,7 +2355,7 @@ export function calculateSimulatedRotationRun(
     return procRolls.get(key)!;
   };
   let timeline = buildRotationTimeline(structuralInput, procRoll);
-  const runtime = resolveHealingTimeline(
+  const runtime = resolveCombatTimeline(
     timeline,
     structuralInput,
     state,
@@ -2388,8 +2396,8 @@ export function calculateRotationBaseline(
   if (import.meta.env.DEV) finishCalculationPhase("timingResolution", initialTimingStartedAt);
   const state = rotationStatState(bundle);
   const damagePipelineStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-  const healingRuntime = resolveHealingTimeline(timeline, bundle.timeline, state, bundle.startAnchor);
-  if (healingRuntime) timeline = healingRuntime.timeline;
+  const combatRuntime = resolveCombatTimeline(timeline, bundle.timeline, state, bundle.startAnchor);
+  if (combatRuntime) timeline = combatRuntime.timeline;
   const baselineResolution = timelineDamageEntries(
     timeline,
     bundle.timeline,
@@ -2399,7 +2407,7 @@ export function calculateRotationBaseline(
     true,
     undefined,
     undefined,
-    healingRuntime?.resolvedActions,
+    combatRuntime?.resolvedActions,
   );
   const baseline = baselineResolution.entries;
   const resolvedSequence = baselineResolution.resolvedSequence ?? calculateRotationDamageSequence(baseline);
@@ -2528,8 +2536,8 @@ export function calculateRotationComparisons(
       !usesWorldToSword && canReuseExpectedOutcomeBuffSchedule(variant)
         ? baselineResult.expectedOutcomeBuffSchedule
         : undefined;
-    const healingRuntime = resolveHealingTimeline(variantTimeline, timelineInput, state, bundle.startAnchor, variant);
-    if (healingRuntime) variantTimeline = healingRuntime.timeline;
+    const combatRuntime = resolveCombatTimeline(variantTimeline, timelineInput, state, bundle.startAnchor, variant);
+    if (combatRuntime) variantTimeline = combatRuntime.timeline;
     const resolution = timelineDamageEntries(
       variantTimeline,
       timelineInput,
@@ -2539,14 +2547,14 @@ export function calculateRotationComparisons(
       false,
       reusableExpectedBuffSchedule,
       undefined,
-      healingRuntime?.resolvedActions,
+      combatRuntime?.resolvedActions,
     );
     const entries = resolution.entries;
     const resolvedSequence =
       resolution.resolvedSequence ?? calculateRotationDamageSequence(entries, undefined, reusableExpectedBuffSchedule);
     if (import.meta.env.DEV) finishCalculationPhase("damagePipeline", damagePipelineStartedAt);
     let duration = baselineResult.duration;
-    if (variant.timeline || healingRuntime) {
+    if (variant.timeline || combatRuntime) {
       const timingStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
       duration = timelineTiming(variantTimeline, bundle.startAnchor, entries).duration;
       if (import.meta.env.DEV) finishCalculationPhase("timingResolution", timingStartedAt);

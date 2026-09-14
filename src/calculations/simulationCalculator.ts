@@ -65,6 +65,14 @@ export function simulateRotation(
   const baseline = calculateRotationBaseline(bundle);
   const samplesTimeline =
     baseline.metrics.totalHealing > 0 ||
+    baseline.timeline.some((row) =>
+      row.actions.some(
+        (action) =>
+          action.type === "apply" &&
+          typeof action.value === "string" &&
+          bundle.timeline.effectDefinitions[action.value]?.recording,
+      ),
+    ) ||
     [...bundle.timeline.innerWayRules, ...bundle.timeline.setupEffects].some((rule) => {
       if (!rule.trigger || typeof rule.trigger !== "object") return false;
       const trigger = rule.trigger as Record<string, unknown>;

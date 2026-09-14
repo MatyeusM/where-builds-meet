@@ -747,10 +747,10 @@ DOT damage ignores the action's flat Physical Bonus and Attribute Bonus. Its coe
 ## Replayed damage
 
 A `replay` action does not enter the normal damage formula. Its source is the
-final resolved damage of the damage event that triggered its `Replayed` skill:
+final resolved damage of the source events that triggered its `Replayed` skill:
 
 ```text
-Replay Damage = Source Event Final Damage × replay.coef
+Replay Damage = Sum(Source Events Final Damage) × replay.coef
 ```
 
 No attack roll, defense, resistance, penetration, damage bonus, Critical,
@@ -758,7 +758,14 @@ Affinity, Abrasion, or other outcome is evaluated again. Replay damage is
 reported in the physical/total breakdown channel, cannot emit another damage
 event, and is excluded from simulation outcome-rate hit counts. The average
 calculator and Monte Carlo simulator use the same source-link resolution, so a
-simulation replay copies that run's randomized source hit.
+simulation replay copies that run's randomized source hits.
+
+Vendetta T3 records Rodent-tagged hits during Rodent Hunt's 15-second window.
+Expiry and reapplication each settle the active window once at 30% of its
+recorded total. Source damage already includes Token, talents, and individual
+outcomes; the payout applies none of them again. Chronological resolution also
+updates target HP before subsequent actions. Reapplication opens a new window,
+while expiry closes it. Sky Gripped continues to replay one source hit.
 
 ## Stat-priority conversion
 

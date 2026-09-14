@@ -41,5 +41,34 @@
     "shared": false,
     "showCoverage": true,
     "duration": 3
+  },
+  "RodentHunt": {
+    "name": "Rodent Hunt",
+    "duration": 15,
+    "maxStack": 1,
+    "refresh": true,
+    "shared": false,
+    "showCoverage": true,
+    "recording": {
+      "event": "damage",
+      "requirement": [
+        {
+          "target": "skillTag",
+          "value": "Rodent"
+        }
+      ],
+      "action": {
+        "type": "trigger",
+        "value": "RodentHuntDamage"
+      }
+    },
+    "action": [
+      {
+        "type": "resolveRecording",
+        "target": "target",
+        "value": "RodentHunt",
+        "time": "expire"
+      }
+    ]
   }
 }

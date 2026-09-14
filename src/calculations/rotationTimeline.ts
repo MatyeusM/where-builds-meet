@@ -413,6 +413,11 @@ export type EffectDefinition = {
   stackEffects?: unknown[][];
   action?: unknown[];
   periodic?: PeriodicEffect;
+  recording?: {
+    event: "damage";
+    requirement?: unknown;
+    action: { type: "trigger"; value: string };
+  };
   accumulator?: {
     threshold?: number | { physical: number; silkbind: number };
     event?: string;
@@ -1221,6 +1226,17 @@ function buildRotationTimelinePass(
     expiresAt?: number;
   };
   const accumulatorStates = new Map<string, AccumulatorState>();
+  const recordings = new Map<
+    string,
+    {
+      id: number;
+      sourceEntryIds: string[];
+      sourceRowId: string;
+      expiresAt: number;
+      definition: NonNullable<EffectDefinition["recording"]>;
+    }
+  >();
+  let nextRecordingId = 0;
   let currentMartialArt = weapons[0];
   let currentWeapon = currentMartialArt ? input.martialArtState?.[currentMartialArt]?.weapon : undefined;
   const resourceMaximums = Object.fromEntries(
@@ -1834,6 +1850,9 @@ function buildRotationTimelinePass(
         ...action,
         ...(expectedProbability !== undefined ? { hitProbability: expectedProbability } : {}),
         ...(action.time === "expire" && expiresAt !== undefined ? { time: expiresAt - eventTime } : {}),
+        ...(action.type === "resolveRecording"
+          ? { recordingId: recordings.get(periodicEffectKey(target, name))?.id }
+          : {}),
       })),
       buffs: [],
       debuffs: [],
@@ -2493,6 +2512,7 @@ function buildRotationTimelinePass(
       probability?: number,
       expectedBranch?: TimelineRow["expectedBranch"],
       triggerTags?: string[],
+      replaySourceEntryIds?: string[],
     ) => {
       const definition = skills[skillId];
       const triggeredSkill =
@@ -2530,6 +2550,7 @@ function buildRotationTimelinePass(
         skill: triggeredSkill,
         actions: actions.map((item) => ({
           ...item,
+          ...(item.type === "replay" && replaySourceEntryIds ? { replaySourceEntryIds } : {}),
           ...(probability !== undefined && item.type === "damage"
             ? { damageScale: Number(item.damageScale ?? 1) * probability, hitProbability: probability }
             : {}),
@@ -2693,6 +2714,41 @@ function buildRotationTimelinePass(
         accumulator.accumulated += increment;
         if (accumulatorDefinition.checkEvent) emitCustomEvent(accumulatorDefinition.checkEvent);
       }
+    };
+    // Both replacement and expiry settle the same activation exactly once.
+    const resolveRecording = (key: string, expectedId?: number) => {
+      const recording = recordings.get(key);
+      if (!recording || (expectedId !== undefined && recording.id !== expectedId)) return;
+      recordings.delete(key);
+      if (recording.sourceEntryIds.length > 0)
+        enqueueTriggeredSkill(
+          recording.definition.action.value,
+          recording.sourceRowId,
+          undefined,
+          "skill",
+          undefined,
+          undefined,
+          undefined,
+          [...recording.sourceEntryIds],
+        );
+    };
+    const startRecording = (
+      name: string,
+      definition: EffectDefinition,
+      target: "self" | "target" | "player",
+      appliedEffect: TrackedEffect,
+      sourceRowId: string,
+    ) => {
+      if (!definition.recording || appliedEffect.expiresAt === undefined) return;
+      const key = periodicEffectKey(target, name);
+      resolveRecording(key);
+      recordings.set(key, {
+        id: nextRecordingId++,
+        sourceEntryIds: [],
+        sourceRowId,
+        expiresAt: appliedEffect.expiresAt,
+        definition: definition.recording,
+      });
     };
     const applyTriggerAction = (triggerAction: EditableObject, triggerSource: "setup" | "innerWay") => {
       const hitProbability = typeof action.hitProbability === "number" ? action.hitProbability : 1;
@@ -2923,6 +2979,7 @@ function buildRotationTimelinePass(
         }
       }
       if (appliedEffect) {
+        startRecording(triggerAction.value, definition, periodicTarget, appliedEffect, collection.sourceRowId);
         enqueueEffectActions(
           triggerAction.value,
           definition,
@@ -3044,7 +3101,36 @@ function buildRotationTimelinePass(
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt);
       continue;
     }
+    if (action.type === "resolveRecording" && typeof action.value === "string") {
+      if (typeof action.recordingId === "number")
+        resolveRecording(
+          periodicEffectKey(action.target === "target" ? "target" : "self", action.value),
+          action.recordingId,
+        );
+      continue;
+    }
+    if (action.type === "replay") {
+      if (resolvedAction?.damage && typeof input.rotation.targetHP === "number" && input.rotation.targetHP > 0)
+        targetHPRatio = Math.max(0, targetHPRatio - resolvedAction.damage / input.rotation.targetHP);
+      continue;
+    }
     if (action.type === "damage") {
+      for (const recording of recordings.values()) {
+        if (
+          compareTimelineTime(event.time, recording.expiresAt) < 0 &&
+          requirementsPass(
+            recording.definition.requirement,
+            buffs,
+            debuffs,
+            skillTags,
+            innerWayConditions,
+            weapons,
+            resources,
+            requirementState(),
+          )
+        )
+          recording.sourceEntryIds.push(actionResolutionKey(event.row, event.actionIndex!));
+      }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
       runSetupTriggers("damage");
       runInnerWayTriggers("damage");
@@ -3130,6 +3216,7 @@ function buildRotationTimelinePass(
         event.row.actionModifierEffects?.[event.actionIndex ?? -1] ?? event.row.modifierEffects
       ).find((effect) => typeof effect.duration === "number");
       const definition = getModifiedEffectDefinition(action.value, buffs, debuffs, skillTags);
+      if (action.type === "extend" && definition.recording) continue;
       let duration = definition.duration;
       if (typeof modifierDuration?.duration === "number") duration = modifierDuration.duration;
       if (typeof action.duration === "number") duration = action.duration;
@@ -3245,6 +3332,7 @@ function buildRotationTimelinePass(
         );
       }
       if (shouldApply && appliedEffect) {
+        startRecording(action.value, definition, periodicTarget, appliedEffect, collection.sourceRowId);
         if (definition.accumulator) {
           const threshold =
             typeof definition.accumulator.threshold === "number"
