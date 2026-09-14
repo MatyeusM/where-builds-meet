@@ -62,12 +62,7 @@
     },
     {
       "type": "skill",
-      "skill": "RighteousReign6thHit"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
+      "skill": "RighteousReign6thHitCancel"
     },
     {
       "type": "skill",
@@ -79,7 +74,7 @@
     },
     {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd4"
     },
     {
       "type": "skill",
@@ -159,14 +154,9 @@
     },
     {
       "type": "event",
-      "event": "Delay",
-      "duration": 0.07
-    },
-    {
-      "type": "event",
       "event": "Qi",
       "before": {
-        "action": 0
+        "action": "start"
       },
       "targetQiRatio": 0.3999
     },
@@ -183,13 +173,8 @@
       "skill": "Deflect"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.57
-    },
-    {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd4"
     },
     {
       "type": "skill",
@@ -248,16 +233,16 @@
       "skill": "Deflect"
     },
     {
+      "type": "skill",
+      "skill": "AllUnderJustice"
+    },
+    {
       "type": "event",
       "event": "Qi",
       "before": {
-        "action": 0
+        "action": 2
       },
       "targetQiRatio": 0
-    },
-    {
-      "type": "skill",
-      "skill": "AllUnderJustice"
     },
     {
       "type": "skill",
@@ -272,13 +257,8 @@
       "skill": "Deflect"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.4
-    },
-    {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd4"
     },
     {
       "type": "skill",
@@ -322,7 +302,7 @@
     },
     {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd"
     },
     {
       "type": "skill",
@@ -333,5 +313,6 @@
       "event": "BattleEnd",
       "startTime": 60
     }
-  ]
+  ],
+  "dummyAttack": true
 }

@@ -103,6 +103,7 @@
     "tags": ["General", "Shield"]
   },
   "Deflect": {
+    "ignorePing": true,
     "name": "Deflect",
     "castTime": {
       "function": "switch",
@@ -125,6 +126,7 @@
     "tags": ["Deflect"]
   },
   "DeflectSuccessful": {
+    "ignorePing": true,
     "name": "Deflect (Successful)",
     "castTime": {
       "function": "switch",
@@ -142,42 +144,13 @@
       },
       "fallback": 0.338
     },
-    "action": [
-      {
-        "type": "addResource",
-        "value": "Vitality",
-        "amount": 3,
-        "time": 0
-      },
-      {
-        "type": "addResource",
-        "value": "Vitality",
-        "amount": 1,
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT4"
-          }
-        ]
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Cleftpeak",
-        "stack": 5,
-        "reapply": true,
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Cleftpeak4P"
-          }
-        ]
-      }
-    ],
+    "action": [],
     "modifier": [],
-    "tags": ["Deflect", "AvoidsTakeDamage"]
+    "tags": ["Deflect"],
+    "attackResponse": {
+      "endMargin": 0.1,
+      "onSuccess": "DeflectSuccess"
+    }
   },
   "MoraleChant": {
     "name": "Morale Chant",
@@ -219,113 +192,14 @@
   "PerfectDodgeCancel": {
     "name": "Perfect Dodge [Cancel]",
     "castTime": 0,
-    "action": [
-      {
-        "type": "addResource",
-        "value": "Vitality",
-        "amount": 3,
-        "time": 0
-      },
-      {
-        "type": "addResource",
-        "value": "Vitality",
-        "amount": 1,
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT1"
-          }
-        ]
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Etherwrath",
-        "stack": 5,
-        "reapply": true,
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Etherwrath4P"
-          }
-        ]
-      },
-      {
-        "type": "trigger",
-        "target": "self",
-        "value": "BreakingPointT6Dodge",
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "BreakingPointT6"
-          }
-        ]
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "MysteryDMGBoost",
-        "stack": 1,
-        "reapply": true,
-        "time": 0,
-        "requirement": [
-          {
-            "operator": "or",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Mystery"
-              },
-              {
-                "target": "self",
-                "value": "MysteryUmbra"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "trigger",
-        "target": "self",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "MysteryUmbra"
-          }
-        ],
-        "value": {
-          "function": "switch",
-          "param1": "currentWeapon",
-          "param2": {
-            "HengBlade": "GhostlyStepsUmbraDodgeHengBlade",
-            "MoBlade": "GhostlyStepsUmbraDodgeMoBlade",
-            "Spear": "GhostlyStepsUmbraDodgeSpear",
-            "Umbrella": "GhostlyStepsUmbraDodgeUmbrella",
-            "RopeDart": "GhostlyStepsUmbraDodgeRopeDart",
-            "Gauntlet": "GhostlyStepsUmbraDodgeGauntlet"
-          },
-          "resolveAt": "skillStart"
-        },
-        "time": 0
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Samsara",
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "EchoesOfOblivionT3"
-          }
-        ]
-      }
-    ],
+    "action": [],
     "modifier": [],
-    "tags": ["General", "PerfectDodge", "AvoidsTakeDamage"]
+    "tags": ["General", "PerfectDodge"],
+    "attackResponse": {
+      "endMargin": 0.1,
+      "durationFrom": "PerfectDodge",
+      "onSuccess": "PerfectDodgeSuccess"
+    }
   },
   "PerfectDodge": {
     "name": "Perfect Dodge",
@@ -345,6 +219,17 @@
       },
       "fallback": 0.5
     },
+    "action": [],
+    "modifier": [],
+    "tags": ["General", "PerfectDodge"],
+    "attackResponse": {
+      "endMargin": 0.1,
+      "onSuccess": "PerfectDodgeSuccess"
+    }
+  },
+  "PerfectDodgeSuccess": {
+    "name": "Perfect Dodge",
+    "castTime": 0,
     "action": [
       {
         "type": "addResource",
@@ -450,7 +335,45 @@
         ]
       }
     ],
-    "modifier": [],
-    "tags": ["General", "PerfectDodge", "AvoidsTakeDamage"]
+    "tags": ["Triggered", "General", "PerfectDodge"]
+  },
+  "DeflectSuccess": {
+    "name": "Deflect (Successful)",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "addResource",
+        "value": "Vitality",
+        "amount": 3,
+        "time": 0
+      },
+      {
+        "type": "addResource",
+        "value": "Vitality",
+        "amount": 1,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "FuryHarvestT4"
+          }
+        ]
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Cleftpeak",
+        "stack": 5,
+        "reapply": true,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "Cleftpeak4P"
+          }
+        ]
+      }
+    ],
+    "tags": ["Triggered", "Deflect"]
   }
 }

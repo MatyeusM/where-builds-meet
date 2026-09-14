@@ -24,6 +24,31 @@ The readiness check precedes attachment expansion so before-start effects do not
 run during a cooldown wait. Once accepted, cast-start modifiers determine the
 new cooldown window and cast duration.
 
+## Readiness after charging
+
+A composite reference can set `waitForRequirement: true` to delay the ordered
+cast until that component's existing requirement passes at its start. Its
+preceding components must form an unconditional, action-free charging prefix.
+The prefix's cast durations and per-component ping determine the lead time.
+
+An isolated replay of the same event loop pauses ordered input before this cast.
+Previously accepted readiness waits are replayed at their accepted start times,
+so forecasts do not recursively forecast earlier casts. Pending actions, timed
+events, triggers, resource gains/spending, and cooldown resets keep resolving.
+Between events, the next resource threshold or natural effect expiry supplies a
+candidate readiness boundary. All events at a tied boundary resolve first. The
+real cast begins at the later of its ordered ready time and the predicted release
+time minus the charging lead; the wait is never inserted inside the charge.
+The replay uses the same action-resolver factory and keyed simulation proc rolls,
+with fresh state and no forecast actions published into the real timeline.
+
+Generated waits have `automatic: "requirement"` and share the existing output-only
+Delay representation and load/import migration. Before-start attachments remain
+attached to the actual cast. Without reachable readiness before Battle End, the
+cast does not start. Without an encounter end or any remaining event/regen that
+can satisfy it, it is skipped. No weak fallback is cast by the two explicit End
+variants. The ordinary Vile Condemned selection behavior is unchanged.
+
 ## Combat cutoff
 
 With Battle End, exhausted ordered input does not end combat: process remaining
@@ -152,3 +177,28 @@ last four of six runs changed from about 361 ms to 306 ms on the same machine.
 Output remained 2,847 rows, including 59 DOT rows; tick checks fell from 118 to 59.
 This is a construction improvement, not a claim that probability processing is
 now cheap or that total calculation/UI latency equals timeline runtime.
+
+## Incoming-attack readiness and success
+
+After cooldown readiness, an ordered skill with `attackResponse` selects the
+next unreserved manual Take Damage event or dummy attack before Battle End,
+accounting for ping before window start. The scheduler waits until attack time
+plus the configured end margin minus the resolved response duration. The window
+uses this skill's timing or its `durationFrom` reference; blocking cast duration
+remains independent. Previous casts and cooldowns remain lower bounds.
+
+Selected attacks stay fixed through the wait. Reservations group simultaneous
+hits, preventing consecutive zero-duration responses from selecting the same
+attack. No next attack means no wait. Cooldown resets wake cooldown waits only.
+Attachments expand after readiness. Auto HP duration discovery retains dummy
+attacks because response alignment can extend the ordered rotation.
+
+Accepted casts register response windows. An incoming hit inside a window is
+avoided and queues one causal `attackResponse` event per defensive cast, ahead
+of later outgoing events at that timestamp. Additional incoming hits remain
+avoided without duplicate success events. Setup talent hooks run on success;
+the configured success skill uses the existing triggered-action executor.
+A per-row response context preserves originating weapon and attribution through
+success descendants without mutating the active weapon. Cancel windows remain
+active while subsequent skills execute. Forecast replays use the same mechanism
+with isolated windows, reservations, and contexts.

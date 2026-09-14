@@ -7,6 +7,7 @@
     "tags": ["MoBlade", "PhalanxbaneBlade", "BurningHeart", "SubAction"]
   },
   "PhalanxbaneHeavySlam1": {
+    "ignorePing": true,
     "name": "Burning Heart Slam 1",
     "castTime": 1.0375,
     "action": [
@@ -97,6 +98,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyFastSlam1": {
+    "ignorePing": true,
     "name": "Burning Heart Fast Slam 1",
     "castTime": 1.0375,
     "action": [
@@ -283,6 +285,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavySlam2": {
+    "ignorePing": true,
     "name": "Burning Heart Slam 2",
     "castTime": 1.05,
     "action": [
@@ -353,6 +356,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyFastSlam2": {
+    "ignorePing": true,
     "name": "Burning Heart Fast Slam 2",
     "castTime": 1.05,
     "action": [
@@ -541,6 +545,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavySlam3": {
+    "ignorePing": true,
     "name": "Burning Heart Slam 3",
     "castTime": 0.9875,
     "action": [
@@ -611,6 +616,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyFastSlam3": {
+    "ignorePing": true,
     "name": "Burning Heart Fast Slam 3",
     "castTime": 0.9875,
     "action": [
@@ -693,6 +699,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyCharged1": {
+    "ignorePing": true,
     "name": "Burning Heart 1st Stage",
     "shortName": "Mo Charged",
     "castTime": 0,
@@ -736,6 +743,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyCharged2": {
+    "ignorePing": true,
     "name": "Burning Heart 2nd Stage",
     "shortName": "Mo Charged",
     "castTime": 0,
@@ -779,6 +787,7 @@
     "weapon": "MoBlade"
   },
   "PhalanxbaneHeavyCharged3": {
+    "ignorePing": true,
     "name": "Burning Heart 3rd Stage",
     "shortName": "Mo Charged",
     "castTime": 0,

@@ -88,7 +88,7 @@ describe("segment-value", () => {
     const mystic = (await import("../data/skill/mystic.json")).default;
     for (const id of ["DragonsBreath2", "DragonsBreathSmolder2"]) {
       const rows = buildRotationTimeline({
-        rotation: { name: "Dragon timing preservation", infiniteVitality: true, steps: [{ type: "skill", skill: id }] },
+        rotation: { name: "Dragon Intoxicated timing", infiniteVitality: true, steps: [{ type: "skill", skill: id }] },
         skills: mystic,
         eventDefinitions: {},
         dots: {},
@@ -102,13 +102,16 @@ describe("segment-value", () => {
       const cast = rows.find((row) => row.kind === "rotation");
       const hits = cast.actions.filter((action) => action.type === "damage");
       expect(
-        Math.abs(cast.effectiveCastTime - 1.7375) < 1e-9,
-        id + " must preserve its adjusted cast duration.",
+        Math.abs(cast.effectiveCastTime - 1.6975969436363636) < 1e-9,
+        id + " must resolve the Intoxicated route's cast duration.",
       ).toBeTruthy();
-      expect(Math.abs(hits[0].time - 0.6375) < 1e-9, id + " must preserve its first hit time.").toBeTruthy();
       expect(
-        hits.slice(1).every((hit) => Math.abs(hit.time - 1.7375) < 1e-9),
-        id + " must preserve its later hit times.",
+        Math.abs(hits[0].time - 0.6064791536363635) < 1e-9,
+        id + " must resolve the first hit using its own timing segment.",
+      ).toBeTruthy();
+      expect(
+        hits.slice(1).every((hit) => Math.abs(hit.time - 1.6975969436363636) < 1e-9),
+        id + " must resolve later hits using the second timing segment.",
       ).toBeTruthy();
     }
   });

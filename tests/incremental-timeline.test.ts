@@ -6,7 +6,7 @@ describe("incremental-timeline", () => {
   it("Incremental scheduling passed: live cooldown resets, no input waits, cast/Delay/Battle End cutoffs and migration anchors", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
     const { calculateEditorTimeline } = await import("../src/calculations/editorTimeline.ts");
-    const { migrateAutomaticCooldownDelays } = await import("../src/rotationEditing.ts");
+    const { migrateAutomaticDelays } = await import("../src/rotationEditing.ts");
     const base = {
       eventDefinitions: { BattleEnd: { action: [] }, Delay: { action: [] } },
       dots: {},
@@ -163,13 +163,13 @@ describe("incremental-timeline", () => {
       ],
       start: { step: 3, action: 0 },
     };
-    const migrated = migrateAutomaticCooldownDelays(legacy);
+    const migrated = migrateAutomaticDelays(legacy);
     assert.equal(migrated.start.step, 2);
     assert.equal(migrated.steps[1].buff, "Example");
     assert.equal(migrated.steps[2], tail);
-    assert.equal(migrateAutomaticCooldownDelays(migrated), migrated);
+    assert.equal(migrateAutomaticDelays(migrated), migrated);
     assert.deepEqual(
-      migrateAutomaticCooldownDelays({ ...legacy, start: { step: 1 } }).start,
+      migrateAutomaticDelays({ ...legacy, start: { step: 1 } }).start,
       { step: 1 },
       "An anchor on a removed wait falls forward to the next retained step",
     );

@@ -1194,5 +1194,11 @@
       ]
     ],
     "refresh": true
+  },
+  "HeavenwillGauntletsA4": {
+    "name": "Heavenwill Gauntlets A4",
+    "duration": 1,
+    "maxStack": 1,
+    "shortName": "A4"
   }
 }

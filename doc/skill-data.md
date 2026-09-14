@@ -60,6 +60,33 @@ Surging Waves, missing-HP bonuses, and Exhausted-target doubling remain separate
 effects. The level-71 coefficient update preserves all existing cast, hit,
 cancel, trigger, and periodic timings.
 
+### Mystic cast timing with separate ping
+
+Cast duration excludes input latency. Dragon Head - Tide uses its 5.8-second
+interrupt, single-volley Bursting Nine uses 1.4 seconds, and full Flute of the
+Tides uses 3.3 seconds. Their existing hit times remain independent; Turnaround
+is applied at the revised cast completion.
+
+Soaring Spin uses the datamined hit times 0.7946970054545454 and 2.02492899
+seconds, replacing the older observed 1.26 / 2.05 timings. The one-hit variant
+ends at its 1.1818181818181817-second interrupt. The two-hit variant ends when
+its second hit lands at 2.02492899 seconds, after that interrupt.
+
+Dragon's Breath and Smolder cancel variants finish at their selected hit.
+The normal and Intoxicated routes use these times from
+`local/datamine/wwm-skills-mystic-skills-offensive.json`:
+
+| Route       | First hit / one-hit cast | Second hit / two-hit cast |
+| ----------- | -----------------------: | ------------------------: |
+| Normal      |               1.27292535 |                2.72768958 |
+| Intoxicated |       0.6064791536363635 |        1.6975969436363636 |
+
+The data preserves full source precision. Damage, burn application/extension,
+and cast-end Turnaround move together. The existing segmented timing modifier
+maps each normal hit to its Intoxicated counterpart; ping is added separately
+once per cast. A cast that begins sober does not speed itself up when its
+start action applies Intoxicated.
+
 ## Datamined martial-art identity and progression
 
 `local/datamine/wwm-martial-arts-normal.json` is the processed local reference.
@@ -199,6 +226,27 @@ skills omit both fields so they inherit state instead of switching it. General
 and Mystic casts leave both values unchanged. Requirements can inspect the
 state with `currentMartialArt` or `currentWeapon`.
 
+### Ping exemptions
+
+Skills may set ignorePing to true to start without the configured input latency.
+The default is false. Composite skills with subAction use ignorePing on the
+parent and pay latency independently for each selected component, rather than
+for each damage action inside that component. Component selection occurs at
+dispatch before its latency gap; the choice stays locked until cast completion.
+Action requirements bound to skill start and cast-time modifiers still resolve
+at the component's actual delayed start.
+
+Both Deflect and Deflect (Successful) ignore ping. Infernal Twinblades A1–A4
+and FA1–FA5 also ignore ping. Vile Condemned's
+VileCondemnedHit and VileCondemnedEndHit releases and all
+PhalanxbaneHeavySlam / PhalanxbaneHeavyFastSlam components also ignore ping.
+Their charge components retain ordinary latency. Drunken Poet composites pay
+once per selected Drink/Poet component, with no additional parent latency.
+
+Rotation records may contain ping, a non-negative finite millisecond override.
+An absent value inherits the user's Settings ping (40 ms by default); zero
+disables ping for that rotation.
+
 ## Actions
 
 All normal skill actions have a numeric `time` measured from cast start and may
@@ -292,6 +340,33 @@ Intoxicated again at the start of every requested hit and stops the remaining
 components if it expires. The five underlying hit definitions are `SubAction`
 components and use their always-Intoxicated timings directly; they have no
 runtime cast-time modifier and are hidden from the castable skill list.
+
+Drink and Poet attacks 1–4 use the measured interrupt / next-cast candidates as
+their cast durations. Attack 5 is canceled when its hit lands, so its cast time
+matches its hit time. Full animation end times are not used:
+
+| Component | Hit time (seconds) | Cast time (seconds) |
+| --------- | -----------------: | ------------------: |
+| Drink     |                  — |               0.626 |
+| Attack 1  |             0.4439 |               0.580 |
+| Attack 2  |             0.2795 |               0.436 |
+| Attack 3  |             0.3783 |               0.550 |
+| Attack 4  |            0.44709 |               0.600 |
+| Attack 5  |             0.5382 |              0.5382 |
+
+Hit-triggered enhancement and explosion actions share their component's hit
+timestamp. Turnaround applications remain at the cast-completion boundary, while
+resource spending and fifth-hit enhancement consumption remain at component
+start. Ping adds its separate latency before each selected component. Drink
+plus five attacks therefore occupies 3.3302 seconds at zero ping and 3.5702
+seconds at 40 ms ping. The separately defined instant Drink cancel is unchanged.
+
+The four bundled one-minute Deluge rotations anchor their 59.99%, 39.99%,
+and zero-Qi events to resolved skill starts or actions near 20, 30, and 50
+seconds after battle start. These anchors are calibrated with the path's default
+build, breakthrough 17, Simmering Fish Slices, Fire Divinecraft, no Script or
+global-effect overrides, and 40 ms ping. Changing ping or build timing can move
+them because they remain attached to combat actions rather than fixed timestamps.
 
 ```json
 {
@@ -482,13 +557,13 @@ the same per-hit calculation with and without the named buff.
 
 A castable skill can declare an ordered `subAction` list of objects. `value`
 names the primary component. Its optional `requirement` is evaluated when that
-component starts, after earlier components finish. A passing requirement uses
+component dispatches, after earlier components finish and before its ping gap. A passing requirement uses
 the primary component; a failing requirement uses `fallback` when provided or
 skips the component otherwise. The selection remains locked for that component
 cast.
 
 `value` and `fallback` may instead be equal-length arrays. The requirement is
-evaluated once when the first component in the group starts, and the entire
+evaluated once when the first component in the group dispatches, and the entire
 primary or fallback sequence is locked from that result. Later components do
 not re-evaluate the requirement after earlier components change resources,
 effects, or cooldowns. Each paired position reserves enough action slots for
@@ -893,7 +968,7 @@ target debuffs, unrelated active buffs, and explicit `extend` amounts are unchan
 An ordinary later refresh resolves its own source and duration afresh.
 
 Infernal Twinblades' Perfect Dodge Enhancement uses `buffDurationBonus: 0.4`
-for the `PerfectDodge` source tag. Both dodge variants share one `skillStart`
+for the `PerfectDodge` source tag. Both dodge variants share one `attackResponse`
 trigger that restores one `AddledMind` charge, with a separate 30-second trigger cooldown.
 The duration bonus is independent of that cooldown and includes indirect dodge
 buffs such as Disintegration. Addled Mind uses a 15-second cooldown, three uses,
@@ -1233,7 +1308,7 @@ skill application actions:
   Samsara after the hit. Samsara lasts 15 seconds and adds 5% HP damage.
   The duration comes from the catalog's English rank description.
 - T2: Solo Level-based Critical Rate (9% at Solo Level 17); T5: fixed 4.4% Critical DMG Bonus, both `rawStat`.
-- T3: both Perfect Dodge variants apply Samsara at time zero when
+- T3: both Perfect Dodge variants apply Samsara on the successful incoming attack when
   `EchoesOfOblivionT3` is selected. This uses the same conditional skill-action
   mechanism as their other Inner Way bonuses; the existing Infernal dodge
   duration talent extends this application to 21 seconds.
@@ -1618,7 +1693,7 @@ character-stat display. Timing values can likewise use action-time thresholds:
 `actionTime` resolves independently for the skill's original cast time and each
 original action time before timing modifiers are applied. Thus a segmented
 `castTimeModifier` may adjust early and late actions by different amounts.
-Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the current `distance` parameter in both expected and sampled calculations. Rodent coefficients use `[5, 12]` with `[0.63, 0.57, 0.6]`. Dragon's Breath retains its inclusive first-hit timing through the equivalent exclusive bound `1.3375000000000001` (the next representable number after `1.3375`).
+Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the current `distance` parameter in both expected and sampled calculations. Rodent coefficients use `[5, 12]` with `[0.63, 0.57, 0.6]`. Dragon's Breath retains its inclusive first-hit timing through the equivalent exclusive bound `1.2729253500000002` (the next representable number after `1.27292535`). Its Intoxicated modifier subtracts the difference between each route's corresponding hit times rather than a rounded shared latency allowance.
 
 `switch` selects a value from an explicit keyed table. `param1` names the
 timeline-state value to inspect, `param2` maps possible values to results, and
@@ -1648,11 +1723,11 @@ General Deflect uses this weapon-time switch. Gauntlet Deflect is measured at
 `0.3` seconds; the other weapon cases retain the shared `0.338`-second
 placeholder until their individual timings are measured.
 
-Successful Deflect and both Perfect Dodge variants carry the shared
-`AvoidsTakeDamage` tag. A Take Damage event inside one of those cast intervals,
-including either boundary, resolves to zero and does not activate take-damage
-triggers. Ordinary Deflect does not carry the tag and therefore does not avoid
-the event.
+Successful Deflect and both Perfect Dodge variants declare an `attackResponse`
+window (see Incoming-attack response windows below). Incoming damage inside an
+active window resolves to zero without take-damage triggers. Perfect Dodge
+Cancel keeps the normal dodge window while allowing the next cast to begin.
+Ordinary Deflect remains an animation cancel without protection.
 
 `multiply` multiplies a dynamic parameter by a scalar:
 
@@ -2140,16 +2215,18 @@ fresh result rather than restoring an incompatible cache entry.
 
 ### Bamboocut Kite definition status
 
-Heavenwill Gauntlets currently defines Heavenwill Declared (Gauntlet Q) as a
-0.9-second Martial Art skill. Its two hits use coefficients `0.2201` and
-`0.8804`, with their respective flat physical and attribute bonuses, and both
-land at cast end until measured per-hit timing becomes available.
+Heavenwill Declared (Gauntlet Q1) uses the supplied Level 100 alternate-animation
+data directly, without distance selection: a 0.625-second cast with hits at
+0.403 and 0.471 seconds. Physical and attribute coefficients are
+0.330138 / 0.770322, physical bonuses are 91.5 / 213.5, and attribute bonuses
+are 49.8 / 116.2. This is a 30%/70% split across two independently resolved hits.
 
-Celestial Mandate is a 1.23-second Falcon skill with five cast-end hits. Its
-first four hits each use physical coefficient `0.2293`, `63` flat physical
-bonus, and `34` flat attribute bonus, while the fifth uses its larger
-finishing-hit values. At cast end it adds `0.1` to the numeric `HeavensWill`
-resource. Heaven's Unity is represented as a regular self buff;
+Celestial Mandate is a 1.4-second Falcon skill with five direct hits at
+0.45, 0.6, 0.683, 0.833, and 1.2 seconds. The first four hits each use physical
+and attribute coefficients of 0.229311, physical bonus 63.6, and attribute
+bonus 34.65. The final hit uses coefficients of 0.611496, physical bonus 169.6,
+and attribute bonus 92.4. Immediately after that final hit, it adds `0.1`
+to the numeric `HeavensWill` resource. Heaven's Unity is a regular self buff;
 while it is active, a second `addResource` action with the standard action
 `requirement` adds another `0.2`, for `0.3` total generation.
 Heaven's Unity lasts 24 seconds, has one maximum stack, and refreshes its
@@ -2158,19 +2235,24 @@ Explicit resource changes and passive resource regeneration are normalized to
 nine decimal places so fractional additions remain stable at requirement and
 display boundaries.
 
-Skygrasp Rope Dart currently defines Sky Grasped (RD Special) as a 0.9-second
-Special skill. Its cast-end hit uses physical coefficient `1.2503`, `347` flat
-physical bonus, and `189` flat attribute bonus. Immediately after that hit at
-the same timestamp, it applies or refreshes Heaven's Unity on self.
+Sky Grasped (RD Special) has a 0.95-second cast and hits at 0.666 seconds.
+Its physical and attribute coefficients are `1.25033`, with `347` flat physical
+bonus and `189` flat attribute bonus. Immediately after that hit at the same
+timestamp, it applies or refreshes Heaven's Unity on self. The conditional
+follow-up damage and 0.25 Heaven's Will gain remain at 1.1 seconds, after the
+cast ends, with their existing requirements and damage values.
 
-Snaring Lash [Cancel] (RD Q [Cancel]) is a 0.6-second Martial Art skill. Its
-single cast-end hit uses physical coefficient `0.4975`, `137` flat physical
-bonus, and `75` flat attribute bonus.
+Snaring Lash [Cancel] (RD Q [Cancel]) uses the supplied Level 100 hit at 0.365
+seconds as its cancel cast duration. Physical and attribute coefficients are
+0.49752, with physical bonus 137.7 and attribute bonus 75. Its Falcon trigger
+and conditional Heaven's Might application remain at that hit timestamp.
 
-The full Snaring Lash (RD Q) has a 1.7-second cast. It retains the cancel
-variant's first hit at 0.6 seconds and adds a second hit at 1.7 seconds with
-physical coefficient `1.1609`, `321` flat physical bonus, and `175` flat
-attribute bonus.
+Full Snaring Lash (RD Q) shares the cancel version's opening hit and effects at
+0.365 seconds. Its follow-up offsets of 0.866 and 0.883 seconds produce hits at
+1.231 and 1.248 seconds; the 0.95-second follow-up duration ends the cast at
+1.315 seconds. The later hits use physical and attribute coefficients of
+0.49752 and 0.66336, physical bonuses of 137.7 and 183.6, and attribute bonuses
+of 75 and 100 respectively.
 
 A requirement with `operator: "not"` and exactly one operand negates that
 operand. This allows data-defined component selection to require that a buff or
@@ -2182,40 +2264,27 @@ end. Stage three divides its total `0.6363` Physical coefficient, `177` Physical
 bonus, and `96` attribute bonus by 30%, 30%, and 40% across hits at `0.275`,
 `0.55`, and `0.7375` seconds.
 
-Wicked Defiance (Gauntlet VC) is a `1.4375`-second Varied Combo. Its single hit
-lands at `0.725` seconds with `1.209` Physical coefficient, `335` Physical
-bonus, and `183` attribute bonus. A following action at the same timestamp adds
-`0.1` Heaven's Will, so the damage resolves before the resource gain.
+Wicked Defiance (Gauntlet VC) uses the supplied Level 100 direct starting route:
+a 0.9-second cast with hits at 0.216 and 0.66 seconds. Physical and attribute
+coefficients are 0.4836 / 0.7254, physical bonuses are 134 / 201, and attribute
+bonuses are 73.2 / 109.8. The two hits independently resolve combat effects.
+Its 0.1 Heaven's Will gain resolves immediately after the final hit at 0.66
+seconds, before the next cast can start.
 
-Righteous Reign 1st Hit is a `0.3375`-second Light Attack whose single hit lands
-at cast end with `0.3564` Physical coefficient, `100` Physical bonus, and `54`
-attribute bonus. Righteous Reign 2nd Hit is a `0.6`-second Light Attack. Its
-total `0.3921` Physical coefficient, `110` Physical bonus, and `59` attribute
-bonus are divided 40% at `0.4125` seconds and 60% at `0.6` seconds.
-
-Righteous Reign 3rd Hit is a `0.425`-second Light Attack whose single hit lands
-at cast end. Righteous Reign 4th Hit has a `0.4625`-second cast and lands its
-single hit at `0.325` seconds.
-
-Righteous Reign 5th Hit (Gauntlet A5) is a `0.6125`-second Light Attack. Its
-total `0.4674` Physical coefficient, `130` Physical bonus, and `71` attribute
-bonus are split one-third at `0.275` seconds and two-thirds at `0.5` seconds.
-
-Righteous Reign 6th Hit [Cancel] (Gauntlet A6) is a `0.2875`-second Light
-Attack. Its cast-end hit uses Physical coefficient `0.8202`, `228` Physical
-bonus, and `124` attribute bonus, then triggers Light Attack Falcon at the same
-timestamp. Light Attack Falcon is a zero-cast-time `Triggered` skill tagged
-`Falcon`; its three `0.748` Physical-coefficient hits land at `0.3`, `0.45`, and
+Righteous Reign A1–A6 timings, coefficients, and the A4 continuation marker are
+specified in [Heavenwill Gauntlets A1–A6 timing and A4 continuation](#heavenwill-gauntlets-a1a6-timing-and-a4-continuation).
+A6 triggers Light Attack Falcon at its 0.256-second hit. Light Attack Falcon is
+a zero-cast-time `Triggered` skill tagged `Falcon`; its three
+`0.748` Physical-coefficient hits land at `0.3`, `0.45`, and
 `0.5875` seconds without extending the rotation's sequential cast time.
-The uncancelled Righteous Reign 6th Hit retains that hit and trigger at
-`0.2875` seconds but has a total cast time of `0.75` seconds.
 
-All Under Justice (Gauntlet Special) is a 1-second Special skill with four
-cast-end hits. The first three each use physical coefficient `0.4884`, `135`
-flat physical bonus, and `73` flat attribute bonus. The final hit uses physical
-coefficient `0.9769`, `270` flat physical bonus, and `147` flat attribute bonus.
+All Under Justice (Gauntlet Special) uses the supplied Level 100 source-layer-0
+timing candidate: a 1.018-second cast with four hits at 0.3, 0.435, 0.602,
+and 0.935 seconds. The first three each use physical and attribute coefficients
+of 0.40704, physical bonus 112.8, and attribute bonus 61.4. The final hit uses
+coefficients of 0.81408, physical bonus 225.6, and attribute bonus 122.8.
 
-Vile Condemned (Gauntlet Charged) contains a one-second
+Vile Condemned (Gauntlet Charged) contains a 0.775-second
 `VileCondemnedCharge` component followed by a conditional release component.
 At release start, Soaring High T0, three or more Heaven's Will, and the absence
 of the self status `VileCondemnedEndCooldown` select `VileCondemnedEndHit`;
@@ -2231,6 +2300,22 @@ consumes exactly two Heaven's Will. End Hit consumes three, leaving any
 fractional amount above three intact, and consumes one additional point when a
 start-bound requirement found Soaring High T6 and exactly four Heaven's Will at
 release start. Heaven's Will is capped at four.
+
+The selectable variants `VileCondemnedEnd` and `VileCondemnedEnd4` keep the
+same charge and release components. They require at least three and four Heaven's
+Will respectively at release start, plus Soaring High T0 and an expired or reset
+End Hit cooldown. Their release reference has `waitForRequirement: true` and no
+weak-hit fallback. The scheduler inserts the wait before the charge, crediting
+regeneration and already queued gains/resets during the charge. The charge pays
+ping once; the composite root and End Hit still ignore ping. The four-HW variant
+uses the existing T6 damage bonus and consumption rules.
+
+Both bundled Kite presets use the four-HW variant for their first three casts
+and the three-HW variant for their last. Their old manual delay padding is
+removed. The regular preset omits its final Snaring Lash [Cancel] and Sky Grasped
+to land the last End Hit before 60 seconds. It retains Deflect immediately after
+Righteous Reign 6th Hit [Cancel], because A6 requires that cancel. Battle End still
+cuts off late hits even when the release was ready.
 
 When End Hit deals damage, Soaring High T6 triggers a one-point Heaven's Will
 refund. The refund uses its own 18-second cooldown, independent of End Hit's
@@ -2312,3 +2397,76 @@ the existing targets against that snapshot. A listener cooldown is local to
 that listener and begins only when it successfully spawns its skill. For a
 multi-hit skill, the first eligible event starts the cooldown, so later hits in
 that window do not replay.
+
+### Incoming-attack response windows
+
+Skills declare `attackResponse: { endMargin: 0.1, onSuccess: "SkillId" }`.
+The window normally uses the skill's resolved weapon-dependent cast duration,
+including timing modifiers. `durationFrom: "PerfectDodge"` gives Perfect Dodge
+Cancel the normal dodge's modified window while its blocking cast duration stays
+zero. The window persists while subsequent skills cast.
+
+After cooldown readiness, the scheduler finds the next manual Take Damage event
+or dummy attack before Battle End that is not already reserved by another response.
+It inserts an automatic attack wait so the window ends 0.1 seconds after that
+attack, or later if the preceding cast prevents the ideal start. The earliest
+start includes ping; attacks before that time cannot be selected. Reservations
+group simultaneous attacks so consecutive canceled dodges choose distinct attacks.
+Both Deflect variants ignore ping; dodges retain normal ping.
+
+At a positive incoming hit within an active window, damage becomes zero and an
+internal `attackResponse` event runs setup talent hooks and triggers the data's
+`onSuccess` skill at the attack timestamp. Each defensive cast succeeds once;
+additional hits within its window are still avoided. Success effects therefore
+precede later outgoing actions at the same timestamp without changing earlier
+snapshots. No upcoming attack means an ordinary cast and no success rewards.
+
+`PerfectDodgeSuccess` owns Vitality, Etherwrath, Breaking Point, Mystery,
+Mystery Umbra follow-ups, and Samsara. `DeflectSuccess` owns Vitality and
+Cleftpeak. Dodge talent charge resets and Carouse Binge gains listen to
+`attackResponse` instead of `skillStart`. Success rows and their triggered
+children retain the defensive row's attribution and weapon context even if a
+subsequent cast switches weapons; the active weapon is not switched back.
+
+Generated waits retain `automatic: "attack"` and the output-only editing rules
+shared with cooldown waits. Loading/importing old rotations changes direct
+anchors on the removed time-zero defensive actions to cast-start anchors.
+
+Kite BP enables paired dummy attacks. The second A6 in its opener uses A6 Cancel,
+followed directly by Perfect Dodge, which cancels A6's remaining animation.
+At 40ms ping, a 0.0585-second automatic wait puts the first dodge window at
+5.100–5.600 seconds, covering the first paired attack at 5.500 seconds.
+The final Qi break attaches to the first damage action of Soaring Spin before
+the third four-HW VC. This keeps the following Celestial Mandate inside
+Exhausted, allowing its Falcon hit to reset VC's cooldown. Three four-HW releases
+and the final three-HW End Hit now land before the 60-second cutoff. DPS
+baselines remain review-gated separately from builds.
+
+### Heavenwill Gauntlets A1–A6 timing and A4 continuation
+
+Righteous Reign uses the supplied Level 100 grounded A1 and non-PvP A6 data.
+Normal cast durations use interrupt timing; full animation end timings do not
+block the rotation. A6 Cancel ends at its hit, retaining the separate follow-up
+cancel skill. A6's Falcon trigger remains synchronized with that hit.
+
+| Attack             | Cast duration | Hit times     | Physical/attribute coefficients | Physical bonuses | Attribute bonuses |
+| ------------------ | ------------- | ------------- | ------------------------------- | ---------------- | ----------------- |
+| A1 grounded        | 0.466         | 0.21          | 0.35636                         | 100              | 54                |
+| A2                 | 0.462         | 0.148 / 0.32  | 0.156852 / 0.235278             | 44 / 66          | 23.6 / 35.4       |
+| A3                 | 0.333         | 0.25          | 0.25294                         | 71               | 39                |
+| A4                 | 0.417         | 0.194         | 0.31826                         | 89               | 48                |
+| A5 alternate entry | 0.512         | 0.205 / 0.423 | 0.186944 / 0.280416             | 52 / 78          | 28.4 / 42.6       |
+| A5 continuation    | 0.410         | 0.115 / 0.320 | same as alternate entry         | same             | same              |
+| A6 non-PvP         | 0.923         | 0.256         | 0.8202                          | 228              | 124               |
+| A6 Cancel          | 0.256         | 0.256         | same as A6                      | same             | same              |
+
+A4 applies the self buff `HeavenwillGauntletsA4` (displayed as Heavenwill Gauntlets A4) at its cast end (0.417 seconds), with one-second
+duration and one maximum stack. A5 snapshots a modifier requiring this buff and
+consumes it at time zero. Other attacks neither consume it nor receive its speedup.
+Ping and intervening delays count against its lifetime.
+
+The A5 modifier uses the existing segmented `castTimeModifier` on original
+`actionTime`: boundaries 0.205, 0.423, and 0.512 select offsets 0, -0.09,
+-0.103, and -0.102 seconds. This preserves the time-zero consumption while
+matching both faster hits and the faster interrupt independently. Consumption
+does not undo the modifier snapshot for the remainder of that A5 cast.

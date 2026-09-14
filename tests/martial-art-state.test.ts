@@ -11,7 +11,7 @@ describe("martial-art-state", () => {
       Object.entries(mystic).filter(([skillId]) => skillId.startsWith("GhostlyStepsUmbraDodge")),
     );
     const skills = {
-      PerfectDodge: general.PerfectDodge,
+      ...general,
       MartialArtCast: {
         name: "Martial Art Cast",
         castTime: 0,
@@ -24,6 +24,7 @@ describe("martial-art-state", () => {
       ...ghostSkills,
     };
     const eventDefinitions = {
+      TakeDamage: { action: [{ type: "takeDamage", time: 0 }] },
       MartialArt: {
         name: "Switch Martial Art",
         castTime: 0,
@@ -46,6 +47,7 @@ describe("martial-art-state", () => {
             martialArt: "snowparting",
           },
           { type: "skill", skill: "PerfectDodge" },
+          ...[0.4, 0.9, 1.4].map((startTime) => ({ type: "event", event: "TakeDamage", startTime, damage: 1 })),
         ],
       },
       skills,
@@ -63,7 +65,10 @@ describe("martial-art-state", () => {
       initialBuffs: [{ name: "MysteryUmbra" }],
     });
     const triggeredSkills = timeline
-      .filter((row) => row.kind === "trigger" && row.step.type === "skill")
+      .filter(
+        (row) =>
+          row.kind === "trigger" && row.step.type === "skill" && row.step.skill.startsWith("GhostlyStepsUmbraDodge"),
+      )
       .map((row) => row.step.skill);
 
     expect(

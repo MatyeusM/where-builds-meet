@@ -40,11 +40,6 @@
       "skill": "DrunkenPoet5HitsCancel"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.49
-    },
-    {
       "type": "skill",
       "skill": "DeflectSuccessful"
     },
@@ -65,11 +60,6 @@
       "skill": "FourfoldInquiry1"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.45
-    },
-    {
       "type": "skill",
       "skill": "DeflectSuccessful"
     },
@@ -85,18 +75,13 @@
       "type": "event",
       "event": "Qi",
       "before": {
-        "action": "start"
+        "action": 6
       },
       "targetQiRatio": 0.5999
     },
     {
       "type": "skill",
       "skill": "DrunkenPoet5HitsCancel"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.58
     },
     {
       "type": "skill",
@@ -111,20 +96,20 @@
       "skill": "Deflect"
     },
     {
-      "type": "event",
-      "event": "Qi",
-      "before": {
-        "action": 35
-      },
-      "targetQiRatio": 0.3999
-    },
-    {
       "type": "skill",
       "skill": "DrunkenPoet5HitsCancel"
     },
     {
       "type": "skill",
       "skill": "Deflect"
+    },
+    {
+      "type": "event",
+      "event": "Qi",
+      "before": {
+        "action": "start"
+      },
+      "targetQiRatio": 0.3999
     },
     {
       "type": "skill",
@@ -179,11 +164,6 @@
       "skill": "FourfoldInquiry1"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.83
-    },
-    {
       "type": "skill",
       "skill": "DeflectSuccessful"
     },
@@ -206,11 +186,6 @@
     {
       "type": "skill",
       "skill": "DrunkenPoet5HitsCancel"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.59
     },
     {
       "type": "skill",

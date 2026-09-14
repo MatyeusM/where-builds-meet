@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 
@@ -165,6 +166,7 @@ describe("echoes-t4", () => {
       setupEffects: talent.talent[13].flatMap((entry) => entry.effect ?? []),
     });
     combined.skills.Dodge = { castTime: 0, tags: ["PerfectDodge"], action: [] };
+    combined.skills = withImmediateAttacks(combined.skills);
     assert.deepEqual(
       times(buildRotationTimeline(combined)),
       [0, 0, 0, 0, 1, 15],

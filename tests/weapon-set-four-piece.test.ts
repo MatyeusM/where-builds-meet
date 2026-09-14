@@ -75,7 +75,7 @@ describe("weapon-set-four-piece", () => {
             QiImbalance: { duration: 10, maxStack: 1 },
           },
           dots: {},
-          eventDefinitions: {},
+          eventDefinitions: { TakeDamage: { action: [{ type: "takeDamage", time: 0 }] } },
           weapons,
           innerWayConditions: setupEffects.flatMap((effect) => (effect.condition ? [effect.condition] : [])),
           innerWayRules: [],
@@ -174,7 +174,13 @@ describe("weapon-set-four-piece", () => {
         "Rain Whisper does not boost noncritical healing",
       );
     }
-    const deflectOptions = { steps: [cast("DeflectSuccessful"), cast("Probe")] };
+    const deflectOptions = {
+      steps: [
+        cast("DeflectSuccessful"),
+        cast("Probe"),
+        { type: "event", event: "TakeDamage", startTime: 0.1, damage: 200 },
+      ],
+    };
     for (const roll of [undefined, () => 0.5]) {
       const selected = buildRotationTimeline(bundle("Cleftpeak", 4, deflectOptions).timeline, roll);
       const hit = selected.find((row) => row.step.skill === "Probe").actionStates[0];
@@ -199,7 +205,14 @@ describe("weapon-set-four-piece", () => {
         );
       }
       const expired = buildRotationTimeline(
-        bundle("Cleftpeak", 4, { steps: [cast("DeflectSuccessful"), delay(5), cast("Probe")] }).timeline,
+        bundle("Cleftpeak", 4, {
+          steps: [
+            cast("DeflectSuccessful"),
+            delay(5),
+            cast("Probe"),
+            { type: "event", event: "TakeDamage", startTime: 0.1, damage: 200 },
+          ],
+        }).timeline,
         roll,
       );
       assert.ok(

@@ -1,5 +1,6 @@
+import { normalizePing } from "./calculations/combatDefaults";
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline";
-import { migrateAutomaticCooldownDelays } from "./rotationEditing";
+import { migrateAutomaticDelays, migrateDefenseActionAnchors } from "./rotationEditing";
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types";
 
 export const rotationExportFormat = "where-builds-meet-rotations";
@@ -163,7 +164,9 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
       type: "event",
       event: "Delay",
       duration: Math.max(0, step.duration),
-      ...(step.automatic === "cooldown" ? { automatic: "cooldown" as const } : {}),
+      ...(step.automatic === "cooldown" || step.automatic === "attack" || step.automatic === "requirement"
+        ? { automatic: step.automatic }
+        : {}),
     };
   }
   if (
@@ -223,6 +226,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     autoHP?: unknown;
     dummyAttack?: unknown;
     groupSize?: unknown;
+    ping?: unknown;
     infiniteVitality?: unknown;
     start?: unknown;
     eventTimeReference?: unknown;
@@ -261,23 +265,26 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           ...(typeof startValue.action === "number" ? { action: startValue.action } : {}),
         }
       : undefined;
-  return migrateAutomaticCooldownDelays({
-    name: candidate.name,
-    steps: parsedSteps,
-    ...(typeof candidate.targetHP === "number" && Number.isFinite(candidate.targetHP) && candidate.targetHP > 0
-      ? { targetHP: candidate.targetHP }
-      : {}),
-    ...(autoHP ? { autoHP: true } : {}),
-    ...(candidate.dummyAttack === true ? { dummyAttack: true } : {}),
-    groupSize: candidate.groupSize === 5 || candidate.groupSize === 10 ? candidate.groupSize : 1,
-    ...(typeof candidate.infiniteVitality === "boolean"
-      ? { infiniteVitality: candidate.infiniteVitality }
-      : /\bIV\b|infinite vitality/i.test(candidate.name)
-        ? { infiniteVitality: true }
+  return migrateDefenseActionAnchors(
+    migrateAutomaticDelays({
+      name: candidate.name,
+      steps: parsedSteps,
+      ...(typeof candidate.targetHP === "number" && Number.isFinite(candidate.targetHP) && candidate.targetHP > 0
+        ? { targetHP: candidate.targetHP }
         : {}),
-    ...(start ? { start } : {}),
-    ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
-  });
+      ...(autoHP ? { autoHP: true } : {}),
+      ...(candidate.dummyAttack === true ? { dummyAttack: true } : {}),
+      ...(normalizePing(candidate.ping) !== undefined ? { ping: normalizePing(candidate.ping) } : {}),
+      groupSize: candidate.groupSize === 5 || candidate.groupSize === 10 ? candidate.groupSize : 1,
+      ...(typeof candidate.infiniteVitality === "boolean"
+        ? { infiniteVitality: candidate.infiniteVitality }
+        : /\bIV\b|infinite vitality/i.test(candidate.name)
+          ? { infiniteVitality: true }
+          : {}),
+      ...(start ? { start } : {}),
+      ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
+    }),
+  );
 }
 
 function importedId(originalId: string, usedIds: Set<string>) {

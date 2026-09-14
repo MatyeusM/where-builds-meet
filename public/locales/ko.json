@@ -210,6 +210,7 @@
   "data.skill.general.MoraleChant.name": "결의의 노래",
   "data.skill.general.PerfectDodge.name": "완벽회피",
   "data.skill.general.PerfectDodgeCancel.name": "완벽 회피(캔슬)",
+  "data.skill.general.PerfectDodgeSuccess.name": "완벽회피",
   "data.skill.general.PiercingDamage.damageGroup.name": "핏빛찬가",
   "data.skill.general.RiposteTrigger.name": "방어반격",
   "data.skill.mystic.BurstingNine.name": "연구의 화살",

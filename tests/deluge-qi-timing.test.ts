@@ -1,104 +1,81 @@
 import { describe, expect, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
+import { buildPresetRotationBundle } from "../src/App";
+import { calculateRotationBaseline } from "../src/calculations/rotationCalculator";
+import { compareTimelineTime, type RotationRecord } from "../src/calculations/rotationTimeline";
+import paths from "../data/path.json";
+import regularFire from "../data/rotation/silkbind-deluge/dummy-1-min-regular-fire.json";
+import smolder from "../data/rotation/silkbind-deluge/dummy-1-min-smolder.json";
+import wts from "../data/rotation/silkbind-deluge/dummy-1-min-wts.json";
+import wtsTeam from "../data/rotation/silkbind-deluge/dummy-1-min-wts-team.json";
 
-// Ported from script/probe/check-deluge-qi-timing.mjs.
-describe("deluge-qi-timing", () => {
-  it("deluge-qi-timing checks", async () => {
-    const moduleJson = async (path) => (await probeLoad(path)).default;
-
-    const rotationFiles = [
-      "dummy-1-min-regular-fire.json",
-      "dummy-1-min-smolder.json",
-      "dummy-1-min-wts.json",
-      "dummy-1-min-wts-team.json",
-    ];
-    const rotations = await Promise.all(
-      rotationFiles.map(async (file) => ({
-        file,
-        rotation: await moduleJson(`/data/rotation/silkbind-deluge/${file}`),
-      })),
-    );
-    const skills = Object.assign(
-      {},
-      ...(await Promise.all(
-        [
-          "/data/skill/general.json",
-          "/data/skill/mystic.json",
-          "/data/skill/panacea-fan.json",
-          "/data/skill/soulshade-umbrella.json",
-        ].map(moduleJson),
-      )),
-    );
-    const dots = await import("../data/dot/mystic.json");
-    const effectDefinitions = Object.assign(
-      {},
-      ...(await Promise.all(
-        [
-          "/data/buff/general.json",
-          "/data/buff/mystic.json",
-          "/data/buff/silkbind-deluge.json",
-          "/data/debuff/general.json",
-          "/data/debuff/mystic.json",
-        ].map(moduleJson),
-      )),
-      dots,
-    );
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const eventDefinitions = {
-      BattleEnd: { name: "Battle End", castTime: 0, action: [], tags: ["Event"] },
-      Qi: {
-        name: "Qi",
-        castTime: 0,
-        action: [
-          { type: "setQi", time: 0 },
-          {
-            type: "apply",
-            target: "target",
-            value: "Exhausted",
-            stack: 1,
-            requirement: [{ target: "resource", value: "Qi", comparison: "==", amount: 0 }],
-            time: 0,
-          },
-        ],
-        tags: ["Event"],
-      },
-      TakeDamage: {
-        name: "Take Damage",
-        castTime: 0,
-        action: [{ type: "takeDamage", time: 0 }],
-        tags: ["Event"],
-      },
-    };
-
-    for (const { file, rotation } of rotations) {
-      const timeline = buildRotationTimeline({
+describe("Deluge Qi timing", () => {
+  it.each([
+    { name: "Regular Fire", rotation: regularFire },
+    { name: "Smolder", rotation: smolder },
+    { name: "World to Sword", rotation: wts },
+    { name: "World to Sword Team", rotation: wtsTeam },
+  ])("$name keeps its complete Qi segment near 20/30/50 seconds at default ping", ({ rotation: preset }) => {
+    const rotation = { ...preset, ping: 40 } as RotationRecord;
+    const bundle = buildPresetRotationBundle(
+      {
+        pathId: "silkbindDeluge",
+        martialArts: ["panaceaFan", "soulshadeUmbrella"],
         rotation,
-        skills,
-        eventDefinitions,
-        dots,
-        effectDefinitions,
-        innerWayConditions: [],
-        innerWayRules: [],
-        setupEffects: [],
-        weapons: rotation.martialArts,
-      });
-      const qiRows = timeline.filter(
-        (row) => row.kind === "rotation" && row.step.type === "event" && row.step.event === "Qi",
-      );
-      const expected = [
-        { ratio: 0.5999, time: 20 },
-        { ratio: 0.3999, time: 30 },
-        { ratio: 0, time: 50 },
-      ];
-      expect(qiRows.length === expected.length, `${file} must contain one complete Qi segment.`).toBeTruthy();
-      for (const target of expected) {
-        const row = qiRows.find((candidate) => candidate.step.targetQiRatio === target.ratio);
-        expect(row, `${file} is missing its ${target.ratio * 100}% Qi event.`).toBeTruthy();
-        expect(
-          Math.abs(row.startTime - target.time) <= 0.75,
-          `${file} ${target.ratio * 100}% Qi occurs at ${row.startTime.toFixed(3)}s instead of near ${target.time}s.`,
-        ).toBeTruthy();
+        breakthrough: "17",
+        food: "SimmeringFishSlices",
+        divinecraft: "Fire",
+        script: "None",
+        globalDebuffs: {
+          phantomChime: false,
+          qiImbalance: false,
+          soulShaken: false,
+          vulnerable: false,
+          fearfulBlade: false,
+          qingyisCharm: "none",
+          floatingGrace: "none",
+        },
+        skillOverrides: {},
+      },
+      paths.silkbindDeluge.defaultBuild,
+    );
+    expect(bundle).toBeDefined();
+    const { timeline } = calculateRotationBaseline(bundle!);
+    const anchor = timeline.find((row) => row.rotationIndex === (rotation.start?.step ?? 0))!;
+    const startTime =
+      anchor.startTime +
+      (rotation.start?.action === undefined ? 0 : Number(anchor.actions[rotation.start.action].time));
+    const ordered = timeline
+      .filter((row) => row.kind === "rotation" && row.step.type === "skill" && !row.skipped)
+      .sort((a, b) => (a.rotationIndex ?? 0) - (b.rotationIndex ?? 0));
+    const attacks = timeline.filter((row) => row.step.type === "event" && row.step.event === "TakeDamage");
+    for (let index = 0; index < ordered.length; index++) {
+      const row = ordered[index];
+      if (row.step.type !== "skill" || row.step.skill !== "DeflectSuccessful") continue;
+      const previous = ordered[index - 1];
+      const earliest = previous ? previous.startTime + previous.effectiveCastTime : 0;
+      const attack = attacks.find((attack) => compareTimelineTime(attack.startTime, earliest) >= 0);
+      if (!attack) {
+        expect(row.startTime).toBeCloseTo(earliest);
+        continue;
       }
+      expect(row.startTime).toBeCloseTo(Math.max(earliest, attack.startTime + 0.1 - row.effectiveCastTime));
+      expect(attack.actions.find((action) => action.type === "takeDamage")?.damage).toBe(0);
+    }
+    const qiRows = timeline.filter(
+      (row) => row.kind === "rotation" && row.step.type === "event" && row.step.event === "Qi",
+    );
+    expect(qiRows).toHaveLength(3);
+    for (const [ratio, time] of [
+      [0.5999, 20],
+      [0.3999, 30],
+      [0, 50],
+    ]) {
+      const row = qiRows.find(
+        (row) => row.step.type === "event" && row.step.event === "Qi" && row.step.targetQiRatio === ratio,
+      );
+      expect(row, "Missing Qi event at " + time + " seconds").toBeDefined();
+      expect(Math.abs(row!.startTime - startTime - time)).toBeLessThanOrEqual(0.75);
+      expect(row!.actions.some((action) => action.type === "setQi")).toBe(true);
     }
   });
 });

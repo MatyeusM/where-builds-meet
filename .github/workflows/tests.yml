@@ -1,4 +1,4 @@
-name: DPS snapshots
+name: Tests
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  dps-snapshots:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -18,5 +18,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test:wts
-      - run: npm run test:dps
+      - run: npm run test

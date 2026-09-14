@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 
@@ -33,7 +34,7 @@ describe("fury-harvest", () => {
           { type: "skill", skill: "Observe" },
         ],
       },
-      skills: {
+      skills: withImmediateAttacks({
         PerfectDodgeCancel: generalSkills.PerfectDodgeCancel,
         DeflectSuccessful: generalSkills.DeflectSuccessful,
         Exchange: {
@@ -53,7 +54,7 @@ describe("fury-harvest", () => {
           modifier: [],
           tags: ["General"],
         },
-      },
+      }),
       eventDefinitions: {},
       dots: {},
       effectDefinitions: {},

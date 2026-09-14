@@ -26,6 +26,12 @@ describe("triggered-skills", () => {
 
     jsonFiles("data").forEach((file) =>
       walk(JSON.parse(fs.readFileSync(file, "utf8")), (value) => {
+        if (value.attackResponse?.durationFrom)
+          expect(
+            definitions[value.attackResponse.durationFrom],
+            "Attack response duration reference must resolve",
+          ).toBeDefined();
+        if (typeof value.attackResponse?.onSuccess === "string") triggeredIds.add(value.attackResponse.onSuccess);
         if (value.type !== "trigger") return;
         if (typeof value.value === "string") {
           triggeredIds.add(value.value);

@@ -22,7 +22,7 @@
         "effect": [
           {
             "trigger": {
-              "event": "skillStart",
+              "event": "attackResponse",
               "requirement": [
                 {
                   "target": "self",

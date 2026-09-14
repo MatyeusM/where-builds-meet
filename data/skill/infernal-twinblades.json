@@ -75,6 +75,7 @@
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "AddledMind"]
   },
   "InfernalLight1": {
+    "ignorePing": true,
     "name": "Dual Blade - Light Attack",
     "shortName": "A1",
     "castTime": 0.43,
@@ -93,6 +94,7 @@
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight1"]
   },
   "InfernalLight2": {
+    "ignorePing": true,
     "name": "Dual Blade - Light Attack",
     "shortName": "A2",
     "castTime": 0.47,
@@ -119,6 +121,7 @@
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight2"]
   },
   "InfernalLight3": {
+    "ignorePing": true,
     "name": "Dual Blade - Light Attack",
     "shortName": "A3",
     "castTime": 0.6,
@@ -145,6 +148,7 @@
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight3"]
   },
   "InfernalLight4": {
+    "ignorePing": true,
     "name": "Dual Blade - Light Attack",
     "shortName": "A4",
     "castTime": 0.529,
@@ -163,6 +167,7 @@
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight4"]
   },
   "InfernalFlamelashLight1": {
+    "ignorePing": true,
     "name": "Blade of Heaven's Wrath",
     "shortName": "FA1",
     "castTime": 0.357,
@@ -198,6 +203,7 @@
     ]
   },
   "InfernalFlamelashLight2": {
+    "ignorePing": true,
     "name": "Blade of Heaven's Wrath",
     "shortName": "FA2",
     "castTime": 0.5,
@@ -225,6 +231,7 @@
     ]
   },
   "InfernalFlamelashLight3": {
+    "ignorePing": true,
     "name": "Blade of Heaven's Wrath",
     "shortName": "FA3",
     "castTime": 0.8,
@@ -308,6 +315,7 @@
     ]
   },
   "InfernalFlamelashLight4": {
+    "ignorePing": true,
     "name": "Blade of Heaven's Wrath",
     "shortName": "FA4",
     "castTime": 0.96,
@@ -367,6 +375,7 @@
     ]
   },
   "InfernalFlamelashLight5": {
+    "ignorePing": true,
     "name": "Blade of Heaven's Wrath",
     "shortName": "FA5",
     "castTime": 1.401,

@@ -6,15 +6,44 @@ import {
   type RotationStep,
 } from "./calculations/rotationTimeline";
 
-export function isAutomaticCooldownDelay(step: RotationStep | undefined): boolean {
-  return step?.type === "event" && step.event === "Delay" && step.automatic === "cooldown";
+/** Old defensive reward actions all occurred at cast start. Preserve their direct anchors. */
+export function migrateDefenseActionAnchors(rotation: RotationRecord): RotationRecord {
+  const isDefense = (step: RotationStep | undefined) =>
+    step?.type === "skill" && ["PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"].includes(step.skill ?? "");
+  let changed = false;
+  const steps = rotation.steps.map((step, index) => {
+    if (step.type !== "event") return step;
+    const attachment = "before" in step ? step.before : "after" in step ? step.after : undefined;
+    if (!attachment || attachment.action === "start" || attachment.trigger !== undefined) return step;
+    const target = rotation.steps.find(
+      (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
+    );
+    if (!isDefense(target)) return step;
+    changed = true;
+    const key = "before" in step ? "before" : "after";
+    return { ...step, [key]: { ...attachment, action: "start" as const } };
+  });
+  let start = rotation.start;
+  if (start?.action !== undefined && isDefense(rotation.steps[start.step])) {
+    start = { step: start.step };
+    changed = true;
+  }
+  return changed ? { ...rotation, steps, start } : rotation;
 }
 
-export function migrateAutomaticCooldownDelays(rotation: RotationRecord): RotationRecord {
-  if (!rotation.steps.some(isAutomaticCooldownDelay)) return rotation;
+export function isAutomaticDelay(step: RotationStep | undefined): boolean {
+  return (
+    step?.type === "event" &&
+    step.event === "Delay" &&
+    (step.automatic === "cooldown" || step.automatic === "attack" || step.automatic === "requirement")
+  );
+}
+
+export function migrateAutomaticDelays(rotation: RotationRecord): RotationRecord {
+  if (!rotation.steps.some(isAutomaticDelay)) return rotation;
   const retainedIndexes = new Map<number, number>();
   const steps = rotation.steps.filter((step, index) => {
-    if (isAutomaticCooldownDelay(step)) return false;
+    if (isAutomaticDelay(step)) return false;
     retainedIndexes.set(index, retainedIndexes.size);
     return true;
   });

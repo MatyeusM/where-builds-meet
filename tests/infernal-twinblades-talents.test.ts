@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -71,7 +72,7 @@ describe("infernal-twinblades-talents", () => {
     const build = (steps, extra = {}) =>
       buildRotationTimeline({
         rotation: { name: "Infernal Twinblades talent probe", steps },
-        skills,
+        skills: withImmediateAttacks(skills),
         effectDefinitions: effects,
         eventDefinitions: {},
         dots: {},
@@ -173,18 +174,18 @@ describe("infernal-twinblades-talents", () => {
     });
     assert.equal(unenhanced.at(-1).startTime, 100, "Without talent a dodge cannot reset the skill");
     const empty = build([cast("AddledMind"), cast("EmptyDodge"), cast("AddledMind")]);
-    assert.equal(empty.at(-1).startTime, 0, "Start trigger runs even for skills without actions");
+    assert.equal(empty.at(-1).startTime, 0, "Success trigger restores a charge when the incoming hit is avoided");
     assert.deepEqual(
       empty.find((row) => row.step.skill === "EmptyDodge").actions,
-      [],
-      "Lifecycle trigger is not a synthetic displayed action",
+      [{ type: "takeDamage", damage: 0, time: 0 }],
+      "Only the fixture incoming hit is displayed; the response event stays internal",
     );
     const waiting = build([cast("AddledMind"), cast("AddledMind")], {
-      skills: {
+      skills: withImmediateAttacks({
         ...skills,
         AddledMind: { ...skills.AddledMind, action: [{ type: "trigger", value: "DelayedDodge", time: 0 }] },
         DelayedDodge: { castTime: 0, action: [{ type: "trigger", value: "PerfectDodgeCancel", time: 5 }] },
-      },
+      }),
     });
     assert.equal(
       waiting.find((row) => row.rotationIndex === 1).startTime,

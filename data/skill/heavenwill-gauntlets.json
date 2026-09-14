@@ -2,23 +2,23 @@
   "HeavenwillDeclared": {
     "name": "Heavenwill Declared",
     "shortName": "Gauntlet Q1",
-    "castTime": 0.675,
+    "castTime": 0.625,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.2201,
-        "phyBonus": 61,
-        "attrBonus": 33,
-        "time": 0.45,
-        "attrCoef": 0.2201
+        "phyCoef": 0.330138,
+        "phyBonus": 91.5,
+        "attrBonus": 49.8,
+        "time": 0.403,
+        "attrCoef": 0.330138
       },
       {
         "type": "damage",
-        "phyCoef": 0.8804,
-        "phyBonus": 244,
-        "attrBonus": 132,
-        "time": 0.5125,
-        "attrCoef": 0.8804
+        "phyCoef": 0.770322,
+        "phyBonus": 213.5,
+        "attrBonus": 116.2,
+        "time": 0.471,
+        "attrCoef": 0.770322
       }
     ],
     "modifier": [],
@@ -29,59 +29,59 @@
   "CelestialMandate": {
     "name": "Celestial Mandate",
     "shortName": "Gauntlet Q2",
-    "castTime": 1.45,
+    "castTime": 1.4,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.2293,
-        "phyBonus": 63,
-        "attrBonus": 34,
-        "time": 0.525,
-        "attrCoef": 0.2293
+        "phyCoef": 0.229311,
+        "phyBonus": 63.6,
+        "attrBonus": 34.65,
+        "time": 0.45,
+        "attrCoef": 0.229311
       },
       {
         "type": "damage",
-        "phyCoef": 0.2293,
-        "phyBonus": 63,
-        "attrBonus": 34,
-        "time": 0.6875,
-        "attrCoef": 0.2293
+        "phyCoef": 0.229311,
+        "phyBonus": 63.6,
+        "attrBonus": 34.65,
+        "time": 0.6,
+        "attrCoef": 0.229311
       },
       {
         "type": "damage",
-        "phyCoef": 0.2293,
-        "phyBonus": 63,
-        "attrBonus": 34,
-        "time": 0.7625,
-        "attrCoef": 0.2293
+        "phyCoef": 0.229311,
+        "phyBonus": 63.6,
+        "attrBonus": 34.65,
+        "time": 0.683,
+        "attrCoef": 0.229311
       },
       {
         "type": "damage",
-        "phyCoef": 0.2293,
-        "phyBonus": 63,
-        "attrBonus": 34,
-        "time": 0.925,
-        "attrCoef": 0.2293
+        "phyCoef": 0.229311,
+        "phyBonus": 63.6,
+        "attrBonus": 34.65,
+        "time": 0.833,
+        "attrCoef": 0.229311
       },
       {
         "type": "damage",
-        "phyCoef": 0.6115,
-        "phyBonus": 169,
-        "attrBonus": 92,
-        "time": 1.275,
-        "attrCoef": 0.6115
+        "phyCoef": 0.611496,
+        "phyBonus": 169.6,
+        "attrBonus": 92.4,
+        "time": 1.2,
+        "attrCoef": 0.611496
       },
       {
         "type": "addResource",
         "value": "HeavensWill",
         "amount": 0.1,
-        "time": 1.275
+        "time": 1.2
       },
       {
         "type": "addResource",
         "value": "HeavensWill",
         "amount": 0.2,
-        "time": 1.275,
+        "time": 1.2,
         "requirement": [
           {
             "target": "self",
@@ -180,21 +180,29 @@
   "WickedDefiance": {
     "name": "Wicked Defiance",
     "shortName": "Gauntlet VC",
-    "castTime": 1.375,
+    "castTime": 0.9,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 1.209,
-        "phyBonus": 335,
-        "attrBonus": 183,
-        "time": 0.725,
-        "attrCoef": 1.209
+        "phyCoef": 0.4836,
+        "phyBonus": 134,
+        "attrCoef": 0.4836,
+        "attrBonus": 73.2,
+        "time": 0.216
+      },
+      {
+        "type": "damage",
+        "phyCoef": 0.7254,
+        "phyBonus": 201,
+        "attrCoef": 0.7254,
+        "attrBonus": 109.8,
+        "time": 0.66
       },
       {
         "type": "addResource",
         "value": "HeavensWill",
         "amount": 0.1,
-        "time": 1.1125
+        "time": 0.66
       }
     ],
     "modifier": [],
@@ -205,15 +213,15 @@
   "RighteousReign1stHit": {
     "name": "Righteous Reign 1st Hit",
     "shortName": "Gauntlet A1",
-    "castTime": 0.3375,
+    "castTime": 0.466,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.3564,
+        "phyCoef": 0.35636,
         "phyBonus": 100,
         "attrBonus": 54,
-        "time": 0.3375,
-        "attrCoef": 0.3564
+        "time": 0.21,
+        "attrCoef": 0.35636
       }
     ],
     "modifier": [],
@@ -224,23 +232,23 @@
   "RighteousReign2ndHit": {
     "name": "Righteous Reign 2nd Hit",
     "shortName": "Gauntlet A2",
-    "castTime": 0.6,
+    "castTime": 0.462,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.15684,
+        "phyCoef": 0.156852,
         "phyBonus": 44,
         "attrBonus": 23.6,
-        "time": 0.4125,
-        "attrCoef": 0.15684
+        "time": 0.148,
+        "attrCoef": 0.156852
       },
       {
         "type": "damage",
-        "phyCoef": 0.23526,
+        "phyCoef": 0.235278,
         "phyBonus": 66,
         "attrBonus": 35.4,
-        "time": 0.6,
-        "attrCoef": 0.23526
+        "time": 0.32,
+        "attrCoef": 0.235278
       }
     ],
     "modifier": [],
@@ -251,15 +259,15 @@
   "RighteousReign3rdHit": {
     "name": "Righteous Reign 3rd Hit",
     "shortName": "Gauntlet A3",
-    "castTime": 0.425,
+    "castTime": 0.333,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.2529,
+        "phyCoef": 0.25294,
         "phyBonus": 71,
         "attrBonus": 39,
-        "time": 0.425,
-        "attrCoef": 0.2529
+        "time": 0.25,
+        "attrCoef": 0.25294
       }
     ],
     "modifier": [],
@@ -270,15 +278,21 @@
   "RighteousReign4thHit": {
     "name": "Righteous Reign 4th Hit",
     "shortName": "Gauntlet A4",
-    "castTime": 0.4625,
+    "castTime": 0.417,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.3183,
+        "phyCoef": 0.31826,
         "phyBonus": 89,
         "attrBonus": 48,
-        "time": 0.325,
-        "attrCoef": 0.3183
+        "time": 0.194,
+        "attrCoef": 0.31826
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "HeavenwillGauntletsA4",
+        "time": 0.417
       }
     ],
     "modifier": [],
@@ -289,26 +303,49 @@
   "RighteousReign5thHit": {
     "name": "Righteous Reign 5th Hit",
     "shortName": "Gauntlet A5",
-    "castTime": 0.6125,
+    "castTime": 0.512,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.1558,
-        "phyBonus": 43.33333333,
-        "attrBonus": 23.666667,
-        "time": 0.275,
-        "attrCoef": 0.1558
+        "phyCoef": 0.186944,
+        "phyBonus": 52,
+        "attrBonus": 28.4,
+        "time": 0.205,
+        "attrCoef": 0.186944
       },
       {
         "type": "damage",
-        "phyCoef": 0.3116,
-        "phyBonus": 86.666666667,
-        "attrBonus": 47.333333,
-        "time": 0.5,
-        "attrCoef": 0.3116
+        "phyCoef": 0.280416,
+        "phyBonus": 78,
+        "attrBonus": 42.6,
+        "time": 0.423,
+        "attrCoef": 0.280416
+      },
+      {
+        "type": "consume",
+        "target": "self",
+        "value": "HeavenwillGauntletsA4",
+        "time": 0
       }
     ],
-    "modifier": [],
+    "modifier": [
+      {
+        "requirement": [
+          {
+            "target": "self",
+            "value": "HeavenwillGauntletsA4"
+          }
+        ],
+        "effect": {
+          "castTimeModifier": {
+            "function": "segment",
+            "param1": "actionTime",
+            "param2": [0.205, 0.423, 0.512],
+            "param3": [0, -0.09, -0.103, -0.102]
+          }
+        }
+      }
+    ],
     "tags": ["DirectDamage", "MartialArts", "Light", "Gauntlet", "HeavenwillGauntlets", "RighteousReign"],
     "martialArt": "heavenwill",
     "weapon": "Gauntlet"
@@ -316,21 +353,21 @@
   "RighteousReign6thHit": {
     "name": "Righteous Reign 6th Hit",
     "shortName": "Gauntlet A6",
-    "castTime": 0.75,
+    "castTime": 0.923,
     "action": [
       {
         "type": "damage",
         "phyCoef": 0.8202,
         "phyBonus": 228,
         "attrBonus": 124,
-        "time": 0.2875,
+        "time": 0.256,
         "attrCoef": 0.8202
       },
       {
         "type": "trigger",
         "target": "self",
         "value": "LightAttackFalcon",
-        "time": 0.2875
+        "time": 0.256
       }
     ],
     "modifier": [],
@@ -341,21 +378,21 @@
   "RighteousReign6thHitCancel": {
     "name": "Righteous Reign 6th Hit [Cancel]",
     "shortName": "Gauntlet A6",
-    "castTime": 0.2875,
+    "castTime": 0.256,
     "action": [
       {
         "type": "damage",
         "phyCoef": 0.8202,
         "phyBonus": 228,
         "attrBonus": 124,
-        "time": 0.2875,
+        "time": 0.256,
         "attrCoef": 0.8202
       },
       {
         "type": "trigger",
         "target": "self",
         "value": "LightAttackFalcon",
-        "time": 0.2875
+        "time": 0.256
       }
     ],
     "modifier": [],
@@ -369,27 +406,27 @@
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.748,
+        "phyCoef": 0.7479252,
         "phyBonus": 0,
         "attrBonus": 0,
         "time": 0.3,
-        "attrCoef": 0.748
+        "attrCoef": 0.7479252
       },
       {
         "type": "damage",
-        "phyCoef": 0.748,
+        "phyCoef": 0.7479252,
         "phyBonus": 0,
         "attrBonus": 0,
         "time": 0.45,
-        "attrCoef": 0.748
+        "attrCoef": 0.7479252
       },
       {
         "type": "damage",
-        "phyCoef": 0.748,
+        "phyCoef": 0.7479252,
         "phyBonus": 0,
         "attrBonus": 0,
         "time": 0.5875,
-        "attrCoef": 0.748
+        "attrCoef": 0.7479252
       },
       {
         "type": "addResource",
@@ -416,39 +453,39 @@
   "AllUnderJustice": {
     "name": "All Under Justice",
     "shortName": "Gauntlet Special",
-    "castTime": 1.1125,
+    "castTime": 1.018,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.4884,
-        "phyBonus": 135,
-        "attrBonus": 73,
-        "time": 0.3875,
-        "attrCoef": 0.4884
+        "phyCoef": 0.40704,
+        "phyBonus": 112.8,
+        "attrBonus": 61.4,
+        "time": 0.3,
+        "attrCoef": 0.40704
       },
       {
         "type": "damage",
-        "phyCoef": 0.4884,
-        "phyBonus": 135,
-        "attrBonus": 73,
-        "time": 0.5125,
-        "attrCoef": 0.4884
+        "phyCoef": 0.40704,
+        "phyBonus": 112.8,
+        "attrBonus": 61.4,
+        "time": 0.435,
+        "attrCoef": 0.40704
       },
       {
         "type": "damage",
-        "phyCoef": 0.4884,
-        "phyBonus": 135,
-        "attrBonus": 73,
-        "time": 0.675,
-        "attrCoef": 0.4884
+        "phyCoef": 0.40704,
+        "phyBonus": 112.8,
+        "attrBonus": 61.4,
+        "time": 0.602,
+        "attrCoef": 0.40704
       },
       {
         "type": "damage",
-        "phyCoef": 0.9769,
-        "phyBonus": 270,
-        "attrBonus": 147,
-        "time": 0.9625,
-        "attrCoef": 0.9769
+        "phyCoef": 0.81408,
+        "phyBonus": 225.6,
+        "attrBonus": 122.8,
+        "time": 0.935,
+        "attrCoef": 0.81408
       }
     ],
     "modifier": [],
@@ -457,6 +494,7 @@
     "weapon": "Gauntlet"
   },
   "VileCondemned": {
+    "ignorePing": true,
     "name": "Vile Condemned",
     "shortName": "Gauntlet Charged",
     "castTime": 0,
@@ -512,6 +550,7 @@
     "tags": ["Charged", "Gauntlet", "HeavenwillGauntlets", "VileCondemned", "MartialArtEffect", "SubAction"]
   },
   "VileCondemnedHit": {
+    "ignorePing": true,
     "name": "Vile Condemned Hit",
     "castTime": 2.8375,
     "action": [
@@ -553,6 +592,7 @@
     "weapon": "Gauntlet"
   },
   "VileCondemnedEndHit": {
+    "ignorePing": true,
     "name": "Vile Condemned End Hit",
     "castTime": 2.8375,
     "action": [
@@ -669,5 +709,103 @@
     ],
     "modifier": [],
     "tags": ["Triggered", "DOT", "Replayed", "BamboocutKite"]
+  },
+  "VileCondemnedEnd": {
+    "ignorePing": true,
+    "name": "Vile Condemned End",
+    "shortName": "Gauntlet End",
+    "castTime": 0,
+    "action": [],
+    "subAction": [
+      {
+        "value": "VileCondemnedCharge"
+      },
+      {
+        "value": "VileCondemnedEndHit",
+        "requirement": [
+          {
+            "target": "self",
+            "value": "SoaringHighT0"
+          },
+          {
+            "target": "resource",
+            "value": "HeavensWill",
+            "comparison": ">=",
+            "amount": 3
+          },
+          {
+            "operator": "not",
+            "operand": [
+              {
+                "target": "self",
+                "value": "VileCondemnedEndCooldown"
+              }
+            ]
+          }
+        ],
+        "waitForRequirement": true
+      }
+    ],
+    "modifier": [],
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "Charged",
+      "Gauntlet",
+      "HeavenwillGauntlets",
+      "VileCondemned",
+      "MartialArtEffect"
+    ],
+    "martialArt": "heavenwill",
+    "weapon": "Gauntlet"
+  },
+  "VileCondemnedEnd4": {
+    "ignorePing": true,
+    "name": "Vile Condemned End [4 HW]",
+    "shortName": "Gauntlet End [4 HW]",
+    "castTime": 0,
+    "action": [],
+    "subAction": [
+      {
+        "value": "VileCondemnedCharge"
+      },
+      {
+        "value": "VileCondemnedEndHit",
+        "requirement": [
+          {
+            "target": "self",
+            "value": "SoaringHighT0"
+          },
+          {
+            "target": "resource",
+            "value": "HeavensWill",
+            "comparison": ">=",
+            "amount": 4
+          },
+          {
+            "operator": "not",
+            "operand": [
+              {
+                "target": "self",
+                "value": "VileCondemnedEndCooldown"
+              }
+            ]
+          }
+        ],
+        "waitForRequirement": true
+      }
+    ],
+    "modifier": [],
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "Charged",
+      "Gauntlet",
+      "HeavenwillGauntlets",
+      "VileCondemned",
+      "MartialArtEffect"
+    ],
+    "martialArt": "heavenwill",
+    "weapon": "Gauntlet"
   }
 }

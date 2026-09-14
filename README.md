@@ -29,7 +29,7 @@ npm run build         # Type-check and create the production build in dist/
 npm run preview       # Serve the production build locally
 ```
 
-There is currently no automated test suite. `npm run build` is the baseline verification step; simulation changes should also receive a focused calculation check.
+`npm run test` runs the automated behavioral tests. `npm run build` runs the build checks and creates the production bundle; simulation changes should also receive a focused calculation check.
 
 ## Project map
 
@@ -62,8 +62,9 @@ npm run build
 
 Simulation changes should also receive a focused calculation check.
 
-The build includes `npm run test:dps`, which blocks DPS changes of 5% or more
-for any implemented path. Review failures before updating accepted baselines;
+Release deployment runs `npm run test:dps`, which blocks unreviewed DPS changes
+of 1% or more for any implemented path. Ordinary builds and tests exclude this
+release guard. Review failures before updating accepted baselines;
 see [DPS regression snapshots](doc/dps-snapshots.md) for inputs and update commands.
 
 ### Contributing translations

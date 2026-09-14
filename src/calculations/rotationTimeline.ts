@@ -1,6 +1,6 @@
 import type { WeaponFamily, WeaponId } from "../types";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
-import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
+import { DEFAULT_TARGET_HP_RATIO, normalizePing } from "./combatDefaults";
 import {
   ExpectedPeriodicTracker,
   nextBattlePeriodicTick,
@@ -29,6 +29,8 @@ export type SubActionReference = {
   value: string | string[];
   requirement?: unknown;
   fallback?: string | string[];
+  /** Delay the ordered cast until this component is ready after its action-free prefix. */
+  waitForRequirement?: boolean;
 };
 export type SkillRecord = {
   [key: string]: unknown;
@@ -36,6 +38,8 @@ export type SkillRecord = {
   damageGroup?: { id: string; name: string };
   shortName?: string;
   group?: boolean;
+  ignorePing?: boolean;
+  attackResponse?: { endMargin: number; durationFrom?: string; onSuccess: string };
   castTime?: number | SwitchValue;
   cooldown?: number;
   cooldownGroup?: string;
@@ -80,7 +84,7 @@ export type RotationStep =
       before: AttachedEventTarget & { action: "start"; trigger?: undefined };
       martialArt: WeaponId;
     }
-  | { type: "event"; event: "Delay"; duration: number; automatic?: "cooldown" }
+  | { type: "event"; event: "Delay"; duration: number; automatic?: "cooldown" | "attack" | "requirement" }
   | { type: "event"; event: "Controlled" | "BattleEnd" | "ShieldBroken"; startTime: number; duration?: number }
   | { type: "event"; event: "Exhausted"; startTime: number; duration?: number }
   | { type: "event"; event: "Move"; startTime: number; distance: number };
@@ -103,6 +107,8 @@ export type RotationRecord = {
   autoHP?: boolean;
   dummyAttack?: boolean;
   groupSize?: 1 | 5 | 10;
+  /** Optional per-rotation latency override, in milliseconds. */
+  ping?: number;
   infiniteVitality?: boolean;
   start?: { step: number; action?: number };
   eventTimeReference?: "battleStart";
@@ -739,11 +745,19 @@ function resolveCastModifierEffect(effect: EditableObject, buffs: TrackedEffect[
   );
 }
 
+type ReadinessForecast = {
+  stepIndex: number;
+  earliestRelease: number;
+  acceptedStarts: Map<number, number>;
+  readyAt?: number;
+};
+
 function buildRotationTimelinePass(
   input: TimelineBuildInput,
   resolvedAnchorTime?: number,
   procRoll?: (key: string) => number,
   createActionResolver?: TimelineActionResolverFactory,
+  forecast?: ReadinessForecast,
 ): TimelineRow[] {
   const resolveAction = createActionResolver?.(input);
   type TimelineEvent = {
@@ -751,6 +765,7 @@ function buildRotationTimelinePass(
     sortOrder: number[];
     kind:
       | "start"
+      | "attackResponse"
       | "subActionStart"
       | "action"
       | "expectedTick"
@@ -761,6 +776,7 @@ function buildRotationTimelinePass(
     row: TimelineRow;
     actionIndex?: number;
     subActionIndex?: number;
+    selectedSubAction?: { skillId: string | undefined };
     expiresEffect?: { target: "self" | "target" | "player"; name: string; expiresAt: number; scheduleId: number };
     expectedWakeup?: { name: string; active: ActivePeriodicEffect };
   };
@@ -772,6 +788,9 @@ function buildRotationTimelinePass(
     return left.length - right.length;
   };
   const { rotation, skills, eventDefinitions, dots, effectDefinitions, innerWayRules, setupEffects, weapons } = input;
+  // Application bundles resolve the Settings default before reaching the scheduler.
+  const pingSeconds = (normalizePing(rotation.ping) ?? 0) / 1000;
+  const skillPing = (skill: SkillRecord | undefined) => (skill && !skill.ignorePing ? pingSeconds : 0);
   const hasBattleEnd = rotation.steps.some((step) => step.type === "event" && step.event === "BattleEnd");
   let timelineEndTime = 0;
   const resolvedRows = new Set<TimelineRow>();
@@ -793,6 +812,7 @@ function buildRotationTimelinePass(
       value?: string;
       requirement?: unknown;
       fallback?: string;
+      waitForRequirement?: boolean;
       choiceGroup?: number;
       choiceIndex?: number;
     };
@@ -864,6 +884,7 @@ function buildRotationTimelinePass(
         append(primary[0], ancestry, {
           value: primary[0],
           requirement: reference.requirement,
+          waitForRequirement: reference.waitForRequirement,
           fallback: fallback[0],
         });
         return;
@@ -874,6 +895,7 @@ function buildRotationTimelinePass(
         append(primary[choiceIndex], ancestry, {
           value: primary[choiceIndex],
           requirement: reference.requirement,
+          waitForRequirement: reference.waitForRequirement,
           fallback: fallback[choiceIndex],
           choiceGroup,
           choiceIndex,
@@ -1055,8 +1077,18 @@ function buildRotationTimelinePass(
   let orderedCursor = 0;
   let timedCursor = 0;
   let nextOrderedEvent: TimelineEvent | undefined;
-  let waitingCast: { row: TimelineRow; requestedAt: number } | undefined;
-  const cooldownDelayRows = new Map<TimelineRow, TimelineRow>();
+  type AutomaticWait = { row: TimelineRow; until: number; reason: "cooldown" | "attack" | "requirement" };
+  let waitingCast: { row: TimelineRow; requestedAt: number; delay: AutomaticWait } | undefined;
+  const automaticDelayRows: AutomaticWait[] = [];
+  const acceptedStarts = new Map<number, number>();
+  let forecastSegment: ExpandedSkillSegment | undefined;
+  let forecastTime = 0;
+  const alignedAttacks = new Map<TimelineRow, number>();
+  const reservedAttacks = new Set<number>();
+  const responseWindows: Array<{ row: TimelineRow; endTime: number; succeeded: boolean }> = [];
+  type ResponseContext = Pick<TimelineRow, "currentMartialArt" | "currentWeapon">;
+  const responseContexts = new Map<TimelineRow, ResponseContext>();
+  let responseContext: ResponseContext | undefined;
 
   type ResolvedAttachment = { eventRow: TimelineRow; target: AttachedEventTarget; placement: "before" | "after" };
   const directAttachments = new Map<string, ResolvedAttachment[]>();
@@ -1138,6 +1170,24 @@ function buildRotationTimelinePass(
     events.mutate((event) => {
       if (event === nextOrderedEvent) event.time = row.startTime + row.effectiveCastTime;
     });
+  };
+
+  const shiftSkillSegments = (row: TimelineRow, fromIndex: number, shift: number) => {
+    if (!shift) return;
+    const shiftedSegments = multiActionSegments.get(row.id)!.slice(fromIndex);
+    const shiftedActionIndexes = new Set(shiftedSegments.flatMap((segment) => segment.actionIndexes));
+    row.effectiveCastTime += shift;
+    for (const segment of shiftedSegments) segment.startOffset += shift;
+    for (const actionIndex of shiftedActionIndexes) {
+      const action = row.actions[actionIndex];
+      action.time = Number(action.time ?? 0) + shift;
+    }
+    events.mutate((queued) => {
+      if (queued.row !== row) return;
+      if (queued.kind === "subActionStart" && (queued.subActionIndex ?? -1) >= fromIndex) queued.time += shift;
+      if (queued.kind === "action" && shiftedActionIndexes.has(queued.actionIndex ?? -1)) queued.time += shift;
+    });
+    updateNextOrdered(row);
   };
 
   const effectContentModifiedNames = new Set(
@@ -1409,6 +1459,7 @@ function buildRotationTimelinePass(
     currentTime: currentTimelineTime,
     currentMartialArt,
     currentWeapon,
+    ...responseContext,
   });
   const applicationDuration = (
     duration: number | undefined,
@@ -1516,6 +1567,7 @@ function buildRotationTimelinePass(
     if (
       compareTimelineTime(readyAt, time) <= 0 &&
       waitingCast &&
+      waitingCast.delay.reason === "cooldown" &&
       waitingCast.row.step.type === "skill" &&
       skillCooldownKey(waitingCast.row.step.skill ?? "", waitingCast.row.skill) === key
     ) {
@@ -1524,6 +1576,7 @@ function buildRotationTimelinePass(
         if (queued.kind === "orderedReady" && queued.row === waitingCast!.row) queued.time = time;
       });
       waitingCast.row.cooldownWait = time - waitingCast.requestedAt;
+      waitingCast.delay.until = time;
     }
   };
   const prune = (effects: TrackedEffect[], time: number) =>
@@ -1942,22 +1995,22 @@ function buildRotationTimelinePass(
       });
     });
   };
-  const applyCastTimingModifiers = (row: TimelineRow, baseCastTime: number) => {
+  const castTimingAdjuster = (modifiers: EditableObject[]) => {
     const timingValue = (value: unknown, actionTime: number, fallback: number) =>
       typeof value === "number" && Number.isFinite(value)
         ? value
         : (resolveSegmentValue(value, { actionTime }) ?? fallback);
-    const adjust = (time: number) => {
-      const modifier = row.modifierEffects.reduce(
-        (total, effect) => total + timingValue(effect.castTimeModifier, time, 0),
-        0,
-      );
-      const multiplier = row.modifierEffects.reduce(
+    return (time: number) => {
+      const modifier = modifiers.reduce((total, effect) => total + timingValue(effect.castTimeModifier, time, 0), 0);
+      const multiplier = modifiers.reduce(
         (total, effect) => total * timingValue(effect.castTimeMultiplier, time, 1),
         1,
       );
       return Math.max(0, time + modifier) * multiplier;
     };
+  };
+  const applyCastTimingModifiers = (row: TimelineRow, baseCastTime: number) => {
+    const adjust = castTimingAdjuster(row.modifierEffects);
     row.effectiveCastTime = adjust(baseCastTime);
     row.actions = row.actions.map((action) => ({
       ...action,
@@ -1976,6 +2029,167 @@ function buildRotationTimelinePass(
     return row.effectiveCastTime;
   };
 
+  const modifiersFor = (skill: SkillRecord | undefined, time = currentTimelineTime) => {
+    const activeBuffs = prune(buffs, time);
+    const activeDebuffs = prune(debuffs, time);
+    return Array.isArray(skill?.modifier)
+      ? (skill.modifier as EditableObject[])
+          .filter((item) =>
+            requirementsPass(
+              item.requirement,
+              activeBuffs,
+              activeDebuffs,
+              skill.tags ?? [],
+              innerWayConditions,
+              weapons,
+              resources,
+              { ...requirementState(), currentTime: time },
+            ),
+          )
+          .map((item) =>
+            item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
+              ? resolveCastModifierEffect(item.effect as EditableObject, activeBuffs, activeDebuffs)
+              : {},
+          )
+      : [];
+  };
+  const finishOrderedWait = (time: number) => {
+    if (!waitingCast) return;
+    waitingCast.delay.until = time;
+    if (waitingCast.delay.reason === "cooldown") waitingCast.row.cooldownWait = time - waitingCast.requestedAt;
+    waitingCast = undefined;
+  };
+  const waitForOrdered = (event: TimelineEvent, until: number, reason: AutomaticWait["reason"]) => {
+    const row = event.row;
+    if (waitingCast && waitingCast.delay.reason !== reason) finishOrderedWait(event.time);
+    if (!waitingCast) {
+      const delay: AutomaticWait = {
+        reason,
+        until,
+        row: {
+          id: reason + "-" + row.id + "-" + automaticDelayRows.length,
+          kind: "rotation",
+          order: row.order,
+          step: { type: "event", event: "Delay", duration: 0, automatic: reason },
+          startTime: event.time,
+          effectiveCastTime: 0,
+          skill: { name: "Event: Delay", castTime: 0, action: [], tags: ["Event"] },
+          actions: [],
+          actionStates: {},
+          modifierEffects: [],
+          distance,
+          currentHP,
+          currentHPRatio,
+          targetHPRatio,
+          targetQiRatio,
+          resources: { ...resources },
+          currentMartialArt,
+          currentWeapon,
+          buffs: [...buffs],
+          debuffs: [...debuffs],
+          unconditionalDamageEffects: { ...unconditionalDamageEffects },
+        },
+      };
+      automaticDelayRows.push(delay);
+      waitingCast = { row, requestedAt: event.time, delay };
+    }
+    waitingCast.delay.until = until;
+    if (reason === "cooldown") row.cooldownWait = until - waitingCast.requestedAt;
+    row.startTime = until;
+    events.push({ ...event, time: until });
+  };
+  // Between queued events only passive resources and natural effect expiry can
+  // change release readiness. Discrete gains/resets use this same event loop
+  // in an isolated prefix replay, never a second trigger implementation.
+  const nextRequirementTime = (segment: ExpandedSkillSegment, time: number, earliest: number) => {
+    const candidates = [Math.max(time, earliest)];
+    const collectThresholds = (value: unknown) => {
+      if (Array.isArray(value)) {
+        value.forEach(collectThresholds);
+        return;
+      }
+      if (!value || typeof value !== "object") return;
+      const item = value as EditableObject;
+      if (Array.isArray(item.operand)) collectThresholds(item.operand);
+      if (item.target !== "resource" || typeof item.value !== "string" || typeof item.amount !== "number") return;
+      const rate = resourceRegeneration[item.value] ?? 0;
+      if (rate > 0 && !infiniteResources.has(item.value))
+        candidates.push(
+          Math.max(time, earliest, lastResourceRegenerationTime + (item.amount - (resources[item.value] ?? 0)) / rate),
+        );
+    };
+    collectThresholds(segment.reference?.requirement);
+    for (const effect of [...buffs, ...debuffs])
+      if (effect.expiresAt !== undefined) candidates.push(Math.max(time, earliest, effect.expiresAt));
+    return (
+      candidates
+        .sort((a, b) => a - b)
+        .find((candidate) => {
+          const projected = { ...resources };
+          for (const [name, rate] of Object.entries(resourceRegeneration))
+            if (!infiniteResources.has(name))
+              projected[name] = clampResource(
+                name,
+                (resources[name] ?? 0) + rate * Math.max(0, candidate - lastResourceRegenerationTime),
+              );
+          return requirementsPass(
+            segment.reference?.requirement,
+            prune(buffs, candidate),
+            prune(debuffs, candidate),
+            segment.skill.tags ?? [],
+            innerWayConditions,
+            weapons,
+            projected,
+            { ...requirementState(), currentTime: candidate },
+          );
+        }) ?? Infinity
+    );
+  };
+  const prepareRequiredRelease = (row: TimelineRow, time: number) => {
+    const segments = multiActionSegments.get(row.id) ?? [];
+    const targetIndex = segments.findIndex((segment) => segment.reference?.waitForRequirement);
+    if (targetIndex < 0) return undefined;
+    let lead = skillPing(row.skill);
+    for (let index = 0; index < targetIndex; index++) {
+      const segment = segments[index];
+      if (segment.actionIndexes.length || segment.reference?.requirement)
+        throw new Error("Readiness waits require an unconditional, action-free charging prefix.");
+      if (index > 0) lead += skillPing(segment.skill);
+      lead += castTimingAdjuster(modifiersFor(segment.skill, time))(
+        resolveSkillCastTime(segment.skill, { ...requirementState(), currentTime: time }),
+      );
+    }
+    if (targetIndex > 0) lead += skillPing(segments[targetIndex].skill);
+    return { segment: segments[targetIndex], lead };
+  };
+  const firstDummyAttack = (resolvedAnchorTime ?? initialAnchorTime) + 5.5;
+  const dummyAttackInterval = 6;
+  const battleEndTime = timed.find((entry) => entry.step.event === "BattleEnd")?.time ?? Infinity;
+  const responseDuration = (skill: SkillRecord, time: number) => {
+    const durationSkill = skill.attackResponse?.durationFrom ? skills[skill.attackResponse.durationFrom] : skill;
+    return castTimingAdjuster(modifiersFor(durationSkill, time))(
+      resolveSkillCastTime(durationSkill, { ...requirementState(), currentTime: time }),
+    );
+  };
+  const attackReserved = (time: number) =>
+    [...reservedAttacks].some((reserved) => compareTimelineTime(reserved, time) === 0);
+  const nextAttackAt = (time: number) => {
+    let next =
+      timed.find(
+        (entry) =>
+          entry.step.event === "TakeDamage" &&
+          compareTimelineTime(entry.time, time) >= 0 &&
+          !attackReserved(entry.time),
+      )?.time ?? Infinity;
+    if (rotation.dummyAttack) {
+      const occurrence = Math.max(0, Math.ceil((time - firstDummyAttack) / dummyAttackInterval));
+      let dummyTime = firstDummyAttack + occurrence * dummyAttackInterval;
+      while (attackReserved(dummyTime)) dummyTime += dummyAttackInterval;
+      next = Math.min(next, dummyTime);
+    }
+    return compareTimelineTime(next, battleEndTime) < 0 ? next : undefined;
+  };
+
   if (!startNextOrdered(0) && !hasBattleEnd) return [];
   let dummyOccurrence = 0;
   // A timed-only encounter still has a clock even without an ordered cast.
@@ -1986,11 +2200,21 @@ function buildRotationTimelinePass(
   if (rotation.dummyAttack && rows[0])
     events.push({
       kind: "dummyTick",
-      time: (resolvedAnchorTime ?? initialAnchorTime) + 5.5,
+      time: firstDummyAttack,
       sortOrder: [-1, rotation.steps.length],
       row: rows[0],
     });
-  while ((events.length || timedCursor < timed.length) && processedEvents < 2000) {
+  while ((events.length || timedCursor < timed.length || forecastSegment) && processedEvents < 2000) {
+    responseContext = undefined;
+    if (forecastSegment && forecast) {
+      const readyAt = nextRequirementTime(forecastSegment, forecastTime, forecast.earliestRelease);
+      const nextTime = Math.min(events.peek()?.time ?? Infinity, timed[timedCursor]?.time ?? Infinity);
+      // Resolve every event at a boundary first, including causal refunds/resets.
+      if (compareTimelineTime(readyAt, nextTime) < 0 || !Number.isFinite(nextTime)) {
+        forecast.readyAt = readyAt;
+        return [];
+      }
+    }
     const nextTimed = timed[timedCursor];
     const nextExpanded = events.peek();
     if (nextTimed && (!nextExpanded || compareTimelineTime(nextTimed.time, nextExpanded.time) <= 0)) {
@@ -2009,7 +2233,9 @@ function buildRotationTimelinePass(
     }
     const queueStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
     const event = events.shift()!;
+    responseContext = responseContexts.get(event.row);
     if (import.meta.env.DEV) finishCalculationPhase("timelineQueueOrdering", queueStartedAt);
+    if (forecastSegment) forecastTime = event.time;
     if (event.kind === "dummyTick") {
       for (let hit = 0; hit < 2; hit++) {
         const index = rotation.steps.length + dummyOccurrence++;
@@ -2021,7 +2247,7 @@ function buildRotationTimelinePass(
           ),
         );
       }
-      events.push({ ...event, time: event.time + 6 });
+      events.push({ ...event, time: event.time + dummyAttackInterval });
       continue;
     }
     if (event.kind === "nextOrdered") {
@@ -2055,38 +2281,63 @@ function buildRotationTimelinePass(
           scheduleNextOrdered(row);
           continue;
         }
-        if (!waitingCast) {
-          waitingCast = { row, requestedAt: event.time };
-          cooldownDelayRows.set(row, {
-            id: `cooldown-${row.id}`,
-            kind: "rotation",
-            order: row.order,
-            step: { type: "event", event: "Delay", duration: 0, automatic: "cooldown" },
-            startTime: event.time,
-            effectiveCastTime: 0,
-            skill: { name: "Event: Delay", castTime: 0, action: [], tags: ["Event"] },
-            actions: [],
-            actionStates: {},
-            modifierEffects: [],
-            distance,
-            currentHP,
-            currentHPRatio,
-            targetHPRatio,
-            targetQiRatio,
-            resources: { ...resources },
-            currentMartialArt,
-            currentWeapon,
-            buffs: [...buffs],
-            debuffs: [...debuffs],
-            unconditionalDamageEffects: { ...unconditionalDamageEffects },
-          });
-        }
-        row.cooldownWait = readyAt - waitingCast.requestedAt;
-        row.startTime = readyAt;
-        events.push({ ...event, time: readyAt });
+        waitForOrdered(event, readyAt, "cooldown");
         continue;
       }
-      // Before-start attachments belong to the accepted cast, not its cooldown wait.
+      if (waitingCast?.delay.reason === "cooldown") finishOrderedWait(event.time);
+      if (row.step.type === "skill" && row.skill?.attackResponse !== undefined) {
+        const attackTime = alignedAttacks.get(row) ?? nextAttackAt(event.time + skillPing(row.skill));
+        if (attackTime !== undefined) {
+          alignedAttacks.set(row, attackTime);
+          reservedAttacks.add(attackTime);
+          const duration = responseDuration(row.skill, event.time);
+          const alignedStart = attackTime + row.skill.attackResponse.endMargin - duration - skillPing(row.skill);
+          if (compareTimelineTime(alignedStart, event.time) > 0) {
+            waitForOrdered(event, alignedStart, "attack");
+            continue;
+          }
+        }
+      }
+      const requiredRelease = prepareRequiredRelease(row, event.time);
+      if (requiredRelease) {
+        const stepIndex = row.rotationIndex!;
+        if (forecast?.stepIndex === stepIndex) {
+          forecastSegment = requiredRelease.segment;
+          forecastTime = event.time;
+          continue;
+        }
+        let start = forecast?.acceptedStarts.get(stepIndex) ?? acceptedStarts.get(stepIndex);
+        if (start === undefined) {
+          const projection: ReadinessForecast = {
+            stepIndex,
+            earliestRelease: event.time + requiredRelease.lead,
+            acceptedStarts,
+          };
+          buildRotationTimelinePass(input, resolvedAnchorTime, procRoll, createActionResolver, projection);
+          const release = projection.readyAt ?? Infinity;
+          start = Math.max(event.time, release - requiredRelease.lead);
+          // Subtracting the prefix and adding its segments back must not put
+          // release a floating-point ulp before an exact status expiry.
+          if (Number.isFinite(start) && start > event.time)
+            start += Number.EPSILON * Math.max(1, Math.abs(release)) * 8;
+          acceptedStarts.set(stepIndex, start);
+        }
+        if (!Number.isFinite(start) && !hasBattleEnd) {
+          row.skipped = true;
+          row.actions = [];
+          row.effectiveCastTime = 0;
+          resolvedRows.add(row);
+          scheduleNextOrdered(row);
+          continue;
+        }
+        if (start > event.time) {
+          waitForOrdered(event, Math.min(start, battleEndTime), "requirement");
+          continue;
+        }
+      }
+      // Before-start attachments belong to the accepted cast, not its automatic wait.
+      finishOrderedWait(event.time);
+      if (row.step.type === "skill") row.startTime = event.time + skillPing(row.skill);
       expandRow(row);
       continue;
     }
@@ -2169,33 +2420,10 @@ function buildRotationTimelinePass(
       const segments = multiActionSegments.get(event.row.id);
       const segment = segments?.[event.subActionIndex ?? -1];
       if (!segment) continue;
-      const modifiersFor = (skill: SkillRecord) => {
-        const tags = skill.tags ?? [];
-        return Array.isArray(skill.modifier)
-          ? (skill.modifier as EditableObject[])
-              .filter((item) =>
-                requirementsPass(
-                  item.requirement,
-                  buffs,
-                  debuffs,
-                  tags,
-                  innerWayConditions,
-                  weapons,
-                  resources,
-                  requirementState(),
-                ),
-              )
-              .map((item) =>
-                item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
-                  ? resolveCastModifierEffect(item.effect as EditableObject, buffs, debuffs)
-                  : {},
-              )
-          : [];
-      };
       const reference = segment.reference;
       const choiceKey = reference?.choiceGroup === undefined ? undefined : `${event.row.id}:${reference.choiceGroup}`;
       let primaryPasses = choiceKey ? subActionChoices.get(choiceKey) : undefined;
-      if (primaryPasses === undefined) {
+      if (!event.selectedSubAction && primaryPasses === undefined) {
         primaryPasses =
           !reference?.requirement ||
           requirementsPass(
@@ -2210,8 +2438,19 @@ function buildRotationTimelinePass(
           );
         if (choiceKey) subActionChoices.set(choiceKey, primaryPasses);
       }
-      const selectedId = reference ? (primaryPasses ? reference.value : reference.fallback) : segment.skillId;
+      let selectedId: string | undefined = segment.skillId;
+      if (reference) selectedId = primaryPasses ? reference.value : reference.fallback;
+      if (event.selectedSubAction) selectedId = event.selectedSubAction.skillId;
       const selectedSkill = selectedId ? skills[selectedId] : undefined;
+      // Parent latency is paid at dispatch; each selected component pays separately.
+      // Skipped alternatives and triggered effects do not consume input latency.
+      const ping = (event.subActionIndex ?? 0) > 0 ? skillPing(selectedSkill) : 0;
+      if (!event.selectedSubAction && ping > 0) {
+        shiftSkillSegments(event.row, event.subActionIndex ?? 0, ping);
+        syncDirectAttachments(event.row);
+        events.push({ ...event, time: event.time + ping, selectedSubAction: { skillId: selectedId } });
+        continue;
+      }
       const selectedActions = Array.isArray(selectedSkill?.action) ? (selectedSkill.action as EditableObject[]) : [];
       const segmentStartOffset = event.time - event.row.startTime;
       segment.skillId = selectedId ?? segment.skillId;
@@ -2248,18 +2487,7 @@ function buildRotationTimelinePass(
       });
       resolveStartBoundActionValues(event.row, segment.actionIndexes);
       const modifiers = modifiersFor(segment.skill);
-      const timingValue = (value: unknown, actionTime: number, fallback: number) =>
-        typeof value === "number" && Number.isFinite(value)
-          ? value
-          : (resolveSegmentValue(value, { actionTime }) ?? fallback);
-      const adjust = (time: number) => {
-        const modifier = modifiers.reduce((total, effect) => total + timingValue(effect.castTimeModifier, time, 0), 0);
-        const multiplier = modifiers.reduce(
-          (total, effect) => total * timingValue(effect.castTimeMultiplier, time, 1),
-          1,
-        );
-        return Math.max(0, time + modifier) * multiplier;
-      };
+      const adjust = castTimingAdjuster(modifiers);
       event.row.actionModifierEffects ??= {};
       segment.actionIndexes.forEach((actionIndex, localIndex) => {
         const actionTime = segmentStartOffset + adjust(segment.localActionTimes[localIndex] ?? 0);
@@ -2273,55 +2501,13 @@ function buildRotationTimelinePass(
       const adjustedCastTime = adjust(segment.baseCastTime);
       const shift = adjustedCastTime - segment.effectiveCastTime;
       segment.effectiveCastTime = adjustedCastTime;
-      if (shift) {
-        event.row.effectiveCastTime += shift;
-        segments!.slice((event.subActionIndex ?? -1) + 1).forEach((laterSegment) => {
-          laterSegment.startOffset += shift;
-          laterSegment.actionIndexes.forEach((actionIndex) => {
-            const action = event.row.actions[actionIndex];
-            if (typeof action?.time === "number") action.time += shift;
-          });
-        });
-        events.mutate((queued) => {
-          if (queued.row !== event.row) return;
-          if (queued.kind === "subActionStart" && (queued.subActionIndex ?? -1) > (event.subActionIndex ?? -1))
-            queued.time += shift;
-          if (
-            queued.kind === "action" &&
-            segments!
-              .slice((event.subActionIndex ?? -1) + 1)
-              .some((laterSegment) => laterSegment.actionIndexes.includes(queued.actionIndex ?? -1))
-          )
-            queued.time += shift;
-        });
-        updateNextOrdered(event.row);
-      }
+      shiftSkillSegments(event.row, (event.subActionIndex ?? -1) + 1, shift);
       syncDirectAttachments(event.row);
       continue;
     }
     if (event.kind === "start") {
       const skillId = event.row.step.type === "skill" ? (event.row.step.skill ?? "") : "";
-      const skillModifiers =
-        event.row.step.type === "skill" && Array.isArray(event.row.skill?.modifier)
-          ? (event.row.skill.modifier as EditableObject[])
-              .filter((item) =>
-                requirementsPass(
-                  item.requirement,
-                  buffs,
-                  debuffs,
-                  event.row.skill?.tags ?? [],
-                  innerWayConditions,
-                  weapons,
-                  resources,
-                  requirementState(),
-                ),
-              )
-              .map((item) =>
-                item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
-                  ? resolveCastModifierEffect(item.effect as EditableObject, buffs, debuffs)
-                  : {},
-              )
-          : [];
+      const skillModifiers = event.row.step.type === "skill" ? modifiersFor(event.row.skill, event.time) : [];
       const cooldownDuration = event.row.skill ? skillCooldownDuration(event.row.skill, skillModifiers) : undefined;
       const cooldownUses = Math.max(1, Math.floor(event.row.skill?.cooldownUses ?? 1));
       const cooldownKey = skillCooldownKey(skillId, event.row.skill);
@@ -2352,8 +2538,8 @@ function buildRotationTimelinePass(
       event.row.targetHPRatio = targetHPRatio;
       event.row.targetQiRatio = targetQiRatio;
       event.row.resources = { ...resources };
-      event.row.currentMartialArt = currentMartialArt;
-      event.row.currentWeapon = currentWeapon;
+      event.row.currentMartialArt = requirementState().currentMartialArt;
+      event.row.currentWeapon = requirementState().currentWeapon;
       event.row.unconditionalDamageEffects = { ...unconditionalDamageEffects };
       if (multiActionSegments.has(event.row.id)) {
         if (event.row.kind === "rotation") scheduleNextOrdered(event.row);
@@ -2370,6 +2556,13 @@ function buildRotationTimelinePass(
         applyCastTimingModifiers(event.row, baseCastTime);
         if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row);
       }
+      if (event.row.skill?.attackResponse) {
+        responseWindows.push({
+          row: event.row,
+          endTime: event.time + responseDuration(event.row.skill, event.time),
+          succeeded: false,
+        });
+      }
       if (
         !setupTriggersByEvent.has("skillStart") ||
         event.row.step.type !== "skill" ||
@@ -2379,8 +2572,17 @@ function buildRotationTimelinePass(
     }
 
     // Lifecycle triggers share the ordinary action executor without adding a stored or displayed action.
-    const action: EditableObject | undefined =
-      event.kind === "start" ? { type: "skillStart" } : event.row.actions[event.actionIndex ?? -1];
+    const lifecycleAction = () => {
+      switch (event.kind) {
+        case "start":
+          return { type: "skillStart" };
+        case "attackResponse":
+          return { type: "attackResponse" };
+        default:
+          return event.row.actions[event.actionIndex ?? -1];
+      }
+    };
+    const action: EditableObject | undefined = lifecycleAction();
     if (!action) continue;
     if (event.row.kind === "dot" && event.row.step.type === "skill" && event.row.step.skill) {
       const active = activePeriodicEffects[periodicEffectKey("target", event.row.step.skill)];
@@ -2401,8 +2603,8 @@ function buildRotationTimelinePass(
         targetHPRatio,
         targetQiRatio,
         resources: { ...resources },
-        currentMartialArt,
-        currentWeapon,
+        currentMartialArt: requirementState().currentMartialArt,
+        currentWeapon: requirementState().currentWeapon,
         unconditionalDamageEffects: { ...unconditionalDamageEffects },
       };
     const skillTags = event.row.actionSkillTags?.[event.actionIndex ?? -1] ?? event.row.skill?.tags ?? [];
@@ -2557,6 +2759,7 @@ function buildRotationTimelinePass(
         actionStates: {},
       };
       rows.push(row);
+      if (responseContext) responseContexts.set(row, responseContext);
       events.push({ time: event.time, sortOrder: [...derivedSortOrder, 0], kind: "start", row });
       actions.forEach((item, index) =>
         events.push({
@@ -3076,16 +3279,25 @@ function buildRotationTimelinePass(
       runSetupTriggers("skillStart");
       continue;
     }
+    if (event.kind === "attackResponse") {
+      runSetupTriggers("attackResponse");
+      enqueueTriggeredSkill(event.row.skill!.attackResponse!.onSuccess, event.row.sourceRowId ?? event.row.id);
+      continue;
+    }
     if (action.type === "takeDamage" && typeof action.damage === "number" && Number.isFinite(action.damage)) {
-      const avoidsTakeDamage = rows.some(
-        (row) =>
-          !row.skipped &&
-          row.step.type === "skill" &&
-          row.skill?.tags?.includes("AvoidsTakeDamage") === true &&
-          compareTimelineTime(event.time, row.startTime) >= 0 &&
-          compareTimelineTime(event.time, row.startTime + row.effectiveCastTime) <= 0,
+      const activeResponses = responseWindows.filter(
+        ({ row, endTime }) =>
+          compareTimelineTime(event.time, row.startTime) >= 0 && compareTimelineTime(event.time, endTime) <= 0,
       );
-      const resolvedDamage = avoidsTakeDamage ? 0 : Math.max(0, action.damage);
+      if (action.damage > 0)
+        for (const response of activeResponses) {
+          if (response.succeeded) continue;
+          response.succeeded = true;
+          const row = response.row;
+          responseContexts.set(row, { currentMartialArt: row.currentMartialArt, currentWeapon: row.currentWeapon });
+          events.push({ kind: "attackResponse", row, time: event.time, sortOrder: [...event.sortOrder, 0] });
+        }
+      const resolvedDamage = activeResponses.length ? 0 : Math.max(0, action.damage);
       action.damage = resolvedDamage;
       if (resolvedDamage === 0) continue;
       const previousHP = currentHP;
@@ -3372,10 +3584,10 @@ function buildRotationTimelinePass(
       row.actionStates[index] ? action : { ...action, type: "inactive" },
     );
   // Describe elapsed waits without adding events or changing saved rotation steps.
-  for (const [cast, delay] of cooldownDelayRows) {
-    const duration = Math.max(0, Math.min(cast.startTime, timelineEndTime) - delay.startTime);
+  for (const { row: delay, until, reason } of automaticDelayRows) {
+    const duration = Math.max(0, Math.min(until, timelineEndTime) - delay.startTime);
     if (compareTimelineTime(duration, 0) <= 0) continue;
-    delay.step = { type: "event", event: "Delay", duration, automatic: "cooldown" };
+    delay.step = { type: "event", event: "Delay", duration, automatic: reason };
     delay.effectiveCastTime = duration;
     rows.push(delay);
     resolvedRows.add(delay);
@@ -3510,7 +3722,7 @@ export function buildRotationTimeline(
       buildRotationTimelineResolved(
         {
           ...input,
-          rotation: { ...input.rotation, autoHP: false, dummyAttack: false },
+          rotation: { ...input.rotation, autoHP: false },
         },
         procRoll,
         createActionResolver,

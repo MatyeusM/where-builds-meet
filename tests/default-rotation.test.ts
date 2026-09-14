@@ -76,8 +76,8 @@ describe("default-rotation", () => {
     ).toBeTruthy();
     const ghostlyCast = result.metrics.breakdown.casts.find((row) => row.skillId === "GhostlySteps");
     expect(
-      (ghostlyCast?.damageWithBuff ?? 0) > (ghostlyCast?.damage ?? 0),
-      "The bundled Ghostly Step cast must include damage indirectly added by Mystery DMG Boost.",
+      (ghostlyCast?.damageWithBuff ?? 0) === (ghostlyCast?.damage ?? 0),
+      "Without incoming attacks, dodges cannot activate Mystery DMG Boost.",
     ).toBeTruthy();
   });
 });

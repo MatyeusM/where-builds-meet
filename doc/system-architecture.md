@@ -221,7 +221,7 @@ work. Results enter the cache when completed, but only the latest requested
 fingerprint may replace the editor preview. The previous completed preview stays
 visible while newer work runs. Editor previews never request comparison variants;
 active-rotation comparisons remain tied to save, activation, or setup changes.
-The rotation portion of the fingerprint includes its steps, target HP, Auto HP,
+The rotation portion of the fingerprint includes its resolved ping, steps, target HP, Auto HP,
 Dummy Attack, group size, Infinite Vitality, battle-start anchor, and event-time
 reference. Its display name is intentionally excluded because renaming cannot
 change a calculation.
@@ -434,7 +434,7 @@ same-origin session key before React state is initialized.
 | Combat path                                     | `localStorage`, `wwm-path-session-v1`            |
 | Dev layout preview                              | `localStorage`, `wwm-layout-preview-session-v1`  |
 | Attunement overrides                            | `localStorage`, `wwm-attunement-overrides-v1`    |
-| Weapons                                         | `localStorage`, `wwm-settings-session-v1`        |
+| Weapons and default ping                        | `localStorage`, `wwm-settings-session-v1`        |
 | Build setup overrides                           | `localStorage`, `wwm-build-setup-overrides-v1`   |
 | Food                                            | `localStorage`, `wwm-food-session-v1`            |
 | Divinecraft                                     | `localStorage`, `wwm-divinecraft-session-v1`     |
@@ -779,6 +779,36 @@ next pair of hits dynamically and needs no preliminary duration pass. Auto HP
 still needs a duration to place its percentage steps: fight-relative Battle End
 supplies it directly; otherwise a resolved timeline supplies the final cast/Delay
 endpoint. Fight-relative anchor convergence remains a separate timing dependency.
+
+### Input latency (ping)
+
+Settings persists a non-negative finite ping in milliseconds in the existing
+user-settings record, defaulting to 40 ms for new and legacy settings. Rotations
+may store an optional ping override. An absent override inherits Settings;
+zero explicitly disables latency. Rotation save, duplication, export, and import
+preserve overrides, and invalid overrides are discarded without replacing the
+rotation.
+
+The application resolves inherited ping into each immutable worker rotation
+before fingerprinting. Active calculations, editor previews, comparison timelines,
+graduation baselines, and Monte Carlo snapshots therefore use the same latency.
+The low-level timeline accepts explicit milliseconds; omitted ping there is zero
+for callers without application settings. DPS regression fixtures explicitly
+record their configured ping.
+
+After an ordered skill becomes cooldown-ready, its start is scheduled at ready
+time plus ping / 1000, including the first skill. Attached events follow the
+delayed start/actions. Cast modifiers do not scale latency. Timed events and
+resource regeneration continue during the gap, and Battle End can prevent the
+cast from starting. Cooldown Delay rows report only cooldown waiting; latency
+is an additional gap.
+
+A selected sub-action dispatches with its own skill definition's latency. Its
+primary/fallback choice is locked at dispatch; cast-start values and modifiers
+resolve when it starts after the latency gap. Skipped components consume no ping.
+Composite row duration includes component gaps and pushes later components and
+ordered skills accordingly. Triggered skills, DOTs, periodic actions, and explicit
+Delay events do not pay input latency.
 
 ## Damage calculation
 
@@ -1309,9 +1339,10 @@ from data.
   Bamboocut martial arts, but Void/Formless Attack folding currently remains
   Stonesplit-only.
 - DMG Bonus Category 2 is specified but not implemented.
-- `npm run build` includes deterministic DPS snapshot checks for every available
-  path, alongside preset, localization, type, and production-bundle verification.
-  A change of 1% or more in either direction requires review; see
+- Release deployment runs deterministic DPS snapshot checks for every available
+  path. Ordinary builds run preset, localization, behavioral-test, type, and
+  production-bundle verification without the accepted-snapshot comparison.
+  A DPS change of 1% or more in either direction requires review before release; see
   [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
 ### Rotation editor calculation lifecycle
@@ -1422,7 +1453,9 @@ The exported `buildPresetRotationBundle` in `App.tsx` builds a selected preset
 using the same setup, gear, stats, definitions, and timeline inputs as the
 Graduation comparison. Graduation supplies the path's graduated build ID;
 the headless DPS snapshot runner supplies its default build ID and explicit
-environment settings. Both use the centralized rotation calculator.
+environment settings. Both use the centralized rotation calculator. The Pages
+workflow runs `npm run test:dps` before deployment; ordinary build, test, and
+watch commands exclude that release comparison.
 See [DPS snapshots](dps-snapshots.md) for coverage and the review/update workflow.
 
 ### Chronological healing and cast snapshots
@@ -1460,3 +1493,29 @@ calculations use the live combat traversal, also used for healing and accumulato
 snapshots, so settlement affects target HP before subsequent actions. Comparison
 variants rebuild that traversal and resolve their own source damage. Runtime
 recording IDs and source references are not persisted in user rotations.
+
+### Attack-aligned casts
+
+Successful Deflect uses the data-defined `alignCastEndToAttack: 0.1` margin.
+The ordered scheduler waits so its cast ends 0.1 seconds after the next manual
+or dummy attack, subject to previous cast completion and cooldown readiness.
+When those constraints force a later start, its end can also be later.
+Without a next attack before Battle End, it follows normal ordered timing.
+The existing automatic Delay mechanism represents both cooldown and attack waits
+as read-only timeline output, removed at storage/import boundaries. Deluge presets
+use this alignment for Successful Deflect. The two WTS presets retain a 0.4-second
+authored delay before the opening World to Sword to coordinate its healing arrivals
+with Qi Blade's launch cooldown. Their Qi events remain attached to actions near
+the reviewed encounter times.
+
+Composite release readiness can insert an automatic wait before charging. The
+shared event loop forecasts the existing release requirement against passive
+regeneration and pending events, then subtracts the charge duration and ping.
+See `rotation-event-loop.md` for the bounded prefix replay and `skill-data.md`
+for the Vile Condemned three/four-HW variants.
+
+Attack responses share the timeline readiness queue with cooldown waits. Data-authored
+response windows are independent of blocking cast duration; incoming hits dispatch
+success effects through the existing triggered-skill executor at attack time.
+See `doc/rotation-event-loop.md` for reservations, canceled-window overlap,
+causal ordering, and preserved defensive weapon context.

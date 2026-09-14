@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
@@ -248,7 +249,7 @@ describe("martial-art-talents", () => {
     const timeline = (setupEffects, steps, skills, extra = {}) =>
       buildRotationTimeline({
         rotation: { name: "Talent triggers", steps },
-        skills,
+        skills: withImmediateAttacks(skills),
         effectDefinitions,
         eventDefinitions: {},
         dots: {},

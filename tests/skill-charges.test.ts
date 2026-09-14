@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -46,7 +47,7 @@ describe("skill-charges", () => {
     };
     const input = (steps, extra = {}) => ({
       rotation: { name: "Independent charge probe", steps },
-      skills,
+      skills: withImmediateAttacks(skills),
       eventDefinitions: {},
       dots: {},
       effectDefinitions: { Ready: { duration: 0.1 } },

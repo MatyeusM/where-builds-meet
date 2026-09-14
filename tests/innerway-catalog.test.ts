@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 
@@ -124,7 +125,7 @@ describe("innerway-catalog", () => {
       };
       const timeline = {
         rotation,
-        skills: {
+        skills: withImmediateAttacks({
           ...general,
           Probe: {
             name: "Probe",
@@ -140,7 +141,7 @@ describe("innerway-catalog", () => {
               ...[0.1, 0.2, 15.1, 15.3, 21.1, 21.3].map((time) => ({ type: "damage", phyCoef: 1, time })),
             ],
           },
-        },
+        }),
         effectDefinitions: { ...buffs, ...debuffs },
         dots: {},
         eventDefinitions: {},

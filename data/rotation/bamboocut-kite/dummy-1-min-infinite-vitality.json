@@ -62,7 +62,7 @@
     },
     {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd4"
     },
     {
       "type": "skill",
@@ -150,7 +150,7 @@
     },
     {
       "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd4"
     },
     {
       "type": "event",
@@ -183,11 +183,6 @@
     {
       "type": "skill",
       "skill": "Deflect"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
     },
     {
       "type": "skill",
@@ -251,7 +246,7 @@
     },
     {
       "type": "skill",
-      "skill": "VileCondemned",
+      "skill": "VileCondemnedEnd4",
       "causesBreak": true
     },
     {
@@ -288,19 +283,11 @@
     },
     {
       "type": "skill",
-      "skill": "SnaringLashCancel"
-    },
-    {
-      "type": "skill",
       "skill": "Deflect"
     },
     {
       "type": "skill",
-      "skill": "SkyGrasped"
-    },
-    {
-      "type": "skill",
-      "skill": "VileCondemned"
+      "skill": "VileCondemnedEnd"
     },
     {
       "type": "event",

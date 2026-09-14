@@ -34,7 +34,7 @@
     {
       "type": "event",
       "event": "Delay",
-      "duration": 0.44
+      "duration": 0.4
     },
     {
       "type": "skill",
@@ -57,11 +57,6 @@
       "skill": "EmeraldDewtouch2Cancel"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
-    },
-    {
       "type": "skill",
       "skill": "DeflectSuccessful"
     },
@@ -100,11 +95,6 @@
     {
       "type": "skill",
       "skill": "Deflect"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.74
     },
     {
       "type": "skill",
@@ -118,7 +108,7 @@
       "type": "event",
       "event": "Qi",
       "before": {
-        "action": 32
+        "action": 27
       },
       "targetQiRatio": 0.5999
     },
@@ -149,11 +139,6 @@
     {
       "type": "skill",
       "skill": "JumpHeavy"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.4
     },
     {
       "type": "skill",
@@ -204,11 +189,6 @@
       "skill": "FourfoldInquiry1"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.56
-    },
-    {
       "type": "skill",
       "skill": "DeflectSuccessful"
     },
@@ -219,11 +199,6 @@
     {
       "type": "skill",
       "skill": "Deflect"
-    },
-    {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.59
     },
     {
       "type": "skill",
@@ -246,16 +221,16 @@
       "skill": "WorldToSword"
     },
     {
+      "type": "skill",
+      "skill": "CloudburstHealing"
+    },
+    {
       "type": "event",
       "event": "Qi",
       "before": {
-        "action": 0
+        "action": "start"
       },
       "targetQiRatio": 0
-    },
-    {
-      "type": "skill",
-      "skill": "CloudburstHealing"
     },
     {
       "type": "skill",

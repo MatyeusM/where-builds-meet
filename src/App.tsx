@@ -1,3 +1,4 @@
+import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults";
 import {
   lazy,
   Suspense,
@@ -227,9 +228,10 @@ import {
   attachedEventPhase,
   attachedEventSiblingIndex,
   attachedTargetForStep,
-  isAutomaticCooldownDelay,
+  isAutomaticDelay,
   migrateDrunkenPoetSequences,
-  migrateAutomaticCooldownDelays,
+  migrateAutomaticDelays,
+  migrateDefenseActionAnchors,
   reorderAttachedEventWithinTarget,
 } from "./rotationEditing";
 import {
@@ -293,7 +295,7 @@ function statDefinition(key: keyof CharacterStats) {
   return definition;
 }
 
-type CalculatorSettings = { weapons: [WeaponId, WeaponId]; breakthrough: string };
+type CalculatorSettings = { weapons: [WeaponId, WeaponId]; breakthrough: string; ping: number };
 type LayoutMode = "pc" | "mobile";
 type PathId =
   | "mixed"
@@ -883,6 +885,7 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
     ...(typeof rotation.targetHP === "number" && rotation.targetHP > 0 ? { targetHP: rotation.targetHP } : {}),
     ...(autoHP ? { autoHP: true } : {}),
     ...(rotation.dummyAttack === true ? { dummyAttack: true } : {}),
+    ...(normalizePing(rotation.ping) !== undefined ? { ping: normalizePing(rotation.ping) } : {}),
     groupSize: rotation.groupSize === 5 || rotation.groupSize === 10 ? rotation.groupSize : 1,
     infiniteVitality:
       typeof rotation.infiniteVitality === "boolean"
@@ -956,7 +959,9 @@ function timelineAnchorTime(timeline: TimelineRow[], startAnchor: { rowId: strin
 }
 
 function migrateRotation(rotation: RotationRecord): RotationRecord {
-  const migrated = migrateAutomaticCooldownDelays(migrateDrunkenPoetSequences(normalizeRotation(rotation)));
+  const migrated = migrateDefenseActionAnchors(
+    migrateAutomaticDelays(migrateDrunkenPoetSequences(normalizeRotation(rotation))),
+  );
   const attachedDamageIndexes = migrated.steps.flatMap((step, index) =>
     step.type === "event" && step.event === "TakeDamage" && "before" in step ? [index] : [],
   );
@@ -1167,6 +1172,7 @@ const defaultBreakthrough = "17";
 const defaultSettings: CalculatorSettings = {
   weapons: ["snowparting", "phalanxbane"],
   breakthrough: defaultBreakthrough,
+  ping: DEFAULT_PING_MS,
 };
 
 function breakthroughProfile(settings: CalculatorSettings) {
@@ -1692,6 +1698,7 @@ function loadSettings(): CalculatorSettings {
     const saved = JSON.parse(getPersistentItem(settingsStorageKey) ?? "null") as {
       weapons?: unknown;
       weapon?: unknown;
+      ping?: unknown;
     } | null;
     const savedWeapons = Array.isArray(saved?.weapons) ? saved.weapons.filter(isWeaponId) : [];
     const legacyWeapon = saved && "weapon" in saved && saved.weapon === "phalanxbane" ? "phalanxbane" : "snowparting";
@@ -1699,7 +1706,7 @@ function loadSettings(): CalculatorSettings {
       savedWeapons.length === 2
         ? [savedWeapons[0], savedWeapons[1]]
         : [legacyWeapon, legacyWeapon === "snowparting" ? "phalanxbane" : "snowparting"];
-    return { weapons, breakthrough: defaultBreakthrough };
+    return { weapons, breakthrough: defaultBreakthrough, ping: resolvePing(saved?.ping) };
   } catch {
     return { ...defaultSettings };
   }
@@ -1933,7 +1940,11 @@ export function buildPresetRotationBundle(
   if (!build || configuredWeapons?.length !== 2) return undefined;
 
   const weapons = [...configuredWeapons] as [WeaponId, WeaponId];
-  const settings: CalculatorSettings = { weapons, breakthrough: environment.breakthrough };
+  const settings: CalculatorSettings = {
+    weapons,
+    breakthrough: environment.breakthrough,
+    ping: resolvePing(environment.rotation.ping),
+  };
   const buildSetup = normalizeBuildSetup(build.setup);
   const equippedGear = calculateEquippedGearEffects(buildPresetInventory(build), weapons, false);
   const gearStatEffect: StatEffectContainer = { rawStat: equippedGear.stats };
@@ -1970,7 +1981,7 @@ export function buildPresetRotationBundle(
     dotDefinitions,
     environment.skillOverrides,
   );
-  const rotation = environment.rotation;
+  const rotation = { ...environment.rotation, ping: resolvePing(environment.rotation.ping) };
   const rotationAnchor = rotation.start
     ? { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action }
     : { rowId: "rotation-0" };
@@ -5565,6 +5576,19 @@ function SettingsTab({
             </label>
           ))}
         </div>
+        <label className="editor-field">
+          <span>{t("ui.app.ping")}</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={settings.ping}
+            onChange={(event) => {
+              const ping = normalizePing(event.target.valueAsNumber);
+              if (ping !== undefined) onSettingsChange((current) => ({ ...current, ping }));
+            }}
+          />
+        </label>
         <div className="settings-layout-row">
           <label className="editor-field">
             <span>{t("ui.app.layout")}</span>
@@ -5800,7 +5824,7 @@ function RotationEditorTab({
     setRotation((current) => ({
       ...current,
       steps: current.steps.map((step, stepIndex) =>
-        stepIndex === index && !isAutomaticCooldownDelay(step) ? ({ ...step, ...changes } as RotationStep) : step,
+        stepIndex === index && !isAutomaticDelay(step) ? ({ ...step, ...changes } as RotationStep) : step,
       ),
     }));
   }
@@ -5832,7 +5856,7 @@ function RotationEditorTab({
   }
   function selectRotationItem(index: number, value: string, control: HTMLSelectElement) {
     if (rotationLocked) return;
-    if (isAutomaticCooldownDelay(rotation.steps[index])) return;
+    if (isAutomaticDelay(rotation.steps[index])) return;
     if (rotation.autoHP && value === "__event:HP") return;
     if (
       [
@@ -6113,9 +6137,9 @@ function RotationEditorTab({
   function moveStep(index: number, direction: number) {
     if (rotationLocked) return;
     setRotation((current) => {
-      if (isAutomaticCooldownDelay(current.steps[index])) return current;
+      if (isAutomaticDelay(current.steps[index])) return current;
       const movable = (step: RotationStep | undefined) =>
-        step?.type === "skill" || (step?.type === "event" && step.event === "Delay" && !isAutomaticCooldownDelay(step));
+        step?.type === "skill" || (step?.type === "event" && step.event === "Delay" && !isAutomaticDelay(step));
       if (!movable(current.steps[index])) return current;
       const attached = (step: RotationStep | undefined) => Boolean(attachedTargetForStep(step));
       let blockStart = index;
@@ -6156,7 +6180,7 @@ function RotationEditorTab({
   function removeStep(index: number) {
     if (rotationLocked) return;
     setRotation((current) => {
-      if (isAutomaticCooldownDelay(current.steps[index])) return current;
+      if (isAutomaticDelay(current.steps[index])) return current;
       if (current.steps[index]?.type !== "skill")
         return { ...current, steps: current.steps.filter((_, stepIndex) => stepIndex !== index) };
       if (current.steps.filter((step) => step.type === "skill").length <= 1) return current;
@@ -6720,7 +6744,7 @@ function RotationEditorTab({
     globalDebuffs = currentGlobalDebuffs,
   ): TimelineBuildInput {
     return {
-      rotation: rotationRecord,
+      rotation: { ...rotationRecord, ping: resolvePing(rotationRecord.ping, settings.ping) },
       skills: calculationDefinitions.skills,
       eventDefinitions: rotationEventDefinitions,
       dots: calculationDefinitions.dots,
@@ -7003,7 +7027,7 @@ function RotationEditorTab({
     const environment: GraduationEnvironment = {
       pathId,
       martialArts: [...settings.weapons],
-      rotation: rotationRecord,
+      rotation: { ...rotationRecord, ping: resolvePing(rotationRecord.ping, settings.ping) },
       breakthrough: settings.breakthrough,
       globalDebuffs: currentGlobalDebuffs,
       food: currentFood,
@@ -7441,6 +7465,23 @@ function RotationEditorTab({
                       <option value={10}>{t("ui.app.group")}</option>
                     </select>
                   </label>
+                  <label className="rotation-target-hp">
+                    <span>{t("ui.app.ping")}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      disabled={rotationLocked}
+                      placeholder={String(settings.ping)}
+                      title={t("ui.app.pingInherit")}
+                      value={rotation.ping ?? ""}
+                      onChange={(event) => {
+                        const ping = event.target.value === "" ? undefined : normalizePing(event.target.valueAsNumber);
+                        if (event.target.value !== "" && ping === undefined) return;
+                        updateRotationCalculationSetting((current) => ({ ...current, ping }));
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
               <div className="detail-active-actions">
@@ -7666,7 +7707,7 @@ function RotationEditorTab({
                     const actionTime = entry.time;
                     const isManualEvent = step.type === "event";
                     const isDelayEvent = isManualEvent && step.event === "Delay";
-                    const isProtectedDelay = isAutomaticCooldownDelay(step);
+                    const isProtectedDelay = isAutomaticDelay(step);
                     const isGeneratedEvent =
                       step.type === "event" &&
                       step.event === "TakeDamage" &&
@@ -8832,8 +8873,8 @@ export default function App() {
     [buildSetupOverrides],
   );
   useEffect(
-    () => setPersistentItem(settingsStorageKey, JSON.stringify({ weapons: settings.weapons })),
-    [settings.weapons],
+    () => setPersistentItem(settingsStorageKey, JSON.stringify({ weapons: settings.weapons, ping: settings.ping })),
+    [settings.weapons, settings.ping],
   );
   useEffect(() => setPersistentItem(pathStorageKey, pathId), [pathId]);
 

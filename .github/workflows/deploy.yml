@@ -45,6 +45,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check release DPS snapshots
+        run: npm run test:dps
+
       - name: Check deployment update behavior
         run: npx vitest run tests/deployment-updates.test.ts
 

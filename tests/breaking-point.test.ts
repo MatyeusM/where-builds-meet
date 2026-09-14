@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-breaking-point.mjs.
@@ -88,7 +89,11 @@ describe("breaking-point", () => {
             ],
             eventTimeReference: "battleStart",
           },
-          skills: { ...generalSkills, Hit: hit, Observe: { name: "Observe", castTime: 0, action: [], tags: [] } },
+          skills: withImmediateAttacks({
+            ...generalSkills,
+            Hit: hit,
+            Observe: { name: "Observe", castTime: 0, action: [], tags: [] },
+          }),
           eventDefinitions: { Exhausted: exhausted },
           dots: {},
           effectDefinitions: { ...buffs, Exhausted: { name: "Exhausted", duration: 100, maxStack: 1 } },

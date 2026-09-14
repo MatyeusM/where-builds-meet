@@ -1,3 +1,4 @@
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
 import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-etherwrath.mjs.
@@ -46,7 +47,7 @@ describe("etherwrath", () => {
     };
     const timelineInput = (rotation, skills) => ({
       rotation,
-      skills,
+      skills: withImmediateAttacks(skills),
       eventDefinitions: {},
       dots: {},
       effectDefinitions: kiteBuffs,

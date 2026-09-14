@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import mysticSkills from "../data/skill/mystic.json";
+import mysticBuffs from "../data/buff/mystic.json";
+import { buildRotationTimeline } from "../src/calculations/rotationTimeline";
 
 // Ported from script/probe/check-drunken-poet-composites.mjs.
 describe("drunken-poet-composites", () => {
@@ -8,7 +11,7 @@ describe("drunken-poet-composites", () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
     const { migrateDrunkenPoetSequences } = await import("../src/rotationEditing.ts");
     const closeTo = (actual, expected) => Math.abs((actual ?? Number.NaN) - expected) < 1e-9;
-    const componentTimes = [0.6375, 0.5, 0.625, 0.65, 0.5875];
+    const componentTimes = [0.58, 0.436, 0.55, 0.6, 0.5382];
     const compositeIds = [
       "DrunkenPoet1Hit",
       "DrunkenPoet2Hits",
@@ -43,7 +46,7 @@ describe("drunken-poet-composites", () => {
         `${skillId} must resolve exactly ${hitCount} Poet damage actions with or without initial Intoxicated.`,
       ).toBeTruthy();
       expect(
-        closeTo(sober.effectiveCastTime, expectedPoetTime + 0.6875) &&
+        closeTo(sober.effectiveCastTime, expectedPoetTime + 0.626) &&
           closeTo(intoxicated.effectiveCastTime, expectedPoetTime),
         `${skillId} must insert Drink only when Intoxicated is absent.`,
       ).toBeTruthy();
@@ -114,4 +117,37 @@ describe("drunken-poet-composites", () => {
       "A break marker on legacy Poet 5 must move to the composite.",
     ).toBeTruthy();
   });
+});
+
+it("cancels Poet on its fifth hit while preserving earlier hits and per-component ping", () => {
+  const rows = buildRotationTimeline({
+    rotation: {
+      name: "Poet interrupts",
+      ping: 40,
+      steps: [
+        { type: "skill", skill: "DrunkenPoet5HitsCancel" },
+        { type: "skill", skill: "FollowUp" },
+      ],
+    },
+    skills: { ...mysticSkills, FollowUp: { castTime: 1, action: [] } },
+    eventDefinitions: {},
+    dots: {},
+    effectDefinitions: mysticBuffs,
+    innerWayConditions: [],
+    innerWayRules: [],
+    setupEffects: [],
+    weapons: [],
+    initialResources: { Vitality: 100 },
+    resourceMaximums: { Vitality: 100 },
+  });
+  const poet = rows.find((row) => row.rotationIndex === 0)!;
+  const hits = poet.actions.filter((action) => action.type === "damage");
+  expect(hits).toHaveLength(5);
+  expect(Number(hits[0].time)).toBeCloseTo(1.1499, 8);
+  expect(Number(hits[1].time)).toBeCloseTo(1.6055, 8);
+  expect(Number(hits[2].time)).toBeCloseTo(2.1803, 8);
+  expect(Number(hits[3].time)).toBeCloseTo(2.83909, 8);
+  expect(Number(hits[4].time)).toBeCloseTo(3.5702, 8);
+  expect(poet.effectiveCastTime).toBeCloseTo(3.5702, 8);
+  expect(rows.find((row) => row.rotationIndex === 1)!.startTime).toBeCloseTo(3.6102, 8);
 });
