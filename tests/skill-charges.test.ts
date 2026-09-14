@@ -18,7 +18,13 @@ describe("skill-charges", () => {
     const { calculateEditorTimeline } = await import("../src/calculations/editorTimeline.ts");
     const general = JSON.parse(await readFile("data/skill/general.json", "utf8"));
     const talent = JSON.parse(await readFile("data/martial-art/infernal-twinblades.json", "utf8"));
-    const charged = JSON.parse(await readFile("data/skill/infernal-twinblades.json", "utf8")).AddledMind;
+    // Isolate cooldown scheduling from the skill's attack duration and hit events.
+    const charged = {
+      ...JSON.parse(await readFile("data/skill/infernal-twinblades.json", "utf8")).AddledMind,
+      castTime: 0,
+      action: [],
+      modifier: [],
+    };
     const skills = {
       ...general,
       AddledMind: charged,

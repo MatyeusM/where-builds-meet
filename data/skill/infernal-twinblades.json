@@ -1,13 +1,78 @@
 {
   "AddledMind": {
     "name": "Addled Mind",
-    "description": "Three charges, each recovering in 15 seconds. Cast timing and attack effects are not yet available.",
+    "shortName": "DB Q",
+    "description": "Three charges, each recovering in 15 seconds. Level 100 hit data outside PvP, from files and unverified in play. Flamelash advances cast and hit times by 0.144 seconds.",
+    "castTime": 0.744,
     "cooldown": 15,
     "cooldownUses": 3,
     "cooldownRecovery": "independent",
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.344,
+        "phyCoef": 0.216768,
+        "attrCoef": 0.216768,
+        "phyBonus": 60.16,
+        "attrBonus": 32.8
+      },
+      {
+        "type": "damage",
+        "time": 0.408,
+        "phyCoef": 0.216768,
+        "attrCoef": 0.216768,
+        "phyBonus": 60.16,
+        "attrBonus": 32.8
+      },
+      {
+        "type": "damage",
+        "time": 0.472,
+        "phyCoef": 0.216768,
+        "attrCoef": 0.216768,
+        "phyBonus": 60.16,
+        "attrBonus": 32.8
+      },
+      {
+        "type": "damage",
+        "time": 0.545,
+        "phyCoef": 0.216768,
+        "attrCoef": 0.216768,
+        "phyBonus": 60.16,
+        "attrBonus": 32.8
+      },
+      {
+        "type": "damage",
+        "time": 0.609,
+        "phyCoef": 0.216768,
+        "attrCoef": 0.216768,
+        "phyBonus": 60.16,
+        "attrBonus": 32.8
+      },
+      {
+        "type": "damage",
+        "time": 0.673,
+        "phyCoef": 0.27096,
+        "attrCoef": 0.27096,
+        "phyBonus": 75.2,
+        "attrBonus": 41
+      }
+    ],
+    "modifier": [
+      {
+        "requirement": [
+          {
+            "target": "self",
+            "value": "Flamelash"
+          }
+        ],
+        "effect": {
+          "castTimeModifier": -0.144
+        }
+      }
+    ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
-    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades"]
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "AddledMind"]
   },
   "InfernalLight1": {
     "name": "Dual Blade - Light Attack",

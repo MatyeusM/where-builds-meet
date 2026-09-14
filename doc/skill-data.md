@@ -897,10 +897,16 @@ for the `PerfectDodge` source tag. Both dodge variants share one `skillStart`
 trigger that restores one `AddledMind` charge, with a separate 30-second trigger cooldown.
 The duration bonus is independent of that cooldown and includes indirect dodge
 buffs such as Disintegration. Addled Mind uses a 15-second cooldown, three uses,
-and independent recovery. Its cooldown-only definition is registered in
-`data/skill/infernal-twinblades.json` and exposed in the Infernal skill category.
-Cast time and actions remain absent until measured, so the current placeholder
-spends a charge at zero cast time and contributes no damage or mode changes.
+and independent recovery. Its definition in `data/skill/infernal-twinblades.json`
+uses the supplied outside-PvP Level 100 file data, unverified in play. Interrupt
+time is cast time: 0.744 seconds, with six hits at 0.344, 0.408, 0.472, 0.545,
+0.609, and 0.673 seconds. The first five hits each use physical and attribute
+coefficients of 0.216768, physical bonus 60.16, and attribute bonus 32.8; the
+last uses 0.27096, 75.2, and 41 respectively. A cast-start Flamelash modifier
+subtracts 0.144 seconds from both cast and hit times, giving a 0.6-second cast.
+This explicit uniform shift places the third hit at 0.328 seconds, rather than
+the supplied active table's 0.329 seconds. End animation times are unused.
+Addled Mind does not change the Flamelash state.
 
 Infernal Twinblades rank 13 contains all five talents in source order, using
 the rank array directly without talent IDs. The implemented effects are:

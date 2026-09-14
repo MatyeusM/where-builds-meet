@@ -23,6 +23,8 @@ describe("echoes-t4", () => {
       },
       skills: {
         ...infernal,
+        // Isolate the rolling-hit driver from Addled Mind's own damage and cast duration.
+        AddledMind: { ...infernal.AddledMind, castTime: 0, action: [], modifier: [] },
         Driver: { castTime: 0, action: [{ type: "trigger", value: "Hits", time: 0 }] },
         Hits: { castTime: 0, tags: ["Triggered", "DirectDamage"], action: actions },
         ChanceBurst: {
