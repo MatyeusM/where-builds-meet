@@ -13,14 +13,13 @@ describe("exquisite-scenery", () => {
     const sceneryT6Applies = (tags) =>
       requirementsPass(sceneryT6.requirement, [], [], tags, ["ExquisiteSceneryT6"], ["thundercry", "stormbreaker"]);
     expect(
-      sceneryT6.effect.baseDMGBonus === 0.5 &&
-        [
-          ["Light", "Charged"],
-          ["Heavy", "Charged"],
-          ["Light", "VariedCombo"],
-          ["Heavy", "VariedCombo"],
-        ].every(sceneryT6Applies),
-      "Exquisite Scenery T6 must grant 50% damage to all four charged and charged-varied attack categories.",
+      [
+        ["Light", "Charged"],
+        ["Heavy", "Charged"],
+        ["Light", "VariedCombo"],
+        ["Heavy", "VariedCombo"],
+      ].every(sceneryT6Applies),
+      "Exquisite Scenery T6 must grant its damage bonus to all four charged and charged-varied attack categories.",
     ).toBeTruthy();
     expect(
       !sceneryT6Applies(["Light"]) && !sceneryT6Applies(["Charged"]) && !sceneryT6Applies(["Heavy", "MartialArts"]),

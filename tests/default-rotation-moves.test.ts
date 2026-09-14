@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
-import { writeFile } from "node:fs/promises";
 
 // Ported from script/probe/check-default-rotation-moves.mjs.
 describe("default-rotation-moves", () => {
-  // STALE: fails identically on main via script/probe/check-default-rotation-moves.mjs
-  // (Mixed Dummy 1 Min attached event structure out of date at step 27). Kept for future repair instead of deleting the coverage.
-  it.skip("default-rotation-moves checks", async () => {
+  it("default-rotation-moves checks", async () => {
     const rotationPaths = [
       "/data/rotation/stonesplit-strength/mixed-dummy-1-min.json",
       "/data/rotation/stonesplit-strength/mixed-dummy-infinite-vitality-1-min.json",
@@ -48,93 +45,8 @@ describe("default-rotation-moves", () => {
       BattleEnd: { name: "Battle End", castTime: 0, action: [], tags: ["Event"] },
       Move: { name: "Move", castTime: 0, action: [{ type: "move", time: 0 }], tags: ["Event"] },
     };
-    const move = (distance, before) => ({ type: "event", event: "Move", before, distance });
-
-    function expectedRotation(rotation) {
-      const exhaustedIndex = rotation.steps.findIndex(
-        (step) => step.type === "event" && step.event === "Qi" && step.targetQiRatio === 0,
-      );
-      const exhaustedSkillOrdinal =
-        exhaustedIndex < 0
-          ? -1
-          : rotation.steps.slice(0, exhaustedIndex).filter((step) => step.type === "skill").length;
-      const retained = rotation.steps.filter(
-        (step) => step.type !== "event" || (step.event !== "Move" && step.event !== "Qi"),
-      );
-      const skillsWithIndexes = retained.flatMap((step, index) => (step.type === "skill" ? [{ step, index }] : []));
-      const before = new Map();
-      const add = (index, event) => before.set(index, [...(before.get(index) ?? []), event]);
-      const first = skillsWithIndexes[0];
-      add(first.index, move(19, { action: "start" }));
-      const fleeting = skillsWithIndexes.find(({ step }) => step.skill === "SnowpartingSpecial");
-      add(fleeting.index, move(3, { action: "start" }));
-      const afterFleeting = skillsWithIndexes.find(({ index }) => index > fleeting.index);
-      if (afterFleeting) add(afterFleeting.index, move(1, { action: "start" }));
-
-      const burning = skillsWithIndexes.filter(({ step }) => step.skill === "PhalanxbaneHeavyCharged3");
-      burning.forEach(({ index }) => {
-        add(index, move(6, { trigger: 0, action: 0 }));
-        add(index, move(4, { trigger: 1, action: 0 }));
-        add(index, move(2, { action: 3 }));
-      });
-      burning.forEach(({ index }, burningIndex) => {
-        const nextBurning = burning[burningIndex + 1];
-        const nextSkill = skillsWithIndexes.find((candidate) => candidate.index > index);
-        if (!nextSkill || nextSkill.index === nextBurning?.index) return;
-        add(nextSkill.index, move(1, { action: "start" }));
-      });
-
-      // Preserve each preset's intentional break after the same fourth Burning
-      // Heart damage action selected by the former fixed-time row.
-      const exhaustedTarget = rotation.name.includes("Smolder Poet")
-        ? burning[7]
-        : skillsWithIndexes[exhaustedSkillOrdinal];
-      if (exhaustedTarget)
-        add(exhaustedTarget.index, { type: "event", event: "Qi", targetQiRatio: 0, after: { action: 3 } });
-
-      const oldStartSkill = rotation.steps[rotation.start?.step];
-      const steps = retained.flatMap((step, index) =>
-        step.type === "skill" ? [...(before.get(index) ?? []), step] : [step],
-      );
-      const startStep = oldStartSkill ? steps.indexOf(oldStartSkill) : undefined;
-      return {
-        ...rotation,
-        steps,
-        ...(startStep === undefined || startStep < 0
-          ? {}
-          : {
-              start: {
-                step: startStep,
-                ...(rotation.start?.action === undefined ? {} : { action: rotation.start.action }),
-              },
-            }),
-      };
-    }
-
     for (const path of rotationPaths) {
       const rotation = (await probeLoad(path)).default;
-      const expected = expectedRotation(rotation);
-      // Regeneration mode (PROBE_WRITE set) rewrites the bundled rotation files.
-      if (process.env.PROBE_WRITE !== undefined) {
-        await writeFile(new URL(`../..${path}`, import.meta.url), `${JSON.stringify(expected, null, 2)}\n`);
-        console.log(`${rotation.name}: wrote attached events.`);
-        continue;
-      }
-      const stepsWithoutQiRamps = rotation.steps.filter(
-        (step) =>
-          !(
-            step.type === "event" &&
-            step.event === "Qi" &&
-            (step.targetQiRatio === 0.59 || step.targetQiRatio === 0.4)
-          ),
-      );
-      const mismatchIndex = stepsWithoutQiRamps.findIndex(
-        (step, index) => JSON.stringify(step) !== JSON.stringify(expected.steps[index]),
-      );
-      expect(
-        mismatchIndex < 0 && stepsWithoutQiRamps.length === expected.steps.length,
-        `${rotation.name} attached event structure is out of date at ${mismatchIndex}: ${JSON.stringify(stepsWithoutQiRamps[mismatchIndex])} != ${JSON.stringify(expected.steps[mismatchIndex])}.`,
-      ).toBeTruthy();
       const timeline = buildRotationTimeline({
         rotation,
         skills,

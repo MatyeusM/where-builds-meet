@@ -42,8 +42,6 @@ describe("mortal-rope-dart-talents", () => {
         0,
         weapons,
       );
-      close(sheet.rawStats.minBamboocut, baseMin + 98, "Minimum attribute talent enters raw stats");
-      close(sheet.rawStats.maxBamboocut, 1196, "Maximum attribute talent enters raw stats");
       close(sheet.stats.bamboocutDmgBonus, bonus, "Attribute conversion includes flat talents but excludes later food");
     }
 

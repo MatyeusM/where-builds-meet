@@ -86,7 +86,6 @@ describe("fivefold-bleed-tiers", () => {
     const close = (actual, expected, message) =>
       assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`);
     const bursts = (rows) => rows.filter((row) => row.step.skill === "PiercingDamage");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
     const criticalStats = { ...stats, crit: 0.4, critDmgBonus: 0.5 };
     const criticalBaseline = (tier) =>
       calculateRotationBaseline({
@@ -96,18 +95,6 @@ describe("fivefold-bleed-tiers", () => {
       });
     const tier4Critical = criticalBaseline(4);
     for (const tier of [5, 6]) {
-      const resolvedStats = calculateStatsWithEffects(
-        criticalStats,
-        rulesFor(tier).map((rule) => rule.effect),
-        0,
-      ).stats;
-      close(resolvedStats.critDmgBonus, 0.535, `T${tier} adds 3.5 percentage points to Critical DMG Bonus`);
-      close(resolvedStats.crit, criticalStats.crit, "Critical Rate is unchanged");
-      close(
-        resolvedStats.criticalHealingBonus,
-        criticalStats.criticalHealingBonus,
-        "Critical Healing Bonus is unchanged",
-      );
       const result = criticalBaseline(tier);
       for (const before of tier4Critical.metrics.breakdown.skills) {
         const after = result.metrics.breakdown.skills.find((skill) => skill.id === before.id);

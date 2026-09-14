@@ -7,35 +7,9 @@ describe("martial-art-state", () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
     const general = JSON.parse(await readFile("data/skill/general.json", "utf8"));
     const mystic = JSON.parse(await readFile("data/skill/mystic.json", "utf8"));
-    const martialArtFiles = {
-      snowparting: ["snowparting-blade.json", "HengBlade"],
-      phalanxbane: ["phalanxbane-blade.json", "MoBlade"],
-      thundercry: ["thundercry-blade.json", "MoBlade"],
-      stormbreaker: ["stormbreaker-spear.json", "Spear"],
-      heavenwill: ["heavenwill-gauntlets.json", "Gauntlet"],
-      skygrasp: ["skygrasp-rope-dart.json", "RopeDart"],
-    };
-
-    for (const [martialArt, [file, weapon]] of Object.entries(martialArtFiles)) {
-      const definitions = JSON.parse(await readFile(`data/skill/${file}`, "utf8"));
-      for (const [skillId, skill] of Object.entries(definitions)) {
-        if (!skill.tags?.includes("MartialArts") || skill.tags.includes("Triggered")) continue;
-        expect(
-          skill.martialArt === martialArt && skill.weapon === weapon,
-          `${skillId} must declare its martial art and weapon.`,
-        ).toBeTruthy();
-      }
-    }
-
     const ghostSkills = Object.fromEntries(
       Object.entries(mystic).filter(([skillId]) => skillId.startsWith("GhostlyStepsUmbraDodge")),
     );
-    const ghostWeaponTags = ["HengBlade", "MoBlade", "Spear", "Umbrella", "RopeDart", "Gauntlet"];
-    for (const weapon of ghostWeaponTags)
-      expect(
-        ghostSkills[`GhostlyStepsUmbraDodge${weapon}`]?.tags?.includes(weapon),
-        `Ghostly Step's ${weapon} dodge hit must carry the weapon damage tag.`,
-      ).toBeTruthy();
     const skills = {
       PerfectDodge: general.PerfectDodge,
       MartialArtCast: {

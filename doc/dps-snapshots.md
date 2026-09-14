@@ -38,19 +38,34 @@ skills offset each other in total DPS.
    the difference is correct. Fix a regression without changing its baseline.
 3. Only after accepting an intentional change, update the affected path(s):
 
+   In a POSIX shell:
+
    ```sh
-   npm run snapshots:dps:update -- silkbindDeluge
-   npm run snapshots:dps:update -- stonesplitMight stonesplitStrength
+   DPS_UPDATE_IDS="silkbindDeluge" npm run snapshots:dps:update
+   DPS_UPDATE_IDS="stonesplitMight stonesplitStrength" npm run snapshots:dps:update
+   ```
+
+   In PowerShell:
+
+   ```powershell
+   $env:DPS_UPDATE_IDS = "silkbindDeluge"
+   try {
+     npm run snapshots:dps:update
+   } finally {
+     Remove-Item Env:DPS_UPDATE_IDS
+   }
    ```
 
 4. Inspect the JSON diff, run `npm run format` and `npm run build`, and commit
    the reviewed snapshots together with the intentional change.
 
-`npm run snapshots:dps:update -- --all` explicitly accepts all current paths
-and removes snapshots for paths no longer implemented. Use it only when the
-whole baseline set has been reviewed. Ordinary test/build commands never write
-snapshots. Update commands validate calculation outputs before writing and do
-not change unselected paths. Newly implemented paths require an explicit update.
+Set `DPS_UPDATE_IDS` to `"all"` to explicitly accept all current paths and remove
+snapshots for paths no longer implemented. Use it only when the whole baseline
+set has been reviewed. Keep `DPS_UPDATE_IDS` unset for ordinary test/build commands
+so they only check snapshots. Update commands validate calculation outputs and
+format the JSON before writing, and do not change unselected paths. The formatter
+runs through the current Node executable on Windows, macOS, and Linux.
+Newly implemented paths require an explicit update.
 
 The initial snapshots capture the working tree after the Deluge cancellation
 and visible cooldown-delay fixes, including the current attunement changes.

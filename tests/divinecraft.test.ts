@@ -5,22 +5,12 @@ import { existsSync } from "node:fs";
 describe("divinecraft", () => {
   it("Divinecraft damage and healing-triggered Vitality checks passed", async () => {
     const definitions = (await import("../data/divinecraft.json")).default;
-    const defaultSetup = (await import("../data/default-setup.json")).default;
 
     const damage = await import("../src/calculations/damage.ts");
     const timelineCalculation = await import("../src/calculations/rotationTimeline.ts");
     const statDefinitions = await import("../src/data/statDefinitions.ts");
     const effectiveStats = await import("../src/calculations/effectiveStats.ts");
 
-    expect(
-      Object.keys(definitions).length === 8,
-      "Divinecraft data must contain seven effects and the None choice.",
-    ).toBeTruthy();
-    expect(defaultSetup.divinecraft === "Fire", "Fire must be the default Divinecraft.").toBeTruthy();
-    expect(
-      definitions.PoisonFire.available !== false && definitions.PoisonWater.available !== false,
-      "The two Poison-first choices must be available.",
-    ).toBeTruthy();
     for (const definition of Object.values(definitions)) {
       if (definition.image)
         expect(

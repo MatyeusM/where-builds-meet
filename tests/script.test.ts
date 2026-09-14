@@ -2,31 +2,33 @@ import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 
 // Ported from script/probe/check-script.mjs.
+describe("setup timeline selection", () => {
+  it.each([
+    ["Plain", "Timed", true],
+    ["Timed", "Plain", true],
+    ["Plain", "OtherPlain", false],
+    ["Timed", "Timed", false],
+    ["Plain", "Plain", false],
+  ])("%s -> %s rebuilds=%s", async (current, replacement, expected) => {
+    const { setupSelectionChangesTimeline } = await import("../src/data/scriptDefinitions");
+    expect(
+      setupSelectionChangesTimeline(current, replacement, {
+        Plain: {},
+        OtherPlain: { altersTimeline: false },
+        Timed: { altersTimeline: true },
+      }),
+    ).toBe(expected);
+  });
+});
+
 describe("script", () => {
-  // STALE: fails identically on main via script/probe/check-script.mjs
-  // (scriptSelectionChangesTimeline is not a function (API drift)). Kept for future repair instead of deleting the coverage.
-  it.skip("Script thresholds, absolute self HP, Take Damage, and Revelry checks passed", async () => {
+  it("Script thresholds, absolute self HP, Take Damage, and Revelry checks passed", async () => {
     const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts");
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { scriptSelectionChangesTimeline } = await import("../src/data/scriptDefinitions.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
     const scripts = (await import("../data/script.json")).default;
     const generalBuffs = (await import("../data/buff/general.json")).default;
-
-    expect(scripts.Revelry.altersTimeline === true, "Revelry must declare that it alters the timeline.").toBeTruthy();
-    expect(
-      scriptSelectionChangesTimeline("None", "Revelry", scripts),
-      "A Revelry comparison must rebuild the timeline when Revelry is the candidate.",
-    ).toBeTruthy();
-    expect(
-      scriptSelectionChangesTimeline("Revelry", "None", scripts),
-      "A comparison from baseline Revelry must rebuild the timeline when the candidate removes it.",
-    ).toBeTruthy();
-    expect(
-      !scriptSelectionChangesTimeline("Wraithstrike", "Insight", scripts),
-      "Scripts that only affect damage calculation must continue reusing the baseline timeline.",
-    ).toBeTruthy();
 
     expect(
       requirementsPass(

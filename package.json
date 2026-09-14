@@ -52,11 +52,12 @@
       "oxlint --fix",
       "oxfmt --write"
     ],
-    "*.{json,jsonc,css,md}": [
+    "*.{json,jsonc,md}": [
       "oxfmt --write"
     ],
     "*.css": [
-      "stylelint --fix"
+      "stylelint --fix",
+      "oxfmt --write"
     ]
   }
 }

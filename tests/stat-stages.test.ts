@@ -1,10 +1,75 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 // Ported from script/probe/check-stat-stages.mjs.
 describe("stat-stages", () => {
+  it("preserves source and dependent overrides across baseline changes and comparison deltas", async () => {
+    const { emptyStats } = await import("../src/data/statDefinitions.ts");
+    const { calculateStatsWithEffects, calculateStatsWithOverrides } =
+      await import("../src/calculations/statEffects.ts");
+    const baselineEffects = [
+      {
+        stat: {
+          agility: 20,
+          minPhys: { formula: { source: "agility", multiplier: 0.9 } },
+        },
+      },
+    ];
+    const locked = calculateStatsWithOverrides(emptyStats, baselineEffects, 0, {
+      agility: 100,
+      minPhys: 150,
+    });
+    expect(
+      Math.abs(locked.stats.agility - 100) < 1e-9,
+      "A modified source stat must resolve to its requested final value.",
+    ).toBeTruthy();
+    expect(
+      Math.abs(locked.stats.minPhys - 150) < 1e-9,
+      "A modified dependent stat must resolve after formula effects.",
+    ).toBeTruthy();
+
+    const changedBaseline = calculateStatsWithOverrides(
+      emptyStats,
+      [
+        {
+          stat: {
+            agility: 30,
+            minPhys: { formula: { source: "agility", multiplier: 0.9 } },
+          },
+        },
+      ],
+      0,
+      { agility: 100, minPhys: 150 },
+    );
+    expect(
+      Math.abs(changedBaseline.stats.agility - 100) < 1e-9 && Math.abs(changedBaseline.stats.minPhys - 150) < 1e-9,
+      "Baseline input changes must not move modified stats.",
+    ).toBeTruthy();
+
+    const comparison = calculateStatsWithEffects(
+      locked.baseStats,
+      [
+        {
+          stat: {
+            agility: 30,
+            minPhys: { formula: { source: "agility", multiplier: 0.9 } },
+          },
+        },
+      ],
+      0,
+    );
+    expect(
+      Math.abs(comparison.stats.agility - 110) < 1e-9,
+      "Comparison variants must still apply their stat delta to a modified stat.",
+    ).toBeTruthy();
+    expect(
+      Math.abs(comparison.stats.minPhys - 159) < 1e-9,
+      "Comparison variants must preserve dependent formula deltas.",
+    ).toBeTruthy();
+  });
+
   it("Stat stages passed: raw talent inputs, order independence, food retention, global baseline, expiration, caps, overrides, cache reuse, comparison deltas, healing and actual Kite talents", async () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
     const { calculateStatsWithEffects, calculateStatsWithOverrides, calculateActionStats } = await probeLoad(
@@ -16,7 +81,7 @@ describe("stat-stages", () => {
     const { resolveActionStatContext } = await import("../src/calculations/actionStats.ts");
     const { calculateHealingAttackSnapshot } = await import("../src/calculations/healing.ts");
     const food = {
-      ...JSON.parse(await readFile("data/food.json", "utf8")).SimmeringFishSlices.effect,
+      effectiveStat: { minPhys: 120, maxPhys: 240 },
       statStage: "food",
     };
     const talent = { statStage: "talent", stat: { minPhys: { formula: { source: "minPhys", multiplier: 0.1 } } } };

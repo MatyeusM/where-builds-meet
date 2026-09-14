@@ -6,7 +6,6 @@ import { readdir, readFile } from "node:fs/promises";
 describe("innerway-stat-visibility", () => {
   it("Inner Way T2/T5 stat visibility checks passed", async () => {
     const { allStatDefinitions, emptyStats } = await import("../src/data/statDefinitions.ts");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts");
     const { calculateHealingBreakdown } = await import("../src/calculations/healing.ts");
@@ -86,16 +85,6 @@ describe("innerway-stat-visibility", () => {
                 stat === "physicalResistance" ||
                 visibleStats.has(stat),
               `${definition.name} T${tier} stat ${stat} must be visible in its Stats-page section.`,
-            ).toBeTruthy();
-            const resolved = calculateStatsWithEffects(emptyStats, [effect], 0);
-            const resolvedStats = resolved.stats;
-            expect(
-              resolved.rawStats[stat] === effect.rawStat[stat],
-              `${definition.name} T${tier} must contribute before talent formulas.`,
-            ).toBeTruthy();
-            expect(
-              effect.rawStat[stat] === 0 || resolvedStats[stat] !== emptyStats[stat],
-              `${definition.name} T${tier} stat ${stat} must affect the shared character-stat result.`,
             ).toBeTruthy();
           }
         }

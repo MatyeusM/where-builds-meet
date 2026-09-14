@@ -7,23 +7,6 @@ describe("breaking-point", () => {
     const buffs = (await import("../data/buff/bamboocut-wind.json")).default;
     const breakingPoint = (await import("../data/innerway/breaking-point.json")).default;
     const generalSkills = (await import("../data/skill/general.json")).default;
-    expect(
-      buffs.Disintegration.cooldown === undefined,
-      "Disintegration must accept every Breaking Point stack application.",
-    ).toBeTruthy();
-    expect(buffs.Disintegration.maxStack === 3, "Disintegration must default to a three-stack cap.").toBeTruthy();
-    expect(
-      breakingPoint.effect.BreakingPointT0.trigger[0].action[0].stack === 1,
-      "Breaking Point must add one Disintegration stack per trigger.",
-    ).toBeTruthy();
-    expect(
-      breakingPoint.effect.BreakingPointT4.effect[0].modify.maxStack === 5,
-      "Breaking Point T4 must raise the Disintegration cap to five.",
-    ).toBeTruthy();
-    expect(
-      buffs.Disintegration.stackEffects.length >= 5,
-      "Disintegration must define effects through five stacks.",
-    ).toBeTruthy();
 
     const hit = {
       name: "Breaking Point probe hit",

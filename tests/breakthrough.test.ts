@@ -1,62 +1,28 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-// Ported from script/probe/check-breakthrough.mjs.
 describe("breakthrough", () => {
-  it("Breakthrough stat replacement and shared conversion checks passed", async () => {
-    const breakthroughProfiles = (await import("../data/breakthrough.json")).default;
-    const system = (await import("../data/system.json")).default;
+  it("replaces profile bonuses and applies shared attribute conversions", async () => {
     const { createBaseAttributeEffects } = await import("../src/data/baseAttributeEffects.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
-
-    const sharedEffects = [
-      system.baseStats,
-      ...system.enhancementStats,
-      ...system.talentStats,
-      ...system.qingheOddityStats,
-      ...system.kaifengOddityStats,
-      ...system.imperialPalaceOddityStats,
-      ...system.hexiOddityStats,
-      ...system.hiddenMountainOddityStats,
-      ...createBaseAttributeEffects(system.baseAttributes),
-    ];
-    const calculate = (profile) =>
-      calculateStatsWithEffects(emptyStats, [...sharedEffects, profile.levelBonusStats], profile.judgementResistance);
-    const breakthrough16 = calculate(breakthroughProfiles["16"]);
-    const breakthrough17 = calculate(breakthroughProfiles["17"]);
-    const closeTo = (left, right) => Math.abs(left - right) < 1e-9;
-
-    if (
-      !closeTo(breakthrough17.stats.precision - breakthrough16.stats.precision, 0.012) ||
-      !closeTo(breakthrough17.stats.power - breakthrough16.stats.power, 12) ||
-      !closeTo(breakthrough17.stats.agility - breakthrough16.stats.agility, 12) ||
-      !closeTo(breakthrough17.stats.momentum - breakthrough16.stats.momentum, 12) ||
-      !closeTo(breakthrough17.stats.body - breakthrough16.stats.body, 12) ||
-      !closeTo(breakthrough17.stats.defense - breakthrough16.stats.defense, 12)
-    ) {
-      throw new Error("Breakthrough 17 must replace Breakthrough 16's Precision and five base-attribute bonuses.");
-    }
-    if (
-      !closeTo(breakthrough17.stats.minPhys - breakthrough16.stats.minPhys, 13.44) ||
-      !closeTo(breakthrough17.stats.maxPhys - breakthrough16.stats.maxPhys, 27.12) ||
-      !closeTo(breakthrough17.stats.crit - breakthrough16.stats.crit, 0.00912) ||
-      !closeTo(breakthrough17.stats.affinity - breakthrough16.stats.affinity, 0.00456)
-    ) {
-      throw new Error("Breakthrough base attributes must flow through the shared attribute-conversion pipeline.");
-    }
-
-    const enemyFields = [
-      "level",
-      "defense",
-      "physicalResistance",
-      "bellstrikeResistance",
-      "stonesplitResistance",
-      "silkbindResistance",
-      "bamboocutResistance",
-      "judgementResistance",
-    ];
-    if (enemyFields.some((field) => breakthroughProfiles["16"][field] !== breakthroughProfiles["17"][field])) {
-      throw new Error("Breakthrough 16 and 17 must currently use the same enemy profile.");
-    }
+    // Controlled profiles exercise the pipeline without freezing shipped level bonuses.
+    const profiles = [{ rawStat: { power: 10, precision: 0.1 } }, { rawStat: { power: 25, precision: 0.2 } }];
+    const conversions = createBaseAttributeEffects({
+      power: { minPhys: 2, maxPhys: 3 },
+      body: {},
+      defense: {},
+      agility: {},
+      momentum: {},
+    });
+    const calculate = (profile) => calculateStatsWithEffects(emptyStats, [...conversions, profile], 0).stats;
+    const first = calculate(profiles[0]);
+    const second = calculate(profiles[1]);
+    expect(first.power).toBe(10);
+    expect(second.power).toBe(25);
+    expect(first.precision).toBe(0.1);
+    expect(second.precision).toBe(0.2);
+    expect(second.minPhys - first.minPhys).toBe(30);
+    expect(second.maxPhys - first.maxPhys).toBe(45);
+    expect(calculate(profiles[0])).toEqual(first);
   });
 });

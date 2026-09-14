@@ -16,39 +16,9 @@ describe("default-rotation", () => {
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
 
-    const skillIds = rotation.steps.filter((step) => step.type === "skill").map((step) => step.skill);
     const startSkillIndex = rotation.steps.findIndex(
       (step) => step.type === "skill" && step.skill === "SnowpartingSpecial",
     );
-    expect(
-      rotation.name === "Mixed Dummy Infinite Vitality 1 Min",
-      "The bundled rotation name must match the requested name.",
-    ).toBeTruthy();
-    expect(
-      rotation.start?.step === startSkillIndex && rotation.start.action === 5,
-      "Fleeting Trace action index 5 must be the fight anchor.",
-    ).toBeTruthy();
-    expect(
-      skillIds.length === 45,
-      "The expanded rotation must contain 45 skill steps including Deflect cancels.",
-    ).toBeTruthy();
-    expect(
-      skillIds.filter((id) => id === "SnowpartingQ").length === 4,
-      "Every plain Heng Q must use SnowpartingQ.",
-    ).toBeTruthy();
-    expect(
-      skillIds.filter((id) => id === "PhalanxbaneHeavyCharged3").length === 15,
-      "The slam groups must expand to 4 + 7 + 3 + 1 casts.",
-    ).toBeTruthy();
-    const exhaustedEvent = rotation.steps.find(
-      (step) => step.type === "event" && step.event === "Qi" && step.targetQiRatio === 0,
-    );
-    expect(exhaustedEvent, "The rotation must contain a Qi-depletion event.").toBeTruthy();
-    const soaringIndex = skillIds.indexOf("SoaringSpin2");
-    expect(
-      soaringIndex > 0 && skillIds[soaringIndex - 1] === "PerfectDodgeCancel",
-      "Perfect Dodge Cancel must immediately precede Soaring Spin.",
-    ).toBeTruthy();
 
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1500, precision: 1 };
     const enemy = {

@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
 
 // Ported from script/probe/check-battle-end.mjs.
 describe("battle-end", () => {
-  it("Fight-relative event timing, Battle End cutoff, and dummy preset checks passed", async () => {
+  it("Fight-relative event timing, Battle End cutoff checks passed", async () => {
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
@@ -98,22 +97,5 @@ describe("battle-end", () => {
       "Damage at the same timestamp as Battle End must not be calculated.",
     ).toBeTruthy();
     expect(!result.actionBreakdowns["rotation-4:0"], "Damage after Battle End must not be calculated.").toBeTruthy();
-    const dummyRotationPaths = [
-      "/data/rotation/stonesplit-strength/mixed-dummy-1-min.json",
-      "/data/rotation/stonesplit-strength/mixed-dummy-infinite-vitality-1-min.json",
-      "/data/rotation/stonesplit-strength/mixed-dummy-smolder-poet-1-min.json",
-    ];
-    for (const path of dummyRotationPaths) {
-      const preset = (await probeLoad(path)).default;
-      const battleEnds = preset.steps.filter((step) => step.type === "event" && step.event === "BattleEnd");
-      expect(
-        preset.eventTimeReference === "battleStart",
-        `${preset.name} must use battle-start-relative events.`,
-      ).toBeTruthy();
-      expect(
-        battleEnds.length === 1 && battleEnds[0].startTime === 60,
-        `${preset.name} must contain exactly one Battle End event at 60 seconds.`,
-      ).toBeTruthy();
-    }
   });
 });

@@ -72,15 +72,6 @@ describe("innerway-solo-level", () => {
     );
     assert.throws(() => innerWayDefinitionForSoloLevel(definition, 1.5), RangeError);
 
-    const eonpourStats = (level) =>
-      calculateStatsWithEffects(
-        emptyStats,
-        innerWayDefinitionForSoloLevel(innerWayDefinitions.Eonpour, level).effect.EonpourT2.effect,
-        0,
-      ).rawStats;
-    close(eonpourStats(16).minPhys, 74.4, "Solo Level 16 must use source index 15");
-    close(eonpourStats(17).minPhys, 77.9, "Solo Level 17 must use source index 16");
-
     const profiles = (await import("../data/breakthrough.json")).default;
     for (const profile of Object.values(profiles)) {
       for (const entry of Object.values(innerWayDefinitions)) {

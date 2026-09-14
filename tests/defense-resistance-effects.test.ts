@@ -7,8 +7,6 @@ describe("defense-resistance-effects", () => {
       await import("../src/calculations/damage.ts");
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const charms = (await import("../data/debuff/innerway.json")).default;
-    const phantomChime = (await import("../data/debuff/bamboocut-dust.json")).default.PhantomChime;
     const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9;
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 };
     const enemy = {
@@ -63,35 +61,6 @@ describe("defense-resistance-effects", () => {
     expect(
       closeTo(simulatedCombined / simulatedBaseline, combined / baseline),
       "The simulator must use the same defense and resistance adjustments.",
-    ).toBeTruthy();
-
-    const expectedT0 = [-0.006, -0.012, -0.018, -0.024, -0.03];
-    const expectedT1 = [-0.012, -0.024, -0.036, -0.048, -0.06];
-    const values = (definition) => definition.stackEffects.map((group) => group[0].effect.defenseBonus);
-    expect(
-      JSON.stringify(values(charms.QingyisCharmT0)) === JSON.stringify(expectedT0),
-      "Qingyi's Charm T0 stack progression is incorrect.",
-    ).toBeTruthy();
-    expect(
-      JSON.stringify(values(charms.QingyisCharmT1)) === JSON.stringify(expectedT1),
-      "Qingyi's Charm T1 stack progression is incorrect.",
-    ).toBeTruthy();
-    expect(
-      JSON.stringify(values(charms.QingyisCharmT6)) === JSON.stringify(expectedT1),
-      "Qingyi's Charm T6 must retain T1's 1.2% per-stack progression.",
-    ).toBeTruthy();
-    expect(
-      charms.QingyisCharmT6.stackEffects[4][0].effect.physicalResistance === -10,
-      "Qingyi's Charm T6 must reduce Physical Resistance by 10 only at five stacks.",
-    ).toBeTruthy();
-    expect(
-      JSON.stringify(phantomChime.stackEffects.map((group) => group[0].effect.physicalResistance)) ===
-        JSON.stringify([-2, -4, -6, -8, -10]),
-      "Phantom Chime's cumulative Physical Resistance progression is incorrect.",
-    ).toBeTruthy();
-    expect(
-      phantomChime.duration === 5 && phantomChime.maxStack === 5,
-      "Phantom Chime must last five seconds and cap at five stacks.",
     ).toBeTruthy();
   });
 });

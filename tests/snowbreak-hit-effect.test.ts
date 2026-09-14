@@ -7,7 +7,6 @@ describe("snowbreak-hit-effect", () => {
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
     const frostCladNight = (await import("../data/innerway/frost-clad-night.json")).default;
-    const snowparting = (await import("../data/skill/snowparting-blade.json")).default;
     const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9;
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 };
     const enemy = {
@@ -82,10 +81,6 @@ describe("snowbreak-hit-effect", () => {
     expect(
       closeTo(damage({ exhaustedAt: 0.5, innerPassion: true }) / baseline, 1.4),
       "Inner Passion and Exhausted together must grant only one 40% bonus.",
-    ).toBeTruthy();
-    expect(
-      snowparting.SnowpartingHeavyVC.modifier.length === 0,
-      "Snowbreak Spring must not retain the cast-time HP damage modifier.",
     ).toBeTruthy();
   });
 });

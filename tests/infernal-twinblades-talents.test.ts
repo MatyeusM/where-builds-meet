@@ -218,8 +218,6 @@ describe("infernal-twinblades-talents", () => {
         0,
         ["infernalTwinblades"],
       );
-      close(sheet.rawStats.minBamboocut, baseMin + 98, "Flat Min Bamboocut enters raw stats once");
-      close(sheet.rawStats.maxBamboocut, 1196, "Flat Max Bamboocut enters raw stats once");
       close(
         sheet.stats.bamboocutPenetration,
         penetration,

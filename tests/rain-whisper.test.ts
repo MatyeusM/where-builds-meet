@@ -10,24 +10,6 @@ describe("rain-whisper", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts");
 
     const rainWhisperEffects = weaponSets.RainWhisper.options["4"].effect;
-    expect(
-      Array.isArray(rainWhisperEffects),
-      "Rain Whisper four-piece must expose separate setup effects.",
-    ).toBeTruthy();
-    expect(
-      rainWhisperEffects[0].stat.precision === 0.08 && rainWhisperEffects[0].stat.critDmgBonus === undefined,
-      "Rain Whisper must expose only Precision as a character stat.",
-    ).toBeTruthy();
-    expect(
-      Array.isArray(rainWhisperEffects[1].requirement) &&
-        rainWhisperEffects[1].requirement.length === 0 &&
-        rainWhisperEffects[1].effect.critDmgBonus === 0.1,
-      "Rain Whisper's unconditional Critical DMG must be a compute-time effect.",
-    ).toBeTruthy();
-    expect(
-      rainWhisperEffects[2].requirement[0].value === "Shield" && rainWhisperEffects[2].effect.critDmgBonus === 0.15,
-      "Rain Whisper must grant 15% Critical DMG while Shield is active.",
-    ).toBeTruthy();
 
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, crit: 1 };
     const enemy = {

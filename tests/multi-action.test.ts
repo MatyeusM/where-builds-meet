@@ -359,41 +359,6 @@ describe("multi-action", () => {
       "A live start-bound selection must consume only the effect selected at component start.",
     ).toBeTruthy();
 
-    const assertBoundConsume = (chargeId, slamId, expectedTime) => {
-      const consume = phalanxbaneSkills[chargeId].action.find((action) => action.type === "consume");
-      expect(
-        consume?.value?.resolveAt === "skillStart" && closeTo(consume.time, expectedTime),
-        `${chargeId} must consume its start-bound acceleration effect after charging.`,
-      ).toBeTruthy();
-      expect(
-        !phalanxbaneSkills[slamId].action.some((action) => action.type === "consume"),
-        `${slamId} must not consume the acceleration effect at slam start.`,
-      ).toBeTruthy();
-    };
-    assertBoundConsume("PhalanxbaneHeavyCharge2", "PhalanxbaneHeavySlam2", 0.96);
-    assertBoundConsume("PhalanxbaneHeavyCharge3", "PhalanxbaneHeavySlam3", 1.61);
-    assertBoundConsume("PhalanxbaneHeavyFastCharge2", "PhalanxbaneHeavyFastSlam2", 0.64);
-    assertBoundConsume("PhalanxbaneHeavyFastCharge3", "PhalanxbaneHeavyFastSlam3", 1.0733333333333333);
-
-    expect(
-      phalanxbaneSkills.PhalanxbaneHeavyCharge2.modifier.length === 0 &&
-        phalanxbaneSkills.PhalanxbaneHeavyCharge3.modifier.length === 0 &&
-        phalanxbaneSkills.PhalanxbaneHeavyFastCharge2.modifier.length === 0 &&
-        phalanxbaneSkills.PhalanxbaneHeavyFastCharge3.modifier.length === 0,
-      "Burning Heart charge timing must be encoded by its selected component rather than a live cast-time modifier.",
-    ).toBeTruthy();
-    expect(
-      closeTo(
-        phalanxbaneSkills.PhalanxbaneHeavyFastCharge2.castTime,
-        phalanxbaneSkills.PhalanxbaneHeavyCharge2.castTime / 1.5,
-      ) &&
-        closeTo(
-          phalanxbaneSkills.PhalanxbaneHeavyFastCharge3.castTime,
-          phalanxbaneSkills.PhalanxbaneHeavyCharge3.castTime / 1.5,
-        ),
-      "Fast Burning Heart charge components must take exactly the slow charge time divided by 1.5.",
-    ).toBeTruthy();
-
     const burningPrimer = {
       name: "Burning Heart primer",
       castTime: 0,

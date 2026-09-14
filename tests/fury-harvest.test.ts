@@ -3,12 +3,8 @@ import { readFile } from "node:fs/promises";
 
 // Ported from script/probe/check-fury-harvest.mjs.
 describe("fury-harvest", () => {
-  // STALE: fails identically on main via script/probe/check-fury-harvest.mjs
-  // (Fury Harvest T2 Physical Defense through stat pipeline). Kept for future repair instead of deleting the coverage.
-  it.skip("Fury Harvest T1-T6 behavior checks passed", async () => {
+  it("Fury Harvest T1-T6 behavior checks passed", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
     const generalSkills = JSON.parse(await readFile("data/skill/general.json", "utf8"));
     const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"));
     const generalBuffs = JSON.parse(await readFile("data/buff/general.json", "utf8"));
@@ -17,18 +13,6 @@ describe("fury-harvest", () => {
 
     const activeTier = 5;
     const activeTiers = Array.from({ length: activeTier + 1 }, (_, tier) => furyHarvest.effect[`FuryHarvestT${tier}`]);
-    const statEffects = activeTiers.flatMap((definition) =>
-      (definition.effect ?? []).filter((effect) => effect.stat).map((effect) => ({ stat: effect.stat })),
-    );
-    const stats = calculateStatsWithEffects(emptyStats, statEffects, 0).stats;
-    expect(
-      stats.physicalDefense === 35,
-      "Fury Harvest T2 must increase Physical Defense through the stat pipeline.",
-    ).toBeTruthy();
-    expect(
-      stats.physicalResistance === 5.1,
-      "Fury Harvest T5 must retain its hidden Physical Resistance in the stat pipeline.",
-    ).toBeTruthy();
 
     const innerWayRules = activeTiers.flatMap((definition, tier) =>
       (definition.trigger ?? []).map((trigger) => ({

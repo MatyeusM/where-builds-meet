@@ -2,6 +2,8 @@ import { describe, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareDpsSnapshots, dpsSnapshotTolerance } from "./helpers/dps-snapshot-guard.mjs";
 
@@ -101,8 +103,13 @@ describe("dps-snapshots", () => {
         schemaVersion: 1,
         cases: Object.fromEntries(Object.entries(next).sort(([a], [b]) => a.localeCompare(b))),
       };
-      await writeFile(snapshotFile, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-      execFileSync("npx", ["oxfmt", fileURLToPath(snapshotFile)], { stdio: "inherit" });
+      const formatterCli = join(dirname(createRequire(import.meta.url).resolve("oxfmt/package.json")), "bin", "oxfmt");
+      const formatted = execFileSync(
+        process.execPath,
+        [formatterCli, "--stdin-filepath", fileURLToPath(snapshotFile)],
+        { input: `${JSON.stringify(value, null, 2)}\n`, encoding: "utf8" },
+      );
+      await writeFile(snapshotFile, formatted, "utf8");
       console.log(`Updated reviewed DPS snapshots: ${updateIds.join(", ")}. Inspect and commit the snapshot diff.`);
     } else {
       const failures = compareDpsSnapshots(snapshot.cases, actual);

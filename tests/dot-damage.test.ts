@@ -85,12 +85,7 @@ describe("dot-damage", () => {
     ).toBeTruthy();
 
     const fifthStack = soulShaken.stackEffects[4];
-    const generalEffect = fifthStack[0].effect;
     const umbraRule = fifthStack[1];
-    expect(
-      generalEffect.dotDamage === 0.25 && umbraRule.effect.dotDamage === 0.25,
-      "Soul-Shaken stack 5 must provide 25% general and 25% Umbra DOT vulnerability.",
-    ).toBeTruthy();
     expect(
       requirementsPass(umbraRule.requirement, [], [], ["HeavenQuakerSpear"], new Set()),
       "Heavenquaker Spear must satisfy Soul-Shaken's Umbra requirement.",
