@@ -22,7 +22,7 @@
         "tier": "T6"
       }
     ],
-    "weaponSets": {},
+    "weaponSets": { "Swallowcall": 4 },
     "armorSets": {},
     "bowRingSet": "Precision",
     "arsenal": "Bamboocut"
