@@ -1,0 +1,280 @@
+{
+  "id": "wind-full-min",
+  "name": "Full Min Build",
+  "order": 2,
+  "martialArts": ["infernalTwinblades", "mortalRopeDart"],
+  "setup": {
+    "innerWays": [
+      {
+        "innerWay": "EchoesOfOblivion",
+        "tier": "T6"
+      },
+      {
+        "innerWay": "Vendetta",
+        "tier": "T6"
+      },
+      {
+        "innerWay": "FivefoldBleed",
+        "tier": "T6"
+      },
+      {
+        "innerWay": "BreakingPoint",
+        "tier": "T6"
+      }
+    ],
+    "weaponSets": {},
+    "armorSets": {},
+    "bowRingSet": "Precision",
+    "arsenal": "Bamboocut"
+  },
+  "gear": {
+    "leftWeapon": {
+      "definitionId": "dualBlades",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "minPhys",
+        "value": 77.8
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "dualBladesDmgBoost",
+          "value": 0.062
+        },
+        {
+          "key": "crit",
+          "value": 0.09
+        }
+      ],
+      "attunement": {
+        "key": "physicalPenetration",
+        "value": 11
+      }
+    },
+    "rightWeapon": {
+      "definitionId": "unfetteredRopeDart",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "minPhys",
+        "value": 77.8
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "ropeDartDmgBoost",
+          "value": 0.062
+        },
+        {
+          "key": "crit",
+          "value": 0.09
+        }
+      ],
+      "attunement": {
+        "key": "physicalPenetration",
+        "value": 11
+      }
+    },
+    "disc": {
+      "definitionId": "disc",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "minPhys",
+        "value": 77.8
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "allMartialArts",
+          "value": 0.032
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "physicalPenetration",
+        "value": 11
+      }
+    },
+    "pendant": {
+      "definitionId": "pendant",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "minPhys",
+        "value": 77.8
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "allMartialArts",
+          "value": 0.032
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "physicalPenetration",
+        "value": 11
+      }
+    },
+    "helmet": {
+      "definitionId": "helmet",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "crit",
+        "value": 0.09
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "precision",
+          "value": 0.08
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "mortalRodentBoost",
+        "value": 0.06
+      }
+    },
+    "chestpiece": {
+      "definitionId": "chestpiece",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "crit",
+        "value": 0.09
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "precision",
+          "value": 0.08
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "mortalRodentBoost",
+        "value": 0.06
+      }
+    },
+    "greaves": {
+      "definitionId": "greaves",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "crit",
+        "value": 0.09
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "vsBossDmg",
+          "value": 0.032
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "mortalRodentBoost",
+        "value": 0.06
+      }
+    },
+    "bracer": {
+      "definitionId": "bracer",
+      "level": 96,
+      "rarity": "Gold",
+      "baseAffix": {
+        "key": "crit",
+        "value": 0.09
+      },
+      "additionalAffixes": [
+        {
+          "key": "minPhys",
+          "value": 77.8
+        },
+        {
+          "key": "agility",
+          "value": 49.4
+        },
+        {
+          "key": "vsBossDmg",
+          "value": 0.032
+        },
+        {
+          "key": "maxBamboocut",
+          "value": 44.2
+        }
+      ],
+      "attunement": {
+        "key": "mortalRodentBoost",
+        "value": 0.06
+      }
+    }
+  }
+}

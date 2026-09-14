@@ -71,8 +71,8 @@
     "tag": "BamboocutWind",
     "status": "wip",
     "buildGroup": "bamboocut-wind",
-    "defaultBuild": "empty",
-    "graduated": "empty",
+    "defaultBuild": "wind-fully-relayed-min",
+    "graduated": "wind-full-min",
     "defaultRotation": "empty",
     "lockedWeapons": ["infernalTwinblades", "mortalRopeDart"]
   },
