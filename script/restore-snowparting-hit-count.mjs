@@ -6,7 +6,7 @@ const maps = JSON.parse(await readFile("data/skill-maps.json", "utf8"));
 const aliases = {
   SnowpartingLightCharged: "SnowpartingCharged",
   SnowpartingHeavyVC: "SnowpartingVC",
-  SnowpartingQSlide: "SnowpartingSlide",
+  SnowpartingQ2: "SnowpartingQ",
   SnowpartingQSlash: "SnowpartingQ-Slash",
   SnowpartingQStab: "SnowpartingQ-Stab",
   SnowpartingQDoubleSlash: "SnowpartingQ-DoubleSlash",

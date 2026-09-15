@@ -34,7 +34,7 @@ describe("default-rotation", () => {
     };
     const result = calculateRotationBaseline({
       timeline: {
-        rotation,
+        rotation: { ...rotation, dummyAttack: false },
         skills: { ...snowparting, ...phalanxbane, ...mystic, ...general },
         eventDefinitions: {
           Qi: {
@@ -67,7 +67,7 @@ describe("default-rotation", () => {
       setupComparisons: {},
     });
     expect(
-      result.actionBreakdowns[`rotation-${startSkillIndex}:5`],
+      result.actionBreakdowns[`rotation-${startSkillIndex}:${rotation.start.action}`],
       "The configured Fleeting Trace starting action must calculate damage.",
     ).toBeTruthy();
     expect(

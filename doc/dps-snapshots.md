@@ -18,10 +18,11 @@ escape review. A missing accepted baseline does not block ordinary builds.
 Each rotation uses its path's default build unless an explicit build override
 selects its corresponding variant: regular Kite uses the non-BP build, pure
 Strength uses the pure build, and Double Stab uses the double-min build. The
-remaining variants retain the path default. This covers all 13 current rotations,
+remaining variants retain the path default. This covers all 12 current rotations,
 not every build/rotation combination.
 
-Current calculations use breakthrough 17, 40 ms ping, Simmering Fish Slices,
+Current calculations use breakthrough 17, each rotation's saved ping (40 ms
+by default; 30 ms for Might), Simmering Fish Slices,
 Fire Divinecraft, no Script, and no global or skill overrides. The rotation
 supplies its martial arts and encounter flags; the build supplies its gear,
 Inner Ways, and sets. Fixtures are passed to `buildPresetRotationBundle` and
@@ -59,8 +60,43 @@ Both Kite presets now use the user-approved current data and 40 ms ping:
 regular Kite is 54,487.60 DPS and Kite BP is 60,168.91 DPS. These supersede
 their pre-ping baselines and include the revised skill timings and damage,
 VC readiness, defensive attack alignment, BP Qi-break anchor, and the updated
-Light Attack Falcon coefficients. Might and
-Strength retain their pre-ping baselines pending review.
+Light Attack Falcon coefficients.
+
+Strength's Mixed Dummy 1 Min now uses its user-approved current result at 40 ms
+ping: 65,165.49 DPS, replacing 65,475.07 DPS at zero ping (-0.47%). This includes
+the current Strength skill data, General's Bane opener, and 0.33-second delay
+before the later Legion Summon.
+
+Strength's Mixed Dummy Infinite Vitality 1 Min now uses its user-approved result
+at 40 ms ping: 66,557.01 DPS, replacing 66,827.33 DPS at zero ping (-0.40%).
+This includes the Burning Heart ping exemptions, paired dummy attacks, and the
+combat-start anchor on the final hit of the first Fleeting Trace. Its dodge
+activates Mystery DMG Boost on the 11.5-second dummy attack.
+
+Strength's Mixed Dummy Smolder Poet 1 Min now uses its user-approved result at
+40 ms ping with Infinite Vitality enabled: 66,371.50 DPS, replacing 63,485.87 DPS
+at zero ping with finite Vitality (+4.55%). Infinite Vitality removes the previous
+Mystic damage scaling from available Vitality. The current skill timings and
+60-second cutoff remain, including the final Flute tick falling outside combat.
+
+Strength's Pure Dummy 1 Min now uses its user-approved result at 40 ms ping:
+63,888.11 DPS, replacing 64,359.42 DPS at zero ping (-0.73%). This includes
+the 1.605-second base Heng LC cast (0.955 seconds with Forgetfulness),
+the revised fillers that avoid immediate VC-to-Tab transitions, and the
+additional LC/VC pair. All 13 LC casts are fast and land all four hits.
+Might's Dummy 1 Min now uses its user-approved result at 30 ms ping:
+77,276.26 DPS, replacing 76,333.79 DPS at zero ping (+1.23%). It includes the
+current Avalanche timing and damage, first-hit battle-start anchor, revised
+Cleave sequence, and attack-driven Defense holds. The added final Cleave lands
+its first hit at 59.734 seconds for 68,063.54 damage; its Quake at 60.022 seconds
+falls outside the 60-second combat window. This adds 1,134.39 DPS compared with
+the preceding 76,141.87 DPS rotation.
+
+Strength's Mixed Double Stab now uses its user-approved result at 40 ms ping:
+65,563.95 DPS, replacing 65,244.22 DPS at zero ping (+0.49%). This includes
+the revised opener and skill sequence, Burning Heart charge/slam ping exemptions,
+and the later Heng LC timing update. All current preset snapshots have now
+completed the ping-transition review.
 
 ## Updating reviewed rotations
 

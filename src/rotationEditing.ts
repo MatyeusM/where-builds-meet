@@ -6,10 +6,22 @@ import {
   type RotationStep,
 } from "./calculations/rotationTimeline";
 
+/** Replace legacy Slide openers without shifting battle or attached-event anchors. */
+export function migrateGeneralsBaneSlides(rotation: RotationRecord): RotationRecord {
+  let slideCount = 0;
+  const steps = rotation.steps.map((step) => {
+    if (step.type !== "skill" || step.skill !== "SnowpartingQSlide") return step;
+    slideCount += 1;
+    return { ...step, skill: slideCount === 2 ? "SnowpartingQ2" : "SnowpartingQ" };
+  });
+  return slideCount ? { ...rotation, steps } : rotation;
+}
+
 /** Old defensive reward actions all occurred at cast start. Preserve their direct anchors. */
 export function migrateDefenseActionAnchors(rotation: RotationRecord): RotationRecord {
   const isDefense = (step: RotationStep | undefined) =>
-    step?.type === "skill" && ["PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"].includes(step.skill ?? "");
+    step?.type === "skill" &&
+    ["Defense", "PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"].includes(step.skill ?? "");
   let changed = false;
   const steps = rotation.steps.map((step, index) => {
     if (step.type !== "event") return step;

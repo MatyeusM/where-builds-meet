@@ -39,7 +39,8 @@ export type SkillRecord = {
   shortName?: string;
   group?: boolean;
   ignorePing?: boolean;
-  attackResponse?: { endMargin: number; durationFrom?: string; onSuccess: string };
+  attackResponse?: { endMargin?: number; durationFrom?: string; onSuccess: string; perAttack?: boolean };
+  editableCastTime?: boolean;
   castTime?: number | SwitchValue;
   cooldown?: number;
   cooldownGroup?: string;
@@ -57,7 +58,7 @@ export type SkillRecord = {
 };
 export type AttachedEventTarget = { action: number | "start"; trigger?: number };
 export type RotationStep =
-  | { type: "skill"; skill?: string; causesBreak?: boolean; condition?: string }
+  | { type: "skill"; skill?: string; duration?: number; causesBreak?: boolean; condition?: string }
   | { type: "event"; event: "Exhausted"; after: AttachedEventTarget; duration?: number }
   | { type: "event"; event: "Exhausted"; before: AttachedEventTarget; duration?: number }
   | { type: "event"; event: "Move"; before: AttachedEventTarget; distance: number }
@@ -2285,7 +2286,7 @@ function buildRotationTimelinePass(
         continue;
       }
       if (waitingCast?.delay.reason === "cooldown") finishOrderedWait(event.time);
-      if (row.step.type === "skill" && row.skill?.attackResponse !== undefined) {
+      if (row.step.type === "skill" && row.skill?.attackResponse?.endMargin !== undefined) {
         const attackTime = alignedAttacks.get(row) ?? nextAttackAt(event.time + skillPing(row.skill));
         if (attackTime !== undefined) {
           alignedAttacks.set(row, attackTime);
@@ -2549,17 +2550,28 @@ function buildRotationTimelinePass(
           event.row.actions.map((_action, actionIndex) => actionIndex),
         );
         event.row.modifierEffects = skillModifiers;
-        const baseCastTime =
+        let baseCastTime =
           event.row.step.type === "event" && event.row.step.event === "Delay"
             ? Math.max(0, event.row.step.duration)
             : resolveSkillCastTime(event.row.skill, requirementState());
+        if (
+          event.row.step.type === "skill" &&
+          event.row.skill?.editableCastTime &&
+          typeof event.row.step.duration === "number" &&
+          Number.isFinite(event.row.step.duration)
+        )
+          baseCastTime = Math.max(0, event.row.step.duration);
         applyCastTimingModifiers(event.row, baseCastTime);
         if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row);
       }
       if (event.row.skill?.attackResponse) {
         responseWindows.push({
           row: event.row,
-          endTime: event.time + responseDuration(event.row.skill, event.time),
+          endTime:
+            event.time +
+            (event.row.skill.attackResponse.durationFrom
+              ? responseDuration(event.row.skill, event.time)
+              : event.row.effectiveCastTime),
           succeeded: false,
         });
       }
@@ -3291,7 +3303,7 @@ function buildRotationTimelinePass(
       );
       if (action.damage > 0)
         for (const response of activeResponses) {
-          if (response.succeeded) continue;
+          if (response.succeeded && !response.row.skill?.attackResponse?.perAttack) continue;
           response.succeeded = true;
           const row = response.row;
           responseContexts.set(row, { currentMartialArt: row.currentMartialArt, currentWeapon: row.currentWeapon });

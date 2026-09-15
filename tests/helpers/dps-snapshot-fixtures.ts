@@ -1,4 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
+import { resolvePing } from "../../src/calculations/combatDefaults";
 import type { RotationRecord } from "../../src/calculations/rotationTimeline";
 import type { buildPresetRotationBundle } from "../../src/App";
 type Environment = Parameters<typeof buildPresetRotationBundle>[0];
@@ -8,7 +9,6 @@ const dataRoot = new URL("../../data/", import.meta.url);
 export const snapshotBuildOverrides: Record<string, string> = {
   "bamboocutKite/dummy-1-min-infinite-vitality": "kite-fully-relayed-min",
   "stonesplitStrength/pure-dummy-1-min": "pure-fully-relayed-min",
-  "stonesplitStrength/pure-dummy-1-min-2": "pure-fully-relayed-min",
   "stonesplitStrength/mixed-dummy-1-min-double-stab": "mixed-fully-relayed-double-min",
 };
 export const dpsSnapshotEnvironment = {
@@ -51,6 +51,7 @@ export async function loadDpsSnapshotFixtures() {
           rotation: rotationId,
           martialArts: rotation.martialArts!,
           ...dpsSnapshotEnvironment,
+          ping: resolvePing(rotation.ping, dpsSnapshotEnvironment.ping),
         },
       });
     }

@@ -3,7 +3,6 @@
   "martialArts": ["snowparting", "phalanxbane"],
   "eventTimeReference": "battleStart",
   "infiniteVitality": true,
-  "autoHP": true,
   "start": {
     "step": 5,
     "action": 0
@@ -71,7 +70,19 @@
     },
     {
       "type": "skill",
-      "skill": "SoaringSpin2"
+      "skill": "LeapingToad"
+    },
+    {
+      "type": "skill",
+      "skill": "Deflect"
+    },
+    {
+      "type": "skill",
+      "skill": "SnowpartingConversion"
+    },
+    {
+      "type": "skill",
+      "skill": "SnowpartingHeavyVC"
     },
     {
       "type": "event",
@@ -83,7 +94,11 @@
     },
     {
       "type": "skill",
-      "skill": "SnowpartingLightCharged"
+      "skill": "BurstingNine2Shots"
+    },
+    {
+      "type": "skill",
+      "skill": "SnowpartingConversion"
     },
     {
       "type": "skill",
@@ -144,10 +159,6 @@
     {
       "type": "skill",
       "skill": "SnowpartingQStab"
-    },
-    {
-      "type": "skill",
-      "skill": "PhalanxbaneQ"
     },
     {
       "type": "skill",
@@ -231,6 +242,10 @@
     },
     {
       "type": "skill",
+      "skill": "SoaringSpin2"
+    },
+    {
+      "type": "skill",
       "skill": "PhalanxbaneSpecial"
     },
     {
@@ -282,21 +297,10 @@
       "skill": "SnowpartingHeavyVC"
     },
     {
-      "type": "skill",
-      "skill": "SnowpartingLightCharged"
-    },
-    {
-      "type": "skill",
-      "skill": "SnowpartingHeavyVC"
-    },
-    {
-      "type": "skill",
-      "skill": "SoaringSpin2"
-    },
-    {
       "type": "event",
       "event": "BattleEnd",
       "startTime": 60
     }
-  ]
+  ],
+  "ping": 40
 }

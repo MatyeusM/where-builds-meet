@@ -314,5 +314,6 @@
       "startTime": 60
     }
   ],
-  "dummyAttack": true
+  "dummyAttack": true,
+  "ping": 40
 }

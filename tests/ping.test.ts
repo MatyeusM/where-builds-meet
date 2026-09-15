@@ -183,6 +183,24 @@ describe("ping scheduling", () => {
     expect(times(40)).toEqual(times(0));
   });
 
+  it.each([1, 2, 3].flatMap((stage) => [false, true].map((fast) => ({ stage, fast }))))(
+    "Burning Heart stage $stage pays ping only once (fast: $fast)",
+    ({ stage, fast }) => {
+      const data = input(phalanxbane, [step("PhalanxbaneHeavyCharged" + stage)]);
+      data.effectDefinitions = { InnerPassion: { duration: 30, maxStack: 4 } };
+      if (fast) data.initialBuffs = [{ name: "InnerPassion", stack: 1 }];
+      const zero = buildRotationTimeline({ ...data, rotation: { ...data.rotation, ping: 0 } });
+      const delayed = buildRotationTimeline(data);
+      expect(delayed[0].effectiveCastTime - zero[0].effectiveCastTime).toBeCloseTo(0.04, 8);
+      const zeroHits = damageTimes(zero);
+      const delayedHits = damageTimes(delayed);
+      expect(zeroHits.length).toBeGreaterThan(0);
+      expect(delayedHits).toHaveLength(zeroHits.length);
+      delayedHits.forEach((time, index) => expect(time - zeroHits[index]).toBeCloseTo(0.04, 8));
+      if (stage === 3 && fast) expect(delayed[0].effectiveCastTime).toBeCloseTo(2.4608333333333334, 8);
+    },
+  );
+
   it.each([
     "VileCondemnedHit",
     "VileCondemnedEndHit",

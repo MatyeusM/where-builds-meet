@@ -23,6 +23,17 @@ describe("skill-cooldowns", () => {
         ...overrides,
       });
 
+    const tabRows = build(
+      {
+        name: "Heng Tab cooldown",
+        ping: 40,
+        steps: Array.from({ length: 3 }, () => ({ type: "skill", skill: "SnowpartingConversion" })),
+      },
+      snowpartingSkills,
+    ).filter((row) => row.kind === "rotation" && row.step.type === "skill");
+    [0.04, 3.08, 6.12].forEach((time, index) => expect(tabRows[index].startTime).toBeCloseTo(time, 8));
+    expect(tabRows[1].cooldownWait).toBeCloseTo(2.44, 8);
+
     const multiUseSkills = {
       First: { castTime: 1, cooldown: 12, cooldownUses: 2, action: [] },
       Second: { castTime: 1, cooldown: 12, cooldownUses: 2, action: [] },
@@ -207,8 +218,9 @@ describe("skill-cooldowns", () => {
         actualSkills,
         conditions,
       ).filter((row) => row.kind === "rotation" && row.step.type === "skill");
+    const stabSequence = actualRows(["SnowpartingQ", "SnowpartingQStab", "SnowpartingQ"]);
     expect(
-      Math.abs(actualRows(["SnowpartingQ", "SnowpartingQStab", "SnowpartingQ"])[2].startTime - 1.877) < 0.000001,
+      Math.abs(stabSequence[2].startTime - (stabSequence[1].startTime + stabSequence[1].effectiveCastTime)) < 0.000001,
       "Stab must not consume a General's Bane use.",
     ).toBeTruthy();
     expect(
@@ -225,7 +237,7 @@ describe("skill-cooldowns", () => {
     ).toBeTruthy();
     expect(
       actualRows(["PhalanxbaneSpecial", "PhalanxbaneSpecial"])[1].startTime === 20 &&
-        actualRows(["PhalanxbaneSpecial", "PhalanxbaneSpecial"], ["SteadfastDevotionT1"])[1].startTime === 1.3,
+        actualRows(["PhalanxbaneSpecial", "PhalanxbaneSpecial"], ["SteadfastDevotionT1"])[1].startTime === 1.167,
       "The real Legion Summon definition must use its normal cooldown and Steadfast T1 override.",
     ).toBeTruthy();
 

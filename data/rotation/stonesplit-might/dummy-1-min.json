@@ -25,7 +25,7 @@
     },
     {
       "type": "skill",
-      "skill": "StonebreakerCleave"
+      "skill": "StonebreakerCleave1"
     },
     {
       "type": "skill",
@@ -48,22 +48,9 @@
       "skill": "DragonsBreath1"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.1
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
-    },
-    {
-      "type": "event",
-      "event": "Buff",
-      "before": {
-        "action": "start"
-      },
-      "buff": "Cadence",
-      "stack": 2
+      "skill": "Defense",
+      "duration": 0.124075
     },
     {
       "type": "skill",
@@ -114,22 +101,9 @@
       "skill": "StonebreakerCleave"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
-    },
-    {
-      "type": "event",
-      "event": "Buff",
-      "before": {
-        "action": "start"
-      },
-      "buff": "Cadence",
-      "stack": 2
+      "skill": "Defense",
+      "duration": 1.27452
     },
     {
       "type": "skill",
@@ -164,22 +138,9 @@
       "skill": "FluteOfTheTidesCancel"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
-    },
-    {
-      "type": "event",
-      "event": "Buff",
-      "before": {
-        "action": "start"
-      },
-      "buff": "Cadence",
-      "stack": 2
+      "skill": "Defense",
+      "duration": 1.076
     },
     {
       "type": "skill",
@@ -202,22 +163,9 @@
       "skill": "StonebreakerCleave"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.3
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
-    },
-    {
-      "type": "event",
-      "event": "Buff",
-      "before": {
-        "action": "start"
-      },
-      "buff": "Cadence",
-      "stack": 2
+      "skill": "Defense",
+      "duration": 0.366
     },
     {
       "type": "skill",
@@ -264,22 +212,9 @@
       "skill": "StonebreakerCleave"
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.1
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
-    },
-    {
-      "type": "event",
-      "event": "Buff",
-      "before": {
-        "action": "start"
-      },
-      "buff": "Cadence",
-      "stack": 2
+      "skill": "Defense",
+      "duration": 1.143
     },
     {
       "type": "skill",
@@ -330,17 +265,13 @@
       "event": "Qi",
       "targetQiRatio": 0,
       "after": {
-        "action": 0
+        "action": "start"
       }
     },
     {
-      "type": "event",
-      "event": "Delay",
-      "duration": 0.1
-    },
-    {
       "type": "skill",
-      "skill": "Defense"
+      "skill": "Defense",
+      "duration": 1.143
     },
     {
       "type": "skill",
@@ -361,6 +292,10 @@
     {
       "type": "skill",
       "skill": "Avalanche"
+    },
+    {
+      "type": "skill",
+      "skill": "StonebreakerCleave"
     },
     {
       "type": "event",
@@ -372,5 +307,7 @@
     "step": 4,
     "action": 1
   },
-  "eventTimeReference": "battleStart"
+  "eventTimeReference": "battleStart",
+  "ping": 30,
+  "dummyAttack": true
 }

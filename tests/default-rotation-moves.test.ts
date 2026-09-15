@@ -95,10 +95,14 @@ describe("default-rotation-moves", () => {
           secondAnxi?.actionStates[0]?.distance === 4,
           `${rotation.name} Burning Heart ${row.rotationIndex} second Anxi must be 4m.`,
         ).toBeTruthy();
-        expect(
-          row.actionStates[3]?.distance === 2,
-          `${rotation.name} Burning Heart ${row.rotationIndex} first damage must be 2m.`,
-        ).toBeTruthy();
+        if (row.actions[3]?.type === "inactive") {
+          expect(row.actionStates[3], "A hit cut off by Battle End has no resolved state.").toBeUndefined();
+        } else {
+          expect(
+            row.actionStates[3]?.distance === 2,
+            `${rotation.name} Burning Heart ${row.rotationIndex} first damage must be 2m.`,
+          ).toBeTruthy();
+        }
       }
     }
   });

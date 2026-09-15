@@ -196,6 +196,19 @@ active build contributes gear stats, attunement, weapon and armor sets, bow/ring
 arsenal to calculations. The same
 viewed-versus-active distinction applies to rotations; an edited rotation
 publishes metrics globally only when it is also active.
+All bundled rotation presets explicitly store ping, including the empty planner
+preset, so changes to Settings ping do not change their timelines. Most use
+40 ms; the Might dummy preset uses 30 ms.
+Preset ping is displayed in a disabled input with muted text. A custom rotation inheriting
+Settings shows the current default as a muted input placeholder.
+Custom rotations can override ping; an explicit override uses the Main tab's
+modified-field highlight and reset control. This feedback is local to the
+ping field and appears while typing, before committing or rebuilding the
+timeline. Reset removes the override and
+returns to Settings ping. Editor worker calculations update silently without
+a calculating-status message. Both ping inputs keep local drafts until Enter or
+blur, then clamp to 0–999 ms; a blank custom rotation field inherits Settings.
+
 Bundled rotation presets are immutable editor sources. Switching, activating,
 or creating another rotation only writes the current editor content back when
 the previous entry is user-created.
@@ -1496,7 +1509,7 @@ recording IDs and source references are not persisted in user rotations.
 
 ### Attack-aligned casts
 
-Successful Deflect uses the data-defined `alignCastEndToAttack: 0.1` margin.
+Successful Deflect uses the data-defined `attackResponse.endMargin: 0.1` margin.
 The ordered scheduler waits so its cast ends 0.1 seconds after the next manual
 or dummy attack, subject to previous cast completion and cooldown readiness.
 When those constraints force a later start, its end can also be later.
@@ -1519,3 +1532,10 @@ response windows are independent of blocking cast duration; incoming hits dispat
 success effects through the existing triggered-skill executor at attack time.
 See `doc/rotation-event-loop.md` for reservations, canceled-window overlap,
 causal ordering, and preserved defensive weapon context.
+
+Defense uses the shared response windows with success on every incoming hit.
+Its optional rotation-step duration overrides base cast time only when the skill
+declares `editableCastTime`; the worker resolves the hold and all success effects.
+Defense omits automatic attack alignment, so its entered duration occupies the
+ordered timeline from cast start. The editor reuses its duration control and does
+not calculate defensive rewards or hold timing independently.

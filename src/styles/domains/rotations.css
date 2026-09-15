@@ -245,6 +245,16 @@
     inline-size: 10rem;
   }
 
+  .rotation-ping-field input {
+    padding: 5px 7px;
+  }
+
+  .rotation-ping-field input:disabled,
+  .rotation-ping-field input::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+
   .rotation-group-size select {
     inline-size: auto;
     min-inline-size: 7rem;

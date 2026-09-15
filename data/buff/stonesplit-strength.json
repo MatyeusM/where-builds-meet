@@ -2,19 +2,9 @@
   "Cadence": {
     "name": "Cadence",
     "shortName": "Cad",
-    "description": "Attempts to grant Riposte whenever Cadence is applied.",
+    "description": "Stores successful defenses for later Riposte conversions.",
     "duration": 20,
     "maxStack": 2,
-    "action": [
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Riposte",
-        "stack": 1,
-        "reapply": true,
-        "time": 0
-      }
-    ],
     "refresh": true
   },
   "Riposte": {

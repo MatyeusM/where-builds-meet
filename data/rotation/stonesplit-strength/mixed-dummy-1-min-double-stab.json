@@ -13,11 +13,11 @@
     },
     {
       "type": "skill",
-      "skill": "SnowpartingQSlide"
+      "skill": "SnowpartingQ"
     },
     {
       "type": "skill",
-      "skill": "SnowpartingQSlide"
+      "skill": "SnowpartingQ2"
     },
     {
       "type": "skill",
@@ -208,6 +208,22 @@
       "skill": "SnowpartingSpecial"
     },
     {
+      "type": "skill",
+      "skill": "SnowpartingQ"
+    },
+    {
+      "type": "skill",
+      "skill": "SnowpartingQStab"
+    },
+    {
+      "type": "skill",
+      "skill": "FluteOfTheTidesCancel"
+    },
+    {
+      "type": "skill",
+      "skill": "Deflect"
+    },
+    {
       "type": "event",
       "event": "Move",
       "before": {
@@ -236,22 +252,6 @@
     {
       "type": "skill",
       "skill": "PhalanxbaneHeavyCharged3"
-    },
-    {
-      "type": "skill",
-      "skill": "FluteOfTheTidesCancel"
-    },
-    {
-      "type": "skill",
-      "skill": "Deflect"
-    },
-    {
-      "type": "skill",
-      "skill": "SnowpartingQ"
-    },
-    {
-      "type": "skill",
-      "skill": "SnowpartingQStab"
     },
     {
       "type": "event",
@@ -575,6 +575,10 @@
     },
     {
       "type": "skill",
+      "skill": "PhalanxbaneQ"
+    },
+    {
+      "type": "skill",
       "skill": "SnowpartingConversion"
     },
     {
@@ -594,5 +598,6 @@
       "event": "BattleEnd",
       "startTime": 60
     }
-  ]
+  ],
+  "ping": 40
 }

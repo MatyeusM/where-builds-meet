@@ -2,7 +2,7 @@
   "SnowpartingLightCharged": {
     "name": "Grave Frost",
     "shortName": "Heng LC",
-    "castTime": 1.617,
+    "castTime": 1.605,
     "action": [
       {
         "type": "consume",
@@ -16,7 +16,7 @@
         "phyCoef": 0.4899,
         "phyBonus": 135.333,
         "attrBonus": 73.667,
-        "time": 0.667,
+        "time": 0.833,
         "attrCoef": 0.4899
       },
       {
@@ -24,7 +24,7 @@
         "phyCoef": 0.4899,
         "phyBonus": 135.333,
         "attrBonus": 73.667,
-        "time": 0.667,
+        "time": 1.05,
         "attrCoef": 0.4899
       },
       {
@@ -32,7 +32,7 @@
         "phyCoef": 0.4899,
         "phyBonus": 135.333,
         "attrBonus": 73.667,
-        "time": 0.667,
+        "time": 1.171,
         "attrCoef": 0.4899
       },
       {
@@ -40,7 +40,7 @@
         "phyCoef": 0.9798,
         "phyBonus": 271,
         "attrBonus": 147,
-        "time": 1.617,
+        "time": 1.596,
         "attrCoef": 0.9798
       }
     ],
@@ -53,7 +53,7 @@
           }
         ],
         "effect": {
-          "castTimeModifier": -0.619
+          "castTimeModifier": -0.65
         }
       }
     ],
@@ -73,14 +73,14 @@
   "SnowpartingHeavyVC": {
     "name": "Snowbreak Spring",
     "shortName": "Heng VC",
-    "castTime": 0.85,
+    "castTime": 0.857,
     "action": [
       {
         "type": "damage",
         "phyCoef": 2.8245,
         "phyBonus": 782,
         "attrBonus": 425,
-        "time": 0.588,
+        "time": 0.565,
         "attrCoef": 2.8245
       },
       {
@@ -88,7 +88,7 @@
         "target": "self",
         "value": "InnerPassion",
         "stack": 1,
-        "time": 0.588
+        "time": 0.565
       },
       {
         "type": "trigger",
@@ -103,7 +103,7 @@
           }
         ],
         "value": "AnxiSoldierSnowbreakSpring",
-        "time": 0.588
+        "time": 0.565
       },
       {
         "type": "extend",
@@ -120,7 +120,7 @@
         "target": "target",
         "value": "Dread",
         "duration": 2,
-        "time": 0.588
+        "time": 0.565
       },
       {
         "type": "clearCD",
@@ -136,7 +136,7 @@
         ],
         "target": "self",
         "value": "Forgetfulness",
-        "time": 0.588
+        "time": 0.565
       },
       {
         "type": "apply",
@@ -149,7 +149,7 @@
         "target": "self",
         "value": "Forgetfulness",
         "stack": 1,
-        "time": 0.588
+        "time": 0.565
       }
     ],
     "modifier": [],
@@ -169,80 +169,80 @@
   "SnowpartingSpecial": {
     "name": "Fleeting Trace",
     "shortName": "Heng Special",
-    "castTime": 2.177,
+    "castTime": 2.066,
     "cooldown": 20,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.378,
-        "phyBonus": 104,
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
         "attrBonus": 57,
-        "time": 0.5,
-        "attrCoef": 0.378
+        "time": 0.633,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.377975,
-        "phyBonus": 104.5,
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
         "attrBonus": 57,
-        "time": 0.878,
-        "attrCoef": 0.377975
+        "time": 1,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.377975,
-        "phyBonus": 104.5,
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
         "attrBonus": 57,
-        "time": 0.878,
-        "attrCoef": 0.377975
+        "time": 1.1,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.377975,
-        "phyBonus": 104.5,
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
         "attrBonus": 57,
-        "time": 0.878,
-        "attrCoef": 0.377975
+        "time": 1.2,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.377975,
-        "phyBonus": 104.5,
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
         "attrBonus": 57,
-        "time": 0.878,
-        "attrCoef": 0.377975
+        "time": 1.3,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.47245,
-        "phyBonus": 130.75,
-        "attrBonus": 130.75,
-        "time": 1.843,
-        "attrCoef": 0.47245
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
+        "attrBonus": 57,
+        "time": 1.6,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.47245,
-        "phyBonus": 130.75,
-        "attrBonus": 130.75,
-        "time": 1.843,
-        "attrCoef": 0.47245
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
+        "attrBonus": 57,
+        "time": 1.666,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.47245,
-        "phyBonus": 130.75,
-        "attrBonus": 130.75,
-        "time": 1.843,
-        "attrCoef": 0.47245
+        "phyCoef": 0.377968,
+        "phyBonus": 104.6,
+        "attrBonus": 57,
+        "time": 1.733,
+        "attrCoef": 0.377968
       },
       {
         "type": "damage",
-        "phyCoef": 0.47245,
-        "phyBonus": 130.75,
-        "attrBonus": 130.75,
-        "time": 1.843,
-        "attrCoef": 0.47245
+        "phyCoef": 0.755936,
+        "phyBonus": 209.2,
+        "attrBonus": 114,
+        "time": 1.8,
+        "attrCoef": 0.755936
       },
       {
         "type": "apply",
@@ -250,7 +250,7 @@
         "target": "self",
         "value": "InnerPassion",
         "stack": 3,
-        "time": 2.177
+        "time": 2.066
       },
       {
         "type": "apply",
@@ -263,7 +263,7 @@
         "target": "self",
         "value": "InnerPassion",
         "stack": 1,
-        "time": 2.177
+        "time": 2.066
       },
       {
         "type": "apply",
@@ -271,7 +271,7 @@
         "target": "target",
         "value": "Dread",
         "stack": 1,
-        "time": 2.177
+        "time": 2.066
       }
     ],
     "modifier": [],
@@ -279,22 +279,10 @@
     "martialArt": "snowparting",
     "weapon": "HengBlade"
   },
-  "SnowpartingQSlide": {
-    "name": "General's Bane - Slide",
-    "shortName": "Heng Q",
-    "castTime": 0.711,
-    "cooldown": 12,
-    "cooldownUses": 2,
-    "action": [],
-    "modifier": [],
-    "tags": ["DirectDamage", "MartialArts", "MartialArt", "HengBlade", "SnowpartingBlade", "General's Bane"],
-    "martialArt": "snowparting",
-    "weapon": "HengBlade"
-  },
   "SnowpartingQ": {
     "name": "General's Bane",
     "shortName": "Heng Q",
-    "castTime": 0.711,
+    "castTime": 0.692,
     "cooldown": 12,
     "cooldownUses": 2,
     "action": [
@@ -303,7 +291,7 @@
         "phyCoef": 1.2338,
         "phyBonus": 342,
         "attrBonus": 186,
-        "time": 0.549,
+        "time": 0.526,
         "attrCoef": 1.2338
       }
     ],
@@ -312,28 +300,50 @@
     "martialArt": "snowparting",
     "weapon": "HengBlade"
   },
-  "SnowpartingQSlash": {
-    "name": "General's Bane: Slash",
-    "shortName": "Heng Q",
-    "castTime": 1.383,
+  "SnowpartingQ2": {
+    "name": "General's Bane 2",
+    "shortName": "Heng Q2",
+    "castTime": 0.708,
     "cooldown": 12,
     "cooldownUses": 2,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.74545,
-        "phyBonus": 206.5,
-        "attrBonus": 112.5,
-        "time": 1.383,
-        "attrCoef": 0.74545
+        "phyCoef": 1.2338,
+        "phyBonus": 342,
+        "attrBonus": 186,
+        "time": 0.611,
+        "attrCoef": 1.2338
+      }
+    ],
+    "modifier": [],
+    "tags": ["DirectDamage", "MartialArts", "MartialArt", "HengBlade", "SnowpartingBlade", "General's Bane"],
+    "martialArt": "snowparting",
+    "weapon": "HengBlade",
+    "cooldownGroup": "SnowpartingQ"
+  },
+  "SnowpartingQSlash": {
+    "name": "General's Bane: Slash",
+    "shortName": "Heng Q",
+    "castTime": 0.654,
+    "cooldown": 12,
+    "cooldownUses": 2,
+    "action": [
+      {
+        "type": "damage",
+        "phyCoef": 0.596352,
+        "phyBonus": 165.2,
+        "attrBonus": 90,
+        "time": 0.234,
+        "attrCoef": 0.596352
       },
       {
         "type": "damage",
-        "phyCoef": 0.74545,
-        "phyBonus": 206.5,
-        "attrBonus": 112.5,
-        "time": 1.383,
-        "attrCoef": 0.74545
+        "phyCoef": 0.894528,
+        "phyBonus": 247.8,
+        "attrBonus": 135,
+        "time": 0.491,
+        "attrCoef": 0.894528
       }
     ],
     "modifier": [],
@@ -352,25 +362,25 @@
   "SnowpartingQStab": {
     "name": "General's Bane: Stab",
     "shortName": "Heng Q Stab",
-    "castTime": 1.166,
+    "castTime": 1.15,
     "cooldown": 12,
     "cooldownUses": 2,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 1.0662,
-        "phyBonus": 295,
-        "attrBonus": 161,
-        "time": 0.263,
-        "attrCoef": 1.0662
+        "phyCoef": 0.85296,
+        "phyBonus": 236,
+        "attrBonus": 128.8,
+        "time": 0.228,
+        "attrCoef": 0.85296
       },
       {
         "type": "damage",
-        "phyCoef": 1.0662,
-        "phyBonus": 295,
-        "attrBonus": 161,
-        "time": 0.821,
-        "attrCoef": 1.0662
+        "phyCoef": 1.27944,
+        "phyBonus": 354,
+        "attrBonus": 193.2,
+        "time": 0.799,
+        "attrCoef": 1.27944
       },
       {
         "type": "apply",
@@ -378,7 +388,7 @@
         "target": "target",
         "value": "FearfulBlade",
         "stack": 1,
-        "time": 0.821
+        "time": 0.799
       },
       {
         "type": "extend",
@@ -386,7 +396,7 @@
         "target": "target",
         "value": "Dread",
         "duration": 6,
-        "time": 0.821
+        "time": 0.799
       },
       {
         "type": "trigger",
@@ -401,7 +411,7 @@
           }
         ],
         "value": "AnxiSoldierGeneralsBaneStab",
-        "time": 1.166
+        "time": 0.799
       }
     ],
     "modifier": [],
@@ -421,15 +431,16 @@
   "SnowpartingConversion": {
     "name": "Snowparting Conversion",
     "shortName": "Heng Tab",
-    "castTime": 0.575,
+    "cooldown": 3,
+    "castTime": 0.56,
     "action": [
       {
         "type": "damage",
-        "phyCoef": 0.6486,
+        "phyCoef": 0.64861,
         "phyBonus": 180,
         "attrBonus": 98,
-        "time": 0.5,
-        "attrCoef": 0.6486
+        "time": 0.498,
+        "attrCoef": 0.64861
       }
     ],
     "modifier": [],
@@ -446,7 +457,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.16,
         "attrCoef": 0.35
       },
       {
@@ -454,7 +465,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.4,
         "attrCoef": 0.35
       },
       {
@@ -462,7 +473,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.46,
         "attrCoef": 0.35
       },
       {
@@ -470,7 +481,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.7,
         "attrCoef": 0.35
       }
     ],
@@ -497,7 +508,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.16,
         "attrCoef": 0.35
       },
       {
@@ -505,7 +516,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.4,
         "attrCoef": 0.35
       },
       {
@@ -513,7 +524,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.46,
         "attrCoef": 0.35
       },
       {
@@ -521,7 +532,7 @@
         "phyCoef": 0.35,
         "phyBonus": 0,
         "attrBonus": 0,
-        "time": 0,
+        "time": 0.7,
         "attrCoef": 0.35
       }
     ],

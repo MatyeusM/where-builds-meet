@@ -77,10 +77,10 @@ describe("pure-dummy-rotation", () => {
       innerWayPriority: [],
       setupComparisons: {},
     });
-    expect(
-      result.metrics.totalDamage > 0 &&
-        result.duration === rotation.steps.find((step) => step.event === "BattleEnd").startTime,
-      "The translated preset must calculate as a 60-second rotation.",
-    ).toBeTruthy();
+    expect(result.metrics.totalDamage).toBeGreaterThan(0);
+    expect(result.duration, "The translated preset must calculate as a 60-second rotation.").toBeCloseTo(
+      rotation.steps.find((step) => step.event === "BattleEnd")!.startTime!,
+      8,
+    );
   });
 });

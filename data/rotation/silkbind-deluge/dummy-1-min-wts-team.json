@@ -274,5 +274,6 @@
       "event": "BattleEnd",
       "startTime": 60
     }
-  ]
+  ],
+  "ping": 40
 }

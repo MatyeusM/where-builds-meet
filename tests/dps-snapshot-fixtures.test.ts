@@ -1,3 +1,4 @@
+import { resolvePing } from "../src/calculations/combatDefaults";
 import { describe, expect, it } from "vitest";
 import { readdir, readFile } from "node:fs/promises";
 import { loadDpsSnapshotFixtures, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures";
@@ -12,6 +13,8 @@ describe("rotation DPS snapshot fixtures", () => {
     const expected = [];
     for (const file of files.filter((file) => file.endsWith(".json"))) {
       const rotation = JSON.parse(await readFile("data/rotation/" + file, "utf8"));
+      expect(Number.isFinite(rotation.ping), "Preset must store its own ping: " + file).toBe(true);
+      expect(resolvePing(rotation.ping, 85), "Preset ping must ignore Settings: " + file).toBe(rotation.ping);
       if (!rotation.steps.length) continue;
       const group = file.replaceAll("\\", "/").split("/")[0];
       const pathId = Object.keys(paths).find((id) => paths[id].buildGroup === group);
@@ -25,7 +28,7 @@ describe("rotation DPS snapshot fixtures", () => {
         await readFile("data/build/" + entry.buildGroup + "/" + entry.fixture.build + ".json", "utf8"),
       );
       expect(build.martialArts.slice().sort()).toEqual(entry.fixture.martialArts.slice().sort());
-      expect(entry.fixture.ping).toBe(40);
+      expect(entry.fixture.ping).toBe(entry.rotation.ping);
     }
     expect(compareDpsSnapshots(snapshots.cases, snapshots.cases)).toEqual([]);
   });

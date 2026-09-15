@@ -13,7 +13,6 @@ describe("preset Qi event attachments", () => {
     "/archive/rotation/stonesplit-strength/mixed-horse-tamer-standard-27s.json",
     "/archive/rotation/stonesplit-strength/mixed-horse-tamer-standard-27s-no-fcn.json",
     "/data/rotation/stonesplit-strength/pure-dummy-1-min.json",
-    "/data/rotation/stonesplit-strength/pure-dummy-1-min-2.json",
     "/archive/rotation/stonesplit-strength/pure-horse-tamer-standard-27s.json",
     "/data/rotation/stonesplit-might/dummy-1-min.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json",
@@ -53,10 +52,25 @@ describe("preset Qi event attachments", () => {
     for (const row of qiRows) {
       const attachment = row.step.before ?? row.step.after;
       expect(attachment).toBeDefined();
-      const target = timeline.find((candidate) => candidate.id === row.sourceRowId)!;
+      const source = timeline.find((candidate) => candidate.id === row.sourceRowId)!;
+      expect(source).toBeDefined();
+      const trigger =
+        attachment.trigger === undefined
+          ? undefined
+          : source.actions.filter((action) => action.type === "trigger")[attachment.trigger];
+      const target =
+        attachment.trigger === undefined
+          ? source
+          : timeline.find(
+              (candidate) =>
+                candidate.kind === "trigger" &&
+                candidate.triggerSource === "skill" &&
+                candidate.sourceRowId === source.id &&
+                candidate.step.skill === trigger?.value,
+            );
       expect(target).toBeDefined();
       const expectedTime =
-        target.startTime + (attachment.action === "start" ? 0 : Number(target.actions[attachment.action].time ?? 0));
+        target!.startTime + (attachment.action === "start" ? 0 : Number(target!.actions[attachment.action].time ?? 0));
       expect(row.startTime).toBeCloseTo(expectedTime, 8);
       const setIndex = row.actions.findIndex((action) => action.type === "setQi");
       expect(setIndex).toBeGreaterThanOrEqual(0);

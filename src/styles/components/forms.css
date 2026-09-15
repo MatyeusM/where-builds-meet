@@ -100,6 +100,10 @@
     font-weight: 700;
   }
 
+  .ping-field input[type="number"] {
+    inline-size: calc(4ch + 1.5rem);
+  }
+
   .editor-field-wide {
     grid-column: 1 / -1;
   }

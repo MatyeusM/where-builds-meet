@@ -1,175 +1,122 @@
 import { describe, expect, it } from "vitest";
+import {
+  buildRotationTimeline,
+  type RotationStep,
+  type TimelineBuildInput,
+} from "../src/calculations/rotationTimeline";
+import { exportRotationEntries, mergeImportedRotationEntries } from "../src/rotationTransfer";
+import general from "../data/skill/general.json";
+import might from "../data/skill/thundercry-blade.json";
+import buffs from "../data/buff/stonesplit-strength.json";
 
-// Ported from script/probe/check-defense-skill.mjs.
-describe("defense-skill", () => {
-  it("Defense, Cadence conversion, Riposte cooldown, and Avalanche timing checks passed", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const generalSkills = (await import("../data/skill/general.json")).default;
-    const mightSkills = (await import("../data/skill/thundercry-blade.json")).default;
-    const strengthBuffs = (await import("../data/buff/stonesplit-strength.json")).default;
-    const defenseTimeline = (innerWayConditions) =>
-      buildRotationTimeline({
-        rotation: { name: "Defense probe", steps: [{ type: "skill", skill: "Defense" }] },
-        skills: { Defense: generalSkills.Defense },
-        eventDefinitions: {},
-        dots: {},
-        effectDefinitions: strengthBuffs,
-        innerWayConditions,
-        innerWayRules: [],
-        setupEffects: [],
-        weapons: ["thundercry", "stormbreaker"],
-      })[0];
+const cast = (duration: number): RotationStep => ({ type: "skill", skill: "Defense", duration });
+const attack = (startTime: number): RotationStep => ({ type: "event", event: "TakeDamage", startTime, damage: 200 });
+const end = (startTime: number): RotationStep => ({ type: "event", event: "BattleEnd", startTime });
+const input = (steps: RotationStep[]): TimelineBuildInput => ({
+  rotation: { name: "Defense", steps },
+  skills: { ...general, ...might, Probe: { castTime: 0, action: [{ type: "damage", time: 0 }] } },
+  eventDefinitions: { TakeDamage: { action: [{ type: "takeDamage", time: 0 }] }, BattleEnd: { action: [] } },
+  dots: {},
+  effectDefinitions: buffs,
+  innerWayConditions: ["ExquisiteSceneryT0"],
+  innerWayRules: [],
+  setupEffects: [],
+  weapons: ["thundercry", "stormbreaker"],
+  maxHP: 10000,
+});
+const skillRows = (rows: ReturnType<typeof buildRotationTimeline>, skill: string) =>
+  rows.filter((row) => row.step.type === "skill" && row.step.skill === skill);
 
-    expect(defenseTimeline([]).effectiveCastTime === 0, "Defense must have zero cast time.").toBeTruthy();
+describe("held Defense", () => {
+  it("protects through the hold end and excludes attacks during the preceding ping gap", () => {
+    const data = input([cast(0.8), attack(0.02), attack(0.05), attack(0.84), attack(0.85), end(1)]);
+    data.rotation.ping = 40;
+    const rows = buildRotationTimeline(data);
     expect(
-      !defenseTimeline([]).actionStates[0].buffs.some((effect) => effect.name === "Cadence"),
-      "Defense must not apply Cadence without Exquisite Scenery.",
-    ).toBeTruthy();
-    const cadenceState = defenseTimeline(["ExquisiteSceneryT0"]).actionStates[0].buffs;
-    expect(
-      !cadenceState.some((effect) => effect.name === "Cadence"),
-      "The applying action's pre-action snapshot must not contain Cadence.",
-    ).toBeTruthy();
-    const build = (steps, innerWayConditions = ["ExquisiteSceneryT0"], innerWayRules = []) =>
-      buildRotationTimeline({
-        rotation: { name: "Periodic effect probe", steps },
-        skills: {
-          Defense: generalSkills.Defense,
-          RiposteTrigger: generalSkills.RiposteTrigger,
-          Avalanche: mightSkills.Avalanche,
-          ApplyCadence: {
-            name: "Apply Cadence",
-            castTime: 0,
-            action: [{ type: "apply", target: "self", value: "Cadence", stack: 2, time: 0 }],
-            modifier: [],
-            tags: [],
-          },
-          ApplyOneCadence: {
-            name: "Apply One Cadence",
-            castTime: 0,
-            action: [{ type: "apply", target: "self", value: "Cadence", stack: 1, time: 0 }],
-            modifier: [],
-            tags: [],
-          },
-          Probe: { name: "Probe", castTime: 0, action: [{ type: "damage", time: 0 }], modifier: [], tags: [] },
-        },
-        eventDefinitions: {},
-        dots: {},
-        effectDefinitions: strengthBuffs,
-        innerWayConditions,
-        innerWayRules,
-        setupEffects: [],
-        weapons: ["thundercry", "stormbreaker"],
-      });
-
-    const followupTimeline = build([
-      { type: "skill", skill: "Defense" },
-      { type: "skill", skill: "Probe" },
-    ]);
-    const defensePeriodicRow = followupTimeline.find((row) => row.kind === "periodic" && row.step.skill === "Cadence");
-    const followupRow = followupTimeline.find((row) => row.id === "rotation-1");
-    expect(
-      defensePeriodicRow?.startTime === 0,
-      "Cadence must trigger immediately when Defense applies it.",
-    ).toBeTruthy();
-    expect(
-      followupRow.actionStates[0].buffs.some((effect) => effect.name === "Riposte") &&
-        !followupRow.actionStates[0].buffs.some((effect) => effect.name === "Cadence"),
-      "An immediate Cadence trigger must consume Cadence and grant Riposte before the next skill.",
-    ).toBeTruthy();
-
-    const baseCooldownTimeline = build([
-      { type: "skill", skill: "ApplyCadence" },
-      { type: "event", event: "Delay", duration: 12 },
-    ]);
-    expect(
-      JSON.stringify(
-        baseCooldownTimeline.filter((row) => row.step.skill === "RiposteTrigger").map((row) => row.startTime),
-      ) === JSON.stringify([0, 10]),
-      "Riposte must start one ten-second follow-up attempt for each successfully converted Cadence stack.",
-    ).toBeTruthy();
-
-    const refreshedTimeline = build([
-      { type: "skill", skill: "ApplyCadence" },
-      { type: "event", event: "Delay", duration: 2 },
-      { type: "skill", skill: "ApplyOneCadence" },
-      { type: "event", event: "Delay", duration: 20 },
-    ]);
-    expect(
-      JSON.stringify(
-        refreshedTimeline.filter((row) => row.step.skill === "RiposteTrigger").map((row) => row.startTime),
-      ) === JSON.stringify([0, 10, 20]),
-      "Refreshing Cadence during Riposte cooldown must not consume it or restart the existing follow-up wait.",
-    ).toBeTruthy();
-
-    const blockedApplyTimeline = build([
-      { type: "skill", skill: "ApplyCadence" },
-      { type: "event", event: "Delay", duration: 2 },
-      { type: "skill", skill: "ApplyOneCadence" },
-      { type: "skill", skill: "Probe" },
-    ]);
-    const blockedApplyProbe = blockedApplyTimeline.find((row) => row.id === "rotation-3");
-    expect(
-      blockedApplyProbe.actionStates[0].buffs.find((effect) => effect.name === "Cadence")?.stack === 2,
-      "A cooldown-rejected Riposte application must not consume Cadence.",
-    ).toBeTruthy();
-
-    const resumedTimeline = build([
-      { type: "skill", skill: "ApplyOneCadence" },
-      { type: "event", event: "Delay", duration: 12 },
-      { type: "skill", skill: "ApplyOneCadence" },
-    ]);
-    expect(
-      JSON.stringify(
-        resumedTimeline.filter((row) => row.step.skill === "RiposteTrigger").map((row) => row.startTime),
-      ) === JSON.stringify([0, 12]),
-      "Cadence applied after an idle Riposte cooldown must restart the chain immediately.",
-    ).toBeTruthy();
-
-    const t4Timeline = build(
-      [
-        { type: "skill", skill: "ApplyCadence" },
-        { type: "event", event: "Delay", duration: 7 },
-      ],
-      ["ExquisiteSceneryT0", "ExquisiteSceneryT4"],
-      [
-        {
-          source: "ExquisiteScenery",
-          tier: 4,
-          target: "Riposte",
-          modify: { cooldown: 5 },
-        },
-      ],
+      rows.flatMap((row) =>
+        row.actions.filter((action) => action.type === "takeDamage").map((action) => action.damage),
+      ),
+    ).toEqual([200, 0, 0, 200]);
+    expect(skillRows(rows, "DefenseSuccess").map((row) => row.startTime)).toEqual([0.05, 0.84]);
+  });
+  it("blocks only within its entered duration and rewards each hit, with Riposte before Cadence", () => {
+    const rows = buildRotationTimeline(
+      input([cast(1.1), { type: "skill", skill: "Probe" }, attack(1), attack(1), attack(1.2), end(2)]),
     );
+    expect(skillRows(rows, "Defense")[0].effectiveCastTime).toBe(1.1);
     expect(
-      JSON.stringify(t4Timeline.filter((row) => row.step.skill === "RiposteTrigger").map((row) => row.startTime)) ===
-        JSON.stringify([0, 5]),
-      "Exquisite Scenery T4 must reduce both the Riposte cooldown and follow-up wait to five seconds.",
-    ).toBeTruthy();
-
-    const avalancheTimeline = build([
-      { type: "skill", skill: "Defense" },
-      { type: "skill", skill: "Avalanche" },
-      { type: "skill", skill: "Probe" },
-    ]);
-    const avalanche = avalancheTimeline.find((row) => row.id === "rotation-1");
-    const afterAvalanche = avalancheTimeline.find((row) => row.id === "rotation-2");
-    expect(
-      avalanche.effectiveCastTime === 1.766,
-      "Riposte must reduce Avalanche's cast time by 2 seconds.",
-    ).toBeTruthy();
-    const avalancheDamageTimes = avalanche.actions
-      .filter((action) => action.type === "damage")
-      .map((action) => action.time);
-    expect(
-      avalancheDamageTimes.length === 2 &&
-        Math.abs(avalancheDamageTimes[0] - 0.93) < 1e-9 &&
-        Math.abs(avalancheDamageTimes[1] - 1.766) < 1e-9,
-      "Riposte must shift Avalanche's damage actions with its reduced cast time.",
-    ).toBeTruthy();
-    expect(
-      !afterAvalanche.buffs.some((effect) => effect.name === "Riposte"),
-      "Avalanche must consume Riposte when its cast starts.",
-    ).toBeTruthy();
+      rows.flatMap((row) =>
+        row.actions.filter((action) => action.type === "takeDamage").map((action) => action.damage),
+      ),
+    ).toEqual([0, 0, 200]);
+    const successes = skillRows(rows, "DefenseSuccess");
+    expect(successes).toHaveLength(2);
+    expect(successes.map((row) => row.startTime)).toEqual([1, 1]);
+    expect(successes[0].actionStates[0].buffs).toEqual([]);
+    expect(successes[0].actionStates[1].buffs.map((effect) => effect.name)).toContain("Riposte");
+    const state = skillRows(rows, "Probe")[0];
+    expect(state.buffs.find((effect) => effect.name === "Cadence")?.stack).toBe(2);
+    expect(state.buffs.some((effect) => effect.name === "Riposte")).toBe(true);
+    expect(state.currentHP).toBe(10000);
+  });
+  it("grants no rewards without an attack or Exquisite Scenery", () => {
+    const noAttack = buildRotationTimeline(input([cast(1), end(2)]));
+    expect(skillRows(noAttack, "DefenseSuccess")).toHaveLength(0);
+    const data = input([cast(1), attack(0.5), { type: "skill", skill: "Probe" }, end(2)]);
+    data.innerWayConditions = [];
+    const rows = buildRotationTimeline(data);
+    expect(skillRows(rows, "Probe")[0].buffs).toEqual([]);
+    expect(skillRows(rows, "Probe")[0].currentHP).toBe(10000);
+  });
+  it.each([0, 40, 100])(
+    "starts after %s ms ping and holds the exact requested duration without attack alignment",
+    (ping) => {
+      const data = input([cast(0.8), { type: "skill", skill: "Probe" }, attack(0.4), end(2)]);
+      data.rotation.ping = ping;
+      const rows = buildRotationTimeline(data);
+      expect(skillRows(rows, "Defense")[0].startTime).toBeCloseTo(ping / 1000);
+      expect(skillRows(rows, "Defense")[0].effectiveCastTime).toBeCloseTo(0.8);
+      expect(skillRows(rows, "Probe")[0].startTime).toBeCloseTo(0.8 + ping / 500);
+    },
+  );
+  it.each([false, true])("converts stored stacks on Riposte cooldown, including T4=%s", (tier4) => {
+    const cooldown = tier4 ? 5 : 10;
+    const data = input([cast(1.1), attack(1), attack(1), end(3 * cooldown + 2)]);
+    if (tier4) {
+      data.innerWayConditions.push("ExquisiteSceneryT4");
+      data.innerWayRules = [{ source: "ExquisiteScenery", tier: 4, target: "Riposte", modify: { cooldown: 5 } }];
+    }
+    const rows = buildRotationTimeline(data);
+    expect(skillRows(rows, "RiposteTrigger").map((row) => row.startTime)).toEqual(tier4 ? [1, 6, 11] : [1, 11]);
+  });
+  it("blocks further attacks during cooldown without consuming their new Cadence stack", () => {
+    const rows = buildRotationTimeline(
+      input([cast(1.1), attack(1), cast(1.1), attack(2), { type: "skill", skill: "Probe" }, end(3)]),
+    );
+    expect(skillRows(rows, "Probe")[0].buffs.find((effect) => effect.name === "Cadence")?.stack).toBe(2);
+    expect(skillRows(rows, "RiposteTrigger")).toHaveLength(1);
+  });
+  it("reduces Avalanche timing and consumes Riposte when the cast starts", () => {
+    const rows = buildRotationTimeline(
+      input([cast(1.1), attack(1), { type: "skill", skill: "Avalanche" }, { type: "skill", skill: "Probe" }, end(5)]),
+    );
+    const avalanche = skillRows(rows, "Avalanche")[0];
+    expect(avalanche.effectiveCastTime).toBeCloseTo(1.545);
+    const hits = avalanche.actions.filter((action) => action.type === "damage");
+    expect(hits[0].time).toBeCloseTo(0.318);
+    expect(hits[1].time).toBeCloseTo(1);
+    expect(skillRows(rows, "Probe")[0].buffs.some((effect) => effect.name === "Riposte")).toBe(false);
+  });
+  it("preserves duration through export/import and migrates the old Defense action anchor", () => {
+    const rotation = input([
+      { type: "event", event: "Qi", before: { action: 0 }, targetQiRatio: 0.4 },
+      cast(1.234),
+    ]).rotation;
+    rotation.start = { step: 1, action: 0 };
+    const exported = exportRotationEntries([{ id: "defense", rotation, martialArts: ["thundercry", "stormbreaker"] }]);
+    const imported = mergeImportedRotationEntries([], JSON.parse(exported)).entries[0].rotation;
+    expect(imported.steps[1]).toEqual(cast(1.234));
+    expect(imported.start).toEqual({ step: 1 });
+    expect(imported.steps[0]).toMatchObject({ before: { action: "start" } });
   });
 });

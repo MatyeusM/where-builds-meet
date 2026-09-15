@@ -21,11 +21,11 @@
     },
     {
       "type": "skill",
-      "skill": "SnowpartingQSlide"
+      "skill": "SnowpartingQ"
     },
     {
       "type": "skill",
-      "skill": "SnowpartingQSlide"
+      "skill": "SnowpartingQ2"
     },
     {
       "type": "skill",
@@ -234,6 +234,11 @@
     {
       "type": "skill",
       "skill": "SnowpartingQ"
+    },
+    {
+      "type": "event",
+      "event": "Delay",
+      "duration": 0.33
     },
     {
       "type": "skill",
@@ -646,5 +651,6 @@
       "event": "BattleEnd",
       "startTime": 60
     }
-  ]
+  ],
+  "ping": 40
 }

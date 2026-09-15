@@ -18,25 +18,15 @@
   },
   "Defense": {
     "name": "Defense",
-    "castTime": 0,
-    "action": [
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Cadence",
-        "stack": 1,
-        "reapply": true,
-        "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "ExquisiteSceneryT0"
-          }
-        ]
-      }
-    ],
+    "castTime": 0.3,
+    "editableCastTime": true,
+    "action": [],
     "modifier": [],
-    "tags": ["General"]
+    "tags": ["General"],
+    "attackResponse": {
+      "onSuccess": "DefenseSuccess",
+      "perAttack": true
+    }
   },
   "RiposteTrigger": {
     "name": "Riposte Trigger",
@@ -375,5 +365,40 @@
       }
     ],
     "tags": ["Triggered", "Deflect"]
+  },
+  "DefenseSuccess": {
+    "name": "Defense (Successful)",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Riposte",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "ExquisiteSceneryT0"
+          }
+        ]
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Cadence",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "ExquisiteSceneryT0"
+          }
+        ]
+      }
+    ],
+    "tags": ["General", "Triggered"]
   }
 }

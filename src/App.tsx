@@ -1,3 +1,5 @@
+import { RotationPingField } from "./components/RotationPingField";
+import { PingInput } from "./components/PingInput";
 import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults";
 import {
   lazy,
@@ -232,6 +234,7 @@ import {
   migrateDrunkenPoetSequences,
   migrateAutomaticDelays,
   migrateDefenseActionAnchors,
+  migrateGeneralsBaneSlides,
   reorderAttachedEventWithinTarget,
 } from "./rotationEditing";
 import {
@@ -960,7 +963,7 @@ function timelineAnchorTime(timeline: TimelineRow[], startAnchor: { rowId: strin
 
 function migrateRotation(rotation: RotationRecord): RotationRecord {
   const migrated = migrateDefenseActionAnchors(
-    migrateAutomaticDelays(migrateDrunkenPoetSequences(normalizeRotation(rotation))),
+    migrateAutomaticDelays(migrateDrunkenPoetSequences(migrateGeneralsBaneSlides(normalizeRotation(rotation)))),
   );
   const attachedDamageIndexes = migrated.steps.flatMap((step, index) =>
     step.type === "event" && step.event === "TakeDamage" && "before" in step ? [index] : [],
@@ -5576,17 +5579,11 @@ function SettingsTab({
             </label>
           ))}
         </div>
-        <label className="editor-field">
+        <label className="editor-field ping-field">
           <span>{t("ui.app.ping")}</span>
-          <input
-            type="number"
-            min="0"
-            step="1"
+          <PingInput
             value={settings.ping}
-            onChange={(event) => {
-              const ping = normalizePing(event.target.valueAsNumber);
-              if (ping !== undefined) onSettingsChange((current) => ({ ...current, ping }));
-            }}
+            onCommit={(ping) => onSettingsChange((current) => ({ ...current, ping: ping ?? 0 }))}
           />
         </label>
         <div className="settings-layout-row">
@@ -7359,7 +7356,6 @@ function RotationEditorTab({
         </aside>
         {editingEntry ? (
           <div className="rotation-editor-content">
-            {!editorCalculationReady && <p role="status">{t("ui.app.editorCalculating")}</p>}
             <div className="skill-detail-heading">
               <div>
                 {editingName && !rotationLocked ? (
@@ -7465,23 +7461,13 @@ function RotationEditorTab({
                       <option value={10}>{t("ui.app.group")}</option>
                     </select>
                   </label>
-                  <label className="rotation-target-hp">
-                    <span>{t("ui.app.ping")}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      disabled={rotationLocked}
-                      placeholder={String(settings.ping)}
-                      title={t("ui.app.pingInherit")}
-                      value={rotation.ping ?? ""}
-                      onChange={(event) => {
-                        const ping = event.target.value === "" ? undefined : normalizePing(event.target.valueAsNumber);
-                        if (event.target.value !== "" && ping === undefined) return;
-                        updateRotationCalculationSetting((current) => ({ ...current, ping }));
-                      }}
-                    />
-                  </label>
+                  <RotationPingField
+                    key={editingRotationId}
+                    value={rotation.ping}
+                    inheritedValue={settings.ping}
+                    disabled={rotationLocked}
+                    onCommit={(ping) => updateRotationCalculationSetting((current) => ({ ...current, ping }))}
+                  />
                 </div>
               </div>
               <div className="detail-active-actions">
@@ -7771,10 +7757,19 @@ function RotationEditorTab({
                         : selfHPPercentage;
                     const durationEvent =
                       isManualEvent && (step.event === "Controlled" || step.event === "Delay") ? step.event : undefined;
-                    const durationValue = durationEvent
-                      ? (("duration" in step ? step.duration : undefined) ??
-                        (durationEvent === "Delay" ? 1 : eventDefaultDuration(durationEvent)))
-                      : 0;
+                    const editableCastTime = step.type === "skill" && row.skill?.editableCastTime === true;
+                    let durationValue = 0;
+                    switch (step.type) {
+                      case "skill":
+                        durationValue = step.duration ?? baseSkillCastTime(row.skill);
+                        break;
+                      case "event":
+                        if (durationEvent)
+                          durationValue =
+                            ("duration" in step ? step.duration : undefined) ??
+                            (durationEvent === "Delay" ? 1 : eventDefaultDuration(durationEvent));
+                        break;
+                    }
                     const actionBuffs =
                       actionState?.buffs.filter(
                         (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
@@ -7890,7 +7885,7 @@ function RotationEditorTab({
                               )}
                             </span>
                             <span className="rotation-mobile-field" data-mobile-label={t("ui.app.castTime")}>
-                              {durationEvent ? (
+                              {durationEvent || editableCastTime ? (
                                 rowReadOnly || isProtectedDelay ? (
                                   <span>
                                     {formatNumber(durationValue)}

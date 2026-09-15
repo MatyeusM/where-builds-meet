@@ -47,6 +47,8 @@ describe("deluge-wts-rotation", () => {
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     };
     const timeline = buildRotationTimeline(timelineInput);
+    const anchorRow = timeline.find((row) => row.id === `rotation-${rotation.start.step}`)!;
+    const anchorTime = anchorRow.startTime + Number(anchorRow.actions[rotation.start.action]?.time ?? 0);
     for (const preset of [
       rotation,
       (await import("../data/rotation/silkbind-deluge/dummy-1-min-wts-team.json")).default,
@@ -71,7 +73,7 @@ describe("deluge-wts-rotation", () => {
         row.step.type === "event" &&
         row.step.event === "TakeDamage" &&
         row.step.automatic !== "dummyAttack" &&
-        row.startTime < 60,
+        row.startTime - anchorTime < 60,
     );
     expect(manualAttackRows.length === 0, "The preset must not invent manual Take Damage events.").toBeTruthy();
     const automaticAttackRows = timeline.filter(
@@ -79,7 +81,9 @@ describe("deluge-wts-rotation", () => {
     );
     expect(
       automaticAttackRows.length === 20 &&
-        automaticAttackRows.every((row, index) => Math.abs(row.startTime - (5.5 + Math.floor(index / 2) * 6)) < 1e-9),
+        automaticAttackRows.every(
+          (row, index) => Math.abs(row.startTime - anchorTime - (5.5 + Math.floor(index / 2) * 6)) < 1e-9,
+        ),
       "The preset must use only the standard paired dummy attacks every six seconds from 5.5 seconds.",
     ).toBeTruthy();
     expect(

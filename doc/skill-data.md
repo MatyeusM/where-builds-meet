@@ -238,10 +238,12 @@ at the component's actual delayed start.
 
 Both Deflect and Deflect (Successful) ignore ping. Infernal Twinblades A1–A4
 and FA1–FA5 also ignore ping. Vile Condemned's
-VileCondemnedHit and VileCondemnedEndHit releases and all
-PhalanxbaneHeavySlam / PhalanxbaneHeavyFastSlam components also ignore ping.
-Their charge components retain ordinary latency. Drunken Poet composites pay
-once per selected Drink/Poet component, with no additional parent latency.
+VileCondemnedHit and VileCondemnedEndHit releases ignore ping; Vile Condemned's
+charge retains ordinary latency. All Burning Heart stages (1, 2, and 3) pay ping
+only on PhalanxbaneHeavyPreCharge. Their normal and fast charge and slam
+components ignore ping, as do the composite parents. Stage 1 goes directly from
+PreCharge to its selected slam without a separate charge component. Drunken Poet
+composites pay once per selected Drink/Poet component, with no additional parent latency.
 
 Rotation records may contain ping, a non-negative finite millisecond override.
 An absent value inherits the user's Settings ping (40 ms by default); zero
@@ -1541,7 +1543,7 @@ type RotationRecord = {
   name: string;
   eventTimeReference?: "battleStart";
   steps: Array<
-    | { type: "skill"; skill: string }
+    | { type: "skill"; skill: string; duration?: number }
     | { type: "event"; event: "Delay"; duration: number }
     | { type: "event"; event: "Exhausted"; after: AttachedEventTarget; duration?: number }
     | { type: "event"; event: "Move"; before: AttachedEventTarget; distance: number }
@@ -1567,6 +1569,11 @@ type AttachedEventTarget = {
   trigger?: number;
 };
 ```
+
+Skills with `editableCastTime: true` expose a duration input in the rotation
+editor. The skill step's optional finite, nonnegative `duration` replaces base
+cast time before timing modifiers; omission uses the skill's ordinary cast time.
+The field survives save, duplication, export, and import.
 
 Skill steps and `Delay` events are placed sequentially. A Delay starts when the
 preceding cast ends, advances every later sequential step by its nonnegative
@@ -1918,8 +1925,8 @@ Bellstrike Attack at `0.000168` per point, capped at `0.11`.
 
 The WIP Stonesplit Might data declares Thundercry Blade and Stormbreaker Spear
 skills, buffs, Vulnerable, weapon talents, Exquisite Scenery, Art of Resistance,
-and Formbend. Cast durations derived from the local WWM reference are 3.766s
-for Avalanche, 1s for Stonebreaker Cleave, 1.6s for Thunder Shock, 1s for Storm
+and Formbend. Avalanche uses the datamined charge-relative timings described
+below. Other reference cast durations are 1s for Stonebreaker Cleave, 1.6s for Thunder Shock, 1s for Storm
 Roar, and 1s for Predator's Shield. Thunder Shock hits at 0.4s and 1.2s; its
 cancel variant ends after the first hit at 0.4s. Until other per-hit timing is
 available, every remaining multi-hit Might skill places its hits at cast end.
@@ -1927,19 +1934,40 @@ At each Thunder Shock timestamp, damage resolves before its following
 Vulnerable application: hit one cannot benefit from its own application, while
 hit two sees the debuff from hit one and then refreshes it.
 
-The General Defense skill has zero cast time and applies one Cadence stack at
-cast start when Exquisite Scenery T0 or higher is selected. Preset rotations
-represent its 0.3-second animation with an explicit Delay immediately before
-each Defense step. Cadence lasts 20
-seconds and stacks twice. Each accepted Cadence application immediately tries
-to apply Riposte. Riposte lasts five seconds and has a 10-second cooldown. Only
-an accepted Riposte application consumes one Cadence stack and starts the
-hidden Riposte Trigger wait; when that wait ends, it tries Riposte again if
-Cadence remains. A failed attempt ends the chain, while a later Cadence
-application starts a new attempt. Exquisite Scenery T4 changes both the Riposte
-cooldown and the hidden trigger wait to five seconds. Riposte reduces
-Avalanche's cast and hit timing by two seconds and is consumed when the
-Avalanche cast starts.
+Avalanche has a 1.85-second charge followed by a 1.545-second release animation,
+for a full cast of 3.395 seconds. Its datamined hit offsets are measured from
+charge completion: 0.318 and 1.000 seconds, stored as 2.168 and 2.850 seconds
+from cast start. Riposte removes the 1.85-second charge, preserving the
+1.545-second release and the 0.318/1.000-second hits. The one-hit cancel variant
+retains its separately authored 2-second charge: it ends at 2.318 seconds
+normally or 0.318 seconds with Riposte.
+
+| Hit | Physical coefficient | Physical bonus | Attribute coefficient | Attribute bonus |
+| --- | -------------------: | -------------: | --------------------: | --------------: |
+| 1   |              1.94838 |            539 |               1.94838 |          293.65 |
+| 2   |           2.87636556 |        795.718 |            2.87636556 |        433.5113 |
+
+Defense holds for its rotation step's entered duration (default 0.3 seconds).
+It grants no effects at cast start. Every positive incoming attack during the
+hold is blocked and triggers Defense (Successful), which first attempts Riposte
+and then grants one Cadence stack when Exquisite Scenery T0 is selected. A paired
+dummy attack therefore grants Riposte plus two Cadence stacks when ready.
+Cadence lasts 20 seconds and stacks twice; applying Cadence alone does not trigger
+Riposte. Riposte lasts five seconds and has a 10-second cooldown. An accepted
+Riposte application consumes one existing Cadence stack, if any, and starts the
+hidden Riposte Trigger wait. At the end of that wait, remaining Cadence can grant
+Riposte again. A failed attempt ends the chain; a later successful defense can
+restart it. Exquisite Scenery T4 reduces both the cooldown and wait to five seconds.
+Cadence expires before conversion at its exact expiration timestamp. Riposte
+removes Avalanche's authored charge time and is consumed when
+Avalanche starts. Might's dummy preset uses paired incoming attacks and authored
+Defense durations ending 0.1 seconds after impact, without manual Cadence or Delay
+events. Its intended defended pairs are at 5.5, 17.5, 23.5, 29.5, 41.5, and
+53.5 seconds. The opening Stonebreaker Cleave uses its one-hit cancel variant.
+Battle Start is anchored to the opening Avalanche's first damage hit, at 2.168
+seconds into the cast. At the preset's 30 ms ping, the first Defense begins at
+5.476 seconds and holds for 0.124075 seconds, ending at 5.600 seconds. All six
+holds are authored against this first-hit battle clock.
 
 Battle Anthem and Adaptive Steel are alternative Stonesplit Might Inner Ways.
 Breaking Point is also available to both Stonesplit Strength and Stonesplit
@@ -2400,7 +2428,9 @@ that window do not replay.
 
 ### Incoming-attack response windows
 
-Skills declare `attackResponse: { endMargin: 0.1, onSuccess: "SkillId" }`.
+Skills declare `attackResponse: { onSuccess: "SkillId", endMargin?: number, perAttack?: boolean }`.
+`endMargin` enables automatic alignment to the next incoming attack. Defense
+omits it and uses its entered cast duration without an automatic attack wait.
 The window normally uses the skill's resolved weapon-dependent cast duration,
 including timing modifiers. `durationFrom: "PerfectDodge"` gives Perfect Dodge
 Cancel the normal dodge's modified window while its blocking cast duration stays
@@ -2416,8 +2446,10 @@ Both Deflect variants ignore ping; dodges retain normal ping.
 
 At a positive incoming hit within an active window, damage becomes zero and an
 internal `attackResponse` event runs setup talent hooks and triggers the data's
-`onSuccess` skill at the attack timestamp. Each defensive cast succeeds once;
-additional hits within its window are still avoided. Success effects therefore
+`onSuccess` skill at the attack timestamp. By default each defensive cast succeeds
+once; additional hits within its window are still avoided. `perAttack: true`
+repeats success for every positive incoming hit, including simultaneous dummy
+attacks. Defense uses this mode to award one Cadence stack per blocked hit. Success effects therefore
 precede later outgoing actions at the same timestamp without changing earlier
 snapshots. No upcoming attack means an ordinary cast and no success rewards.
 
@@ -2441,6 +2473,12 @@ the third four-HW VC. This keeps the following Celestial Mandate inside
 Exhausted, allowing its Falcon hit to reset VC's cooldown. Three four-HW releases
 and the final three-HW End Hit now land before the 60-second cutoff. DPS
 baselines remain review-gated separately from builds.
+
+Strength's Mixed Dummy Infinite Vitality preset enables paired dummy attacks and
+anchors combat start to the final hit of its first Fleeting Trace. At 40 ms ping,
+its canceled dodge catches the second pair at 11.5 seconds, activating Ghostly
+Steps' Mystery DMG Boost before both Soaring Spin hits. Battle End remains
+60 seconds after the selected starting hit.
 
 ### Heavenwill Gauntlets A1–A6 timing and A4 continuation
 
@@ -2470,3 +2508,90 @@ The A5 modifier uses the existing segmented `castTimeModifier` on original
 -0.103, and -0.102 seconds. This preserves the time-zero consumption while
 matching both faster hits and the faster interrupt independently. Consumption
 does not undo the modifier snapshot for the remainder of that A5 cast.
+
+### Total Annihilation timing and damage
+
+Total Annihilation (`PhalanxbaneQ`) uses a 0.7-second cast and a direct hit at
+0.311 seconds. Physical and attribute coefficients are both 1.8948, with
+physical bonus 525 and attribute bonus 286. Its 15-second cooldown and
+conditional Anxi Soldier follow-up at 0.913 seconds remain unchanged. The
+follow-up can resolve after the next skill has started.
+
+### General's Bane: Stab timing and damage
+
+General's Bane: Stab (`SnowpartingQStab`) casts for 1.15 seconds and hits at
+0.228 and 0.799 seconds. Physical and attribute coefficients are 0.85296 and
+1.27944, with physical bonuses 236 and 354 and attribute bonuses 128.8 and
+193.2. Fearful Blade application and Dread extension follow the second hit at
+0.799 seconds, followed by the conditional Anxi Soldier trigger at the same
+final-hit timestamp. Its 12-second, two-use cooldown is unchanged.
+
+### Fleeting Trace timing and damage
+
+Fleeting Trace (`SnowpartingSpecial`) casts for 2.066 seconds. Its nine hits
+land at 0.633, 1, 1.1, 1.2, 1.3, 1.6, 1.666, 1.733, and 1.8 seconds.
+The first eight hits each use physical and attribute coefficients of 0.377968,
+physical bonus 104.6, and attribute bonus 57. The final hit doubles those values
+to 0.755936, 209.2, and 114 respectively. Inner Passion and Dread applications
+remain at cast end, now 2.066 seconds. Its 20-second cooldown is unchanged.
+
+### Snowbreak Spring timing
+
+Snowbreak Spring (`SnowpartingHeavyVC`) casts for 0.857 seconds and hits at
+0.565 seconds. Its existing damage coefficients and bonuses are retained.
+Inner Passion consumption, Dread extension, and Forgetfulness cooldown/reset
+actions and the Anxi Soldier trigger remain synchronized with the direct hit
+at 0.565 seconds.
+
+### Heng Blade Anxi Soldier assist timing
+
+`AnxiSoldierSnowbreakSpring` and `AnxiSoldierGeneralsBaneStab` each resolve
+four attacks at 0.16, 0.40, 0.46, and 0.70 seconds relative to their trigger.
+Their damage coefficients and bonuses are unchanged. Snowbreak Spring triggers
+its assist at the 0.565-second direct hit; Stab triggers its assist at the
+0.799-second final hit. The delayed soldier attacks snapshot combat state at
+their individual hit times, and Qi events attached to a soldier action follow
+that action's offset.
+
+### Grave Frost charge and attack timing
+
+Grave Frost (`SnowpartingLightCharged`, Heng LC) has a 0.65-second charge
+followed by attacks at 0.183, 0.400, 0.521, and 0.946 seconds into the attack
+animation. Its interrupt is 1.182 seconds after charging, so the complete
+cast lasts 1.832 seconds and hits at 0.833, 1.050, 1.171, and 1.596 seconds.
+The existing Forgetfulness modifier subtracts 0.65 seconds from the cast and
+hit times, skipping only the charge. Its time-zero consumption stays at zero,
+and the timing modifier remains snapshotted after consumption. Damage values
+are unchanged; ping applies once per cast.
+
+### Legion Summon timing
+
+Legion Summon (`PhalanxbaneSpecial`) applies Iron Guard 1 second after cast
+start and finishes casting at 1.167 seconds. Iron Guard duration starts at its
+application timestamp. The existing cooldown and Steadfast Devotion T1
+cooldown/duration modifier are unchanged.
+
+### General's Bane variants and Slash
+
+General's Bane (`SnowpartingQ`) casts for 0.692 seconds and hits at 0.526
+seconds. General's Bane 2 (`SnowpartingQ2`) casts for 0.708 seconds and hits
+at 0.611 seconds. Both use physical and attribute coefficients of 1.2338,
+physical bonus 342, and attribute bonus 186. Bane 2 shares the existing
+`SnowpartingQ` 12-second, two-use cooldown window through `cooldownGroup`.
+
+General's Bane: Slash (`SnowpartingQSlash`) casts for 0.654 seconds. Its hits
+at 0.234 and 0.491 seconds use physical and attribute coefficients of
+0.596352 and 0.894528, physical bonuses 165.2 and 247.8, and attribute bonuses
+90 and 135. Its existing cooldown behavior is unchanged.
+
+The removed General's Bane - Slide opener is replaced by General's Bane followed
+by General's Bane 2 in the bundled Mixed starters. Their shared cooldown remains
+12 seconds with two uses. Saved and imported Slide steps migrate in place: the
+second legacy Slide becomes General's Bane 2, and the others become General's
+Bane. Step indices and attached-event anchors are preserved.
+
+### Heng Blade conversion cooldown
+
+Snowparting Conversion (`SnowpartingConversion`, Heng Tab) has a three-second
+cooldown. It uses ordinary cooldown readiness and then pays configured ping.
+Its 0.56-second cast and 0.498-second hit timing are unchanged.
