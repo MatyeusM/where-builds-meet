@@ -47,7 +47,7 @@
   "RodentHunt": {
     "name": "Rodent Hunt",
     "shortName": "RH",
-    "duration": 15,
+    "duration": 20,
     "maxStack": 1,
     "refresh": true,
     "shared": false,

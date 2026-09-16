@@ -793,7 +793,7 @@ event, and is excluded from simulation outcome-rate hit counts. The average
 calculator and Monte Carlo simulator use the same source-link resolution, so a
 simulation replay copies that run's randomized source hits.
 
-Vendetta T3 records Rodent-tagged hits during Rodent Hunt's 15-second window.
+Vendetta T3 records Rodent-tagged hits during Rodent Hunt's base 20-second window (user-confirmed despite the Inner Way's 15-second wording).
 Expiry and reapplication each settle the active window once at 30% of its
 recorded total. Source damage already includes Token, talents, and individual
 outcomes; the payout applies none of them again. Chronological resolution also

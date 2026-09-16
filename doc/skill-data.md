@@ -1499,7 +1499,7 @@ The three-second HP recovery and 4.5-second Qi recovery holds are outside this
 fixed-duration skill.
 
 T3 applies Rodent Hunt at Bladebound Thread's hit. This target effect records
-Rodent damage for 15 seconds and pays out 30% on expiry. Reapplication settles
+Rodent damage for 20 seconds by default and pays out 30% on expiry. This user-confirmed duration overrides the Inner Way description mentioning 15 seconds; it does not require a duration extension. Reapplication settles
 the previous window immediately, then starts a fresh window. Token refresh and
 extension actions cannot delay its settlement. FA5's extra Rodent attacks count;
 unrelated damage and settlement damage do not.
@@ -2743,8 +2743,7 @@ Battle End stops simulation 60 seconds later without deleting the remaining step
 The marked break sets target Qi to zero after the second hit of the specified FA1,
 so that hit lands before exhaustion and the following FA2 observes the break.
 
-Pre-pull deflects use ordinary Deflect, the first flute is a full cast, and the
-later flute uses its cancel variant. Rodent-only variants use zero cast time
+Pre-pull deflects use ordinary Deflect, and both flute casts use the cancel variant. Rodent-only variants use zero cast time
 and launch their Rodent without blade damage; A4/FA5 cancels retain damage
 through their last hit. Perfect Dodges align to the paired dummy attacks.
 The preset JSON is the source of truth for the evolving authored sequence,

@@ -93,10 +93,10 @@ describe("damage-recording", () => {
       cast("RodentRampage"),
       cast("InfernalLight1"),
       cast("InfernalFlamelashLight5"),
-      // Trigger after Hunt expires at 15.385s, before Rampage expires at 15.926s.
+      // Land a direct Rodent after Hunt expires at 20.385s.
       // Its delayed hit lands after Rampage expiry, outside the recording window.
-      delay(12.5),
-      cast("InfernalLight1"),
+      delay(17.5),
+      cast("Rodent"),
       delay(0.5),
     ];
     const result = calculateRotationBaseline(bundle(steps));
@@ -106,7 +106,11 @@ describe("damage-recording", () => {
       4,
       "One ordinary Rodent plus all three FA5 Rodents are recorded",
     );
-    close(payouts(result)[0].timelineTime, 15.385, "Hunt expires independently of the 20-second Token");
+    close(
+      payouts(result)[0].timelineTime,
+      20.385,
+      "Hunt uses its base 20-second window without a T4 duration modifier",
+    );
     checkPayouts(result);
     assert.equal(rodents(result).length, 5, "A later Rodent still attacks but is outside the recording window");
     const enhanced = calculateRotationBaseline(
@@ -115,8 +119,8 @@ describe("damage-recording", () => {
     assert.equal(rodents(enhanced).length, 15, "Vendetta ERR supplies fifteen automatic Rodents");
     assert.equal(
       payouts(enhanced)[0].replay.sourceEntryIds.length,
-      12,
-      "Hunt records only the automatic Rodents landing inside its window",
+      15,
+      "The 20-second Hunt records all fifteen automatic Rodents",
     );
     checkPayouts(enhanced);
     assert.ok(damage(enhanced, rodents(enhanced)) > 0, "Automatic Rodents contribute calculated damage");
@@ -157,7 +161,7 @@ describe("damage-recording", () => {
     );
     assert.equal(payouts(reapply).length, 2, "Reapply settles old hits and expiry settles new hits once");
     close(payouts(reapply)[0].timelineTime, 8.385, "Reapplication settles immediately");
-    close(payouts(reapply)[1].timelineTime, 23.385, "Old expiry does not settle the replacement window");
+    close(payouts(reapply)[1].timelineTime, 28.385, "Old expiry does not settle the replacement window");
     assert.deepEqual(
       payouts(reapply).map((entry) => entry.replay.sourceEntryIds.length),
       [1, 1],
@@ -168,18 +172,18 @@ describe("damage-recording", () => {
       bundle([
         cast("BladeboundThreadCancel"),
         cast("Rodent"),
-        delay(14.615),
+        delay(19.615),
         cast("BladeboundThreadCancel"),
         cast("Rodent"),
-        delay(16),
+        delay(21),
       ]),
     );
     assert.equal(payouts(boundary).length, 2, "Same-time expiry and reapplication settle each activation once");
-    close(payouts(boundary)[0].timelineTime, 15.385, "Old activation settles at the boundary");
-    close(payouts(boundary)[1].timelineTime, 30.385, "New activation retains its full window");
+    close(payouts(boundary)[0].timelineTime, 20.385, "Old activation settles at the boundary");
+    close(payouts(boundary)[1].timelineTime, 40.385, "New activation retains its full window");
     checkPayouts(boundary);
     const exact = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(14.5), cast("Rodent"), delay(1)]),
+      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(19.5), cast("Rodent"), delay(1)]),
     );
     assert.equal(
       payouts(exact)[0].replay.sourceEntryIds.length,
@@ -187,11 +191,11 @@ describe("damage-recording", () => {
       "Hit at the exclusive expiration boundary is not recorded",
     );
     const fixed = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Extend"), cast("Token"), delay(16)]),
+      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Extend"), cast("Token"), delay(21)]),
     );
-    close(payouts(fixed)[0].timelineTime, 15.385, "Extension and Token refresh do not delay settlement");
+    close(payouts(fixed)[0].timelineTime, 20.385, "Extension and Token refresh do not delay settlement");
     assert.equal(
-      payouts(calculateRotationBaseline(bundle([cast("BladeboundThreadCancel"), delay(16)]))).length,
+      payouts(calculateRotationBaseline(bundle([cast("BladeboundThreadCancel"), delay(21)]))).length,
       0,
       "Empty window emits no damage",
     );
@@ -201,7 +205,7 @@ describe("damage-recording", () => {
     const ended = bundle([
       cast("BladeboundThreadCancel"),
       cast("Rodent"),
-      { type: "event", event: "BattleEnd", startTime: 15.385 },
+      { type: "event", event: "BattleEnd", startTime: 20.385 },
     ]);
     ended.timeline.eventDefinitions.BattleEnd = { name: "Battle End", action: [] };
     assert.equal(
@@ -209,7 +213,7 @@ describe("damage-recording", () => {
       0,
       "Battle End excludes a settlement at its timestamp",
     );
-    const precombat = bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Rodent"), delay(16)]);
+    const precombat = bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Rodent"), delay(21)]);
     precombat.startAnchor = { rowId: "rotation-3" };
     const anchored = calculateRotationBaseline(precombat);
     const full = calculateRotationBaseline(bundle(precombat.timeline.rotation.steps));
