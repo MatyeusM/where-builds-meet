@@ -58,7 +58,10 @@
       "ThundercryBlade",
       "StormbreakerSpear",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "VernalUmbrella",
+      "InkwellFan"
     ],
     "options": {
       "0": {
@@ -165,7 +168,10 @@
       "StrategicSword",
       "HeavenQuakerSpear",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "VernalUmbrella",
+      "InkwellFan"
     ],
     "options": {
       "0": {
@@ -215,7 +221,13 @@
       "SnowpartingBlade",
       "PhalanxbaneBlade",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "BamboocutDust",
+      "VernalUmbrella",
+      "InkwellFan",
+      "EverspringUmbrella",
+      "UnfetteredRopeDart"
     ],
     "options": {
       "0": {
@@ -262,7 +274,14 @@
   "Jadeware": {
     "name": "Jadeware",
     "altersTimeline": false,
-    "tags": [],
+    "tags": [
+      "BellstrikeSplendor",
+      "BellstrikeUmbra",
+      "NamelessSword",
+      "NamelessSpear",
+      "StrategicSword",
+      "HeavenQuakerSpear"
+    ],
     "options": {
       "0": {
         "name": "0",
@@ -507,7 +526,7 @@
   "Mistwillow": {
     "name": "Mistwillow",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["SilkbindJade", "VernalUmbrella", "InkwellFan"],
     "options": {
       "0": {
         "name": "0",
@@ -534,7 +553,7 @@
   "Starweave": {
     "name": "Starweave",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["BamboocutDust", "EverspringUmbrella", "UnfetteredRopeDart"],
     "options": {
       "0": {
         "name": "0",
@@ -561,7 +580,7 @@
   "Tiltrim": {
     "name": "Tiltrim",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["BamboocutDraught", "SkystrikeGauntlets", "RivenTwinblades"],
     "options": {
       "0": {
         "name": "0",
