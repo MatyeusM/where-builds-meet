@@ -1,4 +1,4 @@
-import { expect, it } from "vitest"
+import { assert, expect, it } from "vitest"
 
 import paths from "../data/path.json"
 import preset from "../data/rotation/stonesplit-might/dummy-1-min.json"
@@ -47,7 +47,8 @@ it("Might holds Defense through the intended dummy pairs and stores two Cadence 
     )
     expect(next?.buffs.find(effect => effect.name === "Cadence")?.stack).toBe(2)
     // Later defenses can occur during the cooldown of a stored-Cadence conversion.
-    if (defense === defenses[0]) expect(next?.buffs.some(effect => effect.name === "Riposte")).toBe(true)
+    if (defense === defenses[0])
+      assert(next?.buffs.some(effect => effect.name === "Riposte") === true, "First defense must grant Riposte.")
   }
   expect(
     timeline.some(row => row.step.type === "event" && row.step.event === "Buff" && row.step.buff === "Cadence"),

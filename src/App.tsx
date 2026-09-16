@@ -2616,10 +2616,7 @@ function CalculationStatus({
   )
   const { recalculating, progress } = statuses[category]
   const percentage = Math.round(progress * 100)
-  const progressStyle = useMemo(
-    () => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties,
-    [percentage],
-  )
+  const progressStyle = useMemo(() => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties, [percentage])
   return (
     <div
       className={`calculation-status ${className} ${recalculating ? "" : "idle"}`}
@@ -6816,14 +6813,7 @@ function RotationEditorTab({
           .join(" "),
         minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
       }) as CSSProperties,
-    [
-      showDistanceColumn,
-      showSelfHPColumn,
-      showTargetHPColumn,
-      showQiColumn,
-      showHeavensWillColumn,
-      showVitalityColumn,
-    ],
+    [showDistanceColumn, showSelfHPColumn, showTargetHPColumn, showQiColumn, showHeavensWillColumn, showVitalityColumn],
   )
   const totalRotationTime = currentCachedResult?.duration ?? 0
   const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0

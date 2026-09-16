@@ -14,7 +14,7 @@ it("Infinite Vitality starts on Fleeting Trace's final hit and dodges the second
   )!
   const result = calculateRotationBaseline(bundle)
   const firstTrace = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "SnowpartingSpecial")!
-  const lastHit = firstTrace.actions.filter(action => action.type === "damage").at(-1)!
+  const lastHit = firstTrace.actions.findLast(action => action.type === "damage")!
   expect(result.anchorTime).toBeCloseTo(firstTrace.startTime + Number(lastHit.time), 8)
   expect(result.duration).toBeCloseTo(60, 8)
   const success = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "PerfectDodgeSuccess")

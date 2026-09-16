@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import buffs from "../data/buff/bamboocut-kite.json"
 import skills from "../data/skill/heavenwill-gauntlets.json"
@@ -49,9 +49,13 @@ describe("Heavenwill attack timings", () => {
       expect(hits(row)).toEqual(hitTimes)
       expect(find(rows, "Observe")[0].startTime).toBeCloseTo(0.04 + duration + 0.04)
       for (const [index, action] of row.actions.entries())
-        if (action.type === "damage") expect(row.actionStates[index]).toBeDefined()
+        if (action.type === "damage")
+          assert(row.actionStates[index] !== undefined, "Damage action must have a resolved state.")
       if (skill.startsWith("RighteousReign6"))
-        expect(find(rows, "LightAttackFalcon")[0].startTime).toBeCloseTo(row.startTime + 0.256)
+        assert(
+          Math.abs(find(rows, "LightAttackFalcon")[0].startTime - (row.startTime + 0.256)) < 0.005,
+          "Cancel follow-up must start 0.256s after the cast.",
+        )
     },
   )
   it("applies A4 at cast end and snapshots the fast A5 timings before consuming the marker", () => {

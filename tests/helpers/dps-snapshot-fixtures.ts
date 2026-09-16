@@ -30,33 +30,40 @@ export const dpsSnapshotEnvironment = {
 }
 export async function loadDpsSnapshotFixtures() {
   const paths = JSON.parse(await readFile(new URL("path.json", dataRoot), "utf8"))
-  const cases = []
-  for (const pathId of Object.keys(paths).sort()) {
-    const definition = paths[pathId]
-    if (definition.status !== "available") continue
-    const directory = new URL("rotation/" + definition.buildGroup + "/", dataRoot)
-    for (const file of (await readdir(directory)).filter(file => file.endsWith(".json")).sort()) {
-      const rotationId = file.slice(0, -5)
-      const id = pathId + "/" + rotationId
-      const rotation = JSON.parse(await readFile(new URL(file, directory), "utf8")) as RotationRecord & {
-        martialArts: Environment["martialArts"]
-      }
-      if (!rotation.steps.length) continue
-      cases.push({
-        id,
-        pathId: pathId as Environment["pathId"],
-        buildGroup: definition.buildGroup as string,
-        rotation,
-        fixture: {
-          build: snapshotBuildOverrides[id] ?? (definition.defaultBuild as string),
-          rotation: rotationId,
-          martialArts: rotation.martialArts!,
-          ...dpsSnapshotEnvironment,
-          ping: resolvePing(rotation.ping, dpsSnapshotEnvironment.ping),
-        },
-      })
-    }
-  }
+  const availablePathIds = Object.keys(paths)
+    .sort()
+    .filter(pathId => paths[pathId].status === "available")
+  const nested = await Promise.all(
+    availablePathIds.map(async pathId => {
+      const definition = paths[pathId]
+      const directory = new URL("rotation/" + definition.buildGroup + "/", dataRoot)
+      const files = (await readdir(directory)).filter(file => file.endsWith(".json")).sort()
+      return Promise.all(
+        files.map(async file => {
+          const rotationId = file.slice(0, -5)
+          const id = pathId + "/" + rotationId
+          const rotation = JSON.parse(await readFile(new URL(file, directory), "utf8")) as RotationRecord & {
+            martialArts: Environment["martialArts"]
+          }
+          if (!rotation.steps.length) return undefined
+          return {
+            id,
+            pathId: pathId as Environment["pathId"],
+            buildGroup: definition.buildGroup as string,
+            rotation,
+            fixture: {
+              build: snapshotBuildOverrides[id] ?? (definition.defaultBuild as string),
+              rotation: rotationId,
+              martialArts: rotation.martialArts!,
+              ...dpsSnapshotEnvironment,
+              ping: resolvePing(rotation.ping, dpsSnapshotEnvironment.ping),
+            },
+          }
+        }),
+      )
+    }),
+  )
+  const cases = nested.flat().filter(entry => entry !== undefined)
   if (!cases.length) throw new Error("No preset rotations found for DPS snapshots.")
   for (const id of Object.keys(snapshotBuildOverrides))
     if (!cases.some(entry => entry.id === id)) throw new Error("Stale snapshot build override: " + id)

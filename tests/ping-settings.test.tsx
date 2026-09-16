@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { afterEach, assert, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import App from "../src/App"
@@ -9,10 +9,10 @@ import { requestRotationBaseline, requestEditorTimeline } from "../src/calculati
 import { initializeI18n } from "../src/i18n"
 
 vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn(() => new Promise(() => {})),
-  requestRotationComparisons: vi.fn(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn(() => new Promise(() => {})),
-  supersedeRotationCalculationRequests: vi.fn(),
+  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
+  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
+  requestEditorTimeline: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
+  supersedeRotationCalculationRequests: vi.fn<() => void>(),
 }))
 
 let container: HTMLDivElement
@@ -44,7 +44,7 @@ afterEach(async () => {
 })
 async function click(text: string) {
   const button = [...container.querySelectorAll("button")].find(node => node.textContent?.trim() === text)
-  expect(button, text).toBeDefined()
+  assert(button !== undefined, text)
   await act(async () => button!.click())
 }
 async function fill(input: HTMLInputElement, value: string) {

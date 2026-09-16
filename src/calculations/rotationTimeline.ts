@@ -1378,13 +1378,16 @@ function buildRotationTimelinePass(
   const regenerateResources = (time: number) => {
     const elapsed = Math.max(0, time - lastResourceRegenerationTime)
     if (elapsed > 0) {
-      resources = Object.entries(resourceRegeneration).reduce((next, [name, rate]) => {
-        if (infiniteResources.has(name)) return next
-        const before = next[name] ?? 0
-        const after = clampResource(name, before + rate * elapsed)
-        recordResourceChange(name, before, after, "regenerate")
-        return Object.assign(next, { [name]: after })
-      }, Object.assign({}, resources))
+      resources = Object.entries(resourceRegeneration).reduce(
+        (next, [name, rate]) => {
+          if (infiniteResources.has(name)) return next
+          const before = next[name] ?? 0
+          const after = clampResource(name, before + rate * elapsed)
+          recordResourceChange(name, before, after, "regenerate")
+          return Object.assign(next, { [name]: after })
+        },
+        Object.assign({}, resources),
+      )
     }
     lastResourceRegenerationTime = Math.max(lastResourceRegenerationTime, time)
   }

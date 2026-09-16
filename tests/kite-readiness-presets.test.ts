@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import regular from "../data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json"
 import bp from "../data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json"
@@ -49,7 +49,7 @@ describe("Kite preset release readiness", () => {
       expect(row.startTime + Number(hit!.time) - result.anchorTime).toBeLessThan(result.duration)
       const damageIndex = row.actions.findIndex(action => action.type === "damage")
       const bonus = row.actionModifierEffects?.[damageIndex]?.some(effect => effect.baseDMGBonus === 0.3)
-      if (index < 3) expect(bonus).toBe(true)
+      if (index < 3) assert(bonus === true, "First three casts must carry the 0.3 base damage bonus.")
       expect(row.resourceConsumption?.HeavensWill).toBe(index < 3 ? 4 : 3)
     }
   })

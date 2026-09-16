@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 
@@ -102,10 +102,10 @@ describe("breaking-point", () => {
           resourceMaximums: { Vitality: 40 },
         })
       const timeline = runDodgeProbe(6)
-      expect(
-        timeline.filter(row => row.step.skill === "Observe").at(-1).resources.Vitality === 9,
+      assert(
+        timeline.findLast(row => row.step.skill === "Observe")!.resources.Vitality === 9,
         "All three dodges must grant Vitality even when the BP T6 proc is on cooldown.",
-      ).toBeTruthy()
+      )
       const observedStacks = timeline
         .filter(row => row.step.skill === "Observe")
         .map(row => row.buffs.find(effect => effect.name === "Disintegration")?.stack ?? 0)

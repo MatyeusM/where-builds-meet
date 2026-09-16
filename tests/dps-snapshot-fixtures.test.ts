@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises"
 
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import { resolvePing } from "../src/calculations/combatDefaults"
 import { loadDpsSnapshotFixtures, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures"
@@ -13,22 +13,34 @@ describe("rotation DPS snapshot fixtures", () => {
     const paths = JSON.parse(await readFile("data/path.json", "utf8"))
     const files = await readdir("data/rotation", { recursive: true })
     const expected = []
-    for (const file of files.filter(file => file.endsWith(".json"))) {
-      const rotation = JSON.parse(await readFile("data/rotation/" + file, "utf8"))
-      expect(Number.isFinite(rotation.ping), "Preset must store its own ping: " + file).toBe(true)
-      expect(resolvePing(rotation.ping, 85), "Preset ping must ignore Settings: " + file).toBe(rotation.ping)
+    const rotationSources = await Promise.all(
+      files
+        .filter(file => file.endsWith(".json"))
+        .map(async file => [file, await readFile("data/rotation/" + file, "utf8")] as const),
+    )
+    for (const [file, source] of rotationSources) {
+      const rotation = JSON.parse(source)
+      assert(Number.isFinite(rotation.ping), "Preset must store its own ping: " + file)
+      assert(resolvePing(rotation.ping, 85) === rotation.ping, "Preset ping must ignore Settings: " + file)
       if (!rotation.steps.length) continue
       const group = file.replaceAll("\\", "/").split("/")[0]
       const pathId = Object.keys(paths).find(id => paths[id].buildGroup === group)
-      expect(pathId, "Rotation has no path: " + file).toBeDefined()
-      expect(paths[pathId!].status, "Non-empty preset must be included in DPS coverage: " + file).toBe("available")
+      assert(pathId !== undefined, "Rotation has no path: " + file)
+      assert(paths[pathId!].status === "available", "Non-empty preset must be included in DPS coverage: " + file)
       expected.push(pathId + "/" + file.replaceAll("\\", "/").split("/").at(-1)!.slice(0, -5))
     }
     expect(cases.map(c => c.id).sort()).toEqual(expected.sort())
-    for (const entry of cases) {
-      const build = JSON.parse(
-        await readFile("data/build/" + entry.buildGroup + "/" + entry.fixture.build + ".json", "utf8"),
-      )
+    const buildSources = await Promise.all(
+      cases.map(
+        async entry =>
+          [
+            entry,
+            await readFile("data/build/" + entry.buildGroup + "/" + entry.fixture.build + ".json", "utf8"),
+          ] as const,
+      ),
+    )
+    for (const [entry, source] of buildSources) {
+      const build = JSON.parse(source)
       expect(build.martialArts.slice().sort()).toEqual(entry.fixture.martialArts.slice().sort())
       expect(entry.fixture.ping).toBe(entry.rotation.ping)
     }
@@ -42,7 +54,7 @@ describe("rotation DPS snapshot fixtures", () => {
     expect(selectDpsSnapshotUpdates("kite/bp deluge/wts", ids)).toEqual(["deluge/wts", "kite/bp"])
     expect(selectDpsSnapshotUpdates("all", ids)).toEqual(ids)
     for (const selector of ["missing", "kite kite/bp", "kite/bp kite/bp", "kit"])
-      expect(() => selectDpsSnapshotUpdates(selector, ids)).toThrow()
+      expect(() => selectDpsSnapshotUpdates(selector, ids)).toThrow(/DPS snapshot selector/)
   })
   it("detects a sibling rotation regression or missing baseline independently", () => {
     const sample = (dps: number) => ({ fixture: { build: "same" }, dps, totalDamage: dps * 60, duration: 60 })

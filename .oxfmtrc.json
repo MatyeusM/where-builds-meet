@@ -12,6 +12,7 @@
     "dist-preview/",
     "local/",
     "public/ocr/",
+    "public/locales/manifest.json",
     ".agents/",
     "*.log",
     "*.traineddata"

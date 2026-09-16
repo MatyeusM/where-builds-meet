@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import mysticBuffs from "../data/buff/mystic.json"
 import general from "../data/skill/general.json"
@@ -196,7 +196,11 @@ describe("ping scheduling", () => {
       expect(zeroHits.length).toBeGreaterThan(0)
       expect(delayedHits).toHaveLength(zeroHits.length)
       delayedHits.forEach((time, index) => expect(time - zeroHits[index]).toBeCloseTo(0.04, 8))
-      if (stage === 3 && fast) expect(delayed[0].effectiveCastTime).toBeCloseTo(2.4608333333333334, 8)
+      if (stage === 3 && fast)
+        assert(
+          Math.abs(delayed[0].effectiveCastTime - 2.4608333333333334) < 5e-9,
+          "Stage 3 fast cast must account for the full ping delay.",
+        )
     },
   )
 

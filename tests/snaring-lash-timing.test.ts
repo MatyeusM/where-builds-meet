@@ -1,4 +1,4 @@
-import { it, expect } from "vitest"
+import { assert, expect, it } from "vitest"
 
 import skills from "../data/skill/skygrasp-rope-dart.json"
 import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
@@ -33,7 +33,11 @@ it.each([
   expect(hits).toHaveLength(hitTimes.length)
   for (const [index, actionIndex] of hits.entries()) {
     expect(cast.startTime + Number(cast.actions[actionIndex].time)).toBeCloseTo(hitTimes[index])
-    if (index > 0) expect(cast.actionStates[actionIndex].debuffs.some(b => b.name === "HeavensMight")).toBe(true)
+    if (index > 0)
+      assert(
+        cast.actionStates[actionIndex].debuffs.some(b => b.name === "HeavensMight") === true,
+        "Later hits must apply HeavensMight.",
+      )
   }
   expect(cast.startTime + Number(cast.actions[0].time)).toBeCloseTo(0.405)
   expect(cast.actionStates[0].debuffs.some(b => b.name === "HeavensMight")).toBe(false)

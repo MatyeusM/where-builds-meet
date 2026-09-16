@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 import effects from "../data/debuff/bamboocut-kite.json"
 import skills from "../data/skill/heavenwill-gauntlets.json"
@@ -65,7 +65,8 @@ describe("Vile Condemned pre-charge readiness", () => {
       action: [{ type: "apply", target: "self", value: "VileCondemnedEndCooldown", duration: expiry, time: 0 }],
     }
     data.rotation.steps.unshift(cast("Cooldown"))
-    verifyRelease(data, ready, 4)
+    const { row: cooldownRow } = verifyRelease(data, ready, 4)
+    assert(!cooldownRow.skipped, "Cooldown and resource wait must release the cast.")
   })
   it("includes pending resource gains during the future charge", () => {
     const data = input()
@@ -77,7 +78,8 @@ describe("Vile Condemned pre-charge readiness", () => {
       action: [{ type: "addResource", value: "HeavensWill", amount: 1, time: 2 }],
     }
     data.rotation.steps.unshift(cast("Pending"))
-    verifyRelease(data, 2, 4)
+    const { row: pendingRow } = verifyRelease(data, 2, 4)
+    assert(!pendingRow.skipped, "Pending resource gain must release the cast.")
   })
   it("includes a queued Falcon cooldown reset through the ordinary trigger executor", () => {
     const data = input()
@@ -99,7 +101,8 @@ describe("Vile Condemned pre-charge readiness", () => {
       },
     ]
     data.rotation.steps.unshift(cast("Falcon"))
-    verifyRelease(data, 2, 4)
+    const { row: falconRow } = verifyRelease(data, 2, 4)
+    assert(!falconRow.skipped, "Falcon cooldown reset must release the cast.")
   })
   it("processes same-time spending before accepting release readiness", () => {
     const data = input()
@@ -113,7 +116,8 @@ describe("Vile Condemned pre-charge readiness", () => {
       ],
     }
     data.rotation.steps.unshift(cast("Pending"))
-    verifyRelease(data, 3, 4)
+    const { row: spendingRow } = verifyRelease(data, 3, 4)
+    assert(!spendingRow.skipped, "Same-time spending must release the cast.")
   })
   it("replays prior accepted waits without losing the shared End Hit cooldown", () => {
     const data = input()
