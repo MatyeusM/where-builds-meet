@@ -2080,6 +2080,9 @@ function StatField({
   )
 }
 
+const emptyPriorityRows: RotationPriority[] = []
+const tabSuspenseFallback = <div className="viewport-tab-content" />
+
 function PriorityPanel({
   title,
   rows,
@@ -2201,7 +2204,7 @@ function PriorityPanel({
 function BreakdownGroupTable({
   title,
   rows,
-  healingRows = [],
+  healingRows,
   colored = false,
 }: {
   title: string
@@ -2209,7 +2212,7 @@ function BreakdownGroupTable({
   healingRows?: RotationHealingGroupBreakdown[]
   colored?: boolean
 }) {
-  const hasHealing = healingRows.some(row => row.healing > 0)
+  const hasHealing = (healingRows ?? []).some(row => row.healing > 0)
   return (
     <section className="panel breakdown-panel">
       <div className="panel-heading">
@@ -2241,7 +2244,7 @@ function BreakdownGroupTable({
               <span>{t("ui.app.healing")}</span>
               <span>{t("ui.app.total")}</span>
             </div>
-            {healingRows
+            {(healingRows ?? [])
               .filter(row => row.healing > 0)
               .map(row => (
                 <div className="breakdown-table-row" key={row.id}>
@@ -2613,10 +2616,14 @@ function CalculationStatus({
   )
   const { recalculating, progress } = statuses[category]
   const percentage = Math.round(progress * 100)
+  const progressStyle = useMemo(
+    () => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties,
+    [percentage],
+  )
   return (
     <div
       className={`calculation-status ${className} ${recalculating ? "" : "idle"}`}
-      style={{ "--calculation-progress": `${percentage}%` } as CSSProperties}
+      style={progressStyle}
       aria-live="polite"
     >
       <progress
@@ -3885,14 +3892,14 @@ function StatsTab({
           </section>
           <PriorityPanel
             title={t("ui.app.statsPriority")}
-            rows={rotationMetrics?.statPriority ?? []}
+            rows={rotationMetrics?.statPriority ?? emptyPriorityRows}
             calculationCategory="statPriority"
             showMaxRoll
             showHealing={Boolean(rotationMetrics && rotationMetrics.hps > 0)}
           />
           <PriorityPanel
             title={t("ui.app.attunementStatsPriority")}
-            rows={rotationMetrics?.attunementPriority ?? []}
+            rows={rotationMetrics?.attunementPriority ?? emptyPriorityRows}
             calculationCategory="attunementPriority"
             sectionBreakAt={2}
             showMaxRoll
@@ -3900,7 +3907,7 @@ function StatsTab({
           />
           <PriorityPanel
             title={t("ui.app.innerWaysPriority")}
-            rows={rotationMetrics?.innerWayPriority ?? []}
+            rows={rotationMetrics?.innerWayPriority ?? emptyPriorityRows}
             calculationCategory="innerWays"
             showHealing={Boolean(rotationMetrics && rotationMetrics.hps > 0)}
           />
@@ -6794,6 +6801,30 @@ function RotationEditorTab({
       }),
     [calculationDefinitions, rotation.steps],
   )
+  const rotationTableStyle = useMemo(
+    () =>
+      ({
+        "--rotation-state-columns": [
+          showDistanceColumn ? "10ch" : "",
+          showSelfHPColumn ? "8ch" : "",
+          showTargetHPColumn ? "8ch" : "",
+          showQiColumn ? "8ch" : "",
+          showHeavensWillColumn ? "13ch" : "",
+          showVitalityColumn ? "10ch" : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
+      }) as CSSProperties,
+    [
+      showDistanceColumn,
+      showSelfHPColumn,
+      showTargetHPColumn,
+      showQiColumn,
+      showHeavensWillColumn,
+      showVitalityColumn,
+    ],
+  )
   const totalRotationTime = currentCachedResult?.duration ?? 0
   const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0
   const rotationDps = currentCachedResult?.metrics.dps ?? 0
@@ -7678,24 +7709,7 @@ function RotationEditorTab({
               </span>
             </div>
             <div className="rotation-scroll-content" ref={rotationScrollRef}>
-              <div
-                className="rotation-table"
-                style={
-                  {
-                    "--rotation-state-columns": [
-                      showDistanceColumn ? "10ch" : "",
-                      showSelfHPColumn ? "8ch" : "",
-                      showTargetHPColumn ? "8ch" : "",
-                      showQiColumn ? "8ch" : "",
-                      showHeavensWillColumn ? "13ch" : "",
-                      showVitalityColumn ? "10ch" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                    minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
-                  } as CSSProperties
-                }
-              >
+              <div className="rotation-table" style={rotationTableStyle}>
                 <div className="rotation-table-header">
                   <span></span>
                   <span>#</span>
@@ -8730,6 +8744,10 @@ export default function App() {
     () => ({ ...buildState, activeBuildId: activeBuild?.id ?? "" }),
     [activeBuild?.id, buildState],
   )
+  const buildTabMartialArtTags = useMemo(
+    () => settings.weapons.map(weapon => martialArtDefinitions[weapon].tag),
+    [settings.weapons],
+  )
   const selectedRotationId = activeRotationIdsByPath[pathId] ?? defaultRotationIdForPath(pathId)
   const activeBuildDisplayName = activeBuild
     ? (activeBuild.isDefault ? gameText(activeBuild.name) : activeBuild.name) || "Unnamed Build"
@@ -9145,11 +9163,11 @@ export default function App() {
         />
       ) : activeTab === "build" ? (
         <FeatureLoadBoundary>
-          <Suspense fallback={<div className="viewport-tab-content" />}>
+          <Suspense fallback={tabSuspenseFallback}>
             <div className="viewport-tab-content">
               <BuildTab
                 weapons={settings.weapons}
-                martialArtTags={settings.weapons.map(weapon => martialArtDefinitions[weapon].tag)}
+                martialArtTags={buildTabMartialArtTags}
                 pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildId={typedPathDefinitions[pathId].graduated}

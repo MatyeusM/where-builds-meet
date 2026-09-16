@@ -42,13 +42,14 @@ export class ExpectedPeriodicTracker {
   private sharedTick?: number
   private branches = new Map<string | undefined, PeriodicPartition>([[undefined, { inactive: 1, owners: new Map() }]])
   private readonly createList: () => PeriodicStateList
+  private readonly interval: number
+  private readonly firstTick: number
+  private readonly tickOrigin?: number
 
-  constructor(
-    private readonly interval: number,
-    private readonly firstTick: number,
-    private readonly tickOrigin?: number,
-    storage: PeriodicStateStorage = "indexed",
-  ) {
+  constructor(interval: number, firstTick: number, tickOrigin?: number, storage: PeriodicStateStorage = "indexed") {
+    this.interval = interval
+    this.firstTick = firstTick
+    this.tickOrigin = tickOrigin
     this.createList = periodicStateListFactory(storage)
   }
 

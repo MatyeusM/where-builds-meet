@@ -116,9 +116,31 @@ function stackedBuildLayoutSnapshot() {
   return window.matchMedia(stackedBuildLayoutQuery).matches
 }
 
-function ResponsiveBuildOverview({ children, setup }: { children: ReactElement; setup: ReactElement }) {
+function ResponsiveBuildOverview({ children }: { children: [ReactElement, ReactElement] }) {
   const setupFirst = useSyncExternalStore(subscribeToStackedBuildLayout, stackedBuildLayoutSnapshot, () => false)
-  return <div className="build-overview-grid">{setupFirst ? [setup, children] : [children, setup]}</div>
+  const [setup, gear] = children
+  return <div className="build-overview-grid">{setupFirst ? [setup, gear] : [gear, setup]}</div>
+}
+
+const noGearOptions: string[] = []
+
+const attunementOptionCache = new Map<string, string[]>()
+function cachedAttunementOptions(
+  definitionId: string,
+  pathTag: string | undefined,
+  martialArtTags: string[],
+): string[] {
+  const cacheKey = `${definitionId}|${pathTag ?? ""}|${martialArtTags.join(",")}`
+  const cached = attunementOptionCache.get(cacheKey)
+  if (cached) return cached
+  const definition = gearData.gear[definitionId]
+  const options = (definition ? attunementsForGearDefinition(definition) : noGearOptions).filter(key => {
+    const tags = attunementData[key]?.tags ?? []
+    if (tags.includes("Weapon")) return true
+    return (!pathTag || tags.includes(pathTag)) && martialArtTags.some(tag => tags.includes(tag))
+  })
+  attunementOptionCache.set(cacheKey, options)
+  return options
 }
 
 function displayValue(value: number, definition?: { percentage?: boolean }) {
@@ -1022,34 +1044,28 @@ function BuildManagement({
 
   const baseAffixOptions = selected.definition
     ? affixOptionsForGearDefinition(selected.definition, "baseAffixes", draft.level, draft.relayed)
-    : []
+    : noGearOptions
   const additionalAffixOptions = selected.definition
     ? affixOptionsForGearDefinition(selected.definition, "additionalAffixes", draft.level, draft.relayed)
-    : []
-  const attunementOptions = (selected.definition ? attunementsForGearDefinition(selected.definition) : []).filter(
-    key => {
-      const tags = attunementData[key]?.tags ?? []
-      if (tags.includes("Weapon")) return true
-      return (!pathTag || tags.includes(pathTag)) && martialArtTags.some(tag => tags.includes(tag))
-    },
+    : noGearOptions
+  const attunementOptions = cachedAttunementOptions(selected.definitionId, pathTag, martialArtTags)
+  const selectedAdditionalKeys = useMemo(
+    () => new Set(draft.additionalAffixes.map(affix => affix.key).filter(Boolean)),
+    [draft.additionalAffixes],
   )
-  const selectedAdditionalKeys = new Set(draft.additionalAffixes.map(affix => affix.key).filter(Boolean))
 
   return (
     <div className="build-page">
-      <ResponsiveBuildOverview
-        setup={
-          <BuildSetupPanel
-            key="setup"
-            setup={setup}
-            affixSummary={affixSummary}
-            martialArtTags={martialArtTags}
-            pathTag={pathTag}
-            locked={locked}
-            onChange={onSetupChange}
-          />
-        }
-      >
+      <ResponsiveBuildOverview>
+        <BuildSetupPanel
+          key="setup"
+          setup={setup}
+          affixSummary={affixSummary}
+          martialArtTags={martialArtTags}
+          pathTag={pathTag}
+          locked={locked}
+          onChange={onSetupChange}
+        />
         <div key="gear" className="build-management-grid">
           <section className="panel build-equipped-panel">
             <div className="panel-heading">

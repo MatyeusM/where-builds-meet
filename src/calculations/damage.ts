@@ -373,7 +373,7 @@ function calculateDamageBreakdownInternal(
           penetrationMultiplier(penetration + (attribute === path ? attunementFormlessPenetration : 0), resistance) *
           (1 + damageBonus) *
           (attribute === path ? 1.5 : 1)
-        return { ...total, [attribute]: total[attribute as keyof typeof total] + damage }
+        return Object.assign(total, { [attribute]: total[attribute as keyof typeof total] + damage })
       },
       { bellstrike: 0, stonesplit: 0, silkbind: 0, bamboocut: 0 },
     )

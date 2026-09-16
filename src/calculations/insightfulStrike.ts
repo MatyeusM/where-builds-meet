@@ -106,10 +106,7 @@ export function insightfulStrikeEffectFor(
     const resourceModifiers = rules
       .filter(candidate => candidate.target === resource.name && candidate.modify)
       .map(candidate => candidate.modify as EditableObject)
-    const modifiedResource = resourceModifiers.reduce<EditableObject>(
-      (current, modifier) => ({ ...current, ...modifier }),
-      resource,
-    )
+    const modifiedResource = Object.assign({}, resource, ...resourceModifiers)
     const gain = numericValue(modifiedResource.gain)
     const decayRate = numericValue(resource.decayRate)
     const threshold = numericValue(resource.threshold)

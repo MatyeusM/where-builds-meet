@@ -90,7 +90,7 @@ export function hawkwingEffectFor(
 export class ExpectedHawkwingTracker {
   private distribution: StackDistribution = new Map([[0, new Map([[0, 1]])]])
 
-  expectedStack(effect: HawkwingEffect, tick: number) {
+  expectedStack(_effect: HawkwingEffect, tick: number) {
     this.distribution = activeDistribution(this.distribution, tick)
     let expected = 0
     for (const [stack, expiries] of this.distribution)

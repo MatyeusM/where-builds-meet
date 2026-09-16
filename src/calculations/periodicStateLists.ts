@@ -140,7 +140,9 @@ class IndexedPeriodicList implements PeriodicStateList {
   mass: number[]
   pending: number[]
   cadences: PeriodicCadences[]
-  constructor(private arena: PeriodicArena) {
+  private arena: PeriodicArena
+  constructor(arena: PeriodicArena) {
+    this.arena = arena
     this.expires = arena.expires
     this.mass = arena.mass
     this.pending = arena.pending

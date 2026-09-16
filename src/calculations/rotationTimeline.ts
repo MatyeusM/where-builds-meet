@@ -214,8 +214,11 @@ class OrderedQueue<T> {
   private entries: Array<OrderedQueueEntry<T>> = []
   private nextSequence = 0
   private dirty = false
+  private readonly compareValues: (left: T, right: T) => number
 
-  constructor(private readonly compareValues: (left: T, right: T) => number) {}
+  constructor(compareValues: (left: T, right: T) => number) {
+    this.compareValues = compareValues
+  }
 
   get length() {
     return this.entries.length
@@ -1380,8 +1383,8 @@ function buildRotationTimelinePass(
         const before = next[name] ?? 0
         const after = clampResource(name, before + rate * elapsed)
         recordResourceChange(name, before, after, "regenerate")
-        return { ...next, [name]: after }
-      }, resources)
+        return Object.assign(next, { [name]: after })
+      }, Object.assign({}, resources))
     }
     lastResourceRegenerationTime = Math.max(lastResourceRegenerationTime, time)
   }

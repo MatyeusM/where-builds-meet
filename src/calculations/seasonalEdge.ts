@@ -50,12 +50,10 @@ export function seasonalEdgeEffectFor(
   const modifiers = rules
     .filter(rule => rule.source === "SeasonalEdge" && rule.target === "SeasonalEdgeRandomBuff" && rule.modify)
     .map(rule => rule.modify!)
-  const modified = modifiers.reduce<EditableObject>((current, modifier) => ({ ...current, ...modifier }), {
-    duration: trigger.duration,
-    outcome: trigger.outcome,
-    count: [{ value: 1, weight: 1 }],
-    additionalSkills: [],
-  })
+  const modified = Object.assign(
+    { duration: trigger.duration, outcome: trigger.outcome, count: [{ value: 1, weight: 1 }], additionalSkills: [] },
+    ...modifiers,
+  ) as EditableObject
   if (!finitePositive(modified.duration)) return undefined
   const candidates = (Array.isArray(modified.outcome) ? modified.outcome : []).flatMap(candidate => {
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return []

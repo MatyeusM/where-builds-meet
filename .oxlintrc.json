@@ -1,14 +1,45 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "unicorn", "react", "react-perf", "oxc", "import", "jsx-a11y", "vitest"],
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "react",
+    "react-perf",
+    "oxc",
+    "import",
+    "jsx-a11y",
+    "vitest",
+    "promise"
+  ],
   "categories": { "correctness": "error" },
-  "rules": {},
+  "rules": {
+    // react-in-jsx-scope must stay disabled.
+    // oxlint does not respect React 19's automatic JSX scope insertion, unlike eslint.
+    "react/react-in-jsx-scope": "off"
+  },
   "overrides": [
     {
       "files": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "script/**/*.mjs"],
       "rules": { "oxc/no-map-spread": "error" }
     },
-    { "files": ["script/**/*.mjs", "tests/**/*.ts", "src/App.tsx"], "rules": { "eslint/no-await-in-loop": "error" } }
+    { "files": ["script/**/*.mjs", "tests/**/*.ts", "src/App.tsx"], "rules": { "eslint/no-await-in-loop": "error" } },
+    {
+      "files": ["src/**/*.ts", "src/**/*.tsx", "script/**/*.mjs", "tests/**/*.ts"],
+      "rules": {
+        "oxc/no-accumulating-spread": "error",
+        "unicorn/prefer-array-find": "error",
+        "react/no-object-type-as-default-prop": "error"
+      }
+    },
+    {
+      "files": ["src/**/*.tsx"],
+      "rules": {
+        "react-perf/jsx-no-new-array-as-prop": "error",
+        "react-perf/jsx-no-new-object-as-prop": "error",
+        "react-perf/jsx-no-jsx-as-prop": "error"
+      }
+    }
   ],
   "ignorePatterns": ["public/", "dist/", "dist-preview/", "local/", ".agents/"],
   "env": { "builtin": true, "browser": true }
