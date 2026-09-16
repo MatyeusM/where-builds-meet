@@ -3779,9 +3779,9 @@ function StatsTab({
               </div>
             </div>
             <div className="divinecraft-option-list">
-              {divinecraftDisplayOrder.map((value, index) => {
+              {divinecraftDisplayOrder.map(value => {
                 if (value === null)
-                  return <span className="divinecraft-option-spacer" aria-hidden="true" key={`spacer-${index}`} />
+                  return <span className="divinecraft-option-spacer" aria-hidden="true" key="spacer" />
                 const definition = typedDivinecraftDefinitions[value]
                 if (!definition) return null
                 const available = definition.available !== false

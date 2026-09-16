@@ -225,10 +225,10 @@ function GearBaseStatSummary({ item }: { item: GearItem }) {
 function GearAttributes({ item, compact = false }: { item: GearItem; compact?: boolean }) {
   return (
     <div className={`gear-attribute-list ${compact ? "compact" : ""}`}>
-      {itemAttributes(item).map((row, index) => (
+      {itemAttributes(item).map(row => (
         <div
           className={`gear-attribute ${row.kind === "Attunement" ? "gear-attunement-attribute" : ""}`}
-          key={`${row.kind}-${row.label}-${index}`}
+          key={`${row.kind}-${row.label}-${row.value}`}
         >
           <span>
             {row.kind === "Attunement" && <small>{t("ui.buildTab.attunement")}</small>}
