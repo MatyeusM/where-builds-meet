@@ -69,17 +69,13 @@ for (const sampled of [false, true]) {
       expect(rodentTimes(cut)).toHaveLength(3);
       expect(rodentTimes(build(input(opener)))).toEqual([]);
     });
-    it("refreshes the automatic timer and replaces ERR with RR when charges run out", () => {
+    it("preserves automatic cadence through duration refresh and replaces ERR with RR when charges run out", () => {
       const refreshed = build(input([...opener, delay(2.2), cast("RodentRampage"), delay(11)]));
       const times = rodentTimes(refreshed);
       expect(times).toHaveLength(13);
-      expect(times[0]).toBeCloseTo(appliedAt + 1);
-      expect(times[1]).toBeCloseTo(appliedAt + 2);
-      expect(times[2]).toBeCloseTo(appliedAt + 3); // Already launched before the refresh.
-      for (let index = 3; index < times.length; index++)
-        expect(times[index]).toBeCloseTo(appliedAt + 2.741 + index - 2);
+      times.forEach((time, index) => expect(time).toBeCloseTo(appliedAt + index + 1));
       const replaced = build(input([...opener, cast("RodentRampage"), cast("RodentRampage"), delay(11)]));
-      expect(rodentTimes(replaced)).toHaveLength(2); // In-flight attacks survive replacement.
+      expect(rodentTimes(replaced)).toHaveLength(1); // Preserved cadence launches no second Rodent before replacement.
       const light = build(input([cast("RodentRampage"), ...opener, cast("InfernalLight1Rodent")])).find(
         (row) => row.step.skill === "InfernalLight1Rodent",
       )!;

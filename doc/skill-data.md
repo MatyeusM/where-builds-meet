@@ -1502,8 +1502,10 @@ Both buffs last 10 seconds without Vendetta, 15 at T0–T3, or 20 at T4–T6;
 ERR therefore supplies 10, 15, or 20 automatic attacks over its full lifetime.
 Its data-defined periodic actions trigger the existing Rodent skill, preserving
 damage modifiers, Rodent Hunt recording, and Samsara's +1 Hellfire per hit.
-Reapplying ERR restarts the automatic launch timer; already launched Rodents
-retain their pending hits. Applying either RR or ERR consumes
+Reapplying active ERR refreshes its full duration while preserving the original
+automatic launch cadence; already launched Rodents retain their pending hits.
+The extended window can include an additional launch depending on refresh timing.
+Applying either RR or ERR consumes
 the other buff, canceling its pending periodic actions. Light-attack triggers,
 Rodent-only cancels, and FA5's T6 extras accept either buff. Automatic hits do not
 advance the light-attack accumulator. Battle End still cuts off pending hits.

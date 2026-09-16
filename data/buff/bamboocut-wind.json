@@ -275,7 +275,7 @@
     "periodic": {
       "interval": 1,
       "firstTick": 0.5,
-      "resetOnRefresh": true,
+      "resetOnRefresh": false,
       "tickOnExpire": true,
       "action": [
         {
