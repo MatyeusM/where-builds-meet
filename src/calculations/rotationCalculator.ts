@@ -1,3 +1,4 @@
+import { groupSkillBreakdown } from "./skillBreakdownCategories";
 import {
   calculateDamageBreakdown,
   calculateSimulatedDamageBreakdown,
@@ -1095,6 +1096,8 @@ function calculateBreakdown(
   );
 
   return {
+    groupedSkills: [],
+    groupedHealingSkills: [],
     skills: [...skills.values()]
       .filter((skill) => skill.damage > 0)
       .map(({ tags: _tags, abrasionTotal, normalTotal, criticalTotal, affinityTotal, ...skill }) => ({
@@ -2163,6 +2166,8 @@ export function calculateRotationBaseline(bundle: RotationSimulationBundle): Rot
     rawBaselineDamage,
     baselineHealing,
   );
+  metrics.breakdown.groupedSkills = groupSkillBreakdown(metrics.breakdown.skills, bundle.timeline.skills);
+  metrics.breakdown.groupedHealingSkills = groupSkillBreakdown(metrics.breakdown.healingSkills, bundle.timeline.skills);
   metrics.expectedHawkwingStacks = averageExpectedBuffStack(resolvedSequence, "Hawkwing");
   if (import.meta.env.DEV) finishCalculationPhase("metricsAndBreakdown", metricsStartedAt);
   return {

@@ -1,9 +1,12 @@
+import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./calculations/rotationMetrics";
+import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories";
 import type { TrackedEffect } from "./calculations/rotationTimeline";
 import { RotationPingField } from "./components/RotationPingField";
 import resourceEventDefinitions from "../data/event.json";
 import { PingInput } from "./components/PingInput";
 import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults";
 import {
+  Fragment,
   lazy,
   Suspense,
   useCallback,
@@ -2367,6 +2370,62 @@ function EffectCoveragePanel({
   );
 }
 
+function SkillBreakdownRows({
+  row,
+}: {
+  row: SkillBreakdownGroup<RotationSkillBreakdown | RotationHealingSkillBreakdown>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const label = row.children ? (
+    <button
+      type="button"
+      className="breakdown-category-toggle"
+      aria-expanded={expanded}
+      onClick={() => setExpanded((value) => !value)}
+    >
+      <span aria-hidden="true">{expanded ? "▾" : "▸"}</span> {gameText(row.name)}
+    </button>
+  ) : (
+    skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)
+  );
+  return (
+    <Fragment>
+      {"damage" in row ? (
+        <div className="breakdown-table-row">
+          <span>{label}</span>
+          <strong>{row.casts || ""}</strong>
+          <strong>{row.triggers ? formatNumber(row.triggers) : ""}</strong>
+          <strong>{row.hits ? formatNumber(row.hits) : ""}</strong>
+          <strong>{formatNumber(row.abrasionRate)}%</strong>
+          <strong>{formatNumber(row.normalRate)}%</strong>
+          <strong>{formatNumber(row.criticalRate)}%</strong>
+          <strong>{formatNumber(row.affinityRate)}%</strong>
+          <strong>{formatDamageNumber(row.damage)}</strong>
+          <strong>{formatNumber(row.percentage)}%</strong>
+        </div>
+      ) : (
+        <div className="breakdown-table-row">
+          <span>{label}</span>
+          <strong>{row.casts || ""}</strong>
+          <strong>{row.triggers || ""}</strong>
+          <strong>{row.heals || ""}</strong>
+          <strong>{formatNumber(row.normalRate)}%</strong>
+          <strong>{formatNumber(row.criticalRate)}%</strong>
+          <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
+          <strong>{formatNumber(row.percentage)}%</strong>
+        </div>
+      )}
+      {expanded && row.children ? (
+        <div className="breakdown-category-children">
+          {row.children.map((child) => (
+            <SkillBreakdownRows key={child.id} row={child} />
+          ))}
+        </div>
+      ) : null}
+    </Fragment>
+  );
+}
+
 function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: PathId }) {
   if (!metrics)
     return (
@@ -2430,19 +2489,8 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             <span>{t("ui.app.damage")}</span>
             <span>{t("ui.app.total")}</span>
           </div>
-          {breakdown.skills.map((row) => (
-            <div className="breakdown-table-row" key={row.id}>
-              <span>{skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)}</span>
-              <strong>{row.casts || ""}</strong>
-              <strong>{row.triggers ? formatNumber(row.triggers) : ""}</strong>
-              <strong>{row.hits ? formatNumber(row.hits) : ""}</strong>
-              <strong>{formatNumber(row.abrasionRate)}%</strong>
-              <strong>{formatNumber(row.normalRate)}%</strong>
-              <strong>{formatNumber(row.criticalRate)}%</strong>
-              <strong>{formatNumber(row.affinityRate)}%</strong>
-              <strong>{formatDamageNumber(row.damage)}</strong>
-              <strong>{formatNumber(row.percentage)}%</strong>
-            </div>
+          {breakdown.groupedSkills.map((row) => (
+            <SkillBreakdownRows key={row.id} row={row} />
           ))}
         </div>
         {hasHealing ? (
@@ -2459,17 +2507,8 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
                 <span>{t("ui.app.healing")}</span>
                 <span>{t("ui.app.total")}</span>
               </div>
-              {breakdown.healingSkills.map((row) => (
-                <div className="breakdown-table-row" key={row.id}>
-                  <span>{skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)}</span>
-                  <strong>{row.casts || ""}</strong>
-                  <strong>{row.triggers || ""}</strong>
-                  <strong>{row.heals || ""}</strong>
-                  <strong>{formatNumber(row.normalRate)}%</strong>
-                  <strong>{formatNumber(row.criticalRate)}%</strong>
-                  <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
-                  <strong>{formatNumber(row.percentage)}%</strong>
-                </div>
+              {breakdown.groupedHealingSkills.map((row) => (
+                <SkillBreakdownRows key={row.id} row={row} />
               ))}
             </div>
           </>

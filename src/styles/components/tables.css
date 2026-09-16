@@ -42,6 +42,35 @@
     min-inline-size: 67.25rem;
   }
 
+  .breakdown-category-children {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+
+    & .breakdown-table-row > :first-child {
+      padding-inline-start: 1.5rem;
+    }
+  }
+
+  .breakdown-category-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+  }
+
   .breakdown-cast-table {
     grid-template-columns: minmax(16.25rem, 1fr) repeat(6, max-content);
     min-inline-size: 64rem;

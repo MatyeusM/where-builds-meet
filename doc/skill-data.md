@@ -161,6 +161,7 @@ type SkillMap = Record<string, SkillDefinition>;
 type SkillDefinition = {
   name: string;
   shortName?: string;
+  skillBreakdownCategory?: string;
   group?: boolean;
   castTime: number;
   cooldown?: number;
@@ -179,6 +180,16 @@ type SkillDefinition = {
   weapon?: WeaponFamily;
 };
 ```
+
+`skillBreakdownCategory` is an optional category name for the per-skill breakdown.
+Skills with the same nonblank name share a collapsed summary that expands to their
+individual rows. Uncategorized skills remain standalone. The worker sums damage,
+healing, casts, triggers, and hits/heals; outcome rates are weighted by hits/heals.
+Shares retain the whole-rotation denominator. Flat skill metrics remain available
+for numerical audits, while grouped metrics drive the UI. Categories are localized
+at the presentation boundary and do not change combat events or damage attribution.
+Wind FA1–5 and A1–4 include their cancel and Rodent-only variants; separately
+triggered Rodent damage retains its own skill attribution.
 
 `shortName` is optional presentation metadata. Skill lists, selectors, timeline
 rows, and breakdowns display it as `Long Name (Short Name)` without changing the

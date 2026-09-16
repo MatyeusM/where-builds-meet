@@ -1,3 +1,4 @@
+import type { SkillBreakdownGroup } from "./skillBreakdownCategories";
 export type RotationPriority = {
   label: string;
   maxRoll?: number;
@@ -67,6 +68,8 @@ export type RotationEffectCoverage = {
 };
 export type RotationBreakdown = {
   skills: RotationSkillBreakdown[];
+  groupedSkills: SkillBreakdownGroup<RotationSkillBreakdown>[];
+  groupedHealingSkills: SkillBreakdownGroup<RotationHealingSkillBreakdown>[];
   healingSkills: RotationHealingSkillBreakdown[];
   casts: RotationCastBreakdown[];
   healingCasts: RotationHealingCastBreakdown[];
@@ -80,6 +83,8 @@ export type RotationBreakdown = {
 
 export const emptyRotationBreakdown = (): RotationBreakdown => ({
   skills: [],
+  groupedSkills: [],
+  groupedHealingSkills: [],
   healingSkills: [],
   casts: [],
   healingCasts: [],

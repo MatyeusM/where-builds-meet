@@ -45,6 +45,7 @@ export type SkillRecord = {
   name?: string;
   damageGroup?: { id: string; name: string };
   shortName?: string;
+  skillBreakdownCategory?: string;
   group?: boolean;
   ignorePing?: boolean;
   /** An inert charging component: no actions, cooldown, or skill-start notifications. */
