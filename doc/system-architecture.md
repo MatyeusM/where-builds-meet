@@ -234,7 +234,7 @@ work. Results enter the cache when completed, but only the latest requested
 fingerprint may replace the editor preview. The previous completed preview stays
 visible while newer work runs. Editor previews never request comparison variants;
 active-rotation comparisons remain tied to save, activation, or setup changes.
-The rotation portion of the fingerprint includes its resolved ping, steps, target HP, Auto HP,
+The rotation portion of the fingerprint includes its resolved ping, steps, target HP,
 Dummy Attack, group size, Infinite Vitality, battle-start anchor, and event-time
 reference. Its display name is intentionally excluded because renaming cannot
 change a calculation.
@@ -253,10 +253,13 @@ Damage action. The editor keeps the attached event immediately before its
 anchor in stored rotation order, while timeline sort order determines whether
 its effect resolves before or after the selected action at the shared timestamp.
 
-The optional `autoHP` rotation flag removes manual target-HP events and compiles
-ten hidden fixed-time HP events from the resolved rotation duration. Target HP is
-99.99% at fight start and loses ten percentage points at each subsequent 10%
-duration boundary through 90%. The optional `dummyAttack` flag compiles two
+Auto HP has been removed. Loading or importing a legacy rotation discards its
+`autoHP` flag while preserving authored HP events, target maximum HP, and the
+fight-start anchor. The simulator does not infer HP changes from future rotation
+duration. Target HP follows explicit HP events or damage against a supplied
+maximum HP; otherwise it stays at the ordinary 99% default.
+
+The optional `dummyAttack` flag compiles two
 read-only 200-damage Take Damage events at the same timestamp every six seconds,
 starting 5.5 seconds after fight start and stopping before Battle End. A Take
 Damage event overlapping a skill tagged `AvoidsTakeDamage` resolves to zero and
@@ -333,9 +336,9 @@ loop budget. Without the tiny-state approximation described below, the DOT's
 marginal stack distribution is exact; downstream
 expected-state calculations use marginal hit weights, not a joint distribution
 of every proc, resource cap, and other random buff. Simulations instead rebuild
-concrete timelines, including on-hit resource gains. Proc rolls are memoized by
-source/action/occurrence within a run so anchor convergence and healing-feedback
-rebuilds do not reroll existing applications. Selecting or comparing an Inner
+concrete timelines, including on-hit resource gains. Damage and proc draws occur
+in chronological execution order, once per action/application, without replay.
+Selecting or comparing an Inner
 Way that can add these events must rebuild the timeline.
 The distribution is partitioned by temporary branch identity inside each effect's
 tracker. A conditional post-burst application detaches and transforms only its
@@ -683,10 +686,9 @@ following skill's cast start, direct action, or triggered-skill action. Exhauste
 rows run after their attached direct or triggered action. Both are rescheduled
 with that target. Take Damage and other timed manual-event `startTime`
 values are offsets from the selected fight-start anchor and consume no cast time.
-The builder resolves cast-time modifiers and the fight-start anchor in a bounded
-convergence pass, then processes manual events at their final absolute times.
-This prevents an already-processed event from being retroactively moved across
-a skill when pre-start cast timing changes.
+The builder records fight start when the selected event is reached, then activates
+the fight-relative encounter schedule. Internal timestamps never shift for display;
+the UI subtracts the published `battleStartTime`. There is no convergence pass.
 The event queue is a stable priority queue ordered by timestamp and then by a
 lexicographic causal order. Ordinary insertions and removals update its binary
 heap directly. Cast-time changes can mutate several queued timestamps at once;
@@ -789,10 +791,8 @@ sequence with Hellfire ticks and automatic Enhanced Rodent Rampage attacks.
 Setup and Inner Way triggers are indexed by event name once for each timeline
 pass. A damage, healing, or incoming-damage action evaluates only the rules for
 that event while retaining their original data order. Dummy Attack queues its
-next pair of hits dynamically and needs no preliminary duration pass. Auto HP
-still needs a duration to place its percentage steps: fight-relative Battle End
-supplies it directly; otherwise a resolved timeline supplies the final cast/Delay
-endpoint. Fight-relative anchor convergence remains a separate timing dependency.
+next pair of hits dynamically and needs no preliminary duration pass.
+Fight-start detection activates its dependent clocks in the same traversal.
 
 ### Input latency (ping)
 
@@ -1002,15 +1002,13 @@ against the cached timeline, damage entries, duration, total damage, and
 breakdown. `calculateRotationSimulation()` remains as a combined entry point for
 focused probes and callers that need both phases at once.
 
-Deterministic damage is resolved exactly once per baseline or variant. A
-rotation that tracks target HP or has damage-event listeners uses one ordered
-pass to update target state, dispatch listeners, enqueue replay actions, and
-retain each action's resolved breakdown for the final total. Replay actions are
-inserted into the unprocessed portion of that ordered queue without repeatedly
-sorting or shifting the full event list. A rotation with neither feature skips
-the ordered damage pass and damage-event state snapshots entirely; its final
-aggregation performs the single required damage resolution. Monte Carlo runs
-still resolve the stored entries independently with that run's random samples.
+Each baseline and event-changing variant has one live combat traversal. Shared
+formulas resolve damage and healing inside the event executor, immediately update
+HP and collectors, and dispatch listeners through the same queue. Final totals
+consume retained results. Event-invariant variants reuse action snapshots and
+evaluate their own formulas without replaying combat. Monte Carlo runs with
+event feedback use the same live executor; event-invariant runs can sample stored
+entries. No structural discovery or separate damage-event executor remains.
 
 Outcome-triggered buff schedules are built with the baseline damage stream and
 stored by damage-entry ID. A comparison variant that changes stats, setup
@@ -1148,18 +1146,20 @@ Monte Carlo simulation is involved. `data/path.json` declares `defaultBuild`
 and `graduated` separately so the build loaded by default does not have to be
 the build used as the graduation denominator.
 
-The Rotation Editor renders editable draft steps immediately without running the
-combat timeline builder on the main thread. `editorTimelinePreview.ts` retains
-previous snapshots only for unchanged step objects and preserves current draft
-order while results are pending. A status notice marks potentially stale values.
-After a 100 ms debounce, the existing deterministic worker builds the structural
-timeline directly from authored input (`editorTimeline.ts`). Results
+The Rotation Editor retains its complete last-built timeline, including generated
+rows and calculated values, while a new draft is pending. `editorTimelinePreview.ts`
+maps retained controls to the latest draft step identities; removed steps become
+read-only until the replacement arrives. Repeated field edits preserve that identity.
+Only the initial load uses authored placeholders. A status notice marks stale values.
+After a 100 ms debounce, the existing deterministic worker calculates a complete
+baseline directly from authored input. Results
 are accepted only for the same rotation ID, combat-context key, and draft object
-revision. Saving and further edits do not wait for this request. Results never
+revision. A new edit cancels that editor's queued or running structural request;
+unrelated queued work remains scheduled. Saving and further edits do not wait for this request. Results never
 replace draft steps or remap editing state. Unreached steps after Battle End remain
 editable placeholders without expanded combat actions.
-The worker retains up to eight prepared timelines, keyed by the normalized bundle
-fingerprint, for one-use reuse by the following baseline calculation. Superseding
+The worker retains up to eight complete preview baselines, keyed by the normalized bundle
+fingerprint, for one-use reuse by the following baseline request without recalculation. Superseding
 busy work still terminates the worker; an idle worker retains this cache.
 Calculated state and action damage are overlaid only for a matching fingerprint;
 the previous aggregate totals may remain visible while recalculation is pending.
@@ -1475,12 +1475,11 @@ See [DPS snapshots](dps-snapshots.md) for coverage and the review/update workflo
 
 `createTimelineEntryBuilder` supplies the same action contexts to ordinary damage
 reporting and the live healing traversal. A worker-local `TimelineActionResolverFactory`
-creates a fresh outcome resolver for each timeline pass. Accepted damage, healing,
+creates one outcome resolver for the combat traversal. Accepted damage, healing,
 and accumulator-application actions resolve in event order; healing immediately
 restores self HP and feeds the existing accumulator, and generated Qi Blades re-enter
-that same traversal. The final reporting pass reuses those resolved actions, including
-sampled outcomes, instead of rolling them again. The existing replay reporting remains
-responsible for replay damage.
+that same traversal. Final reporting aggregates those resolved actions, including
+sampled outcomes. Replay damage also resolves in the live traversal.
 
 Accumulator threshold coefficients live in buff data. WTS snapshots buffed Physical
 and Silkbind attack at its own application, including current Hawkwing/Etherwrath
@@ -1490,8 +1489,8 @@ sampled runs use actual stacks. Hawkwing now declares `altersTimeline` because i
 attack bonus affects both healing and WTS conversion. No nearby damage/healing
 entry is used as a substitute cast context.
 
-Timeline anchor/automatic-event preparation can rebuild a pass. Sampled rolls are
-memoized per action within the run; resolver state restarts for each traversal.
+Battle-start detection and pending silent charges never restart the traversal.
+Sampled damage and proc draws interleave in live execution order.
 The callback is never part of a serialized bundle. `npm run test:wts` verifies cast
 ordering, buff changes, recasts, food, proc feedback, and periodic heals created after
 Qi Blades, alongside the existing healing checks.
@@ -1521,10 +1520,10 @@ authored delay before the opening World to Sword to coordinate its healing arriv
 with Qi Blade's launch cooldown. Their Qi events remain attached to actions near
 the reviewed encounter times.
 
-Composite release readiness can insert an automatic wait before charging. The
-shared event loop forecasts the existing release requirement against passive
-regeneration and pending events, then subtracts the charge duration and ping.
-See `rotation-event-loop.md` for the bounded prefix replay and `skill-data.md`
+Composite release readiness holds a silent charge open while the live event loop
+processes regeneration and pending events. It then finalizes the displayed charge
+interval without replay; weapon switching occurs at the earliest possible start.
+See `rotation-event-loop.md` for pending-charge execution and `skill-data.md`
 for the Vile Condemned three/four-HW variants.
 
 Attack responses share the timeline readiness queue with cooldown waits. Data-authored

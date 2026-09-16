@@ -170,6 +170,7 @@ import {
 import {
   requestRotationBaseline,
   requestEditorTimeline,
+  cancelEditorTimelineRequest,
   requestRotationComparisons,
   supersedeRotationCalculationRequests,
 } from "./calculations/rotationWorkerClient";
@@ -858,8 +859,8 @@ function innerWayEffectRulesFor(
 }
 
 function normalizeRotation(rotation: RotationRecord): RotationRecord {
-  const autoHP = rotation.autoHP === true;
-  const expandedSteps: RotationStep[] = (rotation.steps as Array<RotationStep & { repeat?: number }>).flatMap(
+  // Reconstruct supported fields: discard legacy autoHP, preserving manual HP events and anchors.
+  const steps: RotationStep[] = (rotation.steps as Array<RotationStep & { repeat?: number }>).flatMap(
     (step): RotationStep[] => {
       if (step.type === "event") return [step];
       const repeat = Math.max(1, step.repeat ?? 1);
@@ -870,26 +871,10 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
       })) as RotationStep[];
     },
   );
-  const steps = autoHP ? expandedSteps.filter((step) => step.type !== "event" || step.event !== "HP") : expandedSteps;
-  const start = rotation.start
-    ? {
-        ...rotation.start,
-        step: Math.max(
-          0,
-          rotation.start.step -
-            (autoHP
-              ? expandedSteps
-                  .slice(0, rotation.start.step)
-                  .filter((step) => step.type === "event" && step.event === "HP").length
-              : 0),
-        ),
-      }
-    : undefined;
   return {
     name: rotation.name,
     steps,
     ...(typeof rotation.targetHP === "number" && rotation.targetHP > 0 ? { targetHP: rotation.targetHP } : {}),
-    ...(autoHP ? { autoHP: true } : {}),
     ...(rotation.dummyAttack === true ? { dummyAttack: true } : {}),
     ...(normalizePing(rotation.ping) !== undefined ? { ping: normalizePing(rotation.ping) } : {}),
     groupSize: rotation.groupSize === 5 || rotation.groupSize === 10 ? rotation.groupSize : 1,
@@ -897,7 +882,7 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
       typeof rotation.infiniteVitality === "boolean"
         ? rotation.infiniteVitality
         : /\bIV\b|infinite vitality/i.test(rotation.name),
-    start,
+    start: rotation.start,
     ...(rotation.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
   };
 }
@@ -958,6 +943,7 @@ function baseAttachedEventTime(rotation: RotationRecord, eventStepIndex: number,
 }
 
 function timelineAnchorTime(timeline: TimelineRow[], startAnchor: { rowId: string; actionIndex?: number }) {
+  if (timeline[0]?.battleStartTime !== undefined) return Math.max(0, timeline[0].battleStartTime);
   const anchorRow = timeline.find((row) => row.id === startAnchor.rowId);
   if (!anchorRow) return 0;
   if (startAnchor.actionIndex === undefined) return anchorRow.startTime;
@@ -5684,6 +5670,7 @@ function RotationEditorTab({
     );
   const [editingRotationId, setEditingRotationId] = useState(initialState.activeId);
   const [rotation, setRotation] = useState<RotationRecord>(initialState.rotation);
+  const editorStepReplacements = useRef(new WeakMap<RotationStep, RotationStep>());
   const [startAnchor, setStartAnchor] = useState<{ rowId: string; actionIndex?: number }>(initialState.startAnchor);
   const [expandedSkillRows, setExpandedSkillRows] = useState<Set<string>>(() => new Set());
   const [editingName, setEditingName] = useState(false);
@@ -5821,43 +5808,22 @@ function RotationEditorTab({
 
   function updateStep(index: number, changes: Record<string, unknown>) {
     if (rotationLocked) return;
-    setRotation((current) => ({
-      ...current,
-      steps: current.steps.map((step, stepIndex) =>
-        stepIndex === index && !isAutomaticDelay(step) ? ({ ...step, ...changes } as RotationStep) : step,
-      ),
-    }));
+    const step = rotation.steps[index];
+    if (!step || isAutomaticDelay(step)) return;
+    const replacement = { ...step, ...changes } as RotationStep;
+    editorStepReplacements.current.set(step, replacement);
+    setRotation({
+      ...rotation,
+      steps: rotation.steps.map((candidate, stepIndex) => (stepIndex === index ? replacement : candidate)),
+    });
   }
   function updateRotationCalculationSetting(value: SetStateAction<RotationRecord>) {
     scheduledRefreshTargetRef.current = null;
     setRotation(value);
   }
-  function toggleAutoHP(checked: boolean) {
-    if (rotationLocked) return;
-    const removedBeforeStart = checked
-      ? rotation.steps
-          .slice(0, rotation.start?.step ?? 0)
-          .filter((step) => step.type === "event" && step.event === "HP").length
-      : 0;
-    const nextStart = rotation.start
-      ? { ...rotation.start, step: Math.max(0, rotation.start.step - removedBeforeStart) }
-      : undefined;
-    updateRotationCalculationSetting({
-      ...rotation,
-      ...(checked ? { autoHP: true } : { autoHP: undefined }),
-      steps: checked ? rotation.steps.filter((step) => step.type !== "event" || step.event !== "HP") : rotation.steps,
-      ...(nextStart ? { start: nextStart } : {}),
-    });
-    if (nextStart)
-      setStartAnchor({
-        rowId: `rotation-${nextStart.step}`,
-        ...(nextStart.action === undefined ? {} : { actionIndex: nextStart.action }),
-      });
-  }
   function selectRotationItem(index: number, value: string, control: HTMLSelectElement) {
     if (rotationLocked) return;
     if (isAutomaticDelay(rotation.steps[index])) return;
-    if (rotation.autoHP && value === "__event:HP") return;
     if (
       [
         "__event:Move",
@@ -5888,7 +5854,8 @@ function RotationEditorTab({
       (row) => row.kind === "rotation" && (row.rotationIndex ?? -1) < index && row.step.type === "skill",
     );
     const previousSkill = previousSkills[previousSkills.length - 1];
-    setRotation((current) => {
+    const current = rotation;
+    const nextRotation = (() => {
       if (
         value.startsWith("__event:") &&
         current.steps[index]?.type === "skill" &&
@@ -5985,7 +5952,11 @@ function RotationEditorTab({
       if (attached && !steps.slice(index + 1).some((step) => step.type === "skill"))
         steps.push({ type: "skill", skill: rotationSkillIds[0] });
       return { ...current, steps };
-    });
+    })();
+    if (nextRotation !== current) {
+      editorStepReplacements.current.set(current.steps[index], nextRotation.steps[index]);
+      setRotation(nextRotation);
+    }
   }
   function commitEventTime(rowId: string, stepIndex: number) {
     const draft = eventTimeDrafts[rowId];
@@ -6085,7 +6056,7 @@ function RotationEditorTab({
         : eventAfterAction
           ? attachmentTargets.filter((target) => target.target.action !== "start")
           : attachmentTargets;
-    const eventRow = timeline.find((row) => row.id === `rotation-${stepIndex}`);
+    const eventRow = timeline.find((row) => row.rotationIndex === stepIndex);
     const currentTargetIndex = availableTargets.findIndex(
       (target) =>
         target.sourceRowId === eventRow?.sourceRowId &&
@@ -6106,6 +6077,7 @@ function RotationEditorTab({
     const movedEvent = eventAfterAction
       ? ({ ...eventStep, after: nextTarget.target } as RotationStep)
       : ({ ...eventStep, before: nextTarget.target } as RotationStep);
+    editorStepReplacements.current.set(eventStep, movedEvent);
     const steps = [...withoutEvent.slice(0, targetIndex), movedEvent, ...withoutEvent.slice(targetIndex)];
     const movedEventIndex = steps.indexOf(movedEvent);
     const nextStartStep = startStep ? steps.indexOf(startStep) : -1;
@@ -6500,6 +6472,7 @@ function RotationEditorTab({
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      cancelEditorTimelineRequest(`editor:${requested.id}`);
     };
   }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady]);
   const structuralTimeline = useMemo(
@@ -6512,6 +6485,7 @@ function RotationEditorTab({
         : pendingEditorTimeline(
             { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
             editorTimelineState?.revision.id === editingRotationId ? editorTimelineState : undefined,
+            editorStepReplacements.current,
           ),
     [rotation, calculationDefinitions, editingRotationId, editorTimelineReady, editorTimelineState],
   );
@@ -6519,22 +6493,30 @@ function RotationEditorTab({
     () => rotation.steps.filter((step) => step.type === "skill").length,
     [rotation.steps],
   );
+  const displayedCalculationRef = useRef(rotationResults[editingRotationId]);
+  if (rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint)
+    displayedCalculationRef.current = rotationResults[editingRotationId];
+  const displayedCalculation =
+    editorTimelineState?.revision.id === editingRotationId &&
+    displayedCalculationRef.current?.key === editorTimelineState?.fingerprint
+      ? displayedCalculationRef.current?.result
+      : undefined;
   const timeline = useMemo(
-    () =>
-      editorTimelineReady && rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint
-        ? mergeCalculatedTimelineState(structuralTimeline, currentCachedResult?.timeline)
-        : structuralTimeline,
-    [
-      currentCachedResult?.timeline,
-      structuralTimeline,
-      editorTimelineReady,
-      editorTimelineState,
-      rotationResults,
-      editingRotationId,
-    ],
+    () => mergeCalculatedTimelineState(structuralTimeline, displayedCalculation?.timeline),
+    [structuralTimeline, displayedCalculation],
   );
-  const anchorTime = useMemo(() => timelineAnchorTime(timeline, startAnchor), [startAnchor, timeline]);
+  const displayedStart =
+    editorTimelineState?.revision.id === editingRotationId ? editorTimelineState.rotation.start : rotation.start;
+  const anchorTime = useMemo(
+    () =>
+      timelineAnchorTime(timeline, {
+        rowId: `rotation-${displayedStart?.step ?? 0}`,
+        actionIndex: displayedStart?.action,
+      }),
+    [displayedStart, timeline],
+  );
   useLayoutEffect(() => {
+    if (!editorTimelineReady) return;
     const scrollContainer = rotationScrollRef.current;
     const pendingScroll = pendingEventScrollRef.current;
     if (scrollContainer && pendingScroll) {
@@ -6556,10 +6538,8 @@ function RotationEditorTab({
         pendingSkillFocusRef.current = null;
       }
     }
-  }, [timeline]);
-  const editorCalculationReady =
-    editorTimelineReady && rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint;
-  const workerActionBreakdowns = editorCalculationReady ? (currentCachedResult?.actionBreakdowns ?? {}) : {};
+  }, [timeline, editorTimelineReady]);
+  const workerActionBreakdowns = displayedCalculation?.actionBreakdowns ?? {};
   const displayTime = (time: number) => time - anchorTime;
   const calculateTimelineActionBreakdown = (row: TimelineRow, actionIndex: number): RotationActionBreakdown =>
     workerActionBreakdowns[`${row.id}:${actionIndex}`] ?? {
@@ -6602,7 +6582,13 @@ function RotationEditorTab({
     });
 
     return timeline
-      .filter((row) => row.kind === "rotation" && isAttachmentAnchorStep(row.step) && !row.skipped)
+      .filter(
+        (row) =>
+          row.kind === "rotation" &&
+          row.rotationIndex !== undefined &&
+          isAttachmentAnchorStep(row.step) &&
+          !row.skipped,
+      )
       .flatMap((sourceRow) => {
         const sourceStepIndex = sourceRow.rotationIndex ?? -1;
         const targets: Array<{
@@ -6682,10 +6668,8 @@ function RotationEditorTab({
   );
   const showTargetHPColumn = useMemo(
     () =>
-      rotation.autoHP === true ||
-      rotation.targetHP !== undefined ||
-      rotation.steps.some((step) => step.type === "event" && step.event === "HP"),
-    [rotation.autoHP, rotation.steps, rotation.targetHP],
+      rotation.targetHP !== undefined || rotation.steps.some((step) => step.type === "event" && step.event === "HP"),
+    [rotation.steps, rotation.targetHP],
   );
   const showQiColumn = useMemo(
     () => rotation.steps.some((step) => step.type === "event" && step.event === "Qi"),
@@ -7409,15 +7393,6 @@ function RotationEditorTab({
                   <p className="rotation-default-note">{t("ui.app.thisIsAPrebuiltDefaultRotationAndCannot")}</p>
                 )}
                 <div className="rotation-target-controls">
-                  <label className="rotation-option-toggle">
-                    <input
-                      type="checkbox"
-                      disabled={rotationLocked}
-                      checked={rotation.autoHP === true}
-                      onChange={(event) => toggleAutoHP(event.target.checked)}
-                    />
-                    <span>{t("ui.app.autoHp")}</span>
-                  </label>
                   <label className="rotation-target-hp">
                     <span>{t("ui.app.targetHp")}</span>
                     <input
@@ -7723,7 +7698,7 @@ function RotationEditorTab({
                       step.event === "TakeDamage" &&
                       "automatic" in step &&
                       step.automatic === "dummyAttack";
-                    const rowReadOnly = rotationLocked || isGeneratedEvent;
+                    const rowReadOnly = rotationLocked || isGeneratedEvent || row.rotationIndex === undefined;
                     const resolvedTakeDamage =
                       step.type === "event" && step.event === "TakeDamage"
                         ? Number(row.actions.find((action) => action.type === "takeDamage")?.damage ?? step.damage)
@@ -7880,33 +7855,34 @@ function RotationEditorTab({
                             )}
                             <span className="rotation-index">{skillNumber}</span>
                             <span className="rotation-mobile-field" data-mobile-label={t("ui.app.startTime")}>
-                              {isManualEvent ? (
-                                isAttachedEvent || isDelayEvent || rowReadOnly ? (
+                              {!row.skipped &&
+                                (isManualEvent ? (
+                                  isAttachedEvent || isDelayEvent || rowReadOnly ? (
+                                    <span>
+                                      {formatNumber(displayTime(startTime))}
+                                      {t("ui.app.s")}
+                                    </span>
+                                  ) : (
+                                    <input
+                                      className="rotation-event-time"
+                                      type="number"
+                                      step="0.01"
+                                      value={eventTimeDrafts[row.id] ?? formatNumber(displayTime(startTime))}
+                                      onChange={(event) =>
+                                        setEventTimeDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                      }
+                                      onBlur={() => commitEventTime(row.id, row.rotationIndex ?? 0)}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter") event.currentTarget.blur();
+                                      }}
+                                    />
+                                  )
+                                ) : (
                                   <span>
                                     {formatNumber(displayTime(startTime))}
                                     {t("ui.app.s")}
                                   </span>
-                                ) : (
-                                  <input
-                                    className="rotation-event-time"
-                                    type="number"
-                                    step="0.01"
-                                    value={eventTimeDrafts[row.id] ?? formatNumber(displayTime(startTime))}
-                                    onChange={(event) =>
-                                      setEventTimeDrafts((current) => ({ ...current, [row.id]: event.target.value }))
-                                    }
-                                    onBlur={() => commitEventTime(row.id, row.rotationIndex ?? 0)}
-                                    onKeyDown={(event) => {
-                                      if (event.key === "Enter") event.currentTarget.blur();
-                                    }}
-                                  />
-                                )
-                              ) : (
-                                <span>
-                                  {formatNumber(displayTime(startTime))}
-                                  {t("ui.app.s")}
-                                </span>
-                              )}
+                                ))}
                             </span>
                             <span className="rotation-mobile-field" data-mobile-label={t("ui.app.castTime")}>
                               {durationEvent || editableCastTime ? (
@@ -7978,13 +7954,11 @@ function RotationEditorTab({
                                         {skillDisplayName(findSkill(id), id)}
                                       </option>
                                     ))}
-                                    {rotationEventOptionIds
-                                      .filter((id) => !rotation.autoHP || id !== "__event:HP")
-                                      .map((id) => (
-                                        <option key={id} value={id}>
-                                          {rotationEventDisplayName(id.slice(8))}
-                                        </option>
-                                      ))}
+                                    {rotationEventOptionIds.map((id) => (
+                                      <option key={id} value={id}>
+                                        {rotationEventDisplayName(id.slice(8))}
+                                      </option>
+                                    ))}
                                   </select>
                                 </span>
                               )
@@ -8359,7 +8333,7 @@ function RotationEditorTab({
                                   <button
                                     type="button"
                                     aria-label={t("ui.app.moveEventToPreviousAction")}
-                                    disabled={rotationLocked || (attachedSiblingAbove < 0 && attachedTargetIndex <= 0)}
+                                    disabled={rowReadOnly || (attachedSiblingAbove < 0 && attachedTargetIndex <= 0)}
                                     onClick={(event) =>
                                       moveAttachedEvent(row.rotationIndex ?? 0, -1, event.currentTarget)
                                     }
@@ -8370,7 +8344,7 @@ function RotationEditorTab({
                                     type="button"
                                     aria-label={t("ui.app.moveEventToNextAction")}
                                     disabled={
-                                      rotationLocked ||
+                                      rowReadOnly ||
                                       (attachedSiblingBelow < 0 &&
                                         (attachedTargetIndex < 0 ||
                                           attachedTargetIndex >= availableAttachmentTargets.length - 1))
@@ -8402,7 +8376,7 @@ function RotationEditorTab({
                                   <button
                                     type="button"
                                     aria-label={t("ui.app.moveUp")}
-                                    disabled={rotationLocked || (row.rotationIndex ?? 0) === 0}
+                                    disabled={rowReadOnly || (row.rotationIndex ?? 0) === 0}
                                     onClick={() => moveStep(row.rotationIndex ?? 0, -1)}
                                   >
                                     <UiIcon name="up" />
@@ -8410,7 +8384,7 @@ function RotationEditorTab({
                                   <button
                                     type="button"
                                     aria-label={t("ui.app.moveDown")}
-                                    disabled={rotationLocked || (row.rotationIndex ?? 0) === rotation.steps.length - 1}
+                                    disabled={rowReadOnly || (row.rotationIndex ?? 0) === rotation.steps.length - 1}
                                     onClick={() => moveStep(row.rotationIndex ?? 0, 1)}
                                   >
                                     <UiIcon name="down" />
@@ -8422,7 +8396,7 @@ function RotationEditorTab({
                                   <button
                                     type="button"
                                     aria-label={t("ui.app.deleteStep")}
-                                    disabled={rotationLocked || (!isManualEvent && rotationSkillCount <= 1)}
+                                    disabled={rowReadOnly || (!isManualEvent && rotationSkillCount <= 1)}
                                     onClick={() => removeStep(row.rotationIndex ?? 0)}
                                   >
                                     <UiIcon name="close" />
@@ -8431,7 +8405,7 @@ function RotationEditorTab({
                                     <button
                                       type="button"
                                       aria-label={t("ui.app.addStepBelow")}
-                                      disabled={rotationLocked}
+                                      disabled={rowReadOnly}
                                       onClick={() => addStepBelow(row.rotationIndex ?? 0)}
                                     >
                                       <UiIcon name="plus" />
@@ -8462,7 +8436,7 @@ function RotationEditorTab({
                                     className={`start-marker ${startAnchor.rowId === row.id && startAnchor.actionIndex === actionIndex ? "active" : ""}`}
                                     type="button"
                                     aria-label={t("ui.app.setFightStartHere")}
-                                    disabled={rotationLocked}
+                                    disabled={rowReadOnly}
                                     onClick={() => selectStart(row.rotationIndex ?? 0, actionIndex)}
                                   >
                                     {startAnchor.rowId === row.id && startAnchor.actionIndex === actionIndex

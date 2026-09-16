@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader";
-import { buildRotationTimeline } from "../src/calculations/rotationTimeline";
+import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline";
 import { buildPresetRotationBundle } from "../src/App";
 import paths from "../data/path.json";
 
@@ -83,7 +83,7 @@ describe("preset Qi event attachments", () => {
       if (step.type !== "event" || step.event !== "Qi") continue;
       const attachment = step.before ?? step.after;
       const nextIndex = rotation.steps.findIndex(
-        (candidate, candidateIndex) => candidateIndex > index && candidate.type === "skill",
+        (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
       );
       const target = timeline.find((row) => row.id === `rotation-${nextIndex}`);
       if (!target || target.skipped) continue;
@@ -91,7 +91,7 @@ describe("preset Qi event attachments", () => {
       if (attachment.action !== "start" && (!action || action.type === "inactive")) continue;
       expect(
         qiRows.some((row) => row.id === `rotation-${index}`),
-        "An executed attachment must not lose its Qi event",
+        `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${attachment.action} must retain its Qi event`,
       ).toBe(true);
     }
   });

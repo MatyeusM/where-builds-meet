@@ -12,6 +12,7 @@ vi.mock("../src/calculations/rotationWorkerClient", () => ({
   requestRotationComparisons: vi.fn(() => new Promise(() => {})),
   requestEditorTimeline: vi.fn(() => new Promise(() => {})),
   supersedeRotationCalculationRequests: vi.fn(),
+  cancelEditorTimelineRequest: vi.fn(),
 }));
 
 let container: HTMLDivElement;
@@ -101,4 +102,66 @@ it("adds a timed Hellfire event, edits signed amounts, and saves it", async () =
         ),
       ),
   ).toBe(true);
+});
+
+it("retains generated rows until the latest complete editor revision arrives", async () => {
+  const { pendingEditorTimeline } = await import("../src/editorTimelinePreview");
+  type Result = Awaited<ReturnType<typeof requestEditorTimeline>>;
+  const requests: { result: Result; resolve: (result: Result) => void }[] = [];
+  vi.mocked(requestEditorTimeline).mockImplementation(
+    (bundle) =>
+      new Promise((resolve) => {
+        const timeline = pendingEditorTimeline(bundle.timeline).map((row) => ({ ...row, pendingCalculation: false }));
+        timeline.push({
+          ...timeline[0],
+          id: "generated-wait",
+          rotationIndex: undefined,
+          startTime: 0.5,
+          step: { type: "event", event: "Delay", duration: 2, automatic: "cooldown" },
+        });
+        requests.push({
+          resolve,
+          result: { rotation: bundle.timeline.rotation, timeline, fingerprint: `revision-${requests.length}` },
+        });
+      }),
+  );
+  await act(async () => root.render(<App />));
+  await click("Rotation Editor");
+  await click("Duplicate");
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(100);
+  });
+  await act(async () => {
+    requests[0].resolve(requests[0].result);
+  });
+  const rows = () => [...container.querySelectorAll(".rotation-table-row")];
+  const originalRows = rows();
+  const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!;
+  const originalValue = select.value;
+  const alternate = [...select.options].find(
+    (option) => !option.value.startsWith("__") && option.value !== originalValue,
+  )!;
+  await act(async () => {
+    select.value = alternate.value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(100);
+  });
+  expect(rows()).toEqual(originalRows);
+  expect(select.isConnected).toBe(true);
+  expect(select.value).toBe(originalValue);
+  await act(async () => {
+    select.value = alternate.value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(100);
+  });
+  expect(requests).toHaveLength(3);
+  await act(async () => {
+    requests[1].resolve(requests[1].result);
+  });
+  expect(select.value).toBe(originalValue);
+  expect(rows()).toEqual(originalRows);
+  await act(async () => {
+    requests[2].resolve(requests[2].result);
+  });
+  expect(select.value).toBe(alternate.value);
 });

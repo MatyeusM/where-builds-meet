@@ -236,7 +236,6 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     name?: unknown;
     steps?: unknown;
     targetHP?: unknown;
-    autoHP?: unknown;
     dummyAttack?: unknown;
     groupSize?: unknown;
     ping?: unknown;
@@ -247,9 +246,8 @@ function parseRotation(value: unknown): RotationRecord | undefined {
   if (typeof candidate.name !== "string" || !candidate.name.trim() || !Array.isArray(candidate.steps)) return undefined;
   const steps = candidate.steps.map(parseRotationStep);
   if (steps.some((step) => !step)) return undefined;
-  const autoHP = candidate.autoHP === true;
-  const allParsedSteps = steps.filter((step): step is RotationStep => Boolean(step));
-  const parsedSteps = allParsedSteps.filter((step) => !autoHP || step.type !== "event" || step.event !== "HP");
+  // Legacy autoHP is ignored; preserve authored HP events and their anchors.
+  const parsedSteps = steps.filter((step): step is RotationStep => Boolean(step));
   const startValue =
     candidate.start && typeof candidate.start === "object" && !Array.isArray(candidate.start)
       ? (candidate.start as { step?: unknown; action?: unknown })
@@ -259,22 +257,14 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     typeof startValue.step === "number" &&
     Number.isInteger(startValue.step) &&
     startValue.step >= 0 &&
-    startValue.step < allParsedSteps.length;
+    startValue.step < parsedSteps.length;
   const validStartAction =
     startValue?.action === undefined ||
     (typeof startValue.action === "number" && Number.isInteger(startValue.action) && startValue.action >= 0);
   const start =
     validStartStep && validStartAction
       ? {
-          step: Math.max(
-            0,
-            (startValue.step as number) -
-              (autoHP
-                ? allParsedSteps
-                    .slice(0, startValue.step as number)
-                    .filter((step) => step.type === "event" && step.event === "HP").length
-                : 0),
-          ),
+          step: startValue.step as number,
           ...(typeof startValue.action === "number" ? { action: startValue.action } : {}),
         }
       : undefined;
@@ -286,7 +276,6 @@ function parseRotation(value: unknown): RotationRecord | undefined {
         ...(typeof candidate.targetHP === "number" && Number.isFinite(candidate.targetHP) && candidate.targetHP > 0
           ? { targetHP: candidate.targetHP }
           : {}),
-        ...(autoHP ? { autoHP: true } : {}),
         ...(candidate.dummyAttack === true ? { dummyAttack: true } : {}),
         ...(normalizePing(candidate.ping) !== undefined ? { ping: normalizePing(candidate.ping) } : {}),
         groupSize: candidate.groupSize === 5 || candidate.groupSize === 10 ? candidate.groupSize : 1,

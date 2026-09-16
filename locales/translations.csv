@@ -944,7 +944,6 @@ ui.app.attributeResistance,Attribute Resistance:,屬性抗性：,,,속성 저항
 ui.app.attunementStats,Attunement Stats,定音,,,정음,,,,,,,
 ui.app.attunementStatsPriority,Attunement Stats Priority,定音優先級,,,정음 중요도,,,,,,,
 ui.app.authorGreydustWwmIgnGreydustDiscord,Author: greydust (WWM IGN) / greydust (Discord),作者：greydust（燕雲十六聲）／greydust（Discord）,,,,,,,,,,
-ui.app.autoHp,Auto HP,自動氣血,,,,,,,,,,
 ui.app.averageHps,Average HPS,平均每秒治療,,,평균 HPS,,,,,,,
 ui.app.averageStack,Average stack,平均層數,,,,,,,,,,
 ui.app.avgCastTime,Avg Cast Time,平均施放時間,,,,,,,,,,

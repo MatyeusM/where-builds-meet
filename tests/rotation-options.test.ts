@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-rotation-options.mjs.
 describe("rotation-options", () => {
-  it("Rotation Auto HP, Dummy Attack, and Infinite Vitality checks passed", async () => {
+  it("Legacy Auto HP, Dummy Attack, and Infinite Vitality behavior remains valid", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
     const commonInput = {
       dots: {},
@@ -33,14 +33,15 @@ describe("rotation-options", () => {
       },
     };
 
+    const legacyRotation = {
+      name: "Automatic HP probe",
+      autoHP: true,
+      eventTimeReference: "battleStart" as const,
+      steps: [{ type: "skill" as const, skill: "ObserveHP" }],
+    };
     const hpTimeline = buildRotationTimeline({
       ...commonInput,
-      rotation: {
-        name: "Automatic HP probe",
-        autoHP: true,
-        eventTimeReference: "battleStart",
-        steps: [{ type: "skill", skill: "ObserveHP" }],
-      },
+      rotation: legacyRotation,
       skills: {
         ObserveHP: {
           name: "Observe HP",
@@ -55,15 +56,12 @@ describe("rotation-options", () => {
       (row) => row.step.type === "event" && row.step.event === "HP" && row.step.automatic,
     );
     expect(
-      automaticRows.length === 10,
-      "Auto HP must create ten hidden state changes for a nonzero rotation.",
+      automaticRows.length === 0,
+      "A legacy Auto HP flag must not generate duration-dependent HP events.",
     ).toBeTruthy();
     expect(
-      Object.values(hpRow.actionStates).every((state, index) => {
-        const expected = index === 0 ? 0.9999 : 0.9999 - Math.min(index, 9) * 0.1;
-        return Math.abs(state.targetHPRatio - expected) < 1e-9;
-      }),
-      "Auto HP must begin at 99.99% and lose ten percentage points at each 10% duration boundary.",
+      Object.values(hpRow.actionStates).every((state) => state.targetHPRatio === 0.99),
+      "Without manual HP events or maximum target HP, legacy rotations retain the ordinary 99% target state.",
     ).toBeTruthy();
 
     const vitalityTimeline = buildRotationTimeline({

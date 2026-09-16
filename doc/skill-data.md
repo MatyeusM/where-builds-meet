@@ -570,6 +570,15 @@ the same per-hit calculation with and without the named buff.
 
 ### Multi-action skills
 
+`silent: true` marks an inert skill/component. It cannot contain actions,
+cooldowns, or attack responses and does not emit a skill-start notification.
+Its weapon declaration still switches weapon at the earliest possible start.
+Vile Condemned's parent and charge are silent; its damage-bearing release is not.
+`waitForRequirement` requires a silent, unconditional prefix. The live scheduler
+holds release until ready and backdates only the displayed charging interval;
+explicit start attachments stay at the earliest start. See
+[Readiness after charging](rotation-event-loop.md#readiness-after-charging).
+
 A castable skill can declare an ordered `subAction` list of objects. `value`
 names the primary component. Its optional `requirement` is evaluated when that
 component dispatches, after earlier components finish and before its ping gap. A passing requirement uses
@@ -729,11 +738,10 @@ An attached target HP event can set the percentage explicitly:
 }
 ```
 
-A rotation may instead set `"autoHP": true`. The timeline derives the rotation
-duration, starts target HP at 99.99% at the fight-start anchor, and applies a
-hidden ten-percentage-point reduction at every 10% duration boundary through
-90%. Enabling Auto HP removes stored manual HP events, and the editor does not
-offer the HP event while the option remains enabled.
+The former `autoHP` option is no longer supported. Saved and imported rotations
+drop that flag without removing authored HP events or shifting the fight-start
+anchor. HP changes must come from explicit events or damage against configured
+target maximum HP; no duration-dependent HP events are generated.
 
 A rotation with `"dummyAttack": true` derives two hidden Take Damage events at
 5.5 seconds after fight start and every six seconds thereafter. Both events at
@@ -1826,7 +1834,7 @@ Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the 
 
 `switch` selects a value from an explicit keyed table. `param1` names the
 timeline-state value to inspect, `param2` maps possible values to results, and
-the optional `fallback` is used while the structural timeline is built or when
+the optional `fallback` is used during initial row expansion or when
 no case matches:
 
 ```json
@@ -1842,7 +1850,7 @@ no case matches:
 ```
 
 A switched `castTime` is resolved from `currentWeapon` when the cast starts and
-is then locked for that cast. The fallback supplies the initial structural
+is then locked for that cast. The fallback supplies the initial row
 estimate before timeline events have established the weapon state. Actions may
 also use a switched `value` with `"resolveAt": "skillStart"`; Perfect Dodge
 uses this to select one weapon-tagged Ghostly Step - Umbra Dodge definition

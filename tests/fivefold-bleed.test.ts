@@ -342,17 +342,13 @@ describe("fivefold-bleed", () => {
         },
       },
     };
-    let rolls = 0;
-    const withHealing = calculateSimulatedRotationRun({ ...bundle, timeline: healingInput }, () => {
-      rolls++;
-      return rolls === 1 ? 0 : 0.99;
-    });
+    const withHealing = calculateSimulatedRotationRun({ ...bundle, timeline: healingInput }, () => 0);
     close(
       withHealing.resolvedSequence
         .filter(({ entry }) => entry.context.isDot)
         .reduce((sum, { breakdown }) => sum + breakdown.total, 0),
       8,
-      "Healing feedback must preserve the proc roll",
+      "A successful proc remains active while healing resolves in the live traversal",
     );
 
     const dense = buildRotationTimeline(inputFor(Array.from({ length: 220 }, (_, index) => index * 0.037)));

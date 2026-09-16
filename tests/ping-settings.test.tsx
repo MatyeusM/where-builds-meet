@@ -12,6 +12,7 @@ vi.mock("../src/calculations/rotationWorkerClient", () => ({
   requestRotationComparisons: vi.fn(() => new Promise(() => {})),
   requestEditorTimeline: vi.fn(() => new Promise(() => {})),
   supersedeRotationCalculationRequests: vi.fn(),
+  cancelEditorTimelineRequest: vi.fn(),
 }));
 
 let container: HTMLDivElement;

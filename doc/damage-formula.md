@@ -50,6 +50,11 @@ excludes damage at its timestamp. Otherwise the last ordered cast or explicit
 Delay ends combat, including same-time final actions but dropping later damage,
 healing, DOT ticks, and replays. Generated damage never extends the duration.
 
+Damage and healing resolve once as their events execute in the single combat
+traversal. HP feedback, recorded damage, and replay coefficients consume those
+resolved values immediately. Reporting retains the results; buff-attribution
+counterfactual formulas do not execute combat events or change live state.
+
 Expected shared-clock DOTs use the [tiny-state merging approximation](rotation-event-loop.md#tiny-expected-state-merging):
 compatible states below `1e-5` probability can share a weighted mean expiration
 within a 0.1-second bucket. No probability mass is discarded and damage formulas

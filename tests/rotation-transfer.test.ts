@@ -180,11 +180,17 @@ describe("rotation-transfer", () => {
       (entry) => entry.id === automaticHPImport.importedIds[0],
     )?.rotation;
     expect(
-      automaticHPRotation?.autoHP === true &&
-        automaticHPRotation.steps.length === 1 &&
-        automaticHPRotation.start?.step === 0,
-      "Auto HP import must discard manual HP events while preserving the anchored skill.",
+      automaticHPRotation !== undefined &&
+        !Object.hasOwn(automaticHPRotation, "autoHP") &&
+        automaticHPRotation.steps.length === 2 &&
+        automaticHPRotation.steps[0].event === "HP" &&
+        automaticHPRotation.start?.step === 1,
+      "Legacy Auto HP import must drop the flag while retaining manual HP events and the anchored skill.",
     ).toBeTruthy();
+    const migratedExport = JSON.parse(transfer.exportRotationEntries(automaticHPImport.entries));
+    const migratedRotation = migratedExport.rotations.find((entry) => entry.id === automaticHPImport.importedIds[0]);
+    expect(migratedRotation.rotation).toEqual(automaticHPRotation);
+    expect(Object.hasOwn(migratedRotation.rotation, "autoHP")).toBe(false);
 
     const legacyExhaustedImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,
