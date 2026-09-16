@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { assert, describe, it } from "vitest";
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -46,7 +46,7 @@ describe("dps-snapshots", () => {
         },
         fixture.build,
       );
-      if (!bundle) throw new Error(id + ": failed to build the production calculation bundle.");
+      assert(bundle, id + ": failed to build the production calculation bundle.");
       const { metrics, duration } = calculateRotationBaseline(bundle);
       actual[id] = { fixture, dps: metrics.dps, totalDamage: metrics.totalDamage, duration };
       const previous = snapshot.cases[id]?.dps;
@@ -61,7 +61,7 @@ describe("dps-snapshots", () => {
       );
     }
     const invalid = compareDpsSnapshots(actual, actual);
-    if (invalid.length) throw new Error(invalid.join("\n"));
+    assert(!invalid.length, invalid.join("\n"));
     if (updateIds.length) {
       const next = { ...snapshot.cases };
       for (const id of updateIds) next[id] = actual[id];
@@ -80,8 +80,10 @@ describe("dps-snapshots", () => {
       console.log("Updated reviewed rotation snapshots: " + updateIds.join(", "));
     } else {
       const failures = compareDpsSnapshots(snapshot.cases, actual);
-      if (failures.length)
-        throw new Error(failures.join("\n") + "\nReview each change; update only confirmed rotation snapshots.");
+      assert(
+        !failures.length,
+        failures.join("\n") + "\nReview each change; update only confirmed rotation snapshots.",
+      );
       console.log(
         "All preset rotations remain within " + dpsSnapshotTolerance * 100 + "% of their accepted snapshots.",
       );

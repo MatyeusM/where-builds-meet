@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 
 // Ported from script/probe/check-default-rotation-moves.mjs.
@@ -87,21 +87,21 @@ describe("default-rotation-moves", () => {
             candidate.step.type === "skill" &&
             candidate.step.skill === "AnxiSoldierBurningHeart3",
         );
-        expect(
+        assert(
           firstAnxi?.actionStates[0]?.distance === 6,
           `${rotation.name} Burning Heart ${row.rotationIndex} first Anxi must be 6m.`,
-        ).toBeTruthy();
-        expect(
+        );
+        assert(
           secondAnxi?.actionStates[0]?.distance === 4,
           `${rotation.name} Burning Heart ${row.rotationIndex} second Anxi must be 4m.`,
-        ).toBeTruthy();
+        );
         if (row.actions[3]?.type === "inactive") {
-          expect(row.actionStates[3], "A hit cut off by Battle End has no resolved state.").toBeUndefined();
+          assert(row.actionStates[3] === undefined, "A hit cut off by Battle End has no resolved state.");
         } else {
-          expect(
+          assert(
             row.actionStates[3]?.distance === 2,
             `${rotation.name} Burning Heart ${row.rotationIndex} first damage must be 2m.`,
-          ).toBeTruthy();
+          );
         }
       }
     }

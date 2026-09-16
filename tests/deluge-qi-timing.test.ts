@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 import { buildPresetRotationBundle } from "../src/App";
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator";
 import { compareTimelineTime, type RotationRecord } from "../src/calculations/rotationTimeline";
@@ -55,7 +55,10 @@ describe("Deluge Qi timing", () => {
       const earliest = previous ? previous.startTime + previous.effectiveCastTime : 0;
       const attack = attacks.find((attack) => compareTimelineTime(attack.startTime, earliest) >= 0);
       if (!attack) {
-        expect(row.startTime).toBeCloseTo(earliest);
+        assert(
+          Math.abs(row.startTime - earliest) < 0.005,
+          "Deflect must start at the earliest ready time when no attack is incoming.",
+        );
         continue;
       }
       expect(row.startTime).toBeCloseTo(Math.max(earliest, attack.startTime + 0.1 - row.effectiveCastTime));
@@ -73,7 +76,7 @@ describe("Deluge Qi timing", () => {
       const row = qiRows.find(
         (row) => row.step.type === "event" && row.step.event === "Qi" && row.step.targetQiRatio === ratio,
       );
-      expect(row, "Missing Qi event at " + time + " seconds").toBeDefined();
+      assert(row !== undefined, "Missing Qi event at " + time + " seconds");
       expect(Math.abs(row!.startTime - startTime - time)).toBeLessThanOrEqual(0.75);
       expect(row!.actions.some((action) => action.type === "setQi")).toBe(true);
     }

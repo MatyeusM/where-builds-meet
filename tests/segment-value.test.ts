@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-segment-value.mjs.
 describe("segment-value", () => {
@@ -24,10 +24,10 @@ describe("segment-value", () => {
       [2.499999, -1],
       [2.5, -1.2],
     ]) {
-      expect(
+      assert(
         resolveSegmentValue(segment, { actionTime: input }) === expected,
         "Exclusive segment boundary failed at " + input,
-      ).toBeTruthy();
+      );
     }
     const { deserializeSkillOverrides, serializeSkillOverrides } = await import("../src/skillOverrides.ts");
     for (const threshold of [-2, 0, 1.3375, Number.MAX_VALUE]) {
@@ -39,10 +39,10 @@ describe("segment-value", () => {
         const migratedSegment = saved.Buff.Probe.effect[0].effect.dmgBonus;
         for (const input of [threshold - 1, threshold, threshold + 1, Number.MIN_VALUE, Number.MAX_VALUE]) {
           if (!Number.isFinite(input)) continue;
-          expect(
+          assert(
             resolveSegmentValue(migratedSegment, { distance: input }) === (input <= threshold ? 2 : 3),
             "Legacy segment migration changed its result at " + input,
-          ).toBeTruthy();
+          );
         }
       }
     }
@@ -101,18 +101,18 @@ describe("segment-value", () => {
       });
       const cast = rows.find((row) => row.kind === "rotation");
       const hits = cast.actions.filter((action) => action.type === "damage");
-      expect(
+      assert(
         Math.abs(cast.effectiveCastTime - 1.6975969436363636) < 1e-9,
         id + " must resolve the Intoxicated route's cast duration.",
-      ).toBeTruthy();
-      expect(
+      );
+      assert(
         Math.abs(hits[0].time - 0.6064791536363635) < 1e-9,
         id + " must resolve the first hit using its own timing segment.",
-      ).toBeTruthy();
-      expect(
+      );
+      assert(
         hits.slice(1).every((hit) => Math.abs(hit.time - 1.6975969436363636) < 1e-9),
         id + " must resolve later hits using the second timing segment.",
-      ).toBeTruthy();
+      );
     }
   });
 });
