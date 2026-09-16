@@ -131,7 +131,7 @@
     "ignorePing": true,
     "name": "Light Attack 1",
     "shortName": "A1",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.43,
     "action": [
       {
@@ -157,7 +157,7 @@
     "ignorePing": true,
     "name": "Light Attack 1 [Rodent]",
     "shortName": "A1 [Rodent]",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0,
     "action": [
       {
@@ -194,7 +194,7 @@
     "ignorePing": true,
     "name": "Light Attack 2",
     "shortName": "A2",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.47,
     "action": [
       {
@@ -234,7 +234,7 @@
     "ignorePing": true,
     "name": "Light Attack 3",
     "shortName": "A3",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.6,
     "action": [
       {
@@ -274,7 +274,7 @@
     "ignorePing": true,
     "name": "Light Attack 3 [Cancel]",
     "shortName": "A3",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.419,
     "action": [
       {
@@ -314,7 +314,7 @@
     "ignorePing": true,
     "name": "Light Attack 3 [Rodent]",
     "shortName": "A3 [Rodent]",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0,
     "action": [
       {
@@ -351,7 +351,7 @@
     "ignorePing": true,
     "name": "Light Attack 4",
     "shortName": "A4",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.529,
     "action": [
       {
@@ -391,7 +391,7 @@
     "ignorePing": true,
     "name": "Light Attack 4 [Cancel]",
     "shortName": "A4 [Cancel]",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0.167,
     "action": [
       {
@@ -431,7 +431,7 @@
     "ignorePing": true,
     "name": "Light Attack 4 [Rodent]",
     "shortName": "A4 [Rodent]",
-    "skillBreakdownCategory": "A1–4",
+    "skillBreakdownCategory": "Light Attack",
     "castTime": 0,
     "action": [
       {
@@ -468,7 +468,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 1",
     "shortName": "FA1",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0.357,
     "action": [
       {
@@ -517,7 +517,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 2",
     "shortName": "FA2",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0.5,
     "action": [
       {
@@ -552,7 +552,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 2 [Rodent]",
     "shortName": "FA2 [Rodent]",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0,
     "action": [
       {
@@ -597,7 +597,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 3",
     "shortName": "FA3",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0.8,
     "action": [
       {
@@ -730,7 +730,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 4",
     "shortName": "FA4",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0.96,
     "action": [
       {
@@ -821,7 +821,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 4 [Rodent]",
     "shortName": "FA4 [Rodent]",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 0,
     "action": [
       {
@@ -866,7 +866,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 5",
     "shortName": "FA5",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 1.401,
     "action": [
       {
@@ -1023,7 +1023,7 @@
     "ignorePing": true,
     "name": "Blade of Heaven's Wrath 5 [Cancel]",
     "shortName": "FA5 [Cancel]",
-    "skillBreakdownCategory": "FA1–5",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
     "castTime": 1.023,
     "action": [
       {

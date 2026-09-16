@@ -188,7 +188,8 @@ healing, casts, triggers, and hits/heals; outcome rates are weighted by hits/hea
 Shares retain the whole-rotation denominator. Flat skill metrics remain available
 for numerical audits, while grouped metrics drive the UI. Categories are localized
 at the presentation boundary and do not change combat events or damage attribution.
-Wind FA1–5 and A1–4 include their cancel and Rodent-only variants; separately
+Wind FA1–5 use `Blade of Heaven's Wrath` and A1–4 use `Light Attack`. Both
+categories include their cancel and Rodent-only variants; separately
 triggered Rodent damage retains its own skill attribution.
 
 `shortName` is optional presentation metadata. Skill lists, selectors, timeline
