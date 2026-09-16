@@ -71,6 +71,7 @@ export type RotationStep =
       damage: number;
       automatic?: "dummyAttack";
     }
+  | { type: "event"; event: "Hellfire"; startTime: number; amount: number }
   // Accepted only at persistence/import boundaries and migrated to startTime.
   | { type: "event"; event: "TakeDamage"; before: AttachedEventTarget; damage: number }
   | { type: "event"; event: "HP"; before: AttachedEventTarget; targetHPRatio: number }
@@ -520,6 +521,7 @@ export type ResourceEventRule = {
 };
 
 export type RequirementState = {
+  distance?: number;
   selfHPPercentage?: number;
   targetHPPercentage?: number;
   targetQiPercentage?: number;
@@ -614,12 +616,16 @@ export function requirementsPass(
     }
     if (
       item.target === "resource" ||
+      item.target === "distance" ||
       item.target === "selfHPPercentage" ||
       item.target === "targetHPPercentage" ||
       item.target === "targetQiPercentage"
     ) {
       let current = 0;
       switch (item.target) {
+        case "distance":
+          current = state.distance ?? 1;
+          break;
         case "resource":
           current = typeof item.value === "string" ? (resources[item.value] ?? 0) : 0;
           break;
@@ -769,6 +775,7 @@ function buildRotationTimelinePass(
       | "attackResponse"
       | "subActionStart"
       | "action"
+      | "periodicTick"
       | "expectedTick"
       | "expectedExpire"
       | "nextOrdered"
@@ -780,6 +787,7 @@ function buildRotationTimelinePass(
     selectedSubAction?: { skillId: string | undefined };
     expiresEffect?: { target: "self" | "target" | "player"; name: string; expiresAt: number; scheduleId: number };
     expectedWakeup?: { name: string; active: ActivePeriodicEffect };
+    periodicWakeup?: { name: string; active: ActivePeriodicEffect };
   };
   const compareSortOrder = (left: number[], right: number[]) => {
     const sharedLength = Math.min(left.length, right.length);
@@ -982,6 +990,9 @@ function buildRotationTimelinePass(
         : {}),
       ...(step.type === "event" && step.event === "TakeDamage" && action.type === "takeDamage"
         ? { damage: step.damage }
+        : {}),
+      ...(step.type === "event" && step.event === "Hellfire" && action.type === "addResource"
+        ? { type: step.amount < 0 ? "consumeResource" : "addResource", amount: Math.abs(step.amount) }
         : {}),
       ...(step.type === "event" && step.event === "HP" && action.type === "setTargetHP"
         ? { targetHPRatio: step.targetHPRatio }
@@ -1452,6 +1463,7 @@ function buildRotationTimelinePass(
   );
   let currentTimelineTime = 0;
   const requirementState = (): RequirementState => ({
+    distance,
     selfHPPercentage: currentHPRatio * 100,
     targetHPPercentage: targetHPRatio * 100,
     targetQiPercentage: targetQiRatio * 100,
@@ -1675,6 +1687,7 @@ function buildRotationTimelinePass(
           Object.keys(row.actionStates).length === 0,
       ),
     );
+    events.remove((event) => event.periodicWakeup?.active === activeEffect);
     if (pendingRows.size === 0) return;
     activeEffect.rows = activeEffect.rows.filter((row) => !pendingRows.has(row));
     for (let index = rows.length - 1; index >= 0; index -= 1) if (pendingRows.has(rows[index])) rows.splice(index, 1);
@@ -1704,29 +1717,40 @@ function buildRotationTimelinePass(
         activeEffect.appliedAt;
     const isDot = Boolean(dots[name]);
     const rowSkill = (dots[name] ?? effectDefinitions[name]) as SkillRecord | undefined;
+    // Indefinite effects schedule only their next tick; generated ticks never extend combat.
+    const indefinite = !Number.isFinite(activeEffect.expiresAt);
+    const nextTickIndex = Math.max(0, Math.ceil((afterTime - activeEffect.appliedAt - firstTick - 1e-6) / interval));
+    let nextTickTime = activeEffect.appliedAt + firstTick + nextTickIndex * interval;
+    if (!includeCurrentTime && nextTickTime <= afterTime + 1e-6) nextTickTime += interval;
     const scheduledTicks =
       resolvedTicks ??
-      Array.from(
-        {
-          length: Math.max(
-            0,
-            Math.floor((activeEffect.expiresAt - activeEffect.appliedAt - firstTick + 1e-6) / interval) + 1,
-          ),
-        },
-        (_, index) => ({
-          time: activeEffect.appliedAt + firstTick + index * interval,
-          probability: undefined,
-          sources: undefined,
-        }),
-      );
+      (indefinite
+        ? [{ time: nextTickTime, probability: undefined, sources: undefined }]
+        : Array.from(
+            {
+              length: Math.max(
+                0,
+                Math.floor((activeEffect.expiresAt - activeEffect.appliedAt - firstTick + 1e-6) / interval) + 1,
+              ),
+            },
+            (_, index) => ({
+              time: activeEffect.appliedAt + firstTick + index * interval,
+              probability: undefined,
+              sources: undefined,
+            }),
+          ));
     for (const [tickIndex, tick] of scheduledTicks.entries()) {
       const tickTime = tick.time;
       if (periodic?.tickOnExpire === false && tickTime >= activeEffect.expiresAt - 1e-6) continue;
       if (tickTime < afterTime - 1e-6 || (!includeCurrentTime && Math.abs(tickTime - afterTime) <= 1e-6)) continue;
       const derivedId = nextDerivedOrder++;
       const derivedSortOrder = [...causalSortOrder, derivedId];
+      const ordinal = Math.max(0, Math.round((tickTime - activeEffect.appliedAt - firstTick) / interval));
       const actions = baseActions.map((action) => ({
         ...action,
+        ...(typeof action.amount === "number" && typeof action.amountPerTick === "number"
+          ? { amount: action.amount + ordinal * action.amountPerTick }
+          : {}),
         time: 0,
         ...(tick.probability !== undefined ? { damageScale: tick.probability, hitProbability: tick.probability } : {}),
       }));
@@ -1763,6 +1787,14 @@ function buildRotationTimelinePass(
         modifierEffects: [],
         actionStates: {},
       };
+      if (indefinite)
+        events.push({
+          time: tickTime + interval,
+          sortOrder: [...derivedSortOrder, 2],
+          kind: "periodicTick",
+          row,
+          periodicWakeup: { name, active: activeEffect },
+        });
       activeEffect.rows.push(row);
       rows.push(row);
       events.push({ time: tickTime, sortOrder: [...derivedSortOrder, 0], kind: "start", row });
@@ -2205,7 +2237,7 @@ function buildRotationTimelinePass(
       sortOrder: [-1, rotation.steps.length],
       row: rows[0],
     });
-  while ((events.length || timedCursor < timed.length || forecastSegment) && processedEvents < 2000) {
+  while ((events.length || timedCursor < timed.length || forecastSegment) && processedEvents < 5000) {
     responseContext = undefined;
     if (forecastSegment && forecast) {
       const readyAt = nextRequirementTime(forecastSegment, forecastTime, forecast.earliestRelease);
@@ -2340,6 +2372,12 @@ function buildRotationTimelinePass(
       finishOrderedWait(event.time);
       if (row.step.type === "skill") row.startTime = event.time + skillPing(row.skill);
       expandRow(row);
+      continue;
+    }
+    if (event.periodicWakeup) {
+      const { name, active } = event.periodicWakeup;
+      if (Object.values(activePeriodicEffects).includes(active))
+        schedulePeriodicActions(name, active, event.time, event.sortOrder, event.row.order, true);
       continue;
     }
     if (event.expectedWakeup) {
@@ -3155,7 +3193,7 @@ function buildRotationTimelinePass(
       if (triggerAction.target === "target") setDebuffs(next);
       else setBuffs(next);
       const appliedEffect = next.find((effect) => effect.name === triggerAction.value);
-      if (definition.periodic && appliedEffect?.expiresAt !== undefined) {
+      if (definition.periodic && appliedEffect) {
         const key = periodicEffectKey(periodicTarget, triggerAction.value);
         const effectSourceRowId = applicationSource;
         if (existing && activePeriodicEffects[key] && definition.refresh !== false) {
@@ -3163,7 +3201,7 @@ function buildRotationTimelinePass(
             triggerAction.value,
             periodicTarget,
             definition,
-            appliedEffect.expiresAt,
+            appliedEffect.expiresAt ?? Number.POSITIVE_INFINITY,
             event.time,
             effectSourceRowId,
             event.sortOrder,
@@ -3174,7 +3212,7 @@ function buildRotationTimelinePass(
           const activeEffect: ActivePeriodicEffect = {
             definition,
             appliedAt: event.time,
-            expiresAt: appliedEffect.expiresAt,
+            expiresAt: appliedEffect.expiresAt ?? Number.POSITIVE_INFINITY,
             sourceRowId: effectSourceRowId,
             rows: [],
           };
@@ -3495,7 +3533,7 @@ function buildRotationTimelinePass(
       const appliedEffect = next.find(
         (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
       );
-      if (shouldApply && definition.periodic && appliedEffect?.expiresAt !== undefined) {
+      if (shouldApply && definition.periodic && appliedEffect) {
         const key = periodicEffectKey(periodicTarget, action.value, playerRecipientIndex);
         const effectSourceRowId = damageSource(definition, event.row.sourceRowId ?? event.row.id);
         if (existing && activePeriodicEffects[key] && definition.refresh !== false) {
@@ -3503,7 +3541,7 @@ function buildRotationTimelinePass(
             action.value,
             periodicTarget,
             definition,
-            appliedEffect.expiresAt,
+            appliedEffect.expiresAt ?? Number.POSITIVE_INFINITY,
             event.time,
             effectSourceRowId,
             event.sortOrder,
@@ -3515,7 +3553,7 @@ function buildRotationTimelinePass(
           const activeEffect: ActivePeriodicEffect = {
             definition,
             appliedAt: event.time,
-            expiresAt: appliedEffect.expiresAt,
+            expiresAt: appliedEffect.expiresAt ?? Number.POSITIVE_INFINITY,
             sourceRowId: effectSourceRowId,
             ...(playerRecipientIndex !== undefined ? { playerRecipientIndex } : {}),
             rows: [],
@@ -3588,8 +3626,8 @@ function buildRotationTimelinePass(
     }
     if (typeof action.cooldown === "number") cooldowns[actionCooldownKey] = event.time + action.cooldown;
   }
-  if (processedEvents >= 2000 && (events.length || timedCursor < timed.length))
-    throw new Error("Combat timeline exceeded its 2,000-event safety limit before reaching combat end.");
+  if (processedEvents >= 5000 && (events.length || timedCursor < timed.length))
+    throw new Error("Combat timeline exceeded its 5,000-event safety limit before reaching combat end.");
   regenerateResources(timelineEndTime);
   for (const row of rows)
     row.actions = row.actions.map((action, index) =>

@@ -3,6 +3,6 @@
   "locales": ["en", "zh-Hant", "ko"],
   "completion": {
     "zh-Hant": 76,
-    "ko": 58
+    "ko": 56
   }
 }

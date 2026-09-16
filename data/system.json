@@ -2,16 +2,25 @@
   "initialResources": {
     "HeavensWill": 2,
     "BladeMomentum": 4,
-    "BattleWill": 4
+    "BattleWill": 4,
+    "Hellfire": 0
   },
   "resourceMaximums": {
-    "HeavensWill": 4
+    "HeavensWill": 4,
+    "Hellfire": 80
   },
   "resourceEvents": [
     {
       "event": "damage",
       "resource": "Vitality",
-      "amount": { "function": "switch", "param1": "FuryHarvestT3", "param2": { "true": 2.1 }, "fallback": 2 },
+      "amount": {
+        "function": "switch",
+        "param1": "FuryHarvestT3",
+        "param2": {
+          "true": 2.1
+        },
+        "fallback": 2
+      },
       "cooldown": 2
     },
     {

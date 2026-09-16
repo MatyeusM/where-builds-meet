@@ -781,9 +781,10 @@ Refreshing can either preserve or restart the cadence according to
 use this shared scheduler and differ only in row classification, damage rules,
 and source-cast presentation.
 
-The simulator has a 2,000-event safety limit to prevent accidental infinite
+The simulator has a 5,000-event safety limit to prevent accidental infinite
 trigger chains. Exceeding it raises an error rather than publishing a truncated
-timeline with a misleading duration.
+timeline with a misleading duration. This accommodates Wind's complete authored
+sequence with Hellfire ticks and automatic Enhanced Rodent Rampage attacks.
 
 Setup and Inner Way triggers are indexed by event name once for each timeline
 pass. A damage, healing, or incoming-damage action evaluates only the rules for
@@ -1309,8 +1310,7 @@ families are available to Settings and Build. Planner-only status does not imply
 that all supporting data is absent: talents and attunements may already be
 registered while combat skill definitions remain incomplete. See the martial-art
 talent and attunement audit documents for their implementation status. Mixed is the final
-selector option and is Dev-only. Kite is available without Dev mode, while Wind
-remains a WIP path.
+selector option and is Dev-only. Kite and Wind are available without Dev mode.
 
 Stored universal build and rotation records created before either planner-only
 martial-art expansion contain one of the previous complete martial-art ID sets.
@@ -1352,8 +1352,8 @@ from data.
   Bamboocut martial arts, but Void/Formless Attack folding currently remains
   Stonesplit-only.
 - DMG Bonus Category 2 is specified but not implemented.
-- Release deployment runs deterministic DPS snapshot checks for every available
-  path. Ordinary builds run preset, localization, behavioral-test, type, and
+- Release deployment runs deterministic DPS snapshot checks for every non-empty preset,
+  including WIP paths. Ordinary builds run preset, localization, behavioral-test, type, and
   production-bundle verification without the accepted-snapshot comparison.
   A DPS change of 1% or more in either direction requires review before release; see
   [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.

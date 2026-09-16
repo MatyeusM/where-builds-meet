@@ -23,6 +23,25 @@
           "effect": {
             "defenseBonus": -0.1
           }
+        },
+        {
+          "requirement": [
+            {
+              "target": "martialArt",
+              "value": "InfernalTwinblades"
+            },
+            {
+              "target": "skillTag",
+              "value": "Light"
+            },
+            {
+              "target": "target",
+              "value": "Karma"
+            }
+          ],
+          "effect": {
+            "bamboocutResistance": -10
+          }
         }
       ],
       "trigger": [
@@ -148,7 +167,26 @@
         }
       ]
     },
-    "EchoesOfOblivionT3": {},
+    "EchoesOfOblivionT3": {
+      "trigger": [
+        {
+          "event": "damage",
+          "requirement": [
+            {
+              "target": "self",
+              "value": "Samsara"
+            }
+          ],
+          "action": [
+            {
+              "type": "addResource",
+              "value": "Hellfire",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
     "EchoesOfOblivionT4": {
       "trigger": [
         {

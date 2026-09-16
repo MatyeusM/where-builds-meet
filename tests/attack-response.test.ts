@@ -129,6 +129,44 @@ describe("attack response windows", () => {
     expect(rowsFor(rows, "Observe")[0].currentWeapon).toBe("RopeDart");
   });
 
+  it.each(["PerfectDodge", "PerfectDodgeCancel"])(
+    "%s creates one Dual Blades Umbra explosion for paired attacks",
+    (skill) => {
+      const data = input([cast(skill), cast("Follow"), cast("Observe"), attack(5), attack(5), end(7)]);
+      data.weapons = ["infernalTwinblades", "mortalRopeDart"];
+      data.martialArtState = {
+        infernalTwinblades: { weapon: "DualBlades" },
+        mortalRopeDart: { weapon: "RopeDart" },
+      } as TimelineBuildInput["martialArtState"];
+      data.skills.Follow = {
+        ...data.skills.Follow,
+        tags: ["MartialArts"],
+        martialArt: "mortalRopeDart",
+        weapon: "RopeDart",
+      };
+      data.skills.Observe = { castTime: 0, action: [] };
+      data.initialBuffs = [{ name: "MysteryUmbra" }];
+      const rows = buildRotationTimeline(data);
+      const dodge = rowsFor(rows, skill)[0];
+      expect(dodge.startTime).toBeCloseTo(4.975);
+      expect(dodge.effectiveCastTime).toBe(skill === "PerfectDodge" ? 0.125 : 0);
+      expect(rowsFor(rows, "Follow")[0].startTime).toBeCloseTo(skill === "PerfectDodge" ? 5.14 : 5.015);
+      const procs = rowsFor(rows, "GhostlyStepsUmbraDodgeDualBlades");
+      expect(procs).toHaveLength(1);
+      expect(procs[0].currentWeapon).toBe("DualBlades");
+      expect(procs[0].currentMartialArt).toBe("infernalTwinblades");
+      expect(procs[0].sourceRowId).toBe(rowsFor(rows, skill)[0].id);
+      const damage = procs[0].actions.filter((action) => action.type === "damage");
+      expect(damage).toHaveLength(1);
+      expect(procs[0].startTime + Number(damage[0].time)).toBeCloseTo(5.8);
+      expect(incoming(rows)).toEqual([0, 0]);
+      expect(rowsFor(rows, "GhostlyStepsUmbraDodgeRopeDart")).toHaveLength(0);
+      expect(rowsFor(rows, "Observe")[0].currentWeapon).toBe("RopeDart");
+      data.rotation.steps = [cast(skill), cast("Follow"), end(7)];
+      expect(rowsFor(buildRotationTimeline(data), "GhostlyStepsUmbraDodgeDualBlades")).toHaveLength(0);
+    },
+  );
+
   it("restores talent charges on the successful attack, not on cast start", () => {
     const data = input([cast("Charged"), cast("PerfectDodgeCancel"), cast("Charged"), attack(5), end(6)]);
     data.rotation.ping = 0;

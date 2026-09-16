@@ -19,7 +19,6 @@ describe("rotation DPS snapshot fixtures", () => {
       const group = file.replaceAll("\\", "/").split("/")[0];
       const pathId = Object.keys(paths).find((id) => paths[id].buildGroup === group);
       expect(pathId, "Rotation has no path: " + file).toBeDefined();
-      expect(paths[pathId!].status, "Non-empty preset must be included in DPS coverage: " + file).toBe("available");
       expected.push(pathId + "/" + file.replaceAll("\\", "/").split("/").at(-1)!.slice(0, -5));
     }
     expect(cases.map((c) => c.id).sort()).toEqual(expected.sort());

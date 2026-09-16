@@ -398,6 +398,18 @@
     color: var(--text-muted);
   }
 
+  .rotation-hellfire-value {
+    color: oklch(1 0 0);
+
+    &[data-full="true"] {
+      color: oklch(0.85 0.09 25);
+    }
+
+    &[data-flamelash="true"] {
+      color: oklch(0.72 0.2 25);
+    }
+  }
+
   .rotation-damage-heading,
   .rotation-damage-value {
     padding-inline-start: 18px;

@@ -41,22 +41,34 @@ describe("vendetta", () => {
     );
     for (const roll of [undefined, () => 0.5]) {
       for (let tier = 0; tier <= 6; tier++) {
+        const duration = tier < 4 ? 15 : 20;
         const rows = build(tier, lateAttack, roll);
         assert.equal(rodent(rows).length, 1, "Every Vendetta tier retains T0 and enables attacks after ten seconds");
         const buff = rows
           .find((row) => row.step.skill === "InfernalLight1")
           .actionStates[0].buffs.find((buff) => buff.name === "RodentRampage");
         assert.ok(
-          Math.abs(buff.expiresAt - 25.541) < 1e-9,
-          "Vendetta adds fifteen seconds once, without stacking cumulative tier descriptions",
+          Math.abs(buff.expiresAt - (duration + 0.541)) < 1e-9,
+          "Vendetta sets the total duration to 15 seconds, upgraded to 20 at T4",
         );
         assert.equal(buff.stack, 1, "Duration extension preserves the one-stack cap");
+        for (const [offset, expected] of [
+          [-0.001, 1],
+          [0, 0],
+        ]) {
+          const boundary = build(
+            tier,
+            [cast("RodentRampage"), delay(duration - 0.339 + offset), cast("InfernalLight1")],
+            roll,
+          );
+          assert.equal(rodent(boundary).length, expected, "Rodent attacks stop at the selected tier's exact expiry");
+        }
       }
     }
     assert.equal(
-      rodent(build(0, [cast("RodentRampage"), delay(25 - 0.339), cast("InfernalLight1")])).length,
+      rodent(build(0, [cast("RodentRampage"), delay(15 - 0.339), cast("InfernalLight1")])).length,
       0,
-      "Extended buff expires at the exact 25-second boundary",
+      "Extended buff expires at the exact 15-second boundary",
     );
     const refresh = build(0, [
       cast("RodentRampage"),
@@ -71,7 +83,7 @@ describe("vendetta", () => {
       .actionStates[0].buffs.filter((buff) => buff.name === "RodentRampage");
     assert.equal(refreshed.length, 1, "Refresh still produces one buff");
     assert.ok(
-      Math.abs(refreshed[0].expiresAt - 40.082) < 1e-9,
+      Math.abs(refreshed[0].expiresAt - 30.082) < 1e-9,
       "Refresh expiration is measured from the new application",
     );
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
@@ -95,7 +107,12 @@ describe("vendetta", () => {
         timeline: {
           rotation: {
             name: "Vendetta Token damage",
-            steps: [cast("RodentRampage"), cast(withToken ? "BladeboundThreadCancel" : "Wait"), cast("InfernalLight1")],
+            steps: [
+              cast("RodentRampage"),
+              cast(withToken ? "BladeboundThreadCancel" : "Wait"),
+              cast("InfernalLight1"),
+              delay(0.5),
+            ],
           },
           skills: { ...mortal, ...infernal, Wait: { castTime: 0.385, action: [] } },
           effectDefinitions: buffs,

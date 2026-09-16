@@ -24,6 +24,12 @@ The readiness check precedes attachment expansion so before-start effects do not
 run during a cooldown wait. Once accepted, cast-start modifiers determine the
 new cooldown window and cast duration.
 
+Indefinite periodic effects keep only one upcoming tick in the event queue.
+Each tick schedules its successor using the original application cadence;
+consumption and refresh remove obsolete wakeups. Finite periodic effects retain
+their bounded schedule, and both obey the same combat endpoint. Periodic resource
+amounts can increase by a data-defined amount each tick, as used by Hellfire.
+
 ## Readiness after charging
 
 A composite reference can set `waitForRequirement: true` to delay the ordered

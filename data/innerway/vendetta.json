@@ -8,11 +8,17 @@
         {
           "target": "RodentRampage",
           "modify": {
-            "duration": 25
+            "duration": 15
           }
         },
         {
           "target": "VendettaToken",
+          "modify": {
+            "duration": 15
+          }
+        },
+        {
+          "target": "EnhancedRodentRampage",
           "modify": {
             "duration": 15
           }
@@ -64,7 +70,22 @@
       ]
     },
     "VendettaT3": {},
-    "VendettaT4": {},
+    "VendettaT4": {
+      "effect": [
+        {
+          "target": "RodentRampage",
+          "modify": {
+            "duration": 20
+          }
+        },
+        {
+          "target": "EnhancedRodentRampage",
+          "modify": {
+            "duration": 20
+          }
+        }
+      ]
+    },
     "VendettaT5": {
       "effect": [
         {

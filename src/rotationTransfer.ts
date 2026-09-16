@@ -56,6 +56,16 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
   };
   const before = parseAttachment(step.before);
   const after = parseAttachment(step.after);
+  if (
+    step.type === "event" &&
+    step.event === "Hellfire" &&
+    typeof step.startTime === "number" &&
+    Number.isFinite(step.startTime) &&
+    typeof step.amount === "number" &&
+    Number.isFinite(step.amount)
+  ) {
+    return { type: "event", event: "Hellfire", startTime: step.startTime, amount: step.amount };
+  }
   if (step.type === "event" && step.event === "Exhausted" && (after || before)) {
     return {
       type: "event",

@@ -1,6 +1,7 @@
 {
   "BoneCorrosion": {
     "name": "Bone Corrosion",
+    "shortName": "BC",
     "description": "Increases Qi damage from the applier by 5%, or 40% for Light Attacks.",
     "duration": 5,
     "maxStack": 1,
@@ -35,6 +36,7 @@
   },
   "Karma": {
     "name": "Karma",
+    "shortName": "Kar",
     "description": "Echoes of Oblivion mark. Lasts 3 seconds, refreshes on application, and stacks once.",
     "maxStack": 1,
     "refresh": true,
@@ -44,6 +46,7 @@
   },
   "RodentHunt": {
     "name": "Rodent Hunt",
+    "shortName": "RH",
     "duration": 15,
     "maxStack": 1,
     "refresh": true,

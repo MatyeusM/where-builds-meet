@@ -15,7 +15,7 @@
         "tier": "T6"
       },
       {
-        "innerWay": "FivefoldBleed",
+        "innerWay": "MoraleChant",
         "tier": "T6"
       },
       {
@@ -23,7 +23,9 @@
         "tier": "T6"
       }
     ],
-    "weaponSets": { "Swallowcall": 4 },
+    "weaponSets": {
+      "Swallowcall": 4
+    },
     "armorSets": {},
     "bowRingSet": "Precision",
     "arsenal": "Bamboocut"
@@ -43,16 +45,16 @@
           "value": 73.132
         },
         {
-          "key": "crit",
-          "value": 0.0846
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "dualBladesDmgBoost",
           "value": 0.05828
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "crit",
+          "value": 0.0846
         }
       ],
       "attunement": {
@@ -105,8 +107,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "allMartialArts",
@@ -136,8 +138,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "allMartialArts",
@@ -167,8 +169,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "agility",
@@ -198,8 +200,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "agility",
@@ -229,8 +231,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "vsBossDmg",
@@ -260,8 +262,8 @@
           "value": 73.132
         },
         {
-          "key": "maxBamboocut",
-          "value": 41.548
+          "key": "power",
+          "value": 46.436
         },
         {
           "key": "vsBossDmg",

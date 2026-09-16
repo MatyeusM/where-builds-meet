@@ -93,8 +93,11 @@ describe("damage-recording", () => {
       cast("RodentRampage"),
       cast("InfernalLight1"),
       cast("InfernalFlamelashLight5"),
-      delay(16),
+      // Trigger after Hunt expires at 15.385s, before Rampage expires at 15.926s.
+      // Its delayed hit lands after Rampage expiry, outside the recording window.
+      delay(12.5),
       cast("InfernalLight1"),
+      delay(0.5),
     ];
     const result = calculateRotationBaseline(bundle(steps));
     assert.equal(payouts(result).length, 1, "Expiry settles one window");
@@ -106,6 +109,17 @@ describe("damage-recording", () => {
     close(payouts(result)[0].timelineTime, 15.385, "Hunt expires independently of the 20-second Token");
     checkPayouts(result);
     assert.equal(rodents(result).length, 5, "A later Rodent still attacks but is outside the recording window");
+    const enhanced = calculateRotationBaseline(
+      bundle([cast("BladeboundThreadCancel"), cast("RodentsResilienceCharge"), cast("RodentRampage"), delay(20)]),
+    );
+    assert.equal(rodents(enhanced).length, 15, "Vendetta ERR supplies fifteen automatic Rodents");
+    assert.equal(
+      payouts(enhanced)[0].replay.sourceEntryIds.length,
+      12,
+      "Hunt records only the automatic Rodents landing inside its window",
+    );
+    checkPayouts(enhanced);
+    assert.ok(damage(enhanced, rodents(enhanced)) > 0, "Automatic Rodents contribute calculated damage");
     const later = result.baseline.find((entry) => entry.id === "rotation-5:0");
     const earlier = result.baseline.filter((entry) => entry.timelineTime < later.timelineTime);
     close(
@@ -165,7 +179,7 @@ describe("damage-recording", () => {
     close(payouts(boundary)[1].timelineTime, 30.385, "New activation retains its full window");
     checkPayouts(boundary);
     const exact = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(15), cast("Rodent"), delay(1)]),
+      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(14.5), cast("Rodent"), delay(1)]),
     );
     assert.equal(
       payouts(exact)[0].replay.sourceEntryIds.length,

@@ -24,9 +24,22 @@ Actions tagged `Rodent` gain a fixed 9% plus up to another 12% Physical and
 Bamboocut DMG Bonus, scaling at `0.00016 × raw Min Physical Attack` to the cap
 at 750. This uses the existing additive channel bonuses and raw-stat stages.
 Its Attr. Attack DMG UP also uses the shared primary-path multiplier.
-Rodent's physical and attribute coefficients are both 0.63 below 5m, 0.57 from
-5m to below 12m, and 0.6 at 12m or more. Rodent Rampage launches it once per
+Rodent uses the user-confirmed nonmatching-target route for PvE. Physical and
+attribute coefficients are both 0.348974526316, with zero flat bonuses. This is
+skill 20391's base coefficient 0.581624210526316 multiplied by the route's 0.6;
+0.6 itself is not the final coefficient. Ordinary coordinated and automatic
+triggers require distance below 12. The matching PvP routes (0.366423252632
+below 5 and 0.3315258 from 5 to below 12) are not used by the PvE simulator.
+Export distances use raw game units, whose correspondence with the editor's
+metres remains unverified. Rodent Rampage launches it once per
 Infernal/Mortal light-attack stage and once per two stages of other martial arts.
+Enhanced Rodent Rampage retains these coordinated launches and adds one automatic
+Rodent hit per second, starting one second after application: launches occur at
++0.5, +1.5, ... and each Rodent lands 0.5 seconds after launch. Coordinated
+Rodents also land 0.5 seconds after their triggers. Its 10/15/20-second
+lifetime includes the final automatic hit at expiry. These hits use the same
+damage coefficients, Vendetta Token bonuses, Rodent Hunt recording, and
+Samsara Hellfire gains as coordinated Rodents.
 Echoes T6 adds two more launches on FA5's first hit while the buff and Flamelash
 are active. Expected and sampled calculations use the same definite trigger
 schedule; individual damage outcomes remain mode-dependent.
@@ -669,6 +682,13 @@ and active `physicalPenetration` effects.
 Each attribute starts with its corresponding character penetration stat. Stonesplit additionally receives active `stonesplitPenetration` effects. Formless Penetration is added to the primary attribute.
 
 Effects may adjust resistance directly with `bellstrikeResistance`, `stonesplitResistance`, `silkbindResistance`, or `bamboocutResistance`. These values are added to enemy resistance. For example, Fearful Blade contributes `-16` to each attribute resistance.
+
+Echoes of Oblivion applies `bamboocutResistance: -10` only to Infernal
+Twinblades Light Attacks against Karma, at every tier. This flat adjustment
+combines with other Bamboocut resistance adjustments in the existing channel;
+it does not scale with enemy resistance. Sin separately supplies 10% Physical
+Defense ignore for matching Light Attacks. Neither changes Judgment Resistance
+or its precision, critical, and affinity rate formulas.
 
 The Main tab can treat Phantom Chime, Qi Imbalance, Soul-Shaken, Vulnerable,
 Fearful Blade, Bitter Seasons, and Floating Grace as externally maintained

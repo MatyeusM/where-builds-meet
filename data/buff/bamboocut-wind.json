@@ -1,8 +1,70 @@
 {
+  "RodentRampageEnhancement": {
+    "name": "Rodent Rampage Enhancement",
+    "shortName": "RRE",
+    "description": "RD Special consumes one stack to apply Enhanced Rodent Rampage instead of Rodent Rampage.",
+    "maxStack": 2,
+    "showCoverage": true
+  },
   "Flamelash": {
     "name": "Flamelash",
+    "shortName": "Fla",
     "maxStack": 1,
-    "showCoverage": true
+    "showCoverage": true,
+    "effect": [
+      {
+        "effect": {
+          "stat": {
+            "crit": 0.1
+          },
+          "critDmgBonus": 0.2
+        }
+      }
+    ],
+    "refresh": true,
+    "action": [
+      {
+        "type": "consume",
+        "target": "self",
+        "value": "Flamelash",
+        "stack": "all",
+        "requirement": [
+          {
+            "target": "resource",
+            "value": "Hellfire",
+            "comparison": "<=",
+            "amount": 0
+          }
+        ],
+        "time": 0
+      }
+    ],
+    "periodic": {
+      "interval": 0.13,
+      "resetOnRefresh": true,
+      "action": [
+        {
+          "type": "consumeResource",
+          "value": "Hellfire",
+          "amount": 1,
+          "amountPerTick": 0.05
+        },
+        {
+          "type": "consume",
+          "target": "self",
+          "value": "Flamelash",
+          "stack": "all",
+          "requirement": [
+            {
+              "target": "resource",
+              "value": "Hellfire",
+              "comparison": "<=",
+              "amount": 0
+            }
+          ]
+        }
+      ]
+    }
   },
   "Disintegration": {
     "name": "Disintegration",
@@ -57,6 +119,7 @@
   },
   "Samsara": {
     "name": "Samsara",
+    "shortName": "Sam",
     "description": "Increases HP damage dealt by 5%. Echoes of Oblivion T6 adds another 5%.",
     "duration": 15,
     "maxStack": 1,
@@ -72,6 +135,7 @@
   },
   "RodentRampage": {
     "name": "Rodent Rampage",
+    "shortName": "RR",
     "duration": 10,
     "maxStack": 1,
     "refresh": true,
@@ -107,13 +171,30 @@
         "event": "RodentAttackCheck",
         "action": {
           "type": "trigger",
-          "value": "Rodent"
+          "value": "Rodent",
+          "requirement": [
+            {
+              "target": "distance",
+              "comparison": "<",
+              "amount": 12
+            }
+          ]
         }
+      }
+    ],
+    "action": [
+      {
+        "type": "consume",
+        "target": "self",
+        "value": "EnhancedRodentRampage",
+        "stack": "all",
+        "time": 0
       }
     ]
   },
   "VendettaToken": {
     "name": "Vendetta Token",
+    "shortName": "VT",
     "duration": 10,
     "maxStack": 1,
     "refresh": true,
@@ -131,5 +212,84 @@
         }
       }
     ]
+  },
+  "EnhancedRodentRampage": {
+    "name": "Enhanced Rodent Rampage",
+    "shortName": "ERR",
+    "duration": 10,
+    "maxStack": 1,
+    "refresh": true,
+    "showCoverage": true,
+    "accumulator": {
+      "event": "damage",
+      "threshold": 2,
+      "amount": {
+        "function": "switch",
+        "param1": "currentMartialArt",
+        "param2": {
+          "infernalTwinblades": 2,
+          "mortalRopeDart": 2
+        },
+        "fallback": 1
+      },
+      "requirement": [
+        {
+          "target": "skillTag",
+          "value": "MartialArts"
+        },
+        {
+          "target": "skillTag",
+          "value": "Light"
+        }
+      ],
+      "oncePerSkill": true,
+      "resetOnRefresh": false,
+      "checkEvent": "RodentAttackCheck"
+    },
+    "listen": [
+      {
+        "event": "RodentAttackCheck",
+        "action": {
+          "type": "trigger",
+          "value": "Rodent",
+          "requirement": [
+            {
+              "target": "distance",
+              "comparison": "<",
+              "amount": 12
+            }
+          ]
+        }
+      }
+    ],
+    "description": "Retains coordinated Rodent attacks. Automatic Rodents launch at +0.5s, then every second, and land 0.5s later. Lasts 10 seconds, 15 with Vendetta, or 20 at Vendetta T4.",
+    "action": [
+      {
+        "type": "consume",
+        "target": "self",
+        "value": "RodentRampage",
+        "stack": "all",
+        "time": 0
+      }
+    ],
+    "periodic": {
+      "interval": 1,
+      "firstTick": 0.5,
+      "resetOnRefresh": true,
+      "tickOnExpire": true,
+      "action": [
+        {
+          "type": "trigger",
+          "value": "Rodent",
+          "requirement": [
+            {
+              "target": "distance",
+              "comparison": "<",
+              "amount": 12
+            }
+          ]
+        }
+      ]
+    }
   }
 }

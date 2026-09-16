@@ -30,9 +30,14 @@ export const dpsSnapshotEnvironment = {
 export async function loadDpsSnapshotFixtures() {
   const paths = JSON.parse(await readFile(new URL("path.json", dataRoot), "utf8"));
   const cases = [];
+  const groups = new Set(
+    (await readdir(new URL("rotation/", dataRoot), { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name),
+  );
   for (const pathId of Object.keys(paths).sort()) {
     const definition = paths[pathId];
-    if (definition.status !== "available") continue;
+    if (!groups.has(definition.buildGroup)) continue;
     const directory = new URL("rotation/" + definition.buildGroup + "/", dataRoot);
     for (const file of (await readdir(directory)).filter((file) => file.endsWith(".json")).sort()) {
       const rotationId = file.slice(0, -5);

@@ -256,7 +256,9 @@ describe("infernal-twinblades-talents", () => {
           },
           eventDefinitions: { Buff: { action: [{ type: "apply", target: "self", time: 0 }] } },
           dots: {},
-          effectDefinitions: effects,
+          initialResources: { Hellfire: 80 },
+          // Isolate rank-13 talents from the separately tested base Flamelash bonuses.
+          effectDefinitions: { ...effects, Flamelash: { ...effects.Flamelash, effect: [] } },
           innerWayConditions: [],
           innerWayRules: [],
           setupEffects,

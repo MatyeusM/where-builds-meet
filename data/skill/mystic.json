@@ -2185,6 +2185,22 @@
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "GhostlySteps", "Triggered", "Gauntlet"]
   },
+  "GhostlyStepsUmbraDodgeDualBlades": {
+    "name": "Ghostly Step - Umbra Dodge (Dual Blades)",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "damage",
+        "phyCoef": 2.041567357513,
+        "phyBonus": 312,
+        "attrBonus": 0,
+        "time": 0.8,
+        "attrCoef": 2.041567357513
+      }
+    ],
+    "modifier": [],
+    "tags": ["DirectDamage", "Mystic", "GhostlySteps", "Triggered", "DualBlades"]
+  },
   "WorldToSword": {
     "name": "World to Sword",
     "shortName": "WTS",

@@ -1,6 +1,6 @@
 # DPS regression snapshots
 
-`npm run test:dps` compares every non-empty preset rotation for available paths
+`npm run test:dps` compares every non-empty preset rotation, including WIP paths
 against `tests/snapshots/rotation-dps.json`. The release deployment workflow
 runs this guard before publishing, including manual deployments. Ordinary build,
 tests, watch mode, and PR/main CI exclude the accepted-DPS comparison while
@@ -9,7 +9,7 @@ retaining its coverage, selector, and comparison-algorithm tests.
 ## Fixture selection
 
 `tests/helpers/dps-snapshot-fixtures.ts` discovers rotation JSON files from each
-available path's build group. Cases use stable `<pathId>/<rotationId>` keys.
+path's existing rotation directory. Cases use stable `<pathId>/<rotationId>` keys.
 Empty planner rotations are excluded. A durable coverage test checks all
 non-empty rotation files against this catalog. The release guard compares the
 catalog with accepted baseline keys, so new or removed presets cannot silently
@@ -18,7 +18,7 @@ escape review. A missing accepted baseline does not block ordinary builds.
 Each rotation uses its path's default build unless an explicit build override
 selects its corresponding variant: regular Kite uses the non-BP build, pure
 Strength uses the pure build, and Double Stab uses the double-min build. The
-remaining variants retain the path default. This covers all 12 current rotations,
+remaining variants retain the path default. This covers all non-empty presets,
 not every build/rotation combination.
 
 Current calculations use breakthrough 17, each rotation's saved ping (40 ms
@@ -97,6 +97,12 @@ Strength's Mixed Double Stab now uses its user-approved result at 40 ms ping:
 the revised opener and skill sequence, Burning Heart charge/slam ping exemptions,
 and the later Heng LC timing update. All current preset snapshots have now
 completed the ping-transition review.
+
+Wind's Dummy 1 Min Infinite Vitality uses the user-approved current rotation and
+`wind-fully-relayed-min` build at 40 ms ping: 67,575.85 DPS over 60 seconds,
+with 4,054,551.12 total damage. This establishes Wind's first accepted baseline
+alongside its promotion from WIP to available. It includes the current Hellfire,
+Enhanced Rodent Rampage, delayed Rodent hits, and authored rotation adjustments.
 
 ## Updating reviewed rotations
 

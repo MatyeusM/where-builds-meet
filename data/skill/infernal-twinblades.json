@@ -1,4 +1,21 @@
 {
+  "Flamelash": {
+    "name": "Flamelash",
+    "shortName": "Flamelash",
+    "description": "Enter Flamelash, gaining 10% Critical Rate and 20% Critical DMG Bonus while Hellfire drains. Requires 80 Hellfire in preset rotations; the editor permits activation at any amount.",
+    "castTime": 0.85,
+    "action": [
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Flamelash",
+        "time": 0
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades", "Special"]
+  },
   "AddledMind": {
     "name": "Addled Mind",
     "shortName": "DB Q",
@@ -55,6 +72,42 @@
         "attrCoef": 0.27096,
         "phyBonus": 75.2,
         "attrBonus": 41
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.344
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.408
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.472
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.545
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.609
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.673
       }
     ],
     "modifier": [
@@ -76,7 +129,7 @@
   },
   "InfernalLight1": {
     "ignorePing": true,
-    "name": "Dual Blade - Light Attack",
+    "name": "Light Attack 1",
     "shortName": "A1",
     "castTime": 0.43,
     "action": [
@@ -87,15 +140,57 @@
         "attrCoef": 0.42049,
         "phyBonus": 117,
         "attrBonus": 64
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 10,
+        "time": 0.339
       }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight1"]
   },
+  "InfernalLight1Rodent": {
+    "ignorePing": true,
+    "name": "Light Attack 1 [Rodent]",
+    "shortName": "A1 [Rodent]",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight1"]
+  },
   "InfernalLight2": {
     "ignorePing": true,
-    "name": "Dual Blade - Light Attack",
+    "name": "Light Attack 2",
     "shortName": "A2",
     "castTime": 0.47,
     "action": [
@@ -114,6 +209,18 @@
         "attrCoef": 0.22542,
         "phyBonus": 63,
         "attrBonus": 34
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.242
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.343
       }
     ],
     "martialArt": "infernalTwinblades",
@@ -122,7 +229,7 @@
   },
   "InfernalLight3": {
     "ignorePing": true,
-    "name": "Dual Blade - Light Attack",
+    "name": "Light Attack 3",
     "shortName": "A3",
     "castTime": 0.6,
     "action": [
@@ -141,15 +248,102 @@
         "attrCoef": 0.2886,
         "phyBonus": 80.5,
         "attrBonus": 43.5
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.248
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.419
       }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight3"]
   },
+  "InfernalLight3Cancel": {
+    "ignorePing": true,
+    "name": "Light Attack 3 [Cancel]",
+    "shortName": "A3",
+    "castTime": 0.419,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.248,
+        "phyCoef": 0.2886,
+        "attrCoef": 0.2886,
+        "phyBonus": 80.5,
+        "attrBonus": 43.5
+      },
+      {
+        "type": "damage",
+        "time": 0.419,
+        "phyCoef": 0.2886,
+        "attrCoef": 0.2886,
+        "phyBonus": 80.5,
+        "attrBonus": 43.5
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.248
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.419
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight3"]
+  },
+  "InfernalLight3Rodent": {
+    "ignorePing": true,
+    "name": "Light Attack 3 [Rodent]",
+    "shortName": "A3 [Rodent]",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight3"]
+  },
   "InfernalLight4": {
     "ignorePing": true,
-    "name": "Dual Blade - Light Attack",
+    "name": "Light Attack 4",
     "shortName": "A4",
     "castTime": 0.529,
     "action": [
@@ -160,15 +354,110 @@
         "attrCoef": 0.254095,
         "phyBonus": 71,
         "attrBonus": 38.5
+      },
+      {
+        "type": "damage",
+        "time": 0.167,
+        "phyCoef": 0.254095,
+        "attrCoef": 0.254095,
+        "phyBonus": 71,
+        "attrBonus": 38.5
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.167
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.167
       }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
     "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight4"]
   },
+  "InfernalLight4Cancel": {
+    "ignorePing": true,
+    "name": "Light Attack 4 [Cancel]",
+    "shortName": "A4 [Cancel]",
+    "castTime": 0.167,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.167,
+        "phyCoef": 0.254095,
+        "attrCoef": 0.254095,
+        "phyBonus": 71,
+        "attrBonus": 38.5
+      },
+      {
+        "type": "damage",
+        "time": 0.167,
+        "phyCoef": 0.254095,
+        "attrCoef": 0.254095,
+        "phyBonus": 71,
+        "attrBonus": 38.5
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.167
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.167
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight4"]
+  },
+  "InfernalLight4Rodent": {
+    "ignorePing": true,
+    "name": "Light Attack 4 [Rodent]",
+    "shortName": "A4 [Rodent]",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight4"]
+  },
   "InfernalFlamelashLight1": {
     "ignorePing": true,
-    "name": "Blade of Heaven's Wrath",
+    "name": "Blade of Heaven's Wrath 1",
     "shortName": "FA1",
     "castTime": 0.357,
     "action": [
@@ -187,6 +476,18 @@
         "attrCoef": 0.32359,
         "phyBonus": 90,
         "attrBonus": 49
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.104
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.328
       }
     ],
     "martialArt": "infernalTwinblades",
@@ -204,7 +505,7 @@
   },
   "InfernalFlamelashLight2": {
     "ignorePing": true,
-    "name": "Blade of Heaven's Wrath",
+    "name": "Blade of Heaven's Wrath 2",
     "shortName": "FA2",
     "castTime": 0.5,
     "action": [
@@ -215,6 +516,12 @@
         "attrCoef": 0.9012,
         "phyBonus": 250,
         "attrBonus": 136
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 5,
+        "time": 0.294
       }
     ],
     "martialArt": "infernalTwinblades",
@@ -230,9 +537,53 @@
       "Empowered"
     ]
   },
+  "InfernalFlamelashLight2Rodent": {
+    "ignorePing": true,
+    "name": "Blade of Heaven's Wrath 2 [Rodent]",
+    "shortName": "FA2 [Rodent]",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight2",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
   "InfernalFlamelashLight3": {
     "ignorePing": true,
-    "name": "Blade of Heaven's Wrath",
+    "name": "Blade of Heaven's Wrath 3",
     "shortName": "FA3",
     "castTime": 0.8,
     "action": [
@@ -299,6 +650,54 @@
         "attrCoef": 0.2312832,
         "phyBonus": 64.16,
         "attrBonus": 34.88
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.253
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.31
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.368
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.423
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.478
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.535
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.59
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.646
       }
     ],
     "martialArt": "infernalTwinblades",
@@ -316,7 +715,7 @@
   },
   "InfernalFlamelashLight4": {
     "ignorePing": true,
-    "name": "Blade of Heaven's Wrath",
+    "name": "Blade of Heaven's Wrath 4",
     "shortName": "FA4",
     "castTime": 0.96,
     "action": [
@@ -359,6 +758,36 @@
         "attrCoef": 0.347164,
         "phyBonus": 96.2,
         "attrBonus": 52.4
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.345
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.447
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.544
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.644
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 1.25,
+        "time": 0.823
       }
     ],
     "martialArt": "infernalTwinblades",
@@ -374,9 +803,53 @@
       "Empowered"
     ]
   },
+  "InfernalFlamelashLight4Rodent": {
+    "ignorePing": true,
+    "name": "Blade of Heaven's Wrath 4 [Rodent]",
+    "shortName": "FA4 [Rodent]",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight4",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
   "InfernalFlamelashLight5": {
     "ignorePing": true,
-    "name": "Blade of Heaven's Wrath",
+    "name": "Blade of Heaven's Wrath 5",
     "shortName": "FA5",
     "castTime": 1.401,
     "action": [
@@ -394,8 +867,17 @@
         "time": 0.342,
         "requirement": [
           {
-            "target": "self",
-            "value": "RodentRampage"
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
           },
           {
             "target": "self",
@@ -404,6 +886,11 @@
           {
             "target": "self",
             "value": "EchoesOfOblivionT6"
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
           }
         ]
       },
@@ -413,8 +900,17 @@
         "time": 0.342,
         "requirement": [
           {
-            "target": "self",
-            "value": "RodentRampage"
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
           },
           {
             "target": "self",
@@ -423,6 +919,11 @@
           {
             "target": "self",
             "value": "EchoesOfOblivionT6"
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
           }
         ]
       },
@@ -457,6 +958,192 @@
         "attrCoef": 0.506832,
         "phyBonus": 140.4,
         "attrBonus": 76.4
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.342
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.443
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.541
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.641
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 1.023
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "DirectDamage",
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight5",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight5Cancel": {
+    "ignorePing": true,
+    "name": "Blade of Heaven's Wrath 5 [Cancel]",
+    "shortName": "FA5 [Cancel]",
+    "castTime": 1.023,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.342,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0.342,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "self",
+            "value": "Flamelash"
+          },
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT6"
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      },
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0.342,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              {
+                "target": "self",
+                "value": "RodentRampage"
+              },
+              {
+                "target": "self",
+                "value": "EnhancedRodentRampage"
+              }
+            ]
+          },
+          {
+            "target": "self",
+            "value": "Flamelash"
+          },
+          {
+            "target": "self",
+            "value": "EchoesOfOblivionT6"
+          },
+          {
+            "target": "distance",
+            "comparison": "<",
+            "amount": 12
+          }
+        ]
+      },
+      {
+        "type": "damage",
+        "time": 0.443,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 0.541,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 0.641,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "damage",
+        "time": 1.023,
+        "phyCoef": 0.506832,
+        "attrCoef": 0.506832,
+        "phyBonus": 140.4,
+        "attrBonus": 76.4
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.342
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.443
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.541
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 0.641
+      },
+      {
+        "type": "addResource",
+        "value": "Hellfire",
+        "amount": 2,
+        "time": 1.023
       }
     ],
     "martialArt": "infernalTwinblades",

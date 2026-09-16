@@ -143,6 +143,7 @@ describe("innerway-catalog", () => {
           },
         }),
         effectDefinitions: { ...buffs, ...debuffs },
+        initialResources: { Hellfire: 80 },
         dots: {},
         eventDefinitions: {},
         innerWayRules: rules,

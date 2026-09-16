@@ -340,6 +340,7 @@ function effectsForSeasonalOutcome(context: DamageContext, outcome: SeasonalEdge
         context.weapons,
         {},
         {
+          distance: context.distance ?? 1,
           selfHPPercentage: (context.currentHPRatio ?? 1) * 100,
           targetHPPercentage: (context.targetHPRatio ?? DEFAULT_TARGET_HP_RATIO) * 100,
         },
@@ -1641,6 +1642,7 @@ function createTimelineEntryBuilder(
     const skillTags = row.actionSkillTags?.[actionIndex] ?? row.skill?.tags ?? [];
     const skillStaticEffects = skillStaticEffectsFor(skillTags);
     const requirementState = {
+      distance: actionState.distance,
       selfHPPercentage: actionState.currentHPRatio * 100,
       targetHPPercentage: actionState.targetHPRatio * 100,
       targetQiPercentage: actionState.targetQiRatio * 100,

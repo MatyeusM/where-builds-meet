@@ -1,4 +1,5 @@
 import { RotationPingField } from "./components/RotationPingField";
+import resourceEventDefinitions from "../data/event.json";
 import { PingInput } from "./components/PingInput";
 import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults";
 import {
@@ -421,6 +422,7 @@ const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   mortalRopeDart: "Mortal",
 };
 const rotationEventDefinitions: Record<string, SkillRecord> = {
+  ...resourceEventDefinitions,
   Controlled: {
     name: "Event: Controlled",
     castTime: 0,
@@ -609,6 +611,7 @@ const rotationEventOptionIds = [
   "__event:Move",
   "__event:SelfHP",
   "__event:TakeDamage",
+  "__event:Hellfire",
   "__event:HP",
   "__event:Qi",
   "__event:Buff",
@@ -5894,69 +5897,81 @@ function RotationEditorTab({
         return current;
       let steps = current.steps.map((step, stepIndex) => {
         if (stepIndex !== index) return step;
-        if (value === "__event:Delay") return { type: "event", event: "Delay", duration: 1 };
-        if (value === "__event:Controlled")
-          return {
-            type: "event",
-            event: "Controlled",
-            startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-            duration: eventDefaultDuration("Controlled"),
-          };
-        if (value === "__event:ShieldBroken")
-          return {
-            type: "event",
-            event: "ShieldBroken",
-            startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-          };
-        if (value === "__event:BattleEnd")
-          return {
-            type: "event",
-            event: "BattleEnd",
-            startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-          };
-        if (value === "__event:Move") return { type: "event", event: "Move", before: { action: "start" }, distance: 1 };
-        if (value === "__event:SelfHP")
-          return {
-            type: "event",
-            event: "SelfHP",
-            before: { action: "start" },
-            currentHP: displayedCharacterStats.maxHp,
-          };
-        if (value === "__event:TakeDamage")
-          return {
-            type: "event",
-            event: "TakeDamage",
-            startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-            damage: 0,
-          };
-        if (value === "__event:HP")
-          return { type: "event", event: "HP", before: { action: "start" }, targetHPRatio: 1 };
-        if (value === "__event:Qi")
-          return { type: "event", event: "Qi", before: { action: "start" }, targetQiRatio: 1 };
-        if (value === "__event:Buff")
-          return {
-            type: "event",
-            event: "Buff",
-            before: { action: "start" },
-            buff: Object.keys(manualBuffDefinitions)[0],
-            stack: 1,
-          };
-        if (value === "__event:Debuff")
-          return {
-            type: "event",
-            event: "Debuff",
-            before: { action: "start" },
-            debuff: Object.keys(manualDebuffDefinitions)[0],
-            stack: 1,
-          };
-        if (value === "__event:MartialArt")
-          return {
-            type: "event",
-            event: "MartialArt",
-            before: { action: "start" },
-            martialArt: settings.weapons[0],
-          };
-        return { type: "skill", skill: value };
+        switch (value) {
+          case "__event:Hellfire":
+            return {
+              type: "event",
+              event: "Hellfire",
+              startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
+              amount: 0,
+            };
+          case "__event:Delay":
+            return { type: "event", event: "Delay", duration: 1 };
+          case "__event:Controlled":
+            return {
+              type: "event",
+              event: "Controlled",
+              startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
+              duration: eventDefaultDuration("Controlled"),
+            };
+          case "__event:ShieldBroken":
+            return {
+              type: "event",
+              event: "ShieldBroken",
+              startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
+            };
+          case "__event:BattleEnd":
+            return {
+              type: "event",
+              event: "BattleEnd",
+              startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
+            };
+          case "__event:Move":
+            return { type: "event", event: "Move", before: { action: "start" }, distance: 1 };
+          case "__event:SelfHP":
+            return {
+              type: "event",
+              event: "SelfHP",
+              before: { action: "start" },
+              currentHP: displayedCharacterStats.maxHp,
+            };
+          case "__event:TakeDamage":
+            return {
+              type: "event",
+              event: "TakeDamage",
+              startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
+              damage: 0,
+            };
+          case "__event:HP":
+            return { type: "event", event: "HP", before: { action: "start" }, targetHPRatio: 1 };
+          case "__event:Qi":
+            return { type: "event", event: "Qi", before: { action: "start" }, targetQiRatio: 1 };
+          case "__event:Buff":
+            return {
+              type: "event",
+              event: "Buff",
+              before: { action: "start" },
+              buff: Object.keys(manualBuffDefinitions)[0],
+              stack: 1,
+            };
+          case "__event:Debuff":
+            return {
+              type: "event",
+              event: "Debuff",
+              before: { action: "start" },
+              debuff: Object.keys(manualDebuffDefinitions)[0],
+              stack: 1,
+            };
+          case "__event:MartialArt":
+            return {
+              type: "event",
+              event: "MartialArt",
+              before: { action: "start" },
+              martialArt: settings.weapons[0],
+            };
+          default:
+            return { type: "skill", skill: value };
+        }
       }) as RotationStep[];
       const attached = [
         "__event:Move",
@@ -6012,6 +6027,9 @@ function RotationEditorTab({
     const step = rotation.steps[stepIndex];
     if (Number.isFinite(value) && step?.type === "event") {
       switch (step.event) {
+        case "Hellfire":
+          updateStep(stepIndex, { amount: value });
+          break;
         case "SelfHP":
           updateStep(stepIndex, {
             currentHP: (Math.min(100, Math.max(0, value)) / 100) * displayedCharacterStats.maxHp,
@@ -6673,6 +6691,9 @@ function RotationEditorTab({
     () => rotation.steps.some((step) => step.type === "event" && step.event === "Qi"),
     [rotation.steps],
   );
+  const showHellfireColumn =
+    settings.weapons.includes("infernalTwinblades") ||
+    rotation.steps.some((step) => step.type === "event" && step.event === "Hellfire");
   const showHeavensWillColumn = settings.weapons.includes("heavenwill") && settings.weapons.includes("skygrasp");
   const showVitalityColumn = useMemo(
     () =>
@@ -7542,12 +7563,13 @@ function RotationEditorTab({
                       showSelfHPColumn ? "8ch" : "",
                       showTargetHPColumn ? "8ch" : "",
                       showQiColumn ? "8ch" : "",
+                      showHellfireColumn ? "10ch" : "",
                       showHeavensWillColumn ? "13ch" : "",
                       showVitalityColumn ? "10ch" : "",
                     ]
                       .filter(Boolean)
                       .join(" "),
-                    minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
+                    minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHellfireColumn) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
                   } as CSSProperties
                 }
               >
@@ -7561,6 +7583,7 @@ function RotationEditorTab({
                   {showSelfHPColumn && <span>{t("ui.app.selfHp")}</span>}
                   {showTargetHPColumn && <span>{t("ui.app.hp")}</span>}
                   {showQiColumn && <span>{t("ui.app.qi")}</span>}
+                  {showHellfireColumn && <span>{t("system.resource.hellfire")}</span>}
                   {showHeavensWillColumn && <span>{t("system.resource.heavensWill")}</span>}
                   {showVitalityColumn && <span>{t("system.resource.vitality")}</span>}
                   <span className="rotation-damage-heading">{t("ui.app.damage")}</span>
@@ -7590,6 +7613,7 @@ function RotationEditorTab({
                             {showSelfHPColumn && <span aria-hidden="true" />}
                             {showTargetHPColumn && <span aria-hidden="true" />}
                             {showQiColumn && <span aria-hidden="true" />}
+                            {showHellfireColumn && <span aria-hidden="true" />}
                             {showHeavensWillColumn && <span aria-hidden="true" />}
                             {showVitalityColumn && <span aria-hidden="true" />}
                             <span className="rotation-damage-value" data-mobile-label={t("ui.app.damage")}>
@@ -8123,6 +8147,41 @@ function RotationEditorTab({
                                 )}
                               </span>
                             )}
+                            {showHellfireColumn && (
+                              <span
+                                className="rotation-hellfire-value"
+                                data-full={(row.resources.Hellfire ?? 0) >= typedSystemStats.resourceMaximums.Hellfire}
+                                data-flamelash={row.buffs.some((buff) => buff.name === "Flamelash")}
+                                data-mobile-label={t("system.resource.hellfire")}
+                              >
+                                {isManualEvent && step.event === "Hellfire" ? (
+                                  rowReadOnly ? (
+                                    <span>
+                                      {step.amount > 0 ? "+" : ""}
+                                      {formatNumber(step.amount)}
+                                    </span>
+                                  ) : (
+                                    <input
+                                      className="rotation-event-time"
+                                      aria-label={t("ui.app.hellfireChange")}
+                                      title={t("ui.app.hellfireChange")}
+                                      type="number"
+                                      step="0.01"
+                                      value={eventHPDrafts[row.id] ?? String(step.amount)}
+                                      onChange={(event) =>
+                                        setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                      }
+                                      onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter") event.currentTarget.blur();
+                                      }}
+                                    />
+                                  )
+                                ) : (
+                                  formatNumber(row.resources.Hellfire ?? 0)
+                                )}
+                              </span>
+                            )}
                             {showHeavensWillColumn && (
                               <span data-mobile-label={t("system.resource.heavensWill")}>
                                 {formatNumber(row.resources.HeavensWill ?? 0)}
@@ -8439,6 +8498,21 @@ function RotationEditorTab({
                                 {showQiColumn && (
                                   <span data-mobile-label={t("ui.app.qi")}>
                                     {formatNumber((actionState?.targetQiRatio ?? row.targetQiRatio) * 100)}%
+                                  </span>
+                                )}
+                                {showHellfireColumn && (
+                                  <span
+                                    className="rotation-hellfire-value"
+                                    data-full={
+                                      (actionState?.resources.Hellfire ?? row.resources.Hellfire ?? 0) >=
+                                      typedSystemStats.resourceMaximums.Hellfire
+                                    }
+                                    data-flamelash={(actionState?.buffs ?? row.buffs).some(
+                                      (buff) => buff.name === "Flamelash",
+                                    )}
+                                    data-mobile-label={t("system.resource.hellfire")}
+                                  >
+                                    {formatNumber(actionState?.resources.Hellfire ?? row.resources.Hellfire ?? 0)}
                                   </span>
                                 )}
                                 {showHeavensWillColumn && (
