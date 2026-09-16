@@ -41,15 +41,7 @@
     },
     "PhantomRallyT3": {},
     "PhantomRallyT4": {},
-    "PhantomRallyT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physDmgBonus": 0.028
-          }
-        }
-      ]
-    },
+    "PhantomRallyT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.028 } }] },
     "PhantomRallyT6": {}
   }
 }

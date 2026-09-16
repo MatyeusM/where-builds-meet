@@ -1,9 +1,5 @@
 {
-  "Flamelash": {
-    "name": "Flamelash",
-    "maxStack": 1,
-    "showCoverage": true
-  },
+  "Flamelash": { "name": "Flamelash", "maxStack": 1, "showCoverage": true },
   "Disintegration": {
     "name": "Disintegration",
     "shortName": "Dis",
@@ -12,46 +8,11 @@
     "duration": 3,
     "maxStack": 3,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "physicalPenetration": 5,
-            "critDmgBonus": 0.05
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalPenetration": 10,
-            "critDmgBonus": 0.1
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalPenetration": 15,
-            "critDmgBonus": 0.15
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalPenetration": 20,
-            "critDmgBonus": 0.2
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalPenetration": 25,
-            "critDmgBonus": 0.25
-          }
-        }
-      ]
+      [{ "effect": { "physicalPenetration": 5, "critDmgBonus": 0.05 } }],
+      [{ "effect": { "physicalPenetration": 10, "critDmgBonus": 0.1 } }],
+      [{ "effect": { "physicalPenetration": 15, "critDmgBonus": 0.15 } }],
+      [{ "effect": { "physicalPenetration": 20, "critDmgBonus": 0.2 } }],
+      [{ "effect": { "physicalPenetration": 25, "critDmgBonus": 0.25 } }]
     ],
     "refresh": true
   },
@@ -62,13 +23,7 @@
     "maxStack": 1,
     "refresh": true,
     "showCoverage": true,
-    "effect": [
-      {
-        "effect": {
-          "hpDMGBonus": 0.05
-        }
-      }
-    ]
+    "effect": [{ "effect": { "hpDMGBonus": 0.05 } }]
   },
   "RodentRampage": {
     "name": "Rodent Rampage",
@@ -82,35 +37,18 @@
       "amount": {
         "function": "switch",
         "param1": "currentMartialArt",
-        "param2": {
-          "infernalTwinblades": 2,
-          "mortalRopeDart": 2
-        },
+        "param2": { "infernalTwinblades": 2, "mortalRopeDart": 2 },
         "fallback": 1
       },
       "requirement": [
-        {
-          "target": "skillTag",
-          "value": "MartialArts"
-        },
-        {
-          "target": "skillTag",
-          "value": "Light"
-        }
+        { "target": "skillTag", "value": "MartialArts" },
+        { "target": "skillTag", "value": "Light" }
       ],
       "oncePerSkill": true,
       "resetOnRefresh": false,
       "checkEvent": "RodentAttackCheck"
     },
-    "listen": [
-      {
-        "event": "RodentAttackCheck",
-        "action": {
-          "type": "trigger",
-          "value": "Rodent"
-        }
-      }
-    ]
+    "listen": [{ "event": "RodentAttackCheck", "action": { "type": "trigger", "value": "Rodent" } }]
   },
   "VendettaToken": {
     "name": "Vendetta Token",
@@ -118,18 +56,6 @@
     "maxStack": 1,
     "refresh": true,
     "showCoverage": true,
-    "effect": [
-      {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "Rodent"
-          }
-        ],
-        "effect": {
-          "baseDMGBonus": 0.5
-        }
-      }
-    ]
+    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Rodent" }], "effect": { "baseDMGBonus": 0.5 } }]
   }
 }

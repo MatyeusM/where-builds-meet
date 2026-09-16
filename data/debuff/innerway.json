@@ -7,41 +7,11 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.006
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.012
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.018
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.024
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.03
-          }
-        }
-      ]
+      [{ "effect": { "defenseBonus": -0.006 } }],
+      [{ "effect": { "defenseBonus": -0.012 } }],
+      [{ "effect": { "defenseBonus": -0.018 } }],
+      [{ "effect": { "defenseBonus": -0.024 } }],
+      [{ "effect": { "defenseBonus": -0.03 } }]
     ],
     "refresh": true
   },
@@ -53,41 +23,11 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.012
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.024
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.036
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.048
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.06
-          }
-        }
-      ]
+      [{ "effect": { "defenseBonus": -0.012 } }],
+      [{ "effect": { "defenseBonus": -0.024 } }],
+      [{ "effect": { "defenseBonus": -0.036 } }],
+      [{ "effect": { "defenseBonus": -0.048 } }],
+      [{ "effect": { "defenseBonus": -0.06 } }]
     ],
     "refresh": true
   },
@@ -99,42 +39,11 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.012
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.024
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.036
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.048
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "defenseBonus": -0.06,
-            "physicalResistance": -10
-          }
-        }
-      ]
+      [{ "effect": { "defenseBonus": -0.012 } }],
+      [{ "effect": { "defenseBonus": -0.024 } }],
+      [{ "effect": { "defenseBonus": -0.036 } }],
+      [{ "effect": { "defenseBonus": -0.048 } }],
+      [{ "effect": { "defenseBonus": -0.06, "physicalResistance": -10 } }]
     ],
     "refresh": true
   }

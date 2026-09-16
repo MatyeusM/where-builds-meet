@@ -1,20 +1,20 @@
 /** Shared dense-hit fixture, not timed as part of calculation benchmarks. */
 export async function fivefoldBenchmarkBundle(server, count) {
-  const load = async (path) => (await server.ssrLoadModule(path)).default;
-  const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts");
-  const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts");
-  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts");
-  const way = innerWayDefinitionForSoloLevel(await load("/data/innerway/fivefold-bleed.json"), 17);
-  const dots = await load("/data/dot/innerway.json");
-  const { PiercingDamage } = await load("/data/skill/general.json");
+  const load = async path => (await server.ssrLoadModule(path)).default
+  const { calculateDerivedStats } = await server.ssrLoadModule("/src/calculations/effectiveStats.ts")
+  const { emptyStats } = await server.ssrLoadModule("/src/data/statDefinitions.ts")
+  const { innerWayDefinitionForSoloLevel } = await server.ssrLoadModule("/src/data/innerWayDefinitions.ts")
+  const way = innerWayDefinitionForSoloLevel(await load("/data/innerway/fivefold-bleed.json"), 17)
+  const dots = await load("/data/dot/innerway.json")
+  const { PiercingDamage } = await load("/data/skill/general.json")
   const rules = Object.values(way.effect).flatMap((definition, tier) =>
     (definition.effect ?? [])
-      .map((effect) => Object.assign({}, effect, { effect: effect.effect ?? effect, source: "FivefoldBleed", tier }))
-      .concat((definition.trigger ?? []).map((trigger) => ({ trigger, effect: {}, source: "FivefoldBleed", tier }))),
-  );
-  const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+      .map(effect => Object.assign({}, effect, { effect: effect.effect ?? effect, source: "FivefoldBleed", tier }))
+      .concat((definition.trigger ?? []).map(trigger => ({ trigger, effect: {}, source: "FivefoldBleed", tier }))),
+  )
+  const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
 
-  const end = (count - 1) * 0.137 + 5;
+  const end = (count - 1) * 0.137 + 5
   const input = {
     rotation: {
       name: "Cadence stress",
@@ -39,7 +39,7 @@ export async function fivefoldBenchmarkBundle(server, count) {
     innerWayConditions: Object.keys(way.effect),
     setupEffects: [],
     weapons: [],
-  };
+  }
   const bundle = {
     timeline: input,
     stats,
@@ -62,7 +62,7 @@ export async function fivefoldBenchmarkBundle(server, count) {
     attunementPriority: [],
     innerWayPriority: [],
     setupComparisons: {},
-  };
+  }
 
-  return bundle;
+  return bundle
 }

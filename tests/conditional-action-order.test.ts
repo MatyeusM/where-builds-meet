@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { buildRotationTimeline } from "../src/calculations/rotationTimeline";
+import { describe, expect, it } from "vitest"
+
+import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 
 describe("conditional action ordering", () => {
-  it.each([false, true])("applies a conditional debuff after its triggering hit (enabled=%s)", (enabled) => {
+  it.each([false, true])("applies a conditional debuff after its triggering hit (enabled=%s)", enabled => {
     const timeline = buildRotationTimeline({
       rotation: { name: "Conditional application", steps: [{ type: "skill", skill: "Probe" }] },
       skills: {
@@ -30,13 +31,13 @@ describe("conditional action ordering", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    });
-    const row = timeline.find((row) => row.step.skill === "Probe")!;
-    const hits = row.actions.flatMap((action, index) => (action.type === "damage" ? [row.actionStates[index]] : []));
-    expect(hits).toHaveLength(2);
-    expect(hits[0].debuffs.some((effect) => effect.name === "Mark")).toBe(false);
-    expect(hits[1].debuffs.some((effect) => effect.name === "Mark")).toBe(enabled);
-  });
+    })
+    const row = timeline.find(row => row.step.skill === "Probe")!
+    const hits = row.actions.flatMap((action, index) => (action.type === "damage" ? [row.actionStates[index]] : []))
+    expect(hits).toHaveLength(2)
+    expect(hits[0].debuffs.some(effect => effect.name === "Mark")).toBe(false)
+    expect(hits[1].debuffs.some(effect => effect.name === "Mark")).toBe(enabled)
+  })
 
   it.each([
     { enabled: true, equipped: true, expected: 0.25 },
@@ -88,9 +89,9 @@ describe("conditional action ordering", () => {
       weapons: equipped ? ["heavenwill"] : [],
       initialResources: { Charge: 0 },
       resourceMaximums: { Charge: 1 },
-    });
-    const row = timeline.find((row) => row.step.skill === "Observe")!;
-    expect(row.actionStates[0].resources.Charge).toBe(0);
-    expect(row.actionStates[1].resources.Charge).toBe(expected);
-  });
-});
+    })
+    const row = timeline.find(row => row.step.skill === "Observe")!
+    expect(row.actionStates[0].resources.Charge).toBe(0)
+    expect(row.actionStates[1].resources.Charge).toBe(expected)
+  })
+})

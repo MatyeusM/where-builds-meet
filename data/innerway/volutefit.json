@@ -67,15 +67,7 @@
     },
     "VolutefitT3": {},
     "VolutefitT4": {},
-    "VolutefitT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "formlessPenetration": 6
-          }
-        }
-      ]
-    },
+    "VolutefitT5": { "effect": [{ "rawStat": { "formlessPenetration": 6 } }] },
     "VolutefitT6": {}
   }
 }

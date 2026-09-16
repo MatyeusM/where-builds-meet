@@ -12,50 +12,21 @@
               "operator": "or",
               "operand": [
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Light"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Light" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ],
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Heavy"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Heavy" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               ]
             }
           ],
-          "action": [
-            {
-              "type": "apply",
-              "target": "self",
-              "value": "ThroatPierced",
-              "stack": 1,
-              "reapply": true
-            }
-          ]
+          "action": [{ "type": "apply", "target": "self", "value": "ThroatPierced", "stack": 1, "reapply": true }]
         }
       ]
     },
-    "ThroatPiercingArtT1": {
-      "effect": [
-        {
-          "target": "ThroatPierced",
-          "modify": {
-            "duration": 15
-          }
-        }
-      ]
-    },
+    "ThroatPiercingArtT1": { "effect": [{ "target": "ThroatPierced", "modify": { "duration": 15 } }] },
     "ThroatPiercingArtT2": {
       "effect": [
         {
@@ -117,25 +88,8 @@
       ]
     },
     "ThroatPiercingArtT3": {},
-    "ThroatPiercingArtT4": {
-      "effect": [
-        {
-          "target": "ThroatPierced",
-          "modify": {
-            "maxStack": 5
-          }
-        }
-      ]
-    },
-    "ThroatPiercingArtT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "stonesplitPenetration": 6
-          }
-        }
-      ]
-    },
+    "ThroatPiercingArtT4": { "effect": [{ "target": "ThroatPierced", "modify": { "maxStack": 5 } }] },
+    "ThroatPiercingArtT5": { "effect": [{ "rawStat": { "stonesplitPenetration": 6 } }] },
     "ThroatPiercingArtT6": {
       "trigger": [
         {
@@ -144,26 +98,12 @@
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "skillTag",
-                  "value": "AnxiSoldier"
-                },
-                {
-                  "target": "skillTag",
-                  "value": "TriggerAnxiSolder"
-                }
+                { "target": "skillTag", "value": "AnxiSoldier" },
+                { "target": "skillTag", "value": "TriggerAnxiSolder" }
               ]
             }
           ],
-          "action": [
-            {
-              "type": "apply",
-              "target": "self",
-              "value": "ThroatPierced",
-              "stack": 1,
-              "reapply": true
-            }
-          ]
+          "action": [{ "type": "apply", "target": "self", "value": "ThroatPierced", "stack": 1, "reapply": true }]
         }
       ]
     }

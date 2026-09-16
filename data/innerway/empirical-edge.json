@@ -4,45 +4,16 @@
   "tags": ["BamboocutKite"],
   "effect": {
     "EmpiricalEdgeT0": {
-      "effect": [
-        {
-          "target": "Cognition",
-          "modify": {
-            "maxStack": 3
-          }
-        }
-      ],
+      "effect": [{ "target": "Cognition", "modify": { "maxStack": 3 } }],
       "trigger": [
         {
           "target": "self",
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "MartialArtEffect"
-            }
-          ],
-          "action": [
-            {
-              "type": "apply",
-              "target": "self",
-              "value": "Cognition",
-              "stack": 1,
-              "reapply": true
-            }
-          ]
+          "requirement": [{ "target": "skillTag", "value": "MartialArtEffect" }],
+          "action": [{ "type": "apply", "target": "self", "value": "Cognition", "stack": 1, "reapply": true }]
         }
       ]
     },
-    "EmpiricalEdgeT1": {
-      "effect": [
-        {
-          "target": "Cognition",
-          "modify": {
-            "duration": 8
-          }
-        }
-      ]
-    },
+    "EmpiricalEdgeT1": { "effect": [{ "target": "Cognition", "modify": { "duration": 8 } }] },
     "EmpiricalEdgeT2": {
       "effect": [
         {
@@ -103,35 +74,9 @@
         }
       ]
     },
-    "EmpiricalEdgeT3": {
-      "effect": [
-        {
-          "target": "Cognition",
-          "modify": {
-            "maxStack": 5
-          }
-        }
-      ]
-    },
-    "EmpiricalEdgeT4": {
-      "effect": [
-        {
-          "target": "Cognition",
-          "modify": {
-            "cooldown": 0
-          }
-        }
-      ]
-    },
-    "EmpiricalEdgeT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physDmgBonus": 0.025
-          }
-        }
-      ]
-    },
+    "EmpiricalEdgeT3": { "effect": [{ "target": "Cognition", "modify": { "maxStack": 5 } }] },
+    "EmpiricalEdgeT4": { "effect": [{ "target": "Cognition", "modify": { "cooldown": 0 } }] },
+    "EmpiricalEdgeT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.025 } }] },
     "EmpiricalEdgeT6": {}
   }
 }

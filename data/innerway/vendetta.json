@@ -5,30 +5,11 @@
   "effect": {
     "VendettaT0": {
       "effect": [
-        {
-          "target": "RodentRampage",
-          "modify": {
-            "duration": 25
-          }
-        },
-        {
-          "target": "VendettaToken",
-          "modify": {
-            "duration": 15
-          }
-        }
+        { "target": "RodentRampage", "modify": { "duration": 25 } },
+        { "target": "VendettaToken", "modify": { "duration": 15 } }
       ]
     },
-    "VendettaT1": {
-      "effect": [
-        {
-          "target": "VendettaToken",
-          "modify": {
-            "duration": 20
-          }
-        }
-      ]
-    },
+    "VendettaT1": { "effect": [{ "target": "VendettaToken", "modify": { "duration": 20 } }] },
     "VendettaT2": {
       "effect": [
         {
@@ -65,33 +46,13 @@
     },
     "VendettaT3": {},
     "VendettaT4": {},
-    "VendettaT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalPenetration": 5.1
-          }
-        }
-      ]
-    },
+    "VendettaT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
     "VendettaT6": {
       "effect": [
         {
           "target": "VendettaToken",
           "modify": {
-            "effect": [
-              {
-                "requirement": [
-                  {
-                    "target": "skillTag",
-                    "value": "Rodent"
-                  }
-                ],
-                "effect": {
-                  "dmgBonus": 0.3
-                }
-              }
-            ]
+            "effect": [{ "requirement": [{ "target": "skillTag", "value": "Rodent" }], "effect": { "dmgBonus": 0.3 } }]
           }
         }
       ]

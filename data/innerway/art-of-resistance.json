@@ -66,44 +66,12 @@
       ]
     },
     "ArtOfResistanceT3": {
-      "effect": [
-        {
-          "requirement": [
-            {
-              "target": "self",
-              "value": "Shield"
-            }
-          ],
-          "effect": {
-            "dmgBonus": 0.05
-          }
-        }
-      ]
+      "effect": [{ "requirement": [{ "target": "self", "value": "Shield" }], "effect": { "dmgBonus": 0.05 } }]
     },
     "ArtOfResistanceT4": {},
-    "ArtOfResistanceT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "stonesplitPenetration": 6
-          }
-        }
-      ]
-    },
+    "ArtOfResistanceT5": { "effect": [{ "rawStat": { "stonesplitPenetration": 6 } }] },
     "ArtOfResistanceT6": {
-      "effect": [
-        {
-          "requirement": [
-            {
-              "target": "self",
-              "value": "Shield"
-            }
-          ],
-          "effect": {
-            "dmgBonus": 0.05
-          }
-        }
-      ]
+      "effect": [{ "requirement": [{ "target": "self", "value": "Shield" }], "effect": { "dmgBonus": 0.05 } }]
     }
   }
 }

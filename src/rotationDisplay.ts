@@ -1,12 +1,12 @@
-import { compareTimelineTime, type TimelineRow } from "./calculations/rotationTimeline";
+import { compareTimelineTime, type TimelineRow } from "./calculations/rotationTimeline"
 
 export type TimelineDisplayEntry = {
-  row: TimelineRow;
-  kind: "skill" | "action";
-  time: number;
-  order: number;
-  actionIndex?: number;
-};
+  row: TimelineRow
+  kind: "skill" | "action"
+  time: number
+  order: number
+  actionIndex?: number
+}
 
 /** Inner Way totals are non-expandable footers; their internal actions never enter the display list. */
 export function buildTimelineDisplayEntries(
@@ -14,28 +14,28 @@ export function buildTimelineDisplayEntries(
   expanded: (rowId: string) => boolean,
   startAnchor: { rowId: string; actionIndex?: number },
 ): TimelineDisplayEntry[] {
-  const rowsById = new Map(timeline.map((row) => [row.id, row]));
-  const pending = timeline.some((row) => row.pendingCalculation);
-  const headers: TimelineDisplayEntry[] = [];
-  const entries: TimelineDisplayEntry[] = [];
+  const rowsById = new Map(timeline.map(row => [row.id, row]))
+  const pending = timeline.some(row => row.pendingCalculation)
+  const headers: TimelineDisplayEntry[] = []
+  const entries: TimelineDisplayEntry[] = []
   for (const row of timeline) {
-    if (row.kind === "damageGroup") headers.push({ row, kind: "skill", time: row.startTime, order: row.order });
+    if (row.kind === "damageGroup") headers.push({ row, kind: "skill", time: row.startTime, order: row.order })
   }
   for (const row of timeline) {
-    if (row.skipped || row.kind === "damageGroup") continue;
+    if (row.skipped || row.kind === "damageGroup") continue
     if (row.step.type === "event" && row.step.event === "HP" && "automatic" in row.step && row.step.automatic === true)
-      continue;
-    const sourceRow = row.sourceRowId ? rowsById.get(row.sourceRowId) : undefined;
-    if (sourceRow?.kind === "damageGroup") continue;
-    if (row.kind === "rotation") entries.push({ row, kind: "skill", time: row.startTime, order: row.order });
+      continue
+    const sourceRow = row.sourceRowId ? rowsById.get(row.sourceRowId) : undefined
+    if (sourceRow?.kind === "damageGroup") continue
+    if (row.kind === "rotation") entries.push({ row, kind: "skill", time: row.startTime, order: row.order })
     const derivedExpanded =
-      row.kind !== "rotation" && sourceRow && (sourceRow.step.type !== "skill" || expanded(sourceRow.id));
+      row.kind !== "rotation" && sourceRow && (sourceRow.step.type !== "skill" || expanded(sourceRow.id))
     row.actions.forEach((action, actionIndex) => {
       const visible =
         derivedExpanded ||
         row.step.type !== "skill" ||
         expanded(row.id) ||
-        (startAnchor.rowId === row.id && startAnchor.actionIndex === actionIndex);
+        (startAnchor.rowId === row.id && startAnchor.actionIndex === actionIndex)
       if ((action.type === "damage" || action.type === "replay" || action.type === "heal") && visible)
         entries.push({
           row,
@@ -43,10 +43,10 @@ export function buildTimelineDisplayEntries(
           actionIndex,
           time: row.startTime + Number(action.time ?? 0),
           order: row.order + 10 + actionIndex,
-        });
-    });
+        })
+    })
   }
   const compare = (left: TimelineDisplayEntry, right: TimelineDisplayEntry) =>
-    pending ? left.order - right.order : compareTimelineTime(left.time, right.time) || left.order - right.order;
-  return [...entries.sort(compare), ...headers];
+    pending ? left.order - right.order : compareTimelineTime(left.time, right.time) || left.order - right.order
+  return [...entries.sort(compare), ...headers]
 }

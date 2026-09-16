@@ -1,8 +1,9 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto"
 
-const buildVersion = randomUUID();
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
+
+const buildVersion = randomUUID()
 
 export default defineConfig(({ command }) => ({
   // Calculation probes create separate Vite servers with the default cache path.
@@ -13,7 +14,7 @@ export default defineConfig(({ command }) => ({
     {
       name: "deployment-version",
       generateBundle() {
-        this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ version: buildVersion }) });
+        this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ version: buildVersion }) })
       },
     },
   ],
@@ -28,13 +29,13 @@ export default defineConfig(({ command }) => ({
             id.includes("node_modules/react-dom/") ||
             id.includes("node_modules/scheduler/")
           ) {
-            return "vendor-react";
+            return "vendor-react"
           }
           if (id.includes("/data/")) {
-            return "game-data";
+            return "game-data"
           }
         },
       },
     },
   },
-}));
+}))

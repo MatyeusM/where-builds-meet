@@ -1,27 +1,15 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["eslint", "typescript", "unicorn", "react", "react-perf", "oxc", "import", "jsx-a11y", "vitest"],
-  "categories": {
-    "correctness": "error"
-  },
+  "categories": { "correctness": "error" },
   "rules": {},
   "overrides": [
     {
       "files": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "script/**/*.mjs"],
-      "rules": {
-        "oxc/no-map-spread": "error"
-      }
+      "rules": { "oxc/no-map-spread": "error" }
     },
-    {
-      "files": ["script/**/*.mjs", "tests/**/*.ts", "src/App.tsx"],
-      "rules": {
-        "eslint/no-await-in-loop": "error"
-      }
-    }
+    { "files": ["script/**/*.mjs", "tests/**/*.ts", "src/App.tsx"], "rules": { "eslint/no-await-in-loop": "error" } }
   ],
   "ignorePatterns": ["public/", "dist/", "dist-preview/", "local/", ".agents/"],
-  "env": {
-    "builtin": true,
-    "browser": true
-  }
+  "env": { "builtin": true, "browser": true }
 }

@@ -41,15 +41,7 @@
     },
     "TrappedBeastT3": {},
     "TrappedBeastT4": {},
-    "TrappedBeastT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalResistance": 5.1
-          }
-        }
-      ]
-    },
+    "TrappedBeastT5": { "effect": [{ "rawStat": { "physicalResistance": 5.1 } }] },
     "TrappedBeastT6": {}
   }
 }

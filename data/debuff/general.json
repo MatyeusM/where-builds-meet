@@ -6,20 +6,8 @@
     "duration": 10,
     "maxStack": 1,
     "shared": true,
-    "effect": [
-      {
-        "effect": {
-          "globalDmgBonus": 0.1
-        }
-      }
-    ],
-    "action": [
-      {
-        "type": "setQi",
-        "targetQiRatio": 1,
-        "time": "expire"
-      }
-    ],
+    "effect": [{ "effect": { "globalDmgBonus": 0.1 } }],
+    "action": [{ "type": "setQi", "targetQiRatio": 1, "time": "expire" }],
     "refresh": true
   },
   "Controlled": {
@@ -31,14 +19,6 @@
     "shared": true,
     "refresh": true
   },
-  "Immobilized": {
-    "name": "Immobilized",
-    "maxStack": 1,
-    "showCoverage": true
-  },
-  "Airborne": {
-    "name": "Airborne",
-    "maxStack": 1,
-    "showCoverage": true
-  }
+  "Immobilized": { "name": "Immobilized", "maxStack": 1, "showCoverage": true },
+  "Airborne": { "name": "Airborne", "maxStack": 1, "showCoverage": true }
 }

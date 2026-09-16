@@ -1,29 +1,31 @@
-import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
-import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises"
+
+import { describe, expect, it } from "vitest"
+
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 
 // Ported from script/probe/check-fury-harvest.mjs.
 describe("fury-harvest", () => {
   it("Fury Harvest T1-T6 behavior checks passed", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const generalSkills = JSON.parse(await readFile("data/skill/general.json", "utf8"));
-    const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"));
-    const generalBuffs = JSON.parse(await readFile("data/buff/general.json", "utf8"));
-    const furyHarvest = JSON.parse(await readFile("data/innerway/fury-harvest.json", "utf8"));
-    const system = JSON.parse(await readFile("data/system.json", "utf8"));
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const generalSkills = JSON.parse(await readFile("data/skill/general.json", "utf8"))
+    const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"))
+    const generalBuffs = JSON.parse(await readFile("data/buff/general.json", "utf8"))
+    const furyHarvest = JSON.parse(await readFile("data/innerway/fury-harvest.json", "utf8"))
+    const system = JSON.parse(await readFile("data/system.json", "utf8"))
 
-    const activeTier = 5;
-    const activeTiers = Array.from({ length: activeTier + 1 }, (_, tier) => furyHarvest.effect[`FuryHarvestT${tier}`]);
+    const activeTier = 5
+    const activeTiers = Array.from({ length: activeTier + 1 }, (_, tier) => furyHarvest.effect[`FuryHarvestT${tier}`])
 
     const innerWayRules = activeTiers.flatMap((definition, tier) =>
-      (definition.trigger ?? []).map((trigger) => ({
+      (definition.trigger ?? []).map(trigger => ({
         trigger: { ...trigger, target: trigger.target ?? "self", action: trigger.action ?? [] },
         effect: {},
         source: "FuryHarvest",
         tier,
       })),
-    );
-    const innerWayConditions = Array.from({ length: activeTier + 1 }, (_, tier) => `FuryHarvestT${tier}`);
+    )
+    const innerWayConditions = Array.from({ length: activeTier + 1 }, (_, tier) => `FuryHarvestT${tier}`)
     const timeline = buildRotationTimeline({
       rotation: {
         name: "Fury Harvest vitality probe",
@@ -66,12 +68,12 @@ describe("fury-harvest", () => {
       resourceMaximums: { Vitality: 40 },
       resourceEvents: system.resourceEvents,
       maxHP: 1000,
-    });
+    })
 
     expect(
       timeline.at(-1).actionStates[0].resources.Vitality === 14.1,
       `Dodge and deflect grant 8 total; base damage recovery grants 2.1 and incoming damage retains its ordinary 4; actual ${timeline.at(-1).actionStates[0].resources.Vitality}.`,
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const recoveryInput = {
       rotation: { name: "Base recovery cooldown", steps: [{ type: "skill", skill: "Hits" }] },
@@ -81,7 +83,7 @@ describe("fury-harvest", () => {
           castTime: 4,
           tags: ["DirectDamage"],
           action: [0, 0, 0.5, 1.999, 2, 2.1, 4]
-            .map((time) => ({ type: "damage", phyCoef: 1, time }))
+            .map(time => ({ type: "damage", phyCoef: 1, time }))
             .concat([{ type: "setResource", value: "Observed", amount: 1, time: 4 }]),
         },
       },
@@ -95,25 +97,25 @@ describe("fury-harvest", () => {
       initialResources: { Vitality: 0 },
       resourceMaximums: { Vitality: 40 },
       resourceEvents: system.resourceEvents,
-    };
-    const recovery = (input) =>
-      buildRotationTimeline(input).find((row) => row.step.skill === "Hits").actionStates[7].resources.Vitality;
+    }
+    const recovery = input =>
+      buildRotationTimeline(input).find(row => row.step.skill === "Hits").actionStates[7].resources.Vitality
     expect(
       recovery(recoveryInput) === 6.3,
       "Only the recovery events at 0, 2 and 4 seconds grant 2.1; intervening hits grant nothing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       recovery({ ...recoveryInput, innerWayConditions: ["FuryHarvestT0", "FuryHarvestT1", "FuryHarvestT2"] }) === 6,
       "Below T3 the same cooldown grants the normal 2 Vitality.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       recovery({ ...recoveryInput, resourceEvents: [] }) === 0,
       "T3 has no independent damage-event resource gain.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       recovery({ ...recoveryInput, resourceMaximums: { Vitality: 4 } }) === 4,
       "The combined recovery respects the resource cap.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const turnaroundTimeline = buildRotationTimeline({
       rotation: {
@@ -148,20 +150,16 @@ describe("fury-harvest", () => {
       weapons: [],
       initialResources: { Vitality: 100 },
       resourceMaximums: { Vitality: 100 },
-    });
-    const dragonHead = turnaroundTimeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "DragonHeadTide",
-    );
-    const burstingNine = turnaroundTimeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "BurstingNine",
-    );
+    })
+    const dragonHead = turnaroundTimeline.find(row => row.step.type === "skill" && row.step.skill === "DragonHeadTide")
+    const burstingNine = turnaroundTimeline.find(row => row.step.type === "skill" && row.step.skill === "BurstingNine")
     expect(
       dragonHead.actionStates[2].resources.Vitality === 30,
       "Turnaround from the preceding Mystic must cap an 80-Vitality skill's refund at 10.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       burstingNine.actionStates[2].resources.Vitality === 10 && turnaroundTimeline.at(-1).resources.Vitality === 10,
       "Turnaround must expire five seconds after its last refresh and stop refunding later Mystic casts.",
-    ).toBeTruthy();
-  });
-});
+    ).toBeTruthy()
+  })
+})

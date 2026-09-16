@@ -1,33 +1,34 @@
-import { describe, it } from "vitest";
-import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
+import assert from "node:assert/strict"
+import { readFile, readdir } from "node:fs/promises"
+
+import { describe, it } from "vitest"
 
 // Ported from script/probe/check-martial-art-talent-ranks.mjs.
 describe("martial-art-talent-ranks", () => {
   it("Talent ranks: configured data coverage, independent selection, deduplication, raw-stat formulas, worker damage, and timeline changes passed", async () => {
-    const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
+    const readJson = async path => JSON.parse(await readFile(path, "utf8"))
 
-    const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts");
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const profiles = await readJson("data/breakthrough.json");
+    const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const profiles = await readJson("data/breakthrough.json")
     const arts = await Promise.all(
       (await readdir("data/martial-art"))
-        .filter((file) => file.endsWith(".json"))
-        .map((file) => readJson(`data/martial-art/${file}`)),
-    );
+        .filter(file => file.endsWith(".json"))
+        .map(file => readJson(`data/martial-art/${file}`)),
+    )
     for (const art of arts) {
-      assert(art.talent.every(Array.isArray), `${art.name} must have a talent array at every rank slot`);
+      assert(art.talent.every(Array.isArray), `${art.name} must have a talent array at every rank slot`)
       for (const profile of Object.values(profiles))
         assert(
           Array.isArray(art.talent[profile.martialArtTalentRank]),
           `${art.name} must define the rank selected by breakthrough ${profile.name}`,
-        );
+        )
     }
 
-    const shared = { stat: { minPhys: 10, maxPhys: 10 } };
+    const shared = { stat: { minPhys: 10, maxPhys: 10 } }
     const definitions = {
       infernalTwinblades: {
         talent: [
@@ -50,14 +51,13 @@ describe("martial-art-talent-ranks", () => {
           [{ name: "Attack rank", effect: [{ stat: { minPhys: 20, maxPhys: 20 } }] }],
         ],
       },
-    };
-    const before = structuredClone(definitions);
-    const selected = (rank) =>
-      martialArtEffectsForRank(definitions, ["infernalTwinblades", "infernalTwinblades"], rank);
-    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
-    const results = [0, 1, 2, 3].map((rank) => {
-      const setupEffects = selected(rank);
-      const sheet = calculateStatsWithEffects(stats, setupEffects, 0);
+    }
+    const before = structuredClone(definitions)
+    const selected = rank => martialArtEffectsForRank(definitions, ["infernalTwinblades", "infernalTwinblades"], rank)
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
+    const results = [0, 1, 2, 3].map(rank => {
+      const setupEffects = selected(rank)
+      const sheet = calculateStatsWithEffects(stats, setupEffects, 0)
       const result = calculateRotationBaseline({
         timeline: {
           rotation: {
@@ -100,9 +100,9 @@ describe("martial-art-talent-ranks", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      });
-      return { attack: sheet.stats.minPhys, duration: result.duration, totalDamage: result.metrics.totalDamage };
-    });
+      })
+      return { attack: sheet.stats.minPhys, duration: result.duration, totalDamage: result.metrics.totalDamage }
+    })
     assert.deepEqual(
       results,
       [
@@ -112,29 +112,29 @@ describe("martial-art-talent-ranks", () => {
         { attack: 100, duration: 11, totalDamage: 200 },
       ],
       "Only the selected rank affects stats, damage, and cooldown timing; empty/missing ranks have no effects and duplicate weapons do not double talents",
-    );
-    assert.deepEqual(definitions, before, "Selecting a rank must not mutate bundled effects");
+    )
+    assert.deepEqual(definitions, before, "Selecting a rank must not mutate bundled effects")
 
-    const gauntlets = arts.find((art) => art.name === "Heavenwill Gauntlets");
-    const rope = arts.find((art) => art.name === "Skygrasp Rope Dart");
-    const current = { heavenwill: gauntlets, skygrasp: rope };
+    const gauntlets = arts.find(art => art.name === "Heavenwill Gauntlets")
+    const rope = arts.find(art => art.name === "Skygrasp Rope Dart")
+    const current = { heavenwill: gauntlets, skygrasp: rope }
     for (const profile of Object.values(profiles)) {
-      const effects = martialArtEffectsForRank(current, ["heavenwill", "skygrasp"], profile.martialArtTalentRank);
+      const effects = martialArtEffectsForRank(current, ["heavenwill", "skygrasp"], profile.martialArtTalentRank)
       const sheet = calculateStatsWithEffects(
         { ...emptyStats, minBamboocut: 100, maxBamboocut: 200 },
-        effects.filter((effect) => !effect.requirement),
+        effects.filter(effect => !effect.requirement),
         0,
         ["heavenwill", "skygrasp"],
-      );
+      )
       assert.equal(
         sheet.rawStats.minBamboocut,
         296,
         `Breakthrough ${profile.name} selects both real rank-13 attribute talents`,
-      );
+      )
       assert(
         Math.abs(sheet.stats.bamboocutDmgBonus - 296 * 0.000336) < 1e-9,
         "Ranked talent formulas still read the shared raw-stat stage",
-      );
+      )
     }
-  });
-});
+  })
+})

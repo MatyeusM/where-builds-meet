@@ -24,60 +24,25 @@
             "trigger": {
               "event": "attackResponse",
               "requirement": [
-                {
-                  "target": "self",
-                  "value": "Carouse"
-                },
-                {
-                  "target": "skillTag",
-                  "value": "PerfectDodge"
-                }
+                { "target": "self", "value": "Carouse" },
+                { "target": "skillTag", "value": "PerfectDodge" }
               ],
               "cooldown": 1,
-              "action": {
-                "type": "addResource",
-                "value": "Binge",
-                "amount": 5
-              }
+              "action": { "type": "addResource", "value": "Binge", "amount": 5 }
             }
           }
         ]
       },
       {
         "name": "Physical Attack Up",
-        "effect": [
-          {
-            "stat": {
-              "minPhys": {
-                "formula": {
-                  "source": "agility",
-                  "multiplier": 0.264,
-                  "max": 73.92
-                }
-              }
-            }
-          }
-        ]
+        "effect": [{ "stat": { "minPhys": { "formula": { "source": "agility", "multiplier": 0.264, "max": 73.92 } } } }]
       },
       {
         "name": "Inebriate Critical Enhancement",
         "effect": [
           {
-            "requirement": [
-              {
-                "target": "skillTag",
-                "value": "InebriateEnhanced"
-              }
-            ],
-            "effect": {
-              "critDmgBonus": {
-                "formula": {
-                  "source": "minPhys",
-                  "multiplier": 0.0004,
-                  "max": 0.3
-                }
-              }
-            }
+            "requirement": [{ "target": "skillTag", "value": "InebriateEnhanced" }],
+            "effect": { "critDmgBonus": { "formula": { "source": "minPhys", "multiplier": 0.0004, "max": 0.3 } } }
           }
         ]
       },
@@ -85,26 +50,14 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
-            "rawStat": {
-              "maxBamboocut": 196,
-              "minBamboocut": 98
-            },
+            "rawStat": { "maxBamboocut": 196, "minBamboocut": 98 },
             "stat": {
-              "bamboocutDmgBonus": {
-                "formula": {
-                  "source": "minBamboocut",
-                  "multiplier": 0.000336,
-                  "max": 0.11
-                }
-              }
+              "bamboocutDmgBonus": { "formula": { "source": "minBamboocut", "multiplier": 0.000336, "max": 0.11 } }
             }
           }
         ]
       },
-      {
-        "name": "Attr. Attack DMG Up",
-        "effect": []
-      }
+      { "name": "Attr. Attack DMG Up", "effect": [] }
     ]
   ]
 }

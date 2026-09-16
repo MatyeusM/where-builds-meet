@@ -1,5 +1,5 @@
-import type { CharacterStats, StatDefinition } from "../types";
-import { DIRECT_CRIT_RATE_CAP } from "../calculations/statCaps";
+import { DIRECT_CRIT_RATE_CAP } from "../calculations/statCaps"
+import type { CharacterStats, StatDefinition } from "../types"
 
 export const combatStats: StatDefinition[] = [
   { key: "minPhys", label: "Min Physical Attack" },
@@ -19,7 +19,7 @@ export const combatStats: StatDefinition[] = [
   },
   { key: "affinity", label: "Affinity Rate", unit: "%", showUnitInLabel: false, showUnitInInput: true },
   { key: "directAffinity", label: "Direct Affinity Rate", unit: "%", showUnitInLabel: false, showUnitInInput: true },
-];
+]
 
 export const martialArtsStats: StatDefinition[] = [
   { key: "minBellstrike", label: "Min Bellstrike Attack" },
@@ -32,7 +32,7 @@ export const martialArtsStats: StatDefinition[] = [
   { key: "maxBamboocut", label: "Max Bamboocut Attack" },
   { key: "minVoidAttack", label: "Min Void Attack" },
   { key: "maxVoidAttack", label: "Max Void Attack" },
-];
+]
 
 export const survivalStats: StatDefinition[] = [
   { key: "body", label: "Body" },
@@ -48,7 +48,7 @@ export const survivalStats: StatDefinition[] = [
   },
   { key: "maxEndurance", label: "Max Endurance" },
   { key: "maxVitality", label: "Max Vitality" },
-];
+]
 
 export const defenseStats: StatDefinition[] = [
   { key: "bellstrikePenetration", label: "Bellstrike Penetration" },
@@ -120,13 +120,13 @@ export const defenseStats: StatDefinition[] = [
   { key: "swordDmgBoost", label: "Art of Sword", unit: "%", showUnitInLabel: false, showUnitInInput: true },
   { key: "fanDmgBoost", label: "Art of Fan", unit: "%", showUnitInLabel: false, showUnitInInput: true },
   { key: "dualBladesDmgBoost", label: "Art of Dual Blades", unit: "%", showUnitInLabel: false, showUnitInInput: true },
-];
+]
 
-export const allStatDefinitions = [...combatStats, ...survivalStats, ...martialArtsStats, ...defenseStats];
+export const allStatDefinitions = [...combatStats, ...survivalStats, ...martialArtsStats, ...defenseStats]
 
-export const emptyStats = Object.fromEntries(allStatDefinitions.map(({ key }) => [key, 0])) as CharacterStats;
-emptyStats.effectiveCritBonus = 0;
-emptyStats.heavensWillRegen = 0;
-emptyStats.physicalPenetration = 0;
-emptyStats.formlessPenetration = 0;
-emptyStats.physicalResistance = 0;
+export const emptyStats = Object.fromEntries(allStatDefinitions.map(({ key }) => [key, 0])) as CharacterStats
+emptyStats.effectiveCritBonus = 0
+emptyStats.heavensWillRegen = 0
+emptyStats.physicalPenetration = 0
+emptyStats.formlessPenetration = 0
+emptyStats.physicalResistance = 0

@@ -1,12 +1,12 @@
-import fs from "node:fs";
-import vm from "node:vm";
+import fs from "node:fs"
+import vm from "node:vm"
 
-const sourcePath = new URL("../local/wwm/js/app.formatted.js", import.meta.url);
-const sourceAffixMapPath = new URL("../local/official-wwm-affix-map.json", import.meta.url);
-const outputPath = new URL("../data/official/affix-map.json", import.meta.url);
-const importOutputPath = new URL("../data/official/import-map.json", import.meta.url);
-const source = fs.readFileSync(sourcePath, "utf8");
-const sourceAffixMap = JSON.parse(fs.readFileSync(sourceAffixMapPath, "utf8"));
+const sourcePath = new URL("../local/wwm/js/app.formatted.js", import.meta.url)
+const sourceAffixMapPath = new URL("../local/official-wwm-affix-map.json", import.meta.url)
+const outputPath = new URL("../data/official/affix-map.json", import.meta.url)
+const importOutputPath = new URL("../data/official/import-map.json", import.meta.url)
+const source = fs.readFileSync(sourcePath, "utf8")
+const sourceAffixMap = JSON.parse(fs.readFileSync(sourceAffixMapPath, "utf8"))
 
 // Translate the reference site's names once at generation time. Runtime code
 // only sees IDs mapped directly to Where Builds Meet's canonical data keys.
@@ -52,7 +52,7 @@ const internalAffixKeys = {
   ropeDartCharged: "unfetteredChargedBoost",
   ropeDartSpecial: "unfetteredSpecialBoost",
   ropeDartQ: "unfetteredMartialBoost",
-};
+}
 
 // Observed directly in official dashboard exports but absent from the older
 // reference site's source map. Keep these at the generation boundary so a
@@ -83,47 +83,47 @@ const observedOfficialAffixMap = {
   9794006: "defense",
   9794103: "body",
   9794106: "defense",
-};
+}
 
 function extractFunction(name) {
-  const start = source.indexOf(`function ${name}(`);
-  if (start < 0) throw new Error(`Could not find ${name}`);
+  const start = source.indexOf(`function ${name}(`)
+  if (start < 0) throw new Error(`Could not find ${name}`)
 
-  const bodyStart = source.indexOf("{", start);
-  let depth = 0;
-  let quote = null;
-  let escaped = false;
+  const bodyStart = source.indexOf("{", start)
+  let depth = 0
+  let quote = null
+  let escaped = false
 
   for (let index = bodyStart; index < source.length; index += 1) {
-    const character = source[index];
+    const character = source[index]
 
     if (quote) {
-      if (escaped) escaped = false;
-      else if (character === "\\") escaped = true;
-      else if (character === quote) quote = null;
-      continue;
+      if (escaped) escaped = false
+      else if (character === "\\") escaped = true
+      else if (character === quote) quote = null
+      continue
     }
 
     if (character === '"' || character === "'" || character === "`") {
-      quote = character;
+      quote = character
     } else if (character === "{") {
-      depth += 1;
+      depth += 1
     } else if (character === "}") {
-      depth -= 1;
-      if (depth === 0) return source.slice(start, index + 1);
+      depth -= 1
+      if (depth === 0) return source.slice(start, index + 1)
     }
   }
 
-  throw new Error(`Could not find the end of ${name}`);
+  throw new Error(`Could not find the end of ${name}`)
 }
 
 function extractRange(startMarker, endMarker) {
-  const start = source.indexOf(startMarker);
-  const end = source.indexOf(endMarker, start);
+  const start = source.indexOf(startMarker)
+  const end = source.indexOf(endMarker, start)
   if (start < 0 || end < 0) {
-    throw new Error(`Could not extract ${startMarker}`);
+    throw new Error(`Could not extract ${startMarker}`)
   }
-  return source.slice(start, end + endMarker.length);
+  return source.slice(start, end + endMarker.length)
 }
 
 const decoderSetup = [
@@ -132,17 +132,17 @@ const decoderSetup = [
   extractFunction("_0x24351d"),
   extractFunction("_0x4994a7"),
   extractRange("(function (_0x7703ce", "})(_0x2f83, 0xbe68d);"),
-].join("\n");
+].join("\n")
 
-const importTables = extractRange("const _0x5aba14 = {};", "zS = _0x47435b;");
+const importTables = extractRange("const _0x5aba14 = {};", "zS = _0x47435b;")
 
-const context = {};
-vm.createContext(context);
+const context = {}
+vm.createContext(context)
 vm.runInContext(
   `${decoderSetup}\n${importTables}\n` +
     "globalThis.extracted = { slots: _0x5aba14, baseAttributeKeys: _0x3dd791, baseStats: _0x4193a2 };",
   context,
-);
+)
 
 const mapping = Object.fromEntries(
   [
@@ -151,9 +151,9 @@ const mapping = Object.fromEntries(
       .filter(([, statKey]) => typeof statKey === "string"),
     ...Object.entries(observedOfficialAffixMap),
   ].sort(([left], [right]) => Number(left) - Number(right)),
-);
+)
 
-fs.writeFileSync(outputPath, `${JSON.stringify(mapping, null, 2)}\n`);
+fs.writeFileSync(outputPath, `${JSON.stringify(mapping, null, 2)}\n`)
 fs.writeFileSync(
   importOutputPath,
   `${JSON.stringify(
@@ -165,6 +165,6 @@ fs.writeFileSync(
     null,
     2,
   )}\n`,
-);
-console.log(`Generated ${Object.keys(mapping).length} supported official affix IDs.`);
-console.log(`9233002 -> ${mapping["9233002"]}`);
+)
+console.log(`Generated ${Object.keys(mapping).length} supported official affix IDs.`)
+console.log(`9233002 -> ${mapping["9233002"]}`)

@@ -1,26 +1,28 @@
-import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
-import { describe, it } from "vitest";
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import assert from "node:assert/strict"
+import { readFile } from "node:fs/promises"
+
+import { describe, it } from "vitest"
+
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 
 // Ported from script/probe/check-infernal-twinblades-talents.mjs.
 describe("infernal-twinblades-talents", () => {
   it("Infernal Twinblades: rank-13 stat scaling, conditional Flamelash damage, status lifecycle, attribute channels, dodge durations, and charge reset passed", async () => {
-    const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
-    const cast = (skill) => ({ type: "skill", skill });
-    const delay = (duration) => ({ type: "event", event: "Delay", duration });
+    const readJson = async path => JSON.parse(await readFile(path, "utf8"))
+    const cast = skill => ({ type: "skill", skill })
+    const delay = duration => ({ type: "event", event: "Delay", duration })
     const close = (actual, expected, message) =>
-      assert(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`);
+      assert(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
 
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const general = await readJson("data/skill/general.json");
-    const talent = await readJson("data/martial-art/infernal-twinblades.json");
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
+    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const general = await readJson("data/skill/general.json")
+    const talent = await readJson("data/martial-art/infernal-twinblades.json")
     const effects = {
       ...(await readJson("data/buff/bamboocut-kite.json")),
       ...(await readJson("data/buff/bamboocut-wind.json")),
@@ -32,8 +34,8 @@ describe("infernal-twinblades-talents", () => {
       Permanent: {},
       NoRefresh: { duration: 10, refresh: false, maxStack: 5 },
       Enemy: { duration: 10 },
-    };
-    const apply = (value, extra = {}) => ({ type: "apply", target: "self", value, time: 0, ...extra });
+    }
+    const apply = (value, extra = {}) => ({ type: "apply", target: "self", value, time: 0, ...extra })
     const skills = {
       ...general,
       // Deliberately long, ordinary cooldown isolates the reset from future charge semantics.
@@ -67,8 +69,8 @@ describe("infernal-twinblades-talents", () => {
         action: [{ type: "extend", target: "self", value: "Direct", duration: 2, time: 0 }],
       },
       EmptyDodge: { castTime: 0, tags: ["PerfectDodge"], action: [] },
-    };
-    const setupEffects = martialArtEffectsForRank({ infernalTwinblades: talent }, ["infernalTwinblades"], 13);
+    }
+    const setupEffects = martialArtEffectsForRank({ infernalTwinblades: talent }, ["infernalTwinblades"], 13)
     const build = (steps, extra = {}) =>
       buildRotationTimeline({
         rotation: { name: "Infernal Twinblades talent probe", steps },
@@ -81,15 +83,15 @@ describe("infernal-twinblades-talents", () => {
         setupEffects,
         weapons: ["infernalTwinblades"],
         ...extra,
-      });
-    const observed = (rows) => rows.filter((row) => row.step.skill === "Observe");
-    const buff = (row, name) => row.buffs.find((entry) => entry.name === name);
+      })
+    const observed = rows => rows.filter(row => row.step.skill === "Observe")
+    const buff = (row, name) => row.buffs.find(entry => entry.name === name)
 
     for (const dodge of ["PerfectDodge", "PerfectDodgeCancel"]) {
       for (const enabled of [false, true]) {
-        const [row] = observed(build([cast(dodge), cast("Observe")], { setupEffects: enabled ? setupEffects : [] }));
+        const [row] = observed(build([cast(dodge), cast("Observe")], { setupEffects: enabled ? setupEffects : [] }))
         for (const name of ["Etherwrath", "Disintegration", "MysteryDMGBoost"]) {
-          close(buff(row, name).expiresAt, effects[name].duration * (enabled ? 1.4 : 1), `${dodge} ${name} duration`);
+          close(buff(row, name).expiresAt, effects[name].duration * (enabled ? 1.4 : 1), `${dodge} ${name} duration`)
         }
       }
     }
@@ -119,30 +121,30 @@ describe("infernal-twinblades-talents", () => {
             },
           ],
         },
-      );
-      const [first, extended, later] = observed(rows);
-      close(buff(first, "Direct").expiresAt, 8, "Explicit application duration is scaled once");
+      )
+      const [first, extended, later] = observed(rows)
+      close(buff(first, "Direct").expiresAt, 8, "Explicit application duration is scaled once")
       close(
         buff(first, "Indirect").expiresAt,
         16,
         "Nested triggered buff inherits original cast tags across damage ownership",
-      );
-      close(buff(first, "Listener").expiresAt, 16, "On-damage trigger application inherits the same buff source");
-      close(buff(first, "Existing").expiresAt, 10, "Unrelated active buff is unchanged");
-      close(buff(first, "NoRefresh").expiresAt, 10, "Non-refreshing stack application preserves expiry");
-      assert.equal(buff(first, "Permanent").expiresAt, undefined);
-      close(first.debuffs.find((entry) => entry.name === "Enemy").expiresAt, 11, "Debuffs are unchanged");
-      close(buff(extended, "Direct").expiresAt, 10, "Explicit extensions are not multiplied");
-      assert(!buff(later, "Existing") && !buff(later, "Direct"), "Ordinary expirations still remove buffs");
+      )
+      close(buff(first, "Listener").expiresAt, 16, "On-damage trigger application inherits the same buff source")
+      close(buff(first, "Existing").expiresAt, 10, "Unrelated active buff is unchanged")
+      close(buff(first, "NoRefresh").expiresAt, 10, "Non-refreshing stack application preserves expiry")
+      assert.equal(buff(first, "Permanent").expiresAt, undefined)
+      close(first.debuffs.find(entry => entry.name === "Enemy").expiresAt, 11, "Debuffs are unchanged")
+      close(buff(extended, "Direct").expiresAt, 10, "Explicit extensions are not multiplied")
+      assert(!buff(later, "Existing") && !buff(later, "Direct"), "Ordinary expirations still remove buffs")
       assert(
         buff(later, "Indirect") && buff(later, "Listener"),
         "Extended indirect buffs remain active past base expiry",
-      );
+      )
       assert.deepEqual(
-        rows.find((row) => row.step.skill === "NestedHelper").skill.tags,
+        rows.find(row => row.step.skill === "NestedHelper").skill.tags,
         ["Triggered"],
         "Buff origin does not alter damage tags",
-      );
+      )
     }
 
     const resetRows = build([
@@ -158,54 +160,48 @@ describe("infernal-twinblades-talents", () => {
       delay(1),
       cast("PerfectDodgeCancel"),
       cast("AddledMind"),
-    ]);
+    ])
     assert.deepEqual(
-      resetRows.filter((row) => row.step.skill === "AddledMind").map((row) => row.startTime),
+      resetRows.filter(row => row.step.skill === "AddledMind").map(row => row.startTime),
       [0, 0, 30, 130],
       "Reset is immediate, shared across dodge variants, and available exactly at 30 seconds",
-    );
+    )
     close(
       buff(observed(resetRows)[0], "Etherwrath").expiresAt,
       29 + effects.Etherwrath.duration * 1.4,
       "Duration bonus remains active during reset cooldown",
-    );
-    const unenhanced = build([cast("AddledMind"), cast("PerfectDodgeCancel"), cast("AddledMind")], {
-      setupEffects: [],
-    });
-    assert.equal(unenhanced.at(-1).startTime, 100, "Without talent a dodge cannot reset the skill");
-    const empty = build([cast("AddledMind"), cast("EmptyDodge"), cast("AddledMind")]);
-    assert.equal(empty.at(-1).startTime, 0, "Success trigger restores a charge when the incoming hit is avoided");
+    )
+    const unenhanced = build([cast("AddledMind"), cast("PerfectDodgeCancel"), cast("AddledMind")], { setupEffects: [] })
+    assert.equal(unenhanced.at(-1).startTime, 100, "Without talent a dodge cannot reset the skill")
+    const empty = build([cast("AddledMind"), cast("EmptyDodge"), cast("AddledMind")])
+    assert.equal(empty.at(-1).startTime, 0, "Success trigger restores a charge when the incoming hit is avoided")
     assert.deepEqual(
-      empty.find((row) => row.step.skill === "EmptyDodge").actions,
+      empty.find(row => row.step.skill === "EmptyDodge").actions,
       [{ type: "takeDamage", damage: 0, time: 0 }],
       "Only the fixture incoming hit is displayed; the response event stays internal",
-    );
+    )
     const waiting = build([cast("AddledMind"), cast("AddledMind")], {
       skills: withImmediateAttacks({
         ...skills,
         AddledMind: { ...skills.AddledMind, action: [{ type: "trigger", value: "DelayedDodge", time: 0 }] },
         DelayedDodge: { castTime: 0, action: [{ type: "trigger", value: "PerfectDodgeCancel", time: 5 }] },
       }),
-    });
+    })
     assert.equal(
-      waiting.find((row) => row.rotationIndex === 1).startTime,
+      waiting.find(row => row.rotationIndex === 1).startTime,
       5,
       "Triggered dodge wakes a pending cast before its old cooldown",
-    );
+    )
 
-    const unconditional = setupEffects.filter((effect) => !effect.requirement);
+    const unconditional = setupEffects.filter(effect => !effect.requirement)
     for (const [agility, bonus] of [
       [0, 0],
       [140, 36.96],
       [280, 73.92],
       [560, 73.92],
     ]) {
-      const sheet = calculateStatsWithEffects(
-        { ...emptyStats, agility, minPhys: 100, maxPhys: 1000 },
-        unconditional,
-        0,
-      );
-      close(sheet.stats.minPhys, 100 + bonus, "Agility talent scales and caps at the datamined rate");
+      const sheet = calculateStatsWithEffects({ ...emptyStats, agility, minPhys: 100, maxPhys: 1000 }, unconditional, 0)
+      close(sheet.stats.minPhys, 100 + bonus, "Agility talent scales and caps at the datamined rate")
     }
     for (const [baseMin, penetration] of [
       [0, 6.5856],
@@ -218,12 +214,12 @@ describe("infernal-twinblades-talents", () => {
         [...unconditional, { statStage: "food", effectiveStat: { minBamboocut: 100 } }],
         0,
         ["infernalTwinblades"],
-      );
+      )
       close(
         sheet.stats.bamboocutPenetration,
         penetration,
         "Penetration includes flat talents and excludes effective food",
-      );
+      )
     }
     const enemy = {
       name: "Probe",
@@ -235,9 +231,9 @@ describe("infernal-twinblades-talents", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const calculate = (minPhys, active, extra = {}) => {
-      const stats = { ...emptyStats, agility: 280, minPhys, maxPhys: 2000, precision: 1, crit: 1, ...extra.stats };
+      const stats = { ...emptyStats, agility: 280, minPhys, maxPhys: 2000, precision: 1, crit: 1, ...extra.stats }
       return calculateRotationBaseline({
         timeline: {
           rotation: {
@@ -273,28 +269,28 @@ describe("infernal-twinblades-talents", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      });
-    };
+      })
+    }
     for (const [minPhys, bonus] of [
       [0, 0.05],
       [375, 0.175],
       [750, 0.3],
       [1000, 0.3],
     ]) {
-      const ordinary = calculate(minPhys, false);
-      const enhanced = calculate(minPhys, true);
-      const criticalRate = Object.values(ordinary.actionBreakdowns)[0].outcomeRates.critical;
+      const ordinary = calculate(minPhys, false)
+      const enhanced = calculate(minPhys, true)
+      const criticalRate = Object.values(ordinary.actionBreakdowns)[0].outcomeRates.critical
       close(
         enhanced.metrics.totalDamage - ordinary.metrics.totalDamage,
         ((minPhys + 73.92 + 2000) / 2) * criticalRate * bonus,
         "Flamelash gates critical damage and scales from raw attack before the Agility talent",
-      );
+      )
     }
     close(
       calculate(750, true, { stats: { crit: 0 } }).metrics.totalDamage,
       calculate(750, false, { stats: { crit: 0 } }).metrics.totalDamage,
       "Flamelash does not increase normal-hit damage",
-    );
+    )
     const lifecycle = calculate(750, false, {
       timeline: {
         rotation: {
@@ -320,13 +316,13 @@ describe("infernal-twinblades-talents", () => {
           },
         },
       },
-    });
+    })
     const damage = lifecycle.timeline
-      .filter((row) => row.step.skill === "Hit")
-      .map((row) => lifecycle.actionBreakdowns[`${row.id}:0`].total);
-    assert(damage[1] > damage[0] && damage[3] > damage[0], "Existing status applications enable Flamelash damage");
-    close(damage[2], damage[0], "Expiration removes the bonus at its exact boundary");
-    close(damage[4], damage[0], "Consumption removes the bonus before the following hit");
+      .filter(row => row.step.skill === "Hit")
+      .map(row => lifecycle.actionBreakdowns[`${row.id}:0`].total)
+    assert(damage[1] > damage[0] && damage[3] > damage[0], "Existing status applications enable Flamelash damage")
+    close(damage[2], damage[0], "Expiration removes the bonus at its exact boundary")
+    close(damage[4], damage[0], "Consumption removes the bonus before the following hit")
 
     const attributeStats = {
       ...emptyStats,
@@ -339,7 +335,7 @@ describe("infernal-twinblades-talents", () => {
       maxSilkbind: 100,
       minBamboocut: 100,
       maxBamboocut: 100,
-    };
+    }
     const attributeDamage = calculateDamageBreakdown(
       { phyCoef: 0, attrCoef: 1 },
       {
@@ -350,12 +346,12 @@ describe("infernal-twinblades-talents", () => {
         skillTags: ["MartialArts", "InfernalTwinblades"],
         weapons: ["infernalTwinblades"],
         buffs: [],
-        effects: talent.talent[13].find((entry) => entry.name === "Attr. Attack DMG Up").effect,
+        effects: talent.talent[13].find(entry => entry.name === "Attr. Attack DMG Up").effect,
       },
-    );
-    close(attributeDamage.bellstrike, 100, "Non-primary attribute damage is retained");
-    close(attributeDamage.stonesplit, 100, "Stonesplit damage remains a normal attribute channel");
-    close(attributeDamage.silkbind, 100, "Silkbind damage remains a normal attribute channel");
-    close(attributeDamage.bamboocut, 150, "Bamboocut receives exactly one 50% primary multiplier");
-  });
-});
+    )
+    close(attributeDamage.bellstrike, 100, "Non-primary attribute damage is retained")
+    close(attributeDamage.stonesplit, 100, "Stonesplit damage remains a normal attribute channel")
+    close(attributeDamage.silkbind, 100, "Silkbind damage remains a normal attribute channel")
+    close(attributeDamage.bamboocut, 150, "Bamboocut receives exactly one 50% primary multiplier")
+  })
+})

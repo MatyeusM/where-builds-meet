@@ -46,10 +46,7 @@
     "50": { "weaponSet": "Cleftpeak" },
     "56": { "weaponSet": "Etherwrath" }
   },
-  "armorSets": {
-    "2": { "armorSet": "Formbend" },
-    "24": { "armorSet": "Calmwaters" }
-  },
+  "armorSets": { "2": { "armorSet": "Formbend" }, "24": { "armorSet": "Calmwaters" } },
   "bowRingSets": {
     "44": { "bowRingSet": "Precision" },
     "45": { "bowRingSet": "Critical" },

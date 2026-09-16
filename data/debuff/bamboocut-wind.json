@@ -8,20 +8,8 @@
     "shared": false,
     "showCoverage": true,
     "effect": [
-      {
-        "qiDMGBonus": 0.05
-      },
-      {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "Light"
-          }
-        ],
-        "effect": {
-          "qiDMGBonus": 0.35
-        }
-      }
+      { "qiDMGBonus": 0.05 },
+      { "requirement": [{ "target": "skillTag", "value": "Light" }], "effect": { "qiDMGBonus": 0.35 } }
     ]
   },
   "Sin": {
@@ -51,24 +39,9 @@
     "showCoverage": true,
     "recording": {
       "event": "damage",
-      "requirement": [
-        {
-          "target": "skillTag",
-          "value": "Rodent"
-        }
-      ],
-      "action": {
-        "type": "trigger",
-        "value": "RodentHuntDamage"
-      }
+      "requirement": [{ "target": "skillTag", "value": "Rodent" }],
+      "action": { "type": "trigger", "value": "RodentHuntDamage" }
     },
-    "action": [
-      {
-        "type": "resolveRecording",
-        "target": "target",
-        "value": "RodentHunt",
-        "time": "expire"
-      }
-    ]
+    "action": [{ "type": "resolveRecording", "target": "target", "value": "RodentHunt", "time": "expire" }]
   }
 }

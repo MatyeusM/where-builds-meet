@@ -41,15 +41,7 @@
     },
     "ShadowAssaultT3": {},
     "ShadowAssaultT4": {},
-    "ShadowAssaultT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physDmgBonus": 0.022
-          }
-        }
-      ]
-    },
+    "ShadowAssaultT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.022 } }] },
     "ShadowAssaultT6": {}
   }
 }

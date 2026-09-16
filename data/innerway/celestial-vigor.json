@@ -67,15 +67,7 @@
     },
     "CelestialVigorT3": {},
     "CelestialVigorT4": {},
-    "CelestialVigorT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "formlessPenetration": 6
-          }
-        }
-      ]
-    },
+    "CelestialVigorT5": { "effect": [{ "rawStat": { "formlessPenetration": 6 } }] },
     "CelestialVigorT6": {}
   }
 }

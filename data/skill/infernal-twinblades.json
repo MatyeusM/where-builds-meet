@@ -48,27 +48,10 @@
         "phyBonus": 60.16,
         "attrBonus": 32.8
       },
-      {
-        "type": "damage",
-        "time": 0.673,
-        "phyCoef": 0.27096,
-        "attrCoef": 0.27096,
-        "phyBonus": 75.2,
-        "attrBonus": 41
-      }
+      { "type": "damage", "time": 0.673, "phyCoef": 0.27096, "attrCoef": 0.27096, "phyBonus": 75.2, "attrBonus": 41 }
     ],
     "modifier": [
-      {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Flamelash"
-          }
-        ],
-        "effect": {
-          "castTimeModifier": -0.144
-        }
-      }
+      { "requirement": [{ "target": "self", "value": "Flamelash" }], "effect": { "castTimeModifier": -0.144 } }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -80,14 +63,7 @@
     "shortName": "A1",
     "castTime": 0.43,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.339,
-        "phyCoef": 0.42049,
-        "attrCoef": 0.42049,
-        "phyBonus": 117,
-        "attrBonus": 64
-      }
+      { "type": "damage", "time": 0.339, "phyCoef": 0.42049, "attrCoef": 0.42049, "phyBonus": 117, "attrBonus": 64 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -99,22 +75,8 @@
     "shortName": "A2",
     "castTime": 0.47,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.242,
-        "phyCoef": 0.22542,
-        "attrCoef": 0.22542,
-        "phyBonus": 63,
-        "attrBonus": 34
-      },
-      {
-        "type": "damage",
-        "time": 0.343,
-        "phyCoef": 0.22542,
-        "attrCoef": 0.22542,
-        "phyBonus": 63,
-        "attrBonus": 34
-      }
+      { "type": "damage", "time": 0.242, "phyCoef": 0.22542, "attrCoef": 0.22542, "phyBonus": 63, "attrBonus": 34 },
+      { "type": "damage", "time": 0.343, "phyCoef": 0.22542, "attrCoef": 0.22542, "phyBonus": 63, "attrBonus": 34 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -126,22 +88,8 @@
     "shortName": "A3",
     "castTime": 0.6,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.248,
-        "phyCoef": 0.2886,
-        "attrCoef": 0.2886,
-        "phyBonus": 80.5,
-        "attrBonus": 43.5
-      },
-      {
-        "type": "damage",
-        "time": 0.419,
-        "phyCoef": 0.2886,
-        "attrCoef": 0.2886,
-        "phyBonus": 80.5,
-        "attrBonus": 43.5
-      }
+      { "type": "damage", "time": 0.248, "phyCoef": 0.2886, "attrCoef": 0.2886, "phyBonus": 80.5, "attrBonus": 43.5 },
+      { "type": "damage", "time": 0.419, "phyCoef": 0.2886, "attrCoef": 0.2886, "phyBonus": 80.5, "attrBonus": 43.5 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -153,14 +101,7 @@
     "shortName": "A4",
     "castTime": 0.529,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.167,
-        "phyCoef": 0.254095,
-        "attrCoef": 0.254095,
-        "phyBonus": 71,
-        "attrBonus": 38.5
-      }
+      { "type": "damage", "time": 0.167, "phyCoef": 0.254095, "attrCoef": 0.254095, "phyBonus": 71, "attrBonus": 38.5 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -172,22 +113,8 @@
     "shortName": "FA1",
     "castTime": 0.357,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.104,
-        "phyCoef": 0.32359,
-        "attrCoef": 0.32359,
-        "phyBonus": 90,
-        "attrBonus": 49
-      },
-      {
-        "type": "damage",
-        "time": 0.328,
-        "phyCoef": 0.32359,
-        "attrCoef": 0.32359,
-        "phyBonus": 90,
-        "attrBonus": 49
-      }
+      { "type": "damage", "time": 0.104, "phyCoef": 0.32359, "attrCoef": 0.32359, "phyBonus": 90, "attrBonus": 49 },
+      { "type": "damage", "time": 0.328, "phyCoef": 0.32359, "attrCoef": 0.32359, "phyBonus": 90, "attrBonus": 49 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -208,14 +135,7 @@
     "shortName": "FA2",
     "castTime": 0.5,
     "action": [
-      {
-        "type": "damage",
-        "time": 0.294,
-        "phyCoef": 0.9012,
-        "attrCoef": 0.9012,
-        "phyBonus": 250,
-        "attrBonus": 136
-      }
+      { "type": "damage", "time": 0.294, "phyCoef": 0.9012, "attrCoef": 0.9012, "phyBonus": 250, "attrBonus": 136 }
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
@@ -393,18 +313,9 @@
         "value": "Rodent",
         "time": 0.342,
         "requirement": [
-          {
-            "target": "self",
-            "value": "RodentRampage"
-          },
-          {
-            "target": "self",
-            "value": "Flamelash"
-          },
-          {
-            "target": "self",
-            "value": "EchoesOfOblivionT6"
-          }
+          { "target": "self", "value": "RodentRampage" },
+          { "target": "self", "value": "Flamelash" },
+          { "target": "self", "value": "EchoesOfOblivionT6" }
         ]
       },
       {
@@ -412,18 +323,9 @@
         "value": "Rodent",
         "time": 0.342,
         "requirement": [
-          {
-            "target": "self",
-            "value": "RodentRampage"
-          },
-          {
-            "target": "self",
-            "value": "Flamelash"
-          },
-          {
-            "target": "self",
-            "value": "EchoesOfOblivionT6"
-          }
+          { "target": "self", "value": "RodentRampage" },
+          { "target": "self", "value": "Flamelash" },
+          { "target": "self", "value": "EchoesOfOblivionT6" }
         ]
       },
       {

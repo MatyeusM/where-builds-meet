@@ -148,28 +148,24 @@ an on-damage trigger does not retroactively affect the hit that caused it.
 ## Skill definition
 
 ```ts
-type SkillMap = Record<string, SkillDefinition>;
+type SkillMap = Record<string, SkillDefinition>
 
 type SkillDefinition = {
-  name: string;
-  shortName?: string;
-  group?: boolean;
-  castTime: number;
-  cooldown?: number;
-  cooldownGroup?: string;
-  cooldownUses?: number;
-  cooldownRecovery?: "window" | "independent";
-  action: SkillAction[];
-  subAction?: Array<{
-    value: string | string[];
-    requirement?: Requirement[];
-    fallback?: string | string[];
-  }>;
-  modifier: SkillModifier[];
-  tags: string[];
-  martialArt?: WeaponId;
-  weapon?: WeaponFamily;
-};
+  name: string
+  shortName?: string
+  group?: boolean
+  castTime: number
+  cooldown?: number
+  cooldownGroup?: string
+  cooldownUses?: number
+  cooldownRecovery?: "window" | "independent"
+  action: SkillAction[]
+  subAction?: Array<{ value: string | string[]; requirement?: Requirement[]; fallback?: string | string[] }>
+  modifier: SkillModifier[]
+  tags: string[]
+  martialArt?: WeaponId
+  weapon?: WeaponFamily
+}
 ```
 
 `shortName` is optional presentation metadata. Skill lists, selectors, timeline
@@ -261,14 +257,7 @@ expiry action and schedules it for the refreshed expiration time.
 ### Damage
 
 ```json
-{
-  "type": "damage",
-  "phyCoef": 1.2338,
-  "attrCoef": 1.2338,
-  "phyBonus": 342,
-  "attrBonus": 186,
-  "time": 0.7
-}
+{ "type": "damage", "phyCoef": 1.2338, "attrCoef": 1.2338, "phyBonus": 342, "attrBonus": 186, "time": 0.7 }
 ```
 
 `phyCoef` drives physical damage; independent `attrCoef` drives all four attribute paths. Missing coefficients mean zero. `attrBonus` is used only
@@ -371,14 +360,7 @@ global-effect overrides, and 40 ms ping. Changing ping or build timing can move
 them because they remain attached to combat actions rather than fixed timestamps.
 
 ```json
-{
-  "type": "heal",
-  "phyCoef": 4.912,
-  "silkbindCoef": 4.912,
-  "phyBonus": 1363,
-  "attrBonus": 743,
-  "time": 0.975
-}
+{ "type": "heal", "phyCoef": 4.912, "silkbindCoef": 4.912, "phyBonus": 1363, "attrBonus": 743, "time": 0.975 }
 ```
 
 An internal targeted event action names only the listeners interested in that
@@ -394,11 +376,7 @@ Only a skill tagged `Replayed` may be spawned by a damage-event listener. Its
 actions use a fixed coefficient instead of ordinary damage fields:
 
 ```json
-{
-  "type": "replay",
-  "coef": 0.13333333333333333,
-  "time": 1
-}
+{ "type": "replay", "coef": 0.13333333333333333, "time": 1 }
 ```
 
 The triggering listener passes `event.damage`; each replay action deals exactly
@@ -454,13 +432,7 @@ An Inner Way trigger can grant conditional extra stacks:
 ### Consume
 
 ```json
-{
-  "type": "consume",
-  "target": "self",
-  "value": "Forgetfulness",
-  "stack": 1,
-  "time": 0
-}
+{ "type": "consume", "target": "self", "value": "Forgetfulness", "stack": 1, "time": 0 }
 ```
 
 Consumption occurs at the declared action time. The default amount is one;
@@ -471,10 +443,7 @@ Consumption occurs at the declared action time. The default amount is one;
 {
   "type": "consume",
   "target": "self",
-  "value": {
-    "operator": "first",
-    "operand": ["InnerPassion", "ChargeEnhancement"]
-  },
+  "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"] },
   "time": 0.4
 }
 ```
@@ -605,13 +574,7 @@ the acceleration state was already captured by the sequence selection.
 ### Extend
 
 ```json
-{
-  "type": "extend",
-  "target": "target",
-  "value": "Dread",
-  "duration": 2,
-  "time": 1.883
-}
+{ "type": "extend", "target": "target", "value": "Dread", "duration": 2, "time": 1.883 }
 ```
 
 `duration` is the amount added to the existing expiration time. Missing,
@@ -620,12 +583,7 @@ permanent, or already-expired states are not extended.
 ### Clear cooldown
 
 ```json
-{
-  "type": "clearCD",
-  "target": "self",
-  "value": "Forgetfulness",
-  "time": 0.867
-}
+{ "type": "clearCD", "target": "self", "value": "Forgetfulness", "time": 0.867 }
 ```
 
 This clears the named effect/application cooldown at that timestamp.
@@ -673,11 +631,7 @@ The timeline initializes self HP from the calculated Max HP stat. The attached
 Self HP event emits a `setHP` action and stores an absolute value:
 
 ```json
-{
-  "type": "setHP",
-  "currentHP": 100000,
-  "time": 0
-}
+{ "type": "setHP", "currentHP": 100000, "time": 0 }
 ```
 
 The Take Damage event subtracts a nonnegative absolute amount:
@@ -709,11 +663,7 @@ Without `targetHP`, damage does not reduce the displayed target percentage.
 An attached target HP event can set the percentage explicitly:
 
 ```json
-{
-  "type": "setTargetHP",
-  "targetHPRatio": 0.5,
-  "time": 0
-}
+{ "type": "setTargetHP", "targetHPRatio": 0.5, "time": 0 }
 ```
 
 A rotation may instead set `"autoHP": true`. The timeline derives the rotation
@@ -734,11 +684,7 @@ applies Exhausted. Exhausted declares a generic expiry action which restores Qi
 to 100% when its data-defined duration ends:
 
 ```json
-{
-  "type": "setQi",
-  "targetQiRatio": 1,
-  "time": "expire"
-}
+{ "type": "setQi", "targetQiRatio": 1, "time": "expire" }
 ```
 
 Rotation loaders migrate legacy Exhausted events to Qi-at-zero events and
@@ -1106,10 +1052,7 @@ internal ID remains `EnhanceDrunkenPoet` for stored-data compatibility.
             ]
           }
         ],
-        "effect": {
-          "SteadfastGuaranteedCrit": true,
-          "critDmgBonus": 0.1
-        }
+        "effect": { "SteadfastGuaranteedCrit": true, "critDmgBonus": 0.1 }
       }
     ]
   }
@@ -1183,13 +1126,7 @@ Negative values reduce the corresponding enemy property. Cumulative
 Inner Ways and setup data can modify a named buff or debuff:
 
 ```json
-{
-  "target": "ThroatPierced",
-  "modify": {
-    "duration": 15,
-    "maxStack": 5
-  }
-}
+{ "target": "ThroatPierced", "modify": { "duration": 15, "maxStack": 5 } }
 ```
 
 Scalar definition fields override the base definition. A `modify.effect` array
@@ -1211,9 +1148,7 @@ combat events cannot change:
   "effect": {
     "MoraleChantT0": {},
     "MoraleChantT1": {},
-    "MoraleChantT2": {
-      "effect": [{ "rawStat": { "minPhys": 24.8, "maxPhys": 49.6 } }]
-    }
+    "MoraleChantT2": { "effect": [{ "rawStat": { "minPhys": 24.8, "maxPhys": 49.6 } }] }
   }
 }
 ```
@@ -1456,18 +1391,7 @@ behind skill or combat conditions. Use ordinary raw source names such as
 `minStonesplit`, not `effectiveMinStonesplit`, for those talents.
 
 ```json
-{
-  "stat": {
-    "minPhys": {
-      "formula": {
-        "source": "agility",
-        "multiplier": 0.264,
-        "offset": 0,
-        "max": 73.9
-      }
-    }
-  }
-}
+{ "stat": { "minPhys": { "formula": { "source": "agility", "multiplier": 0.264, "offset": 0, "max": 73.9 } } } }
 ```
 
 Formula result:
@@ -1540,8 +1464,8 @@ neither refreshes the timer nor schedules another attack.
 
 ```ts
 type RotationRecord = {
-  name: string;
-  eventTimeReference?: "battleStart";
+  name: string
+  eventTimeReference?: "battleStart"
   steps: Array<
     | { type: "skill"; skill: string; duration?: number }
     | { type: "event"; event: "Delay"; duration: number }
@@ -1555,19 +1479,13 @@ type RotationRecord = {
     | { type: "event"; event: "Debuff"; before: AttachedEventTarget; debuff: string; stack?: number }
     | { type: "event"; event: "MartialArt"; before: { action: "start" }; martialArt: WeaponId }
     | { type: "event"; event: "Controlled" | "ShieldBroken" | "BattleEnd"; startTime: number; duration?: number }
-  >;
-  start?: { step: number; action?: number };
-};
+  >
+  start?: { step: number; action?: number }
+}
 
-type RotationPreset = RotationRecord & {
-  martialArts: WeaponId[];
-  test?: boolean;
-};
+type RotationPreset = RotationRecord & { martialArts: WeaponId[]; test?: boolean }
 
-type AttachedEventTarget = {
-  action: number | "start";
-  trigger?: number;
-};
+type AttachedEventTarget = { action: number | "start"; trigger?: number }
 ```
 
 Skills with `editableCastTime: true` expose a duration input in the rotation
@@ -1657,12 +1575,7 @@ Burning Heart sections reset to 1m after their final cast.
 `segment` maps a numeric parameter through ordered exclusive upper bounds:
 
 ```json
-{
-  "function": "segment",
-  "param1": "distance",
-  "param2": [2, 3],
-  "param3": [0.02, 0.03, 0.04]
-}
+{ "function": "segment", "param1": "distance", "param2": [2, 3], "param3": [0.02, 0.03, 0.04] }
 ```
 
 For each threshold `param2[n]`, a parameter strictly less than that threshold
@@ -1674,12 +1587,7 @@ Stat and effective-stat effects use the same function with character-stat
 parameters and explicit thresholds:
 
 ```json
-{
-  "function": "segment",
-  "param1": "maxHp",
-  "param2": [5000, 10000, 15000],
-  "param3": [0, 4, 8, 12]
-}
+{ "function": "segment", "param1": "maxHp", "param2": [5000, 10000, 15000], "param3": [0, 4, 8, 12] }
 ```
 
 This example returns 0 below 5,000 Max HP, 4 from 5,000 to below 10,000, 8 from
@@ -1689,12 +1597,7 @@ the damage action's tags and state, and they are excluded from the global
 character-stat display. Timing values can likewise use action-time thresholds:
 
 ```json
-{
-  "function": "segment",
-  "param1": "actionTime",
-  "param2": [1.5, 2.5],
-  "param3": [-0.7, -1, -1.2]
-}
+{ "function": "segment", "param1": "actionTime", "param2": [1.5, 2.5], "param3": [-0.7, -1, -1.2] }
 ```
 
 `actionTime` resolves independently for the skill's original cast time and each
@@ -1708,15 +1611,7 @@ the optional `fallback` is used while the structural timeline is built or when
 no case matches:
 
 ```json
-{
-  "function": "switch",
-  "param1": "currentWeapon",
-  "param2": {
-    "HengBlade": 0.5,
-    "Gauntlet": 0.5
-  },
-  "fallback": 0.5
-}
+{ "function": "switch", "param1": "currentWeapon", "param2": { "HengBlade": 0.5, "Gauntlet": 0.5 }, "fallback": 0.5 }
 ```
 
 A switched `castTime` is resolved from `currentWeapon` when the cast starts and
@@ -1739,11 +1634,7 @@ Ordinary Deflect remains an animation cancel without protection.
 `multiply` multiplies a dynamic parameter by a scalar:
 
 ```json
-{
-  "function": "multiply",
-  "param1": "missingHPPercentage",
-  "param2": "0.0045"
-}
+{ "function": "multiply", "param1": "missingHPPercentage", "param2": "0.0045" }
 ```
 
 Numeric strings are accepted for the scalar. `missingHPPercentage` converts the
@@ -1813,13 +1704,7 @@ ordinary timeline buff:
   "trigger": {
     "event": "damageOutcome",
     "outcome": "affinity",
-    "action": {
-      "type": "apply",
-      "target": "self",
-      "value": "Hawkwing",
-      "stack": 1,
-      "reapply": true
-    }
+    "action": { "type": "apply", "target": "self", "value": "Hawkwing", "stack": 1, "reapply": true }
   }
 }
 ```
@@ -1836,22 +1721,8 @@ applying a regular buff:
   "event": "damageOutcome",
   "outcome": "affinity",
   "target": "self",
-  "resource": {
-    "name": "Focus",
-    "gain": 1,
-    "decayRate": -0.25,
-    "threshold": 4,
-    "resetTo": 0
-  },
-  "action": [
-    {
-      "type": "apply",
-      "target": "self",
-      "value": "Concentration",
-      "stack": 1,
-      "reapply": true
-    }
-  ]
+  "resource": { "name": "Focus", "gain": 1, "decayRate": -0.25, "threshold": 4, "resetTo": 0 },
+  "action": [{ "type": "apply", "target": "self", "value": "Concentration", "stack": 1, "reapply": true }]
 }
 ```
 
@@ -2409,11 +2280,7 @@ An Inner Way tier may listen to final damage events:
         { "target": "skillTag", "value": "Charged" },
         { "target": "target", "value": "HeavensMight" }
       ],
-      "action": {
-        "type": "trigger",
-        "value": "SkyGrippedReplay",
-        "parameter": { "damage": "event.damage" }
-      }
+      "action": { "type": "trigger", "value": "SkyGrippedReplay", "parameter": { "damage": "event.damage" } }
     }
   ]
 }

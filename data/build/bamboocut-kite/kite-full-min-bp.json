@@ -5,26 +5,12 @@
   "martialArts": ["heavenwill", "skygrasp"],
   "setup": {
     "innerWays": [
-      {
-        "innerWay": "SoaringHigh",
-        "tier": "T6"
-      },
-      {
-        "innerWay": "SkyGripped",
-        "tier": "T6"
-      },
-      {
-        "innerWay": "BreakingPoint",
-        "tier": "T6"
-      },
-      {
-        "innerWay": "EnvigoratedWarrior",
-        "tier": "T6"
-      }
+      { "innerWay": "SoaringHigh", "tier": "T6" },
+      { "innerWay": "SkyGripped", "tier": "T6" },
+      { "innerWay": "BreakingPoint", "tier": "T6" },
+      { "innerWay": "EnvigoratedWarrior", "tier": "T6" }
     ],
-    "weaponSets": {
-      "Etherwrath": 4
-    },
+    "weaponSets": { "Etherwrath": 4 },
     "armorSets": {},
     "bowRingSet": "Precision",
     "arsenal": "Bamboocut"
@@ -34,249 +20,105 @@
       "definitionId": "gauntlet",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "minPhys",
-        "value": 77.8
-      },
+      "baseAffix": { "key": "minPhys", "value": 77.8 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "gauntletDmgBoost",
-          "value": 0.062
-        },
-        {
-          "key": "crit",
-          "value": 0.09
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "gauntletDmgBoost", "value": 0.062 },
+        { "key": "crit", "value": 0.09 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "rightWeapon": {
       "definitionId": "skygraspRopeDart",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "minPhys",
-        "value": 77.8
-      },
+      "baseAffix": { "key": "minPhys", "value": 77.8 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "crit",
-          "value": 0.09
-        },
-        {
-          "key": "maxVoidAttack",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "crit", "value": 0.09 },
+        { "key": "maxVoidAttack", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "disc": {
       "definitionId": "disc",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "minPhys",
-        "value": 77.8
-      },
+      "baseAffix": { "key": "minPhys", "value": 77.8 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "allMartialArts",
-          "value": 0.032
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "allMartialArts", "value": 0.032 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "pendant": {
       "definitionId": "pendant",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "minPhys",
-        "value": 77.8
-      },
+      "baseAffix": { "key": "minPhys", "value": 77.8 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "allMartialArts",
-          "value": 0.032
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "allMartialArts", "value": 0.032 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "helmet": {
       "definitionId": "helmet",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "crit",
-        "value": 0.09
-      },
+      "baseAffix": { "key": "crit", "value": 0.09 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "precision",
-          "value": 0.08
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "precision", "value": 0.08 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "heavenwillChargedBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "heavenwillChargedBoost", "value": 0.06 }
     },
     "chestpiece": {
       "definitionId": "chestpiece",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "crit",
-        "value": 0.09
-      },
+      "baseAffix": { "key": "crit", "value": 0.09 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "precision",
-          "value": 0.08
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "precision", "value": 0.08 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "heavenwillChargedBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "heavenwillChargedBoost", "value": 0.06 }
     },
     "greaves": {
       "definitionId": "greaves",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "crit",
-        "value": 0.09
-      },
+      "baseAffix": { "key": "crit", "value": 0.09 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "vsBossDmg",
-          "value": 0.032
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "vsBossDmg", "value": 0.032 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "heavenwillChargedBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "heavenwillChargedBoost", "value": 0.06 }
     },
     "bracer": {
       "definitionId": "bracer",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "crit",
-        "value": 0.09
-      },
+      "baseAffix": { "key": "crit", "value": 0.09 },
       "additionalAffixes": [
-        {
-          "key": "minPhys",
-          "value": 77.8
-        },
-        {
-          "key": "agility",
-          "value": 49.4
-        },
-        {
-          "key": "vsBossDmg",
-          "value": 0.032
-        },
-        {
-          "key": "maxBamboocut",
-          "value": 44.2
-        }
+        { "key": "minPhys", "value": 77.8 },
+        { "key": "agility", "value": 49.4 },
+        { "key": "vsBossDmg", "value": 0.032 },
+        { "key": "maxBamboocut", "value": 44.2 }
       ],
-      "attunement": {
-        "key": "heavenwillChargedBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "heavenwillChargedBoost", "value": 0.06 }
     }
   }
 }

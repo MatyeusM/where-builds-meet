@@ -41,15 +41,7 @@
     },
     "SwordHorizonT3": {},
     "SwordHorizonT4": {},
-    "SwordHorizonT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directAffinity": 0.023
-          }
-        }
-      ]
-    },
+    "SwordHorizonT5": { "effect": [{ "rawStat": { "directAffinity": 0.023 } }] },
     "SwordHorizonT6": {}
   }
 }

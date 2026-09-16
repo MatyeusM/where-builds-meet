@@ -11,35 +11,15 @@
       "SkygraspRopeDart"
     ],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {
-          "stat": {}
-        }
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
+      "0": { "name": "0", "effect": { "stat": {} } },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
       "4": {
         "name": "4",
         "effect": {
-          "stat": {
-            "minPhys": 77.8
-          },
+          "stat": { "minPhys": 77.8 },
           "trigger": {
             "event": "damage",
-            "action": {
-              "type": "apply",
-              "target": "self",
-              "value": "Cleftpeak",
-              "stack": 1,
-              "reapply": true
-            }
+            "action": { "type": "apply", "target": "self", "value": "Cleftpeak", "stack": 1, "reapply": true }
           },
           "condition": "Cleftpeak4P"
         }
@@ -61,46 +41,16 @@
       "SoulshadeUmbrella"
     ],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {
-          "stat": {}
-        }
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "precision": 0.08
-          }
-        }
-      },
+      "0": { "name": "0", "effect": { "stat": {} } },
+      "2": { "name": "2", "effect": { "rawStat": { "precision": 0.08 } } },
       "4": {
         "name": "4",
         "effect": [
+          { "stat": { "precision": 0.08 } },
+          { "requirement": [], "effect": { "critDmgBonus": 0.1, "criticalHealingBonus": 0.1 } },
           {
-            "stat": {
-              "precision": 0.08
-            }
-          },
-          {
-            "requirement": [],
-            "effect": {
-              "critDmgBonus": 0.1,
-              "criticalHealingBonus": 0.1
-            }
-          },
-          {
-            "requirement": [
-              {
-                "target": "self",
-                "value": "Shield"
-              }
-            ],
-            "effect": {
-              "critDmgBonus": 0.15,
-              "criticalHealingBonus": 0.15
-            }
+            "requirement": [{ "target": "self", "value": "Shield" }],
+            "effect": { "critDmgBonus": 0.15, "criticalHealingBonus": 0.15 }
           }
         ]
       }
@@ -111,43 +61,15 @@
     "altersTimeline": true,
     "tags": ["SilkbindDeluge", "PanaceaFan", "SoulshadeUmbrella"],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {
-          "stat": {}
-        }
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "crit": 0.09
-          }
-        }
-      },
+      "0": { "name": "0", "effect": { "stat": {} } },
+      "2": { "name": "2", "effect": { "rawStat": { "crit": 0.09 } } },
       "4": {
         "name": "4",
         "effect": [
+          { "stat": { "crit": 0.09 } },
           {
-            "stat": {
-              "crit": 0.09
-            }
-          },
-          {
-            "requirement": [
-              {
-                "target": "selfHPPercentage",
-                "comparison": ">=",
-                "amount": 100
-              }
-            ],
-            "effect": {
-              "stat": {
-                "crit": 0.05
-              },
-              "critDmgBonus": 0.15,
-              "criticalHealingBonus": 0.15
-            }
+            "requirement": [{ "target": "selfHPPercentage", "comparison": ">=", "amount": 100 }],
+            "effect": { "stat": { "crit": 0.05 }, "critDmgBonus": 0.15, "criticalHealingBonus": 0.15 }
           }
         ]
       }
@@ -168,36 +90,16 @@
       "SoulshadeUmbrella"
     ],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {
-          "stat": {}
-        }
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "affinity": 0.045
-          }
-        }
-      },
+      "0": { "name": "0", "effect": { "stat": {} } },
+      "2": { "name": "2", "effect": { "rawStat": { "affinity": 0.045 } } },
       "4": {
         "name": "4",
         "effect": {
-          "stat": {
-            "affinity": 0.045
-          },
+          "stat": { "affinity": 0.045 },
           "trigger": {
             "event": "damageOutcome",
             "outcome": "affinity",
-            "action": {
-              "type": "apply",
-              "target": "self",
-              "value": "Hawkwing",
-              "stack": 1,
-              "reapply": true
-            }
+            "action": { "type": "apply", "target": "self", "value": "Hawkwing", "stack": 1, "reapply": true }
           }
         }
       }
@@ -218,42 +120,17 @@
       "SoulshadeUmbrella"
     ],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {
-          "stat": {}
-        }
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
+      "0": { "name": "0", "effect": { "stat": {} } },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
       "4": {
         "name": "4",
         "effect": {
           "condition": "Etherwrath4P",
-          "stat": {
-            "minPhys": 77.8
-          },
+          "stat": { "minPhys": 77.8 },
           "trigger": {
             "event": "damage",
-            "requirement": [
-              {
-                "target": "skillTag",
-                "value": "DirectDamage"
-              }
-            ],
-            "action": {
-              "type": "apply",
-              "target": "self",
-              "value": "Etherwrath",
-              "stack": 1,
-              "reapply": true
-            }
+            "requirement": [{ "target": "skillTag", "value": "DirectDamage" }],
+            "action": { "type": "apply", "target": "self", "value": "Etherwrath", "stack": 1, "reapply": true }
           }
         }
       }
@@ -264,26 +141,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxPhys": 77.8
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxPhys": 77.8
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxPhys": 77.8 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxPhys": 77.8 } } }
     }
   },
   "SwiftGale": {
@@ -291,26 +151,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxPhys": 77.8
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxPhys": 77.8
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxPhys": 77.8 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxPhys": 77.8 } } }
     }
   },
   "SwayingHeights": {
@@ -318,97 +161,35 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
       "4": {
         "name": "4",
         "effect": [
+          { "rawStat": { "minPhys": 77.8 } },
           {
-            "rawStat": {
-              "minPhys": 77.8
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">", "amount": 50 }],
+            "effect": { "hpDMGBonus": 0.05 }
           },
           {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">",
-                "amount": 50
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.05
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">=", "amount": 55 }],
+            "effect": { "hpDMGBonus": 0.01 }
           },
           {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">=",
-                "amount": 55
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.01
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">=", "amount": 60 }],
+            "effect": { "hpDMGBonus": 0.01 }
           },
           {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">=",
-                "amount": 60
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.01
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">=", "amount": 65 }],
+            "effect": { "hpDMGBonus": 0.01 }
           },
           {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">=",
-                "amount": 65
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.01
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">=", "amount": 70 }],
+            "effect": { "hpDMGBonus": 0.01 }
           },
           {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">=",
-                "amount": 70
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.01
-            }
-          },
-          {
-            "requirement": [
-              {
-                "target": "targetHPPercentage",
-                "comparison": ">=",
-                "amount": 75
-              }
-            ],
-            "effect": {
-              "hpDMGBonus": 0.01
-            }
+            "requirement": [{ "target": "targetHPPercentage", "comparison": ">=", "amount": 75 }],
+            "effect": { "hpDMGBonus": 0.01 }
           }
         ]
       }
@@ -419,86 +200,43 @@
     "altersTimeline": false,
     "tags": ["BamboocutWind", "InfernalTwinblades", "MortalRopeDart"],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
       "4": {
         "name": "4",
         "effect": [
-          {
-            "rawStat": {
-              "minPhys": 77.8
-            }
-          },
+          { "rawStat": { "minPhys": 77.8 } },
           {
             "requirement": [
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Light"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "Rodent"
-                  }
+                  { "target": "skillTag", "value": "Light" },
+                  { "target": "skillTag", "value": "Rodent" }
                 ]
               }
             ],
-            "effect": {
-              "hpDMGBonus": 0.12
-            }
+            "effect": { "hpDMGBonus": 0.12 }
           },
           {
             "requirement": [
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Light"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "Rodent"
-                  }
+                  { "target": "skillTag", "value": "Light" },
+                  { "target": "skillTag", "value": "Rodent" }
                 ]
               },
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "targetQiPercentage",
-                    "comparison": "<",
-                    "amount": 40
-                  },
-                  {
-                    "target": "target",
-                    "value": "BoneCorrosion"
-                  },
-                  {
-                    "target": "target",
-                    "value": "QiImbalance"
-                  }
+                  { "target": "targetQiPercentage", "comparison": "<", "amount": 40 },
+                  { "target": "target", "value": "BoneCorrosion" },
+                  { "target": "target", "value": "QiImbalance" }
                 ]
               }
             ],
-            "effect": {
-              "stat": {
-                "physDmgBonus": 0.06,
-                "bamboocutDmgBonus": 0.06
-              }
-            }
+            "effect": { "stat": { "physDmgBonus": 0.06, "bamboocutDmgBonus": 0.06 } }
           }
         ]
       }
@@ -509,26 +247,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "precision": 0.08
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "precision": 0.08
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "precision": 0.08 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "precision": 0.08 } } }
     }
   },
   "Starweave": {
@@ -536,26 +257,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "minPhys": 77.8 } } }
     }
   },
   "Tiltrim": {
@@ -563,26 +267,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "minPhys": 77.8
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "minPhys": 77.8 } } }
     }
   }
 }

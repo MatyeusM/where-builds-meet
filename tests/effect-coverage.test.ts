@@ -1,12 +1,12 @@
-import { assert, describe, it } from "vitest";
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-effect-coverage.mjs.
 describe("effect-coverage", () => {
   it("Definition-filtered average stacks and shared-debuff time coverage verified", async () => {
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Coverage probe",
       level: 96,
@@ -17,13 +17,10 @@ describe("effect-coverage", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const result = calculateRotationBaseline({
       timeline: {
-        rotation: {
-          name: "Coverage probe",
-          steps: [{ type: "skill", skill: "CoverageProbe" }],
-        },
+        rotation: { name: "Coverage probe", steps: [{ type: "skill", skill: "CoverageProbe" }] },
         skills: {
           CoverageProbe: {
             name: "Coverage probe",
@@ -44,14 +41,7 @@ describe("effect-coverage", () => {
         eventDefinitions: {},
         dots: {},
         effectDefinitions: {
-          ShortBuff: {
-            name: "Short Buff",
-            duration: 1.5,
-            maxStack: 1,
-            refresh: true,
-            showCoverage: true,
-            effect: [],
-          },
+          ShortBuff: { name: "Short Buff", duration: 1.5, maxStack: 1, refresh: true, showCoverage: true, effect: [] },
           ShortDebuff: {
             name: "Short Debuff",
             duration: 1.5,
@@ -70,13 +60,7 @@ describe("effect-coverage", () => {
             showCoverage: true,
             effect: [],
           },
-          HiddenBuff: {
-            name: "Hidden Buff",
-            duration: 10,
-            maxStack: 1,
-            refresh: true,
-            effect: [],
-          },
+          HiddenBuff: { name: "Hidden Buff", duration: 10, maxStack: 1, refresh: true, effect: [] },
         },
         innerWayConditions: [],
         innerWayRules: [],
@@ -93,22 +77,22 @@ describe("effect-coverage", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
-    const buff = result.metrics.breakdown.buffCoverage.find((row) => row.id === "ShortBuff");
-    const debuff = result.metrics.breakdown.debuffCoverage.find((row) => row.id === "ShortDebuff");
-    const privateDebuff = result.metrics.breakdown.debuffCoverage.find((row) => row.id === "PrivateDebuff");
-    assert(buff?.averageStacks === 0.5, "Buff average stacks must include only damage and healing actions.");
+    })
+    const buff = result.metrics.breakdown.buffCoverage.find(row => row.id === "ShortBuff")
+    const debuff = result.metrics.breakdown.debuffCoverage.find(row => row.id === "ShortDebuff")
+    const privateDebuff = result.metrics.breakdown.debuffCoverage.find(row => row.id === "PrivateDebuff")
+    assert(buff?.averageStacks === 0.5, "Buff average stacks must include only damage and healing actions.")
     assert(
       debuff?.averageStacks === 0.5 && debuff.timeCoverage === 75,
       "A shared debuff must report output-action average stacks and elapsed-time coverage.",
-    );
+    )
     assert(
       privateDebuff?.averageStacks === 0.5 && privateDebuff.timeCoverage === undefined,
       "A non-shared debuff must report average stacks without elapsed-time coverage.",
-    );
+    )
     assert(
-      !result.metrics.breakdown.buffCoverage.some((row) => row.id === "HiddenBuff"),
+      !result.metrics.breakdown.buffCoverage.some(row => row.id === "HiddenBuff"),
       "Effects without showCoverage must stay out of the coverage breakdown.",
-    );
-  });
-});
+    )
+  })
+})

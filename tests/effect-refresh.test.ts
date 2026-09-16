@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { buildRotationTimeline } from "../src/calculations/rotationTimeline";
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator";
-import { calculateDerivedStats } from "../src/calculations/effectiveStats";
-import { emptyStats } from "../src/data/statDefinitions";
+import { describe, expect, it } from "vitest"
+
+import { calculateDerivedStats } from "../src/calculations/effectiveStats"
+import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
+import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { emptyStats } from "../src/data/statDefinitions"
 
 describe("effect lifecycle", () => {
   it.each([
@@ -20,7 +21,7 @@ describe("effect lifecycle", () => {
           action: [
             { type: "apply", target: "self", value: "Stacking", stack: 1, time: 0 },
             { type: "apply", target: "self", value: "Stacking", stack: 1, reapply, time: 2 },
-            ...[6.9, 7.1, 9.1].map((time) => ({ type: "damage", phyCoef: 0, time })),
+            ...[6.9, 7.1, 9.1].map(time => ({ type: "damage", phyCoef: 0, time })),
           ],
         },
       },
@@ -31,20 +32,20 @@ describe("effect lifecycle", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    });
-    const row = timeline.find((row) => row.step.skill === "Probe")!;
+    })
+    const row = timeline.find(row => row.step.skill === "Probe")!
     const stacks = row.actions.flatMap((action, index) =>
       action.type === "damage"
-        ? [row.actionStates[index].buffs.find((effect) => effect.name === "Stacking")?.stack ?? 0]
+        ? [row.actionStates[index].buffs.find(effect => effect.name === "Stacking")?.stack ?? 0]
         : [],
-    );
-    expect(stacks).toEqual(expected);
-  });
+    )
+    expect(stacks).toEqual(expected)
+  })
 
   it.each([true, false])(
     "evaluates a buff's target-debuff and skill-tag requirements at each hit (matching=%s)",
-    (matching) => {
-      const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+    matching => {
+      const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
       const enemy = {
         name: "Fixture",
         level: 96,
@@ -55,7 +56,7 @@ describe("effect lifecycle", () => {
         silkbindResistance: 0,
         bamboocutResistance: 0,
         judgementResistance: 0,
-      };
+      }
       const result = calculateRotationBaseline({
         timeline: {
           rotation: { name: "Hit-time requirements", steps: [{ type: "skill", skill: "Probe" }] },
@@ -106,9 +107,9 @@ describe("effect lifecycle", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      });
-      const damage = [1, 3, 4].map((index) => result.actionBreakdowns[`rotation-0:${index}`].total);
-      expect(damage).toEqual(matching ? [100, 200, 100] : [100, 100, 100]);
+      })
+      const damage = [1, 3, 4].map(index => result.actionBreakdowns[`rotation-0:${index}`].total)
+      expect(damage).toEqual(matching ? [100, 200, 100] : [100, 100, 100])
     },
-  );
-});
+  )
+})

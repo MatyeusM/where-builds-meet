@@ -41,15 +41,7 @@
     },
     "LightAnewT3": {},
     "LightAnewT4": {},
-    "LightAnewT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "bamboocutPenetration": 6
-          }
-        }
-      ]
-    },
+    "LightAnewT5": { "effect": [{ "rawStat": { "bamboocutPenetration": 6 } }] },
     "LightAnewT6": {}
   }
 }

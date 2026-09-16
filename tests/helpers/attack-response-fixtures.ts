@@ -1,5 +1,5 @@
-import general from "../../data/skill/general.json";
-import type { SkillRecord } from "../../src/calculations/rotationTimeline";
+import general from "../../data/skill/general.json"
+import type { SkillRecord } from "../../src/calculations/rotationTimeline"
 
 // Isolate reward/cooldown tests from encounter alignment: a synthetic incoming
 // hit resolves just after the defensive cast opens its window at the same time.
@@ -7,8 +7,8 @@ import type { SkillRecord } from "../../src/calculations/rotationTimeline";
 export function withImmediateAttacks(skills: Record<string, SkillRecord>): Record<string, SkillRecord> {
   return Object.fromEntries(
     Object.entries({ ...general, ...skills }).map(([id, skill]) => {
-      if (!skill.attackResponse && !skill.tags?.includes("PerfectDodge")) return [id, skill];
-      if (skill.tags?.includes("Triggered")) return [id, skill];
+      if (!skill.attackResponse && !skill.tags?.includes("PerfectDodge")) return [id, skill]
+      if (skill.tags?.includes("Triggered")) return [id, skill]
       return [
         id,
         {
@@ -20,7 +20,7 @@ export function withImmediateAttacks(skills: Record<string, SkillRecord>): Recor
           },
           action: [...(skill.action ?? []), { type: "takeDamage", damage: 1, time: 0 }],
         },
-      ];
+      ]
     }),
-  );
+  )
 }

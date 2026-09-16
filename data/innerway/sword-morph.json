@@ -41,15 +41,7 @@
     },
     "SwordMorphT3": {},
     "SwordMorphT4": {},
-    "SwordMorphT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directAffinity": 0.023
-          }
-        }
-      ]
-    },
+    "SwordMorphT5": { "effect": [{ "rawStat": { "directAffinity": 0.023 } }] },
     "SwordMorphT6": {}
   }
 }

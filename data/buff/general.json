@@ -23,13 +23,7 @@
     "duration": 20,
     "cooldown": 60,
     "maxStack": 1,
-    "effect": [
-      {
-        "effect": {
-          "dmgBonus": 0.2
-        }
-      }
-    ],
+    "effect": [{ "effect": { "dmgBonus": 0.2 } }],
     "refresh": true
   },
   "Hawkwing": {
@@ -39,41 +33,11 @@
     "duration": 5,
     "maxStack": 5,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "physicalAttackBonus": 0.02
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalAttackBonus": 0.04
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalAttackBonus": 0.06
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalAttackBonus": 0.08
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalAttackBonus": 0.1
-          }
-        }
-      ]
+      [{ "effect": { "physicalAttackBonus": 0.02 } }],
+      [{ "effect": { "physicalAttackBonus": 0.04 } }],
+      [{ "effect": { "physicalAttackBonus": 0.06 } }],
+      [{ "effect": { "physicalAttackBonus": 0.08 } }],
+      [{ "effect": { "physicalAttackBonus": 0.1 } }]
     ],
     "refresh": true
   },
@@ -92,22 +56,10 @@
     "duration": 8,
     "maxStack": 1,
     "effect": [
+      { "stat": { "allMartialArts": 0.1 } },
       {
-        "stat": {
-          "allMartialArts": 0.1
-        }
-      },
-      {
-        "requirement": [
-          {
-            "target": "selfHPPercentage",
-            "comparison": ">",
-            "amount": 75
-          }
-        ],
-        "stat": {
-          "allMartialArts": 0.1
-        }
+        "requirement": [{ "target": "selfHPPercentage", "comparison": ">", "amount": 75 }],
+        "stat": { "allMartialArts": 0.1 }
       }
     ],
     "refresh": true
@@ -118,19 +70,7 @@
     "description": "Increases Mystic Skill damage by 10% and restores 2 Vitality per second.",
     "duration": 8,
     "maxStack": 1,
-    "effect": [
-      {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "Mystic"
-          }
-        ],
-        "effect": {
-          "dmgBonus": 0.1
-        }
-      }
-    ],
+    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Mystic" }], "effect": { "dmgBonus": 0.1 } }],
     "refresh": true
   },
   "Frost": {
@@ -159,118 +99,53 @@
     "maxStack": 5,
     "stackEffects": [
       [
-        {
-          "effect": {
-            "dmgBonus": 0.01,
-            "physicalPenetration": 2
-          }
-        },
+        { "effect": { "dmgBonus": 0.01, "physicalPenetration": 2 } },
         {
           "requirement": [
-            {
-              "target": "target",
-              "value": "Controlled"
-            },
-            {
-              "target": "self",
-              "value": "MoraleChantT3"
-            }
+            { "target": "target", "value": "Controlled" },
+            { "target": "self", "value": "MoraleChantT3" }
           ],
-          "effect": {
-            "dmgBonus": 0.01
-          }
+          "effect": { "dmgBonus": 0.01 }
         }
       ],
       [
-        {
-          "effect": {
-            "dmgBonus": 0.02,
-            "physicalPenetration": 4
-          }
-        },
+        { "effect": { "dmgBonus": 0.02, "physicalPenetration": 4 } },
         {
           "requirement": [
-            {
-              "target": "target",
-              "value": "Controlled"
-            },
-            {
-              "target": "self",
-              "value": "MoraleChantT3"
-            }
+            { "target": "target", "value": "Controlled" },
+            { "target": "self", "value": "MoraleChantT3" }
           ],
-          "effect": {
-            "dmgBonus": 0.02
-          }
+          "effect": { "dmgBonus": 0.02 }
         }
       ],
       [
-        {
-          "effect": {
-            "dmgBonus": 0.03,
-            "physicalPenetration": 6
-          }
-        },
+        { "effect": { "dmgBonus": 0.03, "physicalPenetration": 6 } },
         {
           "requirement": [
-            {
-              "target": "target",
-              "value": "Controlled"
-            },
-            {
-              "target": "self",
-              "value": "MoraleChantT3"
-            }
+            { "target": "target", "value": "Controlled" },
+            { "target": "self", "value": "MoraleChantT3" }
           ],
-          "effect": {
-            "dmgBonus": 0.03
-          }
+          "effect": { "dmgBonus": 0.03 }
         }
       ],
       [
-        {
-          "effect": {
-            "dmgBonus": 0.04,
-            "physicalPenetration": 8
-          }
-        },
+        { "effect": { "dmgBonus": 0.04, "physicalPenetration": 8 } },
         {
           "requirement": [
-            {
-              "target": "target",
-              "value": "Controlled"
-            },
-            {
-              "target": "self",
-              "value": "MoraleChantT3"
-            }
+            { "target": "target", "value": "Controlled" },
+            { "target": "self", "value": "MoraleChantT3" }
           ],
-          "effect": {
-            "dmgBonus": 0.04
-          }
+          "effect": { "dmgBonus": 0.04 }
         }
       ],
       [
-        {
-          "effect": {
-            "dmgBonus": 0.05,
-            "physicalPenetration": 10
-          }
-        },
+        { "effect": { "dmgBonus": 0.05, "physicalPenetration": 10 } },
         {
           "requirement": [
-            {
-              "target": "target",
-              "value": "Controlled"
-            },
-            {
-              "target": "self",
-              "value": "MoraleChantT3"
-            }
+            { "target": "target", "value": "Controlled" },
+            { "target": "self", "value": "MoraleChantT3" }
           ],
-          "effect": {
-            "dmgBonus": 0.05
-          }
+          "effect": { "dmgBonus": 0.05 }
         }
       ]
     ],

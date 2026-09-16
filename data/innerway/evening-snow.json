@@ -41,15 +41,7 @@
     },
     "EveningSnowT3": {},
     "EveningSnowT4": {},
-    "EveningSnowT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalResistance": 4.5
-          }
-        }
-      ]
-    },
+    "EveningSnowT5": { "effect": [{ "rawStat": { "physicalResistance": 4.5 } }] },
     "EveningSnowT6": {}
   }
 }

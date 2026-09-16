@@ -7,34 +7,12 @@
       "trigger": [
         {
           "target": "self",
-          "requirement": [
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "action": [
-            {
-              "type": "apply",
-              "target": "self",
-              "value": "Disintegration",
-              "stack": 1,
-              "reapply": true
-            }
-          ]
+          "requirement": [{ "target": "target", "value": "Exhausted" }],
+          "action": [{ "type": "apply", "target": "self", "value": "Disintegration", "stack": 1, "reapply": true }]
         }
       ]
     },
-    "BreakingPointT1": {
-      "effect": [
-        {
-          "target": "Disintegration",
-          "modify": {
-            "duration": 5
-          }
-        }
-      ]
-    },
+    "BreakingPointT1": { "effect": [{ "target": "Disintegration", "modify": { "duration": 5 } }] },
     "BreakingPointT2": {
       "effect": [
         {
@@ -70,25 +48,8 @@
       ]
     },
     "BreakingPointT3": {},
-    "BreakingPointT4": {
-      "effect": [
-        {
-          "target": "Disintegration",
-          "modify": {
-            "maxStack": 5
-          }
-        }
-      ]
-    },
-    "BreakingPointT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directCrit": 0.041
-          }
-        }
-      ]
-    },
+    "BreakingPointT4": { "effect": [{ "target": "Disintegration", "modify": { "maxStack": 5 } }] },
+    "BreakingPointT5": { "effect": [{ "rawStat": { "directCrit": 0.041 } }] },
     "BreakingPointT6": {}
   }
 }

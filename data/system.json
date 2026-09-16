@@ -1,12 +1,6 @@
 {
-  "initialResources": {
-    "HeavensWill": 2,
-    "BladeMomentum": 4,
-    "BattleWill": 4
-  },
-  "resourceMaximums": {
-    "HeavensWill": 4
-  },
+  "initialResources": { "HeavensWill": 2, "BladeMomentum": 4, "BattleWill": 4 },
+  "resourceMaximums": { "HeavensWill": 4 },
   "resourceEvents": [
     {
       "event": "damage",
@@ -14,12 +8,7 @@
       "amount": { "function": "switch", "param1": "FuryHarvestT3", "param2": { "true": 2.1 }, "fallback": 2 },
       "cooldown": 2
     },
-    {
-      "event": "takeDamage",
-      "resource": "Vitality",
-      "amount": 4,
-      "perMaxHPRatio": 0.1
-    }
+    { "event": "takeDamage", "resource": "Vitality", "amount": 4, "perMaxHPRatio": 0.1 }
   ],
   "baseStats": {
     "rawStat": {
@@ -36,1280 +25,218 @@
     }
   },
   "enhancementStats": [
-    {
-      "id": "enhancement-01",
-      "rawStat": {
-        "minPhys": 120,
-        "maxPhys": 80
-      }
-    },
-    {
-      "id": "enhancement-02",
-      "rawStat": {
-        "minPhys": 120,
-        "maxPhys": 80
-      }
-    },
-    {
-      "id": "enhancement-03",
-      "rawStat": {
-        "maxPhys": 160
-      }
-    },
-    {
-      "id": "enhancement-04",
-      "rawStat": {
-        "maxPhys": 160
-      }
-    }
+    { "id": "enhancement-01", "rawStat": { "minPhys": 120, "maxPhys": 80 } },
+    { "id": "enhancement-02", "rawStat": { "minPhys": 120, "maxPhys": 80 } },
+    { "id": "enhancement-03", "rawStat": { "maxPhys": 160 } },
+    { "id": "enhancement-04", "rawStat": { "maxPhys": 160 } }
   ],
   "talentStats": [
-    {
-      "id": "talent-01",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-02",
-      "rawStat": {
-        "critDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-03",
-      "rawStat": {
-        "precision": 0.03
-      }
-    },
-    {
-      "id": "talent-04",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-05",
-      "rawStat": {
-        "affinityDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-06",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-07",
-      "rawStat": {
-        "critDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-08",
-      "rawStat": {
-        "precision": 0.03
-      }
-    },
-    {
-      "id": "talent-09",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-10",
-      "rawStat": {
-        "affinityDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-11",
-      "rawStat": {
-        "physicalDefense": 26.4
-      }
-    },
-    {
-      "id": "talent-12",
-      "rawStat": {
-        "maxHp": 2000
-      }
-    },
-    {
-      "id": "talent-13",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-14",
-      "rawStat": {
-        "critDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-15",
-      "rawStat": {
-        "precision": 0.03
-      }
-    },
-    {
-      "id": "talent-16",
-      "rawStat": {
-        "maxPhys": 52.8
-      }
-    },
-    {
-      "id": "talent-17",
-      "rawStat": {
-        "minPhys": 52.8
-      }
-    },
-    {
-      "id": "talent-18",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-19",
-      "rawStat": {
-        "affinityDmgBonus": 0.05
-      }
-    },
-    {
-      "id": "talent-20",
-      "rawStat": {
-        "precision": 0.015
-      }
-    },
-    {
-      "id": "talent-21",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-22",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-23",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-24",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-25",
-      "rawStat": {
-        "physicalDefense": 13.2
-      }
-    },
-    {
-      "id": "talent-26",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-27",
-      "rawStat": {
-        "maxHp": 1000
-      }
-    },
-    {
-      "id": "talent-28",
-      "rawStat": {
-        "precision": 0.015
-      }
-    },
-    {
-      "id": "talent-29",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-30",
-      "rawStat": {
-        "maxPhys": 26.4
-      }
-    },
-    {
-      "id": "talent-31",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-32",
-      "rawStat": {
-        "minPhys": 26.4
-      }
-    },
-    {
-      "id": "talent-33",
-      "rawStat": {
-        "physicalDefense": 13.2
-      }
-    },
-    {
-      "id": "talent-34",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-35",
-      "rawStat": {
-        "maxHp": 1000
-      }
-    },
-    {
-      "id": "talent-36",
-      "rawStat": {
-        "precision": 0.015
-      }
-    },
-    {
-      "id": "talent-37",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-38",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-39",
-      "rawStat": {
-        "minPhys": 26.4
-      }
-    },
-    {
-      "id": "talent-40",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-41",
-      "rawStat": {
-        "maxPhys": 26.4
-      }
-    },
-    {
-      "id": "talent-42",
-      "rawStat": {
-        "precision": 0.015
-      }
-    },
-    {
-      "id": "talent-43",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-44",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-45",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-46",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-47",
-      "rawStat": {
-        "maxHp": 1000
-      }
-    },
-    {
-      "id": "talent-48",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-49",
-      "rawStat": {
-        "physicalDefense": 13.2
-      }
-    },
-    {
-      "id": "talent-50",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-51",
-      "rawStat": {
-        "precision": 0.015
-      }
-    },
-    {
-      "id": "talent-52",
-      "rawStat": {
-        "affinity": 0.02
-      }
-    },
-    {
-      "id": "talent-53",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-54",
-      "rawStat": {
-        "crit": 0.04
-      }
-    },
-    {
-      "id": "talent-55",
-      "rawStat": {
-        "maxHp": 1000
-      }
-    },
-    {
-      "id": "talent-56",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-57",
-      "rawStat": {
-        "physicalDefense": 13.2
-      }
-    },
-    {
-      "id": "talent-58",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-59",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-60",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-61",
-      "rawStat": {
-        "maxVoidAttack": 13.2
-      }
-    },
-    {
-      "id": "talent-62",
-      "rawStat": {
-        "minVoidAttack": 13.2
-      }
-    },
-    {
-      "id": "talent-63",
-      "rawStat": {
-        "agility": 1,
-        "power": 1,
-        "momentum": 1,
-        "body": 1,
-        "defense": 1
-      }
-    },
-    {
-      "id": "talent-64",
-      "rawStat": {
-        "maxHp": 1000
-      }
-    },
-    {
-      "id": "talent-65",
-      "rawStat": {
-        "physicalDefense": 13.2
-      }
-    }
+    { "id": "talent-01", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-02", "rawStat": { "critDmgBonus": 0.05 } },
+    { "id": "talent-03", "rawStat": { "precision": 0.03 } },
+    { "id": "talent-04", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-05", "rawStat": { "affinityDmgBonus": 0.05 } },
+    { "id": "talent-06", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-07", "rawStat": { "critDmgBonus": 0.05 } },
+    { "id": "talent-08", "rawStat": { "precision": 0.03 } },
+    { "id": "talent-09", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-10", "rawStat": { "affinityDmgBonus": 0.05 } },
+    { "id": "talent-11", "rawStat": { "physicalDefense": 26.4 } },
+    { "id": "talent-12", "rawStat": { "maxHp": 2000 } },
+    { "id": "talent-13", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-14", "rawStat": { "critDmgBonus": 0.05 } },
+    { "id": "talent-15", "rawStat": { "precision": 0.03 } },
+    { "id": "talent-16", "rawStat": { "maxPhys": 52.8 } },
+    { "id": "talent-17", "rawStat": { "minPhys": 52.8 } },
+    { "id": "talent-18", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-19", "rawStat": { "affinityDmgBonus": 0.05 } },
+    { "id": "talent-20", "rawStat": { "precision": 0.015 } },
+    { "id": "talent-21", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-22", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-23", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-24", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-25", "rawStat": { "physicalDefense": 13.2 } },
+    { "id": "talent-26", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-27", "rawStat": { "maxHp": 1000 } },
+    { "id": "talent-28", "rawStat": { "precision": 0.015 } },
+    { "id": "talent-29", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-30", "rawStat": { "maxPhys": 26.4 } },
+    { "id": "talent-31", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-32", "rawStat": { "minPhys": 26.4 } },
+    { "id": "talent-33", "rawStat": { "physicalDefense": 13.2 } },
+    { "id": "talent-34", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-35", "rawStat": { "maxHp": 1000 } },
+    { "id": "talent-36", "rawStat": { "precision": 0.015 } },
+    { "id": "talent-37", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-38", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-39", "rawStat": { "minPhys": 26.4 } },
+    { "id": "talent-40", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-41", "rawStat": { "maxPhys": 26.4 } },
+    { "id": "talent-42", "rawStat": { "precision": 0.015 } },
+    { "id": "talent-43", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-44", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-45", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-46", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-47", "rawStat": { "maxHp": 1000 } },
+    { "id": "talent-48", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-49", "rawStat": { "physicalDefense": 13.2 } },
+    { "id": "talent-50", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-51", "rawStat": { "precision": 0.015 } },
+    { "id": "talent-52", "rawStat": { "affinity": 0.02 } },
+    { "id": "talent-53", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-54", "rawStat": { "crit": 0.04 } },
+    { "id": "talent-55", "rawStat": { "maxHp": 1000 } },
+    { "id": "talent-56", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-57", "rawStat": { "physicalDefense": 13.2 } },
+    { "id": "talent-58", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-59", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-60", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-61", "rawStat": { "maxVoidAttack": 13.2 } },
+    { "id": "talent-62", "rawStat": { "minVoidAttack": 13.2 } },
+    { "id": "talent-63", "rawStat": { "agility": 1, "power": 1, "momentum": 1, "body": 1, "defense": 1 } },
+    { "id": "talent-64", "rawStat": { "maxHp": 1000 } },
+    { "id": "talent-65", "rawStat": { "physicalDefense": 13.2 } }
   ],
   "qingheOddityStats": [
-    {
-      "id": "qinghe-oddity-01",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-02",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "qinghe-oddity-03",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-04",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-05",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "qinghe-oddity-06",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-07",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-08",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-09",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-10",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-11",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "qinghe-oddity-12",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-13",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-14",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-15",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-16",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-17",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-18",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "qinghe-oddity-19",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-20",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-21",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "qinghe-oddity-22",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-23",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "qinghe-oddity-24",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "qinghe-oddity-25",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-26",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "qinghe-oddity-27",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "qinghe-oddity-28",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "qinghe-oddity-29",
-      "rawStat": {
-        "maxHp": 150
-      }
-    }
+    { "id": "qinghe-oddity-01", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-02", "rawStat": { "maxEndurance": 5 } },
+    { "id": "qinghe-oddity-03", "rawStat": { "maxPhys": 4 } },
+    { "id": "qinghe-oddity-04", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-05", "rawStat": { "maxVitality": 10 } },
+    { "id": "qinghe-oddity-06", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-07", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-08", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-09", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-10", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-11", "rawStat": { "maxEndurance": 5 } },
+    { "id": "qinghe-oddity-12", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-13", "rawStat": { "maxPhys": 4 } },
+    { "id": "qinghe-oddity-14", "rawStat": { "minPhys": 4 } },
+    { "id": "qinghe-oddity-15", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-16", "rawStat": { "maxPhys": 4 } },
+    { "id": "qinghe-oddity-17", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-18", "rawStat": { "maxEndurance": 5 } },
+    { "id": "qinghe-oddity-19", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-20", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-21", "rawStat": { "maxVitality": 10 } },
+    { "id": "qinghe-oddity-22", "rawStat": { "minPhys": 4 } },
+    { "id": "qinghe-oddity-23", "rawStat": { "physicalDefense": 2 } },
+    { "id": "qinghe-oddity-24", "rawStat": { "maxEndurance": 5 } },
+    { "id": "qinghe-oddity-25", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-26", "rawStat": { "maxVitality": 10 } },
+    { "id": "qinghe-oddity-27", "rawStat": { "maxPhys": 4 } },
+    { "id": "qinghe-oddity-28", "rawStat": { "maxHp": 150 } },
+    { "id": "qinghe-oddity-29", "rawStat": { "maxHp": 150 } }
   ],
   "kaifengOddityStats": [
-    {
-      "id": "kaifeng-oddity-01",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-02",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-03",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-04",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-05",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-06",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "kaifeng-oddity-07",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-08",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-09",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-10",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-11",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-12",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-13",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "kaifeng-oddity-14",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-15",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-16",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-17",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-18",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-19",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-20",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "kaifeng-oddity-21",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-22",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-23",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-24",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-25",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-26",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-27",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "kaifeng-oddity-28",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-29",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-30",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-31",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-32",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-33",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-34",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-35",
-      "rawStat": {
-        "maxVitality": 10
-      }
-    },
-    {
-      "id": "kaifeng-oddity-36",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "kaifeng-oddity-37",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "kaifeng-oddity-38",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "kaifeng-oddity-39",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    }
+    { "id": "kaifeng-oddity-01", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-02", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-03", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-04", "rawStat": { "minPhys": 4 } },
+    { "id": "kaifeng-oddity-05", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-06", "rawStat": { "maxEndurance": 5 } },
+    { "id": "kaifeng-oddity-07", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-08", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-09", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-10", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-11", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-12", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-13", "rawStat": { "maxVitality": 10 } },
+    { "id": "kaifeng-oddity-14", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-15", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-16", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-17", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-18", "rawStat": { "minPhys": 4 } },
+    { "id": "kaifeng-oddity-19", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-20", "rawStat": { "maxEndurance": 5 } },
+    { "id": "kaifeng-oddity-21", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-22", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-23", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-24", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-25", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-26", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-27", "rawStat": { "maxVitality": 10 } },
+    { "id": "kaifeng-oddity-28", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-29", "rawStat": { "minPhys": 4 } },
+    { "id": "kaifeng-oddity-30", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-31", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-32", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-33", "rawStat": { "minPhys": 4 } },
+    { "id": "kaifeng-oddity-34", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-35", "rawStat": { "maxVitality": 10 } },
+    { "id": "kaifeng-oddity-36", "rawStat": { "maxHp": 150 } },
+    { "id": "kaifeng-oddity-37", "rawStat": { "physicalDefense": 2 } },
+    { "id": "kaifeng-oddity-38", "rawStat": { "maxPhys": 4 } },
+    { "id": "kaifeng-oddity-39", "rawStat": { "physicalDefense": 2 } }
   ],
   "imperialPalaceOddityStats": [
-    {
-      "id": "imperial-palace-oddity-01",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-02",
-      "rawStat": {
-        "maxHp": 100
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-03",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-04",
-      "rawStat": {
-        "maxHp": 100
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-05",
-      "rawStat": {
-        "maxHp": 100
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-06",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-07",
-      "rawStat": {
-        "maxHp": 100
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-08",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-09",
-      "rawStat": {
-        "maxHp": 100
-      }
-    },
-    {
-      "id": "imperial-palace-oddity-10",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    }
+    { "id": "imperial-palace-oddity-01", "rawStat": { "minPhys": 4 } },
+    { "id": "imperial-palace-oddity-02", "rawStat": { "maxHp": 100 } },
+    { "id": "imperial-palace-oddity-03", "rawStat": { "physicalDefense": 2 } },
+    { "id": "imperial-palace-oddity-04", "rawStat": { "maxHp": 100 } },
+    { "id": "imperial-palace-oddity-05", "rawStat": { "maxHp": 100 } },
+    { "id": "imperial-palace-oddity-06", "rawStat": { "physicalDefense": 2 } },
+    { "id": "imperial-palace-oddity-07", "rawStat": { "maxHp": 100 } },
+    { "id": "imperial-palace-oddity-08", "rawStat": { "maxPhys": 4 } },
+    { "id": "imperial-palace-oddity-09", "rawStat": { "maxHp": 100 } },
+    { "id": "imperial-palace-oddity-10", "rawStat": { "maxPhys": 4 } }
   ],
   "hexiOddityStats": [
-    {
-      "id": "hexi-oddity-01",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-02",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-03",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-04",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-05",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "hexi-oddity-06",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hexi-oddity-07",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-08",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hexi-oddity-09",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-10",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-11",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-12",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-13",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-14",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hexi-oddity-15",
-      "rawStat": {
-        "maxEndurance": 5
-      }
-    },
-    {
-      "id": "hexi-oddity-16",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hexi-oddity-17",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-18",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-19",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-20",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hexi-oddity-21",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-22",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hexi-oddity-23",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hexi-oddity-24",
-      "rawStat": {
-        "maxHp": 150
-      }
-    }
+    { "id": "hexi-oddity-01", "rawStat": { "minPhys": 4 } },
+    { "id": "hexi-oddity-02", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-03", "rawStat": { "maxPhys": 4 } },
+    { "id": "hexi-oddity-04", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-05", "rawStat": { "maxEndurance": 5 } },
+    { "id": "hexi-oddity-06", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hexi-oddity-07", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-08", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hexi-oddity-09", "rawStat": { "maxPhys": 4 } },
+    { "id": "hexi-oddity-10", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-11", "rawStat": { "maxPhys": 4 } },
+    { "id": "hexi-oddity-12", "rawStat": { "minPhys": 4 } },
+    { "id": "hexi-oddity-13", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-14", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hexi-oddity-15", "rawStat": { "maxEndurance": 5 } },
+    { "id": "hexi-oddity-16", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hexi-oddity-17", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-18", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-19", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-20", "rawStat": { "maxPhys": 4 } },
+    { "id": "hexi-oddity-21", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-22", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hexi-oddity-23", "rawStat": { "maxHp": 150 } },
+    { "id": "hexi-oddity-24", "rawStat": { "maxHp": 150 } }
   ],
   "hiddenMountainOddityStats": [
-    {
-      "id": "hidden-mountain-oddity-01",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-02",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-03",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-04",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-05",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-06",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-07",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-08",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-09",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-10",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-11",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-12",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-13",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-14",
-      "rawStat": {
-        "minPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-15",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-16",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-17",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-18",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-19",
-      "rawStat": {
-        "maxPhys": 4
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-20",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-21",
-      "rawStat": {
-        "physicalDefense": 2
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-22",
-      "rawStat": {
-        "maxHp": 150
-      }
-    },
-    {
-      "id": "hidden-mountain-oddity-23",
-      "rawStat": {
-        "maxHp": 150
-      }
-    }
+    { "id": "hidden-mountain-oddity-01", "rawStat": { "minPhys": 4 } },
+    { "id": "hidden-mountain-oddity-02", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-03", "rawStat": { "maxPhys": 4 } },
+    { "id": "hidden-mountain-oddity-04", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-05", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-06", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hidden-mountain-oddity-07", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hidden-mountain-oddity-08", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-09", "rawStat": { "maxPhys": 4 } },
+    { "id": "hidden-mountain-oddity-10", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-11", "rawStat": { "maxPhys": 4 } },
+    { "id": "hidden-mountain-oddity-12", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-13", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-14", "rawStat": { "minPhys": 4 } },
+    { "id": "hidden-mountain-oddity-15", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-16", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-17", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-18", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-19", "rawStat": { "maxPhys": 4 } },
+    { "id": "hidden-mountain-oddity-20", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-21", "rawStat": { "physicalDefense": 2 } },
+    { "id": "hidden-mountain-oddity-22", "rawStat": { "maxHp": 150 } },
+    { "id": "hidden-mountain-oddity-23", "rawStat": { "maxHp": 150 } }
   ],
   "baseAttributes": {
-    "body": {
-      "maxHp": 60
-    },
-    "power": {
-      "minPhys": 0.22,
-      "maxPhys": 1.36
-    },
-    "defense": {
-      "maxHp": 17,
-      "physicalDefense": 0.57
-    },
-    "agility": {
-      "minPhys": 0.9,
-      "crit": 0.00076
-    },
-    "momentum": {
-      "maxPhys": 0.9,
-      "affinity": 0.00038
-    }
+    "body": { "maxHp": 60 },
+    "power": { "minPhys": 0.22, "maxPhys": 1.36 },
+    "defense": { "maxHp": 17, "physicalDefense": 0.57 },
+    "agility": { "minPhys": 0.9, "crit": 0.00076 },
+    "momentum": { "maxPhys": 0.9, "affinity": 0.00038 }
   }
 }

@@ -41,15 +41,7 @@
     },
     "RockSolidT3": {},
     "RockSolidT4": {},
-    "RockSolidT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalDmgReduction": 0.025
-          }
-        }
-      ]
-    },
+    "RockSolidT5": { "effect": [{ "rawStat": { "physicalDmgReduction": 0.025 } }] },
     "RockSolidT6": {}
   }
 }

@@ -6,23 +6,13 @@
     "cooldown": 12,
     "cooldownGroup": "SoaringSpin",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 15,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 15, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 4.5,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -39,12 +29,7 @@
         "stack": 1,
         "reapply": true,
         "time": 1.1818181818181817,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -57,23 +42,13 @@
     "cooldown": 12,
     "cooldownGroup": "SoaringSpin",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 15,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 15, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 4.5,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -98,12 +73,7 @@
         "stack": 1,
         "reapply": true,
         "time": 2.02492899,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -115,23 +85,13 @@
     "castTime": 1.25,
     "cooldown": 8,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 25,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 25, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 7.5,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -149,13 +109,7 @@
         "time": 1.15,
         "attrCoef": 3.24377136
       },
-      {
-        "type": "apply",
-        "target": "target",
-        "value": "ToadVenom",
-        "reapply": false,
-        "time": 1.15
-      },
+      { "type": "apply", "target": "target", "value": "ToadVenom", "reapply": false, "time": 1.15 },
       {
         "type": "apply",
         "target": "self",
@@ -163,12 +117,7 @@
         "stack": 1,
         "reapply": true,
         "time": 1.25,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -179,31 +128,15 @@
     "shortName": "Drink",
     "castTime": 0.626,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 10,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 10, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 3,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "apply",
         "target": "self",
@@ -211,12 +144,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.626,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -227,31 +155,15 @@
     "shortName": "Drink",
     "castTime": 0,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 10,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 10, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 3,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "apply",
         "target": "self",
@@ -259,12 +171,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -279,27 +186,9 @@
     "subAction": [
       {
         "value": "DrunkenPoetDrink",
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Intoxicated"
-              }
-            ]
-          }
-        ]
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "Intoxicated" }] }]
       },
-      {
-        "value": "DrunkenPoet1",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      }
+      { "value": "DrunkenPoet1", "requirement": [{ "target": "self", "value": "Intoxicated" }] }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet"]
@@ -313,36 +202,10 @@
     "subAction": [
       {
         "value": "DrunkenPoetDrink",
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Intoxicated"
-              }
-            ]
-          }
-        ]
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "Intoxicated" }] }]
       },
-      {
-        "value": "DrunkenPoet1",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet2",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      }
+      { "value": "DrunkenPoet1", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet2", "requirement": [{ "target": "self", "value": "Intoxicated" }] }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet"]
@@ -356,45 +219,11 @@
     "subAction": [
       {
         "value": "DrunkenPoetDrink",
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Intoxicated"
-              }
-            ]
-          }
-        ]
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "Intoxicated" }] }]
       },
-      {
-        "value": "DrunkenPoet1",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet2",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet3",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      }
+      { "value": "DrunkenPoet1", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet2", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet3", "requirement": [{ "target": "self", "value": "Intoxicated" }] }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet"]
@@ -408,54 +237,12 @@
     "subAction": [
       {
         "value": "DrunkenPoetDrink",
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Intoxicated"
-              }
-            ]
-          }
-        ]
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "Intoxicated" }] }]
       },
-      {
-        "value": "DrunkenPoet1",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet2",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet3",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet4",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      }
+      { "value": "DrunkenPoet1", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet2", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet3", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet4", "requirement": [{ "target": "self", "value": "Intoxicated" }] }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet"]
@@ -469,63 +256,13 @@
     "subAction": [
       {
         "value": "DrunkenPoetDrink",
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Intoxicated"
-              }
-            ]
-          }
-        ]
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "Intoxicated" }] }]
       },
-      {
-        "value": "DrunkenPoet1",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet2",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet3",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet4",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      },
-      {
-        "value": "DrunkenPoet5",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ]
-      }
+      { "value": "DrunkenPoet1", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet2", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet3", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet4", "requirement": [{ "target": "self", "value": "Intoxicated" }] },
+      { "value": "DrunkenPoet5", "requirement": [{ "target": "self", "value": "Intoxicated" }] }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet"]
@@ -535,23 +272,13 @@
     "shortName": "Poet",
     "castTime": 0.58,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 6,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 6, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 1.7999999999999998,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -561,32 +288,16 @@
         "time": 0.4439,
         "attrCoef": 1.023247732349
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "EnhanceDrunkenPoet",
-        "stack": 1,
-        "time": 0.4439
-      },
+      { "type": "apply", "target": "self", "value": "EnhanceDrunkenPoet", "stack": 1, "time": 0.4439 },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Combustion"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Combustion" }],
         "value": "CombustionExplosion",
         "time": 0.4439
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Smolder"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Smolder" }],
         "value": "SmolderExplosion",
         "time": 0.4439
       },
@@ -597,12 +308,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.58,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -613,23 +319,13 @@
     "shortName": "Poet",
     "castTime": 0.436,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 6,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 6, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 1.7999999999999998,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -639,32 +335,16 @@
         "time": 0.2795,
         "attrCoef": 1.023247732349
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "EnhanceDrunkenPoet",
-        "stack": 1,
-        "time": 0.2795
-      },
+      { "type": "apply", "target": "self", "value": "EnhanceDrunkenPoet", "stack": 1, "time": 0.2795 },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Combustion"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Combustion" }],
         "value": "CombustionExplosion",
         "time": 0.2795
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Smolder"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Smolder" }],
         "value": "SmolderExplosion",
         "time": 0.2795
       },
@@ -675,12 +355,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.436,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -691,23 +366,13 @@
     "shortName": "Poet",
     "castTime": 0.55,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 6,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 6, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 1.7999999999999998,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -717,32 +382,16 @@
         "time": 0.3783,
         "attrCoef": 1.023247732349
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "EnhanceDrunkenPoet",
-        "stack": 1,
-        "time": 0.3783
-      },
+      { "type": "apply", "target": "self", "value": "EnhanceDrunkenPoet", "stack": 1, "time": 0.3783 },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Combustion"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Combustion" }],
         "value": "CombustionExplosion",
         "time": 0.3783
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Smolder"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Smolder" }],
         "value": "SmolderExplosion",
         "time": 0.3783
       },
@@ -753,12 +402,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.55,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -769,23 +413,13 @@
     "shortName": "Poet",
     "castTime": 0.6,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 6,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 6, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 1.7999999999999998,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -795,32 +429,16 @@
         "time": 0.44709,
         "attrCoef": 1.023247732349
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "EnhanceDrunkenPoet",
-        "stack": 1,
-        "time": 0.44709
-      },
+      { "type": "apply", "target": "self", "value": "EnhanceDrunkenPoet", "stack": 1, "time": 0.44709 },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Combustion"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Combustion" }],
         "value": "CombustionExplosion",
         "time": 0.44709
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Smolder"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Smolder" }],
         "value": "SmolderExplosion",
         "time": 0.44709
       },
@@ -831,12 +449,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.6,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -847,31 +460,15 @@
     "shortName": "Poet",
     "castTime": 0.5382,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 6,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 6, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 1.7999999999999998,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "consume",
-        "target": "self",
-        "value": "EnhanceDrunkenPoet",
-        "stack": "all",
-        "time": 0
-      },
+      { "type": "consume", "target": "self", "value": "EnhanceDrunkenPoet", "stack": "all", "time": 0 },
       {
         "type": "damage",
         "phyCoef": 1.705412887248,
@@ -882,23 +479,13 @@
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Combustion"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Combustion" }],
         "value": "CombustionExplosion",
         "time": 0.5382
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Smolder"
-          }
-        ],
+        "requirement": [{ "target": "target", "value": "Smolder" }],
         "value": "SmolderExplosion",
         "time": 0.5382
       },
@@ -909,29 +496,13 @@
         "stack": 1,
         "reapply": true,
         "time": 0.5382,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "EnhanceDrunkenPoet"
-          }
-        ],
-        "effect": {
-          "dmgBonus": {
-            "function": "byStack",
-            "param1": "EnhanceDrunkenPoet",
-            "param2": 0.2
-          }
-        }
+        "requirement": [{ "target": "self", "value": "EnhanceDrunkenPoet" }],
+        "effect": { "dmgBonus": { "function": "byStack", "param1": "EnhanceDrunkenPoet", "param2": 0.2 } }
       }
     ],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet", "SubAction"]
@@ -948,13 +519,7 @@
         "time": 0,
         "attrCoef": 0.701655587896
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Combustion",
-        "duration": 1.5,
-        "time": 0
-      }
+      { "type": "extend", "target": "target", "value": "Combustion", "duration": 1.5, "time": 0 }
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DrunkenPoet", "Triggered"]
@@ -982,31 +547,15 @@
     "cooldown": 6,
     "cooldownGroup": "DragonBreath",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 20,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 20, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 6,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "damage",
         "phyCoef": 1.36063935,
@@ -1015,13 +564,7 @@
         "time": 1.27292535,
         "attrCoef": 1.36063935
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Combustion",
-        "duration": 1.5,
-        "time": 1.27292535
-      },
+      { "type": "extend", "target": "target", "value": "Combustion", "duration": 1.5, "time": 1.27292535 },
       {
         "type": "apply",
         "target": "target",
@@ -1037,25 +580,13 @@
         "stack": 1,
         "reapply": true,
         "time": 1.27292535,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ],
-        "effect": {
-          "castTimeModifier": -0.6664461963636364
-        }
+        "requirement": [{ "target": "self", "value": "Intoxicated" }],
+        "effect": { "castTimeModifier": -0.6664461963636364 }
       }
     ],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DragonsBreath"]
@@ -1067,31 +598,15 @@
     "cooldown": 12,
     "cooldownGroup": "DragonBreathSmolder",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 20,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 20, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 6,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "damage",
         "phyCoef": 1.283668254717,
@@ -1100,21 +615,8 @@
         "time": 1.27292535,
         "attrCoef": 1.283668254717
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Smolder",
-        "duration": 4,
-        "time": 1.27292535
-      },
-      {
-        "type": "apply",
-        "target": "target",
-        "value": "Smolder",
-        "reapply": false,
-        "duration": 4,
-        "time": 1.27292535
-      },
+      { "type": "extend", "target": "target", "value": "Smolder", "duration": 4, "time": 1.27292535 },
+      { "type": "apply", "target": "target", "value": "Smolder", "reapply": false, "duration": 4, "time": 1.27292535 },
       {
         "type": "apply",
         "target": "self",
@@ -1122,25 +624,13 @@
         "stack": 1,
         "reapply": true,
         "time": 1.27292535,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ],
-        "effect": {
-          "castTimeModifier": -0.6664461963636364
-        }
+        "requirement": [{ "target": "self", "value": "Intoxicated" }],
+        "effect": { "castTimeModifier": -0.6664461963636364 }
       }
     ],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "DragonsBreath"]
@@ -1152,31 +642,15 @@
     "cooldown": 6,
     "cooldownGroup": "DragonBreath",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 20,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 20, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 6,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "damage",
         "phyCoef": 1.36063935,
@@ -1185,13 +659,7 @@
         "time": 1.27292535,
         "attrCoef": 1.36063935
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Combustion",
-        "duration": 1.5,
-        "time": 1.27292535
-      },
+      { "type": "extend", "target": "target", "value": "Combustion", "duration": 1.5, "time": 1.27292535 },
       {
         "type": "apply",
         "target": "target",
@@ -1216,13 +684,7 @@
         "time": 2.7276895800000003,
         "attrCoef": 1.4994801
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Combustion",
-        "duration": 3,
-        "time": 2.7276895800000003
-      },
+      { "type": "extend", "target": "target", "value": "Combustion", "duration": 3, "time": 2.7276895800000003 },
       {
         "type": "apply",
         "target": "self",
@@ -1230,22 +692,12 @@
         "stack": 1,
         "reapply": true,
         "time": 2.7276895800000003,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "Intoxicated" }],
         "effect": {
           "castTimeModifier": {
             "function": "segment",
@@ -1265,31 +717,15 @@
     "cooldown": 12,
     "cooldownGroup": "DragonBreathSmolder",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 20,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 20, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 6,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Intoxicated",
-        "reapply": false,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Intoxicated", "reapply": false, "time": 0 },
       {
         "type": "damage",
         "phyCoef": 1.283668254717,
@@ -1298,21 +734,8 @@
         "time": 1.27292535,
         "attrCoef": 1.283668254717
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Smolder",
-        "duration": 4,
-        "time": 1.27292535
-      },
-      {
-        "type": "apply",
-        "target": "target",
-        "value": "Smolder",
-        "duration": 4,
-        "reapply": false,
-        "time": 1.27292535
-      },
+      { "type": "extend", "target": "target", "value": "Smolder", "duration": 4, "time": 1.27292535 },
+      { "type": "apply", "target": "target", "value": "Smolder", "duration": 4, "reapply": false, "time": 1.27292535 },
       {
         "type": "damage",
         "phyCoef": 1.283668254717,
@@ -1329,13 +752,7 @@
         "time": 2.7276895800000003,
         "attrCoef": 1.414654811321
       },
-      {
-        "type": "extend",
-        "target": "target",
-        "value": "Smolder",
-        "duration": 7.5,
-        "time": 2.7276895800000003
-      },
+      { "type": "extend", "target": "target", "value": "Smolder", "duration": 7.5, "time": 2.7276895800000003 },
       {
         "type": "apply",
         "target": "self",
@@ -1343,22 +760,12 @@
         "stack": 1,
         "reapply": true,
         "time": 2.7276895800000003,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Intoxicated"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "Intoxicated" }],
         "effect": {
           "castTimeModifier": {
             "function": "segment",
@@ -1379,36 +786,16 @@
     "cooldown": 25,
     "cooldownGroup": "FluteOfTheTides",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 50,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 50, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Flute",
-        "reapply": true,
-        "time": 3.275
-      },
-      {
-        "type": "trigger",
-        "value": "FluteRipple",
-        "time": 3.275
-      },
+      { "type": "apply", "target": "self", "value": "Flute", "reapply": true, "time": 3.275 },
+      { "type": "trigger", "value": "FluteRipple", "time": 3.275 },
       {
         "type": "apply",
         "target": "self",
@@ -1416,12 +803,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.8,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1435,23 +817,13 @@
     "cooldown": 25,
     "cooldownGroup": "FluteOfTheTides",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 50,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 50, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -1469,18 +841,8 @@
         "time": 3.275,
         "attrCoef": 3.937211268802
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Flute",
-        "reapply": true,
-        "time": 3.275
-      },
-      {
-        "type": "trigger",
-        "value": "FluteRipple",
-        "time": 3.275
-      },
+      { "type": "apply", "target": "self", "value": "Flute", "reapply": true, "time": 3.275 },
+      { "type": "trigger", "value": "FluteRipple", "time": 3.275 },
       {
         "type": "apply",
         "target": "self",
@@ -1488,12 +850,7 @@
         "stack": 1,
         "reapply": true,
         "time": 3.3,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1553,31 +910,15 @@
     "castTime": 0,
     "cooldown": 60,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 35,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 35, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "Mystery",
-        "reapply": true,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "Mystery", "reapply": true, "time": 0 },
       {
         "type": "apply",
         "target": "self",
@@ -1585,12 +926,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1602,31 +938,15 @@
     "castTime": 0,
     "cooldown": 60,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 40,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 40, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "MysteryUmbra",
-        "reapply": true,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "MysteryUmbra", "reapply": true, "time": 0 },
       {
         "type": "apply",
         "target": "self",
@@ -1634,12 +954,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1650,88 +965,22 @@
     "castTime": 5.8,
     "cooldown": 120,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 80,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 80, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 0.05
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 0.3
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 0.6
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 0.9
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 1.2
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 1.5
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 1.8
-      },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "SurgingWaves",
-        "stack": 1,
-        "reapply": true,
-        "time": 2.1
-      },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 0.05 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 0.3 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 0.6 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 0.9 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 1.2 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 1.5 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 1.8 },
+      { "type": "apply", "target": "self", "value": "SurgingWaves", "stack": 1, "reapply": true, "time": 2.1 },
       {
         "type": "damage",
         "phyCoef": 12.596539543396,
@@ -1747,12 +996,7 @@
         "stack": 1,
         "reapply": true,
         "time": 5.8,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1778,12 +1022,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0.4375,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1795,23 +1034,13 @@
     "cooldown": 30,
     "cooldownGroup": "BurstingNine",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 20,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 20, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 6,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -1892,12 +1121,7 @@
         "stack": 1,
         "reapply": true,
         "time": 1.4,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -1909,23 +1133,13 @@
     "cooldown": 30,
     "cooldownGroup": "BurstingNine",
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 30,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 30, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 9,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
       {
         "type": "damage",
@@ -2078,12 +1292,7 @@
         "stack": 1,
         "reapply": true,
         "time": 1.925,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -2190,32 +1399,15 @@
     "shortName": "WTS",
     "castTime": 0,
     "action": [
-      {
-        "type": "consumeResource",
-        "value": "Vitality",
-        "amount": 40,
-        "time": 0
-      },
+      { "type": "consumeResource", "value": "Vitality", "amount": 40, "time": 0 },
       {
         "type": "addResource",
         "value": "Vitality",
         "amount": 10,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "Turnaround"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
       },
-      {
-        "type": "apply",
-        "target": "self",
-        "value": "WorldToSword",
-        "stack": 1,
-        "reapply": true,
-        "time": 0
-      },
+      { "type": "apply", "target": "self", "value": "WorldToSword", "stack": 1, "reapply": true, "time": 0 },
       {
         "type": "apply",
         "target": "self",
@@ -2223,12 +1415,7 @@
         "stack": 1,
         "reapply": true,
         "time": 0,
-        "requirement": [
-          {
-            "target": "self",
-            "value": "FuryHarvestT6"
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
       }
     ],
     "modifier": [],
@@ -2240,11 +1427,7 @@
     "castTime": 0,
     "cooldown": 0.3,
     "action": [
-      {
-        "type": "emitEvent",
-        "value": "QiBladeCheck",
-        "time": 0.3
-      },
+      { "type": "emitEvent", "value": "QiBladeCheck", "time": 0.3 },
       {
         "type": "damage",
         "phyCoef": 2.03692656,

@@ -4,4 +4,4 @@
 // (`/src/...`, `/data/...`); this helper lives in tests/helpers/, two levels
 // below the root like the former script/probe/ checks did relative to theirs,
 // so a `../..` prefix resolves them.
-export const probeLoad = (path: string) => import(/* @vite-ignore */ `../..${path}`);
+export const probeLoad = (path: string) => import(/* @vite-ignore */ `../..${path}`)

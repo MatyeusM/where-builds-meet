@@ -7,19 +7,8 @@
     "refresh": true,
     "effect": [
       {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "DragonHeadTide"
-          }
-        ],
-        "effect": {
-          "dmgBonus": {
-            "function": "multiply",
-            "param1": "missingHPPercentage",
-            "param2": "0.0045"
-          }
-        }
+        "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }],
+        "effect": { "dmgBonus": { "function": "multiply", "param1": "missingHPPercentage", "param2": "0.0045" } }
       }
     ]
   },
@@ -87,13 +76,7 @@
     "description": "From Ghostly Steps",
     "duration": 8,
     "maxStack": 1,
-    "effect": [
-      {
-        "effect": {
-          "dmgBonus": 0.15
-        }
-      }
-    ],
+    "effect": [{ "effect": { "dmgBonus": 0.15 } }],
     "refresh": true
   },
   "SurgingWaves": {
@@ -103,1123 +86,403 @@
     "maxStack": 40,
     "stackEffects": [
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.0125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.0125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.025 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.025
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.0375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.0375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.05 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.05
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.0625 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.0625
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.075 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.075
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.0875 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.0875
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.1 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.1
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.1125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.1125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.1375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.1375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.15 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.15
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.1625 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.1625
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.175 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.175
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.1875 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.1875
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.2 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.2
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.2125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.2125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.225 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.225
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.2375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.2375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.25 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.25
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.2625 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.2625
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.275 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.275
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.2875 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.2875
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.3 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.3
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.3125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.3125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.325 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.325
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.3375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.3375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.35 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.35
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.3625 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.3625
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.3875 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.3875
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.4 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.4
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.4125 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.4125
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.425 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.425
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.4375 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.4375
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.45 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.45
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.4625 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.4625
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.475 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.475
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.4875 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.4875
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ],
       [
+        { "requirement": [{ "target": "skillTag", "value": "DragonHeadTide" }], "effect": { "dmgBonus": 0.5 } },
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            }
+            { "target": "skillTag", "value": "DragonHeadTide" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "effect": {
-            "dmgBonus": 0.5
-          }
-        },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DragonHeadTide"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
-          ],
-          "effect": {
-            "baseDMGBonus": 1
-          }
+          "effect": { "baseDMGBonus": 1 }
         }
       ]
     ],
@@ -1244,10 +507,7 @@
         "event": "QiBladeCheck",
         "cooldown": 0.3,
         "maxTriggers": 20,
-        "action": {
-          "type": "trigger",
-          "value": "QiBlade"
-        }
+        "action": { "type": "trigger", "value": "QiBlade" }
       }
     ]
   }

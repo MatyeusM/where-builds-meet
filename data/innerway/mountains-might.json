@@ -67,15 +67,7 @@
     },
     "MountainsMightT3": {},
     "MountainsMightT4": {},
-    "MountainsMightT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "bellstrikePenetration": 6
-          }
-        }
-      ]
-    },
+    "MountainsMightT5": { "effect": [{ "rawStat": { "bellstrikePenetration": 6 } }] },
     "MountainsMightT6": {}
   }
 }

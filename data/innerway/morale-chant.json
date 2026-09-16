@@ -17,12 +17,7 @@
       "trigger": [
         {
           "target": "self",
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DirectDamage"
-            }
-          ],
+          "requirement": [{ "target": "skillTag", "value": "DirectDamage" }],
           "action": [
             {
               "type": "apply",
@@ -31,14 +26,8 @@
               "stack": 1,
               "additionalStack": {
                 "requirement": [
-                  {
-                    "target": "target",
-                    "value": "Controlled"
-                  },
-                  {
-                    "target": "self",
-                    "value": "MoraleChantT3"
-                  }
+                  { "target": "target", "value": "Controlled" },
+                  { "target": "self", "value": "MoraleChantT3" }
                 ],
                 "stack": 1
               },
@@ -110,46 +99,17 @@
       ]
     },
     "MoraleChantT3": {},
-    "MoraleChantT4": {
-      "effect": [
-        {
-          "target": "YiRiver",
-          "modify": {
-            "duration": 12
-          }
-        }
-      ]
-    },
-    "MoraleChantT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directCrit": 0.046
-          }
-        }
-      ]
-    },
+    "MoraleChantT4": { "effect": [{ "target": "YiRiver", "modify": { "duration": 12 } }] },
+    "MoraleChantT5": { "effect": [{ "rawStat": { "directCrit": 0.046 } }] },
     "MoraleChantT6": {
       "trigger": [
         {
           "target": "self",
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "DirectDamage"
-            },
-            {
-              "target": "self",
-              "value": "YiRiver",
-              "stack": 5
-            }
+            { "target": "skillTag", "value": "DirectDamage" },
+            { "target": "self", "value": "YiRiver", "stack": 5 }
           ],
-          "action": [
-            {
-              "type": "trigger",
-              "value": "MoraleChant"
-            }
-          ]
+          "action": [{ "type": "trigger", "value": "MoraleChant" }]
         }
       ]
     }

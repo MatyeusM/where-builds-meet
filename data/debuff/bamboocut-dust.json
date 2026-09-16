@@ -7,47 +7,13 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [
-        {
-          "effect": {
-            "physicalResistance": -2
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalResistance": -4
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalResistance": -6
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalResistance": -8
-          }
-        }
-      ],
-      [
-        {
-          "effect": {
-            "physicalResistance": -10
-          }
-        }
-      ]
+      [{ "effect": { "physicalResistance": -2 } }],
+      [{ "effect": { "physicalResistance": -4 } }],
+      [{ "effect": { "physicalResistance": -6 } }],
+      [{ "effect": { "physicalResistance": -8 } }],
+      [{ "effect": { "physicalResistance": -10 } }]
     ],
     "refresh": true
   },
-  "Soulbreak": {
-    "name": "Soulbreak",
-    "maxStack": 1,
-    "showCoverage": true
-  }
+  "Soulbreak": { "name": "Soulbreak", "maxStack": 1, "showCoverage": true }
 }

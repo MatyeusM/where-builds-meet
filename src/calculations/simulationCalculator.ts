@@ -1,37 +1,37 @@
-import type { DamageOutcome } from "./damage";
+import type { DamageOutcome } from "./damage"
 import {
   calculateRotationBaseline,
   calculateRotationDamageSequence,
   calculateSimulatedRotationRun,
   type RotationSimulationBundle,
-} from "./rotationCalculator";
+} from "./rotationCalculator"
 
 export type SimulationRunResult = {
-  totalDamage: number;
-  dps: number;
-  totalHealing: number;
-  hps: number;
-  abrasionPercentage: number;
-  normalPercentage: number;
-  criticalPercentage: number;
-  affinityPercentage: number;
-  healingNormalPercentage: number;
-  healingCriticalPercentage: number;
-};
+  totalDamage: number
+  dps: number
+  totalHealing: number
+  hps: number
+  abrasionPercentage: number
+  normalPercentage: number
+  criticalPercentage: number
+  affinityPercentage: number
+  healingNormalPercentage: number
+  healingCriticalPercentage: number
+}
 
 export type SimulationSummary = {
-  runCount: number;
-  duration: number;
-  runs: SimulationRunResult[];
+  runCount: number
+  duration: number
+  runs: SimulationRunResult[]
   results: {
-    best: SimulationRunResult;
-    p99: SimulationRunResult;
-    p95: SimulationRunResult;
-    p90: SimulationRunResult;
-    p75: SimulationRunResult;
-    median: SimulationRunResult;
-  };
-};
+    best: SimulationRunResult
+    p99: SimulationRunResult
+    p95: SimulationRunResult
+    p90: SimulationRunResult
+    p75: SimulationRunResult
+    median: SimulationRunResult
+  }
+}
 
 const emptyRun = (): SimulationRunResult => ({
   totalDamage: 0,
@@ -44,11 +44,11 @@ const emptyRun = (): SimulationRunResult => ({
   affinityPercentage: 0,
   healingNormalPercentage: 0,
   healingCriticalPercentage: 0,
-});
+})
 
 export function selectSimulationPercentile(runs: SimulationRunResult[], percentile: number) {
-  if (runs.length === 0) return emptyRun();
-  return runs[Math.round((1 - percentile) * (runs.length - 1))];
+  if (runs.length === 0) return emptyRun()
+  return runs[Math.round((1 - percentile) * (runs.length - 1))]
 }
 
 /**
@@ -61,66 +61,66 @@ export function simulateRotation(
   random: () => number = Math.random,
   onProgress?: (completed: number, total: number) => void,
 ): SimulationSummary {
-  const count = Math.max(1, Math.floor(runCount));
-  const baseline = calculateRotationBaseline(bundle);
+  const count = Math.max(1, Math.floor(runCount))
+  const baseline = calculateRotationBaseline(bundle)
   const samplesTimeline =
     baseline.metrics.totalHealing > 0 ||
-    baseline.timeline.some((row) =>
+    baseline.timeline.some(row =>
       row.actions.some(
-        (action) =>
+        action =>
           action.type === "apply" &&
           typeof action.value === "string" &&
           bundle.timeline.effectDefinitions[action.value]?.recording,
       ),
     ) ||
-    [...bundle.timeline.innerWayRules, ...bundle.timeline.setupEffects].some((rule) => {
-      if (!rule.trigger || typeof rule.trigger !== "object") return false;
-      const trigger = rule.trigger as Record<string, unknown>;
-      const actions = trigger.action;
+    [...bundle.timeline.innerWayRules, ...bundle.timeline.setupEffects].some(rule => {
+      if (!rule.trigger || typeof rule.trigger !== "object") return false
+      const trigger = rule.trigger as Record<string, unknown>
+      const actions = trigger.action
       return (Array.isArray(actions) ? actions : [actions]).some(
-        (action) => action && typeof action === "object" && action.chance !== undefined,
-      );
-    });
-  const runs: SimulationRunResult[] = [];
-  const progressStep = Math.max(1, Math.floor(count / 100));
+        action => action && typeof action === "object" && action.chance !== undefined,
+      )
+    })
+  const runs: SimulationRunResult[] = []
+  const progressStep = Math.max(1, Math.floor(count / 100))
 
   for (let runIndex = 0; runIndex < count; runIndex += 1) {
-    let totalDamage = 0;
-    const outcomes: Record<DamageOutcome, number> = { abrasion: 0, normal: 0, critical: 0, affinity: 0 };
-    let hitCount = 0;
-    let totalHealing = 0;
-    let normalHeals = 0;
-    let criticalHeals = 0;
-    let healCount = 0;
-    let mysticDamage = 0;
-    const simulated = samplesTimeline ? calculateSimulatedRotationRun(bundle, random) : undefined;
-    const resolvedSequence = simulated?.resolvedSequence ?? calculateRotationDamageSequence(baseline.baseline, random);
+    let totalDamage = 0
+    const outcomes: Record<DamageOutcome, number> = { abrasion: 0, normal: 0, critical: 0, affinity: 0 }
+    let hitCount = 0
+    let totalHealing = 0
+    let normalHeals = 0
+    let criticalHeals = 0
+    let healCount = 0
+    let mysticDamage = 0
+    const simulated = samplesTimeline ? calculateSimulatedRotationRun(bundle, random) : undefined
+    const resolvedSequence = simulated?.resolvedSequence ?? calculateRotationDamageSequence(baseline.baseline, random)
     resolvedSequence.forEach(({ entry, breakdown }) => {
-      totalDamage += breakdown.total;
-      if (entry.context.skillTags.includes("Mystic")) mysticDamage += breakdown.total;
+      totalDamage += breakdown.total
+      if (entry.context.skillTags.includes("Mystic")) mysticDamage += breakdown.total
       if (breakdown.outcome) {
-        outcomes[breakdown.outcome] += 1;
-        hitCount += 1;
+        outcomes[breakdown.outcome] += 1
+        hitCount += 1
       }
       if (breakdown.healing) {
-        totalHealing += breakdown.healing.total;
+        totalHealing += breakdown.healing.total
         for (const recipientHealing of breakdown.recipientHealing ?? [breakdown.healing]) {
           switch (recipientHealing.outcome) {
             case "normal":
-              normalHeals += 1;
-              healCount += 1;
-              break;
+              normalHeals += 1
+              healCount += 1
+              break
             case "critical":
-              criticalHeals += 1;
-              healCount += 1;
-              break;
+              criticalHeals += 1
+              healCount += 1
+              break
           }
         }
       }
-    });
-    totalDamage -= mysticDamage * (1 - (simulated?.mysticVitalityDamageScale ?? baseline.mysticVitalityDamageScale));
-    const percentage = (outcome: DamageOutcome) => (hitCount > 0 ? (outcomes[outcome] / hitCount) * 100 : 0);
-    const runDuration = simulated?.duration ?? baseline.duration;
+    })
+    totalDamage -= mysticDamage * (1 - (simulated?.mysticVitalityDamageScale ?? baseline.mysticVitalityDamageScale))
+    const percentage = (outcome: DamageOutcome) => (hitCount > 0 ? (outcomes[outcome] / hitCount) * 100 : 0)
+    const runDuration = simulated?.duration ?? baseline.duration
     runs.push({
       totalDamage,
       dps: runDuration > 0 ? totalDamage / runDuration : 0,
@@ -132,12 +132,12 @@ export function simulateRotation(
       affinityPercentage: percentage("affinity"),
       healingNormalPercentage: healCount > 0 ? (normalHeals / healCount) * 100 : 0,
       healingCriticalPercentage: healCount > 0 ? (criticalHeals / healCount) * 100 : 0,
-    });
-    const completed = runIndex + 1;
-    if (completed === count || completed % progressStep === 0) onProgress?.(completed, count);
+    })
+    const completed = runIndex + 1
+    if (completed === count || completed % progressStep === 0) onProgress?.(completed, count)
   }
 
-  runs.sort((left, right) => right.dps - left.dps);
+  runs.sort((left, right) => right.dps - left.dps)
   return {
     runCount: count,
     duration: baseline.duration,
@@ -150,5 +150,5 @@ export function simulateRotation(
       p75: selectSimulationPercentile(runs, 0.75),
       median: selectSimulationPercentile(runs, 0.5),
     },
-  };
+  }
 }

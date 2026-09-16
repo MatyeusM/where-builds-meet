@@ -1,10 +1,11 @@
-import { expect, it } from "vitest";
-import { buildRotationTimeline } from "../src/calculations/rotationTimeline";
-import { calculateDamageBreakdown } from "../src/calculations/damage";
-import { calculateDerivedStats } from "../src/calculations/effectiveStats";
-import { emptyStats } from "../src/data/statDefinitions";
-import skills from "../data/skill/thundercry-blade.json";
-import buffs from "../data/buff/stonesplit-strength.json";
+import { expect, it } from "vitest"
+
+import buffs from "../data/buff/stonesplit-strength.json"
+import skills from "../data/skill/thundercry-blade.json"
+import { calculateDamageBreakdown } from "../src/calculations/damage"
+import { calculateDerivedStats } from "../src/calculations/effectiveStats"
+import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { emptyStats } from "../src/data/statDefinitions"
 it.each([
   ["Avalanche", 1.85, 1.545, [0.318, 1]],
   ["Avalanche1", 2, 0.318, [0.318]],
@@ -34,25 +35,25 @@ it.each([
       innerWayConditions: [],
       innerWayRules: [],
       setupEffects: [],
-    });
-    const [fast, slow] = timeline.filter((row) => row.step.skill === skill);
-    expect(fast.effectiveCastTime).toBeCloseTo(releaseDuration);
-    expect(slow.effectiveCastTime).toBeCloseTo(chargeDuration + releaseDuration);
-    expect(fast.actionStates[0].buffs.some((buff) => buff.name === "Riposte")).toBe(true);
+    })
+    const [fast, slow] = timeline.filter(row => row.step.skill === skill)
+    expect(fast.effectiveCastTime).toBeCloseTo(releaseDuration)
+    expect(slow.effectiveCastTime).toBeCloseTo(chargeDuration + releaseDuration)
+    expect(fast.actionStates[0].buffs.some(buff => buff.name === "Riposte")).toBe(true)
     for (const [i, offset] of hitOffsets.entries()) {
-      expect(fast.actions[i + 1].time).toBeCloseTo(offset);
-      expect(slow.actions[i + 1].time).toBeCloseTo(offset + chargeDuration);
-      expect(fast.actionStates[i + 1].buffs.some((buff) => buff.name === "Riposte")).toBe(false);
-      expect(slow.actionStates[i + 1]).toBeDefined();
+      expect(fast.actions[i + 1].time).toBeCloseTo(offset)
+      expect(slow.actions[i + 1].time).toBeCloseTo(offset + chargeDuration)
+      expect(fast.actionStates[i + 1].buffs.some(buff => buff.name === "Riposte")).toBe(false)
+      expect(slow.actionStates[i + 1]).toBeDefined()
     }
-    expect(slow.startTime).toBeCloseTo(fast.startTime + releaseDuration + 0.04);
-    expect(timeline.find((row) => row.step.skill === "Observe")!.startTime).toBeCloseTo(
+    expect(slow.startTime).toBeCloseTo(fast.startTime + releaseDuration + 0.04)
+    expect(timeline.find(row => row.step.skill === "Observe")!.startTime).toBeCloseTo(
       slow.startTime + releaseDuration + chargeDuration + 0.04,
-    );
+    )
   },
-);
+)
 it("resolves Avalanche hit damage from the corrected datamined coefficients and bonuses", () => {
-  const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, minStonesplit: 1000, maxStonesplit: 1000, precision: 1 };
+  const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, minStonesplit: 1000, maxStonesplit: 1000, precision: 1 }
   const context = {
     stats,
     attunement: {},
@@ -72,14 +73,14 @@ it("resolves Avalanche hit damage from the corrected datamined coefficients and 
       bamboocutResistance: 0,
       judgementResistance: 0,
     },
-  };
+  }
   const hits = skills.Avalanche.action
-    .filter((action) => action.type === "damage")
-    .map((action) => calculateDamageBreakdown(action, context));
-  expect(hits[0].physical).toBeCloseTo(2487.38, 6);
-  expect(hits[0].stonesplit).toBeCloseTo(3363.045, 6);
-  expect(hits[1].physical).toBeCloseTo(3672.08356, 6);
-  expect(hits[1].stonesplit).toBeCloseTo(4964.81529, 6);
-  const canceled = calculateDamageBreakdown(skills.Avalanche1.action[1], context);
-  expect(canceled.total).toBeCloseTo(hits[0].total, 6);
-});
+    .filter(action => action.type === "damage")
+    .map(action => calculateDamageBreakdown(action, context))
+  expect(hits[0].physical).toBeCloseTo(2487.38, 6)
+  expect(hits[0].stonesplit).toBeCloseTo(3363.045, 6)
+  expect(hits[1].physical).toBeCloseTo(3672.08356, 6)
+  expect(hits[1].stonesplit).toBeCloseTo(4964.81529, 6)
+  const canceled = calculateDamageBreakdown(skills.Avalanche1.action[1], context)
+  expect(canceled.total).toBeCloseTo(hits[0].total, 6)
+})

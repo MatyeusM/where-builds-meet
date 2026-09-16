@@ -8,194 +8,84 @@
     "shared": true,
     "stackEffects": [
       [
-        {
-          "effect": {
-            "dotDamage": 0.05
-          }
-        },
+        { "effect": { "dotDamage": 0.05 } },
         {
           "requirement": [
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "martialArt",
-                  "value": "HeavenQuakerSpear"
-                },
-                {
-                  "target": "martialArt",
-                  "value": "StrategicSword"
-                }
+                { "target": "martialArt", "value": "HeavenQuakerSpear" },
+                { "target": "martialArt", "value": "StrategicSword" }
               ]
             }
           ],
-          "effect": {
-            "dotDamage": 0.05
-          }
+          "effect": { "dotDamage": 0.05 }
         },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "HighBleed"
-            }
-          ],
-          "effect": {
-            "dotDamage": 0.1
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "HighBleed" }], "effect": { "dotDamage": 0.1 } }
       ],
       [
-        {
-          "effect": {
-            "dotDamage": 0.1
-          }
-        },
+        { "effect": { "dotDamage": 0.1 } },
         {
           "requirement": [
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "martialArt",
-                  "value": "HeavenQuakerSpear"
-                },
-                {
-                  "target": "martialArt",
-                  "value": "StrategicSword"
-                }
+                { "target": "martialArt", "value": "HeavenQuakerSpear" },
+                { "target": "martialArt", "value": "StrategicSword" }
               ]
             }
           ],
-          "effect": {
-            "dotDamage": 0.1
-          }
+          "effect": { "dotDamage": 0.1 }
         },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "HighBleed"
-            }
-          ],
-          "effect": {
-            "dotDamage": 0.2
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "HighBleed" }], "effect": { "dotDamage": 0.2 } }
       ],
       [
-        {
-          "effect": {
-            "dotDamage": 0.15
-          }
-        },
+        { "effect": { "dotDamage": 0.15 } },
         {
           "requirement": [
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "martialArt",
-                  "value": "HeavenQuakerSpear"
-                },
-                {
-                  "target": "martialArt",
-                  "value": "StrategicSword"
-                }
+                { "target": "martialArt", "value": "HeavenQuakerSpear" },
+                { "target": "martialArt", "value": "StrategicSword" }
               ]
             }
           ],
-          "effect": {
-            "dotDamage": 0.15
-          }
+          "effect": { "dotDamage": 0.15 }
         },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "HighBleed"
-            }
-          ],
-          "effect": {
-            "dotDamage": 0.3
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "HighBleed" }], "effect": { "dotDamage": 0.3 } }
       ],
       [
-        {
-          "effect": {
-            "dotDamage": 0.2
-          }
-        },
+        { "effect": { "dotDamage": 0.2 } },
         {
           "requirement": [
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "martialArt",
-                  "value": "HeavenQuakerSpear"
-                },
-                {
-                  "target": "martialArt",
-                  "value": "StrategicSword"
-                }
+                { "target": "martialArt", "value": "HeavenQuakerSpear" },
+                { "target": "martialArt", "value": "StrategicSword" }
               ]
             }
           ],
-          "effect": {
-            "dotDamage": 0.2
-          }
+          "effect": { "dotDamage": 0.2 }
         },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "HighBleed"
-            }
-          ],
-          "effect": {
-            "dotDamage": 0.4
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "HighBleed" }], "effect": { "dotDamage": 0.4 } }
       ],
       [
-        {
-          "effect": {
-            "dotDamage": 0.25
-          }
-        },
+        { "effect": { "dotDamage": 0.25 } },
         {
           "requirement": [
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "martialArt",
-                  "value": "HeavenQuakerSpear"
-                },
-                {
-                  "target": "martialArt",
-                  "value": "StrategicSword"
-                }
+                { "target": "martialArt", "value": "HeavenQuakerSpear" },
+                { "target": "martialArt", "value": "StrategicSword" }
               ]
             }
           ],
-          "effect": {
-            "dotDamage": 0.25
-          }
+          "effect": { "dotDamage": 0.25 }
         },
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "HighBleed"
-            }
-          ],
-          "effect": {
-            "dotDamage": 0.5
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "HighBleed" }], "effect": { "dotDamage": 0.5 } }
       ]
     ],
     "refresh": true

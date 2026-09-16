@@ -1,23 +1,23 @@
-import { assert, describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest"
 
 // Ported from script/probe/check-segment-value.mjs.
 describe("segment-value", () => {
   it("Segment boundary, overflow, and per-action timing checks passed", async () => {
-    const { resolveSegmentValue } = await import("../src/calculations/dynamicValues.ts");
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const segment = { function: "segment", param1: "actionTime", param2: [1.5, 2.5], param3: [-0.7, -1, -1.2] };
+    const { resolveSegmentValue } = await import("../src/calculations/dynamicValues.ts")
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const segment = { function: "segment", param1: "actionTime", param2: [1.5, 2.5], param3: [-0.7, -1, -1.2] }
     expect(
       resolveSegmentValue(segment, { actionTime: 1.5 }) === -1,
       "A value equal to the first threshold must use the next segment.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       resolveSegmentValue(segment, { actionTime: 2 }) === -1,
       "A value between thresholds must use the matching segment.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       resolveSegmentValue(segment, { actionTime: 3 }) === -1.2,
       "A value above every threshold must use the overflow segment.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     for (const [input, expected] of [
       [1.499999, -0.7],
@@ -27,31 +27,31 @@ describe("segment-value", () => {
       assert(
         resolveSegmentValue(segment, { actionTime: input }) === expected,
         "Exclusive segment boundary failed at " + input,
-      );
+      )
     }
-    const { deserializeSkillOverrides, serializeSkillOverrides } = await import("../src/skillOverrides.ts");
+    const { deserializeSkillOverrides, serializeSkillOverrides } = await import("../src/skillOverrides.ts")
     for (const threshold of [-2, 0, 1.3375, Number.MAX_VALUE]) {
-      const legacy = { function: "segment", param1: "distance", param2: [threshold], param3: [2, 3] };
+      const legacy = { function: "segment", param1: "distance", param2: [threshold], param3: [2, 3] }
       for (const version of [undefined, 2]) {
-        const overrides = { Buff: { Probe: { effect: [{ effect: { dmgBonus: legacy } }] } } };
-        const converted = deserializeSkillOverrides(version ? { version, overrides } : overrides);
-        const saved = deserializeSkillOverrides(JSON.parse(serializeSkillOverrides(converted)));
-        const migratedSegment = saved.Buff.Probe.effect[0].effect.dmgBonus;
+        const overrides = { Buff: { Probe: { effect: [{ effect: { dmgBonus: legacy } }] } } }
+        const converted = deserializeSkillOverrides(version ? { version, overrides } : overrides)
+        const saved = deserializeSkillOverrides(JSON.parse(serializeSkillOverrides(converted)))
+        const migratedSegment = saved.Buff.Probe.effect[0].effect.dmgBonus
         for (const input of [threshold - 1, threshold, threshold + 1, Number.MIN_VALUE, Number.MAX_VALUE]) {
-          if (!Number.isFinite(input)) continue;
+          if (!Number.isFinite(input)) continue
           assert(
             resolveSegmentValue(migratedSegment, { distance: input }) === (input <= threshold ? 2 : 3),
             "Legacy segment migration changed its result at " + input,
-          );
+          )
         }
       }
     }
-    const fresh = { Buff: { Probe: { effect: [{ effect: { dmgBonus: segment } }] } } };
-    const reloaded = deserializeSkillOverrides(JSON.parse(serializeSkillOverrides(fresh)));
+    const fresh = { Buff: { Probe: { effect: [{ effect: { dmgBonus: segment } }] } } }
+    const reloaded = deserializeSkillOverrides(JSON.parse(serializeSkillOverrides(fresh)))
     expect(
       resolveSegmentValue(reloaded.Buff.Probe.effect[0].effect.dmgBonus, { actionTime: 1.5 }) === -1,
       "New exclusive thresholds must not migrate again.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const timeline = buildRotationTimeline({
       rotation: { name: "Segment timing probe", steps: [{ type: "skill", skill: "Probe" }] },
@@ -80,12 +80,12 @@ describe("segment-value", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    });
-    const row = timeline[0];
-    expect(row.effectiveCastTime === 1, "The cast end above 1.5s must receive the overflow modifier.").toBeTruthy();
-    expect(row.actions[0].time === 0.5, "An action equal to 1.5s must receive the next segment modifier.").toBeTruthy();
-    expect(row.actions[1].time === 1, "An action above 1.5s must receive the overflow modifier.").toBeTruthy();
-    const mystic = (await import("../data/skill/mystic.json")).default;
+    })
+    const row = timeline[0]
+    expect(row.effectiveCastTime === 1, "The cast end above 1.5s must receive the overflow modifier.").toBeTruthy()
+    expect(row.actions[0].time === 0.5, "An action equal to 1.5s must receive the next segment modifier.").toBeTruthy()
+    expect(row.actions[1].time === 1, "An action above 1.5s must receive the overflow modifier.").toBeTruthy()
+    const mystic = (await import("../data/skill/mystic.json")).default
     for (const id of ["DragonsBreath2", "DragonsBreathSmolder2"]) {
       const rows = buildRotationTimeline({
         rotation: { name: "Dragon Intoxicated timing", infiniteVitality: true, steps: [{ type: "skill", skill: id }] },
@@ -98,21 +98,21 @@ describe("segment-value", () => {
         innerWayRules: [],
         setupEffects: [],
         weapons: [],
-      });
-      const cast = rows.find((row) => row.kind === "rotation");
-      const hits = cast.actions.filter((action) => action.type === "damage");
+      })
+      const cast = rows.find(row => row.kind === "rotation")
+      const hits = cast.actions.filter(action => action.type === "damage")
       assert(
         Math.abs(cast.effectiveCastTime - 1.6975969436363636) < 1e-9,
         id + " must resolve the Intoxicated route's cast duration.",
-      );
+      )
       assert(
         Math.abs(hits[0].time - 0.6064791536363635) < 1e-9,
         id + " must resolve the first hit using its own timing segment.",
-      );
+      )
       assert(
-        hits.slice(1).every((hit) => Math.abs(hit.time - 1.6975969436363636) < 1e-9),
+        hits.slice(1).every(hit => Math.abs(hit.time - 1.6975969436363636) < 1e-9),
         id + " must resolve later hits using the second timing segment.",
-      );
+      )
     }
-  });
-});
+  })
+})

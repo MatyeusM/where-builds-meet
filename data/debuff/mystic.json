@@ -13,13 +13,7 @@
         "time": "expire",
         "attrCoef": 1.62188568
       },
-      {
-        "type": "apply",
-        "target": "target",
-        "value": "LesserToadVenom",
-        "reapply": false,
-        "time": "expire"
-      }
+      { "type": "apply", "target": "target", "value": "LesserToadVenom", "reapply": false, "time": "expire" }
     ],
     "modifier": [],
     "tags": ["Mystic", "DirectDamage", "AreaMystic", "LeapingToad"],

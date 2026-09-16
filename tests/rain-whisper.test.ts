@@ -1,17 +1,17 @@
-import { assert, describe, it } from "vitest";
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-rain-whisper.mjs.
 describe("rain-whisper", () => {
   it("Rain Whisper Shield-dependent Critical DMG check passed", async () => {
-    const weaponSets = (await import("../data/gear-set.json")).default;
-    const generalBuffs = (await import("../data/buff/general.json")).default;
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
+    const weaponSets = (await import("../data/gear-set.json")).default
+    const generalBuffs = (await import("../data/buff/general.json")).default
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
-    const rainWhisperEffects = weaponSets.RainWhisper.options["4"].effect;
+    const rainWhisperEffects = weaponSets.RainWhisper.options["4"].effect
 
-    const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, crit: 1 };
+    const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, crit: 1 }
     const enemy = {
       name: "Probe",
       level: 96,
@@ -22,13 +22,13 @@ describe("rain-whisper", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const calculate = (shielded, setupEffects) => {
       const rotation = {
         name: "Rain Whisper probe",
         steps: [...(shielded ? [{ type: "skill", skill: "ApplyShield" }] : []), { type: "skill", skill: "Hit" }],
-      };
-      const hitIndex = rotation.steps.length - 1;
+      }
+      const hitIndex = rotation.steps.length - 1
       return calculateRotationBaseline({
         timeline: {
           rotation,
@@ -66,22 +66,22 @@ describe("rain-whisper", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      }).metrics.totalDamage;
-    };
+      }).metrics.totalDamage
+    }
 
-    const unshieldedStatOnly = calculate(false, [rainWhisperEffects[0]]);
-    const unshielded = calculate(false, rainWhisperEffects);
-    const unshieldedWithoutConditional = calculate(false, rainWhisperEffects.slice(0, 2));
-    const shielded = calculate(true, rainWhisperEffects);
-    const shieldedWithoutConditional = calculate(true, rainWhisperEffects.slice(0, 2));
+    const unshieldedStatOnly = calculate(false, [rainWhisperEffects[0]])
+    const unshielded = calculate(false, rainWhisperEffects)
+    const unshieldedWithoutConditional = calculate(false, rainWhisperEffects.slice(0, 2))
+    const shielded = calculate(true, rainWhisperEffects)
+    const shieldedWithoutConditional = calculate(true, rainWhisperEffects.slice(0, 2))
     assert(
       Math.abs(unshielded - unshieldedWithoutConditional) < 1e-9,
       "The conditional Rain Whisper bonus must remain inactive without Shield.",
-    );
+    )
     assert(
       unshielded > unshieldedStatOnly,
       "The unconditional Rain Whisper Critical DMG must apply during damage calculation.",
-    );
-    assert(shielded > shieldedWithoutConditional, "The conditional Rain Whisper bonus must activate with Shield.");
-  });
-});
+    )
+    assert(shielded > shieldedWithoutConditional, "The conditional Rain Whisper bonus must activate with Shield.")
+  })
+})

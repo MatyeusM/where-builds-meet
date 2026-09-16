@@ -1,13 +1,14 @@
-import { withImmediateAttacks } from "./helpers/attack-response-fixtures";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest"
+
+import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 
 // Ported from script/probe/check-breaking-point.mjs.
 describe("breaking-point", () => {
   it("Breaking Point stacking and dodge proc cooldown checks passed", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const buffs = (await import("../data/buff/bamboocut-wind.json")).default;
-    const breakingPoint = (await import("../data/innerway/breaking-point.json")).default;
-    const generalSkills = (await import("../data/skill/general.json")).default;
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const buffs = (await import("../data/buff/bamboocut-wind.json")).default
+    const breakingPoint = (await import("../data/innerway/breaking-point.json")).default
+    const generalSkills = (await import("../data/skill/general.json")).default
 
     const hit = {
       name: "Breaking Point probe hit",
@@ -15,26 +16,22 @@ describe("breaking-point", () => {
       action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
       modifier: [],
       tags: ["DirectDamage"],
-    };
+    }
     const exhausted = {
       name: "Exhausted",
       castTime: 0,
       action: [{ type: "apply", target: "target", value: "Exhausted", time: 0 }],
       tags: ["Event"],
-    };
-    const triggerDefinition = breakingPoint.effect.BreakingPointT0.trigger[0];
+    }
+    const triggerDefinition = breakingPoint.effect.BreakingPointT0.trigger[0]
     const triggerRule = {
       requirement: triggerDefinition.requirement,
       trigger: { target: triggerDefinition.target, action: triggerDefinition.action },
       effect: {},
       source: "BreakingPoint",
       tier: 0,
-    };
-    const maxStackRule = {
-      ...breakingPoint.effect.BreakingPointT4.effect[0],
-      source: "BreakingPoint",
-      tier: 4,
-    };
+    }
+    const maxStackRule = { ...breakingPoint.effect.BreakingPointT4.effect[0], source: "BreakingPoint", tier: 4 }
     const stackStarts = (hitCount, highTier) => {
       const timeline = buildRotationTimeline({
         rotation: {
@@ -53,24 +50,24 @@ describe("breaking-point", () => {
         innerWayRules: highTier ? [triggerRule, maxStackRule] : [triggerRule],
         setupEffects: [],
         weapons: [],
-      });
+      })
       return timeline
-        .filter((row) => row.kind === "rotation" && row.step.type === "skill")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
-    };
+        .filter(row => row.kind === "rotation" && row.step.type === "skill")
+        .map(row => row.buffs.find(effect => effect.name === "Disintegration")?.stack ?? 0)
+    }
     expect(
       JSON.stringify(stackStarts(4, false)) === JSON.stringify([0, 1, 2, 3]),
       "Repeated Breaking Point triggers must accumulate to the default three-stack cap.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       JSON.stringify(stackStarts(6, true)) === JSON.stringify([0, 1, 2, 3, 4, 5]),
       "Breaking Point T4 must accumulate Disintegration to five stacks.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     for (const firstDodge of ["PerfectDodge", "PerfectDodgeCancel"]) {
-      const secondDodge = firstDodge === "PerfectDodge" ? "PerfectDodgeCancel" : "PerfectDodge";
-      const firstCastTime = firstDodge === "PerfectDodge" ? 0.5 : 0;
-      const secondCastTime = secondDodge === "PerfectDodge" ? 0.5 : 0;
-      const runDodgeProbe = (tier) =>
+      const secondDodge = firstDodge === "PerfectDodge" ? "PerfectDodgeCancel" : "PerfectDodge"
+      const firstCastTime = firstDodge === "PerfectDodge" ? 0.5 : 0
+      const secondCastTime = secondDodge === "PerfectDodge" ? 0.5 : 0
+      const runDodgeProbe = tier =>
         buildRotationTimeline({
           rotation: {
             name: "Breaking Point dodge cooldown probe",
@@ -103,33 +100,33 @@ describe("breaking-point", () => {
           weapons: [],
           initialResources: { Vitality: 0 },
           resourceMaximums: { Vitality: 40 },
-        });
-      const timeline = runDodgeProbe(6);
+        })
+      const timeline = runDodgeProbe(6)
       expect(
-        timeline.filter((row) => row.step.skill === "Observe").at(-1).resources.Vitality === 9,
+        timeline.filter(row => row.step.skill === "Observe").at(-1).resources.Vitality === 9,
         "All three dodges must grant Vitality even when the BP T6 proc is on cooldown.",
-      ).toBeTruthy();
+      ).toBeTruthy()
       const observedStacks = timeline
-        .filter((row) => row.step.skill === "Observe")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
+        .filter(row => row.step.skill === "Observe")
+        .map(row => row.buffs.find(effect => effect.name === "Disintegration")?.stack ?? 0)
       expect(
         JSON.stringify(observedStacks) === JSON.stringify([5, 0, 1, 5]),
         "Dodge must share only the T6 proc cooldown, permit normal stacks during it, and proc again at 15 seconds.",
-      ).toBeTruthy();
+      ).toBeTruthy()
       const dodges = timeline.filter(
-        (row) => row.kind === "rotation" && [firstDodge, secondDodge].includes(row.step.skill),
-      );
+        row => row.kind === "rotation" && [firstDodge, secondDodge].includes(row.step.skill),
+      )
       expect(
-        JSON.stringify(dodges.map((row) => row.startTime)) === JSON.stringify([0, 4, 15]),
+        JSON.stringify(dodges.map(row => row.startTime)) === JSON.stringify([0, 4, 15]),
         "The BP T6 proc cooldown must not delay either dodge variant.",
-      ).toBeTruthy();
+      ).toBeTruthy()
       const belowT6 = runDodgeProbe(5)
-        .filter((row) => row.step.skill === "Observe")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
+        .filter(row => row.step.skill === "Observe")
+        .map(row => row.buffs.find(effect => effect.name === "Disintegration")?.stack ?? 0)
       expect(
         JSON.stringify(belowT6) === JSON.stringify([0, 0, 1, 0]),
         "Dodges must not grant Disintegration below Breaking Point T6.",
-      ).toBeTruthy();
+      ).toBeTruthy()
     }
-  });
-});
+  })
+})

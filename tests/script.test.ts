@@ -1,5 +1,6 @@
-import { assert, describe, expect, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
+import { assert, describe, expect, it } from "vitest"
+
+import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-script.mjs.
 describe("setup timeline selection", () => {
@@ -10,25 +11,25 @@ describe("setup timeline selection", () => {
     ["Timed", "Timed", false],
     ["Plain", "Plain", false],
   ])("%s -> %s rebuilds=%s", async (current, replacement, expected) => {
-    const { setupSelectionChangesTimeline } = await import("../src/data/scriptDefinitions");
+    const { setupSelectionChangesTimeline } = await import("../src/data/scriptDefinitions")
     expect(
       setupSelectionChangesTimeline(current, replacement, {
         Plain: {},
         OtherPlain: { altersTimeline: false },
         Timed: { altersTimeline: true },
       }),
-    ).toBe(expected);
-  });
-});
+    ).toBe(expected)
+  })
+})
 
 describe("script", () => {
   it("Script thresholds, absolute self HP, Take Damage, and Revelry checks passed", async () => {
-    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts");
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const scripts = (await import("../data/script.json")).default;
-    const generalBuffs = (await import("../data/buff/general.json")).default;
+    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const scripts = (await import("../data/script.json")).default
+    const generalBuffs = (await import("../data/buff/general.json")).default
 
     assert(
       requirementsPass(
@@ -42,7 +43,7 @@ describe("script", () => {
         { targetQiPercentage: 39 },
       ),
       "Wraithstrike must activate below 40% target Qi.",
-    );
+    )
     assert(
       !requirementsPass(
         scripts.Insight.effect.requirement,
@@ -55,7 +56,7 @@ describe("script", () => {
         { targetHPPercentage: 80 },
       ),
       "Insight must require the Mystic skill tag.",
-    );
+    )
 
     const timeline = buildRotationTimeline({
       rotation: {
@@ -79,18 +80,8 @@ describe("script", () => {
         },
       },
       eventDefinitions: {
-        SelfHP: {
-          name: "Self HP",
-          castTime: 0,
-          action: [{ type: "setHP", time: 0 }],
-          tags: ["Event"],
-        },
-        TakeDamage: {
-          name: "Take Damage",
-          castTime: 0,
-          action: [{ type: "takeDamage", time: 0 }],
-          tags: ["Event"],
-        },
+        SelfHP: { name: "Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], tags: ["Event"] },
+        TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }], tags: ["Event"] },
       },
       dots: {},
       effectDefinitions: generalBuffs,
@@ -99,31 +90,24 @@ describe("script", () => {
       setupEffects: [scripts.Revelry.effect],
       weapons: [],
       maxHP: 1000,
-    });
-    const hit = timeline.find((row) => row.id === "rotation-2");
-    const takeDamageRow = timeline.find((row) => row.id === "rotation-1");
+    })
+    const hit = timeline.find(row => row.id === "rotation-2")
+    const takeDamageRow = timeline.find(row => row.id === "rotation-1")
     assert(
       takeDamageRow?.sourceRowId === hit?.id && takeDamageRow?.startTime === 1,
       "Take Damage must remain attached to its selected skill action.",
-    );
+    )
     assert(
       hit?.actionStates[0].currentHP === 1000 && hit?.actionStates[1].currentHP === 199,
       "Self HP and Take Damage must affect only their attached action and later state.",
-    );
+    )
     assert(
-      !hit?.actionStates[0].buffs.some((buff) => buff.name === "Revelry") &&
-        hit?.actionStates[1].buffs.some((buff) => buff.name === "Revelry"),
+      !hit?.actionStates[0].buffs.some(buff => buff.name === "Revelry") &&
+        hit?.actionStates[1].buffs.some(buff => buff.name === "Revelry"),
       "Revelry Script must apply Revelry when Take Damage leaves self HP at 30% or below.",
-    );
+    )
 
-    const stats = {
-      ...emptyStats,
-      minPhys: 1000,
-      maxPhys: 1000,
-      precision: 1,
-      critical: 1,
-      critDmgBonus: 0.35,
-    };
+    const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, critical: 1, critDmgBonus: 0.35 }
     const thresholdResult = calculateRotationBaseline({
       timeline: {
         rotation: {
@@ -172,10 +156,10 @@ describe("script", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
+    })
     assert(
       thresholdResult.actionBreakdowns["rotation-0:0"].total > thresholdResult.actionBreakdowns["rotation-0:1"].total,
       `Target-HP Script requirements must be reevaluated after preceding calculated damage (${thresholdResult.actionBreakdowns["rotation-0:0"].total} -> ${thresholdResult.actionBreakdowns["rotation-0:1"].total}).`,
-    );
-  });
-});
+    )
+  })
+})

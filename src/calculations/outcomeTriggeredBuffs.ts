@@ -4,44 +4,44 @@ import {
   mergeTinyPeriodicEntries,
   type PeriodicStateList,
   type PeriodicStateStorage,
-} from "./periodicStateLists";
+} from "./periodicStateLists"
 
-export const OUTCOME_BUFF_TICKS_PER_SECOND = 10_000;
-const TINY_PERIODIC_STATE_PROBABILITY = 1e-5;
-const PERIODIC_EXPIRATION_BUCKET_TICKS = 0.1 * OUTCOME_BUFF_TICKS_PER_SECOND;
+export const OUTCOME_BUFF_TICKS_PER_SECOND = 10_000
+const TINY_PERIODIC_STATE_PROBABILITY = 1e-5
+const PERIODIC_EXPIRATION_BUCKET_TICKS = 0.1 * OUTCOME_BUFF_TICKS_PER_SECOND
 
-export type ExpectedOutcomeBuffSchedule = Record<string, Record<string, number>>;
+export type ExpectedOutcomeBuffSchedule = Record<string, Record<string, number>>
 
 export function outcomeBuffTick(seconds: number | undefined) {
-  return Math.round((seconds ?? 0) * OUTCOME_BUFF_TICKS_PER_SECOND);
+  return Math.round((seconds ?? 0) * OUTCOME_BUFF_TICKS_PER_SECOND)
 }
 
 export function outcomeProbability(value: number) {
-  return Math.min(1, Math.max(0, value));
+  return Math.min(1, Math.max(0, value))
 }
 
 /** First strictly later grid boundary, never earlier than battle second one. */
 export function nextBattlePeriodicTick(time: number, interval: number, origin: number) {
-  const step = outcomeBuffTick(interval);
-  const start = outcomeBuffTick(origin);
+  const step = outcomeBuffTick(interval)
+  const start = outcomeBuffTick(origin)
   return (
     (start + Math.max(1, Math.floor((outcomeBuffTick(time) - start) / step) + 1) * step) / OUTCOME_BUFF_TICKS_PER_SECOND
-  );
+  )
 }
 
-export type MaxStackAction = { consume: "all"; trigger: string; triggerTags?: string[] };
+export type MaxStackAction = { consume: "all"; trigger: string; triggerTags?: string[] }
 
 export function maxStackActionFor(stack: number, maxStack: number | undefined, action?: MaxStackAction) {
-  return action?.consume === "all" && maxStack !== undefined && stack >= maxStack ? action : undefined;
+  return action?.consume === "all" && maxStack !== undefined && stack >= maxStack ? action : undefined
 }
 
-type PeriodicPartition = { inactive: number; owners: Map<string, PeriodicStateList[]> };
+type PeriodicPartition = { inactive: number; owners: Map<string, PeriodicStateList[]> }
 
 /** Stack-indexed sorted expiration lists. Branches exist only until causal follow-ups finish. */
 export class ExpectedPeriodicTracker {
-  private sharedTick?: number;
-  private branches = new Map<string | undefined, PeriodicPartition>([[undefined, { inactive: 1, owners: new Map() }]]);
-  private readonly createList: () => PeriodicStateList;
+  private sharedTick?: number
+  private branches = new Map<string | undefined, PeriodicPartition>([[undefined, { inactive: 1, owners: new Map() }]])
+  private readonly createList: () => PeriodicStateList
 
   constructor(
     private readonly interval: number,
@@ -49,52 +49,52 @@ export class ExpectedPeriodicTracker {
     private readonly tickOrigin?: number,
     storage: PeriodicStateStorage = "indexed",
   ) {
-    this.createList = periodicStateListFactory(storage);
+    this.createList = periodicStateListFactory(storage)
   }
 
   private partition(branch?: string) {
-    let partition = this.branches.get(branch);
-    if (!partition) this.branches.set(branch, (partition = { inactive: 0, owners: new Map() }));
-    return partition;
+    let partition = this.branches.get(branch)
+    if (!partition) this.branches.set(branch, (partition = { inactive: 0, owners: new Map() }))
+    return partition
   }
 
   private list(partition: PeriodicPartition, source: string, stack: number) {
-    let stacks = partition.owners.get(source);
-    if (!stacks) partition.owners.set(source, (stacks = []));
-    return (stacks[stack] ??= this.createList());
+    let stacks = partition.owners.get(source)
+    if (!stacks) partition.owners.set(source, (stacks = []))
+    return (stacks[stack] ??= this.createList())
   }
 
   private visitLists(visit: (list: PeriodicStateList, source: string, stack: number) => void) {
     for (const partition of this.branches.values())
       for (const [source, stacks] of partition.owners)
         for (let stack = 1; stack < stacks.length; stack++) {
-          const list = stacks[stack];
-          if (list?.size) visit(list, source, stack);
+          const list = stacks[stack]
+          if (list?.size) visit(list, source, stack)
         }
   }
 
   get stateCount() {
-    let count = 0;
-    for (const partition of this.branches.values()) if (partition.inactive > 0) count++;
-    this.visitLists((list) => {
-      count += list.size;
-    });
-    return count;
+    let count = 0
+    for (const partition of this.branches.values()) if (partition.inactive > 0) count++
+    this.visitLists(list => {
+      count += list.size
+    })
+    return count
   }
 
   private advanceSharedTick(tick: number) {
-    if (this.sharedTick !== undefined && tick <= this.sharedTick) return;
-    this.sharedTick = tick;
-    this.visitLists((list) => {
-      for (let index = list.head; index >= 0; index = list.next(index)) list.pending[index] = 0;
-    });
+    if (this.sharedTick !== undefined && tick <= this.sharedTick) return
+    this.sharedTick = tick
+    this.visitLists(list => {
+      for (let index = list.head; index >= 0; index = list.next(index)) list.pending[index] = 0
+    })
   }
 
   private accumulateCadences(target: Map<number, number>, source: Map<number, number>, scale: number, now: number) {
-    const interval = outcomeBuffTick(this.interval);
+    const interval = outcomeBuffTick(this.interval)
     for (const [tick, mass] of source) {
-      const advanced = tick < now ? tick + Math.ceil((now - tick) / interval) * interval : tick;
-      target.set(advanced, (target.get(advanced) ?? 0) + mass * scale);
+      const advanced = tick < now ? tick + Math.ceil((now - tick) / interval) * interval : tick
+      target.set(advanced, (target.get(advanced) ?? 0) + mass * scale)
     }
   }
 
@@ -109,250 +109,250 @@ export class ExpectedPeriodicTracker {
     emittedBranch?: string,
     onlyBranch?: string,
   ) {
-    const now = outcomeBuffTick(time);
+    const now = outcomeBuffTick(time)
     if (this.tickOrigin !== undefined) {
-      const origin = outcomeBuffTick(this.tickOrigin);
-      const interval = outcomeBuffTick(this.interval);
-      this.advanceSharedTick(origin + Math.max(1, Math.ceil((now - origin) / interval)) * interval);
+      const origin = outcomeBuffTick(this.tickOrigin)
+      const interval = outcomeBuffTick(this.interval)
+      this.advanceSharedTick(origin + Math.max(1, Math.ceil((now - origin) / interval)) * interval)
     }
-    const expiry = now + outcomeBuffTick(duration);
-    const affected = onlyBranch === undefined ? [...this.branches.values()] : [this.branches.get(onlyBranch)];
-    let thresholdProbability = 0;
+    const expiry = now + outcomeBuffTick(duration)
+    const affected = onlyBranch === undefined ? [...this.branches.values()] : [this.branches.get(onlyBranch)]
+    let thresholdProbability = 0
     for (const partition of affected) {
-      if (!partition) continue;
-      let highest = 0;
+      if (!partition) continue
+      let highest = 0
       // Expired entries become inactive before this hit's transition.
       for (const stacks of partition.owners.values()) {
-        highest = Math.max(highest, stacks.length - 1);
+        highest = Math.max(highest, stacks.length - 1)
         for (const list of stacks) {
-          if (!list) continue;
+          if (!list) continue
           while (list.head >= 0 && list.expires[list.head] <= now) {
-            partition.inactive += list.mass[list.head];
-            list.shift();
+            partition.inactive += list.mass[list.head]
+            list.shift()
           }
         }
       }
       for (let stack = highest; stack >= 1; stack--) {
         let gained = 0,
-          pending = 0;
-        const cadence = this.tickOrigin === undefined ? new Map<number, number>() : undefined;
+          pending = 0
+        const cadence = this.tickOrigin === undefined ? new Map<number, number>() : undefined
         for (const stacks of partition.owners.values()) {
-          const list = stacks[stack];
-          if (!list?.size) continue;
-          list.retain((index) => {
-            const mass = list.mass[index];
-            gained += mass * chance;
-            pending += list.pending[index] * chance;
-            const times = list.cadences[index];
-            if (cadence && times) this.accumulateCadences(cadence, times, chance, now);
-            list.mass[index] = mass * (1 - chance);
-            list.pending[index] *= 1 - chance;
-            if (times) for (const [tick, value] of times) times.set(tick, value * (1 - chance));
-            return list.mass[index] > 0;
-          });
+          const list = stacks[stack]
+          if (!list?.size) continue
+          list.retain(index => {
+            const mass = list.mass[index]
+            gained += mass * chance
+            pending += list.pending[index] * chance
+            const times = list.cadences[index]
+            if (cadence && times) this.accumulateCadences(cadence, times, chance, now)
+            list.mass[index] = mass * (1 - chance)
+            list.pending[index] *= 1 - chance
+            if (times) for (const [tick, value] of times) times.set(tick, value * (1 - chance))
+            return list.mass[index] > 0
+          })
         }
-        if (!(gained > 0)) continue;
-        if (maxStackActionFor(stack + gain, maxStack, onMaxStack)) thresholdProbability += gained;
-        else this.list(partition, source, Math.min(maxStack, stack + gain)).add(expiry, gained, pending, cadence);
+        if (!(gained > 0)) continue
+        if (maxStackActionFor(stack + gain, maxStack, onMaxStack)) thresholdProbability += gained
+        else this.list(partition, source, Math.min(maxStack, stack + gain)).add(expiry, gained, pending, cadence)
       }
-      const gained = partition.inactive * chance;
-      partition.inactive *= 1 - chance;
+      const gained = partition.inactive * chance
+      partition.inactive *= 1 - chance
       if (gained > 0) {
-        if (maxStackActionFor(gain, maxStack, onMaxStack)) thresholdProbability += gained;
-        else if (gain === 0) partition.inactive += gained;
+        if (maxStackActionFor(gain, maxStack, onMaxStack)) thresholdProbability += gained
+        else if (gain === 0) partition.inactive += gained
         else
           this.list(partition, source, Math.min(maxStack, gain)).add(
             expiry,
             gained,
             now === this.sharedTick ? gained : 0,
             this.tickOrigin === undefined ? new Map([[now + outcomeBuffTick(this.firstTick), gained]]) : undefined,
-          );
+          )
       }
       for (const [owner, stacks] of partition.owners)
-        if (!stacks.some((list) => list?.size)) partition.owners.delete(owner);
+        if (!stacks.some(list => list?.size)) partition.owners.delete(owner)
     }
     // Never feed threshold-created zero-stack mass back through the original hit.
-    if (thresholdProbability > 0) this.partition(emittedBranch).inactive += thresholdProbability;
-    return thresholdProbability;
+    if (thresholdProbability > 0) this.partition(emittedBranch).inactive += thresholdProbability
+    return thresholdProbability
   }
 
   expire(time: number, source: string, chance: number, branch: string) {
-    const tick = outcomeBuffTick(time);
-    let expired = 0;
+    const tick = outcomeBuffTick(time)
+    let expired = 0
     for (const partition of this.branches.values()) {
-      const stacks = partition.owners.get(source);
-      if (!stacks) continue;
+      const stacks = partition.owners.get(source)
+      if (!stacks) continue
       for (const list of stacks) {
-        if (!list) continue;
+        if (!list) continue
         // Chronological scheduling consumes heads in O(1), without compacting the list.
         if (list.head >= 0 && list.expires[list.head] === tick) {
-          expired += list.mass[list.head];
-          list.shift();
+          expired += list.mass[list.head]
+          list.shift()
         } else if (list.head >= 0 && list.expires[list.head] < tick) {
           // Direct tracker queries can address a later expiry without advancing earlier ones.
-          list.retain((index) => {
-            if (list.expires[index] !== tick) return true;
-            expired += list.mass[index];
-            return false;
-          });
+          list.retain(index => {
+            if (list.expires[index] !== tick) return true
+            expired += list.mass[index]
+            return false
+          })
         }
       }
-      if (!stacks.some((list) => list?.size)) partition.owners.delete(source);
+      if (!stacks.some(list => list?.size)) partition.owners.delete(source)
     }
-    const probability = expired * chance;
-    if (expired > probability) this.partition().inactive += expired - probability;
-    if (probability > 0) this.partition(branch).inactive += probability;
-    return probability;
+    const probability = expired * chance
+    if (expired > probability) this.partition().inactive += expired - probability
+    if (probability > 0) this.partition(branch).inactive += probability
+    return probability
   }
 
   releaseBranch(branch: string) {
-    const partition = this.branches.get(branch);
-    if (!partition) return;
-    this.branches.delete(branch);
-    const target = this.partition();
-    target.inactive += partition.inactive;
+    const partition = this.branches.get(branch)
+    if (!partition) return
+    this.branches.delete(branch)
+    const target = this.partition()
+    target.inactive += partition.inactive
     for (const [source, stacks] of partition.owners)
       for (let stack = 1; stack < stacks.length; stack++) {
-        const list = stacks[stack];
-        if (!list?.size) continue;
-        const destination = this.list(target, source, stack);
-        mergePeriodicLists(destination, list);
+        const list = stacks[stack]
+        if (!list?.size) continue
+        const destination = this.list(target, source, stack)
+        mergePeriodicLists(destination, list)
       }
   }
 
   /** Expiration order is obtained from list heads, not a map of all future wakeups. */
   nextExpiration(afterTime = Number.NEGATIVE_INFINITY) {
-    const after = Math.round(afterTime * OUTCOME_BUFF_TICKS_PER_SECOND);
-    let earliest = Infinity;
-    this.visitLists((list) => {
-      let index = list.head;
-      while (index >= 0 && list.expires[index] <= after) index = list.next(index);
-      if (index >= 0) earliest = Math.min(earliest, list.expires[index]);
-    });
-    return Number.isFinite(earliest) ? earliest / OUTCOME_BUFF_TICKS_PER_SECOND : undefined;
+    const after = Math.round(afterTime * OUTCOME_BUFF_TICKS_PER_SECOND)
+    let earliest = Infinity
+    this.visitLists(list => {
+      let index = list.head
+      while (index >= 0 && list.expires[index] <= after) index = list.next(index)
+      if (index >= 0) earliest = Math.min(earliest, list.expires[index])
+    })
+    return Number.isFinite(earliest) ? earliest / OUTCOME_BUFF_TICKS_PER_SECOND : undefined
   }
 
   expirationSources(time: number) {
-    const tick = outcomeBuffTick(time);
-    const sources = new Set<string>();
+    const tick = outcomeBuffTick(time)
+    const sources = new Set<string>()
     this.visitLists((list, source) => {
-      let index = list.head;
-      while (index >= 0 && list.expires[index] < tick) index = list.next(index);
-      if (index >= 0 && list.expires[index] === tick) sources.add(source);
-    });
-    return sources;
+      let index = list.head
+      while (index >= 0 && list.expires[index] < tick) index = list.next(index)
+      if (index >= 0 && list.expires[index] === tick) sources.add(source)
+    })
+    return sources
   }
 
   expirationProbability(time: number, source: string) {
-    const tick = outcomeBuffTick(time);
-    let probability = 0;
+    const tick = outcomeBuffTick(time)
+    let probability = 0
     for (const partition of this.branches.values()) {
-      const stacks = partition.owners.get(source);
-      if (!stacks) continue;
+      const stacks = partition.owners.get(source)
+      if (!stacks) continue
       for (const list of stacks) {
-        if (!list) continue;
+        if (!list) continue
         for (let index = list.head; index >= 0 && list.expires[index] <= tick; index = list.next(index))
-          if (list.expires[index] === tick) probability += list.mass[index];
+          if (list.expires[index] === tick) probability += list.mass[index]
       }
     }
-    return probability;
+    return probability
   }
 
   /** Released tiny states merge only within the same stack, owner and 0.1s bucket. */
   mergeTinyExpirations(time: number) {
-    if (this.tickOrigin === undefined) return false;
-    const partition = this.branches.get(undefined);
-    if (!partition) return false;
-    const now = outcomeBuffTick(time);
-    let changed = false;
+    if (this.tickOrigin === undefined) return false
+    const partition = this.branches.get(undefined)
+    if (!partition) return false
+    const now = outcomeBuffTick(time)
+    let changed = false
     for (const stacks of partition.owners.values())
       for (const list of stacks) {
-        if (!list?.size) continue;
+        if (!list?.size) continue
         if (mergeTinyPeriodicEntries(list, now, TINY_PERIODIC_STATE_PROBABILITY, PERIODIC_EXPIRATION_BUCKET_TICKS))
-          changed = true;
+          changed = true
       }
-    return changed;
+    return changed
   }
 
   consumeTick(time: number) {
     const tick = outcomeBuffTick(time),
-      interval = outcomeBuffTick(this.interval);
+      interval = outcomeBuffTick(this.interval)
     if (this.tickOrigin !== undefined) {
-      this.advanceSharedTick(outcomeBuffTick(nextBattlePeriodicTick(time, this.interval, this.tickOrigin)));
-      return;
+      this.advanceSharedTick(outcomeBuffTick(nextBattlePeriodicTick(time, this.interval, this.tickOrigin)))
+      return
     }
-    this.visitLists((list) => {
+    this.visitLists(list => {
       for (let index = list.head; index >= 0; index = list.next(index)) {
-        const times = list.cadences[index];
-        if (!times) continue;
+        const times = list.cadences[index]
+        if (!times) continue
         // Snapshot: the loop deletes and re-inserts entries in `times`, so it must not iterate the live map.
-        const pending = [...times];
+        const pending = [...times]
         for (const [next, mass] of pending) {
-          if (next > tick) continue;
-          const advanced = next + (Math.floor((tick - next) / interval) + 1) * interval;
-          times.delete(next);
-          times.set(advanced, (times.get(advanced) ?? 0) + mass);
+          if (next > tick) continue
+          const advanced = next + (Math.floor((tick - next) / interval) + 1) * interval
+          times.delete(next)
+          times.set(advanced, (times.get(advanced) ?? 0) + mass)
         }
       }
-    });
+    })
   }
 
   nextTick(afterTime: number, includeCurrentTime = false) {
     const after = outcomeBuffTick(afterTime) + (includeCurrentTime ? 0 : 1),
-      interval = outcomeBuffTick(this.interval);
+      interval = outcomeBuffTick(this.interval)
     if (this.tickOrigin !== undefined) {
-      if (this.sharedTick === undefined) return undefined;
-      const origin = outcomeBuffTick(this.tickOrigin);
-      const first = Math.max(this.sharedTick, origin + Math.max(1, Math.ceil((after - origin) / interval)) * interval);
+      if (this.sharedTick === undefined) return undefined
+      const origin = outcomeBuffTick(this.tickOrigin)
+      const first = Math.max(this.sharedTick, origin + Math.max(1, Math.ceil((after - origin) / interval)) * interval)
       for (const tick of [first, first + interval]) {
-        let active = false;
-        this.visitLists((list) => {
+        let active = false
+        this.visitLists(list => {
           for (let index = list.head; !active && index >= 0; index = list.next(index))
             if (
               tick < list.expires[index] &&
               list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0) > 0
             )
-              active = true;
-        });
-        if (active) return tick / OUTCOME_BUFF_TICKS_PER_SECOND;
+              active = true
+        })
+        if (active) return tick / OUTCOME_BUFF_TICKS_PER_SECOND
       }
-      return undefined;
+      return undefined
     }
-    let earliest = Infinity;
-    this.visitLists((list) => {
+    let earliest = Infinity
+    this.visitLists(list => {
       for (let index = list.head; index >= 0; index = list.next(index))
         for (const next of list.cadences[index]?.keys() ?? []) {
-          const tick = next < after ? next + Math.ceil((after - next) / interval) * interval : next;
-          if (tick < list.expires[index]) earliest = Math.min(earliest, tick);
+          const tick = next < after ? next + Math.ceil((after - next) / interval) * interval : next
+          if (tick < list.expires[index]) earliest = Math.min(earliest, tick)
         }
-    });
-    return Number.isFinite(earliest) ? earliest / OUTCOME_BUFF_TICKS_PER_SECOND : undefined;
+    })
+    return Number.isFinite(earliest) ? earliest / OUTCOME_BUFF_TICKS_PER_SECOND : undefined
   }
 
   tickAt(time: number) {
     const tick = outcomeBuffTick(time),
-      interval = outcomeBuffTick(this.interval);
-    const result = { time, probability: 0, sources: {} as Record<string, number> };
+      interval = outcomeBuffTick(this.interval)
+    const result = { time, probability: 0, sources: {} as Record<string, number> }
     if (
       this.tickOrigin !== undefined &&
       (this.sharedTick === undefined ||
         tick < this.sharedTick ||
         (tick - outcomeBuffTick(this.tickOrigin)) % interval !== 0)
     )
-      return result;
+      return result
     this.visitLists((list, source) => {
       for (let index = list.head; index >= 0; index = list.next(index)) {
-        if (tick >= list.expires[index]) continue;
-        let mass = 0;
+        if (tick >= list.expires[index]) continue
+        let mass = 0
         if (this.tickOrigin !== undefined)
-          mass = list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0);
+          mass = list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0)
         else
           for (const [next, weight] of list.cadences[index] ?? [])
-            if (tick >= next && (tick - next) % interval === 0) mass += weight;
-        result.probability += mass;
-        result.sources[source] = (result.sources[source] ?? 0) + mass;
+            if (tick >= next && (tick - next) % interval === 0) mass += weight
+        result.probability += mass
+        result.sources[source] = (result.sources[source] ?? 0) + mass
       }
-    });
-    return result;
+    })
+    return result
   }
 }

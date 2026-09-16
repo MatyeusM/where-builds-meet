@@ -41,15 +41,7 @@
     },
     "TowlineSweepT3": {},
     "TowlineSweepT4": {},
-    "TowlineSweepT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalPenetration": 5.1
-          }
-        }
-      ]
-    },
+    "TowlineSweepT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
     "TowlineSweepT6": {}
   }
 }

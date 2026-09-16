@@ -1,12 +1,12 @@
-import { assert, describe, it } from "vitest";
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-single-damage-resolution.mjs.
 describe("single-damage-resolution", () => {
   it("Single deterministic damage-resolution checks passed", async () => {
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const rawStats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const rawStats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Single damage resolution probe",
       level: 96,
@@ -17,33 +17,29 @@ describe("single-damage-resolution", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const skill = {
       name: "Probe Hit",
       castTime: 0.1,
       action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 }],
       modifier: [],
       tags: ["DirectDamage"],
-    };
+    }
     const inertDamageListener = {
       source: "ProbeListener",
       tier: 0,
       effect: {},
-      listen: {
-        event: "damage",
-        requirement: [],
-        action: { type: "noop" },
-      },
-    };
+      listen: { event: "damage", requirement: [], action: { type: "noop" } },
+    }
 
     const runCase = ({ listener = false, targetHP } = {}) => {
-      let damageEvaluations = 0;
+      let damageEvaluations = 0
       const stats = new Proxy(rawStats, {
         get(target, property, receiver) {
-          if (property === "vsBossDmg") damageEvaluations += 1;
-          return Reflect.get(target, property, receiver);
+          if (property === "vsBossDmg") damageEvaluations += 1
+          return Reflect.get(target, property, receiver)
         },
-      });
+      })
       const timeline = {
         rotation: {
           name: "Single damage resolution probe",
@@ -58,7 +54,7 @@ describe("single-damage-resolution", () => {
         innerWayRules: listener ? [inertDamageListener] : [],
         setupEffects: [],
         weapons: [],
-      };
+      }
       const result = calculateRotationBaseline({
         timeline,
         startAnchor: { rowId: "rotation-0" },
@@ -71,16 +67,16 @@ describe("single-damage-resolution", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      });
-      assert(result.metrics.totalDamage > 0, "The probe hit must deal damage.");
+      })
+      assert(result.metrics.totalDamage > 0, "The probe hit must deal damage.")
       assert(
         damageEvaluations === 1,
         `Each deterministic hit must resolve once; observed ${damageEvaluations} evaluations.`,
-      );
-    };
+      )
+    }
 
-    runCase();
-    runCase({ listener: true });
-    runCase({ targetHP: 10000 });
-  });
-});
+    runCase()
+    runCase({ listener: true })
+    runCase({ targetHP: 10000 })
+  })
+})

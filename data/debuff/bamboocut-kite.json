@@ -13,20 +13,12 @@
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "skillTag",
-                "value": "Falcon"
-              },
-              {
-                "target": "skillTag",
-                "value": "VileCondemned"
-              }
+              { "target": "skillTag", "value": "Falcon" },
+              { "target": "skillTag", "value": "VileCondemned" }
             ]
           }
         ],
-        "effect": {
-          "hpDMGBonus": 0.1
-        }
+        "effect": { "hpDMGBonus": 0.1 }
       }
     ]
   },

@@ -7,11 +7,7 @@
     "duration": 7,
     "maxStack": 1,
     "shared": false,
-    "effect": [
-      {
-        "hpDMGBonus": 0.12
-      }
-    ],
+    "effect": [{ "hpDMGBonus": 0.12 }],
     "refresh": true
   },
   "FearfulBlade": {
@@ -34,20 +30,12 @@
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "martialArt",
-                "value": "SnowpartingBlade"
-              },
-              {
-                "target": "martialArt",
-                "value": "PhalanxbaneBlade"
-              }
+              { "target": "martialArt", "value": "SnowpartingBlade" },
+              { "target": "martialArt", "value": "PhalanxbaneBlade" }
             ]
           }
         ],
-        "effect": {
-          "hpDMGBonus": 0.08
-        }
+        "effect": { "hpDMGBonus": 0.08 }
       }
     ],
     "refresh": true

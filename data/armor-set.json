@@ -11,27 +11,9 @@
       "StormbreakerSpear"
     ],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "condition": "FormBend4",
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "condition": "FormBend4", "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "Moonflare": {
@@ -39,26 +21,9 @@
     "altersTimeline": true,
     "tags": ["SilkbindDeluge", "PanaceaFan", "SoulshadeUmbrella"],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxHp": 2960 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxHp": 2960 } } }
     }
   },
   "Calmwaters": {
@@ -66,26 +31,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "Eaglerise": {
@@ -93,26 +41,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "RippleStep": {
@@ -120,26 +51,9 @@
     "altersTimeline": true,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxHp": 2960 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxHp": 2960 } } }
     }
   },
   "FlawlessGuardian": {
@@ -147,26 +61,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "BeyondtheChill": {
@@ -174,26 +71,9 @@
     "altersTimeline": true,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxHp": 2960 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxHp": 2960 } } }
     }
   },
   "Whirlsnow": {
@@ -201,26 +81,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "Jadeclasp": {
@@ -228,26 +91,9 @@
     "altersTimeline": true,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "maxHp": 2960
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "maxHp": 2960 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "maxHp": 2960 } } }
     }
   },
   "Ebonward": {
@@ -255,26 +101,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "Honorbound": {
@@ -282,26 +111,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   },
   "Brimflow": {
@@ -309,26 +121,9 @@
     "altersTimeline": false,
     "tags": [],
     "options": {
-      "0": {
-        "name": "0",
-        "effect": {}
-      },
-      "2": {
-        "name": "2",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      },
-      "4": {
-        "name": "4",
-        "effect": {
-          "rawStat": {
-            "physicalDefense": 39
-          }
-        }
-      }
+      "0": { "name": "0", "effect": {} },
+      "2": { "name": "2", "effect": { "rawStat": { "physicalDefense": 39 } } },
+      "4": { "name": "4", "effect": { "rawStat": { "physicalDefense": 39 } } }
     }
   }
 }
