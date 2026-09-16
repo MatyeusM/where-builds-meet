@@ -125,7 +125,7 @@
     ],
     "martialArt": "infernalTwinblades",
     "weapon": "DualBlades",
-    "tags": ["DirectDamage", "MartialArts", "InfernalTwinblades", "DualBlades", "AddledMind"]
+    "tags": ["DirectDamage", "MartialArts", "MartialArt", "InfernalTwinblades", "DualBlades", "AddledMind"]
   },
   "InfernalLight1": {
     "ignorePing": true,

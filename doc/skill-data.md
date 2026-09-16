@@ -1025,6 +1025,8 @@ subtracts 0.144 seconds from both cast and hit times, giving a 0.6-second cast.
 This explicit uniform shift places the third hit at 0.328 seconds, rather than
 the supplied active table's 0.329 seconds. End animation times are unused.
 Addled Mind does not change the Flamelash state.
+Its `MartialArt` tag enables the Infernal Twinblades Martial Art Skill DMG
+Boost attunement through the shared tag matcher.
 
 Infernal Twinblades rank 13 contains all five talents in source order, using
 the rank array directly without talent IDs. The implemented effects are:
