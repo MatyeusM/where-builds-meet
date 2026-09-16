@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 C:/Users/greyd/Desktop/greydust/Projects/where-builds-meet
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:00:13
+   Duration  1.32s (transform 71%, import 15%, tests 14%)
+

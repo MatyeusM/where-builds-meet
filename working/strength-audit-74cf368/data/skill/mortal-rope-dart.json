@@ -1,0 +1,91 @@
+{
+  "RodentRampage": {
+    "name": "Rodent Rampage",
+    "castTime": 0.541,
+    "cooldown": 0,
+    "action": [
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "RodentRampage",
+        "time": 0.541
+      }
+    ],
+    "martialArt": "mortalRopeDart",
+    "weapon": "RopeDart",
+    "tags": ["MartialArts", "MortalRopeDart", "RopeDart", "Special"]
+  },
+  "Rodent": {
+    "name": "Rodent",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0,
+        "phyCoef": {
+          "function": "segment",
+          "param1": "distance",
+          "param2": [5, 12],
+          "param3": [0.63, 0.57, 0.6]
+        },
+        "attrCoef": {
+          "function": "segment",
+          "param1": "distance",
+          "param2": [5, 12],
+          "param3": [0.63, 0.57, 0.6]
+        }
+      }
+    ],
+    "tags": ["DirectDamage", "MartialArts", "MortalRopeDart", "RopeDart", "MartialArtEffect", "Rodent", "Triggered"]
+  },
+  "BladeboundThreadCancel": {
+    "name": "Bladebound Thread [Cancel]",
+    "shortName": "RD Q",
+    "castTime": 0.385,
+    "cooldown": 8,
+    "cooldownGroup": "BladeboundThread",
+    "action": [
+      {
+        "type": "damage",
+        "time": 0.385,
+        "phyCoef": 0.0621375,
+        "attrCoef": 0.0621375,
+        "phyBonus": 17.5,
+        "attrBonus": 9.5
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "VendettaToken",
+        "time": 0.385
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "RodentHunt",
+        "time": 0.385,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "VendettaT3"
+          }
+        ]
+      }
+    ],
+    "martialArt": "mortalRopeDart",
+    "weapon": "RopeDart",
+    "tags": ["DirectDamage", "MartialArts", "MortalRopeDart", "RopeDart", "MartialArt", "BladeboundThread"]
+  },
+  "RodentHuntDamage": {
+    "name": "Rodent Hunt",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "replay",
+        "time": 0,
+        "coef": 0.3
+      }
+    ],
+    "tags": ["Triggered", "Replayed"]
+  }
+}

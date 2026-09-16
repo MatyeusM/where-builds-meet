@@ -5743,7 +5743,12 @@ function RotationEditorTab({
   const readableDialogRef = useRef<HTMLDialogElement>(null);
   const readableTextRef = useRef<HTMLTextAreaElement>(null);
   const rotationScrollRef = useRef<HTMLDivElement>(null);
-  const pendingEventScrollRef = useRef<{ stepIndex: number; top: number } | null>(null);
+  const pendingEventScrollRef = useRef<{
+    stepIndex: number;
+    top: number;
+    step?: RotationStep;
+    rotationId?: string;
+  } | null>(null);
   const pendingSkillFocusRef = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -6210,15 +6215,34 @@ function RotationEditorTab({
   }
   function removeStep(index: number) {
     if (rotationLocked) return;
-    setRotation((current) => {
-      if (isAutomaticDelay(current.steps[index])) return current;
-      if (current.steps[index]?.type !== "skill")
-        return { ...current, steps: current.steps.filter((_, stepIndex) => stepIndex !== index) };
-      if (current.steps.filter((step) => step.type === "skill").length <= 1) return current;
-      let start = index;
-      while (start > 0 && attachedTargetForStep(current.steps[start - 1])) start -= 1;
-      return { ...current, steps: current.steps.filter((_, stepIndex) => stepIndex < start || stepIndex > index) };
-    });
+    const step = rotation.steps[index];
+    if (!step || isAutomaticDelay(step)) return;
+    let start = index;
+    if (step.type === "skill") {
+      if (rotation.steps.filter((candidate) => candidate.type === "skill").length <= 1) return;
+      while (start > 0 && attachedTargetForStep(rotation.steps[start - 1])) start -= 1;
+    }
+    const steps = rotation.steps.filter((_, stepIndex) => stepIndex < start || stepIndex > index);
+    const scrollContainer = rotationScrollRef.current;
+    pendingEventScrollRef.current = null;
+    pendingSkillFocusRef.current = null;
+    if (scrollContainer) {
+      const rows = [...scrollContainer.querySelectorAll<HTMLElement>(".rotation-table-row[data-rotation-step-index]")];
+      const deletedPosition = rows.findIndex((row) => Number(row.dataset.rotationStepIndex) === index);
+      const surviving = (row: HTMLElement) => steps.includes(rotation.steps[Number(row.dataset.rotationStepIndex)]);
+      const anchor =
+        rows.slice(0, deletedPosition).reverse().find(surviving) ?? rows.slice(deletedPosition + 1).find(surviving);
+      if (anchor) {
+        const anchorStep = rotation.steps[Number(anchor.dataset.rotationStepIndex)];
+        pendingEventScrollRef.current = {
+          stepIndex: steps.indexOf(anchorStep),
+          step: anchorStep,
+          rotationId: editingRotationId,
+          top: anchor.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top,
+        };
+      }
+    }
+    setRotation({ ...rotation, steps });
   }
   function selectStart(step: number, action?: number) {
     if (rotationLocked) return;
@@ -6564,12 +6588,21 @@ function RotationEditorTab({
     const scrollContainer = rotationScrollRef.current;
     const pendingScroll = pendingEventScrollRef.current;
     if (scrollContainer && pendingScroll) {
-      const row = scrollContainer.querySelector<HTMLElement>(`[data-rotation-step-index="${pendingScroll.stepIndex}"]`);
+      let stepIndex = pendingScroll.stepIndex;
+      if (pendingScroll.step) {
+        let step = pendingScroll.step;
+        while (editorStepReplacements.current.has(step)) step = editorStepReplacements.current.get(step)!;
+        stepIndex = rotation.steps.indexOf(step);
+      }
+      const sameRotation = pendingScroll.rotationId === undefined || pendingScroll.rotationId === editingRotationId;
+      const row = sameRotation
+        ? scrollContainer.querySelector<HTMLElement>(`[data-rotation-step-index="${stepIndex}"]`)
+        : null;
       if (row) {
         const currentTop = row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top;
         scrollContainer.scrollTop += currentTop - pendingScroll.top;
-        pendingEventScrollRef.current = null;
       }
+      pendingEventScrollRef.current = null;
     }
     const pendingFocus = pendingSkillFocusRef.current;
     if (scrollContainer && pendingFocus !== null) {

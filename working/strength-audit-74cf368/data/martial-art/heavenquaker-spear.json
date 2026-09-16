@@ -1,0 +1,119 @@
+{
+  "name": "HeavenQuaker Spear",
+  "weapon": "Spear",
+  "tag": "HeavenQuakerSpear",
+  "talent": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "name": "Damage Over Time Enhancement",
+        "effect": [
+          {
+            "trigger": {
+              "event": "damage",
+              "requirement": [
+                {
+                  "target": "skillTag",
+                  "value": "HeavenQuakerSpear"
+                },
+                {
+                  "target": "skillTag",
+                  "value": "Charged"
+                }
+              ],
+              "action": {
+                "type": "apply",
+                "target": "target",
+                "value": "SoulShaken",
+                "stack": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Physical Attack Up",
+        "effect": [
+          {
+            "stat": {
+              "maxPhys": {
+                "formula": {
+                  "source": "power",
+                  "multiplier": 0.264,
+                  "max": 73.92
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Damage Over Time Enhancement",
+        "effect": [
+          {
+            "requirement": [
+              {
+                "operator": "or",
+                "operand": [
+                  {
+                    "target": "skillTag",
+                    "value": "DOT"
+                  },
+                  {
+                    "target": "skillTag",
+                    "value": "HighBleed"
+                  }
+                ]
+              }
+            ],
+            "effect": {
+              "affinityDmgBonus": {
+                "formula": {
+                  "source": "maxPhys",
+                  "multiplier": 0.00012,
+                  "max": 0.18
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Bellstrike Attribute Up",
+        "effect": [
+          {
+            "rawStat": {
+              "maxBellstrike": 196,
+              "minBellstrike": 98
+            },
+            "stat": {
+              "bellstrikeDmgBonus": {
+                "formula": {
+                  "source": "maxBellstrike",
+                  "multiplier": 0.000168,
+                  "max": 0.11
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
+      }
+    ]
+  ]
+}

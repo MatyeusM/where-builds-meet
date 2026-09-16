@@ -165,3 +165,73 @@ it("retains generated rows until the latest complete editor revision arrives", a
   });
   expect(select.value).toBe(alternate.value);
 });
+
+it.each([0, 1, 3])(
+  "preserves the neighboring row's viewport position when deleting item %i",
+  async (deletePosition) => {
+    const { pendingEditorTimeline } = await import("../src/editorTimelinePreview");
+    type Result = Awaited<ReturnType<typeof requestEditorTimeline>>;
+    const requests: { result: Result; resolve: (result: Result) => void }[] = [];
+    vi.mocked(requestEditorTimeline).mockImplementation(
+      (bundle) =>
+        new Promise((resolve) => {
+          const timeline = pendingEditorTimeline(bundle.timeline).map((row) => ({ ...row, pendingCalculation: false }));
+          requests.push({
+            resolve,
+            result: { rotation: bundle.timeline.rotation, timeline, fingerprint: `delete-${requests.length}` },
+          });
+        }),
+    );
+    await act(async () => root.render(<App />));
+    await click("Rotation Editor");
+    await click("Duplicate");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    await act(async () => {
+      requests[0].resolve(requests[0].result);
+    });
+    const scroll = container.querySelector<HTMLElement>(".rotation-scroll-content")!;
+    const rows = [...scroll.querySelectorAll<HTMLElement>(".rotation-table-row[data-rotation-step-index]")].filter(
+      (row) => row.querySelector<HTMLButtonElement>('button[aria-label="Delete step"]')?.disabled === false,
+    );
+    expect(rows.length).toBeGreaterThan(deletePosition);
+    const deleted = rows[deletePosition];
+    const rowIndexes = rows.map((row) => Number(row.dataset.rotationStepIndex));
+    const deletedIndex = rowIndexes[deletePosition];
+    let layoutShift = 0;
+    const bounds = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        const index = this.classList.contains("rotation-table-row")
+          ? Number(this.dataset.rotationStepIndex)
+          : undefined;
+        return { top: 100 + (index === undefined ? 0 : index * 40 + layoutShift) } as DOMRect;
+      });
+    try {
+      scroll.scrollTop = 300;
+      await act(async () => {
+        deleted.querySelector<HTMLButtonElement>('button[aria-label="Delete step"]')!.click();
+        await vi.advanceTimersByTimeAsync(100);
+      });
+      expect(scroll.scrollTop).toBe(300);
+      expect(requests).toHaveLength(2);
+      const deletedCount = requests[0].result.rotation.steps.length - requests[1].result.rotation.steps.length;
+      const deletionStart = deletedIndex - deletedCount + 1;
+      const anchorIndex =
+        rowIndexes
+          .slice(0, deletePosition)
+          .reverse()
+          .find((index) => index < deletionStart) ??
+        rowIndexes.slice(deletePosition + 1).find((index) => index > deletedIndex)!;
+      const newAnchorIndex = anchorIndex > deletedIndex ? anchorIndex - deletedCount : anchorIndex;
+      layoutShift = 60;
+      await act(async () => {
+        requests[1].resolve(requests[1].result);
+      });
+      expect(scroll.scrollTop).toBe(300 + 60 + (newAnchorIndex - anchorIndex) * 40);
+    } finally {
+      bounds.mockRestore();
+    }
+  },
+);

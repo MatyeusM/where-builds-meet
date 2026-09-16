@@ -1,0 +1,101 @@
+{
+  "name": "Everspring Umbrella",
+  "weapon": "Umbrella",
+  "tag": "EverspringUmbrella",
+  "talent": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "name": "Perfect Catch Enhancement",
+        "effect": []
+      },
+      {
+        "name": "Physical Attack Up",
+        "effect": [
+          {
+            "stat": {
+              "minPhys": {
+                "formula": {
+                  "source": "agility",
+                  "multiplier": 0.264,
+                  "max": 73.92
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Returning Umbrella DMG Up",
+        "effect": [
+          {
+            "requirement": [
+              {
+                "target": "skillTag",
+                "value": "EverspringUmbrella"
+              },
+              {
+                "target": "skillTag",
+                "value": "ReturningUmbrella"
+              }
+            ],
+            "effect": {
+              "stat": {
+                "physDmgBonus": {
+                  "formula": {
+                    "source": "minPhys",
+                    "multiplier": 0.00016,
+                    "max": 0.12
+                  }
+                },
+                "bamboocutDmgBonus": {
+                  "formula": {
+                    "source": "minPhys",
+                    "multiplier": 0.00016,
+                    "max": 0.12
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Bamboocut Attribute Up",
+        "effect": [
+          {
+            "rawStat": {
+              "maxBamboocut": 196,
+              "minBamboocut": 98
+            },
+            "stat": {
+              "bamboocutPenetration": {
+                "formula": {
+                  "source": "minBamboocut",
+                  "multiplier": 0.0672,
+                  "max": 22
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Attr. Attack DMG Up",
+        "effect": []
+      }
+    ]
+  ]
+}

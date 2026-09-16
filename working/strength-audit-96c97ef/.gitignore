@@ -1,0 +1,6 @@
+dist/
+dist-preview/
+local/
+node_modules/
+
+*.log

@@ -1,0 +1,279 @@
+{
+  "Turnaround": {
+    "name": "Turnaround",
+    "shortName": "Turn",
+    "description": "Refunds 30% of a Mystic skill's Vitality cost, up to 10 Vitality.",
+    "duration": 5,
+    "maxStack": 1,
+    "effect": [],
+    "refresh": true
+  },
+  "Shield": {
+    "name": "Shield",
+    "shortName": "Shield",
+    "description": "A general player shield.",
+    "duration": 8,
+    "maxStack": 1,
+    "refresh": true
+  },
+  "Revelry": {
+    "name": "Revelry",
+    "shortName": "Revelry",
+    "description": "Increases damage dealt by 20%.",
+    "duration": 20,
+    "cooldown": 60,
+    "maxStack": 1,
+    "effect": [
+      {
+        "effect": {
+          "dmgBonus": 0.2
+        }
+      }
+    ],
+    "refresh": true
+  },
+  "Hawkwing": {
+    "name": "Hawkwing",
+    "shortName": "Hawk",
+    "description": "Increases physical attack by 2% per stack.",
+    "duration": 5,
+    "maxStack": 5,
+    "stackEffects": [
+      [
+        {
+          "effect": {
+            "physicalAttackBonus": 0.02
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "physicalAttackBonus": 0.04
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "physicalAttackBonus": 0.06
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "physicalAttackBonus": 0.08
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "physicalAttackBonus": 0.1
+          }
+        }
+      ]
+    ],
+    "refresh": true
+  },
+  "Bloom": {
+    "name": "Bloom",
+    "shortName": "Bloom",
+    "description": "The spring outcome of Seasonal Edge.",
+    "duration": 8,
+    "maxStack": 1,
+    "refresh": true
+  },
+  "Flare": {
+    "name": "Flare",
+    "shortName": "Flare",
+    "description": "Increases All Martial Arts by 10%, plus another 10% above 75% HP.",
+    "duration": 8,
+    "maxStack": 1,
+    "effect": [
+      {
+        "stat": {
+          "allMartialArts": 0.1
+        }
+      },
+      {
+        "requirement": [
+          {
+            "target": "selfHPPercentage",
+            "comparison": ">",
+            "amount": 75
+          }
+        ],
+        "stat": {
+          "allMartialArts": 0.1
+        }
+      }
+    ],
+    "refresh": true
+  },
+  "Yield": {
+    "name": "Yield",
+    "shortName": "Yield",
+    "description": "Increases Mystic Skill damage by 10% and restores 2 Vitality per second.",
+    "duration": 8,
+    "maxStack": 1,
+    "effect": [
+      {
+        "requirement": [
+          {
+            "target": "skillTag",
+            "value": "Mystic"
+          }
+        ],
+        "effect": {
+          "dmgBonus": 0.1
+        }
+      }
+    ],
+    "refresh": true
+  },
+  "Frost": {
+    "name": "Frost",
+    "shortName": "Frost",
+    "description": "The winter outcome of Seasonal Edge.",
+    "duration": 8,
+    "maxStack": 1,
+    "refresh": true
+  },
+  "SeasonalEdgeCooldown": {
+    "name": "Seasonal Edge Cooldown",
+    "shortName": "SE CD",
+    "description": "Seasonal Edge cannot trigger while this effect is active.",
+    "duration": 30,
+    "maxStack": 1,
+    "refresh": false
+  },
+  "YiRiver": {
+    "name": "Yi River",
+    "shortName": "Yi",
+    "showCoverage": true,
+    "description": "Increase damage by 1% and physical penetration by 2 per stack.",
+    "duration": 8,
+    "cooldown": 2,
+    "maxStack": 5,
+    "stackEffects": [
+      [
+        {
+          "effect": {
+            "dmgBonus": 0.01,
+            "physicalPenetration": 2
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "target",
+              "value": "Controlled"
+            },
+            {
+              "target": "self",
+              "value": "MoraleChantT3"
+            }
+          ],
+          "effect": {
+            "dmgBonus": 0.01
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "dmgBonus": 0.02,
+            "physicalPenetration": 4
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "target",
+              "value": "Controlled"
+            },
+            {
+              "target": "self",
+              "value": "MoraleChantT3"
+            }
+          ],
+          "effect": {
+            "dmgBonus": 0.02
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "dmgBonus": 0.03,
+            "physicalPenetration": 6
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "target",
+              "value": "Controlled"
+            },
+            {
+              "target": "self",
+              "value": "MoraleChantT3"
+            }
+          ],
+          "effect": {
+            "dmgBonus": 0.03
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "dmgBonus": 0.04,
+            "physicalPenetration": 8
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "target",
+              "value": "Controlled"
+            },
+            {
+              "target": "self",
+              "value": "MoraleChantT3"
+            }
+          ],
+          "effect": {
+            "dmgBonus": 0.04
+          }
+        }
+      ],
+      [
+        {
+          "effect": {
+            "dmgBonus": 0.05,
+            "physicalPenetration": 10
+          }
+        },
+        {
+          "requirement": [
+            {
+              "target": "target",
+              "value": "Controlled"
+            },
+            {
+              "target": "self",
+              "value": "MoraleChantT3"
+            }
+          ],
+          "effect": {
+            "dmgBonus": 0.05
+          }
+        }
+      ]
+    ],
+    "refresh": true
+  }
+}

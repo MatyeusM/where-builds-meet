@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 2,
+  "cases": {
+    "bamboocutKite/dummy-1-min-infinite-vitality": {
+      "fixture": {
+        "build": "kite-fully-relayed-min",
+        "rotation": "dummy-1-min-infinite-vitality",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 54487.59580544786,
+      "totalDamage": 3269255.7483268715,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp": {
+      "fixture": {
+        "build": "kite-fully-relayed-min-bp",
+        "rotation": "dummy-1-min-iv-bp",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 60168.91227541458,
+      "totalDamage": 3610134.736524875,
+      "duration": 60
+    },
+    "silkbindDeluge/dummy-1-min-regular-fire": {
+      "fixture": {
+        "build": "deluge-fully-relayed-min-ew",
+        "rotation": "dummy-1-min-regular-fire",
+        "martialArts": ["panaceaFan", "soulshadeUmbrella"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 28895.68247653339,
+      "totalDamage": 1733740.9485920034,
+      "duration": 60
+    },
+    "silkbindDeluge/dummy-1-min-smolder": {
+      "fixture": {
+        "build": "deluge-fully-relayed-min-ew",
+        "rotation": "dummy-1-min-smolder",
+        "martialArts": ["panaceaFan", "soulshadeUmbrella"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 34958.631268419056,
+      "totalDamage": 2097517.876105143,
+      "duration": 60
+    },
+    "silkbindDeluge/dummy-1-min-wts": {
+      "fixture": {
+        "build": "deluge-fully-relayed-min-ew",
+        "rotation": "dummy-1-min-wts",
+        "martialArts": ["panaceaFan", "soulshadeUmbrella"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 34399.96926726625,
+      "totalDamage": 2063998.156035975,
+      "duration": 60
+    },
+    "silkbindDeluge/dummy-1-min-wts-team": {
+      "fixture": {
+        "build": "deluge-fully-relayed-min-ew",
+        "rotation": "dummy-1-min-wts-team",
+        "martialArts": ["panaceaFan", "soulshadeUmbrella"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 37966.89706233573,
+      "totalDamage": 2278013.823740144,
+      "duration": 60
+    },
+    "stonesplitMight/dummy-1-min": {
+      "fixture": {
+        "build": "might-fully-relayed-max",
+        "rotation": "dummy-1-min",
+        "martialArts": ["thundercry", "stormbreaker"],
+        "breakthrough": "17",
+        "ping": 30,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 77276.26097072972,
+      "totalDamage": 4636575.658243784,
+      "duration": 60
+    },
+    "stonesplitStrength/mixed-dummy-1-min": {
+      "fixture": {
+        "build": "mixed-fully-relayed-min",
+        "rotation": "mixed-dummy-1-min",
+        "martialArts": ["snowparting", "phalanxbane"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 65165.4876095866,
+      "totalDamage": 3909929.2565751956,
+      "duration": 59.99999999999999
+    },
+    "stonesplitStrength/mixed-dummy-1-min-double-stab": {
+      "fixture": {
+        "build": "mixed-fully-relayed-double-min",
+        "rotation": "mixed-dummy-1-min-double-stab",
+        "martialArts": ["snowparting", "phalanxbane"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 65563.95202772405,
+      "totalDamage": 3933837.121663443,
+      "duration": 59.99999999999999
+    },
+    "stonesplitStrength/mixed-dummy-infinite-vitality-1-min": {
+      "fixture": {
+        "build": "mixed-fully-relayed-min",
+        "rotation": "mixed-dummy-infinite-vitality-1-min",
+        "martialArts": ["snowparting", "phalanxbane"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 66557.00536858689,
+      "totalDamage": 3993420.3221152136,
+      "duration": 60.00000000000001
+    },
+    "stonesplitStrength/mixed-dummy-smolder-poet-1-min": {
+      "fixture": {
+        "build": "mixed-fully-relayed-min",
+        "rotation": "mixed-dummy-smolder-poet-1-min",
+        "martialArts": ["snowparting", "phalanxbane"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 66371.50250018727,
+      "totalDamage": 3982290.150011236,
+      "duration": 59.99999999999999
+    },
+    "stonesplitStrength/pure-dummy-1-min": {
+      "fixture": {
+        "build": "pure-fully-relayed-min",
+        "rotation": "pure-dummy-1-min",
+        "martialArts": ["snowparting", "phalanxbane"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 63888.10710211888,
+      "totalDamage": 3833286.426127133,
+      "duration": 60
+    }
+  }
+}
