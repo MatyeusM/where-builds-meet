@@ -75,8 +75,7 @@ describe("incremental-timeline", () => {
       "Before-start attachments wait until the cast becomes ready",
     );
     assert.equal(
-      attached.find((row) => row.rotationIndex === 2).actionStates[0].buffs.find((buff) => buff.name === "ReadyBuff")
-        ?.stack,
+      attached.find((row) => row.rotationIndex === 2).actionStates[0].buffs.get("ReadyBuff")?.stack,
       1,
       "The attachment is still active at the accepted cast's hit",
     );

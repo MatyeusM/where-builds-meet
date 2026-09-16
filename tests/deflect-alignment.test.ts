@@ -50,7 +50,7 @@ describe("Successful Deflect attack alignment", () => {
     expect(deflects).toHaveLength(2);
     expect(deflects.map((row) => row.startTime + row.effectiveCastTime)).toEqual([5.1, 8.1]);
     expect(rows.find((row) => row.rotationIndex === 1)?.startTime).toBeCloseTo(4.762);
-    expect(deflects[0].buffs.some((buff) => buff.name === "Marker")).toBe(true);
+    expect(deflects[0].buffs.has("Marker")).toBe(true);
     expect(damage(rows)).toEqual([0, 0]);
     const waits = rows.filter((row) => row.step.type === "event" && row.step.event === "Delay");
     expect(waits).toHaveLength(2);

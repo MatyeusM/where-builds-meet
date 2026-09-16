@@ -140,11 +140,7 @@ describe("Qi attachment ordering", () => {
     });
     const row = timeline.find((row) => row.step.skill === "Probe")!;
     const states = row.actions.map((_, index) => row.actionStates[index]);
-    expect(states.map((state) => state.debuffs.some((effect) => effect.name === "Depleted"))).toEqual([
-      placement === "before",
-      true,
-      false,
-    ]);
+    expect(states.map((state) => state.debuffs.has("Depleted"))).toEqual([placement === "before", true, false]);
     expect(states[0].targetQiRatio).toBe(placement === "before" ? 0 : 1);
     expect(states[1].targetQiRatio).toBe(0);
   });

@@ -44,9 +44,9 @@ it("Might holds Defense through the intended dummy pairs and stores two Cadence 
     const next = timeline.find(
       (row) => row.kind === "rotation" && row.step.type === "skill" && row.rotationIndex! > defense.rotationIndex!,
     );
-    expect(next?.buffs.find((effect) => effect.name === "Cadence")?.stack).toBe(2);
+    expect(next?.buffs.get("Cadence")?.stack).toBe(2);
     // Later defenses can occur during the cooldown of a stored-Cadence conversion.
-    if (defense === defenses[0]) expect(next?.buffs.some((effect) => effect.name === "Riposte")).toBe(true);
+    if (defense === defenses[0]) expect(next?.buffs.has("Riposte")).toBe(true);
   }
   expect(
     timeline.some((row) => row.step.type === "event" && row.step.event === "Buff" && row.step.buff === "Cadence"),

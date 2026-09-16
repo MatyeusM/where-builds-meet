@@ -84,7 +84,7 @@ for (const sampled of [false, true]) {
         (row) => row.step.skill === "InfernalLight1Rodent",
       )!;
       expect(
-        light.buffs
+        Array.from(light.buffs.values())
           .filter((buff) => ["RodentRampage", "EnhancedRodentRampage"].includes(buff.name))
           .map((buff) => buff.name),
       ).toEqual(["EnhancedRodentRampage"]);

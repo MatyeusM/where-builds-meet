@@ -1,4 +1,12 @@
 import type { WeaponFamily, WeaponId } from "../types";
+import {
+  trackedEffectMetadata,
+  effectKey,
+  effectState,
+  mapTrackedEffects,
+  filterTrackedEffects,
+  type EffectState,
+} from "./trackedEffectState";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
 import { DEFAULT_TARGET_HP_RATIO, normalizePing } from "./combatDefaults";
 import {
@@ -192,8 +200,8 @@ export type TimelineRow = {
   effectiveCastTime: number;
   skill?: SkillRecord;
   actions: EditableObject[];
-  buffs: TrackedEffect[];
-  debuffs: TrackedEffect[];
+  buffs: EffectState;
+  debuffs: EffectState;
   modifierEffects: EditableObject[];
   unconditionalDamageEffects?: UnconditionalDamageEffects;
   actionSkillTags?: Record<number, string[]>;
@@ -201,8 +209,8 @@ export type TimelineRow = {
   actionStates: Record<
     number,
     {
-      buffs: TrackedEffect[];
-      debuffs: TrackedEffect[];
+      buffs: EffectState;
+      debuffs: EffectState;
       distance: number;
       currentHP: number;
       currentHPRatio: number;
@@ -324,11 +332,9 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
   if (!calculatedTimeline) return structuralTimeline;
   const groupIds = new Set(calculatedTimeline.filter((row) => row.kind === "damageGroup").map((row) => row.id));
   const calculatedRows = new Map(calculatedTimeline.map((row) => [row.id, row]));
-  const mergeEffectRuntimeState = (structural: TrackedEffect[], calculated: TrackedEffect[]) =>
-    structural.map((effect) => {
-      const calculatedEffect = calculated.find(
-        (candidate) => candidate.name === effect.name && candidate.playerRecipientIndex === effect.playerRecipientIndex,
-      );
+  const mergeEffectRuntimeState = (structural: EffectState, calculated: EffectState) =>
+    mapTrackedEffects(structural, (effect) => {
+      const calculatedEffect = calculated.get(effectKey(effect.name, effect.playerRecipientIndex));
       return calculatedEffect?.remainingTriggers === undefined
         ? effect
         : { ...effect, remainingTriggers: calculatedEffect.remainingTriggers };
@@ -463,15 +469,13 @@ export function effectsForTrackedEffect(stack: number | undefined, definition: E
 function boostDamageCollection(
   skill: SkillRecord | undefined,
   effectName: string,
-  activeEffects: TrackedEffect[],
+  source: TrackedEffect | undefined,
   fallbackSourceRowId: string,
 ) {
   if (typeof skill?.collectBoostDamage === "string") {
     return { sourceRowId: fallbackSourceRowId, collectBoostDamage: skill.collectBoostDamage };
   }
-  const inheritedSource = activeEffects.find(
-    (effect) => effect.collectBoostDamage === effectName && effect.sourceRowId,
-  );
+  const inheritedSource = source?.collectBoostDamage === effectName && source.sourceRowId ? source : undefined;
   return inheritedSource
     ? { sourceRowId: inheritedSource.sourceRowId ?? fallbackSourceRowId, collectBoostDamage: effectName }
     : { sourceRowId: fallbackSourceRowId };
@@ -507,7 +511,7 @@ export type TimelineBuildInput = {
 export type TimelineActionResolverFactory = (
   input: TimelineBuildInput,
   timeline: TimelineRow[],
-  initialEffects: { buffs: TrackedEffect[]; debuffs: TrackedEffect[] },
+  initialEffects: { buffs: EffectState; debuffs: EffectState },
 ) => ((
   row: TimelineRow,
   actionIndex: number,
@@ -576,8 +580,8 @@ export function mergeEffectDefinition(definition: EffectDefinition, modify: Edit
 
 export function requirementsPass(
   requirement: unknown,
-  buffs: TrackedEffect[],
-  debuffs: TrackedEffect[],
+  buffs: EffectState,
+  debuffs: EffectState,
   skillTags: string[],
   innerWayConditions: Set<string>,
   weapons: WeaponId[] = [],
@@ -600,9 +604,7 @@ export function requirementsPass(
       default:
         break;
     }
-    const trackedEffect = (target === "target" ? debuffs : buffs).find(
-      (effect) => effect.name === value && (target === "target" || (effect.playerRecipientIndex ?? 0) === 0),
-    );
+    const trackedEffect = target === "target" ? debuffs.get(value) : buffs.get(value);
     if (requiredStack === "max")
       return Boolean(trackedEffect?.maxStack !== undefined && (trackedEffect.stack ?? 0) >= trackedEffect.maxStack);
     if (typeof requiredStack === "number") return Boolean(trackedEffect && (trackedEffect.stack ?? 0) >= requiredStack);
@@ -685,7 +687,7 @@ export function requirementsPass(
 }
 
 function applyTrackedEffect(
-  effects: TrackedEffect[],
+  effects: EffectState,
   name: string,
   stack: number | undefined,
   duration: number | undefined,
@@ -697,9 +699,7 @@ function applyTrackedEffect(
   playerRecipientIndex?: number,
   remainingTriggers?: number,
 ) {
-  const matchesRecipient = (effect: TrackedEffect) =>
-    effect.name === name && effect.playerRecipientIndex === playerRecipientIndex;
-  const existing = effects.find(matchesRecipient);
+  const existing = effects.get(effectKey(name, playerRecipientIndex));
   const nextStack = Math.min(maxStackOverride ?? Number.POSITIVE_INFINITY, (existing?.stack ?? 0) + (stack ?? 1));
   const persistent = existing?.persistent === true;
   const expiresAt =
@@ -720,28 +720,28 @@ function applyTrackedEffect(
         ? { collectBoostDamage: existing.collectBoostDamage }
         : {}),
   };
-  return [...effects.filter((effect) => !matchesRecipient(effect)), nextEffect];
+  return new Map(effects).set(effectKey(name, playerRecipientIndex), nextEffect);
 }
 
-function extendTrackedEffect(effects: TrackedEffect[], name: string, duration: number, time: number) {
-  return effects.map((effect) =>
+function extendTrackedEffect(effects: EffectState, name: string, duration: number, time: number) {
+  return mapTrackedEffects(effects, (effect) =>
     effect.name !== name || effect.expiresAt === undefined || effect.expiresAt <= time
       ? effect
       : { ...effect, expiresAt: effect.expiresAt + duration },
   );
 }
 
-function consumeTrackedEffect(effects: TrackedEffect[], name: string, stack: number | "all" | undefined) {
-  if (stack === "all") return effects.filter((effect) => effect.name !== name);
+function consumeTrackedEffect(effects: EffectState, name: string, stack: number | "all" | undefined) {
+  if (stack === "all") return filterTrackedEffects(effects, (effect) => effect.name !== name);
   const amount = Math.max(1, stack ?? 1);
-  return effects.flatMap((effect) => {
-    if (effect.name !== name || effect.persistent) return [effect];
+  return mapTrackedEffects(effects, (effect) => {
+    if (effect.name !== name || effect.persistent) return effect;
     const remaining = (effect.stack ?? 1) - amount;
-    return remaining > 0 ? [{ ...effect, stack: remaining }] : [];
+    return remaining > 0 ? { ...effect, stack: remaining } : undefined;
   });
 }
 
-function resolveCastModifierEffect(effect: EditableObject, buffs: TrackedEffect[], debuffs: TrackedEffect[]) {
+function resolveCastModifierEffect(effect: EditableObject, buffs: EffectState, debuffs: EffectState) {
   return Object.fromEntries(
     Object.entries(effect).map(([field, value]) => {
       if (!value || typeof value !== "object" || Array.isArray(value)) return [field, value];
@@ -753,7 +753,7 @@ function resolveCastModifierEffect(effect: EditableObject, buffs: TrackedEffect[
       )
         return [field, value];
       const trackedEffects = dynamicValue.target === "target" ? debuffs : buffs;
-      const stack = trackedEffects.find((trackedEffect) => trackedEffect.name === dynamicValue.param1)?.stack ?? 0;
+      const stack = trackedEffects.get(dynamicValue.param1)?.stack ?? 0;
       return [field, stack * dynamicValue.param2];
     }),
   );
@@ -1017,8 +1017,8 @@ export function buildRotationTimeline(
       effectiveCastTime: castTime,
       skill,
       actions,
-      buffs: [],
-      debuffs: [],
+      buffs: effectState(),
+      debuffs: effectState(),
       modifierEffects: [],
       actionStates: {},
     };
@@ -1213,54 +1213,80 @@ export function buildRotationTimeline(
     } = tracked;
     return unchanged;
   };
+  const preparedEffects = new WeakMap<TrackedEffect, TrackedEffect>();
+  const preparedContributions = new Map<string, Map<number, ReturnType<typeof splitUnconditionalDamageEffectRules>>>();
   const prepareTrackedEffect = (tracked: TrackedEffect): TrackedEffect => {
-    if (effectContentModifiedNames.has(tracked.name)) return withoutAggregatedDamageEffects(tracked);
-    const { unconditional, remaining } = splitUnconditionalDamageEffectRules(
-      effectsForTrackedEffect(tracked.stack, effectDefinitions[tracked.name]),
-    );
-    return Object.keys(unconditional).length
-      ? { ...tracked, unconditionalDamageEffects: unconditional, perHitEffectRules: remaining }
-      : withoutAggregatedDamageEffects(tracked);
+    const cached = preparedEffects.get(tracked);
+    if (cached) return cached;
+    let prepared: TrackedEffect;
+    if (effectContentModifiedNames.has(tracked.name)) prepared = withoutAggregatedDamageEffects(tracked);
+    else {
+      let stacks = preparedContributions.get(tracked.name);
+      if (!stacks) preparedContributions.set(tracked.name, (stacks = new Map()));
+      const stack = tracked.stack ?? 1;
+      let contribution = stacks.get(stack);
+      if (!contribution) {
+        contribution = splitUnconditionalDamageEffectRules(
+          effectsForTrackedEffect(tracked.stack, effectDefinitions[tracked.name]),
+        );
+        stacks.set(stack, contribution);
+      }
+      prepared = {
+        ...tracked,
+        unconditionalDamageEffects: contribution.unconditional,
+        perHitEffectRules: contribution.remaining,
+      };
+    }
+    preparedEffects.set(tracked, prepared);
+    preparedEffects.set(prepared, prepared);
+    return prepared;
   };
-  const prepareTrackedEffects = (effects: TrackedEffect[]) => effects.map(prepareTrackedEffect);
-  let buffs: TrackedEffect[] = prepareTrackedEffects(
-    (input.initialBuffs ?? []).map((effect) => ({
-      ...effect,
-      persistent: true,
-      expiresAt: undefined,
-    })),
+  const prepareTrackedEffects = (effects: EffectState) => mapTrackedEffects(effects, prepareTrackedEffect);
+  let buffs: EffectState = prepareTrackedEffects(
+    effectState(
+      (input.initialBuffs ?? []).map((effect) => ({
+        ...effect,
+        persistent: true,
+        expiresAt: undefined,
+      })),
+    ),
   );
-  let debuffs: TrackedEffect[] = prepareTrackedEffects(
-    (input.initialDebuffs ?? []).map((effect) => ({
-      ...effect,
-      persistent: true,
-      expiresAt: undefined,
-    })),
+  let debuffs: EffectState = prepareTrackedEffects(
+    effectState(
+      (input.initialDebuffs ?? []).map((effect) => ({
+        ...effect,
+        persistent: true,
+        expiresAt: undefined,
+      })),
+    ),
   );
   const resolveAction = createActionResolver?.(input, rows, { buffs, debuffs });
   let unconditionalDamageEffects = addUnconditionalDamageEffects(
-    ...buffs
+    ...Array.from(buffs.values())
       .filter((effect) => (effect.playerRecipientIndex ?? 0) === 0)
       .map((effect) => effect.unconditionalDamageEffects),
-    ...debuffs.map((effect) => effect.unconditionalDamageEffects),
+    ...Array.from(debuffs.values()).map((effect) => effect.unconditionalDamageEffects),
   );
   const refreshUnconditionalDamageEffects = () => {
     unconditionalDamageEffects = addUnconditionalDamageEffects(
-      ...buffs
+      ...Array.from(buffs.values())
         .filter((effect) => (effect.playerRecipientIndex ?? 0) === 0)
         .map((effect) => effect.unconditionalDamageEffects),
-      ...debuffs.map((effect) => effect.unconditionalDamageEffects),
+      ...Array.from(debuffs.values()).map((effect) => effect.unconditionalDamageEffects),
     );
   };
-  const setBuffs = (next: TrackedEffect[]) => {
+  const setBuffs = (next: EffectState) => {
+    if (next === buffs) return;
     buffs = prepareTrackedEffects(next);
     for (const name of accumulatorStates.keys()) {
-      if (!buffs.some((effect) => effect.name === name)) accumulatorStates.delete(name);
+      if (!buffs.has(name)) accumulatorStates.delete(name);
     }
     refreshUnconditionalDamageEffects();
   };
-  const setDebuffs = (next: TrackedEffect[]) => {
+  const setDebuffs = (next: EffectState) => {
+    if (next === debuffs) return;
     debuffs = prepareTrackedEffects(next);
+    trackedEffectMetadata(debuffs);
     refreshUnconditionalDamageEffects();
   };
   let distance = 1;
@@ -1589,13 +1615,15 @@ export function buildRotationTimeline(
       waitingCast.delay.until = time;
     }
   };
-  const prune = (effects: TrackedEffect[], time: number) =>
-    effects.some((effect) => effect.expiresAt !== undefined && effect.expiresAt <= time)
-      ? effects.filter((effect) => effect.expiresAt === undefined || effect.expiresAt > time)
+  const prune = (effects: EffectState, time: number) =>
+    trackedEffectMetadata(effects).nextExpiry <= time
+      ? filterTrackedEffects(effects, (effect) => effect.expiresAt === undefined || effect.expiresAt > time)
       : effects;
   const groupSize = input.rotation.groupSize === 5 || input.rotation.groupSize === 10 ? input.rotation.groupSize : 1;
-  const selectPlayerRecipient = (effects: TrackedEffect[], name: string) => {
-    const copies = effects.filter((effect) => effect.name === name && effect.playerRecipientIndex !== undefined);
+  const selectPlayerRecipient = (effects: EffectState, name: string) => {
+    const copies = Array.from(effects.values()).filter(
+      (effect) => effect.name === name && effect.playerRecipientIndex !== undefined,
+    );
     const occupied = new Set(copies.map((effect) => effect.playerRecipientIndex));
     for (let recipientIndex = 0; recipientIndex < groupSize; recipientIndex += 1) {
       if (!occupied.has(recipientIndex)) return recipientIndex;
@@ -1609,8 +1637,8 @@ export function buildRotationTimeline(
   };
   const getModifiedEffectDefinition = (
     name: string,
-    currentBuffs: TrackedEffect[],
-    currentDebuffs: TrackedEffect[],
+    currentBuffs: EffectState,
+    currentDebuffs: EffectState,
     skillTags: string[],
   ) => {
     const setupModifiers = setupEffects
@@ -1779,8 +1807,8 @@ export function buildRotationTimeline(
         effectiveCastTime: 0,
         skill: rowSkill,
         actions,
-        buffs: [],
-        debuffs: [],
+        buffs: effectState(),
+        debuffs: effectState(),
         modifierEffects: [],
         actionStates: {},
       };
@@ -1933,8 +1961,8 @@ export function buildRotationTimeline(
           ? { recordingId: recordings.get(periodicEffectKey(target, name))?.id }
           : {}),
       })),
-      buffs: [],
-      debuffs: [],
+      buffs: effectState(),
+      debuffs: effectState(),
       modifierEffects: [],
       actionStates: {},
     };
@@ -2003,9 +2031,7 @@ export function buildRotationTimeline(
       if (valueObject?.operator !== "first" || valueObject.resolveAt !== "skillStart") return;
       const targetEffects = action.target === "target" ? debuffs : buffs;
       const resolvedValue = Array.isArray(valueObject.operand)
-        ? valueObject.operand.find(
-            (candidate) => typeof candidate === "string" && targetEffects.some((effect) => effect.name === candidate),
-          )
+        ? valueObject.operand.find((candidate) => typeof candidate === "string" && targetEffects.has(candidate))
         : undefined;
       startResolvedActionValues.set(actionResolutionKey(row, actionIndex), resolvedValue);
     });
@@ -2115,8 +2141,8 @@ export function buildRotationTimeline(
           resources: { ...resources },
           currentMartialArt,
           currentWeapon,
-          buffs: [...buffs],
-          debuffs: [...debuffs],
+          buffs,
+          debuffs,
           unconditionalDamageEffects: { ...unconditionalDamageEffects },
         },
       };
@@ -2149,7 +2175,7 @@ export function buildRotationTimeline(
         );
     };
     collectThresholds(segment.reference?.requirement);
-    for (const effect of [...buffs, ...debuffs])
+    for (const effect of [...buffs.values(), ...debuffs.values()])
       if (effect.expiresAt !== undefined) candidates.push(Math.max(time, earliest, effect.expiresAt));
     return (
       candidates
@@ -2445,7 +2471,7 @@ export function buildRotationTimeline(
       ["self", buffs],
       ["target", debuffs],
     ] as const) {
-      for (const effect of effects) {
+      for (const effect of effects.values()) {
         if (effect.expiresAt === undefined || effect.expiresAt > event.time) continue;
         const schedule = expirationScheduleIds.get(
           periodicEffectKey(effect.playerRecipientIndex === undefined ? target : "player", effect.name),
@@ -2455,7 +2481,7 @@ export function buildRotationTimeline(
     }
     if (event.expiresEffect && !validatedExpirationSchedules.has(event.expiresEffect.scheduleId)) {
       const targetEffects = event.expiresEffect.target === "target" ? debuffs : buffs;
-      const current = targetEffects.find((effect) => effect.name === event.expiresEffect!.name);
+      const current = targetEffects.get(event.expiresEffect!.name);
       if (
         current?.expiresAt !== event.expiresEffect.expiresAt ||
         expirationScheduleIds.get(periodicEffectKey(event.expiresEffect.target, event.expiresEffect.name)) !==
@@ -2614,8 +2640,8 @@ export function buildRotationTimeline(
         currentMartialArt = event.row.skill.martialArt;
         currentWeapon = event.row.skill.weapon;
       }
-      event.row.buffs = [...buffs];
-      event.row.debuffs = [...debuffs];
+      event.row.buffs = buffs;
+      event.row.debuffs = debuffs;
       event.row.distance = distance;
       event.row.currentHP = currentHP;
       event.row.currentHPRatio = currentHPRatio;
@@ -2703,8 +2729,8 @@ export function buildRotationTimeline(
       action.damageScale = 1;
     if (event.kind === "action")
       event.row.actionStates[event.actionIndex ?? -1] = {
-        buffs: [...buffs],
-        debuffs: [...debuffs],
+        buffs,
+        debuffs,
         distance,
         currentHP,
         currentHPRatio,
@@ -2713,7 +2739,7 @@ export function buildRotationTimeline(
         resources: { ...resources },
         currentMartialArt: requirementState().currentMartialArt,
         currentWeapon: requirementState().currentWeapon,
-        unconditionalDamageEffects: { ...unconditionalDamageEffects },
+        unconditionalDamageEffects,
       };
     const skillTags = event.row.actionSkillTags?.[event.actionIndex ?? -1] ?? event.row.skill?.tags ?? [];
     const resolutionKey = actionResolutionKey(event.row, event.actionIndex ?? -1);
@@ -2788,9 +2814,7 @@ export function buildRotationTimeline(
         valueObject?.operator === "first" &&
         Array.isArray(valueObject.operand)
       )
-        value = valueObject.operand.find(
-          (candidate) => typeof candidate === "string" && targetEffects.some((effect) => effect.name === candidate),
-        );
+        value = valueObject.operand.find((candidate) => typeof candidate === "string" && targetEffects.has(candidate));
       if (typeof value === "string") {
         const next = consumeTrackedEffect(
           targetEffects,
@@ -2799,7 +2823,7 @@ export function buildRotationTimeline(
         );
         if (action.target === "target") setDebuffs(next);
         else setBuffs(next);
-        if (!next.some((effect) => effect.name === value)) {
+        if (!next.has(value)) {
           const target = action.target === "target" ? "target" : "self";
           const key = periodicEffectKey(target, value);
           const activeEffect = activePeriodicEffects[key];
@@ -2861,8 +2885,8 @@ export function buildRotationTimeline(
             ? { damageScale: Number(item.damageScale ?? 1) * probability, hitProbability: probability }
             : {}),
         })),
-        buffs: [...buffs],
-        debuffs: [...debuffs],
+        buffs,
+        debuffs,
         modifierEffects: [],
         actionStates: {},
       };
@@ -2910,9 +2934,8 @@ export function buildRotationTimeline(
     ) => {
       const threshold = maxStackActionFor(resultingStack, definition.maxStack, definition.onMaxStack);
       if (!threshold) return false;
-      const remaining = (target === "target" ? debuffs : buffs).filter(
-        (effect) => effect.name !== name || effect.playerRecipientIndex !== playerRecipientIndex,
-      );
+      const remaining = new Map(target === "target" ? debuffs : buffs);
+      remaining.delete(effectKey(name, playerRecipientIndex));
       if (target === "target") setDebuffs(remaining);
       else setBuffs(remaining);
       const key = periodicEffectKey(target, name, playerRecipientIndex);
@@ -2933,7 +2956,7 @@ export function buildRotationTimeline(
       return true;
     };
     const emitCustomEvent = (eventName: string) => {
-      for (const activeBuff of buffs) {
+      for (const activeBuff of buffs.values()) {
         const definition = effectDefinitions[activeBuff.name];
         const accumulator = accumulatorStates.get(activeBuff.name);
         if (!accumulator || (accumulator.expiresAt !== undefined && accumulator.expiresAt <= event.time)) continue;
@@ -2949,7 +2972,7 @@ export function buildRotationTimeline(
           accumulator.firedTriggers += 1;
           if (Number.isFinite(maxTriggers))
             setBuffs(
-              buffs.map((effect) =>
+              mapTrackedEffects(buffs, (effect) =>
                 effect.name === activeBuff.name && effect.playerRecipientIndex === activeBuff.playerRecipientIndex
                   ? { ...effect, remainingTriggers: Math.max(0, maxTriggers - accumulator.firedTriggers) }
                   : effect,
@@ -2962,7 +2985,7 @@ export function buildRotationTimeline(
     };
     const accumulateEventValue = (eventName: string, amount: number) => {
       if (!(amount > 0)) return;
-      for (const activeBuff of buffs) {
+      for (const activeBuff of buffs.values()) {
         const definition = effectDefinitions[activeBuff.name];
         const accumulatorDefinition = definition?.accumulator;
         if (!accumulatorDefinition || accumulatorDefinition.event !== eventName) continue;
@@ -3084,7 +3107,7 @@ export function buildRotationTimeline(
         );
         if (triggerAction.target === "target") setDebuffs(next);
         else setBuffs(next);
-        if (!next.some((effect) => effect.name === triggerAction.value)) {
+        if (!next.has(triggerAction.value as string)) {
           const target = triggerAction.target === "target" ? "target" : "self";
           const key = periodicEffectKey(target, triggerAction.value);
           const activeEffect = activePeriodicEffects[key];
@@ -3220,10 +3243,10 @@ export function buildRotationTimeline(
       const collection = boostDamageCollection(
         undefined,
         triggerAction.value,
-        [...buffs, ...debuffs],
+        typeof triggerAction.boostDamageSource === "string" ? buffs.get(triggerAction.boostDamageSource) : undefined,
         damageSource(definition, fallbackSourceRowId),
       );
-      const existing = targetEffects.find((effect) => effect.name === triggerAction.value);
+      const existing = targetEffects.get(triggerAction.value as string);
       if (existing && triggerAction.reapply === false) return;
       if (
         resolveMaxStackApplication(
@@ -3250,7 +3273,7 @@ export function buildRotationTimeline(
       );
       if (triggerAction.target === "target") setDebuffs(next);
       else setBuffs(next);
-      const appliedEffect = next.find((effect) => effect.name === triggerAction.value);
+      const appliedEffect = next.get(triggerAction.value as string);
       if (definition.periodic && appliedEffect) {
         const key = periodicEffectKey(periodicTarget, triggerAction.value);
         const effectSourceRowId = applicationSource;
@@ -3578,15 +3601,13 @@ export function buildRotationTimeline(
       if (typeof modifierDuration?.duration === "number") duration = modifierDuration.duration;
       if (typeof action.duration === "number") duration = action.duration;
       if (action.type === "apply") duration = applicationDuration(duration, action.target, event.row, skillTags);
-      const existing = targetEffects.find(
-        (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
-      );
+      const existing = targetEffects.get(effectKey(action.value, playerRecipientIndex));
       const fallbackSourceRowId =
         event.row.step.type === "event" ? event.row.id : (event.row.sourceRowId ?? event.row.id);
       const collection = boostDamageCollection(
         event.row.skill,
         action.value,
-        [...buffs, ...debuffs],
+        typeof action.boostDamageSource === "string" ? buffs.get(action.boostDamageSource) : undefined,
         damageSource(definition, fallbackSourceRowId),
       );
       const shouldApply = action.type === "apply" && (!existing || action.reapply !== false);
@@ -3622,16 +3643,12 @@ export function buildRotationTimeline(
             : targetEffects;
       const snapshotThreshold = resolvedAction?.accumulatorThreshold;
       if (shouldApply && definition.accumulator && typeof snapshotThreshold === "number") {
-        const applied = next.find(
-          (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
-        );
+        const applied = next.get(effectKey(action.value, playerRecipientIndex));
         if (applied) applied.accumulatorThreshold = snapshotThreshold;
       }
       if (action.target === "target") setDebuffs(next);
       else setBuffs(next);
-      const appliedEffect = next.find(
-        (effect) => effect.name === action.value && effect.playerRecipientIndex === playerRecipientIndex,
-      );
+      const appliedEffect = next.get(effectKey(action.value, playerRecipientIndex));
       if (shouldApply && definition.periodic && appliedEffect) {
         const key = periodicEffectKey(periodicTarget, action.value, playerRecipientIndex);
         const effectSourceRowId = damageSource(definition, event.row.sourceRowId ?? event.row.id);
@@ -3766,8 +3783,8 @@ export function buildRotationTimeline(
       effectiveCastTime: 0,
       actions: [],
       actionStates: {},
-      buffs: [],
-      debuffs: [],
+      buffs: effectState(),
+      debuffs: effectState(),
       resourceConsumption: undefined,
     }));
     sortedRows.unshift(...groupRows);

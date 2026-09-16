@@ -34,8 +34,8 @@ describe("conditional action ordering", () => {
     const row = timeline.find((row) => row.step.skill === "Probe")!;
     const hits = row.actions.flatMap((action, index) => (action.type === "damage" ? [row.actionStates[index]] : []));
     expect(hits).toHaveLength(2);
-    expect(hits[0].debuffs.some((effect) => effect.name === "Mark")).toBe(false);
-    expect(hits[1].debuffs.some((effect) => effect.name === "Mark")).toBe(enabled);
+    expect(hits[0].debuffs.has("Mark")).toBe(false);
+    expect(hits[1].debuffs.has("Mark")).toBe(enabled);
   });
 
   it.each([

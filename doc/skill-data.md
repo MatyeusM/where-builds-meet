@@ -562,10 +562,16 @@ sample. Skills with no attributed damage, including Deflect itself, are omitted.
 Boost-damage attribution is declared on the enabling skill with
 `collectBoostDamage`. Its value is the buff ID whose counterfactual damage
 should be credited to that cast. The field and source cast are passed into buffs
-applied by the skill. If the named buff is applied later, the active carrier
-buff passes the same source forward. Flute names its directly applied `Flute`
+applied by the skill. If the named buff is applied later, its applying action
+sets `boostDamageSource` to the enabling self-buff ID. A direct map lookup
+inherits that buff's source cast when its `collectBoostDamage` matches the
+applied effect. No other active buff is searched. Flute names its directly applied `Flute`
 buff. Ghostly Step names `MysteryDMGBoost`, so `Mystery` or `MysteryUmbra`
-carries the source until Perfect Dodge applies the damage buff. Both then use
+carries the source until Perfect Dodge applies the damage buff. Perfect Dodge
+has a conditional application for each enabling buff, each naming its source.
+Ghostly Step and Umbra consume the opposite enabling buff before applying their
+own, so the two cannot coexist through these casts. An existing damage boost
+retains its original credit until a later application replaces it. Both then use
 the same per-hit calculation with and without the named buff.
 
 ### Multi-action skills

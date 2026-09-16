@@ -52,11 +52,11 @@ describe("held Defense", () => {
     const successes = skillRows(rows, "DefenseSuccess");
     expect(successes).toHaveLength(2);
     expect(successes.map((row) => row.startTime)).toEqual([1, 1]);
-    expect(successes[0].actionStates[0].buffs).toEqual([]);
-    expect(successes[0].actionStates[1].buffs.map((effect) => effect.name)).toContain("Riposte");
+    expect(successes[0].actionStates[0].buffs.size).toBe(0);
+    expect(Array.from(successes[0].actionStates[1].buffs.values()).map((effect) => effect.name)).toContain("Riposte");
     const state = skillRows(rows, "Probe")[0];
-    expect(state.buffs.find((effect) => effect.name === "Cadence")?.stack).toBe(2);
-    expect(state.buffs.some((effect) => effect.name === "Riposte")).toBe(true);
+    expect(state.buffs.get("Cadence")?.stack).toBe(2);
+    expect(state.buffs.has("Riposte")).toBe(true);
     expect(state.currentHP).toBe(10000);
   });
   it("grants no rewards without an attack or Exquisite Scenery", () => {
@@ -65,7 +65,7 @@ describe("held Defense", () => {
     const data = input([cast(1), attack(0.5), { type: "skill", skill: "Probe" }, end(2)]);
     data.innerWayConditions = [];
     const rows = buildRotationTimeline(data);
-    expect(skillRows(rows, "Probe")[0].buffs).toEqual([]);
+    expect(skillRows(rows, "Probe")[0].buffs.size).toBe(0);
     expect(skillRows(rows, "Probe")[0].currentHP).toBe(10000);
   });
   it.each([0, 40, 100])(
@@ -93,7 +93,7 @@ describe("held Defense", () => {
     const rows = buildRotationTimeline(
       input([cast(1.1), attack(1), cast(1.1), attack(2), { type: "skill", skill: "Probe" }, end(3)]),
     );
-    expect(skillRows(rows, "Probe")[0].buffs.find((effect) => effect.name === "Cadence")?.stack).toBe(2);
+    expect(skillRows(rows, "Probe")[0].buffs.get("Cadence")?.stack).toBe(2);
     expect(skillRows(rows, "RiposteTrigger")).toHaveLength(1);
   });
   it("reduces Avalanche timing and consumes Riposte when the cast starts", () => {
@@ -105,7 +105,7 @@ describe("held Defense", () => {
     const hits = avalanche.actions.filter((action) => action.type === "damage");
     expect(hits[0].time).toBeCloseTo(0.318);
     expect(hits[1].time).toBeCloseTo(1);
-    expect(skillRows(rows, "Probe")[0].buffs.some((effect) => effect.name === "Riposte")).toBe(false);
+    expect(skillRows(rows, "Probe")[0].buffs.has("Riposte")).toBe(false);
   });
   it("preserves duration through export/import and migrates the old Defense action anchor", () => {
     const rotation = input([

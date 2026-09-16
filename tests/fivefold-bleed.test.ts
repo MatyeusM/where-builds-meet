@@ -81,10 +81,7 @@ describe("fivefold-bleed", () => {
       [5.51, 6.51, 7.51, 8.51],
       "Consumption cancels old ticks; the next application starts fresh.",
     );
-    assert.ok(
-      bursts(capped)[0].debuffs.every((effect) => effect.name !== "WeepingBlood"),
-      "The burst must see the consumed state.",
-    );
+    assert.ok(bursts(capped)[0].debuffs.has("WeepingBlood") === false, "The burst must see the consumed state.");
     const tenHits = buildRotationTimeline(inputFor(Array(10).fill(0)), () => 0);
     assert.equal(
       bursts(tenHits).length,
@@ -94,8 +91,8 @@ describe("fivefold-bleed", () => {
     assert.equal(ticks(tenHits).length, 0);
     assert.ok(
       tenHits.every((row) =>
-        Object.values(row.actionStates).every((state) =>
-          state.debuffs.every((effect) => effect.name !== "WeepingBlood" || effect.stack < 5),
+        Object.values(row.actionStates).every(
+          (state) => !state.debuffs.has("WeepingBlood") || state.debuffs.get("WeepingBlood")!.stack! < 5,
         ),
       ),
     );
@@ -200,11 +197,7 @@ describe("fivefold-bleed", () => {
     const manual = buildRotationTimeline(manualInput);
     assert.equal(bursts(manual).length, 1, "Ordinary apply actions use the same threshold rule");
     assert.equal(ticks(manual).length, 0, "Ordinary applications cancel pending DOT ticks atomically");
-    assert.ok(
-      manual
-        .find((row) => row.id === "rotation-0")
-        .actionStates[2].debuffs.every((effect) => effect.name !== "WeepingBlood"),
-    );
+    assert.ok(manual.find((row) => row.id === "rotation-0").actionStates[2].debuffs.has("WeepingBlood") === false);
     const generic = {
       ...manualInput,
       skills: {
@@ -230,11 +223,7 @@ describe("fivefold-bleed", () => {
       1,
       "Thresholds use the data-defined cap and skill, including overflow",
     );
-    assert.ok(
-      genericRows
-        .find((row) => row.id === "rotation-0")
-        .actionStates[2].buffs.every((effect) => effect.name !== "ThresholdBuff"),
-    );
+    assert.ok(genericRows.find((row) => row.id === "rotation-0").actionStates[2].buffs.has("ThresholdBuff") === false);
     const uncappedInput = inputFor([0, 0.1, 0.2, 0.3, 0.4, 4.5]);
     const { onMaxStack: _threshold, ...ordinaryDot } = dots.WeepingBlood;
     uncappedInput.dots = { WeepingBlood: ordinaryDot };
@@ -243,9 +232,7 @@ describe("fivefold-bleed", () => {
     assert.equal(bursts(ordinaryRows).length, 0);
     assert.ok(
       ticks(ordinaryRows).every(
-        (row) =>
-          row.actions[0].damageScale === 1 &&
-          row.actionStates[0].debuffs.find((effect) => effect.name === "WeepingBlood")?.stack === 5,
+        (row) => row.actions[0].damageScale === 1 && row.actionStates[0].debuffs.get("WeepingBlood")?.stack === 5,
       ),
       "Effects without a threshold rule retain capped stacks without multiplying tick damage",
     );

@@ -83,7 +83,7 @@ describe("infernal-twinblades-talents", () => {
         ...extra,
       });
     const observed = (rows) => rows.filter((row) => row.step.skill === "Observe");
-    const buff = (row, name) => row.buffs.find((entry) => entry.name === name);
+    const buff = (row, name) => row.buffs.get(name);
 
     for (const dodge of ["PerfectDodge", "PerfectDodgeCancel"]) {
       for (const enabled of [false, true]) {
@@ -131,7 +131,7 @@ describe("infernal-twinblades-talents", () => {
       close(buff(first, "Existing").expiresAt, 10, "Unrelated active buff is unchanged");
       close(buff(first, "NoRefresh").expiresAt, 10, "Non-refreshing stack application preserves expiry");
       assert.equal(buff(first, "Permanent").expiresAt, undefined);
-      close(first.debuffs.find((entry) => entry.name === "Enemy").expiresAt, 11, "Debuffs are unchanged");
+      close(first.debuffs.get("Enemy").expiresAt, 11, "Debuffs are unchanged");
       close(buff(extended, "Direct").expiresAt, 10, "Explicit extensions are not multiplied");
       assert(!buff(later, "Existing") && !buff(later, "Direct"), "Ordinary expirations still remove buffs");
       assert(

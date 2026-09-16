@@ -31,11 +31,11 @@ describe("formbend", () => {
       weapons: ["thundercry", "stormbreaker"],
     });
     expect(
-      !thunderShockTimeline[0].actionStates[0].debuffs.some((effect) => effect.name === "Vulnerable"),
+      !thunderShockTimeline[0].actionStates[0].debuffs.has("Vulnerable"),
       "Thunder Shock hit 1 must deal damage before applying Vulnerable.",
     ).toBeTruthy();
     expect(
-      thunderShockTimeline[0].actionStates[2].debuffs.some((effect) => effect.name === "Vulnerable"),
+      thunderShockTimeline[0].actionStates[2].debuffs.has("Vulnerable"),
       "Thunder Shock hit 2 must benefit from Vulnerable applied after hit 1.",
     ).toBeTruthy();
     const probeSkill = {
@@ -62,7 +62,7 @@ describe("formbend", () => {
         setupEffects: [],
         weapons: ["thundercry", "stormbreaker"],
       });
-      return timeline[1].actionStates[0].buffs.some((effect) => effect.name === "Shield");
+      return timeline[1].actionStates[0].buffs.has("Shield");
     };
     expect(!shieldAtProbe([]), "The base eight-second Shield must expire before the probe hit.").toBeTruthy();
     expect(shieldAtProbe(["FormBend4"]), "Formbend four-piece must extend Shield by two seconds.").toBeTruthy();
@@ -91,7 +91,7 @@ describe("formbend", () => {
         timeline[0].effectiveCastTime === 3,
         "AoR T4 Shield must retain its three-second timeline duration.",
       ).toBeTruthy();
-      return timeline[1].actionStates[0].buffs.some((effect) => effect.name === "Shield");
+      return timeline[1].actionStates[0].buffs.has("Shield");
     };
     expect(!aoRShieldAtProbe([]), "AoR T4 Shield must expire after its 14-second duration.").toBeTruthy();
     expect(
@@ -121,16 +121,13 @@ describe("formbend", () => {
       weapons: ["thundercry", "stormbreaker"],
     });
     const lateBuffs = durationTimeline[2].actionStates[0].buffs;
+    expect(lateBuffs.has("Shield"), "AoR and Formbend must extend Shield at the late probe.").toBeTruthy();
     expect(
-      lateBuffs.some((effect) => effect.name === "Shield"),
-      "AoR and Formbend must extend Shield at the late probe.",
-    ).toBeTruthy();
-    expect(
-      lateBuffs.some((effect) => effect.name === "Breakthrough" && effect.expiresAt === 22),
+      lateBuffs.get("Breakthrough")?.expiresAt === 22,
       "Art of Resistance T0/T4 and Formbend must extend Breakthrough from 12 to 20 seconds.",
     ).toBeTruthy();
     expect(
-      lateBuffs.some((effect) => effect.name === "Shield" && effect.expiresAt === 18),
+      lateBuffs.get("Shield")?.expiresAt === 18,
       "Art of Resistance and Formbend must extend Shield from 8 to 16 seconds.",
     ).toBeTruthy();
   });

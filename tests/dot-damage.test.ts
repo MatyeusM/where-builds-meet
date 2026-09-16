@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-dot-damage.mjs.
@@ -87,15 +88,15 @@ describe("dot-damage", () => {
     const fifthStack = soulShaken.stackEffects[4];
     const umbraRule = fifthStack[1];
     expect(
-      requirementsPass(umbraRule.requirement, [], [], ["HeavenQuakerSpear"], new Set()),
+      requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["HeavenQuakerSpear"], new Set()),
       "Heavenquaker Spear must satisfy Soul-Shaken's Umbra requirement.",
     ).toBeTruthy();
     expect(
-      requirementsPass(umbraRule.requirement, [], [], ["StrategicSword"], new Set()),
+      requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["StrategicSword"], new Set()),
       "Strategic Sword must satisfy Soul-Shaken's Umbra requirement.",
     ).toBeTruthy();
     expect(
-      !requirementsPass(umbraRule.requirement, [], [], ["SnowpartingBlade"], new Set()),
+      !requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["SnowpartingBlade"], new Set()),
       "Non-Umbra martial arts must not receive Soul-Shaken's conditional bonus.",
     ).toBeTruthy();
 
@@ -106,7 +107,7 @@ describe("dot-damage", () => {
       [["Other", "DOT"], 1.25],
     ]) {
       const selected = fifthStack
-        .filter((rule) => requirementsPass(rule.requirement, [], [], tags, new Set()))
+        .filter((rule) => requirementsPass(rule.requirement, effectState([]), effectState([]), tags, new Set()))
         .map((rule) => rule.effect ?? rule);
       expect(
         closeTo(damage(selected, true).total / baselineDot.total, multiplier),

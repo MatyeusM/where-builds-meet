@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 
@@ -26,7 +27,9 @@ describe("empirical-edge", () => {
     ];
     const resolvedPenetration = (tags, conditions = []) =>
       cognition.stackEffects[4]
-        .filter((effect) => requirementsPass(effect.requirement, [], [], tags, new Set(conditions)))
+        .filter((effect) =>
+          requirementsPass(effect.requirement, effectState([]), effectState([]), tags, new Set(conditions)),
+        )
         .reduce(
           (total, effect) => {
             for (const field of penetrationFields) total[field] += effect.effect[field] ?? 0;
@@ -80,8 +83,7 @@ describe("empirical-edge", () => {
       weapons: ["heavenwill", "skygrasp"],
     });
     const row = timeline.find((candidate) => candidate.id === "rotation-0");
-    const cognitionStackAt = (actionIndex) =>
-      row.actionStates[actionIndex].buffs.find((buff) => buff.name === "Cognition")?.stack ?? 0;
+    const cognitionStackAt = (actionIndex) => row.actionStates[actionIndex].buffs.get("Cognition")?.stack ?? 0;
     expect(
       [0, 1, 1, 2].every((stack, index) => cognitionStackAt(index) === stack),
       "Cognition must apply after damage and reject reapplications during its one-second cooldown.",

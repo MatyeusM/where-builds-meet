@@ -64,6 +64,13 @@ including DOTs and feedback loops. No last-damage discovery pass is needed.
 
 ## Damage and reuse
 
+The live state also owns buff/debuff snapshots and their numeric aggregate.
+Actions share unchanged immutable snapshots and consume prepared effects/stats
+from the existing action resolver. Named effect requirements query the
+authoritative maps directly; no parallel active-effect array is maintained. See
+[stat-pipeline.md](stat-pipeline.md#sequential-prepared-combat-state) for reuse
+keys, invalidation, historical ownership, and attribution behavior.
+
 Each baseline and event-changing variant performs one chronological combat
 traversal. A worker-local action resolver calls the shared damage/healing formulas
 inside that traversal. HP, accumulators, recording settlements, and damage-event

@@ -184,11 +184,7 @@ describe("weapon-set-four-piece", () => {
     for (const roll of [undefined, () => 0.5]) {
       const selected = buildRotationTimeline(bundle("Cleftpeak", 4, deflectOptions).timeline, roll);
       const hit = selected.find((row) => row.step.skill === "Probe").actionStates[0];
-      assert.equal(
-        hit.buffs.find((buff) => buff.name === "Cleftpeak").stack,
-        5,
-        "Successful Deflect immediately grants five stacks",
-      );
+      assert.equal(hit.buffs.get("Cleftpeak").stack, 5, "Successful Deflect immediately grants five stacks");
       for (const [tier, skill] of [
         [2, "DeflectSuccessful"],
         [4, "Deflect"],
@@ -198,9 +194,7 @@ describe("weapon-set-four-piece", () => {
           roll,
         );
         assert.ok(
-          !rows
-            .find((row) => row.step.skill === "Probe")
-            .actionStates[0].buffs.some((buff) => buff.name === "Cleftpeak"),
+          !rows.find((row) => row.step.skill === "Probe").actionStates[0].buffs.has("Cleftpeak"),
           "Ordinary Deflect and two-piece selection grant no stacks before damage",
         );
       }
@@ -216,9 +210,7 @@ describe("weapon-set-four-piece", () => {
         roll,
       );
       assert.ok(
-        !expired
-          .find((row) => row.step.skill === "Probe")
-          .actionStates[0].buffs.some((buff) => buff.name === "Cleftpeak"),
+        !expired.find((row) => row.step.skill === "Probe").actionStates[0].buffs.has("Cleftpeak"),
         "Deflect stacks expire after five seconds",
       );
     }

@@ -56,13 +56,13 @@ describe("attack response windows", () => {
     expect(dodge.effectiveCastTime).toBe(0);
     expect(dodge.resources.Vitality).toBe(0);
     expect(follow.startTime).toBeCloseTo(4.64);
-    expect(follow.actionStates[0].buffs.some((buff) => buff.name === "Etherwrath")).toBe(false);
+    expect(follow.actionStates[0].buffs.has("Etherwrath")).toBe(false);
     for (const index of [1, 2]) {
       expect(follow.actionStates[index].resources.Vitality).toBe(3);
-      expect(follow.actionStates[index].buffs.find((buff) => buff.name === "Etherwrath")?.expiresAt).toBeCloseTo(
+      expect(follow.actionStates[index].buffs.get("Etherwrath")?.expiresAt).toBeCloseTo(
         5 + kiteBuffs.Etherwrath.duration,
       );
-      expect(follow.actionStates[index].buffs.find((buff) => buff.name === "Disintegration")?.expiresAt).toBeCloseTo(
+      expect(follow.actionStates[index].buffs.get("Disintegration")?.expiresAt).toBeCloseTo(
         5 + windBuffs.Disintegration.duration,
       );
     }

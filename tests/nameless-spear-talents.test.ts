@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, it } from "vitest";
 
 // Ported from script/probe/check-nameless-spear-talents.mjs.
@@ -41,15 +42,24 @@ describe("nameless-spear-talents", () => {
     if (
       !requirementsPass(
         affinityRule.requirement,
-        [{ name: "EndlessGale" }],
-        [],
+        effectState([{ name: "EndlessGale" }]),
+        effectState([]),
         [],
         new Set(),
         ["namelessSword", "namelessSpear"],
         {},
         {},
       ) ||
-      requirementsPass(affinityRule.requirement, [], [], [], new Set(), ["namelessSword", "namelessSpear"], {}, {})
+      requirementsPass(
+        affinityRule.requirement,
+        effectState([]),
+        effectState([]),
+        [],
+        new Set(),
+        ["namelessSword", "namelessSpear"],
+        {},
+        {},
+      )
     )
       throw new Error("Affinity DMG Up must work with Endless Gale while low Endurance remains unsimulated.");
 

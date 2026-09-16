@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 
@@ -33,8 +34,8 @@ describe("script", () => {
     expect(
       requirementsPass(
         scripts.Wraithstrike.effect.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         [],
         new Set(),
         [],
@@ -46,8 +47,8 @@ describe("script", () => {
     expect(
       !requirementsPass(
         scripts.Insight.effect.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["MartialArts"],
         new Set(),
         [],
@@ -111,8 +112,7 @@ describe("script", () => {
       "Self HP and Take Damage must affect only their attached action and later state.",
     ).toBeTruthy();
     expect(
-      !hit?.actionStates[0].buffs.some((buff) => buff.name === "Revelry") &&
-        hit?.actionStates[1].buffs.some((buff) => buff.name === "Revelry"),
+      !hit?.actionStates[0].buffs.has("Revelry") && hit?.actionStates[1].buffs.has("Revelry"),
       "Revelry Script must apply Revelry when Take Damage leaves self HP at 30% or below.",
     ).toBeTruthy();
 

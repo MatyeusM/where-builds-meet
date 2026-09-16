@@ -1572,6 +1572,13 @@
         ]
       },
       {
+        "type": "consume",
+        "target": "self",
+        "value": "MysteryUmbra",
+        "stack": "all",
+        "time": 0
+      },
+      {
         "type": "apply",
         "target": "self",
         "value": "Mystery",
@@ -1619,6 +1626,13 @@
             "value": "Turnaround"
           }
         ]
+      },
+      {
+        "type": "consume",
+        "target": "self",
+        "value": "Mystery",
+        "stack": "all",
+        "time": 0
       },
       {
         "type": "apply",

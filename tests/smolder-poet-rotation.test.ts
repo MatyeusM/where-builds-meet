@@ -60,7 +60,7 @@ describe("smolder-poet-rotation", () => {
     expect(
       poet5DamageIndex !== undefined &&
         poet5DamageIndex >= 0 &&
-        !poet5Row?.actionStates[poet5DamageIndex]?.buffs.some((effect) => effect.name === "EnhanceDrunkenPoet"),
+        !poet5Row?.actionStates[poet5DamageIndex]?.buffs.has("EnhanceDrunkenPoet"),
       "Poet 5 must consume every Enhanced Drunken Poet stack before its direct hit.",
     ).toBeTruthy();
     const poet5Explosions = timeline.filter(

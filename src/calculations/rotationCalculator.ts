@@ -21,7 +21,6 @@ import {
   type InnerWayEffectRule,
   type TimelineBuildInput,
   type TimelineRow,
-  type TrackedEffect,
 } from "./rotationTimeline";
 import type { CharacterStats, EnemyProfile, WeaponId } from "../types";
 import attunementJson from "../../data/attunement.json";
@@ -33,6 +32,8 @@ import {
   type HealingBreakdown,
 } from "./healing";
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark";
+import { trackedEffectMetadata, effectState, filterTrackedEffects, type EffectState } from "./trackedEffectState";
+import { createPreparedEffectState } from "./preparedEffectState";
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults";
 import {
   addUnconditionalDamageEffects,
@@ -323,8 +324,8 @@ function effectsForSeasonalOutcome(context: DamageContext, outcome: SeasonalEdge
     .filter((effect) =>
       requirementsPass(
         effect.requirement,
-        context.buffs.map((name) => ({ name })),
-        [],
+        effectState(context.buffs.map((name) => ({ name }))),
+        effectState(),
         context.skillTags,
         new Set(),
         context.weapons,
@@ -842,8 +843,8 @@ function calculateBreakdown(
     if (duration <= 0) return 0;
     const windowEnd = anchorTime + duration;
     const intervals: Array<[number, number]> = [];
-    const collect = (effects: TrackedEffect[]) => {
-      const effect = effects.find((candidate) => candidate.name === id);
+    const collect = (effects: EffectState) => {
+      const effect = effects.get(id);
       if (!effect) return;
       const start = Math.max(anchorTime, effect.appliedAt ?? anchorTime);
       const end = Math.min(windowEnd, effect.expiresAt ?? windowEnd);
@@ -1478,7 +1479,7 @@ function createTimelineEntryBuilder(
   updateTimelineState = false,
   includePrecombat = false,
   live?: {
-    initialEffects: { buffs: TrackedEffect[]; debuffs: TrackedEffect[] };
+    initialEffects: { buffs: EffectState; debuffs: EffectState };
     seasonalWindows: SeasonalEdgeWindow[];
   },
   collectAttribution = true,
@@ -1505,8 +1506,8 @@ function createTimelineEntryBuilder(
   );
   const globalContributions = addUnconditionalDamageEffects(
     ...[
-      ...(live?.initialEffects.buffs ?? timeline[0]?.buffs ?? []),
-      ...(live?.initialEffects.debuffs ?? timeline[0]?.debuffs ?? []),
+      ...(live?.initialEffects.buffs ?? timeline[0]?.buffs ?? effectState()).values(),
+      ...(live?.initialEffects.debuffs ?? timeline[0]?.debuffs ?? effectState()).values(),
     ]
       .filter((effect) => globalNames.has(effect.name) && (effect.playerRecipientIndex ?? 0) === 0)
       .map((effect) => effect.unconditionalDamageEffects),
@@ -1530,6 +1531,11 @@ function createTimelineEntryBuilder(
     return split.remaining ? [{ ...rule, effect: split.remaining }] : [];
   });
   const dynamicInnerWayRules = rules.filter((rule) => !requirementIsSkillStatic(rule.requirement));
+  const preparedEffectsFor = createPreparedEffectState([setupEffects, rules, input.effectDefinitions]);
+  const globalStatContributions = Object.fromEntries(
+    Object.entries(globalContributions).filter(([key]) => key.startsWith("stat.") || key.startsWith("effectiveStat.")),
+  );
+  const preparedAggregates = new Map<string, UnconditionalDamageEffects>();
   const skillStaticEffectCache = new Map<
     string,
     {
@@ -1546,10 +1552,32 @@ function createTimelineEntryBuilder(
     const startedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
     const applicableEffects = [
       ...staticSetupEffects
-        .filter((effect) => requirementsPass(effect.requirement, [], [], skillTags, conditions, state.weapons, {}, {}))
+        .filter((effect) =>
+          requirementsPass(
+            effect.requirement,
+            effectState(),
+            effectState(),
+            skillTags,
+            conditions,
+            state.weapons,
+            {},
+            {},
+          ),
+        )
         .map(unwrappedEffect),
       ...staticInnerWayRules
-        .filter((rule) => requirementsPass(rule.requirement, [], [], skillTags, conditions, state.weapons, {}, {}))
+        .filter((rule) =>
+          requirementsPass(
+            rule.requirement,
+            effectState(),
+            effectState(),
+            skillTags,
+            conditions,
+            state.weapons,
+            {},
+            {},
+          ),
+        )
         .map((rule) => rule.effect),
     ];
     let aggregated: UnconditionalDamageEffects = {};
@@ -1626,7 +1654,7 @@ function createTimelineEntryBuilder(
       resources: row.resources,
       unconditionalDamageEffects: row.unconditionalDamageEffects,
     };
-    const buffs = actionState.buffs.filter((effect) => (effect.playerRecipientIndex ?? 0) === 0);
+    const buffs = trackedEffectMetadata(actionState.buffs).self;
     const debuffs = actionState.debuffs;
     const resources = actionState.resources;
     const skillTags = row.actionSkillTags?.[actionIndex] ?? row.skill?.tags ?? [];
@@ -1642,130 +1670,139 @@ function createTimelineEntryBuilder(
       currentDebuffs: typeof debuffs,
       currentResources: typeof resources,
       currentRequirementState = requirementState,
-    ) => {
-      const effectStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
-      const activeSetupEffects = dynamicSetupEffects
-        .filter((effect) =>
-          requirementsPass(
-            effect.requirement,
-            currentBuffs,
-            currentDebuffs,
-            skillTags,
-            conditions,
-            state.weapons,
-            currentResources,
-            currentRequirementState,
-          ),
-        )
-        .map(unwrappedEffect);
-      const activeInnerWayEffects = dynamicInnerWayRules
-        .filter((rule) =>
-          requirementsPass(
-            rule.requirement,
-            currentBuffs,
-            currentDebuffs,
-            skillTags,
-            conditions,
-            state.weapons,
-            currentResources,
-            currentRequirementState,
-          ),
-        )
-        .map((rule) => rule.effect);
-      const activeTrackedEffects = [...currentBuffs, ...currentDebuffs]
-        .flatMap((tracked) => {
-          if (tracked.perHitEffectRules) return tracked.perHitEffectRules;
-          const setupModifiers = setupEffects
-            .filter(
-              (effect) =>
-                effect.target === tracked.name &&
-                effect.modify &&
-                typeof effect.modify === "object" &&
-                !Array.isArray(effect.modify) &&
-                requirementsPass(
-                  effect.requirement,
-                  currentBuffs,
-                  currentDebuffs,
-                  skillTags,
-                  conditions,
-                  state.weapons,
-                  currentResources,
-                  currentRequirementState,
-                ),
+    ) =>
+      preparedEffectsFor(
+        currentBuffs,
+        currentDebuffs,
+        currentResources,
+        currentRequirementState,
+        skillStaticEffects,
+        row.actionModifierEffects?.[actionIndex] ?? row.modifierEffects,
+        () => {
+          const effectStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0;
+          const activeSetupEffects = dynamicSetupEffects
+            .filter((effect) =>
+              requirementsPass(
+                effect.requirement,
+                currentBuffs,
+                currentDebuffs,
+                skillTags,
+                conditions,
+                state.weapons,
+                currentResources,
+                currentRequirementState,
+              ),
             )
-            .map((effect) => effect.modify as EditableObject);
-          const innerWayModifiers = rules
-            .filter(
-              (rule) =>
-                rule.target === tracked.name &&
-                rule.modify &&
-                requirementsPass(
-                  rule.requirement,
-                  currentBuffs,
-                  currentDebuffs,
-                  skillTags,
-                  conditions,
-                  state.weapons,
-                  currentResources,
-                  currentRequirementState,
-                ),
+            .map(unwrappedEffect);
+          const activeInnerWayEffects = dynamicInnerWayRules
+            .filter((rule) =>
+              requirementsPass(
+                rule.requirement,
+                currentBuffs,
+                currentDebuffs,
+                skillTags,
+                conditions,
+                state.weapons,
+                currentResources,
+                currentRequirementState,
+              ),
             )
-            .map((rule) => rule.modify!);
-          const definition = [...setupModifiers, ...innerWayModifiers].reduce(mergeEffectDefinition, {
-            ...input.effectDefinitions[tracked.name],
-          });
-          return effectsForTrackedEffect(tracked.stack, definition);
-        })
-        .filter(
-          (effect): effect is EditableObject => Boolean(effect) && typeof effect === "object" && !Array.isArray(effect),
-        )
-        .filter((effect) =>
-          requirementsPass(
-            effect.requirement,
-            currentBuffs,
-            currentDebuffs,
-            skillTags,
-            conditions,
-            state.weapons,
-            currentResources,
-            currentRequirementState,
-          ),
-        )
-        .map((effect) =>
-          effect.effect && typeof effect.effect === "object" && !Array.isArray(effect.effect)
-            ? (effect.effect as EditableObject)
-            : effect,
-        );
-      const resolvedEffects = [
-        ...skillStaticEffects.remaining,
-        ...activeSetupEffects,
-        ...activeInnerWayEffects,
-        ...activeTrackedEffects,
-        ...(row.actionModifierEffects?.[actionIndex] ?? row.modifierEffects),
-      ];
-      if (import.meta.env.DEV) finishCalculationPhase("effectResolution", effectStartedAt);
-      return resolvedEffects;
-    };
+            .map((rule) => rule.effect);
+          const activeTrackedEffects = [...currentBuffs.values(), ...currentDebuffs.values()]
+            .flatMap((tracked) => {
+              if (tracked.perHitEffectRules) return tracked.perHitEffectRules;
+              const setupModifiers = setupEffects
+                .filter(
+                  (effect) =>
+                    effect.target === tracked.name &&
+                    effect.modify &&
+                    typeof effect.modify === "object" &&
+                    !Array.isArray(effect.modify) &&
+                    requirementsPass(
+                      effect.requirement,
+                      currentBuffs,
+                      currentDebuffs,
+                      skillTags,
+                      conditions,
+                      state.weapons,
+                      currentResources,
+                      currentRequirementState,
+                    ),
+                )
+                .map((effect) => effect.modify as EditableObject);
+              const innerWayModifiers = rules
+                .filter(
+                  (rule) =>
+                    rule.target === tracked.name &&
+                    rule.modify &&
+                    requirementsPass(
+                      rule.requirement,
+                      currentBuffs,
+                      currentDebuffs,
+                      skillTags,
+                      conditions,
+                      state.weapons,
+                      currentResources,
+                      currentRequirementState,
+                    ),
+                )
+                .map((rule) => rule.modify!);
+              const definition = [...setupModifiers, ...innerWayModifiers].reduce(mergeEffectDefinition, {
+                ...input.effectDefinitions[tracked.name],
+              });
+              return effectsForTrackedEffect(tracked.stack, definition);
+            })
+            .filter(
+              (effect): effect is EditableObject =>
+                Boolean(effect) && typeof effect === "object" && !Array.isArray(effect),
+            )
+            .filter((effect) =>
+              requirementsPass(
+                effect.requirement,
+                currentBuffs,
+                currentDebuffs,
+                skillTags,
+                conditions,
+                state.weapons,
+                currentResources,
+                currentRequirementState,
+              ),
+            )
+            .map((effect) =>
+              effect.effect && typeof effect.effect === "object" && !Array.isArray(effect.effect)
+                ? (effect.effect as EditableObject)
+                : effect,
+            );
+          const resolvedEffects = [
+            ...skillStaticEffects.remaining,
+            ...activeSetupEffects,
+            ...activeInnerWayEffects,
+            ...activeTrackedEffects,
+            ...(row.actionModifierEffects?.[actionIndex] ?? row.modifierEffects),
+          ];
+          if (import.meta.env.DEV) finishCalculationPhase("effectResolution", effectStartedAt);
+          return resolvedEffects;
+        },
+      );
+    const aggregateKey = JSON.stringify([actionState.unconditionalDamageEffects, skillStaticEffects.aggregated]);
+    let aggregate = preparedAggregates.get(aggregateKey);
+    if (!aggregate) {
+      aggregate = addUnconditionalDamageEffects(
+        subtractUnconditionalDamageEffects(actionState.unconditionalDamageEffects, globalStatContributions),
+        skillStaticEffects.aggregated,
+      );
+      preparedAggregates.set(aggregateKey, aggregate);
+    }
     const context: DamageContext = {
       stats: skillStaticEffects.stats,
       attunement,
       skillTags,
       weapons: state.weapons,
-      buffs: buffs.map((effect) => effect.name),
+      buffs: trackedEffectMetadata(buffs).names,
       enemy: state.enemy,
       derivedStats: skillStaticEffects.derivedStats,
       effects: effectsForState(buffs, debuffs, resources),
-      unconditionalDamageEffects: addUnconditionalDamageEffects(
-        subtractUnconditionalDamageEffects(
-          actionState.unconditionalDamageEffects,
-          Object.fromEntries(
-            Object.entries(globalContributions).filter(
-              ([key]) => key.startsWith("stat.") || key.startsWith("effectiveStat."),
-            ),
-          ),
-        ),
-        skillStaticEffects.aggregated,
-      ),
+      unconditionalDamageEffects: aggregate,
       distance: actionState.distance,
       currentHPRatio: actionState.currentHPRatio,
       targetHPRatio: actionState.targetHPRatio,
@@ -1773,15 +1810,15 @@ function createTimelineEntryBuilder(
     };
     const attributionContexts =
       collectAttribution && action.type === "damage"
-        ? buffs.flatMap((tracked) => {
+        ? Array.from(buffs.values()).flatMap((tracked) => {
             if (tracked.collectBoostDamage !== tracked.name || !tracked.sourceRowId) return [];
-            const counterfactualBuffs = buffs.filter((candidate) => candidate !== tracked);
+            const counterfactualBuffs = filterTrackedEffects(buffs, (candidate) => candidate !== tracked);
             return [
               {
                 sourceRowId: tracked.sourceRowId,
                 context: {
                   ...context,
-                  buffs: counterfactualBuffs.map((effect) => effect.name),
+                  buffs: trackedEffectMetadata(counterfactualBuffs).names,
                   effects: effectsForState(counterfactualBuffs, debuffs, resources),
                   unconditionalDamageEffects: subtractUnconditionalDamageEffects(
                     context.unconditionalDamageEffects,
@@ -1802,8 +1839,8 @@ function createTimelineEntryBuilder(
         timelineTime: actionTime,
         timelineOrder: actionOrder,
         sourceRowId: row.sourceRowId ?? row.id,
-        activeBuffStacks: Object.fromEntries(buffs.map((effect) => [effect.name, effect.stack ?? 1])),
-        activeDebuffStacks: Object.fromEntries(debuffs.map((effect) => [effect.name, effect.stack ?? 1])),
+        activeBuffStacks: trackedEffectMetadata(buffs).stacks,
+        activeDebuffStacks: trackedEffectMetadata(debuffs).stacks,
         ...(hawkwing ? { hawkwing } : {}),
         ...(insightfulStrike ? { insightfulStrike } : {}),
         ...(seasonalEdge

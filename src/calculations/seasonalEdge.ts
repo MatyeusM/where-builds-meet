@@ -196,19 +196,17 @@ function seasonalEdgeCooldownAt(time: number, sourceRowId: string, windows: Seas
 
 export function applySeasonalEdgeCooldownToTimeline(timeline: TimelineRow[], windows: SeasonalEdgeWindow[]) {
   const withCooldown = (buffs: TimelineRow["buffs"], time: number, sourceRowId: string) => {
-    const retained = buffs.filter((buff) => buff.name !== "SeasonalEdgeCooldown");
+    const next = new Map(buffs);
+    next.delete("SeasonalEdgeCooldown");
     const window = seasonalEdgeCooldownAt(time, sourceRowId, windows);
-    return window
-      ? [
-          ...retained,
-          {
-            name: "SeasonalEdgeCooldown",
-            stack: 1,
-            maxStack: 1,
-            expiresAt: window.cooldownExpiresAt,
-          },
-        ]
-      : retained;
+    if (window)
+      next.set("SeasonalEdgeCooldown", {
+        name: "SeasonalEdgeCooldown",
+        stack: 1,
+        maxStack: 1,
+        expiresAt: window.cooldownExpiresAt,
+      });
+    return next;
   };
   for (const row of timeline) {
     row.buffs = withCooldown(row.buffs, row.startTime, row.id);

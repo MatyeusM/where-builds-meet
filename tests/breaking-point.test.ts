@@ -56,7 +56,7 @@ describe("breaking-point", () => {
       });
       return timeline
         .filter((row) => row.kind === "rotation" && row.step.type === "skill")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
+        .map((row) => row.buffs.get("Disintegration")?.stack ?? 0);
     };
     expect(
       JSON.stringify(stackStarts(4, false)) === JSON.stringify([0, 1, 2, 3]),
@@ -111,7 +111,7 @@ describe("breaking-point", () => {
       ).toBeTruthy();
       const observedStacks = timeline
         .filter((row) => row.step.skill === "Observe")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
+        .map((row) => row.buffs.get("Disintegration")?.stack ?? 0);
       expect(
         JSON.stringify(observedStacks) === JSON.stringify([5, 0, 1, 5]),
         "Dodge must share only the T6 proc cooldown, permit normal stacks during it, and proc again at 15 seconds.",
@@ -125,7 +125,7 @@ describe("breaking-point", () => {
       ).toBeTruthy();
       const belowT6 = runDodgeProbe(5)
         .filter((row) => row.step.skill === "Observe")
-        .map((row) => row.buffs.find((effect) => effect.name === "Disintegration")?.stack ?? 0);
+        .map((row) => row.buffs.get("Disintegration")?.stack ?? 0);
       expect(
         JSON.stringify(belowT6) === JSON.stringify([0, 0, 1, 0]),
         "Dodges must not grant Disintegration below Breaking Point T6.",

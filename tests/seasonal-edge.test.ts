@@ -153,7 +153,7 @@ describe("seasonal-edge", () => {
       100,
       "A Conversion used during the 30-second cooldown must not open a new season window",
     );
-    const cooldownPlate = result.timeline[1].buffs.find((buff) => buff.name === "SeasonalEdgeCooldown");
+    const cooldownPlate = result.timeline[1].buffs.get("SeasonalEdgeCooldown");
     if (!cooldownPlate) throw new Error("Seasonal Edge must expose its deterministic cooldown as a timeline buff.");
     closeTo(cooldownPlate.expiresAt, 31, "Seasonal Edge cooldown must expire 30 seconds after the trigger");
     if (

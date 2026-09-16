@@ -992,6 +992,10 @@ the difference is attributed to the source cast; rotation total damage and the
 damaged skill's own breakdown do not change. Flute names `Flute`, while Ghostly
 Step names `MysteryDMGBoost`; the intermediate `Mystery` or `MysteryUmbra` buff
 carries Ghostly Step's source until Perfect Dodge applies the named damage buff.
+That application names its enabling self-buff using `boostDamageSource`; a
+direct map lookup transfers ownership without depending on iteration order.
+The two Ghostly Step variants consume each other's enabling buff before
+applying their own.
 Both skills therefore use the same tracked-effect and counterfactual path.
 Their per-cast Damage and Average DPS cells show direct values followed by
 parenthesized values that include the attributed buff damage; sorting uses the

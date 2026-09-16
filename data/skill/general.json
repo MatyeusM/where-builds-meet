@@ -274,19 +274,26 @@
         "time": 0,
         "requirement": [
           {
-            "operator": "or",
-            "operand": [
-              {
-                "target": "self",
-                "value": "Mystery"
-              },
-              {
-                "target": "self",
-                "value": "MysteryUmbra"
-              }
-            ]
+            "target": "self",
+            "value": "Mystery"
           }
-        ]
+        ],
+        "boostDamageSource": "Mystery"
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "MysteryDMGBoost",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [
+          {
+            "target": "self",
+            "value": "MysteryUmbra"
+          }
+        ],
+        "boostDamageSource": "MysteryUmbra"
       },
       {
         "type": "trigger",

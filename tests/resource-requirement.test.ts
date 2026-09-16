@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 import { readFile } from "node:fs/promises";
@@ -25,18 +26,20 @@ describe("resource-requirement", () => {
     ).toBeTruthy();
 
     expect(
-      !requirementsPass(requirement, [], [], [], new Set(), ["heavenwill", "skygrasp"], {}),
+      !requirementsPass(requirement, effectState([]), effectState([]), [], new Set(), ["heavenwill", "skygrasp"], {}),
       "A missing resource must default to zero.",
     ).toBeTruthy();
     expect(
-      requirementsPass(requirement, [], [], [], new Set(), ["heavenwill", "skygrasp"], { HeavensWill: 1 }),
+      requirementsPass(requirement, effectState([]), effectState([]), [], new Set(), ["heavenwill", "skygrasp"], {
+        HeavensWill: 1,
+      }),
       "A resource equal to the threshold must pass a greater-than-or-equal requirement.",
     ).toBeTruthy();
     expect(
       !requirementsPass(
         [{ target: "resource", value: "HeavensWill", comparison: ">", amount: 1 }],
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         [],
         new Set(),
         ["heavenwill", "skygrasp"],

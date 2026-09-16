@@ -61,7 +61,7 @@ describe("etherwrath", () => {
     );
     const stackingRow = stackingTimeline.find((row) => row.step.skill === "Hit");
     expect(
-      stackingRow.actionStates[5].buffs.find((effect) => effect.name === "Etherwrath")?.stack === 5,
+      stackingRow.actionStates[5].buffs.get("Etherwrath")?.stack === 5,
       "The sixth damage action must see the five stacks granted by the previous five hits.",
     ).toBeTruthy();
     const dodgeTimeline = buildRotationTimeline(
@@ -78,7 +78,7 @@ describe("etherwrath", () => {
     );
     const dodgeObserver = dodgeTimeline.find((row) => row.step.skill === "Observe");
     expect(
-      dodgeObserver.actionStates[0].buffs.find((effect) => effect.name === "Etherwrath")?.stack === 5,
+      dodgeObserver.actionStates[0].buffs.get("Etherwrath")?.stack === 5,
       "Perfect Dodge must apply five Etherwrath stacks directly.",
     ).toBeTruthy();
 
@@ -112,13 +112,13 @@ describe("etherwrath", () => {
     dotInput.effectDefinitions = { ...kiteBuffs, ...dots };
     const dotTimeline = buildRotationTimeline(dotInput);
     const watched = dotTimeline.find((row) => row.step.skill === "Watch");
-    const activeStack = watched.actionStates[0].buffs.find((effect) => effect.name === "Etherwrath");
+    const activeStack = watched.actionStates[0].buffs.get("Etherwrath");
     expect(
       activeStack?.stack === 1 && activeStack.expiresAt === 8,
       "A DOT tick must neither add nor refresh Etherwrath stacks.",
     ).toBeTruthy();
     expect(
-      !watched.actionStates[1].buffs.some((effect) => effect.name === "Etherwrath"),
+      !watched.actionStates[1].buffs.has("Etherwrath"),
       "DOT and untagged damage must not keep Etherwrath alive.",
     ).toBeTruthy();
     const dotOnly = buildRotationTimeline({
@@ -129,9 +129,7 @@ describe("etherwrath", () => {
       },
     });
     expect(
-      dotOnly.every((row) =>
-        Object.values(row.actionStates).every((state) => !state.buffs.some((effect) => effect.name === "Etherwrath")),
-      ),
+      dotOnly.every((row) => Object.values(row.actionStates).every((state) => !state.buffs.has("Etherwrath"))),
       "DOT-only and untagged damage cannot initially activate Etherwrath.",
     ).toBeTruthy();
   });

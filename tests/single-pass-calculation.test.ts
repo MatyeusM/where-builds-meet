@@ -6,6 +6,7 @@ import {
   calculateSimulatedRotationRun,
 } from "../src/calculations/rotationCalculator";
 import { buildPresetRotationBundle } from "../src/App";
+import { resolveActionStatContext } from "../src/calculations/actionStats";
 import { loadDpsSnapshotFixtures, dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures";
 
 afterEach(() => {
@@ -73,6 +74,19 @@ describe("single-pass calculation", () => {
     expect(observed.build).toHaveBeenCalledTimes(1);
     expect(observed.factories).toBe(1);
     expect(baseline.metrics.dps).toBeGreaterThan(0);
+    const effectLists = baseline.baseline.map((entry) => entry.context.effects);
+    expect(new Set(effectLists).size).toBeLessThan(effectLists.length);
+    const context = {
+      ...baseline.baseline[0].context,
+      effects: [],
+      unconditionalDamageEffects: { "stat.minPhys": 10 },
+    };
+    const prepared = resolveActionStatContext(context);
+    const changed = resolveActionStatContext({ ...context, unconditionalDamageEffects: { "stat.minPhys": 20 } });
+    expect(changed.stats.minPhys).toBeCloseTo(prepared.stats.minPhys + 10);
+    expect(resolveActionStatContext({ ...context, unconditionalDamageEffects: { "stat.minPhys": 10 } }).stats).toBe(
+      prepared.stats,
+    );
     expect(baseline.timeline[0].battleStartTime).toBe(baseline.anchorTime);
     expect(observed.actions[0].size).toBeGreaterThan(baseline.baseline.length);
     calculateRotationComparisons(

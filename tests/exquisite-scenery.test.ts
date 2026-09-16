@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-exquisite-scenery.mjs.
@@ -11,7 +12,14 @@ describe("exquisite-scenery", () => {
 
     const sceneryT6 = exquisiteScenery.effect.ExquisiteSceneryT6.effect[0];
     const sceneryT6Applies = (tags) =>
-      requirementsPass(sceneryT6.requirement, [], [], tags, ["ExquisiteSceneryT6"], ["thundercry", "stormbreaker"]);
+      requirementsPass(
+        sceneryT6.requirement,
+        effectState([]),
+        effectState([]),
+        tags,
+        ["ExquisiteSceneryT6"],
+        ["thundercry", "stormbreaker"],
+      );
     expect(
       [
         ["Light", "Charged"],

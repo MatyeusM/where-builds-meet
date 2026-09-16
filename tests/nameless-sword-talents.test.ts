@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, it } from "vitest";
 import { probeLoad } from "./helpers/probe-loader.js";
 
@@ -33,8 +34,8 @@ describe("nameless-sword-talents", () => {
     if (
       !requirementsPass(
         affinityRule.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["SwordEnergy"],
         new Set(),
         ["namelessSword", "namelessSpear"],
@@ -43,8 +44,8 @@ describe("nameless-sword-talents", () => {
       ) ||
       !requirementsPass(
         affinityRule.requirement,
-        [],
-        [{ name: "QiImbalance" }],
+        effectState([]),
+        effectState([{ name: "QiImbalance" }]),
         ["SwordEnergy"],
         new Set(),
         ["namelessSword", "namelessSpear"],
@@ -53,8 +54,8 @@ describe("nameless-sword-talents", () => {
       ) ||
       requirementsPass(
         affinityRule.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["SwordEnergy"],
         new Set(),
         ["namelessSword", "namelessSpear"],

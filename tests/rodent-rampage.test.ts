@@ -149,9 +149,9 @@ describe("rodent-rampage", () => {
     assert.equal(rodentRows(refreshed).length, 1, "Refresh preserves the half-complete counter");
     const applications = refreshed.filter((row) => row.kind === "rotation" && row.step.skill === "RodentRampage");
     close(applications[1].startTime, 1.041, "Rodent Rampage has no cooldown");
-    const latest = refreshed
-      .find((row) => row.step.skill === "Slow" && row.startTime > 1.1)
-      .actionStates[0].buffs.filter((buff) => buff.name === "RodentRampage");
+    const latest = Array.from(
+      refreshed.find((row) => row.step.skill === "Slow" && row.startTime > 1.1).actionStates[0].buffs.values(),
+    ).filter((buff) => buff.name === "RodentRampage");
     assert.equal(latest.length, 1, "Refreshing never duplicates the buff");
     assert.equal(latest[0].stack, 1, "The buff stays capped at one stack");
     close(latest[0].expiresAt, 11.582, "Refresh gives ten seconds from the new application time");

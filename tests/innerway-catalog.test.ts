@@ -183,7 +183,7 @@ describe("innerway-catalog", () => {
     );
     const row = active.timeline.find((row) => row.skill?.name === "Probe");
     const activeStates = row.actions.flatMap((action, index) =>
-      action.type === "damage" ? [row.actionStates[index].buffs.some((buff) => buff.name === "Samsara")] : [],
+      action.type === "damage" ? [row.actionStates[index].buffs.has("Samsara")] : [],
     );
     assert.deepEqual(
       activeStates,
@@ -239,17 +239,19 @@ describe("innerway-catalog", () => {
       const states = markStates(markSequence(tier, flamelash));
       states.forEach((state, index) => {
         assert.deepEqual(
-          state.debuffs.map((mark) => mark.name).sort(),
+          Array.from(state.debuffs.values())
+            .map((mark) => mark.name)
+            .sort(),
           index === 3 ? [] : [...marks].sort(),
           "Marks must refresh for three seconds and expire after the refreshed duration",
         );
-        for (const mark of state.debuffs) {
+        for (const mark of state.debuffs.values()) {
           assert.equal(mark.stack, 1, "Repeated applications must cap at one stack");
           close(mark.expiresAt, index === 0 ? 3.1 : 4, "Marks must expire three seconds after the latest hit");
         }
       });
       assert.equal(
-        states[0].buffs.some((buff) => buff.name === "Samsara"),
+        states[0].buffs.has("Samsara"),
         tier === 6 && flamelash,
         "The same T6 Flamelash hit must apply both marks before the T1 Samsara trigger checks them",
       );
@@ -259,7 +261,7 @@ describe("innerway-catalog", () => {
       ["DirectDamage", "MortalRopeDart", "Light"],
     ]) {
       assert.ok(
-        markStates(markSequence(6, true, tags)).every((state) => state.debuffs.length === 0),
+        markStates(markSequence(6, true, tags)).every((state) => state.debuffs.size === 0),
         "Heavy Attacks and other martial arts must not apply either mark",
       );
     }
@@ -277,12 +279,16 @@ describe("innerway-catalog", () => {
       }),
     );
     assert.deepEqual(
-      switched.map((state) => state.debuffs.map((mark) => mark.name).sort()),
+      switched.map((state) =>
+        Array.from(state.debuffs.values())
+          .map((mark) => mark.name)
+          .sort(),
+      ),
       [["Karma", "Sin"], ["Karma"], []],
       "Switching to Flamelash must leave Sin on its own expiry and apply Karma independently",
     );
     assert.ok(
-      switched[0].buffs.some((buff) => buff.name === "Samsara"),
+      switched[0].buffs.has("Samsara"),
       "Switching modes while Sin remains must enable Samsara when Karma is applied",
     );
     const manuallyApplied = markStates(
@@ -296,7 +302,7 @@ describe("innerway-catalog", () => {
       }),
     );
     assert.deepEqual(
-      manuallyApplied.map((state) => state.debuffs.length),
+      manuallyApplied.map((state) => state.debuffs.size),
       [2, 0],
       "Default mark duration must also govern explicit applications without an override",
     );

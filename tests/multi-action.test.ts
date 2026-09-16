@@ -340,7 +340,7 @@ describe("multi-action", () => {
     );
     const afterExpiredSelection = expiredSelection.timeline.find((row) => row.id === "rotation-2");
     expect(
-      afterExpiredSelection?.buffs.some((effect) => effect.name === "ChargeEnhancement"),
+      afterExpiredSelection?.buffs.has("ChargeEnhancement"),
       "A start-bound consume must not fall through when its selected effect expires before execution.",
     ).toBeTruthy();
 
@@ -354,8 +354,7 @@ describe("multi-action", () => {
       "The following component must snapshot its modifier before the delayed consume executes.",
     ).toBeTruthy();
     expect(
-      !afterLiveSelection?.buffs.some((effect) => effect.name === "InnerPassion") &&
-        afterLiveSelection?.buffs.some((effect) => effect.name === "ChargeEnhancement"),
+      !afterLiveSelection?.buffs.has("InnerPassion") && afterLiveSelection?.buffs.has("ChargeEnhancement"),
       "A live start-bound selection must consume only the effect selected at component start.",
     ).toBeTruthy();
 

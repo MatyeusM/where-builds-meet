@@ -44,9 +44,7 @@ describe("vendetta", () => {
         const duration = tier < 4 ? 15 : 20;
         const rows = build(tier, lateAttack, roll);
         assert.equal(rodent(rows).length, 1, "Every Vendetta tier retains T0 and enables attacks after ten seconds");
-        const buff = rows
-          .find((row) => row.step.skill === "InfernalLight1")
-          .actionStates[0].buffs.find((buff) => buff.name === "RodentRampage");
+        const buff = rows.find((row) => row.step.skill === "InfernalLight1").actionStates[0].buffs.get("RodentRampage");
         assert.ok(
           Math.abs(buff.expiresAt - (duration + 0.541)) < 1e-9,
           "Vendetta sets the total duration to 15 seconds, upgraded to 20 at T4",
@@ -78,9 +76,9 @@ describe("vendetta", () => {
       cast("InfernalLight1"),
     ]);
     assert.equal(rodent(refresh).length, 1, "Recasting refreshes the full extended lifetime");
-    const refreshed = refresh
-      .find((row) => row.step.skill === "InfernalLight1")
-      .actionStates[0].buffs.filter((buff) => buff.name === "RodentRampage");
+    const refreshed = Array.from(
+      refresh.find((row) => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
+    ).filter((buff) => buff.name === "RodentRampage");
     assert.equal(refreshed.length, 1, "Refresh still produces one buff");
     assert.ok(
       Math.abs(refreshed[0].expiresAt - 30.082) < 1e-9,
@@ -172,14 +170,11 @@ describe("vendetta", () => {
       const casts = rows.filter((row) => row.step.skill === "BladeboundThreadCancel");
       close(casts[0].effectiveCastTime, 0.385, "Cancel cast ends at the supplied hit time");
       close(casts[0].actions[0].time, 0.385, "Cancel hit uses the supplied local time");
-      assert.ok(
-        !casts[0].actionStates[0].buffs.some((buff) => buff.name === "VendettaToken"),
-        "Token is applied after the initial damage",
-      );
+      assert.ok(!casts[0].actionStates[0].buffs.has("VendettaToken"), "Token is applied after the initial damage");
       close(casts[1].startTime, 8, "Repeated cancel casts honor the eight-second cooldown");
-      const active = rows
-        .find((row) => row.step.skill === "InfernalLight1")
-        .actionStates[0].buffs.filter((buff) => buff.name === "VendettaToken");
+      const active = Array.from(
+        rows.find((row) => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
+      ).filter((buff) => buff.name === "VendettaToken");
       assert.equal(active.length, 1, "Reapplication refreshes one Token buff");
       assert.equal(active[0].stack, 1, "Token does not stack damage on recast");
       close(active[0].expiresAt, 18.385, "Token refresh starts ten seconds at its new application");
@@ -195,15 +190,12 @@ describe("vendetta", () => {
           roll,
         );
         const hit = lifetime.find((row) => row.step.skill === "InfernalLight1");
-        assert.ok(
-          !hit.actionStates[0].buffs.some((buff) => buff.name === "VendettaToken"),
-          "Token expires at its exact tier-adjusted boundary",
-        );
+        assert.ok(!hit.actionStates[0].buffs.has("VendettaToken"), "Token expires at its exact tier-adjusted boundary");
         const before = build(tier, [cast("BladeboundThreadCancel"), cast("InfernalLight1")], roll).find(
           (row) => row.step.skill === "InfernalLight1",
         );
         close(
-          before.actionStates[0].buffs.find((buff) => buff.name === "VendettaToken").expiresAt,
+          before.actionStates[0].buffs.get("VendettaToken").expiresAt,
           0.385 + duration,
           "Token duration uses the selected tier",
         );
@@ -226,7 +218,7 @@ describe("vendetta", () => {
       });
       const corrosion = rows
         .find((row) => row.step.skill === "InfernalLight1")
-        .actionStates[0].debuffs.find((buff) => buff.name === "BoneCorrosion");
+        .actionStates[0].debuffs.get("BoneCorrosion");
       assert.equal(Boolean(corrosion), rank === 13, "Bladebound Thread activates Bone Corrosion only with the talent");
       if (corrosion) close(corrosion.expiresAt, 5.385, "Bone Corrosion starts its five-second lifetime at the hit");
     }

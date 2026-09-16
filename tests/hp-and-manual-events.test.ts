@@ -225,7 +225,7 @@ describe("hp-and-manual-events", () => {
       "Timed damage must affect only actions after its declared timestamp.",
     ).toBeTruthy();
     expect(
-      timedDamageHitRow.actionStates[1].buffs.some((effect) => effect.name === "Revelry"),
+      timedDamageHitRow.actionStates[1].buffs.has("Revelry"),
       "Timed damage must continue to activate Take Damage setup triggers.",
     ).toBeTruthy();
 
@@ -278,8 +278,7 @@ describe("hp-and-manual-events", () => {
       "Ordinary Deflect must not avoid Take Damage.",
     ).toBeTruthy();
     expect(
-      !ordinaryDeflectDamage.buffs.some((effect) => effect.name === "DamageSeen") &&
-        afterAvoidance.buffs.some((effect) => effect.name === "DamageSeen"),
+      !ordinaryDeflectDamage.buffs.has("DamageSeen") && afterAvoidance.buffs.has("DamageSeen"),
       "Avoided damage must not fire take-damage triggers, while a real hit still must.",
     ).toBeTruthy();
 
@@ -365,19 +364,19 @@ describe("hp-and-manual-events", () => {
     });
     const probeRow = manualTimeline.find((row) => row.id === "rotation-3");
     expect(
-      probeRow.actionStates[1].debuffs.some((effect) => effect.name === "Controlled"),
+      probeRow.actionStates[1].debuffs.has("Controlled"),
       "A manual Debuff event must use Controlled's default duration.",
     ).toBeTruthy();
     expect(
-      !probeRow.actionStates[2].debuffs.some((effect) => effect.name === "Controlled"),
+      !probeRow.actionStates[2].debuffs.has("Controlled"),
       "Controlled must expire at its data-defined duration.",
     ).toBeTruthy();
     expect(
-      probeRow.actionStates[3].debuffs.some((effect) => effect.name === "Exhausted"),
+      probeRow.actionStates[3].debuffs.has("Exhausted"),
       "Exhausted must use its data-defined default duration.",
     ).toBeTruthy();
     expect(
-      !probeRow.actionStates[4].debuffs.some((effect) => effect.name === "Exhausted"),
+      !probeRow.actionStates[4].debuffs.has("Exhausted"),
       "Exhausted must expire after its data-defined default duration.",
     ).toBeTruthy();
     expect(
@@ -386,11 +385,11 @@ describe("hp-and-manual-events", () => {
     ).toBeTruthy();
     expect(probeRow.actionStates[4].targetQiRatio === 1, "Exhausted expiration must restore Qi to 100%.").toBeTruthy();
     expect(
-      probeRow.actionStates[5].buffs.some((effect) => effect.name === "Flute"),
+      probeRow.actionStates[5].buffs.has("Flute"),
       "A manual Buff event must use the selected buff's default duration.",
     ).toBeTruthy();
     expect(
-      !probeRow.actionStates[6].buffs.some((effect) => effect.name === "Flute"),
+      !probeRow.actionStates[6].buffs.has("Flute"),
       "The manually applied buff must expire at its data-defined duration.",
     ).toBeTruthy();
   });

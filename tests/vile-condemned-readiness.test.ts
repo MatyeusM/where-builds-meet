@@ -138,7 +138,7 @@ describe("Vile Condemned pre-charge readiness", () => {
     data.rotation.steps.unshift({ type: "event", event: "Buff", buff: "Marker", before: { action: "start" } });
     const { rows, row } = verifyRelease(data, 20, 4);
     expect(rows.find((row) => row.rotationIndex === 0)?.startTime).toBe(0);
-    expect(row.actionStates[0].buffs.some((buff) => buff.name === "Marker")).toBe(false);
+    expect(row.actionStates[0].buffs.has("Marker")).toBe(false);
   });
   it("does not replay pending actions and switches weapons before the displayed charge begins", () => {
     const data = input();

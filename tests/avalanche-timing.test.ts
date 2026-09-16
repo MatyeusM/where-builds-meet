@@ -38,11 +38,11 @@ it.each([
     const [fast, slow] = timeline.filter((row) => row.step.skill === skill);
     expect(fast.effectiveCastTime).toBeCloseTo(releaseDuration);
     expect(slow.effectiveCastTime).toBeCloseTo(chargeDuration + releaseDuration);
-    expect(fast.actionStates[0].buffs.some((buff) => buff.name === "Riposte")).toBe(true);
+    expect(fast.actionStates[0].buffs.has("Riposte")).toBe(true);
     for (const [i, offset] of hitOffsets.entries()) {
       expect(fast.actions[i + 1].time).toBeCloseTo(offset);
       expect(slow.actions[i + 1].time).toBeCloseTo(offset + chargeDuration);
-      expect(fast.actionStates[i + 1].buffs.some((buff) => buff.name === "Riposte")).toBe(false);
+      expect(fast.actionStates[i + 1].buffs.has("Riposte")).toBe(false);
       expect(slow.actionStates[i + 1]).toBeDefined();
     }
     expect(slow.startTime).toBeCloseTo(fast.startTime + releaseDuration + 0.04);

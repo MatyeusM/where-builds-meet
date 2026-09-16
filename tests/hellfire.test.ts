@@ -36,7 +36,7 @@ function input(steps: RotationStep[], initial = 0, times: number[] = []): Timeli
     resourceMaximums: { Hellfire: 80 },
   };
 }
-const active = (state: { buffs: { name: string }[] }) => state.buffs.some((buff) => buff.name === "Flamelash");
+const active = (state: { buffs: ReadonlyMap<string, { name: string }> }) => state.buffs.has("Flamelash");
 const observer = (rows: ReturnType<typeof buildRotationTimeline>) =>
   rows.find((row) => row.step.type === "skill" && row.step.skill === "Observation")!;
 

@@ -34,9 +34,7 @@ describe("effect lifecycle", () => {
     });
     const row = timeline.find((row) => row.step.skill === "Probe")!;
     const stacks = row.actions.flatMap((action, index) =>
-      action.type === "damage"
-        ? [row.actionStates[index].buffs.find((effect) => effect.name === "Stacking")?.stack ?? 0]
-        : [],
+      action.type === "damage" ? [row.actionStates[index].buffs.get("Stacking")?.stack ?? 0] : [],
     );
     expect(stacks).toEqual(expected);
   });

@@ -29,8 +29,8 @@ const input = (steps: RotationStep[]): TimelineBuildInput => ({
   setupEffects: [],
   weapons: ["mortalRopeDart", "infernalTwinblades"],
 });
-const stacks = (effects: { name: string; stack: number }[]) =>
-  effects.find((effect) => effect.name === "RodentRampageEnhancement")?.stack ?? 0;
+const stacks = (effects: ReadonlyMap<string, { name: string; stack?: number }>) =>
+  effects.get("RodentRampageEnhancement")?.stack ?? 0;
 
 describe("Rodent's Resilience charge", () => {
   it.each([false, true])(
@@ -69,7 +69,7 @@ describe("Rodent's Resilience charge", () => {
     expect(lights.map((row) => stacks(row.actionStates[0].buffs))).toEqual([1, 1, 0, 0]);
     expect(
       lights.map((row) =>
-        row.actionStates[0].buffs
+        Array.from(row.actionStates[0].buffs.values())
           .filter((effect) => ["RodentRampage", "EnhancedRodentRampage"].includes(effect.name))
           .map((effect) => effect.name),
       ),

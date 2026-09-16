@@ -460,7 +460,8 @@ describe("healing", () => {
     const replacementObservation = replacedMorningDrizzleTimeline.find(
       (row) => row.step.type === "skill" && row.step.skill === "Observe",
     );
-    const replacedCopies = replacementObservation?.buffs.filter((buff) => buff.name === "MorningDrizzle") ?? [];
+    const replacedCopies =
+      Array.from(replacementObservation?.buffs.values()).filter((buff) => buff.name === "MorningDrizzle") ?? [];
     expect(
       replacedCopies.length === 5 &&
         closeTo(replacedCopies.find((buff) => buff.playerRecipientIndex === 0)?.appliedAt, 4.3625) &&
@@ -784,7 +785,7 @@ describe("healing", () => {
       "Healing must restore missing self HP before later healing is counted entirely as overhealing.",
     ).toBeTruthy();
     expect(
-      overflowHealRow?.actionStates[1]?.buffs.find((buff) => buff.name === "WorldToSword")?.remainingTriggers === 19,
+      overflowHealRow?.actionStates[1]?.buffs.get("WorldToSword")?.remainingTriggers === 19,
       "World to Sword must expose its remaining Qi Blade budget after a successful launch.",
     ).toBeTruthy();
     const mergedWorldToSwordTimeline = mergeCalculatedTimelineState(
@@ -797,8 +798,7 @@ describe("healing", () => {
     expect(
       mergedOverflowHealRow?.actionStates[1]?.currentHP === 1000 &&
         mergedOverflowHealRow.currentHPRatio === overflowHealRow.currentHPRatio &&
-        mergedOverflowHealRow.actionStates[1]?.buffs.find((buff) => buff.name === "WorldToSword")?.remainingTriggers ===
-          19,
+        mergedOverflowHealRow.actionStates[1]?.buffs.get("WorldToSword")?.remainingTriggers === 19,
       "The editor timeline must retain calculated self-HP restoration and finite buff-trigger progress when it merges worker results.",
     ).toBeTruthy();
     const exhaustedWorldToSword = calculateRotationBaseline({
@@ -836,7 +836,7 @@ describe("healing", () => {
     const exhaustedWorldToSwordObserve = exhaustedWorldToSword.timeline.find(
       (row) => row.step.type === "skill" && row.step.skill === "Observe",
     );
-    const exhaustedWorldToSwordBuff = exhaustedWorldToSwordObserve?.buffs.find((buff) => buff.name === "WorldToSword");
+    const exhaustedWorldToSwordBuff = exhaustedWorldToSwordObserve?.buffs.get("WorldToSword");
     expect(
       groupQiBladeCount(exhaustedWorldToSword) === 20 &&
         exhaustedWorldToSwordBuff?.remainingTriggers === 0 &&
@@ -912,7 +912,7 @@ describe("healing", () => {
       (row) => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "EndlessCloudCancel",
     );
     expect(
-      secondFanQQ?.buffs.some((buff) => buff.name === "MorningDrizzle"),
+      secondFanQQ?.buffs.has("MorningDrizzle"),
       "Fan QQ and Fan QQ Cancel must apply Morning Drizzle at their healing timestamp.",
     ).toBeTruthy();
     expect(

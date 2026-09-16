@@ -1,3 +1,4 @@
+import { effectState } from "../src/calculations/trackedEffectState";
 import { describe, expect, it } from "vitest";
 
 // Ported from script/probe/check-martial-art-requirement.mjs.
@@ -6,24 +7,31 @@ describe("martial-art-requirement", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts");
     const requirement = [{ target: "martialArt", value: "SnowpartingBlade" }];
     expect(
-      requirementsPass(requirement, [], [], ["SnowpartingBlade", "MartialArts"], new Set(), ["snowparting"]),
+      requirementsPass(requirement, effectState([]), effectState([]), ["SnowpartingBlade", "MartialArts"], new Set(), [
+        "snowparting",
+      ]),
       "A canonical martial-art tag must match its skill.",
     ).toBeTruthy();
     expect(
-      !requirementsPass(requirement, [], [], ["Mystic"], new Set(), ["snowparting"]),
+      !requirementsPass(requirement, effectState([]), effectState([]), ["Mystic"], new Set(), ["snowparting"]),
       "Equipping the martial art must not make its requirement pass for a Mystic skill.",
     ).toBeTruthy();
     expect(
-      !requirementsPass([{ target: "martialArt", value: "snowparting" }], [], [], ["SnowpartingBlade"], new Set(), [
-        "snowparting",
-      ]),
+      !requirementsPass(
+        [{ target: "martialArt", value: "snowparting" }],
+        effectState([]),
+        effectState([]),
+        ["SnowpartingBlade"],
+        new Set(),
+        ["snowparting"],
+      ),
       "Legacy weapon IDs must not be accepted as martial-art tags.",
     ).toBeTruthy();
     expect(
       requirementsPass(
         [{ target: "equippedMartialArt", value: "heavenwill" }],
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["SkygraspRopeDart"],
         new Set(),
         ["skygrasp", "heavenwill"],
@@ -33,8 +41,8 @@ describe("martial-art-requirement", () => {
     expect(
       !requirementsPass(
         [{ target: "equippedMartialArt", value: "heavenwill" }],
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["SkygraspRopeDart"],
         new Set(),
         ["skygrasp", "thundercry"],

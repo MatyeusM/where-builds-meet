@@ -1,3 +1,4 @@
+import type { TrackedEffect } from "./calculations/rotationTimeline";
 import { RotationPingField } from "./components/RotationPingField";
 import resourceEventDefinitions from "../data/event.json";
 import { PingInput } from "./components/PingInput";
@@ -653,12 +654,12 @@ const expectedOutcomeBuffPlateDefinitions = [
   { name: "Frost", maxStack: 1 },
 ] as const;
 const expectedOutcomeBuffPlateNames = new Set<string>(expectedOutcomeBuffPlateDefinitions.map(({ name }) => name));
-type DisplayedTimelineEffect = TimelineRow["buffs"][number] & {
+type DisplayedTimelineEffect = TrackedEffect & {
   hideRemainingTime?: boolean;
   averageStackOnly?: boolean;
 };
 function withExpectedOutcomeBuffPlates(
-  buffs: TimelineRow["buffs"],
+  buffs: TrackedEffect[],
   expectedBuffStacks: Record<string, number> | undefined,
 ): DisplayedTimelineEffect[] {
   if (!expectedBuffStacks) return buffs;
@@ -7770,11 +7771,11 @@ function RotationEditorTab({
                         break;
                     }
                     const actionBuffs =
-                      actionState?.buffs.filter(
+                      Array.from(actionState?.buffs.values() ?? []).filter(
                         (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
                       ) ?? [];
                     const actionDebuffs =
-                      actionState?.debuffs.filter(
+                      Array.from(actionState?.debuffs.values() ?? []).filter(
                         (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
                       ) ?? [];
                     const skillDamageRows =
@@ -7794,7 +7795,7 @@ function RotationEditorTab({
                       return next;
                     }, undefined);
                     const displayedSkillBuffs = withExpectedOutcomeBuffPlates(
-                      row.buffs,
+                      Array.from(row.buffs.values()),
                       skillExpectedBuffStacks?.stacks,
                     );
                     const skillBreakdown = skillDamageRows.reduce<RotationActionBreakdown>(
@@ -8125,7 +8126,7 @@ function RotationEditorTab({
                               <span
                                 className="rotation-hellfire-value"
                                 data-full={(row.resources.Hellfire ?? 0) >= typedSystemStats.resourceMaximums.Hellfire}
-                                data-flamelash={row.buffs.some((buff) => buff.name === "Flamelash")}
+                                data-flamelash={row.buffs.has("Flamelash")}
                                 data-mobile-label={t("system.resource.hellfire")}
                               >
                                 {isManualEvent && step.event === "Hellfire" ? (
@@ -8323,7 +8324,7 @@ function RotationEditorTab({
                               ) : isManualEvent ? (
                                 ""
                               ) : (
-                                effectNames(row.debuffs, startTime)
+                                effectNames(Array.from(row.debuffs.values()), startTime)
                               )}
                             </span>
                             <span className="rotation-controls">
@@ -8481,9 +8482,7 @@ function RotationEditorTab({
                                       (actionState?.resources.Hellfire ?? row.resources.Hellfire ?? 0) >=
                                       typedSystemStats.resourceMaximums.Hellfire
                                     }
-                                    data-flamelash={(actionState?.buffs ?? row.buffs).some(
-                                      (buff) => buff.name === "Flamelash",
-                                    )}
+                                    data-flamelash={(actionState?.buffs ?? row.buffs).has("Flamelash")}
                                     data-mobile-label={t("system.resource.hellfire")}
                                   >
                                     {formatNumber(actionState?.resources.Hellfire ?? row.resources.Hellfire ?? 0)}

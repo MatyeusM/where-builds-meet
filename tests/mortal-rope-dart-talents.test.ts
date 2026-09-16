@@ -173,7 +173,7 @@ describe("mortal-rope-dart-talents", () => {
       weapons,
     });
     const observed = rows.filter((row) => row.step.skill === "Observe");
-    const corrosion = (row) => row.debuffs.find((effect) => effect.name === "BoneCorrosion");
+    const corrosion = (row) => row.debuffs.get("BoneCorrosion");
     close(corrosion(observed[0]).expiresAt, 5, "Bone Corrosion starts with a five-second lifetime");
     close(corrosion(observed[1]).expiresAt, 9, "Reapplication refreshes its expiration");
     assert.equal(corrosion(observed[1]).stack, 1, "Reapplication cannot add a second stack");
