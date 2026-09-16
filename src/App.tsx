@@ -2376,23 +2376,24 @@ function SkillBreakdownRows({
   row: SkillBreakdownGroup<RotationSkillBreakdown | RotationHealingSkillBreakdown>;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const label = row.children ? (
+  const label = row.children ? gameText(row.name) : skillDisplayName(allSkillDefinitions[row.id], row.name, row.id);
+  const toggle = row.children ? (
     <button
       type="button"
       className="breakdown-category-toggle"
+      aria-label={label}
       aria-expanded={expanded}
       onClick={() => setExpanded((value) => !value)}
     >
-      <span aria-hidden="true">{expanded ? "▾" : "▸"}</span> {gameText(row.name)}
+      <span aria-hidden="true">{expanded ? "▾" : "▸"}</span>
     </button>
-  ) : (
-    skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)
-  );
+  ) : null;
   return (
     <Fragment>
       {"damage" in row ? (
         <div className="breakdown-table-row">
-          <span>{label}</span>
+          <span className="breakdown-toggle-cell">{toggle}</span>
+          <span className="breakdown-skill-name">{label}</span>
           <strong>{row.casts || ""}</strong>
           <strong>{row.triggers ? formatNumber(row.triggers) : ""}</strong>
           <strong>{row.hits ? formatNumber(row.hits) : ""}</strong>
@@ -2405,7 +2406,8 @@ function SkillBreakdownRows({
         </div>
       ) : (
         <div className="breakdown-table-row">
-          <span>{label}</span>
+          <span className="breakdown-toggle-cell">{toggle}</span>
+          <span className="breakdown-skill-name">{label}</span>
           <strong>{row.casts || ""}</strong>
           <strong>{row.triggers || ""}</strong>
           <strong>{row.heals || ""}</strong>
@@ -2450,7 +2452,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
     : breakdown.casts;
   return (
     <div className="breakdown-page">
-      <section className="panel breakdown-panel">
+      <section className="panel breakdown-panel breakdown-skill-panel">
         <div className="panel-heading">
           <div>
             <h2>{t("ui.app.perSkillBreakdown")}</h2>
@@ -2478,6 +2480,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
         {hasHealing ? <h3 className="breakdown-channel-heading">{t("ui.app.damage")}</h3> : null}
         <div className="breakdown-table breakdown-skill-table">
           <div className="breakdown-table-header">
+            <span aria-hidden="true" />
             <span>{t("ui.app.skill")}</span>
             <span>{t("ui.app.casts")}</span>
             <span>{t("ui.app.triggers")}</span>
@@ -2498,6 +2501,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             <h3 className="breakdown-channel-heading healing-value">{t("ui.app.healing")}</h3>
             <div className="breakdown-table breakdown-healing-skill-table breakdown-healing-table">
               <div className="breakdown-table-header">
+                <span aria-hidden="true" />
                 <span>{t("ui.app.skill")}</span>
                 <span>{t("ui.app.casts")}</span>
                 <span>{t("ui.app.triggers")}</span>
