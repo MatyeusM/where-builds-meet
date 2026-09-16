@@ -63,9 +63,11 @@ VC readiness, defensive attack alignment, BP Qi-break anchor, and the updated
 Light Attack Falcon coefficients.
 
 Strength's Mixed Dummy 1 Min now uses its user-approved current result at 40 ms
-ping: 65,165.49 DPS, replacing 65,475.07 DPS at zero ping (-0.47%). This includes
-the current Strength skill data, General's Bane opener, and 0.33-second delay
-before the later Legion Summon.
+ping: 65,625.29 DPS, replacing the previous 65,165.49 DPS snapshot (+0.71%).
+Removing ping from Burning Heart's second and third charge stages accounts for
+442.42 DPS of the increase; shortening Grave Frost's cast from 1.832 to 1.605
+seconds accounts for the remaining 17.38 DPS. The General's Bane opener and
+0.33-second delay before the later Legion Summon remain included.
 
 Strength's Mixed Dummy Infinite Vitality 1 Min now uses its user-approved result
 at 40 ms ping: 66,557.01 DPS, replacing 66,827.33 DPS at zero ping (-0.40%).

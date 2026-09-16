@@ -2631,6 +2631,9 @@ anchors combat start to the final hit of its first Fleeting Trace. At 40 ms ping
 its canceled dodge catches the second pair at 11.5 seconds, activating Ghostly
 Steps' Mystery DMG Boost before both Soaring Spin hits. Battle End remains
 60 seconds after the selected starting hit.
+A 0.227-second manual delay before the later Legion Summon preserves Iron Guard
+coverage on the final Anxi Soldier and Flute Ripple hits after Grave Frost's
+cast duration was shortened to 1.605 seconds.
 
 ### Heavenwill Gauntlets A1–A6 timing and A4 continuation
 

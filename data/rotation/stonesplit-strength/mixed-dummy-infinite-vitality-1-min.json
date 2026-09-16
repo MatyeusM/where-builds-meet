@@ -241,6 +241,11 @@
       "skill": "SnowpartingQ"
     },
     {
+      "event": "Delay",
+      "type": "event",
+      "duration": 0.227
+    },
+    {
       "type": "skill",
       "skill": "PhalanxbaneSpecial"
     },
