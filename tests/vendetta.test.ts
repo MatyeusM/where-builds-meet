@@ -147,8 +147,8 @@ describe("vendetta", () => {
     const unbuffed = damageRun(false);
     const token = damageRun(true);
     const tokenT6 = damageRun(true, true);
-    close(procDamage(token) / procDamage(unbuffed), 1.5, "Vendetta Token adds 50% Rodent base damage");
-    close(procDamage(tokenT6) / procDamage(unbuffed), 1.95, "T6 adds a separate 30% Rodent damage bonus");
+    close(procDamage(token) / procDamage(unbuffed), 1.5, "Vendetta Token adds 50% Rodent general damage");
+    close(procDamage(tokenT6) / procDamage(unbuffed), 1.8, "T6 adds 30% to Token's general damage bonus");
     close(procDamage(damageRun(false, true)), procDamage(unbuffed), "T6 has no effect without the self buff");
     close(
       token.actionBreakdowns["rotation-2:0"].total,
@@ -158,7 +158,7 @@ describe("vendetta", () => {
     const existingBonuses = [{ effect: { baseDMGBonus: 0.2, dmgBonus: 0.4 } }];
     close(
       procDamage(damageRun(true, true, existingBonuses)) / procDamage(unbuffed),
-      1.7 * 1.7,
+      1.2 * 2.2,
       "Base damage and Category 1 bonuses add within their own categories",
     );
     for (const roll of [undefined, () => 0.5]) {

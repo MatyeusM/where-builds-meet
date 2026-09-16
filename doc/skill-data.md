@@ -1452,7 +1452,7 @@ coefficients 0.0621375, physical bonus 17.5, and attribute bonus 9.5, then appli
 Vendetta Token to self. It carries `MartialArt` for the matching attunement.
 
 Vendetta Token (仇殺令) is a ten-second, one-stack refreshing self buff. Its
-Rodent-only `baseDMGBonus: 0.5` adds 50% base damage. The datamine's “Vendetta
+Rodent-only `dmgBonus: 0.5` adds 50% general damage. The datamine's “Vendetta
 Mark” means this same buff; there is no separate target mark or second status.
 
 Vendetta (452) implements the following supported effects:
@@ -1466,7 +1466,7 @@ Vendetta (452) implements the following supported effects:
 - T2: Solo Level-based Min Physical Attack; T5: 5.1 Physical Penetration,
   both using existing raw-stat effects.
 - T6: while Vendetta Token is active, Rodent attacks gain another 30% damage
-  through `dmgBonus`. This is separate from Token's 50% base-damage bonus.
+  through `dmgBonus`. This adds to Token's 50% for an 80% general damage bonus.
 
 All Tokens of Gratitude recovery, restoration, consumption, and T4 resource
 calculations are intentionally ignored at the user's request. Rodent's Resilience

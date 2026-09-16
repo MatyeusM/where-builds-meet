@@ -208,7 +208,7 @@
           }
         ],
         "effect": {
-          "baseDMGBonus": 0.5
+          "dmgBonus": 0.5
         }
       }
     ]

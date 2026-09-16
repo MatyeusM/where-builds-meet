@@ -634,10 +634,10 @@ actions, even when the casting skill applies or extends a DOT. Soul-Shaken uses
 this field for its general DOT vulnerability and its additional Umbra-source
 vulnerability.
 
-Vendetta Token uses `baseDMGBonus: 0.5` for Rodent-tagged attacks, following the
-confirmed base-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
-while the same self buff is active. These bonuses belong to separate existing
-categories: without other bonuses they multiply to `1.5 × 1.3 = 1.95`.
+Vendetta Token uses `dmgBonus: 0.5` for Rodent-tagged attacks, following the
+confirmed general-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
+while the same self buff is active. These bonuses add together in the same existing
+category: without other bonuses their multiplier is `1 + 0.5 + 0.3 = 1.8`.
 Other attacks receive neither bonus. No Category 2 multiplier is introduced.
 
 ### Outcome multiplier
