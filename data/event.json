@@ -1,6 +1,6 @@
 {
   "Hellfire": {
-    "name": "Event: Modify Hellfire",
+    "name": "Event: Add Hellfire",
     "castTime": 0,
     "action": [
       { "type": "addResource", "value": "Hellfire", "time": 0 },

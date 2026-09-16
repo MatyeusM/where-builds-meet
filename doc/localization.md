@@ -61,6 +61,9 @@ keys, IDs, formulas, and persisted game data remain language-neutral.
 
 ## Message conventions
 
+Chinese event labels use an ASCII colon followed by a space (`事件: 名稱`),
+not a full-width colon.
+
 - Use `t("ui.area.meaningfulKey")` for interface copy.
 - Use named placeholders such as `{count}` instead of assembling translated
   sentences from fragments.

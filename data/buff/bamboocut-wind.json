@@ -14,8 +14,8 @@
     "effect": [
       {
         "effect": {
-          "stat": {
-            "crit": 0.1
+          "effectiveStat": {
+            "effectiveCritBonus": 0.1
           },
           "critDmgBonus": 0.2
         }

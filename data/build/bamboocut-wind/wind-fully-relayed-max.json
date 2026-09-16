@@ -53,8 +53,8 @@
           "value": 0.05828
         },
         {
-          "key": "crit",
-          "value": 0.0846
+          "key": "minPhys",
+          "value": 73.132
         }
       ],
       "attunement": {
@@ -76,16 +76,16 @@
           "value": 73.132
         },
         {
+          "key": "power",
+          "value": 46.436
+        },
+        {
           "key": "ropeDartDmgBoost",
           "value": 0.05828
         },
         {
           "key": "agility",
           "value": 46.436
-        },
-        {
-          "key": "crit",
-          "value": 0.0846
         }
       ],
       "attunement": {

@@ -142,8 +142,8 @@
               }
             ],
             "effect": {
-              "stat": {
-                "crit": 0.05
+              "effectiveStat": {
+                "effectiveCritBonus": 0.05
               },
               "critDmgBonus": 0.15,
               "criticalHealingBonus": 0.15

@@ -714,7 +714,14 @@ Final Affinity = clamp(Effective Affinity + Direct Affinity, 0, 1)
 ```
 
 Effective Critical Bonus is added after Judgement Resistance and shares the
-80% Effective Critical cap. Direct Critical is a separate final-rate channel
+80% Effective Critical cap. Flamelash contributes `0.1` and Ivorybloom's
+full-HP four-piece effect contributes `0.05` through
+`effectiveStat.effectiveCritBonus`. At `J = 0.65`, these are equivalent to
+`0.165` and `0.0825` ordinary Critical respectively before the cap. Ivorybloom's
+unconditional `0.09` Critical remains subject to Judgement Resistance.
+These bonuses feed the shared damage and healing rate calculations; Precision
+and outcome competition still apply normally.
+Direct Critical is a separate final-rate channel
 and is not part of Effective Critical or its cap. When
 `Final Affinity + Direct Critical + Effective Critical <= 1`:
 

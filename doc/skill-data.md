@@ -323,8 +323,13 @@ reaching zero prevents further triggers but does not end the buff early.
 
 Ivorybloom is a Silkbind Deluge weapon set. Its two-piece effect adds 9%
 Critical Rate. Its four-piece effect retains that bonus and, while Self HP is
-full, adds another 5% Critical Rate plus 15% Critical Healing Bonus and 15%
-Critical DMG Bonus. The set is timeline-affecting because its healing changes
+full, adds 5% Effective Critical Bonus plus 15% Critical Healing Bonus and 15%
+Critical DMG Bonus. The conditional critical bonus bypasses Judgement Resistance
+through `effectiveStat.effectiveCritBonus`, while the unconditional 9% does not.
+Flamelash uses the same field for its 10% critical bonus while active, including
+Rodent and Blade of Heaven's Wrath hits. Both bonuses share the 80% Effective
+Critical cap and the ordinary final outcome calculation.
+The set is timeline-affecting because its healing changes
 can alter World to Sword's Qi Blade schedule.
 
 Soulshade Umbrella's Buff Enhancement appends an Exhausted-target-only 5% damage

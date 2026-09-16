@@ -99,9 +99,10 @@ and the later Heng LC timing update. All current preset snapshots have now
 completed the ping-transition review.
 
 Wind's Dummy 1 Min Infinite Vitality uses the user-approved current rotation and
-`wind-fully-relayed-min` build at 40 ms ping: 67,575.85 DPS over 60 seconds,
-with 4,054,551.12 total damage. This establishes Wind's first accepted baseline
-alongside its promotion from WIP to available. It includes the current Hellfire,
+`wind-fully-relayed-min` build at 40 ms ping: 67,931.14 DPS over 60 seconds,
+with 4,075,868.36 total damage. This user-approved refresh replaces the initial
+67,575.85 DPS baseline after correcting Flamelash's judgment-bypassing critical
+bonus and updating Wind's weapon affixes. It includes the current Hellfire,
 Enhanced Rodent Rampage, delayed Rodent hits, and authored rotation adjustments.
 
 ## Updating reviewed rotations
