@@ -35,6 +35,7 @@ import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } 
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
 import { Panel, PanelHeading } from "./ui/Panel"
+import { Tab } from "./ui/Tab"
 import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
 const loadSimulationTab = () => import("./SimulationTab")
@@ -5465,38 +5466,40 @@ function SkillEditorTab({
             {visibleCategories.map(item => {
               const categoryModified = Object.keys(overrides[item] ?? {}).length > 0
               return (
-                <button
+                <Tab
                   key={item}
-                  className={`category-tab ${category === item ? "active" : ""} ${categoryModified ? "modified" : ""}`}
-                  type="button"
+                  className="category-tab"
+                  active={category === item}
+                  modified={categoryModified}
                   onClick={() => setCategory(item)}
                 >
                   {categoryLabel(item)}
-                </button>
+                </Tab>
               )
             })}
           </div>
-          <button
-            className={`category-tab skill-editor-reset ${editorModified ? "modified" : ""}`}
-            type="button"
+          <Tab
+            className="category-tab skill-editor-reset"
+            modified={editorModified}
             disabled={!editorModified}
             onClick={restoreAllDefaults}
           >
             {t("ui.app.reset")}
-          </button>
+          </Tab>
         </div>
         <div className="skill-editor-layout">
           <aside className="skill-list" aria-label={t("ui.app.namedSkills", { name: category })}>
             {skillIds.map(id => (
-              <button
+              <Tab
                 key={id}
-                className={`skill-list-item ${selectedSkill === id ? "active" : ""} ${overrides[category]?.[id] ? "modified" : ""}`}
-                type="button"
+                className="skill-list-item"
+                active={selectedSkill === id}
+                modified={Boolean(overrides[category]?.[id])}
                 onClick={() => selectSkill(id)}
               >
                 <strong>{skillDisplayName(skills[id], id)}</strong>
                 <small>{id}</small>
-              </button>
+              </Tab>
             ))}
           </aside>
           <div className="skill-detail">
@@ -9341,53 +9344,36 @@ export default function App() {
         </div>
       </section>
       <nav className="main-tabs" aria-label={t("ui.app.mainSections")}>
-        <button className={activeTab === "main" ? "active" : ""} type="button" onClick={() => setActiveTab("main")}>
+        <Tab active={activeTab === "main"} onClick={() => setActiveTab("main")}>
           {t("ui.app.main")}
-        </button>
-        <button className={activeTab === "build" ? "active" : ""} type="button" onClick={() => setActiveTab("build")}>
+        </Tab>
+        <Tab active={activeTab === "build"} onClick={() => setActiveTab("build")}>
           {t("ui.app.build")}
-        </button>
-        <button
-          className={activeTab === "breakdown" ? "active" : ""}
-          type="button"
-          onClick={() => setActiveTab("breakdown")}
-        >
+        </Tab>
+        <Tab active={activeTab === "breakdown"} onClick={() => setActiveTab("breakdown")}>
           {t("ui.app.dpsBreakdown", {
             dps:
               rotationMetrics && rotationMetrics.hps > 0 ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
           })}
-        </button>
-        <button
-          className={activeTab === "rotations" ? "active" : ""}
-          type="button"
-          onClick={() => setActiveTab("rotations")}
-        >
+        </Tab>
+        <Tab active={activeTab === "rotations"} onClick={() => setActiveTab("rotations")}>
           {t("ui.app.rotationEditor")}
-        </button>
-        <button
-          className={activeTab === "simulation" ? "active" : ""}
-          type="button"
+        </Tab>
+        <Tab
+          active={activeTab === "simulation"}
           onClick={() => {
             setSimulationMounted(true)
             setActiveTab("simulation")
           }}
         >
           {t("ui.app.simulation")}
-        </button>
-        <button
-          className={`${activeTab === "skills" ? "active" : ""} ${skillEditorModified ? "modified" : ""}`}
-          type="button"
-          onClick={() => setActiveTab("skills")}
-        >
+        </Tab>
+        <Tab active={activeTab === "skills"} modified={skillEditorModified} onClick={() => setActiveTab("skills")}>
           {t("ui.app.skillEditor")}
-        </button>
-        <button
-          className={activeTab === "settings" ? "active" : ""}
-          type="button"
-          onClick={() => setActiveTab("settings")}
-        >
+        </Tab>
+        <Tab active={activeTab === "settings"} onClick={() => setActiveTab("settings")}>
           {t("ui.app.settings")}
-        </button>
+        </Tab>
       </nav>
       {activeTab === "main" ? (
         <StatsTab
