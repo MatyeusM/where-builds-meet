@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import windBuffs from "../data/buff/bamboocut-wind.json"
 import rotation from "../data/rotation/bamboocut-wind/wind-dummy-1-min-infinite-vitality.json"
 import { buildPresetRotationBundle } from "../src/App"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
@@ -26,6 +27,67 @@ function bundleFor(full = false) {
 }
 
 describe("Wind dummy preset", () => {
+  it("omits the passive from other paths' calculation setup", () => {
+    const wind = bundleFor()
+    const kite = buildPresetRotationBundle(
+      {
+        ...dpsSnapshotEnvironment,
+        pathId: "bamboocutKite",
+        martialArts: ["heavenwill", "skygrasp"],
+        rotation: { name: "Equipment scope", steps: [] },
+        skillOverrides: {},
+      },
+      "kite-fully-relayed-min",
+    )!
+    const passive = windBuffs.InfernalLightAttackPveBonus.effect[0]
+    expect(wind.timeline.setupEffects).toContain(passive)
+    expect(kite.timeline.setupEffects).not.toContain(passive)
+  })
+  it("applies the persistent PvE bonus only to Infernal Light Attack damage", () => {
+    const bundle = bundleFor()
+    bundle.enemy = { ...bundle.enemy, defense: 0, physicalResistance: 0, judgementResistance: 0 }
+    const passive = windBuffs.InfernalLightAttackPveBonus.effect[0]
+    const productionRules = bundle.timeline.setupEffects!.filter(rule => rule === passive)
+    const ids = ["InfernalLight1", "InfernalFlamelashLight1", "InfernalFlamelashLight5Cancel", "AddledMind", "Rodent"]
+    bundle.stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
+    bundle.derivedStats = calculateDerivedStats(bundle.stats, 0)
+    delete bundle.rawStats
+    delete bundle.baseStats
+    bundle.startAnchor = { rowId: "rotation-0" }
+    bundle.timeline = {
+      ...bundle.timeline,
+      initialBuffs: [],
+      initialDebuffs: [],
+      innerWayRules: [],
+      innerWayConditions: [],
+      setupEffects: [...productionRules, { effect: { hpDMGBonus: 0.2 } }],
+      rotation: {
+        name: "Persistent Light Attack bonus",
+        ping: 0,
+        steps: [...ids, "OtherLight"].map(skill => ({ type: "skill" as const, skill })),
+      },
+      skills: Object.fromEntries(
+        [...ids, "OtherLight"].map(id => [
+          id,
+          {
+            castTime: 1,
+            tags: id === "OtherLight" ? ["MartialArts", "MortalRopeDart", "Light"] : bundle.timeline.skills[id].tags,
+            action: [{ type: "damage", time: 0, phyCoef: 1 }],
+          },
+        ]),
+      ),
+    }
+    const boosted = calculateRotationBaseline(bundle)
+    bundle.timeline.setupEffects = [{ effect: { hpDMGBonus: 0.2 } }]
+    const control = calculateRotationBaseline(bundle)
+    for (let index = 0; index < 6; index++) {
+      const key = `rotation-${index}:0`
+      expect(boosted.actionBreakdowns[key].total / control.actionBreakdowns[key].total).toBeCloseTo(
+        index < 3 ? 1.3 / 1.2 : 1,
+      )
+    }
+  })
+
   it("anchors combat to RD Q damage and preserves the authored sequence with a 60-second cutoff", () => {
     const bundle = bundleFor()
     const result = calculateRotationBaseline(bundle)

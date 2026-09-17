@@ -17,6 +17,16 @@ Its Flamelash status enables 5% Critical DMG Bonus plus up to another 25%,
 scaling from raw Min Physical Attack and capped at 750. Its attribute-damage
 talent is already included in the primary-path multiplier described below.
 
+Infernal Twinblades Light Attacks, including Blade of Heaven's Wrath, also
+receive a persistent `hpDMGBonus: 0.1` in the PvE model. Both skill descriptions
+in `local/datamine/wwm-skills-normal-all.json` specify 10% more HP damage against
+non-player units. The setup rule is included only with Infernal Twinblades
+equipped in either slot. It requires both the `InfernalTwinblades`
+martial-art tag and `Light`; it does not require Flamelash or Samsara and does
+not affect Rodent hits or other martial arts. This adds to the existing
+HP/damage bonus bucket rather than multiplying final damage separately.
+It is a skill property, not a rank-dependent talent or a manually applied buff.
+
 Mortal Rope Dart rank 13 grants `0.000304 × Agility` Critical Rate (capped at
 8.512%), 98 Min and 196 Max raw Bamboocut Attack, and
 `0.000336 × raw Min Bamboocut Attack` Bamboocut DMG Bonus (capped at 11%).

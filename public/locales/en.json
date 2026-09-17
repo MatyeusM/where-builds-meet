@@ -36,6 +36,7 @@
   "data.buff.bamboocutWind.EnhancedRodentRampage.shortName": "ERR",
   "data.buff.bamboocutWind.Flamelash.name": "Flamelash",
   "data.buff.bamboocutWind.Flamelash.shortName": "Fla",
+  "data.buff.bamboocutWind.InfernalLightAttackPveBonus.name": "Infernal Light Attack PvE Bonus",
   "data.buff.bamboocutWind.RodentRampage.name": "Rodent Rampage",
   "data.buff.bamboocutWind.RodentRampage.shortName": "RR",
   "data.buff.bamboocutWind.RodentRampageEnhancement.description": "RD Special consumes one stack to apply Enhanced Rodent Rampage instead of Rodent Rampage.",

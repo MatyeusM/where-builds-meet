@@ -409,7 +409,7 @@ export type EffectDefinition = {
   name?: string
   shortName?: string
   description?: string
-  global?: boolean
+  global?: boolean | { equippedMartialArt: WeaponId }
   shared?: boolean
   showCoverage?: boolean
   refresh?: boolean

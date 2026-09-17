@@ -760,6 +760,9 @@ from the rotation. Floating Grace selects either its base Mixed definition or
 its stronger Deluge definition through `initialBuffs`. Reapplication cannot
 expire or duplicate a permanent seeded effect.
 Effect definitions with `global: true` instead enter through setup effects.
+`global: { equippedMartialArt: "infernalTwinblades" }` includes a rule only
+when that martial art is equipped in either slot, before sending setup effects
+to the worker. Its inner requirements still determine which attacks benefit.
 They are evaluated at each damage action without creating a visible or expiring
 tracked buff and are omitted from manual Buff choices.
 

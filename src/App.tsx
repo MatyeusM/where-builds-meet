@@ -388,22 +388,21 @@ const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
 }
-const manualMysticBuffs = Object.fromEntries(
-  Object.entries(mysticBuffs as Record<string, EffectDefinition>).filter(([, definition]) => !definition.global),
-)
 const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
   ...defaultSkillMaps,
-  Buff: {
-    ...manualMysticBuffs,
-    ...generalBuffs,
-    ...stonesplitStrengthBuffs,
-    ...stonesplitMightBuffs,
-    ...bamboocutWindBuffs,
-    ...bamboocutDraughtBuffs,
-    ...bamboocutKiteBuffs,
-    ...silkbindDelugeBuffs,
-    ...bellstrikeUmbraBuffs,
-  } as SkillMap,
+  Buff: Object.fromEntries(
+    Object.entries({
+      ...mysticBuffs,
+      ...generalBuffs,
+      ...stonesplitStrengthBuffs,
+      ...stonesplitMightBuffs,
+      ...bamboocutWindBuffs,
+      ...bamboocutDraughtBuffs,
+      ...bamboocutKiteBuffs,
+      ...silkbindDelugeBuffs,
+      ...bellstrikeUmbraBuffs,
+    } as Record<string, EffectDefinition>).filter(([, definition]) => !definition.global),
+  ) as SkillMap,
   Debuff: {
     ...stonesplitStrengthDebuffs,
     ...stonesplitMightDebuffs,
@@ -651,20 +650,8 @@ function formatResourceRange(value: number, range: { minimum: number; maximum: n
   if (!range || Math.abs(range.maximum - range.minimum) < 1e-9) return formatNumber(value)
   return `${formatNumber(range.minimum)} ~ ${formatNumber(range.maximum)}`
 }
-const globalEffectRules = Object.values(effectDefinitions).flatMap(definition =>
-  definition.global ? (definition.effect ?? []) : [],
-) as EditableObject[]
-const manualBuffDefinitions = {
-  ...manualMysticBuffs,
-  ...generalBuffs,
-  ...stonesplitStrengthBuffs,
-  ...stonesplitMightBuffs,
-  ...bamboocutWindBuffs,
-  ...bamboocutDraughtBuffs,
-  ...bamboocutKiteBuffs,
-  ...silkbindDelugeBuffs,
-  ...bellstrikeUmbraBuffs,
-} as Record<string, { name?: string }>
+const globalEffectDefinitions = Object.values(effectDefinitions).filter(definition => definition.global)
+const manualBuffDefinitions = defaultEditorMaps.Buff as Record<string, { name?: string }>
 const manualGeneralDebuffs = Object.fromEntries(Object.entries(generalDebuffs).filter(([id]) => id !== "Exhausted"))
 const manualDebuffDefinitions = {
   ...mysticDebuffs,
@@ -1414,7 +1401,12 @@ function selectedSetupEffects(
   const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? loadDivinecraft())
   const scriptEffect = scriptEffectFor(overrides.script ?? loadScript())
   return [
-    ...globalEffectRules,
+    ...globalEffectDefinitions.flatMap(definition =>
+      definition.global === true ||
+      (typeof definition.global === "object" && settings.weapons.includes(definition.global.equippedMartialArt))
+        ? ((definition.effect ?? []) as EditableObject[])
+        : [],
+    ),
     ...systemStatEffects,
     breakthroughProfile(settings).levelBonusStats,
     ...selectedMartialArtEffects(settings),

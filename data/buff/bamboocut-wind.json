@@ -1,4 +1,17 @@
 {
+  "InfernalLightAttackPveBonus": {
+    "name": "Infernal Light Attack PvE Bonus",
+    "global": { "equippedMartialArt": "infernalTwinblades" },
+    "effect": [
+      {
+        "requirement": [
+          { "target": "martialArt", "value": "InfernalTwinblades" },
+          { "target": "skillTag", "value": "Light" }
+        ],
+        "effect": { "hpDMGBonus": 0.1 }
+      }
+    ]
+  },
   "RodentRampageEnhancement": {
     "name": "Rodent Rampage Enhancement",
     "shortName": "RRE",
