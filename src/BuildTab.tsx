@@ -64,7 +64,7 @@ import { dataText, gameText, t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { createOfficialGearBookmarklet } from "./officialGearBookmarklet"
 import type { WeaponId } from "./types"
-import { Modal } from "./ui/Modal"
+import { Dialog } from "./ui/Dialog"
 import { UiIcon } from "./UiIcon"
 
 function gearSlotLabel(slot: GearSlot) {
@@ -1206,7 +1206,7 @@ function BuildManagement({
           )}
 
           {!locked && selected.definition && (
-            <Modal
+            <Dialog
               open={editing}
               onClose={cancelEditing}
               className="gear-editor-modal"
@@ -1231,7 +1231,7 @@ function BuildManagement({
                   onSave={save}
                 />
               )}
-            </Modal>
+            </Dialog>
           )}
         </div>
       </ResponsiveBuildOverview>

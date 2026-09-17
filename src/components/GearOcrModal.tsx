@@ -11,7 +11,7 @@ import { gearData } from "../gear"
 import type { GearOcrResult } from "../gearOcr"
 import { t } from "../i18n"
 import { publishNotice, dismissNotice } from "../notices"
-import { Modal } from "../ui/Modal"
+import { Dialog } from "../ui/Dialog"
 
 type GearOcrModule = typeof import("../gearOcr")
 
@@ -134,7 +134,7 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
     void importImage(clipboardFile)
   }
   return (
-    <Modal
+    <Dialog
       open={open}
       onClose={closeOcr}
       onCancel={event => {
@@ -210,6 +210,6 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
           </div>
         )}
       </div>
-    </Modal>
+    </Dialog>
   )
 }
