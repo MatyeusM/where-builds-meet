@@ -26,13 +26,13 @@ import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./ca
 import type { TrackedEffect } from "./calculations/rotationTimeline"
 import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories"
 import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea"
-import { PingInput } from "./components/PingInput"
 import { RotationPingField } from "./components/RotationPingField"
 import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
+import { NumberInput } from "./ui/NumberInput"
 import { Panel, PanelHeading } from "./ui/Panel"
 import { Tab } from "./ui/Tab"
 import { UiIcon } from "./UiIcon"
@@ -4394,11 +4394,11 @@ function NumberField({ label, value, onChange }: { label: string; value: unknown
   return (
     <label className="detail-field">
       <span>{label}</span>
-      <input
-        type="number"
+      <NumberInput
+        commitMode="immediate"
         step="0.0001"
         value={typeof value === "number" ? value : ""}
-        onChange={event => onChange(Number(event.target.value))}
+        onChange={raw => onChange(Number(raw))}
       />
     </label>
   )
@@ -5728,8 +5728,12 @@ function SettingsTab({
         </div>
         <label className="editor-field ping-field">
           <span>{t("ui.app.ping")}</span>
-          <PingInput
+          <NumberInput
             value={settings.ping}
+            min={0}
+            max={999}
+            step={1}
+            inputMode="numeric"
             onCommit={ping => onSettingsChange(current => ({ ...current, ping: ping ?? 0 }))}
           />
         </label>

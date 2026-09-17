@@ -15,7 +15,10 @@ import {
 import type { GearOcrResult } from "../gearOcr"
 import { gameText, t } from "../i18n"
 import { Button } from "../ui/Button"
+import { Checkbox } from "../ui/Checkbox"
+import { NumberInput } from "../ui/NumberInput"
 import { Panel, PanelHeading } from "../ui/Panel"
+import { Select } from "../ui/Select"
 import { GearOcrModal } from "./GearOcrModal"
 
 export type GearValueDraft = { key: string; value: string }
@@ -130,7 +133,7 @@ function GearValueEditor({
     <div className="gear-value-editor">
       <label>
         <span>{label}</span>
-        <select
+        <Select
           aria-label={t("ui.buildTab.namedType", { name: label })}
           value={value.key}
           onChange={event =>
@@ -143,21 +146,19 @@ function GearValueEditor({
               {gameText(definitions[key]?.name ?? key)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="gear-value-input">
         <span>{t("ui.buildTab.value")}</span>
         <span>
-          <input
+          <NumberInput
             aria-label={t("ui.buildTab.namedValue", { name: label })}
-            type="number"
-            min="0"
+            commitMode="immediate"
+            min={0}
             max={maximum}
             step="0.01"
             value={value.value}
-            onChange={event =>
-              onChange(capDraftValue({ ...value, value: event.target.value }, definitions, category, relayed, level))
-            }
+            onChange={raw => onChange(capDraftValue({ ...value, value: raw }, definitions, category, relayed, level))}
           />
           {selectedDefinition?.percentage && <i>%</i>}
         </span>
@@ -295,24 +296,24 @@ export function GearEditor({
       <div className="gear-editor-meta">
         <label className="editor-field">
           <span>{t("ui.buildTab.level")}</span>
-          <select value={draft.level} onChange={event => onLevelChange(Number(event.target.value) as GearLevel)}>
+          <Select value={draft.level} onChange={event => onLevelChange(Number(event.target.value) as GearLevel)}>
             <option value={96}>96</option>
             <option value={91}>91</option>
-          </select>
+          </Select>
         </label>
         <label className="editor-field">
           <span>{t("ui.buildTab.rarity")}</span>
-          <select
+          <Select
             value={draft.rarity}
             onChange={event => onDraftChange(current => ({ ...current, rarity: event.target.value as GearRarity }))}
           >
             <option value="Gold">{gearRarityLabel("Gold")}</option>
             <option value="Purple">{gearRarityLabel("Purple")}</option>
-          </select>
+          </Select>
         </label>
         <div className="gear-editor-roll-controls">
           <label className="gear-relayed-toggle">
-            <input type="checkbox" checked={draft.relayed} onChange={event => onRelayedChange(event.target.checked)} />
+            <Checkbox checked={draft.relayed} onChange={event => onRelayedChange(event.target.checked)} />
             <span>{t("ui.buildTab.relayedOptionLabel")}</span>
           </label>
           <Button className="button-secondary button-small" type="button" onClick={applyMax}>
