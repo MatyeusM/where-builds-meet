@@ -2628,6 +2628,11 @@ dummy attacks, and infinite Vitality. Combat starts on the first RD Q Cancel hit
 Battle End stops simulation 60 seconds later without deleting the remaining steps.
 The marked break sets target Qi to zero after the second hit of the specified FA1,
 so that hit lands before exhaustion and the following FA2 observes the break.
+Qi markers at 59.99% and 39.99% attach to hits near 8.4 and 12.6 seconds.
+After the ten-second Exhausted period restores Qi, the next depletion assumes
+an approximate second break at 61 seconds, one second beyond Battle End.
+Its 59.99% and 39.99% markers attach to hits near 43 and 49 seconds; no
+second break occurs within the simulated fight.
 
 Pre-pull deflects use ordinary Deflect, and both flute casts use the cancel variant. Rodent-only variants use zero cast time
 and launch their Rodent without blade damage; A4/FA5 cancels retain damage

@@ -64,16 +64,52 @@ describe("Wind dummy preset", () => {
     }
     const states = timeline.flatMap(row => Object.values(row.actionStates))
     expect(states.every(state => state.resources.Vitality === bundle.timeline.resourceMaximums!.Vitality)).toBe(true)
-    const breakIndex = bundle.timeline.rotation.steps.findIndex(step => step.type === "event" && step.event === "Qi")
+    const breakIndex = bundle.timeline.rotation.steps.findIndex(
+      step => step.type === "event" && step.event === "Qi" && step.targetQiRatio === 0,
+    )
     const fa1 = timeline.find(row => row.id === "rotation-" + (breakIndex + 1))!
     const fa2 = timeline.find(row => row.id === "rotation-" + (breakIndex + 2))!
-    expect(fa1.actionStates[1].targetQiRatio).toBe(1)
+    expect(fa1.actionStates[1].targetQiRatio).toBe(0.3999)
     expect(fa2.actionStates[0].targetQiRatio).toBe(0)
     expect(
       timeline.some(row => row.step.type === "skill" && row.step.skill === "GhostlyStepsUmbraDodgeDualBlades"),
     ).toBe(true)
   })
 
+  it("depletes Qi before the first break and toward a second break beyond Battle End", () => {
+    const { timeline } = calculateRotationBaseline(bundleFor())
+    const firstQ = timeline.find(row => row.step.skill === "BladeboundThreadCancel")!
+    const fightStart = firstQ.startTime + Number(firstQ.actions[0].time)
+    const qiRows = timeline.filter(row => row.step.type === "event" && row.step.event === "Qi")
+    expect(qiRows).toHaveLength(5)
+    const breakTime = qiRows[2].startTime - fightStart
+    expect(breakTime).toBeCloseTo(21.062, 2)
+    const recoveryTime = breakTime + 10
+    const nextBreak = 61
+    const expectedTimes = [
+      breakTime * 0.4,
+      breakTime * 0.6,
+      breakTime,
+      recoveryTime + (nextBreak - recoveryTime) * 0.4,
+      recoveryTime + (nextBreak - recoveryTime) * 0.6,
+    ]
+    const ratios = [0.5999, 0.3999, 0, 0.5999, 0.3999]
+    qiRows.forEach((row, index) => {
+      expect(Math.abs(row.startTime - fightStart - expectedTimes[index])).toBeLessThan(0.2)
+      const actionIndex = row.actions.findIndex(action => action.type === "setQi")
+      expect(row.actionStates[actionIndex + 1].targetQiRatio).toBe(ratios[index])
+    })
+    const afterRecovery = timeline
+      .flatMap(row =>
+        row.actions.map((action, index) => ({
+          time: row.startTime + Number(action.time ?? 0) - fightStart,
+          state: row.actionStates[index],
+        })),
+      )
+      .filter(entry => entry.time > recoveryTime + 0.01 && entry.time < expectedTimes[3] - 0.2)
+    expect(afterRecovery.length).toBeGreaterThan(0)
+    expect(afterRecovery.every(entry => entry.state.targetQiRatio === 1)).toBe(true)
+  })
   it("applies base Flamelash bonuses at cast start and removes them on Hellfire depletion", () => {
     const bundle = bundleFor()
     bundle.stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1, critDmgBonus: 0.5 }
