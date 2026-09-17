@@ -64,6 +64,7 @@ import { dataText, gameText, t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { createOfficialGearBookmarklet } from "./officialGearBookmarklet"
 import type { WeaponId } from "./types"
+import { Button } from "./ui/Button"
 import { Dialog } from "./ui/Dialog"
 import { UiIcon } from "./UiIcon"
 
@@ -318,9 +319,9 @@ export default function BuildTab({
           <aside className="build-list">
             <div className="build-list-heading">
               <span>{t("ui.buildTab.builds")}</span>
-              <button className="button button-secondary button-small" type="button" onClick={addBuild}>
+              <Button className="button-secondary button-small" type="button" onClick={addBuild}>
                 {t("ui.buildTab.newBuild")}
-              </button>
+              </Button>
             </div>
             <p className="array-editor-empty">{t("ui.buildTab.noBuildsMatchTheSelectedMartialArts")}</p>
           </aside>
@@ -487,9 +488,9 @@ export default function BuildTab({
         <aside className="build-list">
           <div className="build-list-heading">
             <span>{t("ui.buildTab.builds")}</span>
-            <button className="button button-secondary button-small" type="button" onClick={addBuild}>
+            <Button className="button-secondary button-small" type="button" onClick={addBuild}>
               {t("ui.buildTab.newBuild")}
-            </button>
+            </Button>
           </div>
           <div className="build-list-entries">
             {listedEntries.map(entry => {
@@ -542,9 +543,9 @@ export default function BuildTab({
           </div>
           <div className="build-transfer-actions">
             <div>
-              <button className="button button-secondary button-small" type="button" onClick={exportBuilds}>
+              <Button className="button-secondary button-small" type="button" onClick={exportBuilds}>
                 {t("ui.buildTab.export")}
-              </button>
+              </Button>
               <label className="button button-secondary button-small build-import-button">
                 {t("ui.buildTab.import")}
                 <input
@@ -555,13 +556,13 @@ export default function BuildTab({
                 />
               </label>
             </div>
-            <button
-              className="button button-secondary button-small build-official-import-button"
+            <Button
+              className="button-secondary button-small build-official-import-button"
               type="button"
               onClick={openOfficialImport}
             >
               {t("ui.buildTab.importFromOfficial")}
-            </button>
+            </Button>
           </div>
         </aside>
         <div className="build-editor-content">
@@ -595,11 +596,11 @@ export default function BuildTab({
               )}
             </div>
             <div className="detail-active-actions">
-              <button className="button button-secondary button-small" type="button" onClick={duplicateBuild}>
+              <Button className="button-secondary button-small" type="button" onClick={duplicateBuild}>
                 {t("ui.app.duplicate")}
-              </button>
-              <button
-                className="button button-small detail-active-button"
+              </Button>
+              <Button
+                className="button-small detail-active-button"
                 type="button"
                 disabled={editingEntry.id === buildState.activeBuildId}
                 onClick={activateBuild}
@@ -607,7 +608,7 @@ export default function BuildTab({
                 {editingEntry.id === buildState.activeBuildId
                   ? t("ui.buildTab.activeBuildAction")
                   : t("ui.buildTab.makeActive")}
-              </button>
+              </Button>
             </div>
           </div>
           <BuildManagement
@@ -668,21 +669,17 @@ export default function BuildTab({
           }}
         />
         <div className="official-import-actions">
-          <button
-            className="button button-secondary"
-            type="button"
-            onClick={() => officialImportDialogRef.current?.close()}
-          >
+          <Button className="button-secondary" type="button" onClick={() => officialImportDialogRef.current?.close()}>
             {t("ui.buildTab.cancel")}
-          </button>
-          <button
-            className="button button-primary"
+          </Button>
+          <Button
+            className="button-primary"
             type="button"
             disabled={!officialImportText.trim()}
             onClick={importFromOfficial}
           >
             {t("ui.buildTab.importGear")}
-          </button>
+          </Button>
         </div>
         <p className="official-import-privacy">{t("ui.buildTab.theBookmarkRunsOnlyOnTheOfficialDashboard")}</p>
       </dialog>
@@ -1159,8 +1156,8 @@ function BuildManagement({
                     </div>
                     <GearAttributes item={item} />
                     <div className="gear-card-actions">
-                      <button
-                        className="button button-primary button-small"
+                      <Button
+                        className="button-primary button-small"
                         type="button"
                         disabled={inventory.equipped[selectedSlot] === item.id}
                         onClick={() => equip(item)}
@@ -1168,16 +1165,12 @@ function BuildManagement({
                         {inventory.equipped[selectedSlot] === item.id
                           ? t("ui.buildTab.equippedGearStatus")
                           : t("ui.buildTab.equip")}
-                      </button>
-                      <button
-                        className="button button-secondary button-small"
-                        type="button"
-                        onClick={() => beginEdit(item)}
-                      >
+                      </Button>
+                      <Button className="button-secondary button-small" type="button" onClick={() => beginEdit(item)}>
                         {t("ui.buildTab.edit")}
-                      </button>
-                      <button
-                        className={`button button-small ${pendingDeleteId === item.id ? "button-danger" : "button-secondary"}`}
+                      </Button>
+                      <Button
+                        className={`button-small ${pendingDeleteId === item.id ? "button-danger" : "button-secondary"}`}
                         type="button"
                         aria-label={
                           pendingDeleteId === item.id ? t("ui.buildTab.confirmDeleteGear") : t("ui.buildTab.deleteGear")
@@ -1185,7 +1178,7 @@ function BuildManagement({
                         onClick={() => remove(item)}
                       >
                         {pendingDeleteId === item.id ? t("ui.buildTab.confirmDelete") : t("ui.buildTab.delete")}
-                      </button>
+                      </Button>
                     </div>
                   </article>
                 ))}

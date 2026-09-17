@@ -31,6 +31,7 @@ import { RotationPingField } from "./components/RotationPingField"
 import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
+import { Button } from "./ui/Button"
 import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
 const loadSimulationTab = () => import("./SimulationTab")
@@ -2108,9 +2109,9 @@ function PriorityPanel({
           <CalculationStatus category={calculationCategory} />
         </div>
         {isStatPriority && (
-          <button
+          <Button
             type="button"
-            className="button button-secondary priority-mode-control"
+            className="button-secondary priority-mode-control"
             onClick={() => setStatMode(nextStatPriorityMode)}
             aria-label={t("ui.app.priorityModeSwitch", {
               current: modeLabels[statMode],
@@ -2118,7 +2119,7 @@ function PriorityPanel({
             })}
           >
             {modeLabels[statMode]}
-          </button>
+          </Button>
         )}
       </div>
       {rows.length > 0 ? (
@@ -3104,8 +3105,8 @@ function StatsTab({
                     </option>
                   ))}
                 </select>
-                <button
-                  className="button button-secondary"
+                <Button
+                  className="button-secondary"
                   type="button"
                   onClick={() => {
                     dismissNotice("profile-transfer")
@@ -3113,10 +3114,10 @@ function StatsTab({
                   }}
                 >
                   {t("ui.app.profiles")}
-                </button>
-                <button className="button button-secondary" type="button" onClick={() => selectProfile()}>
+                </Button>
+                <Button className="button-secondary" type="button" onClick={() => selectProfile()}>
                   {t("ui.app.reset")}
-                </button>
+                </Button>
               </div>
             </div>
             <div className="stats-grid">
@@ -3966,20 +3967,15 @@ function StatsTab({
               if (event.key === "Enter") createProfile()
             }}
           />
-          <button
-            className="button button-primary"
-            type="button"
-            disabled={!newProfileName.trim()}
-            onClick={createProfile}
-          >
+          <Button className="button-primary" type="button" disabled={!newProfileName.trim()} onClick={createProfile}>
             {t("ui.app.saveCurrent")}
-          </button>
+          </Button>
         </div>
         <div className="character-profile-list">
           <div className="character-profile-row calculated-profile-row">
             <strong>{t("ui.app.calculated")}</strong>
-            <button
-              className="button button-secondary button-small"
+            <Button
+              className="button-secondary button-small"
               type="button"
               onClick={() => {
                 selectProfile()
@@ -3987,7 +3983,7 @@ function StatsTab({
               }}
             >
               {t("ui.app.load")}
-            </button>
+            </Button>
           </div>
           {characterProfiles.map(profile => (
             <div className="character-profile-row" key={profile.id}>
@@ -4009,8 +4005,8 @@ function StatsTab({
                 }}
               />
               <div>
-                <button
-                  className="button button-secondary button-small"
+                <Button
+                  className="button-secondary button-small"
                   type="button"
                   onClick={() => {
                     selectProfile(profile)
@@ -4018,9 +4014,9 @@ function StatsTab({
                   }}
                 >
                   {t("ui.app.load")}
-                </button>
-                <button
-                  className="button button-secondary button-small"
+                </Button>
+                <Button
+                  className="button-secondary button-small"
                   type="button"
                   onClick={() => {
                     const usedIds = new Set(characterProfiles.map(({ id }) => id))
@@ -4048,28 +4044,28 @@ function StatsTab({
                   }}
                 >
                   {t("ui.app.duplicate")}
-                </button>
-                <button
-                  className="button button-danger button-small"
+                </Button>
+                <Button
+                  className="button-danger button-small"
                   type="button"
                   onClick={() => onCharacterProfilesChange(characterProfiles.filter(({ id }) => id !== profile.id))}
                 >
                   {t("ui.app.delete")}
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
         <div className="character-profile-transfer">
           <div>
-            <button
-              className="button button-secondary button-small"
+            <Button
+              className="button-secondary button-small"
               type="button"
               disabled={characterProfiles.length === 0}
               onClick={exportProfiles}
             >
               {t("ui.app.export")}
-            </button>
+            </Button>
             <label className="button button-secondary button-small character-profile-import">
               {t("ui.app.import")}
               <input
@@ -4080,9 +4076,9 @@ function StatsTab({
               />
             </label>
           </div>
-          <button className="button button-primary" type="button" onClick={() => profileDialogRef.current?.close()}>
+          <Button className="button-primary" type="button" onClick={() => profileDialogRef.current?.close()}>
             {t("ui.app.done")}
-          </button>
+          </Button>
         </div>
       </dialog>
     </>
@@ -4278,12 +4274,12 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
           {t("ui.app.requirements")} <small>{t("ui.app.allConditionsMustPass")}</small>
         </span>
         <div className="sub-editor-buttons">
-          <button className="button button-small" type="button" onClick={addLeaf}>
+          <Button className="button-small" type="button" onClick={addLeaf}>
             {t("ui.app.addCondition")}
-          </button>
-          <button className="button button-small" type="button" onClick={addOrGroup}>
+          </Button>
+          <Button className="button-small" type="button" onClick={addOrGroup}>
             {t("ui.app.addOr")}
-          </button>
+          </Button>
         </div>
       </div>
       {requirements.length === 0 && <span className="sub-editor-empty">{t("ui.app.noRequirements")}</span>}
@@ -4360,9 +4356,9 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                   </div>
                 ),
               )}
-              <button className="button button-small" type="button" onClick={() => addOrOperand(index)}>
+              <Button className="button-small" type="button" onClick={() => addOrOperand(index)}>
                 {t("ui.app.addAlternative")}
-              </button>
+              </Button>
             </div>
           )
         }
@@ -4677,9 +4673,9 @@ function ModifierDetails({ item, onChange }: { item: EditableObject; onChange: (
       <RequirementEditor value={item.requirement} onChange={value => set("requirement", value)} />
       <div className="sub-editor-heading">
         <span>{t("ui.app.effects")}</span>
-        <button className="button button-small" type="button" onClick={addEffect}>
+        <Button className="button-small" type="button" onClick={addEffect}>
           {t("ui.app.addEffect")}
-        </button>
+        </Button>
       </div>
       {effectEntries.map(([field, value]) => (
         <div className="effect-row" key={field}>
@@ -4800,8 +4796,8 @@ function DynamicSegmentValueEditor({
       </label>
       <div className="sub-editor-heading">
         <span>{t("ui.app.thresholds")}</span>
-        <button
-          className="button button-small"
+        <Button
+          className="button-small"
           type="button"
           onClick={() => {
             const nextThresholds = [...thresholds, 0]
@@ -4809,7 +4805,7 @@ function DynamicSegmentValueEditor({
           }}
         >
           {t("ui.app.add")}
-        </button>
+        </Button>
       </div>
       <div className="dynamic-effect-values">
         {thresholds.map((item, index) => (
@@ -4979,9 +4975,9 @@ function EffectRuleDetails({ item, onChange }: { item: EditableObject; onChange:
         <span>
           {t("ui.app.effects")} <small>({wrapped ? t("ui.app.wrapped") : t("ui.app.direct")})</small>
         </span>
-        <button className="button button-small" type="button" onClick={addEffect}>
+        <Button className="button-small" type="button" onClick={addEffect}>
           {t("ui.app.addEffect")}
-        </button>
+        </Button>
       </div>
       {effectEntries.length === 0 && <span className="sub-editor-empty">{t("ui.app.noEffects")}</span>}
       {effectEntries.map(([field, value]) => (
@@ -5063,9 +5059,9 @@ function ArrayItemEditor({
     <section className="array-editor">
       <div className="array-editor-heading">
         <span>{label}</span>
-        <button className="button button-small" type="button" onClick={addItem}>
+        <Button className="button-small" type="button" onClick={addItem}>
           {t("ui.app.add")}
-        </button>
+        </Button>
       </div>
       {items.length === 0 && (
         <p className="array-editor-empty">
@@ -5147,8 +5143,8 @@ function StackEffectsEditor({
     <section className="array-editor stack-effects-editor">
       <div className="array-editor-heading">
         <span>{t("ui.app.stackEffects")}</span>
-        <button
-          className="button button-small"
+        <Button
+          className="button-small"
           type="button"
           onClick={() => {
             const next = [...groups, []]
@@ -5157,7 +5153,7 @@ function StackEffectsEditor({
           }}
         >
           {t("ui.app.addStack")}
-        </button>
+        </Button>
       </div>
       {groups.length === 0 && <p className="array-editor-empty">{t("ui.app.noStackEffectsYet")}</p>}
       <div className="array-editor-list">
@@ -5658,12 +5654,12 @@ function SkillEditorTab({
             )}
             {error && <p className="editor-error">{error}</p>}
             <div className="editor-actions">
-              <button className="button button-secondary" type="button" onClick={restoreDefault}>
+              <Button className="button-secondary" type="button" onClick={restoreDefault}>
                 {t("ui.app.default")}
-              </button>
-              <button className="button button-primary" type="button" onClick={save}>
+              </Button>
+              <Button className="button-primary" type="button" onClick={save}>
                 {t("ui.app.save")}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -7577,9 +7573,9 @@ function RotationEditorTab({
         <aside className="rotation-list">
           <div className="rotation-list-heading">
             <span>{t("ui.app.rotations")}</span>
-            <button className="button button-secondary button-small" type="button" onClick={addRotation}>
+            <Button className="button-secondary button-small" type="button" onClick={addRotation}>
               {t("ui.app.newRotation")}
-            </button>
+            </Button>
           </div>
           <div className="rotation-list-entries">
             {listedRotationEntries.map(entry => {
@@ -7629,9 +7625,9 @@ function RotationEditorTab({
           </div>
           <div className="rotation-transfer-actions">
             <div>
-              <button className="button button-secondary button-small" type="button" onClick={exportRotations}>
+              <Button className="button-secondary button-small" type="button" onClick={exportRotations}>
                 {t("ui.app.export")}
-              </button>
+              </Button>
               <label className="button button-secondary button-small rotation-import-button">
                 {t("ui.app.import")}
                 <input
@@ -7750,36 +7746,36 @@ function RotationEditorTab({
               </div>
               <div className="detail-active-actions">
                 <span className="rotation-heading-actions">
-                  <button
-                    className="button button-secondary button-small"
+                  <Button
+                    className="button-secondary button-small"
                     type="button"
                     disabled={timeline.length === 0}
                     onClick={openReadableRotation}
                   >
                     {t("ui.app.readableFormat")}
-                  </button>
+                  </Button>
                   {!rotationLocked && (
                     <>
-                      <button className="button button-secondary button-small" type="button" onClick={resetRotation}>
+                      <Button className="button-secondary button-small" type="button" onClick={resetRotation}>
                         {t("ui.app.reset")}
-                      </button>
-                      <button className="button button-primary button-small" type="button" onClick={save}>
+                      </Button>
+                      <Button className="button-primary button-small" type="button" onClick={save}>
                         {t("ui.app.save")}
-                      </button>
+                      </Button>
                     </>
                   )}
                   <span className="rotation-activation-actions">
-                    <button className="button button-secondary button-small" type="button" onClick={duplicateRotation}>
+                    <Button className="button-secondary button-small" type="button" onClick={duplicateRotation}>
                       {t("ui.app.duplicate")}
-                    </button>
-                    <button
-                      className="button button-small detail-active-button"
+                    </Button>
+                    <Button
+                      className="button-small detail-active-button"
                       type="button"
                       disabled={editingRotationId === activeRotationId}
                       onClick={() => activateRotation(editingRotationId)}
                     >
                       {editingRotationId === activeRotationId ? t("ui.app.active") : t("ui.app.makeActive")}
-                    </button>
+                    </Button>
                   </span>
                 </span>
               </div>
@@ -8818,12 +8814,12 @@ function RotationEditorTab({
         />
         <div className="rotation-readable-actions">
           <output>{readableCopyStatus}</output>
-          <button className="button button-secondary" type="button" onClick={() => readableDialogRef.current?.close()}>
+          <Button className="button-secondary" type="button" onClick={() => readableDialogRef.current?.close()}>
             {t("ui.app.close")}
-          </button>
-          <button className="button button-primary" type="button" onClick={copyReadableRotation}>
+          </Button>
+          <Button className="button-primary" type="button" onClick={copyReadableRotation}>
             {t("ui.app.copy")}
-          </button>
+          </Button>
         </div>
       </dialog>
     </section>
@@ -9210,14 +9206,14 @@ export default function App() {
               ))}
             </select>
           </label>
-          <button
-            className="button button-secondary dev-mode-button"
+          <Button
+            className="button-secondary dev-mode-button"
             type="button"
             aria-pressed={devMode}
             onClick={toggleDevMode}
           >
             {t("ui.app.dev")}
-          </button>
+          </Button>
         </div>
       </header>
       <section className="path-selector" aria-label={t("ui.app.combatPath")}>

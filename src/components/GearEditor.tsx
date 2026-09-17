@@ -14,6 +14,7 @@ import {
 } from "../gear"
 import type { GearOcrResult } from "../gearOcr"
 import { gameText, t } from "../i18n"
+import { Button } from "../ui/Button"
 import { GearOcrModal } from "./GearOcrModal"
 
 export type GearValueDraft = { key: string; value: string }
@@ -285,9 +286,9 @@ export function GearEditor({
           <p>{t("ui.buildTab.percentageValuesAreEnteredAsPercentagePoints")}</p>
         </div>
         {!editingExisting && (
-          <button className="button button-secondary button-small" type="button" onClick={() => setOcrOpen(true)}>
+          <Button className="button-secondary button-small" type="button" onClick={() => setOcrOpen(true)}>
             {t("ui.buildTab.importFromImage")}
-          </button>
+          </Button>
         )}
       </div>
       <div className="gear-editor-meta">
@@ -313,9 +314,9 @@ export function GearEditor({
             <input type="checkbox" checked={draft.relayed} onChange={event => onRelayedChange(event.target.checked)} />
             <span>{t("ui.buildTab.relayedOptionLabel")}</span>
           </label>
-          <button className="button button-secondary button-small" type="button" onClick={applyMax}>
+          <Button className="button-secondary button-small" type="button" onClick={applyMax}>
             {t("ui.buildTab.max")}
-          </button>
+          </Button>
         </div>
       </div>
       <div className="gear-editor-sections">
@@ -378,12 +379,12 @@ export function GearEditor({
         </p>
       )}
       <div className="editor-actions">
-        <button className="button button-secondary" type="button" onClick={onCancel}>
+        <Button className="button-secondary" type="button" onClick={onCancel}>
           {t("ui.buildTab.cancel")}
-        </button>
-        <button className="button button-primary" type="button" onClick={onSave}>
+        </Button>
+        <Button className="button-primary" type="button" onClick={onSave}>
           {editingExisting ? t("ui.buildTab.saveChanges") : t("ui.buildTab.save")}
-        </button>
+        </Button>
       </div>
       <GearOcrModal
         open={ocrOpen}

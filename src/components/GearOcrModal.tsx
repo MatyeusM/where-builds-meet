@@ -11,6 +11,7 @@ import { gearData } from "../gear"
 import type { GearOcrResult } from "../gearOcr"
 import { t } from "../i18n"
 import { publishNotice, dismissNotice } from "../notices"
+import { Button } from "../ui/Button"
 import { Dialog } from "../ui/Dialog"
 
 type GearOcrModule = typeof import("../gearOcr")
@@ -151,9 +152,9 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
             </h2>
             <p>{t("ui.buildTab.useAClearUncroppedGearDetailsScreenshotRecognition")}</p>
           </div>
-          <button className="button button-secondary button-small" type="button" disabled={ocrBusy} onClick={closeOcr}>
+          <Button className="button-secondary button-small" type="button" disabled={ocrBusy} onClick={closeOcr}>
             {t("ui.buildTab.close")}
-          </button>
+          </Button>
         </div>
         <div className="gear-ocr-grid">
           <div
@@ -183,14 +184,14 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
               onChange={selectOcrFile}
               hidden
             />
-            <button
-              className="button button-primary"
+            <Button
+              className="button-primary"
               type="button"
               disabled={ocrBusy}
               onClick={() => ocrInputRef.current?.click()}
             >
               {ocrPreview ? t("ui.buildTab.chooseAnotherImage") : t("ui.buildTab.chooseImage")}
-            </button>
+            </Button>
           </div>
           <figure className="gear-ocr-example">
             <img
