@@ -1545,3 +1545,7 @@ declares `editableCastTime`; the worker resolves the hold and all success effect
 Defense omits automatic attack alignment, so its entered duration occupies the
 ordered timeline from cast start. The editor reuses its duration control and does
 not calculate defensive rewards or hold timing independently.
+
+Stat-only comparisons that reuse a baseline timeline retain its resolved action
+IDs. Conditional or cooldown-blocked actions remain absent; only a rebuilt
+combat timeline can introduce a newly eligible action.

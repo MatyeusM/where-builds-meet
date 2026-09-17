@@ -113,15 +113,6 @@
     ],
     "action": [{ "type": "consume", "target": "self", "value": "EnhancedRodentRampage", "stack": "all", "time": 0 }]
   },
-  "VendettaToken": {
-    "name": "Vendetta Token",
-    "shortName": "VT",
-    "duration": 10,
-    "maxStack": 1,
-    "refresh": true,
-    "showCoverage": true,
-    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Rodent" }], "effect": { "dmgBonus": 0.5 } }]
-  },
   "EnhancedRodentRampage": {
     "name": "Enhanced Rodent Rampage",
     "shortName": "ERR",

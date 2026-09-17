@@ -1398,11 +1398,11 @@ Bladebound Thread [Cancel] (牽繩引刃, RD Q) is Mortal Rope Dart's martial-ar
 skill. It casts in 0.385 seconds with an eight-second cooldown shared under
 `BladeboundThread`. At 0.385 seconds it deals one hit with physical and attribute
 coefficients 0.0621375, physical bonus 17.5, and attribute bonus 9.5, then applies
-Vendetta Token to self. It carries `MartialArt` for the matching attunement.
+Vendetta Token to the target. It carries `MartialArt` for the matching attunement.
 
-Vendetta Token (仇殺令) is a ten-second, one-stack refreshing self buff. Its
+Vendetta Token (仇殺令) is a ten-second, one-stack refreshing caster-specific target debuff. Its
 Rodent-only `dmgBonus: 0.5` adds 50% general damage. The datamine's “Vendetta
-Mark” means this same buff; there is no separate target mark or second status.
+Mark” means this same target debuff; there is no second status.
 
 Vendetta (452) implements the following supported effects:
 
@@ -2649,3 +2649,14 @@ The user explicitly requested keeping this authored sequence unchanged for
 review. It is therefore an intentional temporary exception to preset FA-state
 legality; the editor and damage calculation show the actual inactive state.
 Battle End still excludes actions after 60 seconds. Attack HP drain remains unmodeled.
+
+### Wind target marks and pre-dodge cancels
+
+Vendetta Token is a caster-specific target debuff. Saved manual Buff events migrate
+to Debuff events; saved Token overrides keep their values in the Debuff category,
+with self-targeted Token actions and conditions retargeted to the enemy.
+
+Blade of Heaven's Wrath must start while Flamelash is active, but Flamelash may
+expire during the cast. Remaining hits use the actual buff state. The Wind dummy
+preset launches a zero-duration Rodent cancel before each Perfect Dodge when
+Rodent Rampage or Enhanced Rodent Rampage is active and the target is in range.

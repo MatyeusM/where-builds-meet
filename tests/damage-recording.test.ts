@@ -39,7 +39,7 @@ describe("damage-recording", () => {
             castTime: 0,
             action: [{ type: "extend", target: "target", value: "RodentHunt", duration: 10, time: 0 }],
           },
-          Token: { castTime: 0, action: [{ type: "apply", target: "self", value: "VendettaToken", time: 0 }] },
+          Token: { castTime: 0, action: [{ type: "apply", target: "target", value: "VendettaToken", time: 0 }] },
         },
         effectDefinitions: { ...buffs, ...debuffs },
         dots: {},

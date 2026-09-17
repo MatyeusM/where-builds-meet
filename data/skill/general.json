@@ -104,7 +104,18 @@
     "damageGroup": { "id": "MoraleChant", "name": "Morale Chant" },
     "castTime": 0,
     "cooldown": 10,
-    "action": [{ "type": "damage", "phyCoef": 1, "phyBonus": 0, "attrBonus": 0, "time": 0, "attrCoef": 1 }],
+    "action": [
+      { "type": "damage", "phyCoef": 1, "phyBonus": 0, "attrBonus": 0, "time": 0, "attrCoef": 1 },
+      {
+        "type": "damage",
+        "phyCoef": 1,
+        "phyBonus": 0,
+        "attrBonus": 0,
+        "time": 0,
+        "attrCoef": 1,
+        "requirement": [{ "target": "target", "value": "Controlled" }]
+      }
+    ],
     "modifier": [],
     "tags": ["DirectDamage", "General", "MoraleChant", "Triggered"]
   },

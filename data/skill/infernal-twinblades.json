@@ -724,5 +724,102 @@
       "BladeOfHeavensWrath",
       "Empowered"
     ]
+  },
+  "InfernalLight2Rodent": {
+    "ignorePing": true,
+    "name": "Light Attack 2 [Rodent]",
+    "shortName": "A2 [Rodent]",
+    "skillBreakdownCategory": "Light Attack",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              { "target": "self", "value": "RodentRampage" },
+              { "target": "self", "value": "EnhancedRodentRampage" }
+            ]
+          },
+          { "target": "distance", "comparison": "<", "amount": 12 }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": ["MartialArts", "InfernalTwinblades", "DualBlades", "Light", "InfernalLight2"]
+  },
+  "InfernalFlamelashLight1Rodent": {
+    "ignorePing": true,
+    "name": "Blade of Heaven's Wrath 1 [Rodent]",
+    "shortName": "FA1 [Rodent]",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              { "target": "self", "value": "RodentRampage" },
+              { "target": "self", "value": "EnhancedRodentRampage" }
+            ]
+          },
+          { "target": "distance", "comparison": "<", "amount": 12 }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight1",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
+  },
+  "InfernalFlamelashLight5Rodent": {
+    "ignorePing": true,
+    "name": "Blade of Heaven's Wrath 5 [Rodent]",
+    "shortName": "FA5 [Rodent]",
+    "skillBreakdownCategory": "Blade of Heaven's Wrath",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "trigger",
+        "value": "Rodent",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "or",
+            "operand": [
+              { "target": "self", "value": "RodentRampage" },
+              { "target": "self", "value": "EnhancedRodentRampage" }
+            ]
+          },
+          { "target": "distance", "comparison": "<", "amount": 12 }
+        ]
+      }
+    ],
+    "martialArt": "infernalTwinblades",
+    "weapon": "DualBlades",
+    "tags": [
+      "MartialArts",
+      "InfernalTwinblades",
+      "DualBlades",
+      "Light",
+      "InfernalFlamelashLight5",
+      "BladeOfHeavensWrath",
+      "Empowered"
+    ]
   }
 }

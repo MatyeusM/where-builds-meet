@@ -63,6 +63,12 @@ describe("rodent-rampage", () => {
     })
     const rodentRows = rows => rows.filter(row => row.step.skill === "Rodent")
     const build = (steps, extra = {}, roll) => buildRotationTimeline(input(steps, extra), roll)
+    for (const id of Object.keys(infernal).filter(id => id.endsWith("Rodent"))) {
+      const active = build([cast("RodentRampage"), cast(id)])
+      assert.equal(rodentRows(active).length, 1, `${id} launches one Rodent before its light attack hits`)
+      assert.equal(active.find(row => row.step.skill === id).effectiveCastTime, 0)
+      assert.equal(rodentRows(build([cast(id)], { initialBuffs: [] })).length, 0, `${id} requires Rampage`)
+    }
     const ids = [
       "InfernalLight1",
       "InfernalLight2",

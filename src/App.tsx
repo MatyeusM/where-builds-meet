@@ -250,6 +250,7 @@ import {
   migrateDefenseActionAnchors,
   migrateGeneralsBaneSlides,
   reorderAttachedEventWithinTarget,
+  migrateVendettaTokenStep,
 } from "./rotationEditing"
 import {
   exportRotationEntries,
@@ -805,7 +806,7 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
   // Reconstruct supported fields: discard legacy autoHP, preserving manual HP events and anchors.
   const steps: RotationStep[] = (rotation.steps as Array<RotationStep & { repeat?: number }>).flatMap(
     (step): RotationStep[] => {
-      if (step.type === "event") return [step]
+      if (step.type === "event") return [migrateVendettaTokenStep(step)]
       const repeat = Math.max(1, step.repeat ?? 1)
       const { repeat: _repeat, ...stepWithoutRepeat } = step
       return Array.from({ length: repeat }, (_, index) => ({

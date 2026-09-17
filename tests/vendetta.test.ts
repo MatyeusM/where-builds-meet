@@ -9,6 +9,7 @@ describe("vendetta", () => {
     const delay = duration => ({ type: "event", event: "Delay", duration })
     const vendetta = await import("../data/innerway/vendetta.json")
     const buffs = await import("../data/buff/bamboocut-wind.json")
+    const debuffs = await import("../data/debuff/bamboocut-wind.json")
     const mortal = await import("../data/skill/mortal-rope-dart.json")
     const infernal = await import("../data/skill/infernal-twinblades.json")
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
@@ -17,7 +18,7 @@ describe("vendetta", () => {
         {
           rotation: { name: "Vendetta lifetime", steps },
           skills: { ...mortal, ...infernal },
-          effectDefinitions: buffs,
+          effectDefinitions: { ...buffs, ...debuffs },
           dots: {},
           eventDefinitions: {},
           weapons: ["infernalTwinblades", "mortalRopeDart"],
@@ -112,7 +113,7 @@ describe("vendetta", () => {
             ],
           },
           skills: { ...mortal, ...infernal, Wait: { castTime: 0.385, action: [] } },
-          effectDefinitions: buffs,
+          effectDefinitions: { ...buffs, ...debuffs },
           dots: {},
           eventDefinitions: {},
           weapons,
@@ -145,7 +146,7 @@ describe("vendetta", () => {
     const tokenT6 = damageRun(true, true)
     close(procDamage(token) / procDamage(unbuffed), 1.5, "Vendetta Token adds 50% Rodent general damage")
     close(procDamage(tokenT6) / procDamage(unbuffed), 1.8, "T6 adds 30% to Token's general damage bonus")
-    close(procDamage(damageRun(false, true)), procDamage(unbuffed), "T6 has no effect without the self buff")
+    close(procDamage(damageRun(false, true)), procDamage(unbuffed), "T6 has no effect without the target mark")
     close(
       token.actionBreakdowns["rotation-2:0"].total,
       unbuffed.actionBreakdowns["rotation-2:0"].total,
@@ -166,12 +167,16 @@ describe("vendetta", () => {
       const casts = rows.filter(row => row.step.skill === "BladeboundThreadCancel")
       close(casts[0].effectiveCastTime, 0.385, "Cancel cast ends at the supplied hit time")
       close(casts[0].actions[0].time, 0.385, "Cancel hit uses the supplied local time")
-      assert.ok(!casts[0].actionStates[0].buffs.has("VendettaToken"), "Token is applied after the initial damage")
+      assert.ok(!casts[0].actionStates[0].debuffs.has("VendettaToken"), "Token is applied after the initial damage")
       close(casts[1].startTime, 8, "Repeated cancel casts honor the eight-second cooldown")
       const active = Array.from(
-        rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
+        rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].debuffs.values(),
       ).filter(buff => buff.name === "VendettaToken")
-      assert.equal(active.length, 1, "Reapplication refreshes one Token buff")
+      assert.equal(active.length, 1, "Reapplication refreshes one Token debuff")
+      assert.ok(
+        rows.every(row => !row.buffs.has("VendettaToken")),
+        "Token never becomes a player buff",
+      )
       assert.equal(active[0].stack, 1, "Token does not stack damage on recast")
       close(active[0].expiresAt, 18.385, "Token refresh starts ten seconds at its new application")
       for (const [tier, duration] of [
@@ -186,19 +191,21 @@ describe("vendetta", () => {
           roll,
         )
         const hit = lifetime.find(row => row.step.skill === "InfernalLight1")
-        assert.ok(!hit.actionStates[0].buffs.has("VendettaToken"), "Token expires at its exact tier-adjusted boundary")
+        assert.ok(
+          !hit.actionStates[0].debuffs.has("VendettaToken"),
+          "Token expires at its exact tier-adjusted boundary",
+        )
         const before = build(tier, [cast("BladeboundThreadCancel"), cast("InfernalLight1")], roll).find(
           row => row.step.skill === "InfernalLight1",
         )
         close(
-          before.actionStates[0].buffs.get("VendettaToken").expiresAt,
+          before.actionStates[0].debuffs.get("VendettaToken").expiresAt,
           0.385 + duration,
           "Token duration uses the selected tier",
         )
       }
     }
     const mortalTalents = await import("../data/martial-art/mortal-rope-dart.json")
-    const debuffs = await import("../data/debuff/bamboocut-wind.json")
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     for (const rank of [12, 13]) {
       const rows = buildRotationTimeline({

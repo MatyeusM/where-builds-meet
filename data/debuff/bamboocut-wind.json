@@ -1,4 +1,15 @@
 {
+  "VendettaToken": {
+    "name": "Vendetta Token",
+    "shortName": "VT",
+    "duration": 10,
+    "maxStack": 1,
+    "refresh": true,
+    "shared": false,
+    "showCoverage": true,
+    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Rodent" }], "effect": { "dmgBonus": 0.5 } }]
+  },
+
   "BoneCorrosion": {
     "name": "Bone Corrosion",
     "shortName": "BC",

@@ -107,7 +107,22 @@ describe("Wind dummy preset", () => {
       expect(row.effectiveCastTime).toBe(0)
       expect(row.actions.some(action => action.type === "damage")).toBe(false)
     }
-    // The authored sequence intentionally permits resource-invalid casts pending user review.
+    // Flamelash may expire during a cast, but must be active when that cast starts.
+    for (const row of casts.filter(
+      row =>
+        row.step.skill?.startsWith("InfernalFlamelashLight") && row.actions.some(action => action.type === "damage"),
+    )) {
+      expect(row.buffs.has("Flamelash")).toBe(true)
+    }
+    for (const [index, row] of fullCasts.entries()) {
+      if (!row.step.skill?.includes("PerfectDodge")) continue
+      const cancel = fullCasts[index - 1]
+      expect(cancel.step.skill?.endsWith("Rodent")).toBe(true)
+      expect(
+        full.timeline.filter(trigger => trigger.sourceRowId === cancel.id && trigger.step.skill === "Rodent"),
+      ).toHaveLength(1)
+      expect(cancel.startTime).toBeLessThanOrEqual(row.startTime)
+    }
     expect(fullCasts.length).toBe(bundle.timeline.rotation.steps.filter(step => step.type === "skill").length)
     expect(casts.map(row => row.id)).toEqual(
       fullCasts.filter(row => row.startTime < fightStart + 60).map(row => row.id),

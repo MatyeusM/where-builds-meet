@@ -63,7 +63,7 @@
         "phyBonus": 17.5,
         "attrBonus": 9.5
       },
-      { "type": "apply", "target": "self", "value": "VendettaToken", "time": 0.385 },
+      { "type": "apply", "target": "target", "value": "VendettaToken", "time": 0.385 },
       {
         "type": "apply",
         "target": "target",

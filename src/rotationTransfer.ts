@@ -1,5 +1,6 @@
 import { normalizePing } from "./calculations/combatDefaults"
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
+import { migrateVendettaTokenStep } from "./rotationEditing"
 import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing"
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types"
 
@@ -139,7 +140,13 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
   if (step.type === "event" && step.event === "Buff" && before && typeof step.buff === "string" && step.buff) {
     const stack =
       typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
-    return { type: "event", event: "Buff", before, buff: step.buff, ...(stack === undefined ? {} : { stack }) }
+    return migrateVendettaTokenStep({
+      type: "event",
+      event: "Buff",
+      before,
+      buff: step.buff,
+      ...(stack === undefined ? {} : { stack }),
+    })
   }
   if (step.type === "event" && step.event === "Debuff" && before && typeof step.debuff === "string" && step.debuff) {
     if (step.debuff === "Exhausted") return { type: "event", event: "Qi", before, targetQiRatio: 0 }

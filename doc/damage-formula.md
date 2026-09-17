@@ -640,7 +640,7 @@ vulnerability.
 
 Vendetta Token uses `dmgBonus: 0.5` for Rodent-tagged attacks, following the
 confirmed general-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
-while the same self buff is active. These bonuses add together in the same existing
+while the same caster-specific target debuff is active. These bonuses add together in the same existing
 category: without other bonuses their multiplier is `1 + 0.5 + 0.3 = 1.8`.
 Other attacks receive neither bonus. No Category 2 multiplier is introduced.
 
@@ -822,3 +822,10 @@ The defensive base-attribute relationships are:
 ```
 
 Inner Way priority is calculated by removing each selected Inner Way and measuring the resulting DPS loss. Every current Inner Way declares `altersTimeline: true`, so these removals conservatively rebuild the timeline. Setup comparisons replace the selected setup option with the candidate and omit the already-active choice. Weapon and armor set comparisons rebuild when any changed tier belongs to a definition with `altersTimeline: true`, including a timeline-changing set removed by the replacement. Rain Whisper changes also rebuild the timeline because its Critical Healing bonuses can change overhealing and healing-triggered events. Script comparisons use the same two-sided rule: they rebuild when either the selected baseline Script or the candidate has `altersTimeline: true`. Revelry carries that flag because Take Damage can apply its buff; comparisons between the other damage-only Scripts reuse the baseline timeline.
+
+### Morale Chant T6 controlled targets
+
+At maximum Yi River stacks, Morale Chant T6 triggers one bonus attack, or two
+separate hits against a Controlled target, on the same 10-second cooldown.
+The second hit uses the ordinary damage pipeline and checks Controlled at hit
+time. Exhausted alone does not satisfy this condition.

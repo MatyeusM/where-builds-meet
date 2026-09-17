@@ -243,3 +243,10 @@ export function reorderAttachedEventWithinTarget(
   ;[next[stepIndex], next[siblingIndex]] = [next[siblingIndex], next[stepIndex]]
   return { steps: next, movedIndex: siblingIndex }
 }
+
+/** Preserve saved manual Token applications when moving the mark to the enemy. */
+export function migrateVendettaTokenStep(step: RotationStep): RotationStep {
+  if (step.type !== "event" || step.event !== "Buff" || step.buff !== "VendettaToken") return step
+  const { buff, ...rest } = step
+  return { ...rest, event: "Debuff", debuff: buff }
+}

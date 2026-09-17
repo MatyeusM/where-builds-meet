@@ -26,6 +26,7 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     if (Array.isArray(entry)) return entry.map(migrate)
     if (!entry || typeof entry !== "object") return entry
     const record = Object.fromEntries(Object.entries(entry).map(([key, child]) => [key, migrate(child)]))
+    if (record.value === "VendettaToken" && record.target === "self") record.target = "target"
     if (record.stackDamage !== undefined) {
       if (record.stackDamage === true && record.tickOnExpire === undefined) record.tickOnExpire = false
       delete record.stackDamage
@@ -61,7 +62,16 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     }
     return record
   }
-  return migrate(currentCoefficients ? (stored.overrides ?? {}) : value) as SkillOverrides
+  const overrides = migrate(currentCoefficients ? (stored.overrides ?? {}) : value) as SkillOverrides
+  const legacyToken = overrides.Buff?.VendettaToken
+  if (legacyToken) {
+    overrides.Debuff = {
+      ...overrides.Debuff,
+      VendettaToken: overrides.Debuff?.VendettaToken ?? { ...legacyToken, shared: false },
+    }
+    delete overrides.Buff!.VendettaToken
+  }
+  return overrides
 }
 
 export function serializeSkillOverrides(overrides: SkillOverrides) {

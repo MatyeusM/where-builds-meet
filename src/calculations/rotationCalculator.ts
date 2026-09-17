@@ -2172,6 +2172,7 @@ export function calculateRotationComparisons(
     bundle.attunementPriority.length +
     bundle.innerWayPriority.length +
     Object.values(bundle.setupComparisons).reduce((total, variants) => total + variants.length, 0)
+  const baselineActionIds = new Set(baselineResult.baseline.map(entry => entry.id))
   let completedVariants = 0
   onProgress?.(0, totalVariants)
   const calculationForVariant = (variant: RotationSimulationVariant) => {
@@ -2221,7 +2222,10 @@ export function calculateRotationComparisons(
     const variantTimeline = combatRuntime?.timeline ?? baselineResult.timeline
     const resolution =
       combatRuntime ?? timelineDamageEntries(variantTimeline, timelineInput, state, bundle.startAnchor, variant)
-    const entries = resolution.entries
+    // Reusing combat events must preserve actions skipped by requirements or cooldowns.
+    const entries = combatRuntime
+      ? resolution.entries
+      : resolution.entries.filter(entry => baselineActionIds.has(entry.id))
     const resolvedSequence =
       resolution.resolvedSequence ?? calculateRotationDamageSequence(entries, undefined, reusableExpectedBuffSchedule)
     if (import.meta.env.DEV) finishCalculationPhase("damagePipeline", damagePipelineStartedAt)
