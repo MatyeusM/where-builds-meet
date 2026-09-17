@@ -66,6 +66,7 @@ import { createOfficialGearBookmarklet } from "./officialGearBookmarklet"
 import type { WeaponId } from "./types"
 import { Button } from "./ui/Button"
 import { Dialog } from "./ui/Dialog"
+import { Panel, PanelHeading } from "./ui/Panel"
 import { UiIcon } from "./UiIcon"
 
 function gearSlotLabel(slot: GearSlot) {
@@ -314,7 +315,7 @@ export default function BuildTab({
   }
   if (!editingEntry)
     return (
-      <section className="panel build-manager-panel">
+      <Panel className="build-manager-panel">
         <div className="build-manager-layout">
           <aside className="build-list">
             <div className="build-list-heading">
@@ -326,7 +327,7 @@ export default function BuildTab({
             <p className="array-editor-empty">{t("ui.buildTab.noBuildsMatchTheSelectedMartialArts")}</p>
           </aside>
         </div>
-      </section>
+      </Panel>
     )
   const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons)
   const setup = resolveBuildSetup(editingEntry)
@@ -483,7 +484,7 @@ export default function BuildTab({
   }
 
   return (
-    <section className="panel build-manager-panel">
+    <Panel className="build-manager-panel">
       <div className="build-manager-layout">
         <aside className="build-list">
           <div className="build-list-heading">
@@ -683,7 +684,7 @@ export default function BuildTab({
         </div>
         <p className="official-import-privacy">{t("ui.buildTab.theBookmarkRunsOnlyOnTheOfficialDashboard")}</p>
       </dialog>
-    </section>
+    </Panel>
   )
 }
 
@@ -712,12 +713,12 @@ function BuildSetupPanel({
     definitions: typeof weaponSetDefinitions,
     entries: typeof availableWeaponSets,
   ) => (
-    <section className="panel setup-placeholder-panel build-setup-panel">
-      <div className="panel-heading">
+    <Panel className="setup-placeholder-panel build-setup-panel">
+      <PanelHeading>
         <div>
           <h2>{title}</h2>
         </div>
-      </div>
+      </PanelHeading>
       <div className="gear-set-list">
         {entries.map(([setName, definition]) => {
           const selectedTier = setup[key][setName] ?? 0
@@ -749,16 +750,16 @@ function BuildSetupPanel({
           )
         })}
       </div>
-    </section>
+    </Panel>
   )
   return (
     <div className="build-setup-column" aria-label={t("ui.buildTab.buildSetup")}>
-      <section className="panel setup-placeholder-panel build-setup-panel">
-        <div className="panel-heading">
+      <Panel className="setup-placeholder-panel build-setup-panel">
+        <PanelHeading>
           <div>
             <h2>{t("ui.buildTab.innerWays")}</h2>
           </div>
-        </div>
+        </PanelHeading>
         <div className="inner-way-list">
           {setup.innerWays.map((row, index) => (
             <div className="inner-way-row" key={index}>
@@ -808,16 +809,16 @@ function BuildSetupPanel({
             </div>
           ))}
         </div>
-      </section>
+      </Panel>
       {setPanel(t("ui.buildTab.weaponSet"), "weaponSets", weaponSetDefinitions, availableWeaponSets)}
       {availableArmorSets.length > 0 &&
         setPanel(t("ui.buildTab.armorSet"), "armorSets", armorSetDefinitions, availableArmorSets)}
-      <section className="panel setup-placeholder-panel build-setup-panel">
-        <div className="panel-heading">
+      <Panel className="setup-placeholder-panel build-setup-panel">
+        <PanelHeading>
           <div>
             <h2>{t("ui.buildTab.bowRingSet")}</h2>
           </div>
-        </div>
+        </PanelHeading>
         <div className="setup-option-list setup-option-list-wide">
           {Object.entries(bowRingSetDefinitions).map(([value, definition]) => (
             <button
@@ -832,13 +833,13 @@ function BuildSetupPanel({
             </button>
           ))}
         </div>
-      </section>
-      <section className="panel setup-placeholder-panel build-setup-panel">
-        <div className="panel-heading">
+      </Panel>
+      <Panel className="setup-placeholder-panel build-setup-panel">
+        <PanelHeading>
           <div>
             <h2>{t("ui.buildTab.arsenal")}</h2>
           </div>
-        </div>
+        </PanelHeading>
         <div className="setup-option-list setup-option-list-arsenal">
           {Object.entries(arsenalDefinitions).map(([value, definition]) => (
             <button
@@ -853,14 +854,14 @@ function BuildSetupPanel({
             </button>
           ))}
         </div>
-      </section>
-      <section className="panel setup-placeholder-panel build-setup-panel build-affix-summary-panel">
-        <div className="panel-heading">
+      </Panel>
+      <Panel className="setup-placeholder-panel build-setup-panel build-affix-summary-panel">
+        <PanelHeading>
           <div className="build-affix-summary-heading">
             <h2>{t("ui.buildTab.affixes")}</h2>
             <span>{t("ui.buildTab.affixTotal", { number: affixSummary.total })}</span>
           </div>
-        </div>
+        </PanelHeading>
         {affixSummary.affixes.length > 0 ? (
           <ol className="build-affix-summary-list">
             {affixSummary.affixes.map(({ key, count }) => (
@@ -873,7 +874,7 @@ function BuildSetupPanel({
         ) : (
           <p className="build-affix-summary-empty">{t("ui.buildTab.noAffixes")}</p>
         )}
-      </section>
+      </Panel>
     </div>
   )
 }
@@ -1070,8 +1071,8 @@ function BuildManagement({
           onChange={onSetupChange}
         />
         <div key="gear" className="build-management-grid">
-          <section className="panel build-equipped-panel">
-            <div className="panel-heading">
+          <Panel className="build-equipped-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.buildTab.equippedGear")}</h2>
                 <p>
@@ -1080,7 +1081,7 @@ function BuildManagement({
                     : t("ui.buildTab.selectASlotToEquipGearFromThe")}
                 </p>
               </div>
-            </div>
+            </PanelHeading>
             <div className="equipped-gear-grid">
               {gearSlots.map(slot => {
                 const item = equippedItems[slot]
@@ -1114,11 +1115,11 @@ function BuildManagement({
                 )
               })}
             </div>
-          </section>
+          </Panel>
 
           {!locked && (
-            <section className="panel build-inventory-panel">
-              <div className="panel-heading">
+            <Panel className="build-inventory-panel">
+              <PanelHeading>
                 <div>
                   <h2>{gearSlotLabel(selectedSlot)}</h2>
                   <p>
@@ -1126,7 +1127,7 @@ function BuildManagement({
                     {t("ui.buildTab.inventoryEditsAndDeletionsApplyToEveryBuild")}
                   </p>
                 </div>
-              </div>
+              </PanelHeading>
               <div className="available-gear-grid">
                 {availableItems.map(item => (
                   <article
@@ -1195,7 +1196,7 @@ function BuildManagement({
                   <strong>{t("ui.buildTab.addGear")}</strong>
                 </button>
               </div>
-            </section>
+            </Panel>
           )}
 
           {!locked && selected.definition && (
