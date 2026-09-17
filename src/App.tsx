@@ -35,6 +35,7 @@ import { Chip } from "./ui/Chip"
 import { NumberInput } from "./ui/NumberInput"
 import { Panel, PanelHeading } from "./ui/Panel"
 import { Tab } from "./ui/Tab"
+import { Tooltip } from "./ui/Tooltip"
 import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
 const loadSimulationTab = () => import("./SimulationTab")
@@ -2579,25 +2580,29 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
   )
 }
 
+const damageTooltipParts: Array<[keyof DamageBreakdown, string]> = [
+  ["physical", "Physical"],
+  ["bellstrike", "Bellstrike"],
+  ["stonesplit", "Stonesplit"],
+  ["silkbind", "Silkbind"],
+  ["bamboocut", "Bamboocut"],
+]
+
+function damageTooltipContent(breakdown: DamageBreakdown) {
+  return damageTooltipParts.map(([key, label]) => (
+    <span className={`damage-breakdown-part damage-${key}`} key={key}>
+      <i>{label}</i>
+      {formatDamageNumber(breakdown[key] as number)}
+    </span>
+  ))
+}
+
 function DamageBreakdownValue({ breakdown, className = "" }: { breakdown: DamageBreakdown; className?: string }) {
-  const parts: Array<[keyof DamageBreakdown, string]> = [
-    ["physical", "Physical"],
-    ["bellstrike", "Bellstrike"],
-    ["stonesplit", "Stonesplit"],
-    ["silkbind", "Silkbind"],
-    ["bamboocut", "Bamboocut"],
-  ]
   return (
     <span className={`damage-breakdown-wrap ${className}`}>
-      <span>{formatDamageNumber(breakdown.total)}</span>
-      <span className="damage-breakdown-tooltip">
-        {parts.map(([key, label]) => (
-          <span className={`damage-breakdown-part damage-${key}`} key={key}>
-            <i>{label}</i>
-            {formatDamageNumber(breakdown[key] as number)}
-          </span>
-        ))}
-      </span>
+      <Tooltip className="damage-breakdown-tooltip" content={damageTooltipContent(breakdown)}>
+        <span>{formatDamageNumber(breakdown.total)}</span>
+      </Tooltip>
     </span>
   )
 }
@@ -2611,17 +2616,23 @@ function HealingBreakdownValue({
 }) {
   return (
     <span className={`damage-breakdown-wrap healing-value ${className}`}>
-      <span>+{formatDamageNumber(breakdown.total)}</span>
-      <span className="damage-breakdown-tooltip">
-        <span className="damage-breakdown-part healing-physical">
-          <i>{gameText("Physical")}</i>
-          {formatDamageNumber(breakdown.physical)}
-        </span>
-        <span className="damage-breakdown-part healing-silkbind">
-          <i>{gameText("Silkbind")}</i>
-          {formatDamageNumber(breakdown.silkbind)}
-        </span>
-      </span>
+      <Tooltip
+        className="damage-breakdown-tooltip"
+        content={
+          <>
+            <span className="damage-breakdown-part healing-physical">
+              <i>{gameText("Physical")}</i>
+              {formatDamageNumber(breakdown.physical)}
+            </span>
+            <span className="damage-breakdown-part healing-silkbind">
+              <i>{gameText("Silkbind")}</i>
+              {formatDamageNumber(breakdown.silkbind)}
+            </span>
+          </>
+        }
+      >
+        <span>+{formatDamageNumber(breakdown.total)}</span>
+      </Tooltip>
     </span>
   )
 }
@@ -7920,38 +7931,45 @@ function RotationEditorTab({
                                 : ""
                             return (
                               <Chip className={`effect-plate${plateKind}`} key={`${effect.name}-${effect.stack ?? 1}`}>
-                                {label}
-                                <span className="effect-plate-tooltip" role="tooltip">
-                                  {effect.averageStackOnly ? (
-                                    <span>
-                                      {t("ui.app.averageStack")}: {formatNumber(effect.stack ?? 0)}
-                                    </span>
-                                  ) : (
+                                <Tooltip
+                                  className="effect-plate-tooltip"
+                                  align="end"
+                                  content={
                                     <>
-                                      {effect.remainingTriggers !== undefined && remainingTriggerName ? (
-                                        <>
-                                          <strong>{name}</strong>
-                                          <span>
-                                            {t("ui.app.remainingTriggerCount", {
-                                              name: remainingTriggerName,
-                                              number: effect.remainingTriggers,
-                                            })}
-                                          </span>
-                                          {!effect.hideRemainingTime ? (
-                                            <span>{t("ui.app.sLeft", { number: timeLeft })}</span>
-                                          ) : null}
-                                        </>
+                                      {effect.averageStackOnly ? (
+                                        <span>
+                                          {t("ui.app.averageStack")}: {formatNumber(effect.stack ?? 0)}
+                                        </span>
                                       ) : (
-                                        <strong>
-                                          {effect.hideRemainingTime
-                                            ? name
-                                            : `${name} - ${t("ui.app.sLeft", { number: timeLeft })}`}
-                                        </strong>
+                                        <>
+                                          {effect.remainingTriggers !== undefined && remainingTriggerName ? (
+                                            <>
+                                              <strong>{name}</strong>
+                                              <span>
+                                                {t("ui.app.remainingTriggerCount", {
+                                                  name: remainingTriggerName,
+                                                  number: effect.remainingTriggers,
+                                                })}
+                                              </span>
+                                              {!effect.hideRemainingTime ? (
+                                                <span>{t("ui.app.sLeft", { number: timeLeft })}</span>
+                                              ) : null}
+                                            </>
+                                          ) : (
+                                            <strong>
+                                              {effect.hideRemainingTime
+                                                ? name
+                                                : `${name} - ${t("ui.app.sLeft", { number: timeLeft })}`}
+                                            </strong>
+                                          )}
+                                          {description ? <span>{description}</span> : null}
+                                        </>
                                       )}
-                                      {description ? <span>{description}</span> : null}
                                     </>
-                                  )}
-                                </span>
+                                  }
+                                >
+                                  {label}
+                                </Tooltip>
                               </Chip>
                             )
                           })}
