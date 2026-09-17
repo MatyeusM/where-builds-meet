@@ -11,6 +11,7 @@ import { t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { getPersistentItem, setPersistentItem } from "./persistentStorage"
 import { Button } from "./ui/Button"
+import { Chip } from "./ui/Chip"
 import { Panel } from "./ui/Panel"
 import { UiIcon } from "./UiIcon"
 
@@ -105,7 +106,7 @@ function SimulationResultCard({
             {formatNumber(record.summary.duration)}
             {t("ui.simulationTab.s")}
           </span>
-          <span className={current ? "simulation-current" : "simulation-outdated"}>{statusLabel}</span>
+          <Chip className={current ? "simulation-current" : "simulation-outdated"}>{statusLabel}</Chip>
         </p>
         <button
           className="simulation-record-delete"
@@ -294,7 +295,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
         {customPercentiles.length > 0 && (
           <div className="simulation-percentile-chips">
             {customPercentiles.map(percentile => (
-              <span className="simulation-percentile-chip" key={percentile}>
+              <Chip className="simulation-percentile-chip" key={percentile}>
                 {t("ui.simulationTab.p")}
                 {percentile}
                 <button
@@ -305,7 +306,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
                 >
                   <UiIcon name="close" />
                 </button>
-              </span>
+              </Chip>
             ))}
           </div>
         )}
