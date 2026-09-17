@@ -3,6 +3,7 @@ import { Component, useSyncExternalStore, type ReactNode } from "react"
 import { isDeploymentImportError } from "../deploymentUpdates"
 import { t } from "../i18n"
 import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../notices"
+import { Button } from "../ui/Button"
 import { UiIcon } from "../UiIcon"
 
 function noticeText(message: NoticeMessage) {
@@ -23,9 +24,9 @@ export function NoticeArea() {
                   {notice.error && <strong>{t("ui.notices.error")}</strong>}
                   <p>{noticeText(notice.message)}</p>
                   {notice.action && (
-                    <button type="button" className="button button-primary" onClick={notice.action.run}>
+                    <Button type="button" className="button-primary" onClick={notice.action.run}>
                       {noticeText(notice.action.label)}
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <button

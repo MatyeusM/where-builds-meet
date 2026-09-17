@@ -10,6 +10,7 @@ import { startSimulation, type SimulationTask } from "./calculations/simulationW
 import { t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { getPersistentItem, setPersistentItem } from "./persistentStorage"
+import { Button } from "./ui/Button"
 import { UiIcon } from "./UiIcon"
 
 type SimulationTabProps = {
@@ -265,20 +266,20 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
             onChange={event => setCount(event.target.value)}
           />
         </label>
-        <button
-          className={`button ${running ? "button-secondary" : "button-primary"}`}
+        <Button
+          className={`${running ? "button-secondary" : "button-primary"}`}
           type="button"
           disabled={!bundle && !running}
           onClick={simulate}
         >
           {running ? t("ui.simulationTab.cancel") : t("ui.simulationTab.simulate")}
-        </button>
+        </Button>
       </div>
       <div className="simulation-percentile-settings">
         <div className="simulation-percentile-heading">
           <strong>{t("ui.simulationTab.customPercentiles")}</strong>
-          <button
-            className="button button-secondary button-small"
+          <Button
+            className="button-secondary button-small"
             type="button"
             disabled={running || addingPercentile}
             onClick={() => {
@@ -287,7 +288,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
             }}
           >
             {t("ui.simulationTab.addPercentile")}
-          </button>
+          </Button>
         </div>
         {customPercentiles.length > 0 && (
           <div className="simulation-percentile-chips">
@@ -325,11 +326,11 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
                 }}
               />
             </label>
-            <button className="button button-primary button-small" type="button" onClick={addPercentile}>
+            <Button className="button-primary button-small" type="button" onClick={addPercentile}>
               {t("ui.simulationTab.add")}
-            </button>
-            <button
-              className="button button-secondary button-small"
+            </Button>
+            <Button
+              className="button-secondary button-small"
               type="button"
               onClick={() => {
                 setAddingPercentile(false)
@@ -337,7 +338,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
               }}
             >
               {t("ui.simulationTab.cancel")}
-            </button>
+            </Button>
           </div>
         )}
         {percentileError && (
