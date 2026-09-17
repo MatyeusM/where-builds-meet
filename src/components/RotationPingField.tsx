@@ -1,8 +1,8 @@
 import { useState } from "react"
 
 import { t } from "../i18n"
+import { NumberInput } from "../ui/NumberInput"
 import { UiIcon } from "../UiIcon"
-import { PingInput } from "./PingInput"
 
 type RotationPingFieldProps = {
   value: number | undefined
@@ -20,7 +20,15 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
     return (
       <label className="field compact-field rotation-target-hp rotation-ping-field ping-field">
         <span className="field-label">{t("ui.app.ping")}</span>
-        <PingInput disabled value={value ?? inheritedValue} onCommit={onCommit} />
+        <NumberInput
+          disabled
+          min={0}
+          max={999}
+          step={1}
+          inputMode="numeric"
+          value={value ?? inheritedValue}
+          onCommit={onCommit}
+        />
       </label>
     )
   }
@@ -48,9 +56,13 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
           </button>
         )}
       </span>
-      <PingInput
+      <NumberInput
         key={resetRevision}
         allowEmpty
+        min={0}
+        max={999}
+        step={1}
+        inputMode="numeric"
         placeholder={String(inheritedValue)}
         title={t("ui.app.pingInherit")}
         value={value}
