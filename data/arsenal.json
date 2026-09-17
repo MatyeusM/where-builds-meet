@@ -1,47 +1,7 @@
 {
-  "General": {
-    "name": "General",
-    "effect": {
-      "rawStat": {
-        "minPhys": 131,
-        "maxPhys": 263
-      }
-    }
-  },
-  "Bellstrike": {
-    "name": "Bellstrike",
-    "effect": {
-      "rawStat": {
-        "minBellstrike": 131,
-        "maxBellstrike": 263
-      }
-    }
-  },
-  "Stonesplit": {
-    "name": "Stonesplit",
-    "effect": {
-      "rawStat": {
-        "minStonesplit": 131,
-        "maxStonesplit": 263
-      }
-    }
-  },
-  "Silkbind": {
-    "name": "Silkbind",
-    "effect": {
-      "rawStat": {
-        "minSilkbind": 131,
-        "maxSilkbind": 263
-      }
-    }
-  },
-  "Bamboocut": {
-    "name": "Bamboocut",
-    "effect": {
-      "rawStat": {
-        "minBamboocut": 131,
-        "maxBamboocut": 263
-      }
-    }
-  }
+  "General": { "name": "General", "effect": { "rawStat": { "minPhys": 131, "maxPhys": 263 } } },
+  "Bellstrike": { "name": "Bellstrike", "effect": { "rawStat": { "minBellstrike": 131, "maxBellstrike": 263 } } },
+  "Stonesplit": { "name": "Stonesplit", "effect": { "rawStat": { "minStonesplit": 131, "maxStonesplit": 263 } } },
+  "Silkbind": { "name": "Silkbind", "effect": { "rawStat": { "minSilkbind": 131, "maxSilkbind": 263 } } },
+  "Bamboocut": { "name": "Bamboocut", "effect": { "rawStat": { "minBamboocut": 131, "maxBamboocut": 263 } } }
 }

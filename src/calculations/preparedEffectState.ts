@@ -1,18 +1,18 @@
-import { requirementsPass, type EditableObject } from "./rotationTimeline";
-import { trackedEffectMetadata, type EffectState } from "./trackedEffectState";
+import { requirementsPass, type EditableObject } from "./rotationTimeline"
+import { trackedEffectMetadata, type EffectState } from "./trackedEffectState"
 
 /** Run-local preparation. Numerical predicates are keyed by their result, so HP changes
  * that stay on the same side of a threshold do not rebuild contributions. */
 export function createPreparedEffectState(requirements: unknown[]) {
-  const numericRequirements: EditableObject[] = [];
-  const numericKeys = new Set<string>();
+  const numericRequirements: EditableObject[] = []
+  const numericKeys = new Set<string>()
   const visit = (value: unknown): void => {
     if (Array.isArray(value)) {
-      value.forEach(visit);
-      return;
+      value.forEach(visit)
+      return
     }
-    if (!value || typeof value !== "object") return;
-    const condition = value as EditableObject;
+    if (!value || typeof value !== "object") return
+    const condition = value as EditableObject
     switch (condition.target) {
       case "resource":
       case "distance":
@@ -20,27 +20,27 @@ export function createPreparedEffectState(requirements: unknown[]) {
       case "targetHPPercentage":
       case "targetQiPercentage":
         if (!numericKeys.has(JSON.stringify(condition))) {
-          numericKeys.add(JSON.stringify(condition));
-          numericRequirements.push(condition);
+          numericKeys.add(JSON.stringify(condition))
+          numericRequirements.push(condition)
         }
-        break;
+        break
     }
-    Object.values(condition).forEach(visit);
-  };
-  requirements.forEach(visit);
-  const states = new Map<string, EditableObject[]>();
-  const identities = new WeakMap<object, number>();
-  let nextIdentity = 0;
-  const modifierKeys = new WeakMap<object, string>();
-  const emptyConditions = new Set<string>();
+    Object.values(condition).forEach(visit)
+  }
+  requirements.forEach(visit)
+  const states = new Map<string, EditableObject[]>()
+  const identities = new WeakMap<object, number>()
+  let nextIdentity = 0
+  const modifierKeys = new WeakMap<object, string>()
+  const emptyConditions = new Set<string>()
   const identity = (value: object) => {
-    let id = identities.get(value);
+    let id = identities.get(value)
     if (id === undefined) {
-      id = nextIdentity++;
-      identities.set(value, id);
+      id = nextIdentity++
+      identities.set(value, id)
     }
-    return id;
-  };
+    return id
+  }
   return (
     buffs: EffectState,
     debuffs: EffectState,
@@ -50,13 +50,13 @@ export function createPreparedEffectState(requirements: unknown[]) {
     modifiers: object,
     resolve: () => EditableObject[],
   ) => {
-    const predicates = numericRequirements.map((requirement) =>
+    const predicates = numericRequirements.map(requirement =>
       requirementsPass([requirement], buffs, debuffs, [], emptyConditions, [], resources, state) ? 1 : 0,
-    );
-    let modifierKey = modifierKeys.get(modifiers);
+    )
+    let modifierKey = modifierKeys.get(modifiers)
     if (modifierKey === undefined) {
-      modifierKey = JSON.stringify(modifiers);
-      modifierKeys.set(modifiers, modifierKey);
+      modifierKey = JSON.stringify(modifiers)
+      modifierKeys.set(modifiers, modifierKey)
     }
     const key = JSON.stringify([
       identity(staticEffects),
@@ -64,12 +64,12 @@ export function createPreparedEffectState(requirements: unknown[]) {
       trackedEffectMetadata(buffs).requirementKey,
       trackedEffectMetadata(debuffs).requirementKey,
       predicates,
-    ]);
-    let effects = states.get(key);
+    ])
+    let effects = states.get(key)
     if (!effects) {
-      effects = resolve();
-      states.set(key, effects);
+      effects = resolve()
+      states.set(key, effects)
     }
-    return effects;
-  };
+    return effects
+  }
 }

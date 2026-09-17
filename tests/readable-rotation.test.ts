@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { readableRotationText } from "../src/readableRotation";
-import type { TimelineRow } from "../src/calculations/rotationTimeline";
+import { describe, expect, it } from "vitest"
+
+import type { TimelineRow } from "../src/calculations/rotationTimeline"
+import { readableRotationText } from "../src/readableRotation"
 
 // Ported from script/probe/check-readable-rotation.mjs.
 function skillRow(
@@ -24,7 +25,7 @@ function skillRow(
     debuffs: new Map(),
     modifierEffects: [],
     actionStates: {},
-  };
+  }
 }
 
 describe("readableRotationText", () => {
@@ -52,19 +53,19 @@ describe("readableRotationText", () => {
       modifierEffects: [],
       actionStates: {},
     },
-  ] as unknown as TimelineRow[];
+  ] as unknown as TimelineRow[]
 
   it("formats action-level anchors with hit modifiers", () => {
     expect(readableRotationText(timeline, { rowId: "rotation-1", actionIndex: 2 }, 2)).toBe(
       "One at 2 > Two (start at hit 3) > Three (break) > Four",
-    );
-  });
+    )
+  })
 
   it("formats skill-level anchors with the start modifier", () => {
     expect(readableRotationText(timeline, { rowId: "rotation-1" }, 1)).toBe(
       "One at 1 > Two (start) > Three (break) > Four",
-    );
-  });
+    )
+  })
 
   it("collapses consecutive identical skills without merging later occurrences", () => {
     const repeatedTimeline = [
@@ -73,11 +74,11 @@ describe("readableRotationText", () => {
       skillRow(2, 2, 1, "One"),
       skillRow(3, 3, 1, "Two"),
       skillRow(4, 4, 1, "One"),
-    ] as unknown as TimelineRow[];
+    ] as unknown as TimelineRow[]
 
-    expect(readableRotationText(repeatedTimeline, { rowId: "missing" }, 0)).toBe("One x3 > Two > One");
+    expect(readableRotationText(repeatedTimeline, { rowId: "missing" }, 0)).toBe("One x3 > Two > One")
     expect(readableRotationText(repeatedTimeline, { rowId: "rotation-1" }, 1)).toBe(
       "One at 1 > One (start) > One > Two > One",
-    );
-  });
-});
+    )
+  })
+})

@@ -1,93 +1,94 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest"
+
 import {
   getPersistentItem,
   migrateSessionStorage,
   removePersistentItem,
   setPersistentItem,
-} from "../src/persistentStorage";
+} from "../src/persistentStorage"
 
 // Ported from script/probe/check-persistent-storage.mjs: the probe's
 // MemoryStorage stand-ins become plain Maps behind the Storage interface.
 class MemoryStorage implements Storage {
-  #values = new Map<string, string>();
+  #values = new Map<string, string>()
 
   get length() {
-    return this.#values.size;
+    return this.#values.size
   }
 
   clear() {
-    this.#values.clear();
+    this.#values.clear()
   }
 
   getItem(key: string) {
-    return this.#values.get(String(key)) ?? null;
+    return this.#values.get(String(key)) ?? null
   }
 
   key(index: number) {
-    return [...this.#values.keys()][index] ?? null;
+    return [...this.#values.keys()][index] ?? null
   }
 
   removeItem(key: string) {
-    this.#values.delete(String(key));
+    this.#values.delete(String(key))
   }
 
   setItem(key: string, value: string) {
-    this.#values.set(String(key), String(value));
+    this.#values.set(String(key), String(value))
   }
 }
 
 describe("persistent storage migration", () => {
-  let localStorage: MemoryStorage;
-  let firstTabStorage: MemoryStorage;
+  let localStorage: MemoryStorage
+  let firstTabStorage: MemoryStorage
 
   beforeEach(() => {
-    localStorage = new MemoryStorage();
-    firstTabStorage = new MemoryStorage();
-    globalThis.window = { localStorage, sessionStorage: firstTabStorage } as Window & typeof globalThis;
-  });
+    localStorage = new MemoryStorage()
+    firstTabStorage = new MemoryStorage()
+    globalThis.window = { localStorage, sessionStorage: firstTabStorage } as Window & typeof globalThis
+  })
 
   it("migrates a legacy session value to local storage on read", () => {
-    firstTabStorage.setItem("legacy", "rotation-data");
+    firstTabStorage.setItem("legacy", "rotation-data")
 
-    expect(getPersistentItem("legacy")).toBe("rotation-data");
-    expect(localStorage.getItem("legacy")).toBe("rotation-data");
-    expect(firstTabStorage.getItem("legacy")).toBeNull();
-  });
+    expect(getPersistentItem("legacy")).toBe("rotation-data")
+    expect(localStorage.getItem("legacy")).toBe("rotation-data")
+    expect(firstTabStorage.getItem("legacy")).toBeNull()
+  })
 
   it("eagerly migrates every remaining session value at startup", () => {
-    firstTabStorage.setItem("eager-a", "a");
-    firstTabStorage.setItem("eager-b", "b");
+    firstTabStorage.setItem("eager-a", "a")
+    firstTabStorage.setItem("eager-b", "b")
 
-    migrateSessionStorage();
+    migrateSessionStorage()
 
-    expect(localStorage.getItem("eager-a")).toBe("a");
-    expect(localStorage.getItem("eager-b")).toBe("b");
-    expect(firstTabStorage.length).toBe(0);
-  });
+    expect(localStorage.getItem("eager-a")).toBe("a")
+    expect(localStorage.getItem("eager-b")).toBe("b")
+    expect(firstTabStorage.length).toBe(0)
+  })
 
   it("prefers durable data over a stale session copy", () => {
-    firstTabStorage.setItem("precedence", "stale-session-data");
-    localStorage.setItem("precedence", "durable-data");
+    firstTabStorage.setItem("precedence", "stale-session-data")
+    localStorage.setItem("precedence", "durable-data")
 
-    expect(getPersistentItem("precedence")).toBe("durable-data");
-    expect(firstTabStorage.getItem("precedence")).toBeNull();
-  });
+    expect(getPersistentItem("precedence")).toBe("durable-data")
+    expect(firstTabStorage.getItem("precedence")).toBeNull()
+  })
 
   it("shares migrated data across tabs and writes new values durably", () => {
-    firstTabStorage.setItem("legacy", "rotation-data");
-    expect(getPersistentItem("legacy")).toBe("rotation-data");
+    firstTabStorage.setItem("legacy", "rotation-data")
+    expect(getPersistentItem("legacy")).toBe("rotation-data")
 
-    const secondTabStorage = new MemoryStorage();
-    globalThis.window.sessionStorage = secondTabStorage;
-    expect(getPersistentItem("legacy")).toBe("rotation-data");
+    const secondTabStorage = new MemoryStorage()
+    globalThis.window.sessionStorage = secondTabStorage
+    expect(getPersistentItem("legacy")).toBe("rotation-data")
 
-    setPersistentItem("saved", "value");
-    expect(localStorage.getItem("saved")).toBe("value");
-    expect(secondTabStorage.getItem("saved")).toBeNull();
+    setPersistentItem("saved", "value")
+    expect(localStorage.getItem("saved")).toBe("value")
+    expect(secondTabStorage.getItem("saved")).toBeNull()
 
-    secondTabStorage.setItem("saved", "old-value");
-    removePersistentItem("saved");
-    expect(localStorage.getItem("saved")).toBeNull();
-    expect(secondTabStorage.getItem("saved")).toBeNull();
-  });
-});
+    secondTabStorage.setItem("saved", "old-value")
+    removePersistentItem("saved")
+    expect(localStorage.getItem("saved")).toBeNull()
+    expect(secondTabStorage.getItem("saved")).toBeNull()
+  })
+})

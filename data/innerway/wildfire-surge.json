@@ -67,15 +67,7 @@
     },
     "WildfireSurgeT3": {},
     "WildfireSurgeT4": {},
-    "WildfireSurgeT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physDmgBonus": 0.025
-          }
-        }
-      ]
-    },
+    "WildfireSurgeT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.025 } }] },
     "WildfireSurgeT6": {}
   }
 }

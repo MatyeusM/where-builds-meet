@@ -6,14 +6,7 @@
     "cooldown": 30,
     "cooldownGroup": "EchoesOfAThousandPlants",
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.54,
-        "phyBonus": 149,
-        "attrBonus": 82,
-        "time": 0.625,
-        "attrCoef": 0.54
-      },
+      { "type": "damage", "phyCoef": 0.54, "phyBonus": 149, "attrBonus": 82, "time": 0.625, "attrCoef": 0.54 },
       {
         "type": "apply",
         "target": "self",
@@ -35,14 +28,7 @@
     "cooldown": 30,
     "cooldownGroup": "EchoesOfAThousandPlants",
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.54,
-        "phyBonus": 149,
-        "attrBonus": 82,
-        "time": 0.625,
-        "attrCoef": 0.54
-      },
+      { "type": "damage", "phyCoef": 0.54, "phyBonus": 149, "attrBonus": 82, "time": 0.625, "attrCoef": 0.54 },
       {
         "type": "apply",
         "target": "self",
@@ -82,21 +68,8 @@
     "group": true,
     "castTime": 1.15,
     "action": [
-      {
-        "type": "consume",
-        "target": "self",
-        "value": "EchoesOfAThousandPlants",
-        "stack": "all",
-        "time": 0
-      },
-      {
-        "type": "heal",
-        "phyCoef": 4.912,
-        "phyBonus": 1363,
-        "attrBonus": 743,
-        "time": 0.975,
-        "silkbindCoef": 4.912
-      },
+      { "type": "consume", "target": "self", "value": "EchoesOfAThousandPlants", "stack": "all", "time": 0 },
+      { "type": "heal", "phyCoef": 4.912, "phyBonus": 1363, "attrBonus": 743, "time": 0.975, "silkbindCoef": 4.912 },
       {
         "type": "apply",
         "target": "self",
@@ -104,12 +77,7 @@
         "duration": 12,
         "stack": 1,
         "reapply": true,
-        "requirement": [
-          {
-            "target": "equippedMartialArt",
-            "value": "panaceaFan"
-          }
-        ],
+        "requirement": [{ "target": "equippedMartialArt", "value": "panaceaFan" }],
         "time": 0.975
       },
       {
@@ -119,17 +87,7 @@
         "duration": 12,
         "stack": 1,
         "reapply": true,
-        "requirement": [
-          {
-            "operator": "not",
-            "operand": [
-              {
-                "target": "equippedMartialArt",
-                "value": "panaceaFan"
-              }
-            ]
-          }
-        ],
+        "requirement": [{ "operator": "not", "operand": [{ "target": "equippedMartialArt", "value": "panaceaFan" }] }],
         "time": 0.975
       }
     ],

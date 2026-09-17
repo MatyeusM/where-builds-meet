@@ -1,13 +1,14 @@
-import { describe, expect, it } from "vitest";
-import windBuffs from "../data/buff/bamboocut-wind.json";
-import sets from "../data/gear-set.json";
-import infernal from "../data/skill/infernal-twinblades.json";
-import mortal from "../data/skill/mortal-rope-dart.json";
-import { emptyStats } from "../src/data/statDefinitions";
-import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator";
-import type { RotationStep } from "../src/calculations/rotationTimeline";
+import { describe, expect, it } from "vitest"
 
-const cast = (skill: string): RotationStep => ({ type: "skill", skill });
+import windBuffs from "../data/buff/bamboocut-wind.json"
+import sets from "../data/gear-set.json"
+import infernal from "../data/skill/infernal-twinblades.json"
+import mortal from "../data/skill/mortal-rope-dart.json"
+import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
+import type { RotationStep } from "../src/calculations/rotationTimeline"
+import { emptyStats } from "../src/data/statDefinitions"
+
+const cast = (skill: string): RotationStep => ({ type: "skill", skill })
 function bundle(judgementResistance: number): RotationSimulationBundle {
   return {
     timeline: {
@@ -43,18 +44,18 @@ function bundle(judgementResistance: number): RotationSimulationBundle {
     attunementPriority: [],
     innerWayPriority: [],
     setupComparisons: {},
-  };
+  }
 }
 
 describe("judgment-bypassing critical bonuses", () => {
   it.each([0, 0.65, 1])(
     "Flamelash adds ten points to Rodent and Heaven's Wrath at J=%s only while active",
-    (judgement) => {
-      const input = bundle(judgement);
+    judgement => {
+      const input = bundle(judgement)
       input.timeline.skills.EndFlamelash = {
         castTime: 0,
         action: [{ type: "consume", target: "self", value: "Flamelash", stack: "all", time: 0 }],
-      };
+      }
       input.timeline.rotation.steps = [
         cast("Rodent"),
         cast("InfernalFlamelashLight1"),
@@ -64,23 +65,23 @@ describe("judgment-bypassing critical bonuses", () => {
         cast("EndFlamelash"),
         cast("Rodent"),
         cast("InfernalFlamelashLight1"),
-      ];
-      const result = calculateRotationBaseline(input);
+      ]
+      const result = calculateRotationBaseline(input)
       for (const entry of result.baseline) {
-        const active = entry.context.buffs.includes("Flamelash");
-        const breakdown = result.actionBreakdowns[entry.id!];
-        expect(breakdown.outcomeRates!.critical).toBeCloseTo(0.33 / (1 + judgement) + (active ? 0.1 : 0), 10);
+        const active = entry.context.buffs.includes("Flamelash")
+        const breakdown = result.actionBreakdowns[entry.id!]
+        expect(breakdown.outcomeRates!.critical).toBeCloseTo(0.33 / (1 + judgement) + (active ? 0.1 : 0), 10)
       }
-      expect(result.baseline.some((entry) => entry.context.buffs.includes("Flamelash"))).toBe(true);
-      expect(result.baseline.at(-1)!.context.buffs).not.toContain("Flamelash");
+      expect(result.baseline.some(entry => entry.context.buffs.includes("Flamelash"))).toBe(true)
+      expect(result.baseline.at(-1)!.context.buffs).not.toContain("Flamelash")
     },
-  );
+  )
 
-  it.each([0, 0.65, 1])("Ivorybloom bypasses judgment for damage and healing only at full HP, J=%s", (judgement) => {
+  it.each([0, 0.65, 1])("Ivorybloom bypasses judgment for damage and healing only at full HP, J=%s", judgement => {
     for (const missingHP of [0, 1]) {
-      const input = bundle(judgement);
-      input.weapons = input.timeline.weapons = ["panaceaFan", "soulshadeUmbrella"];
-      input.timeline.setupEffects = sets.Ivorybloom.options["4"].effect;
+      const input = bundle(judgement)
+      input.weapons = input.timeline.weapons = ["panaceaFan", "soulshadeUmbrella"]
+      input.timeline.setupEffects = sets.Ivorybloom.options["4"].effect
       input.timeline.skills.Observe = {
         castTime: 1,
         action: [
@@ -88,21 +89,21 @@ describe("judgment-bypassing critical bonuses", () => {
           { type: "damage", phyCoef: 1, time: 0.1 },
           { type: "heal", phyCoef: 1, time: 0.2 },
         ],
-      };
-      input.timeline.rotation.steps = [cast("Observe")];
-      const result = calculateRotationBaseline(input);
-      const expected = (0.33 + 0.09) / (1 + judgement) + (missingHP === 0 ? 0.05 : 0);
-      expect(result.actionBreakdowns["rotation-0:1"].outcomeRates!.critical).toBeCloseTo(expected, 10);
-      expect(result.actionBreakdowns["rotation-0:2"].healing!.criticalRate).toBeCloseTo(expected, 10);
+      }
+      input.timeline.rotation.steps = [cast("Observe")]
+      const result = calculateRotationBaseline(input)
+      const expected = (0.33 + 0.09) / (1 + judgement) + (missingHP === 0 ? 0.05 : 0)
+      expect(result.actionBreakdowns["rotation-0:1"].outcomeRates!.critical).toBeCloseTo(expected, 10)
+      expect(result.actionBreakdowns["rotation-0:2"].healing!.criticalRate).toBeCloseTo(expected, 10)
     }
-  });
+  })
 
   it("keeps the effective critical cap and Direct Critical separate", () => {
-    const input = bundle(0.65);
-    input.stats.crit = 1.2375; // 75% after judgment; Flamelash reaches the 80% cap.
-    input.stats.directCrit = 0.1;
-    input.timeline.rotation.steps = [cast("Flamelash"), cast("Rodent"), cast("InfernalFlamelashLight1")];
-    const result = calculateRotationBaseline(input);
-    expect(Object.values(result.actionBreakdowns).at(-1)!.outcomeRates!.critical).toBeCloseTo(0.9, 10);
-  });
-});
+    const input = bundle(0.65)
+    input.stats.crit = 1.2375 // 75% after judgment; Flamelash reaches the 80% cap.
+    input.stats.directCrit = 0.1
+    input.timeline.rotation.steps = [cast("Flamelash"), cast("Rodent"), cast("InfernalFlamelashLight1")]
+    const result = calculateRotationBaseline(input)
+    expect(Object.values(result.actionBreakdowns).at(-1)!.outcomeRates!.critical).toBeCloseTo(0.9, 10)
+  })
+})

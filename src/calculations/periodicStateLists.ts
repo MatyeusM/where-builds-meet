@@ -1,223 +1,225 @@
 /** Storage alternatives for sorted expiration lists; probability math lives in the tracker. */
-export type PeriodicStateStorage = "packed" | "indexed";
-export type PeriodicCadences = Map<number, number> | undefined;
+export type PeriodicStateStorage = "packed" | "indexed"
+export type PeriodicCadences = Map<number, number> | undefined
 
 export interface PeriodicStateList {
-  expires: number[];
-  mass: number[];
-  pending: number[];
-  cadences: PeriodicCadences[];
-  head: number;
-  readonly tail: number;
-  size: number;
-  next(index: number): number;
-  shift(): void;
-  add(expires: number, mass: number, pending: number, cadences?: PeriodicCadences): void;
-  insertAfter(previous: number, expires: number, mass: number, pending: number, cadences?: PeriodicCadences): number;
-  removeAfter(previous: number): void;
+  expires: number[]
+  mass: number[]
+  pending: number[]
+  cadences: PeriodicCadences[]
+  head: number
+  readonly tail: number
+  size: number
+  next(index: number): number
+  shift(): void
+  add(expires: number, mass: number, pending: number, cadences?: PeriodicCadences): void
+  insertAfter(previous: number, expires: number, mass: number, pending: number, cadences?: PeriodicCadences): number
+  removeAfter(previous: number): void
   /** Update in place and remove rejected entries, in one traversal. */
-  retain(visit: (index: number) => boolean): void;
+  retain(visit: (index: number) => boolean): void
 }
 
 function mergeAt(list: PeriodicStateList, index: number, mass: number, pending: number, cadences: PeriodicCadences) {
-  list.mass[index] += mass;
-  list.pending[index] += pending;
+  list.mass[index] += mass
+  list.pending[index] += pending
   if (cadences) {
-    const target = (list.cadences[index] ??= new Map());
-    for (const [tick, probability] of cadences) target.set(tick, (target.get(tick) ?? 0) + probability);
+    const target = (list.cadences[index] ??= new Map())
+    for (const [tick, probability] of cadences) target.set(tick, (target.get(tick) ?? 0) + probability)
   }
 }
 
 /** Dense numeric arrays. Head removal is O(1); an update pass compacts survivors. */
 class PackedPeriodicList implements PeriodicStateList {
-  expires: number[] = [];
-  mass: number[] = [];
-  pending: number[] = [];
-  cadences: PeriodicCadences[] = [];
-  head = -1;
+  expires: number[] = []
+  mass: number[] = []
+  pending: number[] = []
+  cadences: PeriodicCadences[] = []
+  head = -1
   get tail() {
-    return this.head < 0 ? -1 : this.expires.length - 1;
+    return this.head < 0 ? -1 : this.expires.length - 1
   }
   get size() {
-    return this.head < 0 ? 0 : this.expires.length - this.head;
+    return this.head < 0 ? 0 : this.expires.length - this.head
   }
   next(index: number) {
-    return index + 1 < this.expires.length ? index + 1 : -1;
+    return index + 1 < this.expires.length ? index + 1 : -1
   }
   shift() {
-    this.head = this.next(this.head);
-    if (this.head < 0) this.clear();
+    this.head = this.next(this.head)
+    if (this.head < 0) this.clear()
   }
   private clear() {
-    this.expires.length = this.mass.length = this.pending.length = this.cadences.length = 0;
+    this.expires.length = this.mass.length = this.pending.length = this.cadences.length = 0
   }
   add(expires: number, mass: number, pending: number, cadences?: PeriodicCadences) {
-    if (!(mass > 0)) return;
-    let index = this.expires.length;
-    while (index > Math.max(0, this.head) && this.expires[index - 1] >= expires) index--;
+    if (!(mass > 0)) return
+    let index = this.expires.length
+    while (index > Math.max(0, this.head) && this.expires[index - 1] >= expires) index--
     if (this.expires[index] === expires) {
-      mergeAt(this, index, mass, pending, cadences);
-      return;
+      mergeAt(this, index, mass, pending, cadences)
+      return
     }
     if (index === this.expires.length) {
-      this.expires.push(expires);
-      this.mass.push(mass);
-      this.pending.push(pending);
-      this.cadences.push(cadences);
+      this.expires.push(expires)
+      this.mass.push(mass)
+      this.pending.push(pending)
+      this.cadences.push(cadences)
     } else {
-      this.expires.splice(index, 0, expires);
-      this.mass.splice(index, 0, mass);
-      this.pending.splice(index, 0, pending);
-      this.cadences.splice(index, 0, cadences);
+      this.expires.splice(index, 0, expires)
+      this.mass.splice(index, 0, mass)
+      this.pending.splice(index, 0, pending)
+      this.cadences.splice(index, 0, cadences)
     }
-    if (this.head < 0) this.head = 0;
+    if (this.head < 0) this.head = 0
   }
   insertAfter(previous: number, expires: number, mass: number, pending: number, cadences?: PeriodicCadences) {
-    const index = previous < 0 ? Math.max(0, this.head) : previous + 1;
-    this.expires.splice(index, 0, expires);
-    this.mass.splice(index, 0, mass);
-    this.pending.splice(index, 0, pending);
-    this.cadences.splice(index, 0, cadences);
-    if (this.head < 0) this.head = index;
-    return index;
+    const index = previous < 0 ? Math.max(0, this.head) : previous + 1
+    this.expires.splice(index, 0, expires)
+    this.mass.splice(index, 0, mass)
+    this.pending.splice(index, 0, pending)
+    this.cadences.splice(index, 0, cadences)
+    if (this.head < 0) this.head = index
+    return index
   }
   removeAfter(previous: number) {
     if (previous < 0) {
-      this.shift();
-      return;
+      this.shift()
+      return
     }
-    const index = previous + 1;
-    this.expires.splice(index, 1);
-    this.mass.splice(index, 1);
-    this.pending.splice(index, 1);
-    this.cadences.splice(index, 1);
+    const index = previous + 1
+    this.expires.splice(index, 1)
+    this.mass.splice(index, 1)
+    this.pending.splice(index, 1)
+    this.cadences.splice(index, 1)
   }
   retain(visit: (index: number) => boolean) {
-    let write = 0;
+    let write = 0
     for (let read = this.head; read >= 0 && read < this.expires.length; read++) {
-      if (!visit(read)) continue;
-      this.expires[write] = this.expires[read];
-      this.mass[write] = this.mass[read];
-      this.pending[write] = this.pending[read];
-      this.cadences[write] = this.cadences[read];
-      write++;
+      if (!visit(read)) continue
+      this.expires[write] = this.expires[read]
+      this.mass[write] = this.mass[read]
+      this.pending[write] = this.pending[read]
+      this.cadences[write] = this.cadences[read]
+      write++
     }
-    this.expires.length = this.mass.length = this.pending.length = this.cadences.length = write;
-    this.head = write ? 0 : -1;
+    this.expires.length = this.mass.length = this.pending.length = this.cadences.length = write
+    this.head = write ? 0 : -1
   }
 }
 
 /** One reusable numeric arena per tracker; lists contain indices rather than node objects. */
 class PeriodicArena {
-  expires: number[] = [];
-  mass: number[] = [];
-  pending: number[] = [];
-  cadences: PeriodicCadences[] = [];
-  links: number[] = [];
-  free = -1;
+  expires: number[] = []
+  mass: number[] = []
+  pending: number[] = []
+  cadences: PeriodicCadences[] = []
+  links: number[] = []
+  free = -1
   allocate(expires: number, mass: number, pending: number, cadences: PeriodicCadences) {
-    const index = this.free < 0 ? this.links.length : this.free;
-    if (this.free >= 0) this.free = this.links[index];
-    this.expires[index] = expires;
-    this.mass[index] = mass;
-    this.pending[index] = pending;
-    this.cadences[index] = cadences;
-    this.links[index] = -1;
-    return index;
+    const index = this.free < 0 ? this.links.length : this.free
+    if (this.free >= 0) this.free = this.links[index]
+    this.expires[index] = expires
+    this.mass[index] = mass
+    this.pending[index] = pending
+    this.cadences[index] = cadences
+    this.links[index] = -1
+    return index
   }
   release(index: number) {
-    this.cadences[index] = undefined;
-    this.links[index] = this.free;
-    this.free = index;
+    this.cadences[index] = undefined
+    this.links[index] = this.free
+    this.free = index
   }
 }
 
 class IndexedPeriodicList implements PeriodicStateList {
-  head = -1;
-  tail = -1;
-  size = 0;
-  expires: number[];
-  mass: number[];
-  pending: number[];
-  cadences: PeriodicCadences[];
-  constructor(private arena: PeriodicArena) {
-    this.expires = arena.expires;
-    this.mass = arena.mass;
-    this.pending = arena.pending;
-    this.cadences = arena.cadences;
+  head = -1
+  tail = -1
+  size = 0
+  expires: number[]
+  mass: number[]
+  pending: number[]
+  cadences: PeriodicCadences[]
+  private arena: PeriodicArena
+  constructor(arena: PeriodicArena) {
+    this.arena = arena
+    this.expires = arena.expires
+    this.mass = arena.mass
+    this.pending = arena.pending
+    this.cadences = arena.cadences
   }
   next(index: number) {
-    return this.arena.links[index];
+    return this.arena.links[index]
   }
   shift() {
-    const old = this.head;
-    this.head = this.next(old);
-    this.arena.release(old);
-    this.size--;
-    if (this.head < 0) this.tail = -1;
+    const old = this.head
+    this.head = this.next(old)
+    this.arena.release(old)
+    this.size--
+    if (this.head < 0) this.tail = -1
   }
   insertAfter(previous: number, expires: number, mass: number, pending: number, cadences?: PeriodicCadences) {
-    const current = previous < 0 ? this.head : this.next(previous);
-    const index = this.arena.allocate(expires, mass, pending, cadences);
-    this.arena.links[index] = current;
-    if (previous < 0) this.head = index;
-    else this.arena.links[previous] = index;
-    if (current < 0) this.tail = index;
-    this.size++;
-    return index;
+    const current = previous < 0 ? this.head : this.next(previous)
+    const index = this.arena.allocate(expires, mass, pending, cadences)
+    this.arena.links[index] = current
+    if (previous < 0) this.head = index
+    else this.arena.links[previous] = index
+    if (current < 0) this.tail = index
+    this.size++
+    return index
   }
   removeAfter(previous: number) {
     if (previous < 0) {
-      this.shift();
-      return;
+      this.shift()
+      return
     }
-    const index = this.next(previous);
-    const next = this.next(index);
-    this.arena.links[previous] = next;
-    if (next < 0) this.tail = previous;
-    this.arena.release(index);
-    this.size--;
+    const index = this.next(previous)
+    const next = this.next(index)
+    this.arena.links[previous] = next
+    if (next < 0) this.tail = previous
+    this.arena.release(index)
+    this.size--
   }
   add(expires: number, mass: number, pending: number, cadences?: PeriodicCadences) {
-    if (!(mass > 0)) return;
+    if (!(mass > 0)) return
     if (this.tail >= 0 && this.expires[this.tail] === expires) {
-      mergeAt(this, this.tail, mass, pending, cadences);
-      return;
+      mergeAt(this, this.tail, mass, pending, cadences)
+      return
     }
-    let previous = this.tail;
-    let current = -1;
+    let previous = this.tail
+    let current = -1
     if (this.tail >= 0 && expires < this.expires[this.tail]) {
-      previous = -1;
-      current = this.head;
+      previous = -1
+      current = this.head
       while (current >= 0 && this.expires[current] < expires) {
-        previous = current;
-        current = this.next(current);
+        previous = current
+        current = this.next(current)
       }
       if (current >= 0 && this.expires[current] === expires) {
-        mergeAt(this, current, mass, pending, cadences);
-        return;
+        mergeAt(this, current, mass, pending, cadences)
+        return
       }
     }
-    const index = this.arena.allocate(expires, mass, pending, cadences);
-    this.arena.links[index] = current;
-    if (previous < 0) this.head = index;
-    else this.arena.links[previous] = index;
-    if (current < 0) this.tail = index;
-    this.size++;
+    const index = this.arena.allocate(expires, mass, pending, cadences)
+    this.arena.links[index] = current
+    if (previous < 0) this.head = index
+    else this.arena.links[previous] = index
+    if (current < 0) this.tail = index
+    this.size++
   }
   retain(visit: (index: number) => boolean) {
-    let previous = -1;
+    let previous = -1
     for (let index = this.head; index >= 0;) {
-      const next = this.next(index);
-      if (visit(index)) previous = index;
+      const next = this.next(index)
+      if (visit(index)) previous = index
       else {
-        if (previous < 0) this.head = next;
-        else this.arena.links[previous] = next;
-        if (next < 0) this.tail = previous;
-        this.arena.release(index);
-        this.size--;
+        if (previous < 0) this.head = next
+        else this.arena.links[previous] = next
+        if (next < 0) this.tail = previous
+        this.arena.release(index)
+        this.size--
       }
-      index = next;
+      index = next
     }
   }
 }
@@ -225,39 +227,37 @@ class IndexedPeriodicList implements PeriodicStateList {
 export function periodicStateListFactory(storage: PeriodicStateStorage): () => PeriodicStateList {
   switch (storage) {
     case "packed":
-      return () => new PackedPeriodicList();
+      return () => new PackedPeriodicList()
     case "indexed": {
-      const arena = new PeriodicArena();
-      return () => new IndexedPeriodicList(arena);
+      const arena = new PeriodicArena()
+      return () => new IndexedPeriodicList(arena)
     }
   }
 }
 
 /** Merge two sorted lists with a forward-only destination cursor, never a search per source entry. */
 export function mergePeriodicLists(destination: PeriodicStateList, source: PeriodicStateList) {
-  if (source.head < 0) return;
+  if (source.head < 0) return
   // Ordinary fixed-duration follow-ups append at the current expiration.
   let previous =
-    destination.tail >= 0 && destination.expires[destination.tail] < source.expires[source.head]
-      ? destination.tail
-      : -1;
+    destination.tail >= 0 && destination.expires[destination.tail] < source.expires[source.head] ? destination.tail : -1
   if (destination.tail >= 0 && destination.expires[destination.tail] === source.expires[source.head]) {
-    const index = source.head;
-    mergeAt(destination, destination.tail, source.mass[index], source.pending[index], source.cadences[index]);
-    previous = destination.tail;
-    source.shift();
+    const index = source.head
+    mergeAt(destination, destination.tail, source.mass[index], source.pending[index], source.cadences[index])
+    previous = destination.tail
+    source.shift()
   }
   while (source.head >= 0) {
-    const index = source.head;
-    const expires = source.expires[index];
-    let current = previous < 0 ? destination.head : destination.next(previous);
+    const index = source.head
+    const expires = source.expires[index]
+    let current = previous < 0 ? destination.head : destination.next(previous)
     while (current >= 0 && destination.expires[current] < expires) {
-      previous = current;
-      current = destination.next(current);
+      previous = current
+      current = destination.next(current)
     }
     if (current >= 0 && destination.expires[current] === expires) {
-      mergeAt(destination, current, source.mass[index], source.pending[index], source.cadences[index]);
-      previous = current;
+      mergeAt(destination, current, source.mass[index], source.pending[index], source.cadences[index])
+      previous = current
     } else {
       previous = destination.insertAfter(
         previous,
@@ -265,81 +265,81 @@ export function mergePeriodicLists(destination: PeriodicStateList, source: Perio
         source.mass[index],
         source.pending[index],
         source.cadences[index],
-      );
+      )
     }
-    source.shift();
+    source.shift()
   }
 }
 
 /** Linear bucket traversal. Keep a survivor and unlink other tiny entries without reinserting groups. */
 export function mergeTinyPeriodicEntries(list: PeriodicStateList, now: number, threshold: number, bucketTicks: number) {
-  let changed = false;
-  let previous = -1;
-  let current = list.head;
+  let changed = false
+  let previous = -1
+  let current = list.head
   while (current >= 0) {
-    let origin = list.expires[current];
-    const bucket = Math.floor(origin / bucketTicks);
-    const end = (bucket + 1) * bucketTicks;
+    let origin = list.expires[current]
+    const bucket = Math.floor(origin / bucketTicks)
+    const end = (bucket + 1) * bucketTicks
     let count = 0,
       mass = 0,
       pending = 0,
-      weighted = 0;
+      weighted = 0
     // Determine the mean before changing any payload (eligibility uses original mass).
     for (let index = current; index >= 0 && list.expires[index] < end; index = list.next(index)) {
-      if (list.expires[index] <= now || list.mass[index] >= threshold) continue;
-      if (count === 0) origin = list.expires[index];
-      count++;
-      mass += list.mass[index];
-      pending += list.pending[index];
-      weighted += (list.expires[index] - origin) * list.mass[index];
+      if (list.expires[index] <= now || list.mass[index] >= threshold) continue
+      if (count === 0) origin = list.expires[index]
+      count++
+      mass += list.mass[index]
+      pending += list.pending[index]
+      weighted += (list.expires[index] - origin) * list.mass[index]
     }
     if (count < 2) {
       while (current >= 0 && list.expires[current] < end) {
-        previous = current;
-        current = list.next(current);
+        previous = current
+        current = list.next(current)
       }
-      continue;
+      continue
     }
-    const expires = origin + Math.round(weighted / mass);
+    const expires = origin + Math.round(weighted / mass)
     // Retain a vacant slot starting at the first tiny node.
     // Its payload can move across significant nodes, so move payloads as we walk
     // rather than searching for an insertion position or allocating a new node.
-    let survivor = -1;
-    let placed = false;
+    let survivor = -1
+    let placed = false
     while (current >= 0 && list.expires[current] < end) {
-      const tiny = list.expires[current] > now && list.mass[current] < threshold;
+      const tiny = list.expires[current] > now && list.mass[current] < threshold
       if (tiny && survivor >= 0) {
-        list.removeAfter(previous);
-        current = previous < 0 ? list.head : list.next(previous);
-        continue;
+        list.removeAfter(previous)
+        current = previous < 0 ? list.head : list.next(previous)
+        continue
       }
       if (tiny) {
-        survivor = current;
+        survivor = current
       } else if (survivor >= 0 && !placed) {
         if (list.expires[current] < expires) {
           // Move the significant payload into the vacant survivor slot.
-          list.expires[survivor] = list.expires[current];
-          list.mass[survivor] = list.mass[current];
-          list.pending[survivor] = list.pending[current];
-          list.cadences[survivor] = list.cadences[current];
-          survivor = current;
+          list.expires[survivor] = list.expires[current]
+          list.mass[survivor] = list.mass[current]
+          list.pending[survivor] = list.pending[current]
+          list.cadences[survivor] = list.cadences[current]
+          survivor = current
         } else if (list.expires[current] === expires) {
           // Exact equality also coalesces the significant state, as sorted add did.
-          mass += list.mass[current];
-          pending += list.pending[current];
-          list.removeAfter(previous);
-          current = previous < 0 ? list.head : list.next(previous);
-          continue;
-        } else placed = true;
+          mass += list.mass[current]
+          pending += list.pending[current]
+          list.removeAfter(previous)
+          current = previous < 0 ? list.head : list.next(previous)
+          continue
+        } else placed = true
       }
-      previous = current;
-      current = list.next(current);
+      previous = current
+      current = list.next(current)
     }
-    list.expires[survivor] = expires;
-    list.mass[survivor] = mass;
-    list.pending[survivor] = pending;
-    list.cadences[survivor] = undefined;
-    changed = true;
+    list.expires[survivor] = expires
+    list.mass[survivor] = mass
+    list.pending[survivor] = pending
+    list.cadences[survivor] = undefined
+    changed = true
   }
-  return changed;
+  return changed
 }

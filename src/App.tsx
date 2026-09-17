@@ -1,16 +1,11 @@
-import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./calculations/rotationMetrics";
-import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories";
-import type { TrackedEffect } from "./calculations/rotationTimeline";
-import { RotationPingField } from "./components/RotationPingField";
-import resourceEventDefinitions from "../data/event.json";
-import { PingInput } from "./components/PingInput";
-import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults";
+import { nanoid } from "nanoid"
 import {
   Fragment,
   lazy,
   Suspense,
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -20,20 +15,179 @@ import {
   type CSSProperties,
   type Dispatch,
   type SetStateAction,
-} from "react";
-import { type AttunementStats, type DamageBreakdown } from "./calculations/damage";
-import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats";
-import { resolveSwitchValue } from "./calculations/dynamicValues";
-import { UiIcon } from "./UiIcon";
-import { buildTimelineDisplayEntries } from "./rotationDisplay";
-import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay";
-import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea";
-import { publishNotice, dismissNotice } from "./notices";
-const loadBuildTab = () => import("./BuildTab");
-const loadSimulationTab = () => import("./SimulationTab");
-const BuildTab = lazy(loadBuildTab);
-const SimulationTab = lazy(loadSimulationTab);
-import { allStatDefinitions, emptyStats } from "./data/statDefinitions";
+} from "react"
+
+import resourceEventDefinitions from "../data/event.json"
+import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats"
+import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults"
+import { type AttunementStats, type DamageBreakdown } from "./calculations/damage"
+import { resolveSwitchValue } from "./calculations/dynamicValues"
+import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./calculations/rotationMetrics"
+import type { TrackedEffect } from "./calculations/rotationTimeline"
+import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories"
+import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea"
+import { PingInput } from "./components/PingInput"
+import { RotationPingField } from "./components/RotationPingField"
+import { publishNotice, dismissNotice } from "./notices"
+import { buildTimelineDisplayEntries } from "./rotationDisplay"
+import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
+import { UiIcon } from "./UiIcon"
+const loadBuildTab = () => import("./BuildTab")
+const loadSimulationTab = () => import("./SimulationTab")
+const BuildTab = lazy(loadBuildTab)
+const SimulationTab = lazy(loadSimulationTab)
+import arsenalDefinitions from "../data/arsenal.json"
+import bowRingSetDefinitions from "../data/bow-ring-set.json"
+import breakthroughProfiles from "../data/breakthrough.json"
+import bamboocutDraughtBuffs from "../data/buff/bamboocut-draught.json"
+import bamboocutKiteBuffs from "../data/buff/bamboocut-kite.json"
+import bamboocutWindBuffs from "../data/buff/bamboocut-wind.json"
+import bellstrikeUmbraBuffs from "../data/buff/bellstrike-umbra.json"
+import generalBuffs from "../data/buff/general.json"
+import mysticBuffs from "../data/buff/mystic.json"
+import silkbindDelugeBuffs from "../data/buff/silkbind-deluge.json"
+import stonesplitMightBuffs from "../data/buff/stonesplit-might.json"
+import stonesplitStrengthBuffs from "../data/buff/stonesplit-strength.json"
+import bamboocutDustDebuffs from "../data/debuff/bamboocut-dust.json"
+import bamboocutKiteDebuffs from "../data/debuff/bamboocut-kite.json"
+import bamboocutWindDebuffs from "../data/debuff/bamboocut-wind.json"
+import bellstrikeSplendorDebuffs from "../data/debuff/bellstrike-splendor.json"
+import bellstrikeUmbraDebuffs from "../data/debuff/bellstrike-umbra.json"
+import generalDebuffs from "../data/debuff/general.json"
+import innerWayDebuffs from "../data/debuff/innerway.json"
+import mysticDebuffs from "../data/debuff/mystic.json"
+import stonesplitMightDebuffs from "../data/debuff/stonesplit-might.json"
+import stonesplitStrengthDebuffs from "../data/debuff/stonesplit-strength.json"
+import defaultSetup from "../data/default-setup.json"
+import divinecraftDefinitions from "../data/divinecraft.json"
+import innerWayDots from "../data/dot/innerway.json"
+import mysticDots from "../data/dot/mystic.json"
+import foodDefinitions from "../data/food.json"
+import everspringMartialArt from "../data/martial-art/everspring-umbrella.json"
+import heavenquakerSpearMartialArt from "../data/martial-art/heavenquaker-spear.json"
+import heavenwillMartialArt from "../data/martial-art/heavenwill-gauntlets.json"
+import infernalTwinbladesMartialArt from "../data/martial-art/infernal-twinblades.json"
+import inkwellFanMartialArt from "../data/martial-art/inkwell-fan.json"
+import mortalRopeDartMartialArt from "../data/martial-art/mortal-rope-dart.json"
+import namelessSpearMartialArt from "../data/martial-art/nameless-spear.json"
+import namelessSwordMartialArt from "../data/martial-art/nameless-sword.json"
+import panaceaFanMartialArt from "../data/martial-art/panacea-fan.json"
+import phalanxbaneMartialArt from "../data/martial-art/phalanxbane-blade.json"
+import rivenTwinbladesMartialArt from "../data/martial-art/riven-twinblades.json"
+import skygraspMartialArt from "../data/martial-art/skygrasp-rope-dart.json"
+import skystrikeGauntletsMartialArt from "../data/martial-art/skystrike-gauntlets.json"
+import snowpartingMartialArt from "../data/martial-art/snowparting-blade.json"
+import soulshadeUmbrellaMartialArt from "../data/martial-art/soulshade-umbrella.json"
+import stormbreakerMartialArt from "../data/martial-art/stormbreaker-spear.json"
+import strategicSwordMartialArt from "../data/martial-art/strategic-sword.json"
+import thundercryMartialArt from "../data/martial-art/thundercry-blade.json"
+import unfetteredMartialArt from "../data/martial-art/unfettered-rope-dart.json"
+import vernalUmbrellaMartialArt from "../data/martial-art/vernal-umbrella.json"
+import pathDefinitions from "../data/path.json"
+import scriptDefinitions from "../data/script.json"
+import generalSkills from "../data/skill/general.json"
+import heavenwillSkills from "../data/skill/heavenwill-gauntlets.json"
+import infernalSkills from "../data/skill/infernal-twinblades.json"
+import mortalSkills from "../data/skill/mortal-rope-dart.json"
+import mysticSkills from "../data/skill/mystic.json"
+import panaceaSkills from "../data/skill/panacea-fan.json"
+import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json"
+import skygraspSkills from "../data/skill/skygrasp-rope-dart.json"
+import snowpartingSkills from "../data/skill/snowparting-blade.json"
+import soulshadeSkills from "../data/skill/soulshade-umbrella.json"
+import stormbreakerSkills from "../data/skill/stormbreaker-spear.json"
+import thundercrySkills from "../data/skill/thundercry-blade.json"
+import systemStats from "../data/system.json"
+import type { EditorTimelineResult } from "./calculations/editorTimeline"
+import type { DerivedStats } from "./calculations/effectiveStats"
+import {
+  RotationCalculationCache,
+  calculationFingerprint,
+  rotationBundleFingerprint,
+  rotationVariantFingerprint,
+} from "./calculations/rotationCalculationCache"
+import {
+  sortAttunementPriorityRows,
+  sortRotationPriorityRows,
+  type RotationActionBreakdown,
+  type RotationSimulationBundle,
+  type RotationSimulationResult,
+  type RotationSimulationVariant,
+} from "./calculations/rotationCalculator"
+import {
+  beginRotationCalculation,
+  completeRotationCalculationCategory,
+  emptyRotationBreakdown,
+  endRotationCalculation,
+  getRotationCalculationStatus,
+  getRotationMetrics,
+  publishRotationCategoryProgress,
+  publishRotationMetrics,
+  rotationCalculationCategories,
+  subscribeToRotationCalculationStatus,
+  subscribeToRotationMetrics,
+  type RotationCalculationCategory,
+  type RotationEffectCoverage,
+  type RotationGroupBreakdown,
+  type RotationHealingGroupBreakdown,
+  type RotationMetrics,
+  type RotationPriority,
+} from "./calculations/rotationMetrics"
+import {
+  buildRotationTimeline,
+  compareTimelineTime,
+  isAttachmentAnchorStep,
+  mergeEffectDefinition,
+  mergeCalculatedTimelineState,
+  type AttachedEventTarget,
+  type EditableObject,
+  type EffectDefinition,
+  type InnerWayEffectRule,
+  type RotationRecord,
+  type RotationStep,
+  type SkillRecord,
+  type TimelineBuildInput,
+  type TimelineRow,
+} from "./calculations/rotationTimeline"
+import {
+  requestRotationBaseline,
+  requestEditorTimeline,
+  cancelEditorTimelineRequest,
+  requestRotationComparisons,
+  supersedeRotationCalculationRequests,
+} from "./calculations/rotationWorkerClient"
+import {
+  calculateStatsWithOverrides,
+  requirementIsUnconditional,
+  type CharacterStatOverrides,
+  type EffectiveStatEffectContainer,
+  type StatEffectContainer,
+} from "./calculations/statEffects"
+import {
+  characterProfileMatches,
+  characterProfileStorageKey,
+  exportCharacterProfiles,
+  loadCharacterProfiles,
+  mergeImportedCharacterProfiles,
+  serializeCharacterProfiles,
+  type CharacterProfile,
+} from "./characterProfiles"
+import { createBaseAttributeEffects, type BaseAttributeData } from "./data/baseAttributeEffects"
+import {
+  innerWayAvailableForTag,
+  innerWayDefinitions,
+  innerWayEntriesForTag,
+  innerWayDefinitionForSoloLevel,
+} from "./data/innerWayDefinitions"
+import { martialArtEffectsForRank, type MartialArtTalent } from "./data/martialArtTalents"
+import { setupSelectionChangesTimeline } from "./data/scriptDefinitions"
+import { allStatDefinitions, emptyStats } from "./data/statDefinitions"
+import {
+  pendingEditorTimeline,
+  withUnresolvedEditorSteps,
+  sameEditorRevision,
+  type EditorRevision,
+} from "./editorTimelinePreview"
 import {
   activeBuildStorageKey,
   armorSetDefinitions,
@@ -63,195 +217,7 @@ import {
   type BuildState,
   type SetDefinition,
   type SetSelections,
-} from "./gear";
-import {
-  normalizeStoredWeaponIds,
-  weaponIds as allWeaponIds,
-  type CharacterStats,
-  type EnemyProfile,
-  type StatDefinition,
-  type WeaponFamily,
-  type WeaponId,
-} from "./types";
-import type { DerivedStats } from "./calculations/effectiveStats";
-import { martialArtEffectsForRank, type MartialArtTalent } from "./data/martialArtTalents";
-import snowpartingSkills from "../data/skill/snowparting-blade.json";
-import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json";
-import thundercrySkills from "../data/skill/thundercry-blade.json";
-import stormbreakerSkills from "../data/skill/stormbreaker-spear.json";
-import heavenwillSkills from "../data/skill/heavenwill-gauntlets.json";
-import skygraspSkills from "../data/skill/skygrasp-rope-dart.json";
-import panaceaSkills from "../data/skill/panacea-fan.json";
-import soulshadeSkills from "../data/skill/soulshade-umbrella.json";
-import mysticSkills from "../data/skill/mystic.json";
-import generalSkills from "../data/skill/general.json";
-import infernalSkills from "../data/skill/infernal-twinblades.json";
-import mortalSkills from "../data/skill/mortal-rope-dart.json";
-import mysticBuffs from "../data/buff/mystic.json";
-import generalBuffs from "../data/buff/general.json";
-import stonesplitStrengthBuffs from "../data/buff/stonesplit-strength.json";
-import stonesplitMightBuffs from "../data/buff/stonesplit-might.json";
-import bamboocutWindBuffs from "../data/buff/bamboocut-wind.json";
-import bamboocutDraughtBuffs from "../data/buff/bamboocut-draught.json";
-import bamboocutKiteBuffs from "../data/buff/bamboocut-kite.json";
-import silkbindDelugeBuffs from "../data/buff/silkbind-deluge.json";
-import bellstrikeUmbraBuffs from "../data/buff/bellstrike-umbra.json";
-import mysticDebuffs from "../data/debuff/mystic.json";
-import stonesplitStrengthDebuffs from "../data/debuff/stonesplit-strength.json";
-import generalDebuffs from "../data/debuff/general.json";
-import bellstrikeSplendorDebuffs from "../data/debuff/bellstrike-splendor.json";
-import bellstrikeUmbraDebuffs from "../data/debuff/bellstrike-umbra.json";
-import innerWayDebuffs from "../data/debuff/innerway.json";
-import bamboocutDustDebuffs from "../data/debuff/bamboocut-dust.json";
-import bamboocutWindDebuffs from "../data/debuff/bamboocut-wind.json";
-import bamboocutKiteDebuffs from "../data/debuff/bamboocut-kite.json";
-import stonesplitMightDebuffs from "../data/debuff/stonesplit-might.json";
-import mysticDots from "../data/dot/mystic.json";
-import innerWayDots from "../data/dot/innerway.json";
-import breakthroughProfiles from "../data/breakthrough.json";
-import systemStats from "../data/system.json";
-import { createBaseAttributeEffects, type BaseAttributeData } from "./data/baseAttributeEffects";
-import {
-  innerWayAvailableForTag,
-  innerWayDefinitions,
-  innerWayEntriesForTag,
-  innerWayDefinitionForSoloLevel,
-} from "./data/innerWayDefinitions";
-import defaultSetup from "../data/default-setup.json";
-import {
-  beginRotationCalculation,
-  completeRotationCalculationCategory,
-  emptyRotationBreakdown,
-  endRotationCalculation,
-  getRotationCalculationStatus,
-  getRotationMetrics,
-  publishRotationCategoryProgress,
-  publishRotationMetrics,
-  rotationCalculationCategories,
-  subscribeToRotationCalculationStatus,
-  subscribeToRotationMetrics,
-  type RotationCalculationCategory,
-  type RotationEffectCoverage,
-  type RotationGroupBreakdown,
-  type RotationHealingGroupBreakdown,
-  type RotationMetrics,
-  type RotationPriority,
-} from "./calculations/rotationMetrics";
-import arsenalDefinitions from "../data/arsenal.json";
-import bowRingSetDefinitions from "../data/bow-ring-set.json";
-import foodDefinitions from "../data/food.json";
-import divinecraftDefinitions from "../data/divinecraft.json";
-import scriptDefinitions from "../data/script.json";
-import pathDefinitions from "../data/path.json";
-import snowpartingMartialArt from "../data/martial-art/snowparting-blade.json";
-import phalanxbaneMartialArt from "../data/martial-art/phalanxbane-blade.json";
-import everspringMartialArt from "../data/martial-art/everspring-umbrella.json";
-import unfetteredMartialArt from "../data/martial-art/unfettered-rope-dart.json";
-import heavenwillMartialArt from "../data/martial-art/heavenwill-gauntlets.json";
-import skygraspMartialArt from "../data/martial-art/skygrasp-rope-dart.json";
-import thundercryMartialArt from "../data/martial-art/thundercry-blade.json";
-import stormbreakerMartialArt from "../data/martial-art/stormbreaker-spear.json";
-import namelessSwordMartialArt from "../data/martial-art/nameless-sword.json";
-import namelessSpearMartialArt from "../data/martial-art/nameless-spear.json";
-import strategicSwordMartialArt from "../data/martial-art/strategic-sword.json";
-import heavenquakerSpearMartialArt from "../data/martial-art/heavenquaker-spear.json";
-import vernalUmbrellaMartialArt from "../data/martial-art/vernal-umbrella.json";
-import inkwellFanMartialArt from "../data/martial-art/inkwell-fan.json";
-import panaceaFanMartialArt from "../data/martial-art/panacea-fan.json";
-import soulshadeUmbrellaMartialArt from "../data/martial-art/soulshade-umbrella.json";
-import infernalTwinbladesMartialArt from "../data/martial-art/infernal-twinblades.json";
-import mortalRopeDartMartialArt from "../data/martial-art/mortal-rope-dart.json";
-import skystrikeGauntletsMartialArt from "../data/martial-art/skystrike-gauntlets.json";
-import rivenTwinbladesMartialArt from "../data/martial-art/riven-twinblades.json";
-import {
-  sortAttunementPriorityRows,
-  sortRotationPriorityRows,
-  type RotationActionBreakdown,
-  type RotationSimulationBundle,
-  type RotationSimulationResult,
-  type RotationSimulationVariant,
-} from "./calculations/rotationCalculator";
-import {
-  requestRotationBaseline,
-  requestEditorTimeline,
-  cancelEditorTimelineRequest,
-  requestRotationComparisons,
-  supersedeRotationCalculationRequests,
-} from "./calculations/rotationWorkerClient";
-import {
-  pendingEditorTimeline,
-  withUnresolvedEditorSteps,
-  sameEditorRevision,
-  type EditorRevision,
-} from "./editorTimelinePreview";
-import type { EditorTimelineResult } from "./calculations/editorTimeline";
-import {
-  RotationCalculationCache,
-  calculationFingerprint,
-  rotationBundleFingerprint,
-  rotationVariantFingerprint,
-} from "./calculations/rotationCalculationCache";
-import {
-  buildRotationTimeline,
-  compareTimelineTime,
-  isAttachmentAnchorStep,
-  mergeEffectDefinition,
-  mergeCalculatedTimelineState,
-  type AttachedEventTarget,
-  type EditableObject,
-  type EffectDefinition,
-  type InnerWayEffectRule,
-  type RotationRecord,
-  type RotationStep,
-  type SkillRecord,
-  type TimelineBuildInput,
-  type TimelineRow,
-} from "./calculations/rotationTimeline";
-import {
-  resolveSkillCalculationDefinitions,
-  deserializeSkillOverrides,
-  serializeSkillOverrides,
-  type EditorCategory,
-  type SkillCategory,
-  type SkillMap,
-  type SkillOverrides,
-} from "./skillOverrides";
-import { setupSelectionChangesTimeline } from "./data/scriptDefinitions";
-import {
-  calculateStatsWithOverrides,
-  requirementIsUnconditional,
-  type CharacterStatOverrides,
-  type EffectiveStatEffectContainer,
-  type StatEffectContainer,
-} from "./calculations/statEffects";
-import {
-  exportRotationEntries,
-  mergeImportedRotationEntries,
-  serializeRotationEntries,
-  type RotationEntry,
-} from "./rotationTransfer";
-import { readableRotationText } from "./readableRotation";
-import { resolvePathWorkspaceSelection } from "./pathWorkspace";
-import {
-  attachedEventPhase,
-  attachedEventSiblingIndex,
-  attachedTargetForStep,
-  isAutomaticDelay,
-  migrateDrunkenPoetSequences,
-  migrateAutomaticDelays,
-  migrateDefenseActionAnchors,
-  migrateGeneralsBaneSlides,
-  reorderAttachedEventWithinTarget,
-} from "./rotationEditing";
-import {
-  characterProfileMatches,
-  characterProfileStorageKey,
-  exportCharacterProfiles,
-  loadCharacterProfiles,
-  mergeImportedCharacterProfiles,
-  serializeCharacterProfiles,
-  type CharacterProfile,
-} from "./characterProfiles";
+} from "./gear"
 import {
   globalDebuffRows,
   globalDebuffStorageKey,
@@ -259,7 +225,7 @@ import {
   globalDebuffTimelineEffects,
   loadGlobalDebuffs,
   type GlobalDebuffState,
-} from "./globalDebuffs";
+} from "./globalDebuffs"
 import {
   developmentModeStorageKey as devModeStorageKey,
   dataText,
@@ -270,42 +236,79 @@ import {
   isLocaleWip,
   selectLocale,
   t,
-} from "./i18n";
-import { getPersistentItem, removePersistentItem, setPersistentItem } from "./persistentStorage";
+} from "./i18n"
+import { resolvePathWorkspaceSelection } from "./pathWorkspace"
+import { getPersistentItem, removePersistentItem, setPersistentItem } from "./persistentStorage"
+import { readableRotationText } from "./readableRotation"
+import {
+  attachedEventPhase,
+  attachedEventSiblingIndex,
+  attachedTargetForStep,
+  isAutomaticDelay,
+  migrateDrunkenPoetSequences,
+  migrateAutomaticDelays,
+  migrateDefenseActionAnchors,
+  migrateGeneralsBaneSlides,
+  reorderAttachedEventWithinTarget,
+} from "./rotationEditing"
+import {
+  exportRotationEntries,
+  mergeImportedRotationEntries,
+  serializeRotationEntries,
+  type RotationEntry,
+} from "./rotationTransfer"
+import {
+  resolveSkillCalculationDefinitions,
+  deserializeSkillOverrides,
+  serializeSkillOverrides,
+  type EditorCategory,
+  type SkillCategory,
+  type SkillMap,
+  type SkillOverrides,
+} from "./skillOverrides"
+import {
+  normalizeStoredWeaponIds,
+  weaponIds as allWeaponIds,
+  type CharacterStats,
+  type EnemyProfile,
+  type StatDefinition,
+  type WeaponFamily,
+  type WeaponId,
+} from "./types"
 
-const storageKey = "wwm-character-stats-v3";
-const legacyStorageKey = "wwm-character-stats-v2";
-const statOverrideStorageKey = "wwm-stat-overrides-v1";
-const skillStorageKey = "wwm-skill-editor-session-v1";
-const layoutPreviewStorageKey = "wwm-layout-preview-session-v1";
-const legacyInnerWayStorageKey = "wwm-inner-way-session-v1";
-const attunementStorageKey = "wwm-attunement-session-v2";
-const legacyAttunementStorageKey = "wwm-attunement-session-v1";
-const attunementOverrideStorageKey = "wwm-attunement-overrides-v1";
-const settingsStorageKey = "wwm-settings-session-v1";
-const arsenalStorageKey = "wwm-arsenal-session-v1";
-const bowRingSetStorageKey = "wwm-bow-ring-set-session-v1";
-const gearSetStorageKey = "wwm-gear-set-session-v1";
-const foodStorageKey = "wwm-food-session-v1";
-const divinecraftStorageKey = "wwm-divinecraft-session-v1";
-const scriptStorageKey = "wwm-script-session-v1";
-const pathStorageKey = "wwm-path-session-v1";
-const buildSetupOverrideStorageKey = "wwm-build-setup-overrides-v1";
+const storageKey = "wwm-character-stats-v3"
+const legacyStorageKey = "wwm-character-stats-v2"
+const statOverrideStorageKey = "wwm-stat-overrides-v1"
+const skillStorageKey = "wwm-skill-editor-session-v1"
+const layoutPreviewStorageKey = "wwm-layout-preview-session-v1"
+const legacyInnerWayStorageKey = "wwm-inner-way-session-v1"
+const attunementStorageKey = "wwm-attunement-session-v2"
+const legacyAttunementStorageKey = "wwm-attunement-session-v1"
+const attunementOverrideStorageKey = "wwm-attunement-overrides-v1"
+const settingsStorageKey = "wwm-settings-session-v1"
+const arsenalStorageKey = "wwm-arsenal-session-v1"
+const bowRingSetStorageKey = "wwm-bow-ring-set-session-v1"
+const gearSetStorageKey = "wwm-gear-set-session-v1"
+const foodStorageKey = "wwm-food-session-v1"
+const divinecraftStorageKey = "wwm-divinecraft-session-v1"
+const scriptStorageKey = "wwm-script-session-v1"
+const pathStorageKey = "wwm-path-session-v1"
+const buildSetupOverrideStorageKey = "wwm-build-setup-overrides-v1"
 const percentageStatKeys = new Set<keyof CharacterStats>(
   allStatDefinitions.filter(({ unit }) => unit === "%").map(({ key }) => key),
-);
+)
 const statDefinitionByKey = new Map<keyof CharacterStats, StatDefinition>(
-  allStatDefinitions.map((definition) => [definition.key, definition]),
-);
+  allStatDefinitions.map(definition => [definition.key, definition]),
+)
 
 function statDefinition(key: keyof CharacterStats) {
-  const definition = statDefinitionByKey.get(key);
-  if (!definition) throw new Error(`Missing stat definition for ${key}.`);
-  return definition;
+  const definition = statDefinitionByKey.get(key)
+  if (!definition) throw new Error(`Missing stat definition for ${key}.`)
+  return definition
 }
 
-type CalculatorSettings = { weapons: [WeaponId, WeaponId]; breakthrough: string; ping: number };
-type LayoutMode = "pc" | "mobile";
+type CalculatorSettings = { weapons: [WeaponId, WeaponId]; breakthrough: string; ping: number }
+type LayoutMode = "pc" | "mobile"
 type PathId =
   | "mixed"
   | "bellstrikeSplendor"
@@ -317,57 +320,57 @@ type PathId =
   | "bamboocutWind"
   | "bamboocutKite"
   | "bamboocutDust"
-  | "bamboocutDraught";
+  | "bamboocutDraught"
 type PathDefinition = {
-  name: string;
-  icon?: string;
-  tag?: string;
-  status: "available" | "wip" | "devOnly" | "plannerOnly";
-  buildGroup: string;
-  defaultBuild: string;
-  graduated: string;
-  defaultRotation: string;
-  lockedWeapons?: [WeaponId, WeaponId];
-};
+  name: string
+  icon?: string
+  tag?: string
+  status: "available" | "wip" | "devOnly" | "plannerOnly"
+  buildGroup: string
+  defaultBuild: string
+  graduated: string
+  defaultRotation: string
+  lockedWeapons?: [WeaponId, WeaponId]
+}
 type DefaultSetup = {
-  innerWays: Array<{ innerWay: string; tier: string }>;
-  weaponSets: SetSelections;
-  armorSets: SetSelections;
-  bowRingSet: string;
-  arsenal: string;
-  food: string;
-  divinecraft: string;
-};
-const typedDefaultSetup = defaultSetup as DefaultSetup;
-const typedPathDefinitions = pathDefinitions as Record<PathId, PathDefinition>;
+  innerWays: Array<{ innerWay: string; tier: string }>
+  weaponSets: SetSelections
+  armorSets: SetSelections
+  bowRingSet: string
+  arsenal: string
+  food: string
+  divinecraft: string
+}
+const typedDefaultSetup = defaultSetup as DefaultSetup
+const typedPathDefinitions = pathDefinitions as Record<PathId, PathDefinition>
 
 function defaultBuildIdForPath(pathId: PathId) {
-  return typedPathDefinitions[pathId].defaultBuild;
+  return typedPathDefinitions[pathId].defaultBuild
 }
 
 function defaultRotationIdForPath(pathId: PathId) {
-  return typedPathDefinitions[pathId].defaultRotation;
+  return typedPathDefinitions[pathId].defaultRotation
 }
 const productionWeaponIds = new Set<WeaponId>(
   (Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).flatMap(([id, definition]) =>
     id !== "mixed" && definition.status === "available" ? (definition.lockedWeapons ?? []) : [],
   ),
-);
+)
 
 function pathRequiresDev(definition: PathDefinition) {
-  return definition.status !== "available";
+  return definition.status !== "available"
 }
 
 function pathStatusLabel(definition: PathDefinition) {
   switch (definition.status) {
     case "plannerOnly":
-      return t("ui.app.plannerOnly");
+      return t("ui.app.plannerOnly")
     case "devOnly":
-      return t("ui.app.dev");
+      return t("ui.app.dev")
     case "wip":
-      return t("ui.app.wip");
+      return t("ui.app.wip")
     case "available":
-      return "";
+      return ""
   }
 }
 
@@ -384,10 +387,10 @@ const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Mortal: mortalSkills as SkillMap,
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
-};
+}
 const manualMysticBuffs = Object.fromEntries(
   Object.entries(mysticBuffs as Record<string, EffectDefinition>).filter(([, definition]) => !definition.global),
-);
+)
 const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
   ...defaultSkillMaps,
   Buff: {
@@ -413,7 +416,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...generalDebuffs,
   } as SkillMap,
   DOT: { ...mysticDots, ...innerWayDots } as SkillMap,
-};
+}
 const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   snowparting: "Snowparting",
   phalanxbane: "Phalanxbane",
@@ -425,7 +428,7 @@ const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   soulshadeUmbrella: "Soulshade",
   infernalTwinblades: "Infernal",
   mortalRopeDart: "Mortal",
-};
+}
 const rotationEventDefinitions: Record<string, SkillRecord> = {
   ...resourceEventDefinitions,
   Controlled: {
@@ -459,34 +462,10 @@ const rotationEventDefinitions: Record<string, SkillRecord> = {
     modifier: [],
     tags: ["Event"],
   },
-  BattleEnd: {
-    name: "Event: Battle End",
-    castTime: 0,
-    action: [],
-    modifier: [],
-    tags: ["Event"],
-  },
-  Delay: {
-    name: "Event: Delay",
-    castTime: 0,
-    action: [],
-    modifier: [],
-    tags: ["Event"],
-  },
-  Move: {
-    name: "Event: Move",
-    castTime: 0,
-    action: [{ type: "move", time: 0 }],
-    modifier: [],
-    tags: ["Event"],
-  },
-  SelfHP: {
-    name: "Event: Self HP",
-    castTime: 0,
-    action: [{ type: "setHP", time: 0 }],
-    modifier: [],
-    tags: ["Event"],
-  },
+  BattleEnd: { name: "Event: Battle End", castTime: 0, action: [], modifier: [], tags: ["Event"] },
+  Delay: { name: "Event: Delay", castTime: 0, action: [], modifier: [], tags: ["Event"] },
+  Move: { name: "Event: Move", castTime: 0, action: [{ type: "move", time: 0 }], modifier: [], tags: ["Event"] },
+  SelfHP: { name: "Event: Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], modifier: [], tags: ["Event"] },
   TakeDamage: {
     name: "Event: Take Damage",
     castTime: 0,
@@ -494,13 +473,7 @@ const rotationEventDefinitions: Record<string, SkillRecord> = {
     modifier: [],
     tags: ["Event"],
   },
-  HP: {
-    name: "Event: HP",
-    castTime: 0,
-    action: [{ type: "setTargetHP", time: 0 }],
-    modifier: [],
-    tags: ["Event"],
-  },
+  HP: { name: "Event: HP", castTime: 0, action: [{ type: "setTargetHP", time: 0 }], modifier: [], tags: ["Event"] },
   Qi: {
     name: "Event: Qi",
     castTime: 0,
@@ -532,49 +505,49 @@ const rotationEventDefinitions: Record<string, SkillRecord> = {
     modifier: [],
     tags: ["Event"],
   },
-};
-
-function rotationEventDisplayName(eventId: string) {
-  const key = `${eventId.charAt(0).toLowerCase()}${eventId.slice(1)}`;
-  return dataText(`game.event.${key}`, rotationEventDefinitions[eventId]?.name ?? eventId);
 }
 
-const rotationStorageKey = "wwm-rotation-editor-session-v2";
-const rotationListStorageKey = "wwm-rotation-list-session-v1";
-const activeRotationStorageKey = "wwm-active-rotation-session-v1";
-const activeRotationByPathStorageKey = "wwm-active-rotation-by-path-v1";
-const activeBuildByPathStorageKey = "wwm-active-build-by-path-v1";
+function rotationEventDisplayName(eventId: string) {
+  const key = `${eventId.charAt(0).toLowerCase()}${eventId.slice(1)}`
+  return dataText(`game.event.${key}`, rotationEventDefinitions[eventId]?.name ?? eventId)
+}
 
-type PathSelectionIds = Partial<Record<PathId, string>>;
+const rotationStorageKey = "wwm-rotation-editor-session-v2"
+const rotationListStorageKey = "wwm-rotation-list-session-v1"
+const activeRotationStorageKey = "wwm-active-rotation-session-v1"
+const activeRotationByPathStorageKey = "wwm-active-rotation-by-path-v1"
+const activeBuildByPathStorageKey = "wwm-active-build-by-path-v1"
+
+type PathSelectionIds = Partial<Record<PathId, string>>
 
 function loadPathSelectionIds(storageKey: string, legacyStorageKey: string, currentPathId: PathId) {
-  let selections: PathSelectionIds = {};
+  let selections: PathSelectionIds = {}
   try {
-    const saved = JSON.parse(getPersistentItem(storageKey) ?? "null") as unknown;
+    const saved = JSON.parse(getPersistentItem(storageKey) ?? "null") as unknown
     if (saved && typeof saved === "object" && !Array.isArray(saved)) {
       selections = Object.fromEntries(
         Object.entries(saved).filter(
           ([path, id]) => path in typedPathDefinitions && typeof id === "string" && id.length > 0,
         ),
-      ) as PathSelectionIds;
+      ) as PathSelectionIds
     }
   } catch {
-    selections = {};
+    selections = {}
   }
   if (!selections[currentPathId]) {
-    const legacyId = getPersistentItem(legacyStorageKey);
+    const legacyId = getPersistentItem(legacyStorageKey)
     if (legacyId) {
-      selections = { ...selections, [currentPathId]: legacyId };
-      setPersistentItem(storageKey, JSON.stringify(selections));
+      selections = { ...selections, [currentPathId]: legacyId }
+      setPersistentItem(storageKey, JSON.stringify(selections))
     }
   }
-  return selections;
+  return selections
 }
 
 function withPathSelection(selections: PathSelectionIds, pathId: PathId, id: string) {
-  return selections[pathId] === id ? selections : { ...selections, [pathId]: id };
+  return selections[pathId] === id ? selections : { ...selections, [pathId]: id }
 }
-const allSkillDefinitions = Object.assign({}, ...Object.values(defaultSkillMaps)) as SkillMap;
+const allSkillDefinitions = Object.assign({}, ...Object.values(defaultSkillMaps)) as SkillMap
 const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Snowparting: "snowpartingBlade",
   Phalanxbane: "phalanxbaneBlade",
@@ -588,26 +561,26 @@ const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Mortal: "mortalRopeDart",
   Mystic: "mystic",
   General: "general",
-};
+}
 const skillDataNamespaceById = new Map<string, string>(
   (Object.entries(defaultSkillMaps) as Array<[SkillCategory, SkillMap]>).flatMap(([category, definitions]) =>
-    Object.keys(definitions).map((id) => [id, skillDataNamespaceByCategory[category]]),
+    Object.keys(definitions).map(id => [id, skillDataNamespaceByCategory[category]]),
   ),
-);
-const allSkillIds = (Object.keys(defaultSkillMaps) as SkillCategory[]).flatMap((category) =>
+)
+const allSkillIds = (Object.keys(defaultSkillMaps) as SkillCategory[]).flatMap(category =>
   Object.keys(defaultSkillMaps[category]),
-);
-const editorSkillIds = Array.from(new Set(allSkillIds));
+)
+const editorSkillIds = Array.from(new Set(allSkillIds))
 const martialArtBySkillId = new Map<string, WeaponId>([
-  ...Object.keys(snowpartingSkills).map((id) => [id, "snowparting"] as const),
-  ...Object.keys(phalanxbaneSkills).map((id) => [id, "phalanxbane"] as const),
-  ...Object.keys(thundercrySkills).map((id) => [id, "thundercry"] as const),
-  ...Object.keys(stormbreakerSkills).map((id) => [id, "stormbreaker"] as const),
-  ...Object.keys(heavenwillSkills).map((id) => [id, "heavenwill"] as const),
-  ...Object.keys(skygraspSkills).map((id) => [id, "skygrasp"] as const),
-  ...Object.keys(panaceaSkills).map((id) => [id, "panaceaFan"] as const),
-  ...Object.keys(soulshadeSkills).map((id) => [id, "soulshadeUmbrella"] as const),
-]);
+  ...Object.keys(snowpartingSkills).map(id => [id, "snowparting"] as const),
+  ...Object.keys(phalanxbaneSkills).map(id => [id, "phalanxbane"] as const),
+  ...Object.keys(thundercrySkills).map(id => [id, "thundercry"] as const),
+  ...Object.keys(stormbreakerSkills).map(id => [id, "stormbreaker"] as const),
+  ...Object.keys(heavenwillSkills).map(id => [id, "heavenwill"] as const),
+  ...Object.keys(skygraspSkills).map(id => [id, "skygrasp"] as const),
+  ...Object.keys(panaceaSkills).map(id => [id, "panaceaFan"] as const),
+  ...Object.keys(soulshadeSkills).map(id => [id, "soulshadeUmbrella"] as const),
+])
 const rotationEventOptionIds = [
   "__event:Delay",
   "__event:Controlled",
@@ -622,10 +595,10 @@ const rotationEventOptionIds = [
   "__event:Buff",
   "__event:Debuff",
   "__event:MartialArt",
-];
-const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>;
-const generalDebuffIds = new Set(Object.keys(generalDebuffs));
-const dotEffectIds = new Set(Object.keys(dotDefinitions));
+]
+const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>
+const generalDebuffIds = new Set(Object.keys(generalDebuffs))
+const dotEffectIds = new Set(Object.keys(dotDefinitions))
 const effectDefinitions = {
   ...mysticBuffs,
   ...generalBuffs,
@@ -647,7 +620,7 @@ const effectDefinitions = {
   ...innerWayDebuffs,
   ...generalDebuffs,
   ...dotDefinitions,
-} as Record<string, EffectDefinition>;
+} as Record<string, EffectDefinition>
 const expectedOutcomeBuffPlateDefinitions = [
   { name: "Hawkwing", maxStack: 5 },
   { name: "Concentration", maxStack: 1 },
@@ -655,43 +628,32 @@ const expectedOutcomeBuffPlateDefinitions = [
   { name: "Flare", maxStack: 1 },
   { name: "Yield", maxStack: 1 },
   { name: "Frost", maxStack: 1 },
-] as const;
-const expectedOutcomeBuffPlateNames = new Set<string>(expectedOutcomeBuffPlateDefinitions.map(({ name }) => name));
-type DisplayedTimelineEffect = TrackedEffect & {
-  hideRemainingTime?: boolean;
-  averageStackOnly?: boolean;
-};
+] as const
+const expectedOutcomeBuffPlateNames = new Set<string>(expectedOutcomeBuffPlateDefinitions.map(({ name }) => name))
+type DisplayedTimelineEffect = TrackedEffect & { hideRemainingTime?: boolean; averageStackOnly?: boolean }
 function withExpectedOutcomeBuffPlates(
   buffs: TrackedEffect[],
   expectedBuffStacks: Record<string, number> | undefined,
 ): DisplayedTimelineEffect[] {
-  if (!expectedBuffStacks) return buffs;
+  if (!expectedBuffStacks) return buffs
   return [
-    ...buffs.filter((effect) => !expectedOutcomeBuffPlateNames.has(effect.name)),
+    ...buffs.filter(effect => !expectedOutcomeBuffPlateNames.has(effect.name)),
     ...expectedOutcomeBuffPlateDefinitions.flatMap(({ name, maxStack }) => {
-      const stack = expectedBuffStacks[name];
+      const stack = expectedBuffStacks[name]
       return stack !== undefined && stack > 0
-        ? [
-            {
-              name,
-              stack,
-              maxStack,
-              hideRemainingTime: true,
-              averageStackOnly: true,
-            },
-          ]
-        : [];
+        ? [{ name, stack, maxStack, hideRemainingTime: true, averageStackOnly: true }]
+        : []
     }),
-  ];
+  ]
 }
 
 function formatResourceRange(value: number, range: { minimum: number; maximum: number } | undefined) {
-  if (!range || Math.abs(range.maximum - range.minimum) < 1e-9) return formatNumber(value);
-  return `${formatNumber(range.minimum)} ~ ${formatNumber(range.maximum)}`;
+  if (!range || Math.abs(range.maximum - range.minimum) < 1e-9) return formatNumber(value)
+  return `${formatNumber(range.minimum)} ~ ${formatNumber(range.maximum)}`
 }
-const globalEffectRules = Object.values(effectDefinitions).flatMap((definition) =>
+const globalEffectRules = Object.values(effectDefinitions).flatMap(definition =>
   definition.global ? (definition.effect ?? []) : [],
-) as EditableObject[];
+) as EditableObject[]
 const manualBuffDefinitions = {
   ...manualMysticBuffs,
   ...generalBuffs,
@@ -702,8 +664,8 @@ const manualBuffDefinitions = {
   ...bamboocutKiteBuffs,
   ...silkbindDelugeBuffs,
   ...bellstrikeUmbraBuffs,
-} as Record<string, { name?: string }>;
-const manualGeneralDebuffs = Object.fromEntries(Object.entries(generalDebuffs).filter(([id]) => id !== "Exhausted"));
+} as Record<string, { name?: string }>
+const manualGeneralDebuffs = Object.fromEntries(Object.entries(generalDebuffs).filter(([id]) => id !== "Exhausted"))
 const manualDebuffDefinitions = {
   ...mysticDebuffs,
   ...stonesplitStrengthDebuffs,
@@ -715,64 +677,62 @@ const manualDebuffDefinitions = {
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
   ...manualGeneralDebuffs,
-} as Record<string, { name?: string }>;
+} as Record<string, { name?: string }>
 
 function loadDevMode() {
-  return localStorage.getItem(devModeStorageKey) === "true";
+  return localStorage.getItem(devModeStorageKey) === "true"
 }
 
-const compactLayoutQuery = "(max-width: 48em)";
+const compactLayoutQuery = "(max-width: 48em)"
 
 function subscribeToCompactLayout(callback: () => void) {
-  const query = window.matchMedia(compactLayoutQuery);
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
+  const query = window.matchMedia(compactLayoutQuery)
+  query.addEventListener("change", callback)
+  return () => query.removeEventListener("change", callback)
 }
 
 function compactLayoutSnapshot() {
-  return window.matchMedia(compactLayoutQuery).matches;
+  return window.matchMedia(compactLayoutQuery).matches
 }
 
 function loadLayoutPreview(compact: boolean): LayoutMode {
-  const saved = getPersistentItem(layoutPreviewStorageKey);
-  return saved === "pc" || saved === "mobile" ? saved : compact ? "mobile" : "pc";
+  const saved = getPersistentItem(layoutPreviewStorageKey)
+  return saved === "pc" || saved === "mobile" ? saved : compact ? "mobile" : "pc"
 }
 
 function loadSelectedPath(devMode = loadDevMode()): PathId {
-  const saved = getPersistentItem(pathStorageKey);
-  const definition = saved ? typedPathDefinitions[saved as PathId] : undefined;
-  return definition && (!pathRequiresDev(definition) || devMode) ? (saved as PathId) : "stonesplitStrength";
+  const saved = getPersistentItem(pathStorageKey)
+  const definition = saved ? typedPathDefinitions[saved as PathId] : undefined
+  return definition && (!pathRequiresDev(definition) || devMode) ? (saved as PathId) : "stonesplitStrength"
 }
 
 function innerWayAvailableForPath(innerWay: string, pathId = loadSelectedPath()) {
-  return innerWayAvailableForTag(innerWay, typedPathDefinitions[pathId].tag);
+  return innerWayAvailableForTag(innerWay, typedPathDefinitions[pathId].tag)
 }
 
 function attunementAvailableForSettings(attunement: string, pathId: PathId, settings: CalculatorSettings) {
-  const definition = attunementData[attunement];
-  if (definition?.tags.includes("Defensive")) return false;
-  if (definition?.tags.includes("Weapon")) return true;
-  const requiredTag = typedPathDefinitions[pathId].tag;
-  if (requiredTag && !definition?.tags.includes(requiredTag)) return false;
-  return settings.weapons.some((weapon) => definition?.tags.includes(martialArtDefinitions[weapon].tag));
+  const definition = attunementData[attunement]
+  if (definition?.tags.includes("Defensive")) return false
+  if (definition?.tags.includes("Weapon")) return true
+  const requiredTag = typedPathDefinitions[pathId].tag
+  if (requiredTag && !definition?.tags.includes(requiredTag)) return false
+  return settings.weapons.some(weapon => definition?.tags.includes(martialArtDefinitions[weapon].tag))
 }
 
 function settingsForPath(settings: CalculatorSettings, pathId: PathId): CalculatorSettings {
-  const lockedWeapons = typedPathDefinitions[pathId].lockedWeapons;
-  return lockedWeapons ? { ...settings, weapons: [...lockedWeapons] } : settings;
+  const lockedWeapons = typedPathDefinitions[pathId].lockedWeapons
+  return lockedWeapons ? { ...settings, weapons: [...lockedWeapons] } : settings
 }
 
 function selectableRotationSkillIds(weapons: [WeaponId, WeaponId]) {
-  const martialCategories = weapons.flatMap((weapon) => {
-    const category = skillCategoryByWeapon[weapon];
-    return category ? [category] : [];
-  });
-  const categories = [...new Set<SkillCategory>([...martialCategories, "Mystic", "General"])] as SkillCategory[];
+  const martialCategories = weapons.flatMap(weapon => {
+    const category = skillCategoryByWeapon[weapon]
+    return category ? [category] : []
+  })
+  const categories = [...new Set<SkillCategory>([...martialCategories, "Mystic", "General"])] as SkillCategory[]
   return categories
-    .flatMap((category) => Object.keys(defaultSkillMaps[category]))
-    .filter(
-      (skillId) => !allSkillDefinitions[skillId]?.tags?.some((tag) => tag === "Triggered" || tag === "SubAction"),
-    );
+    .flatMap(category => Object.keys(defaultSkillMaps[category]))
+    .filter(skillId => !allSkillDefinitions[skillId]?.tags?.some(tag => tag === "Triggered" || tag === "SubAction"))
 }
 
 function innerWayConditionsFor(
@@ -780,13 +740,13 @@ function innerWayConditionsFor(
   excludedInnerWay?: string,
   pathId = loadSelectedPath(),
 ) {
-  const conditions = new Set<string>();
+  const conditions = new Set<string>()
   for (const row of selectedInnerWays) {
-    if (!row.innerWay || row.innerWay === excludedInnerWay || !innerWayAvailableForPath(row.innerWay, pathId)) continue;
-    const tierNumber = Number(row.tier.slice(1));
-    for (let tier = 0; tier <= tierNumber; tier += 1) conditions.add(`${row.innerWay}T${tier}`);
+    if (!row.innerWay || row.innerWay === excludedInnerWay || !innerWayAvailableForPath(row.innerWay, pathId)) continue
+    const tierNumber = Number(row.tier.slice(1))
+    for (let tier = 0; tier <= tierNumber; tier += 1) conditions.add(`${row.innerWay}T${tier}`)
   }
-  return conditions;
+  return conditions
 }
 
 function innerWayEffectRulesFor(
@@ -794,24 +754,22 @@ function innerWayEffectRulesFor(
   soloLevel: number,
   pathId = loadSelectedPath(),
 ): InnerWayEffectRule[] {
-  const selected = selectedInnerWays.filter(({ innerWay }) => innerWayAvailableForPath(innerWay, pathId));
+  const selected = selectedInnerWays.filter(({ innerWay }) => innerWayAvailableForPath(innerWay, pathId))
   return selected.flatMap(({ innerWay, tier }) => {
-    if (!innerWay || !innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions]) return [];
+    if (!innerWay || !innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions]) return []
     const definition = innerWayDefinitionForSoloLevel(
       innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions],
       soloLevel,
-    ) as {
-      effect?: Record<string, { effect?: unknown[]; trigger?: unknown[]; listen?: unknown[] }>;
-    };
-    const tierNumber = Number(tier.slice(1));
+    ) as { effect?: Record<string, { effect?: unknown[]; trigger?: unknown[]; listen?: unknown[] }> }
+    const tierNumber = Number(tier.slice(1))
     return Array.from({ length: tierNumber + 1 }, (_, currentTier) => {
-      const tierDefinition = definition.effect?.[`${innerWay}T${currentTier}`];
-      const effects = tierDefinition?.effect ?? [];
-      const triggers = tierDefinition?.trigger ?? [];
-      const listeners = tierDefinition?.listen ?? [];
+      const tierDefinition = definition.effect?.[`${innerWay}T${currentTier}`]
+      const effects = tierDefinition?.effect ?? []
+      const triggers = tierDefinition?.trigger ?? []
+      const listeners = tierDefinition?.listen ?? []
       const effectRules = effects
         .filter((item): item is EditableObject => Boolean(item) && typeof item === "object" && !Array.isArray(item))
-        .map((item) => ({
+        .map(item => ({
           requirement: item.requirement,
           trigger:
             item.trigger && typeof item.trigger === "object" && !Array.isArray(item.trigger)
@@ -826,7 +784,7 @@ function innerWayEffectRulesFor(
             item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
               ? (item.effect as EditableObject)
               : Object.fromEntries(
-                  ["rawStat", "stat", "effectiveStat"].flatMap((field) =>
+                  ["rawStat", "stat", "effectiveStat"].flatMap(field =>
                     item[field] && typeof item[field] === "object" && !Array.isArray(item[field])
                       ? [[field, item[field]]]
                       : [],
@@ -834,10 +792,10 @@ function innerWayEffectRulesFor(
                 ),
           source: innerWay,
           tier: currentTier,
-        }));
+        }))
       const triggerRules = triggers
         .filter((item): item is EditableObject => Boolean(item) && typeof item === "object" && !Array.isArray(item))
-        .map((item) => ({
+        .map(item => ({
           requirement: item.requirement,
           trigger: {
             ...item,
@@ -847,34 +805,28 @@ function innerWayEffectRulesFor(
           effect: {},
           source: innerWay,
           tier: currentTier,
-        }));
+        }))
       const listenerRules = listeners
         .filter((item): item is EditableObject => Boolean(item) && typeof item === "object" && !Array.isArray(item))
-        .map((item) => ({
-          requirement: item.requirement,
-          listen: item,
-          effect: {},
-          source: innerWay,
-          tier: currentTier,
-        }));
-      return [...effectRules, ...triggerRules, ...listenerRules];
-    }).flat();
-  });
+        .map(item => ({ requirement: item.requirement, listen: item, effect: {}, source: innerWay, tier: currentTier }))
+      return [...effectRules, ...triggerRules, ...listenerRules]
+    }).flat()
+  })
 }
 
 function normalizeRotation(rotation: RotationRecord): RotationRecord {
   // Reconstruct supported fields: discard legacy autoHP, preserving manual HP events and anchors.
   const steps: RotationStep[] = (rotation.steps as Array<RotationStep & { repeat?: number }>).flatMap(
     (step): RotationStep[] => {
-      if (step.type === "event") return [step];
-      const repeat = Math.max(1, step.repeat ?? 1);
-      const { repeat: _repeat, ...stepWithoutRepeat } = step;
+      if (step.type === "event") return [step]
+      const repeat = Math.max(1, step.repeat ?? 1)
+      const { repeat: _repeat, ...stepWithoutRepeat } = step
       return Array.from({ length: repeat }, (_, index) => ({
         ...stepWithoutRepeat,
         causesBreak: index === repeat - 1 ? step.causesBreak : undefined,
-      })) as RotationStep[];
+      })) as RotationStep[]
     },
-  );
+  )
   return {
     name: rotation.name,
     steps,
@@ -888,79 +840,79 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
         : /\bIV\b|infinite vitality/i.test(rotation.name),
     start: rotation.start,
     ...(rotation.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
-  };
+  }
 }
 
 function eventDefaultDuration(event: "Exhausted" | "Controlled") {
-  return effectDefinitions[event]?.duration ?? 0;
+  return effectDefinitions[event]?.duration ?? 0
 }
 
 function baseSkillCastTime(skill: SkillRecord | undefined) {
-  if (typeof skill?.castTime === "number" && Number.isFinite(skill.castTime)) return skill.castTime;
-  const fallback = resolveSwitchValue(skill?.castTime, {});
-  return typeof fallback === "number" && Number.isFinite(fallback) ? fallback : 0;
+  if (typeof skill?.castTime === "number" && Number.isFinite(skill.castTime)) return skill.castTime
+  const fallback = resolveSwitchValue(skill?.castTime, {})
+  return typeof fallback === "number" && Number.isFinite(fallback) ? fallback : 0
 }
 
 function baseRotationAnchorTime(rotation: RotationRecord) {
-  if (!rotation.start) return 0;
-  let time = 0;
+  if (!rotation.start) return 0
+  let time = 0
   for (const [stepIndex, step] of rotation.steps.entries()) {
     if (stepIndex === rotation.start.step) {
-      if (step.type !== "skill") return time;
-      const skill = allSkillDefinitions[step.skill ?? ""];
+      if (step.type !== "skill") return time
+      const skill = allSkillDefinitions[step.skill ?? ""]
       return (
         time +
         (rotation.start.action === undefined || !Array.isArray(skill?.action)
           ? 0
           : Number((skill.action[rotation.start.action] as EditableObject | undefined)?.time ?? 0))
-      );
+      )
     }
-    if (step.type === "skill") time += baseSkillCastTime(allSkillDefinitions[step.skill ?? ""]);
-    else if (step.event === "Delay") time += Math.max(0, step.duration);
+    if (step.type === "skill") time += baseSkillCastTime(allSkillDefinitions[step.skill ?? ""])
+    else if (step.event === "Delay") time += Math.max(0, step.duration)
   }
-  return 0;
+  return 0
 }
 
 function baseAttachedEventTime(rotation: RotationRecord, eventStepIndex: number, target: AttachedEventTarget) {
-  let elapsed = 0;
+  let elapsed = 0
   for (const [stepIndex, step] of rotation.steps.entries()) {
     if (step.type === "skill") {
-      const skill = allSkillDefinitions[step.skill ?? ""];
+      const skill = allSkillDefinitions[step.skill ?? ""]
       if (stepIndex > eventStepIndex) {
-        if (target.action === "start") return elapsed;
-        const actions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : [];
-        if (target.trigger === undefined) return elapsed + Number(actions[target.action]?.time ?? 0);
-        const triggerAction = actions.filter((action) => action.type === "trigger")[target.trigger];
-        if (!triggerAction || typeof triggerAction.value !== "string") return elapsed;
-        const triggeredSkill = allSkillDefinitions[triggerAction.value];
+        if (target.action === "start") return elapsed
+        const actions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : []
+        if (target.trigger === undefined) return elapsed + Number(actions[target.action]?.time ?? 0)
+        const triggerAction = actions.filter(action => action.type === "trigger")[target.trigger]
+        if (!triggerAction || typeof triggerAction.value !== "string") return elapsed
+        const triggeredSkill = allSkillDefinitions[triggerAction.value]
         const triggeredActions = Array.isArray(triggeredSkill?.action)
           ? (triggeredSkill.action as EditableObject[])
-          : [];
-        return elapsed + Number(triggerAction.time ?? 0) + Number(triggeredActions[target.action]?.time ?? 0);
+          : []
+        return elapsed + Number(triggerAction.time ?? 0) + Number(triggeredActions[target.action]?.time ?? 0)
       }
-      elapsed += baseSkillCastTime(skill);
+      elapsed += baseSkillCastTime(skill)
     } else if (step.event === "Delay") {
-      elapsed += Math.max(0, step.duration);
+      elapsed += Math.max(0, step.duration)
     }
   }
-  return elapsed;
+  return elapsed
 }
 
 function timelineAnchorTime(timeline: TimelineRow[], startAnchor: { rowId: string; actionIndex?: number }) {
-  if (timeline[0]?.battleStartTime !== undefined) return Math.max(0, timeline[0].battleStartTime);
-  const anchorRow = timeline.find((row) => row.id === startAnchor.rowId);
-  if (!anchorRow) return 0;
-  if (startAnchor.actionIndex === undefined) return anchorRow.startTime;
-  return anchorRow.startTime + Number(anchorRow.actions[startAnchor.actionIndex]?.time ?? 0);
+  if (timeline[0]?.battleStartTime !== undefined) return Math.max(0, timeline[0].battleStartTime)
+  const anchorRow = timeline.find(row => row.id === startAnchor.rowId)
+  if (!anchorRow) return 0
+  if (startAnchor.actionIndex === undefined) return anchorRow.startTime
+  return anchorRow.startTime + Number(anchorRow.actions[startAnchor.actionIndex]?.time ?? 0)
 }
 
 function migrateRotation(rotation: RotationRecord): RotationRecord {
   const migrated = migrateDefenseActionAnchors(
     migrateAutomaticDelays(migrateDrunkenPoetSequences(migrateGeneralsBaneSlides(normalizeRotation(rotation)))),
-  );
+  )
   const attachedDamageIndexes = migrated.steps.flatMap((step, index) =>
     step.type === "event" && step.event === "TakeDamage" && "before" in step ? [index] : [],
-  );
+  )
   const migrationTimeline = attachedDamageIndexes.length
     ? buildRotationTimeline({
         rotation: migrated,
@@ -973,26 +925,26 @@ function migrateRotation(rotation: RotationRecord): RotationRecord {
         setupEffects: [],
         weapons: [],
       })
-    : [];
+    : []
   const anchorTime = migrationTimeline.length
     ? timelineAnchorTime(migrationTimeline, {
         rowId: `rotation-${migrated.start?.step ?? 0}`,
         actionIndex: migrated.start?.action,
       })
-    : baseRotationAnchorTime(migrated);
+    : baseRotationAnchorTime(migrated)
   migrated.steps = migrated.steps.map((step, stepIndex) => {
-    const legacyStep = step as unknown as Record<string, unknown>;
-    if (step.type !== "event") return step;
+    const legacyStep = step as unknown as Record<string, unknown>
+    if (step.type !== "event") return step
     if (step.event === "TakeDamage" && "before" in step) {
       const targetTime =
-        migrationTimeline.find((row) => row.id === `rotation-${stepIndex}`)?.startTime ??
-        baseAttachedEventTime(migrated, stepIndex, step.before);
+        migrationTimeline.find(row => row.id === `rotation-${stepIndex}`)?.startTime ??
+        baseAttachedEventTime(migrated, stepIndex, step.before)
       return {
         type: "event",
         event: "TakeDamage",
         startTime: migrated.eventTimeReference === "battleStart" ? targetTime - anchorTime : targetTime,
         damage: step.damage,
-      };
+      }
     }
     if (step.event === "HP" && typeof legacyStep.currentHPRatio === "number")
       return {
@@ -1000,24 +952,24 @@ function migrateRotation(rotation: RotationRecord): RotationRecord {
         event: "SelfHP",
         before: legacyStep.before as AttachedEventTarget,
         currentHPRatio: legacyStep.currentHPRatio,
-      };
+      }
     if (step.event === "Debuff" && step.debuff === "Exhausted")
-      return { type: "event", event: "Qi", before: step.before, targetQiRatio: 0 };
+      return { type: "event", event: "Qi", before: step.before, targetQiRatio: 0 }
     if (legacyStep.event === "Exhausted" && (legacyStep.after || legacyStep.before))
       return {
         type: "event",
         event: "Qi",
         after: (legacyStep.after ?? legacyStep.before) as AttachedEventTarget,
         targetQiRatio: 0,
-      };
-    return step;
-  });
+      }
+    return step
+  })
   if (migrated.eventTimeReference !== "battleStart") {
-    const previousAnchorTime = baseRotationAnchorTime(migrated);
-    migrated.steps = migrated.steps.map((step) =>
+    const previousAnchorTime = baseRotationAnchorTime(migrated)
+    migrated.steps = migrated.steps.map(step =>
       step.type === "event" && "startTime" in step ? { ...step, startTime: step.startTime - previousAnchorTime } : step,
-    );
-    migrated.eventTimeReference = "battleStart";
+    )
+    migrated.eventTimeReference = "battleStart"
   }
   const legacyEvents = migrated.steps.flatMap((step, index) =>
     step.type === "event" &&
@@ -1025,58 +977,51 @@ function migrateRotation(rotation: RotationRecord): RotationRecord {
     "startTime" in step
       ? [{ step, index }]
       : [],
-  );
+  )
   if (legacyEvents.length) {
-    const anchor = baseRotationAnchorTime(migrated);
-    let elapsed = 0;
+    const anchor = baseRotationAnchorTime(migrated)
+    let elapsed = 0
     const candidates = migrated.steps.flatMap((step, index) => {
-      if (step.type !== "skill") return [];
-      const skill = allSkillDefinitions[step.skill ?? ""];
-      const castStart = elapsed;
-      elapsed += baseSkillCastTime(skill);
-      const actions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : [];
-      return [
-        { index, time: castStart - anchor, before: { action: "start" } as AttachedEventTarget },
-        ...actions.flatMap((action, actionIndex) => {
-          const time = castStart + Number(action.time ?? 0) - anchor;
-          const direct = { index, time, before: { action: actionIndex } as AttachedEventTarget };
-          if (action.type !== "trigger" || typeof action.value !== "string") return [direct];
-          const triggered = allSkillDefinitions[action.value];
-          const triggeredActions = Array.isArray(triggered?.action) ? (triggered.action as EditableObject[]) : [];
+      if (step.type !== "skill") return []
+      const skill = allSkillDefinitions[step.skill ?? ""]
+      const castStart = elapsed
+      elapsed += baseSkillCastTime(skill)
+      const actions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : []
+      return [{ index, time: castStart - anchor, before: { action: "start" } as AttachedEventTarget }].concat(
+        actions.flatMap((action, actionIndex) => {
+          const time = castStart + Number(action.time ?? 0) - anchor
+          const direct = { index, time, before: { action: actionIndex } as AttachedEventTarget }
+          if (action.type !== "trigger" || typeof action.value !== "string") return [direct]
+          const triggered = allSkillDefinitions[action.value]
+          const triggeredActions = Array.isArray(triggered?.action) ? (triggered.action as EditableObject[]) : []
           const triggerOrdinal =
-            actions.slice(0, actionIndex + 1).filter((candidate) => candidate.type === "trigger").length - 1;
-          return [
-            direct,
-            ...triggeredActions.map((triggeredAction, triggeredActionIndex) => ({
+            actions.slice(0, actionIndex + 1).filter(candidate => candidate.type === "trigger").length - 1
+          return [direct].concat(
+            triggeredActions.map((triggeredAction, triggeredActionIndex) => ({
               index,
               time: time + Number(triggeredAction.time ?? 0),
               before: { trigger: triggerOrdinal, action: triggeredActionIndex } as AttachedEventTarget,
             })),
-          ];
+          )
         }),
-      ];
-    });
-    const attachments = new Map<number, RotationStep[]>();
+      )
+    })
+    const attachments = new Map<number, RotationStep[]>()
     legacyEvents.forEach(({ step }) => {
-      if (!candidates.length) return;
+      if (!candidates.length) return
       const target = candidates.reduce(
         (best, candidate) =>
           Math.abs(candidate.time - step.startTime) < Math.abs(best.time - step.startTime) ? candidate : best,
         candidates[0],
-      );
-      if (!target) return;
+      )
+      if (!target) return
       const attached =
         step.event === "Move"
           ? ({ type: "event", event: "Move", before: target.before, distance: step.distance } as RotationStep)
-          : ({
-              type: "event",
-              event: "Qi",
-              after: target.before,
-              targetQiRatio: 0,
-            } as RotationStep);
-      attachments.set(target.index, [...(attachments.get(target.index) ?? []), attached]);
-    });
-    const startSkill = migrated.steps[migrated.start?.step ?? -1];
+          : ({ type: "event", event: "Qi", after: target.before, targetQiRatio: 0 } as RotationStep)
+      attachments.set(target.index, [...(attachments.get(target.index) ?? []), attached])
+    })
+    const startSkill = migrated.steps[migrated.start?.step ?? -1]
     migrated.steps = migrated.steps.flatMap((step, index) =>
       step.type === "event" &&
       (step.event === "Move" || (step as unknown as { event: string }).event === "Exhausted") &&
@@ -1085,35 +1030,33 @@ function migrateRotation(rotation: RotationRecord): RotationRecord {
         : step.type === "skill"
           ? [...(attachments.get(index) ?? []), step]
           : [step],
-    );
-    const startStep = migrated.steps.indexOf(startSkill);
-    if (startStep >= 0 && migrated.start) migrated.start = { ...migrated.start, step: startStep };
+    )
+    const startStep = migrated.steps.indexOf(startSkill)
+    if (startStep >= 0 && migrated.start) migrated.start = { ...migrated.start, step: startStep }
   }
-  return migrated;
+  return migrated
 }
 
-type RotationPresetRecord = RotationRecord & { martialArts?: WeaponId[]; test?: boolean };
+type RotationPresetRecord = RotationRecord & { martialArts?: WeaponId[]; test?: boolean }
 const rotationPresetModules = import.meta.glob("../data/rotation/**/*.json", {
   eager: true,
   import: "default",
-}) as Record<string, RotationPresetRecord>;
+}) as Record<string, RotationPresetRecord>
 function rotationMartialArts(rotation: RotationRecord, explicit?: unknown) {
-  const configured = normalizeStoredWeaponIds(explicit);
-  if (configured.length) return configured;
+  const configured = normalizeStoredWeaponIds(explicit)
+  if (configured.length) return configured
   const inferred = [
     ...new Set(
-      rotation.steps.flatMap((step) =>
-        step.type === "skill" ? (martialArtBySkillId.get(step.skill ?? "") ?? []) : [],
-      ),
+      rotation.steps.flatMap(step => (step.type === "skill" ? (martialArtBySkillId.get(step.skill ?? "") ?? []) : [])),
     ),
-  ];
-  return inferred.length ? inferred : [...allWeaponIds];
+  ]
+  return inferred.length ? inferred : [...allWeaponIds]
 }
 function rotationAvailableForWeapons(entry: RotationEntry, weapons: [WeaponId, WeaponId]) {
-  if (allWeaponIds.every((weapon) => entry.martialArts.includes(weapon))) return true;
-  const selected = [...new Set(weapons)];
-  const tagged = [...new Set(entry.martialArts)];
-  return tagged.length === selected.length && selected.every((weapon) => tagged.includes(weapon));
+  if (allWeaponIds.every(weapon => entry.martialArts.includes(weapon))) return true
+  const selected = [...new Set(weapons)]
+  const tagged = [...new Set(entry.martialArts)]
+  return tagged.length === selected.length && selected.every(weapon => tagged.includes(weapon))
 }
 const defaultRotationEntries = Object.entries(rotationPresetModules)
   .sort(
@@ -1130,67 +1073,64 @@ const defaultRotationEntries = Object.entries(rotationPresetModules)
     martialArts: rotationMartialArts(rotation, rotation.martialArts),
     isDefault: true,
     test: rotation.test === true,
-  }));
-const defaultRotation = defaultRotationEntries[0]?.rotation ?? { name: "Default Rotation", steps: [] };
-const defaultRotationId = defaultRotationEntries[0]?.id ?? "default-rotation";
-const formerDefaultRotationIds = new Set(["dummy-1-min"]);
+  }))
+const defaultRotation = defaultRotationEntries[0]?.rotation ?? { name: "Default Rotation", steps: [] }
+const defaultRotationId = defaultRotationEntries[0]?.id ?? "default-rotation"
+const formerDefaultRotationIds = new Set(["dummy-1-min"])
 
 function rotationRecordForEntry(entry: RotationEntry) {
-  if (!entry.isDefault) return entry.rotation;
-  return defaultRotationEntries.find((preset) => preset.id === entry.id)?.rotation ?? entry.rotation;
+  if (!entry.isDefault) return entry.rotation
+  return defaultRotationEntries.find(preset => preset.id === entry.id)?.rotation ?? entry.rotation
+}
+
+function createRotationId() {
+  return `rotation-${nanoid()}`
 }
 
 type SetupEffect = StatEffectContainer &
   EffectiveStatEffectContainer & {
-    condition?: string;
-    requirement?: unknown;
-    trigger?: EditableObject;
-    buffDurationBonus?: number;
-    target?: string;
-    modify?: EditableObject;
-  };
+    condition?: string
+    requirement?: unknown
+    trigger?: EditableObject
+    buffDurationBonus?: number
+    target?: string
+    modify?: EditableObject
+  }
 type BreakthroughProfile = EnemyProfile & {
-  soloLevel: number;
-  martialArtTalentRank: number;
+  soloLevel: number
+  martialArtTalentRank: number
   levelBonusStats: SetupEffect & {
-    rawStat: {
-      precision: number;
-      agility: number;
-      power: number;
-      momentum: number;
-      body: number;
-      defense: number;
-    };
-  };
-};
-const typedBreakthroughProfiles = breakthroughProfiles as Record<string, BreakthroughProfile>;
-const defaultBreakthrough = "17";
+    rawStat: { precision: number; agility: number; power: number; momentum: number; body: number; defense: number }
+  }
+}
+const typedBreakthroughProfiles = breakthroughProfiles as Record<string, BreakthroughProfile>
+const defaultBreakthrough = "17"
 const defaultSettings: CalculatorSettings = {
   weapons: ["snowparting", "phalanxbane"],
   breakthrough: defaultBreakthrough,
   ping: DEFAULT_PING_MS,
-};
+}
 
 function breakthroughProfile(settings: CalculatorSettings) {
-  return typedBreakthroughProfiles[settings.breakthrough] ?? typedBreakthroughProfiles[defaultSettings.breakthrough];
+  return typedBreakthroughProfiles[settings.breakthrough] ?? typedBreakthroughProfiles[defaultSettings.breakthrough]
 }
 
 type SystemStatsDefinition = {
-  initialResources: Record<string, number>;
-  resourceMaximums: Record<string, number>;
-  resourceEvents: import("./calculations/rotationTimeline").ResourceEventRule[];
-  baseStats: SetupEffect;
-  enhancementStats: Array<SetupEffect & { id: string }>;
-  talentStats: Array<SetupEffect & { id: string }>;
-  qingheOddityStats: Array<SetupEffect & { id: string }>;
-  kaifengOddityStats: Array<SetupEffect & { id: string }>;
-  imperialPalaceOddityStats: Array<SetupEffect & { id: string }>;
-  hexiOddityStats: Array<SetupEffect & { id: string }>;
-  hiddenMountainOddityStats: Array<SetupEffect & { id: string }>;
-  baseAttributes: BaseAttributeData;
-};
-const typedSystemStats = systemStats as SystemStatsDefinition;
-const baseAttributeEffects = createBaseAttributeEffects(typedSystemStats.baseAttributes);
+  initialResources: Record<string, number>
+  resourceMaximums: Record<string, number>
+  resourceEvents: import("./calculations/rotationTimeline").ResourceEventRule[]
+  baseStats: SetupEffect
+  enhancementStats: Array<SetupEffect & { id: string }>
+  talentStats: Array<SetupEffect & { id: string }>
+  qingheOddityStats: Array<SetupEffect & { id: string }>
+  kaifengOddityStats: Array<SetupEffect & { id: string }>
+  imperialPalaceOddityStats: Array<SetupEffect & { id: string }>
+  hexiOddityStats: Array<SetupEffect & { id: string }>
+  hiddenMountainOddityStats: Array<SetupEffect & { id: string }>
+  baseAttributes: BaseAttributeData
+}
+const typedSystemStats = systemStats as SystemStatsDefinition
+const baseAttributeEffects = createBaseAttributeEffects(typedSystemStats.baseAttributes)
 const systemStatEffects: SetupEffect[] = [
   typedSystemStats.baseStats,
   ...typedSystemStats.enhancementStats,
@@ -1201,24 +1141,24 @@ const systemStatEffects: SetupEffect[] = [
   ...typedSystemStats.hexiOddityStats,
   ...typedSystemStats.hiddenMountainOddityStats,
   ...baseAttributeEffects,
-];
-type ArsenalDefinition = { name: string; effect?: SetupEffect };
-const typedArsenalDefinitions = arsenalDefinitions as Record<string, ArsenalDefinition>;
-const typedBowRingSetDefinitions = bowRingSetDefinitions as Record<string, ArsenalDefinition>;
-type GearSetOption = { name: string; effect?: SetupEffect | SetupEffect[] };
-type GearSetDefinition = Omit<SetDefinition, "options"> & { options: Record<string, GearSetOption> };
-const typedWeaponSetDefinitions = weaponSetDefinitions as Record<string, GearSetDefinition>;
-const typedArmorSetDefinitions = armorSetDefinitions as Record<string, GearSetDefinition>;
-const typedFoodDefinitions = foodDefinitions as Record<string, ArsenalDefinition>;
+]
+type ArsenalDefinition = { name: string; effect?: SetupEffect }
+const typedArsenalDefinitions = arsenalDefinitions as Record<string, ArsenalDefinition>
+const typedBowRingSetDefinitions = bowRingSetDefinitions as Record<string, ArsenalDefinition>
+type GearSetOption = { name: string; effect?: SetupEffect | SetupEffect[] }
+type GearSetDefinition = Omit<SetDefinition, "options"> & { options: Record<string, GearSetOption> }
+const typedWeaponSetDefinitions = weaponSetDefinitions as Record<string, GearSetDefinition>
+const typedArmorSetDefinitions = armorSetDefinitions as Record<string, GearSetDefinition>
+const typedFoodDefinitions = foodDefinitions as Record<string, ArsenalDefinition>
 type DivinecraftDefinition = ArsenalDefinition & {
-  description: string;
-  image?: string;
-  available?: boolean;
-  altersTimeline?: boolean;
-};
-const typedDivinecraftDefinitions = divinecraftDefinitions as Record<string, DivinecraftDefinition>;
-type ScriptDefinition = ArsenalDefinition & { description: string; image?: string; altersTimeline?: boolean };
-const typedScriptDefinitions = scriptDefinitions as Record<string, ScriptDefinition>;
+  description: string
+  image?: string
+  available?: boolean
+  altersTimeline?: boolean
+}
+const typedDivinecraftDefinitions = divinecraftDefinitions as Record<string, DivinecraftDefinition>
+type ScriptDefinition = ArsenalDefinition & { description: string; image?: string; altersTimeline?: boolean }
+const typedScriptDefinitions = scriptDefinitions as Record<string, ScriptDefinition>
 const scriptDisplayOrder = [
   "Wraithstrike",
   "Voidrot",
@@ -1228,7 +1168,7 @@ const scriptDisplayOrder = [
   "Insight",
   "Revelry",
   "None",
-] as const;
+] as const
 const divinecraftDisplayOrder = [
   "Fire",
   "FireWater",
@@ -1239,19 +1179,19 @@ const divinecraftDisplayOrder = [
   null,
   "PoisonFire",
   "PoisonWater",
-] as const;
+] as const
 const comparisonCategoryOrder: RotationCalculationCategory[] = rotationCalculationCategories.filter(
-  (category) => category !== "baseline",
-);
+  category => category !== "baseline",
+)
 
 function setupGroupMatchesCategory(group: string, category: RotationCalculationCategory) {
-  if (category === "weaponSets") return group.startsWith("weaponSets:");
-  if (category === "armorSets") return group.startsWith("armorSets:");
-  if (category === "globalDebuffs") return group.startsWith("debuff:") || group.startsWith("buff:");
-  return group === category;
+  if (category === "weaponSets") return group.startsWith("weaponSets:")
+  if (category === "armorSets") return group.startsWith("armorSets:")
+  if (category === "globalDebuffs") return group.startsWith("debuff:") || group.startsWith("buff:")
+  return group === category
 }
 
-type ComparisonVariantRequest = { key: string; bundle: RotationSimulationBundle };
+type ComparisonVariantRequest = { key: string; bundle: RotationSimulationBundle }
 
 function comparisonVariantRequests(
   bundle: RotationSimulationBundle,
@@ -1267,7 +1207,7 @@ function comparisonVariantRequests(
     attunementPriority: field === "attunementPriority" ? [variant] : [],
     innerWayPriority: field === "innerWayPriority" ? [variant] : [],
     setupComparisons: field === "setupComparisons" && group ? { [group]: [variant] } : {},
-  });
+  })
   const descriptor = (
     variant: RotationSimulationVariant,
     field: "statPriority" | "attunementPriority" | "innerWayPriority" | "setupComparisons",
@@ -1276,16 +1216,15 @@ function comparisonVariantRequests(
     return {
       key: rotationVariantFingerprint(category, field, group, variant),
       bundle: singleVariantBundle(variant, field, group),
-    };
-  };
-  if (category === "statPriority") return bundle.statPriority.map((variant) => descriptor(variant, "statPriority"));
+    }
+  }
+  if (category === "statPriority") return bundle.statPriority.map(variant => descriptor(variant, "statPriority"))
   if (category === "attunementPriority")
-    return bundle.attunementPriority.map((variant) => descriptor(variant, "attunementPriority"));
-  if (category === "innerWays")
-    return bundle.innerWayPriority.map((variant) => descriptor(variant, "innerWayPriority"));
+    return bundle.attunementPriority.map(variant => descriptor(variant, "attunementPriority"))
+  if (category === "innerWays") return bundle.innerWayPriority.map(variant => descriptor(variant, "innerWayPriority"))
   return Object.entries(bundle.setupComparisons)
     .filter(([group]) => setupGroupMatchesCategory(group, category))
-    .flatMap(([group, variants]) => variants.map((variant) => descriptor(variant, "setupComparisons", group)));
+    .flatMap(([group, variants]) => variants.map(variant => descriptor(variant, "setupComparisons", group)))
 }
 
 function combineComparisonVariantMetrics(
@@ -1299,25 +1238,25 @@ function combineComparisonVariantMetrics(
     attunementPriority: [],
     innerWayPriority: [],
     setupComparisons: {},
-  };
+  }
   if (category === "statPriority")
-    combined.statPriority = sortRotationPriorityRows(results.flatMap((result) => result.statPriority));
+    combined.statPriority = sortRotationPriorityRows(results.flatMap(result => result.statPriority))
   else if (category === "attunementPriority")
-    combined.attunementPriority = sortAttunementPriorityRows(results.flatMap((result) => result.attunementPriority));
+    combined.attunementPriority = sortAttunementPriorityRows(results.flatMap(result => result.attunementPriority))
   else if (category === "innerWays")
     combined.innerWayPriority = sortRotationPriorityRows(
-      results.flatMap((result) => result.innerWayPriority),
+      results.flatMap(result => result.innerWayPriority),
       "ascending",
-    );
+    )
   else {
     for (const result of results)
       for (const [group, rows] of Object.entries(result.setupComparisons))
         combined.setupComparisons[group] = sortRotationPriorityRows([
           ...(combined.setupComparisons[group] ?? []),
           ...rows,
-        ]);
+        ])
   }
-  return mergeComparisonCategory(current, combined, category);
+  return mergeComparisonCategory(current, combined, category)
 }
 
 function baselineMetricsWithPreviousComparisons(
@@ -1330,7 +1269,7 @@ function baselineMetricsWithPreviousComparisons(
     attunementPriority: previous?.attunementPriority ?? [],
     innerWayPriority: previous?.innerWayPriority ?? [],
     setupComparisons: previous?.setupComparisons ?? {},
-  };
+  }
 }
 
 function mergeComparisonCategory(
@@ -1338,22 +1277,22 @@ function mergeComparisonCategory(
   calculated: RotationMetrics,
   category: RotationCalculationCategory,
 ) {
-  if (category === "statPriority") return { ...current, statPriority: calculated.statPriority };
-  if (category === "attunementPriority") return { ...current, attunementPriority: calculated.attunementPriority };
-  if (category === "innerWays") return { ...current, innerWayPriority: calculated.innerWayPriority };
+  if (category === "statPriority") return { ...current, statPriority: calculated.statPriority }
+  if (category === "attunementPriority") return { ...current, attunementPriority: calculated.attunementPriority }
+  if (category === "innerWays") return { ...current, innerWayPriority: calculated.innerWayPriority }
   const setupComparisons = Object.fromEntries(
     Object.entries(current.setupComparisons).filter(([group]) => !setupGroupMatchesCategory(group, category)),
-  );
-  for (const [group, rows] of Object.entries(calculated.setupComparisons)) setupComparisons[group] = rows;
-  return { ...current, setupComparisons };
+  )
+  for (const [group, rows] of Object.entries(calculated.setupComparisons)) setupComparisons[group] = rows
+  return { ...current, setupComparisons }
 }
 
 type MartialArtDefinition = {
-  name: string;
-  weapon: WeaponFamily;
-  tag: string;
-  talent: MartialArtTalent<SetupEffect>[][];
-};
+  name: string
+  weapon: WeaponFamily
+  tag: string
+  talent: MartialArtTalent<SetupEffect>[][]
+}
 const martialArtDefinitions: Record<WeaponId, MartialArtDefinition> = {
   snowparting: snowpartingMartialArt as MartialArtDefinition,
   phalanxbane: phalanxbaneMartialArt as MartialArtDefinition,
@@ -1375,7 +1314,7 @@ const martialArtDefinitions: Record<WeaponId, MartialArtDefinition> = {
   mortalRopeDart: mortalRopeDartMartialArt as MartialArtDefinition,
   skystrikeGauntlets: skystrikeGauntletsMartialArt as MartialArtDefinition,
   rivenTwinblades: rivenTwinbladesMartialArt as MartialArtDefinition,
-};
+}
 const weaponFamilyNames: Record<WeaponFamily, string> = {
   HengBlade: "Heng Blade",
   MoBlade: "Mo Blade",
@@ -1386,10 +1325,10 @@ const weaponFamilyNames: Record<WeaponFamily, string> = {
   Sword: "Sword",
   Fan: "Fan",
   DualBlades: "Dual Blades",
-};
-const weaponIdSet = new Set<WeaponId>(allWeaponIds);
+}
+const weaponIdSet = new Set<WeaponId>(allWeaponIds)
 const isWeaponId = (value: unknown): value is WeaponId =>
-  typeof value === "string" && weaponIdSet.has(value as WeaponId);
+  typeof value === "string" && weaponIdSet.has(value as WeaponId)
 
 const artStatByWeaponFamily: Record<WeaponFamily, keyof CharacterStats> = {
   HengBlade: "hengBladeDmgBoost",
@@ -1401,53 +1340,53 @@ const artStatByWeaponFamily: Record<WeaponFamily, keyof CharacterStats> = {
   Sword: "swordDmgBoost",
   Fan: "fanDmgBoost",
   DualBlades: "dualBladesDmgBoost",
-};
+}
 
 function characterStatAvailableForSettings(
   key: keyof CharacterStats,
   settings: CalculatorSettings,
   pathId = loadSelectedPath(),
 ) {
-  if (key === "criticalHealingBonus" || key === "silkbindHealingBonus") return pathId === "silkbindDeluge";
-  const artStats = new Set(Object.values(artStatByWeaponFamily));
+  if (key === "criticalHealingBonus" || key === "silkbindHealingBonus") return pathId === "silkbindDeluge"
+  const artStats = new Set(Object.values(artStatByWeaponFamily))
   if (artStats.has(key))
-    return settings.weapons.some((weapon) => artStatByWeaponFamily[martialArtDefinitions[weapon].weapon] === key);
-  return true;
+    return settings.weapons.some(weapon => artStatByWeaponFamily[martialArtDefinitions[weapon].weapon] === key)
+  return true
 }
 
 function arsenalEffectFor(value: string) {
-  return typedArsenalDefinitions[value]?.effect ?? {};
+  return typedArsenalDefinitions[value]?.effect ?? {}
 }
 
 function bowRingSetEffectFor(value: string) {
-  return typedBowRingSetDefinitions[value]?.effect ?? {};
+  return typedBowRingSetDefinitions[value]?.effect ?? {}
 }
 
 function loadFood() {
-  const saved = getPersistentItem(foodStorageKey);
-  return saved && typedFoodDefinitions[saved] ? saved : typedDefaultSetup.food;
+  const saved = getPersistentItem(foodStorageKey)
+  return saved && typedFoodDefinitions[saved] ? saved : typedDefaultSetup.food
 }
 
 function selectedFoodEffect() {
-  return typedFoodDefinitions[loadFood()]?.effect ?? {};
+  return typedFoodDefinitions[loadFood()]?.effect ?? {}
 }
 
 function loadDivinecraft() {
-  const saved = getPersistentItem(divinecraftStorageKey);
-  return saved && typedDivinecraftDefinitions[saved]?.available !== false ? saved : typedDefaultSetup.divinecraft;
+  const saved = getPersistentItem(divinecraftStorageKey)
+  return saved && typedDivinecraftDefinitions[saved]?.available !== false ? saved : typedDefaultSetup.divinecraft
 }
 
 function divinecraftEffectFor(value: string) {
-  return typedDivinecraftDefinitions[value]?.effect ?? {};
+  return typedDivinecraftDefinitions[value]?.effect ?? {}
 }
 
 function loadScript() {
-  const saved = getPersistentItem(scriptStorageKey);
-  return saved && typedScriptDefinitions[saved] ? saved : "None";
+  const saved = getPersistentItem(scriptStorageKey)
+  return saved && typedScriptDefinitions[saved] ? saved : "None"
 }
 
 function scriptEffectFor(value: string) {
-  return typedScriptDefinitions[value]?.effect ?? {};
+  return typedScriptDefinitions[value]?.effect ?? {}
 }
 
 function selectedMartialArtEffects(settings: CalculatorSettings) {
@@ -1455,7 +1394,7 @@ function selectedMartialArtEffects(settings: CalculatorSettings) {
     martialArtDefinitions,
     settings.weapons,
     breakthroughProfile(settings).martialArtTalentRank,
-  );
+  )
 }
 
 function selectedSetupEffects(
@@ -1470,10 +1409,10 @@ function selectedSetupEffects(
     ...overrides,
     weaponSets: overrides.weaponSets ?? buildSetup.weaponSets,
     armorSets: overrides.armorSets ?? buildSetup.armorSets,
-  };
-  const foodEffect = overrides.food ? (typedFoodDefinitions[overrides.food]?.effect ?? {}) : selectedFoodEffect();
-  const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? loadDivinecraft());
-  const scriptEffect = scriptEffectFor(overrides.script ?? loadScript());
+  }
+  const foodEffect = overrides.food ? (typedFoodDefinitions[overrides.food]?.effect ?? {}) : selectedFoodEffect()
+  const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? loadDivinecraft())
+  const scriptEffect = scriptEffectFor(overrides.script ?? loadScript())
   return [
     ...globalEffectRules,
     ...systemStatEffects,
@@ -1487,7 +1426,7 @@ function selectedSetupEffects(
     scriptEffect,
     divinecraftEffect,
     gearStatEffect,
-  ];
+  ]
 }
 
 function setAvailableForSettings(
@@ -1497,9 +1436,9 @@ function setAvailableForSettings(
 ) {
   return setAvailableForTags(
     definition,
-    settings.weapons.map((weapon) => martialArtDefinitions[weapon].tag),
+    settings.weapons.map(weapon => martialArtDefinitions[weapon].tag),
     typedPathDefinitions[pathId].tag,
-  );
+  )
 }
 
 function availableSetEntriesForSettings<T extends GearSetDefinition>(
@@ -1509,9 +1448,9 @@ function availableSetEntriesForSettings<T extends GearSetDefinition>(
 ) {
   return availableSetEntriesForTags(
     definitions,
-    settings.weapons.map((weapon) => martialArtDefinitions[weapon].tag),
+    settings.weapons.map(weapon => martialArtDefinitions[weapon].tag),
     typedPathDefinitions[pathId].tag,
-  );
+  )
 }
 
 function setEffectsFor(
@@ -1523,13 +1462,13 @@ function setEffectsFor(
   return Object.entries(selected)
     .filter(([setName]) => definitions[setName] && setAvailableForSettings(definitions[setName], settings, pathId))
     .flatMap(([setName, tier]) => {
-      const effect = definitions[setName]?.options[String(tier)]?.effect;
-      return Array.isArray(effect) ? effect : [effect ?? {}];
-    });
+      const effect = definitions[setName]?.options[String(tier)]?.effect
+      return Array.isArray(effect) ? effect : [effect ?? {}]
+    })
 }
 
 function setupConditionsFor(effects: SetupEffect[]) {
-  return effects.flatMap((effect) => (typeof effect.condition === "string" ? [effect.condition] : []));
+  return effects.flatMap(effect => (typeof effect.condition === "string" ? [effect.condition] : []))
 }
 
 function sameBuildSetupValue(
@@ -1539,23 +1478,23 @@ function sameBuildSetupValue(
 ) {
   return key === "weaponSets" || key === "armorSets" || key === "innerWays"
     ? JSON.stringify(left) === JSON.stringify(right)
-    : left === right;
+    : left === right
 }
 
 export function loadBuildSetupOverrides(baseline: BuildSetup): BuildSetupOverrides {
   try {
-    const saved = getPersistentItem(buildSetupOverrideStorageKey);
-    if (saved !== null) return normalizeBuildSetupOverrides(JSON.parse(saved));
-    const legacy: Record<string, unknown> = {};
-    const legacyInnerWays = getPersistentItem(legacyInnerWayStorageKey);
-    const legacyGearSets = getPersistentItem(gearSetStorageKey);
-    const legacyBowRingSet = getPersistentItem(bowRingSetStorageKey);
-    const legacyArsenal = getPersistentItem(arsenalStorageKey);
-    if (legacyInnerWays !== null) legacy.innerWays = JSON.parse(legacyInnerWays);
-    if (legacyGearSets !== null) legacy.weaponSets = JSON.parse(legacyGearSets);
-    if (legacyBowRingSet !== null) legacy.bowRingSet = legacyBowRingSet;
-    if (legacyArsenal !== null) legacy.arsenal = legacyArsenal;
-    const parsed = normalizeBuildSetupOverrides(legacy);
+    const saved = getPersistentItem(buildSetupOverrideStorageKey)
+    if (saved !== null) return normalizeBuildSetupOverrides(JSON.parse(saved))
+    const legacy: Record<string, unknown> = {}
+    const legacyInnerWays = getPersistentItem(legacyInnerWayStorageKey)
+    const legacyGearSets = getPersistentItem(gearSetStorageKey)
+    const legacyBowRingSet = getPersistentItem(bowRingSetStorageKey)
+    const legacyArsenal = getPersistentItem(arsenalStorageKey)
+    if (legacyInnerWays !== null) legacy.innerWays = JSON.parse(legacyInnerWays)
+    if (legacyGearSets !== null) legacy.weaponSets = JSON.parse(legacyGearSets)
+    if (legacyBowRingSet !== null) legacy.bowRingSet = legacyBowRingSet
+    if (legacyArsenal !== null) legacy.arsenal = legacyArsenal
+    const parsed = normalizeBuildSetupOverrides(legacy)
     return Object.fromEntries(
       Object.entries(parsed).filter(
         ([key, value]) =>
@@ -1565,250 +1504,248 @@ export function loadBuildSetupOverrides(baseline: BuildSetup): BuildSetupOverrid
             baseline[key as keyof BuildSetup],
           ),
       ),
-    ) as BuildSetupOverrides;
+    ) as BuildSetupOverrides
   } catch {
-    return {};
+    return {}
   }
 }
 
 function formatNumber(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
 }
 
 function formatDamageNumber(value: number) {
-  const rounded = Number(value.toFixed(2));
-  return rounded === 0 ? "0" : rounded.toFixed(2);
+  const rounded = Number(value.toFixed(2))
+  return rounded === 0 ? "0" : rounded.toFixed(2)
 }
 
-type ThroughputChannel = "damage" | "healing";
+type ThroughputChannel = "damage" | "healing"
 
 function displayedDelta(value: number) {
-  return Number(value.toFixed(2));
+  return Number(value.toFixed(2))
 }
 
 function formatDelta(value: number) {
-  const delta = displayedDelta(value);
-  return delta === 0 ? "0" : delta.toFixed(2);
+  const delta = displayedDelta(value)
+  return delta === 0 ? "0" : delta.toFixed(2)
 }
 
 function deltaPrefix(value: number) {
-  return displayedDelta(value) > 0 ? "+" : "";
+  return displayedDelta(value) > 0 ? "+" : ""
 }
 
 function throughputDeltaClass(value: number, channel: ThroughputChannel) {
-  const delta = displayedDelta(value);
-  if (delta === 0) return "throughput-neutral";
+  const delta = displayedDelta(value)
+  if (delta === 0) return "throughput-neutral"
   switch (channel) {
     case "damage":
-      return delta > 0 ? "damage-positive" : "damage-negative";
+      return delta > 0 ? "damage-positive" : "damage-negative"
     case "healing":
-      return delta > 0 ? "healing-positive" : "healing-negative";
+      return delta > 0 ? "healing-positive" : "healing-negative"
   }
 }
 
 function skillFieldText(skillId: string, skill: SkillRecord | undefined, field: "name" | "shortName") {
-  const value = skill?.[field]?.trim();
-  if (!value) return field === "name" ? skillId : "";
-  const namespace = skillDataNamespaceById.get(skillId);
-  const defaultValue = allSkillDefinitions[skillId]?.[field]?.trim();
-  return namespace && value === defaultValue ? dataText(`data.skill.${namespace}.${skillId}.${field}`, value) : value;
+  const value = skill?.[field]?.trim()
+  if (!value) return field === "name" ? skillId : ""
+  const namespace = skillDataNamespaceById.get(skillId)
+  const defaultValue = allSkillDefinitions[skillId]?.[field]?.trim()
+  return namespace && value === defaultValue ? dataText(`data.skill.${namespace}.${skillId}.${field}`, value) : value
 }
 
 function skillDisplayName(skill: SkillRecord | undefined, fallback = "", skillId = fallback) {
-  const name = skillFieldText(skillId, skill, "name");
-  const shortName = skillFieldText(skillId, skill, "shortName");
-  return shortName ? `${name} (${shortName})` : name;
+  const name = skillFieldText(skillId, skill, "name")
+  const shortName = skillFieldText(skillId, skill, "shortName")
+  return shortName ? `${name} (${shortName})` : name
 }
 
 function RotationSkillName({ skill, fallback = "" }: { skill: SkillRecord | undefined; fallback?: string }) {
-  const name = skillFieldText(fallback, skill, "name");
-  const shortName = skillFieldText(fallback, skill, "shortName");
+  const name = skillFieldText(fallback, skill, "name")
+  const shortName = skillFieldText(fallback, skill, "shortName")
   return (
     <span className="rotation-skill-label">
       <span>{name}</span>
       {shortName && <span>({shortName})</span>}
     </span>
-  );
+  )
 }
 
 function loadStats(): CharacterStats {
   try {
-    const currentSaved = localStorage.getItem(storageKey);
-    const isLegacy = currentSaved === null;
+    const currentSaved = localStorage.getItem(storageKey)
+    const isLegacy = currentSaved === null
     const saved = JSON.parse(currentSaved ?? localStorage.getItem(legacyStorageKey) ?? "null") as
       | (Partial<CharacterStats> & Record<string, unknown> & { attributeDmgBonus?: unknown })
-      | null;
-    if (!saved) return { ...emptyStats };
+      | null
+    if (!saved) return { ...emptyStats }
     const legacyAttributeBonus =
       typeof saved.attributeDmgBonus === "number" && Number.isFinite(saved.attributeDmgBonus)
         ? saved.attributeDmgBonus / (isLegacy ? 100 : 1)
-        : 0;
+        : 0
     const pathBonusKeys = new Set<keyof CharacterStats>([
       "bellstrikeDmgBonus",
       "stonesplitDmgBonus",
       "silkbindDmgBonus",
       "bamboocutDmgBonus",
-    ]);
+    ])
     const legacyPenetrationKeys: Partial<Record<keyof CharacterStats, string>> = {
       bellstrikePenetration: "bellstrikePen",
       silkbindPenetration: "silkbindPen",
       stonesplitPenetration: "stonesplitPen",
       bamboocutPenetration: "bamboocutPen",
-    };
+    }
     return Object.fromEntries(
       allStatDefinitions.map(({ key }) => {
-        const savedValue = saved[key] ?? (legacyPenetrationKeys[key] ? saved[legacyPenetrationKeys[key]!] : undefined);
-        const hasSavedValue = typeof savedValue === "number" && Number.isFinite(savedValue);
-        const value = hasSavedValue ? savedValue : pathBonusKeys.has(key) ? legacyAttributeBonus : 0;
-        return [key, isLegacy && hasSavedValue && percentageStatKeys.has(key) ? value / 100 : value];
+        const savedValue = saved[key] ?? (legacyPenetrationKeys[key] ? saved[legacyPenetrationKeys[key]!] : undefined)
+        const hasSavedValue = typeof savedValue === "number" && Number.isFinite(savedValue)
+        const value = hasSavedValue ? savedValue : pathBonusKeys.has(key) ? legacyAttributeBonus : 0
+        return [key, isLegacy && hasSavedValue && percentageStatKeys.has(key) ? value / 100 : value]
       }),
-    ) as CharacterStats;
+    ) as CharacterStats
   } catch {
-    return { ...emptyStats };
+    return { ...emptyStats }
   }
 }
 
 function loadStatOverrides(): CharacterStatOverrides {
   try {
-    const currentSaved = localStorage.getItem(statOverrideStorageKey);
+    const currentSaved = localStorage.getItem(statOverrideStorageKey)
     if (currentSaved !== null) {
-      const values = JSON.parse(currentSaved) as Record<string, unknown>;
+      const values = JSON.parse(currentSaved) as Record<string, unknown>
       return Object.fromEntries(
         allStatDefinitions.flatMap(({ key }) => {
-          const value = values?.[key];
-          return typeof value === "number" && Number.isFinite(value) ? [[key, value]] : [];
+          const value = values?.[key]
+          return typeof value === "number" && Number.isFinite(value) ? [[key, value]] : []
         }),
-      ) as CharacterStatOverrides;
+      ) as CharacterStatOverrides
     }
 
     // Existing raw stat entries were all manual inputs. Preserve non-zero values
     // as final-value overrides when moving to the calculated-stat model.
-    return Object.fromEntries(Object.entries(loadStats()).filter(([, value]) => value !== 0)) as CharacterStatOverrides;
+    return Object.fromEntries(Object.entries(loadStats()).filter(([, value]) => value !== 0)) as CharacterStatOverrides
   } catch {
-    return {};
+    return {}
   }
 }
 
 function loadSettings(): CalculatorSettings {
   try {
     const saved = JSON.parse(getPersistentItem(settingsStorageKey) ?? "null") as {
-      weapons?: unknown;
-      weapon?: unknown;
-      ping?: unknown;
-    } | null;
-    const savedWeapons = Array.isArray(saved?.weapons) ? saved.weapons.filter(isWeaponId) : [];
-    const legacyWeapon = saved && "weapon" in saved && saved.weapon === "phalanxbane" ? "phalanxbane" : "snowparting";
+      weapons?: unknown
+      weapon?: unknown
+      ping?: unknown
+    } | null
+    const savedWeapons = Array.isArray(saved?.weapons) ? saved.weapons.filter(isWeaponId) : []
+    const legacyWeapon = saved && "weapon" in saved && saved.weapon === "phalanxbane" ? "phalanxbane" : "snowparting"
     const weapons: [WeaponId, WeaponId] =
       savedWeapons.length === 2
         ? [savedWeapons[0], savedWeapons[1]]
-        : [legacyWeapon, legacyWeapon === "snowparting" ? "phalanxbane" : "snowparting"];
-    return { weapons, breakthrough: defaultBreakthrough, ping: resolvePing(saved?.ping) };
+        : [legacyWeapon, legacyWeapon === "snowparting" ? "phalanxbane" : "snowparting"]
+    return { weapons, breakthrough: defaultBreakthrough, ping: resolvePing(saved?.ping) }
   } catch {
-    return { ...defaultSettings };
+    return { ...defaultSettings }
   }
 }
 
 function loadSkillOverrides(): SkillOverrides {
   try {
-    return deserializeSkillOverrides(JSON.parse(getPersistentItem(skillStorageKey) ?? "{}"));
+    return deserializeSkillOverrides(JSON.parse(getPersistentItem(skillStorageKey) ?? "{}"))
   } catch {
-    return {};
+    return {}
   }
 }
 
 function hasSkillOverrides(overrides: SkillOverrides) {
   return Object.values(overrides).some(
-    (categoryOverrides) => categoryOverrides && Object.keys(categoryOverrides).length > 0,
-  );
+    categoryOverrides => categoryOverrides && Object.keys(categoryOverrides).length > 0,
+  )
 }
 
-const defaultAttunementStats = Object.fromEntries(
-  Object.keys(attunementData).map((key) => [key, 0]),
-) as AttunementStats;
+const defaultAttunementStats = Object.fromEntries(Object.keys(attunementData).map(key => [key, 0])) as AttunementStats
 const percentageAttunementKeys = new Set<keyof AttunementStats>(
   Object.entries(attunementData)
     .filter(([, definition]) => definition.percentage)
     .map(([key]) => key as keyof AttunementStats),
-);
+)
 type CharacterState = {
-  stats: CharacterStats;
-  rawStats: CharacterStats;
-  baseStats: CharacterStats;
-  attunementStats: AttunementStats;
-  displayedAttunementStats: AttunementStats;
-  settings: CalculatorSettings;
-  enemy: EnemyProfile;
-  derivedStats: DerivedStats;
-  innerWayRevision: number;
-  gearStatEffect: StatEffectContainer;
-  buildSetup: BuildSetup;
-};
+  stats: CharacterStats
+  rawStats: CharacterStats
+  baseStats: CharacterStats
+  attunementStats: AttunementStats
+  displayedAttunementStats: AttunementStats
+  settings: CalculatorSettings
+  enemy: EnemyProfile
+  derivedStats: DerivedStats
+  innerWayRevision: number
+  gearStatEffect: StatEffectContainer
+  buildSetup: BuildSetup
+}
 
 function loadAttunementStats() {
   try {
-    const currentSaved = getPersistentItem(attunementStorageKey);
-    const isLegacy = currentSaved === null;
-    const saved = JSON.parse(currentSaved ?? getPersistentItem(legacyAttunementStorageKey) ?? "null") as unknown;
-    if (!saved || typeof saved !== "object") return { ...defaultAttunementStats };
-    const values = saved as Record<string, unknown>;
+    const currentSaved = getPersistentItem(attunementStorageKey)
+    const isLegacy = currentSaved === null
+    const saved = JSON.parse(currentSaved ?? getPersistentItem(legacyAttunementStorageKey) ?? "null") as unknown
+    if (!saved || typeof saved !== "object") return { ...defaultAttunementStats }
+    const values = saved as Record<string, unknown>
     return Object.fromEntries(
-      Object.keys(defaultAttunementStats).map((key) => {
-        const statKey = key as keyof AttunementStats;
-        const value = typeof values[key] === "number" && Number.isFinite(values[key]) ? (values[key] as number) : 0;
-        return [key, isLegacy && percentageAttunementKeys.has(statKey) ? value / 100 : value];
+      Object.keys(defaultAttunementStats).map(key => {
+        const statKey = key as keyof AttunementStats
+        const value = typeof values[key] === "number" && Number.isFinite(values[key]) ? (values[key] as number) : 0
+        return [key, isLegacy && percentageAttunementKeys.has(statKey) ? value / 100 : value]
       }),
-    ) as typeof defaultAttunementStats;
+    ) as typeof defaultAttunementStats
   } catch {
-    return { ...defaultAttunementStats };
+    return { ...defaultAttunementStats }
   }
 }
 
 function loadAttunementOverrides(): AttunementOverrides {
   try {
-    const currentSaved = getPersistentItem(attunementOverrideStorageKey);
+    const currentSaved = getPersistentItem(attunementOverrideStorageKey)
     if (currentSaved !== null) {
-      const values = JSON.parse(currentSaved) as Record<string, unknown>;
+      const values = JSON.parse(currentSaved) as Record<string, unknown>
       return Object.fromEntries(
-        Object.keys(defaultAttunementStats).flatMap((key) => {
-          const value = values?.[key];
-          return typeof value === "number" && Number.isFinite(value) ? [[key, value]] : [];
+        Object.keys(defaultAttunementStats).flatMap(key => {
+          const value = values?.[key]
+          return typeof value === "number" && Number.isFinite(value) ? [[key, value]] : []
         }),
-      ) as AttunementOverrides;
+      ) as AttunementOverrides
     }
     return Object.fromEntries(
       Object.entries(loadAttunementStats()).filter(([, value]) => value !== 0),
-    ) as AttunementOverrides;
+    ) as AttunementOverrides
   } catch {
-    return {};
+    return {}
   }
 }
 
 function loadRotationEntries(): RotationEntry[] {
   const bundledDefaults = (): RotationEntry[] =>
-    defaultRotationEntries.map((entry) => ({
+    defaultRotationEntries.map(entry => ({
       ...entry,
       martialArts: [...entry.martialArts],
       rotation: JSON.parse(JSON.stringify(entry.rotation)) as RotationRecord,
-    }));
+    }))
   try {
-    const saved = JSON.parse(getPersistentItem(rotationListStorageKey) ?? "null") as RotationEntry[] | null;
-    const customEntries: RotationEntry[] = [];
-    const bundledDefaultIds = new Set(defaultRotationEntries.map((entry) => entry.id));
-    const usedIds = new Set(bundledDefaultIds);
+    const saved = JSON.parse(getPersistentItem(rotationListStorageKey) ?? "null") as RotationEntry[] | null
+    const customEntries: RotationEntry[] = []
+    const bundledDefaultIds = new Set(defaultRotationEntries.map(entry => entry.id))
+    const usedIds = new Set(bundledDefaultIds)
     const addCustom = (preferredId: string, rotation: RotationRecord, martialArts?: unknown) => {
-      let id = preferredId;
-      let suffix = 2;
-      while (usedIds.has(id)) id = `${preferredId}:${suffix++}`;
-      usedIds.add(id);
-      customEntries.push({ id, rotation, martialArts: rotationMartialArts(rotation, martialArts) });
-    };
+      let id = preferredId
+      let suffix = 2
+      while (usedIds.has(id)) id = `${preferredId}:${suffix++}`
+      usedIds.add(id)
+      customEntries.push({ id, rotation, martialArts: rotationMartialArts(rotation, martialArts) })
+    }
     const preserveFormerDefault = (rotation: RotationRecord) => {
-      const migrated = migrateRotation(rotation);
-      if (defaultRotationEntries.some((entry) => JSON.stringify(migrated) === JSON.stringify(entry.rotation))) return;
-      addCustom("migrated-default-rotation", { ...migrated, name: `${migrated.name || defaultRotation.name} Copy` });
-    };
+      const migrated = migrateRotation(rotation)
+      if (defaultRotationEntries.some(entry => JSON.stringify(migrated) === JSON.stringify(entry.rotation))) return
+      addCustom("migrated-default-rotation", { ...migrated, name: `${migrated.name || defaultRotation.name} Copy` })
+    }
     if (Array.isArray(saved)) {
-      saved.forEach((entry) => {
+      saved.forEach(entry => {
         if (
           !entry ||
           typeof entry.id !== "string" ||
@@ -1816,68 +1753,68 @@ function loadRotationEntries(): RotationEntry[] {
           !entry.rotation ||
           !Array.isArray(entry.rotation.steps)
         )
-          return;
+          return
         try {
           if (entry.isDefault === true || bundledDefaultIds.has(entry.id) || formerDefaultRotationIds.has(entry.id))
-            preserveFormerDefault(entry.rotation);
-          else addCustom(entry.id, migrateRotation(entry.rotation), entry.martialArts);
+            preserveFormerDefault(entry.rotation)
+          else addCustom(entry.id, migrateRotation(entry.rotation), entry.martialArts)
         } catch (error) {
-          console.error(`[Rotation storage] Could not migrate saved rotation ${entry.id}.`, error);
+          console.error(`[Rotation storage] Could not migrate saved rotation ${entry.id}.`, error)
         }
-      });
-      return [...bundledDefaults(), ...customEntries];
+      })
+      return [...bundledDefaults(), ...customEntries]
     }
-    const legacy = JSON.parse(getPersistentItem(rotationStorageKey) ?? "null") as RotationRecord | null;
-    if (legacy && Array.isArray(legacy.steps)) preserveFormerDefault(legacy);
-    return [...bundledDefaults(), ...customEntries];
+    const legacy = JSON.parse(getPersistentItem(rotationStorageKey) ?? "null") as RotationRecord | null
+    if (legacy && Array.isArray(legacy.steps)) preserveFormerDefault(legacy)
+    return [...bundledDefaults(), ...customEntries]
   } catch {
-    return bundledDefaults();
+    return bundledDefaults()
   }
 }
 
 function initialRotationId(entries: RotationEntry[], preferredId: string, weapons: [WeaponId, WeaponId]) {
   return (
-    entries.find((entry) => entry.id === preferredId && rotationAvailableForWeapons(entry, weapons))?.id ??
-    entries.find((entry) => rotationAvailableForWeapons(entry, weapons))?.id ??
+    entries.find(entry => entry.id === preferredId && rotationAvailableForWeapons(entry, weapons))?.id ??
+    entries.find(entry => rotationAvailableForWeapons(entry, weapons))?.id ??
     defaultRotationId
-  );
+  )
 }
 
 function initialRotationEditorState(devMode: boolean, preferredRotationId: string, weapons: [WeaponId, WeaponId]) {
-  const entries = loadRotationEntries();
-  const selectableEntries = entries.filter((entry) => devMode || !entry.test);
-  const activeId = initialRotationId(selectableEntries, preferredRotationId, weapons);
+  const entries = loadRotationEntries()
+  const selectableEntries = entries.filter(entry => devMode || !entry.test)
+  const activeId = initialRotationId(selectableEntries, preferredRotationId, weapons)
   const activeRotation =
-    selectableEntries.find((entry) => entry.id === activeId)?.rotation ??
+    selectableEntries.find(entry => entry.id === activeId)?.rotation ??
     selectableEntries[0]?.rotation ??
-    defaultRotation;
-  const rotation = JSON.parse(JSON.stringify(activeRotation)) as RotationRecord;
+    defaultRotation
+  const rotation = JSON.parse(JSON.stringify(activeRotation)) as RotationRecord
   const startAnchor = rotation.start
     ? { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action }
-    : { rowId: "rotation-0" };
-  return { entries, activeId, rotation, startAnchor };
+    : { rowId: "rotation-0" }
+  return { entries, activeId, rotation, startAnchor }
 }
 
 function rotationEntryDisplayName(entry: RotationEntry) {
-  const name = entry.rotation.name || "Unnamed Rotation";
-  return entry.isDefault ? gameText(name) : name;
+  const name = entry.rotation.name || "Unnamed Rotation"
+  return entry.isDefault ? gameText(name) : name
 }
 
 function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEffectContainer, buildSetup: BuildSetup) {
   const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel)
     .filter(
-      (rule) =>
+      rule =>
         requirementIsUnconditional(rule.requirement) &&
         (rule.effect.rawStat || rule.effect.stat || rule.effect.effectiveStat),
     )
-    .map((rule) => rule.effect as StatEffectContainer);
+    .map(rule => rule.effect as StatEffectContainer)
   // A setup effect with requirements is a per-action rule. It is resolved by
   // the rotation calculator against the current skill and timeline state and
   // must not leak into the always-visible character-stat baseline.
   const unconditionalSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup).filter(
-    (effect) => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
-  );
-  return [...unconditionalSetupEffects, ...innerWayStatEffects];
+    effect => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
+  )
+  return [...unconditionalSetupEffects, ...innerWayStatEffects]
 }
 
 function calculateGlobalStatState(
@@ -1886,31 +1823,31 @@ function calculateGlobalStatState(
   gearStatEffect: StatEffectContainer,
   buildSetup: BuildSetup,
 ) {
-  const breakthrough = breakthroughProfile(settings);
-  const enemy: EnemyProfile = breakthrough;
+  const breakthrough = breakthroughProfile(settings)
+  const enemy: EnemyProfile = breakthrough
   return calculateStatsWithOverrides(
     emptyStats,
     globalStatEffects(settings, gearStatEffect, buildSetup),
     enemy.judgementResistance,
     overrides,
     settings.weapons,
-  );
+  )
 }
 
 type GraduationEnvironment = {
-  pathId: PathId;
-  martialArts: [WeaponId, WeaponId];
-  rotation: RotationRecord;
-  breakthrough: string;
-  globalDebuffs: GlobalDebuffState;
-  food: string;
-  script: string;
-  divinecraft: string;
-  skillOverrides: SkillOverrides;
-};
+  pathId: PathId
+  martialArts: [WeaponId, WeaponId]
+  rotation: RotationRecord
+  breakthrough: string
+  globalDebuffs: GlobalDebuffState
+  food: string
+  script: string
+  divinecraft: string
+  skillOverrides: SkillOverrides
+}
 
 function graduationEnvironmentFingerprint(environment: GraduationEnvironment) {
-  const { name: _displayName, ...rotation } = environment.rotation;
+  const { name: _displayName, ...rotation } = environment.rotation
   return calculationFingerprint({
     pathId: environment.pathId,
     martialArts: environment.martialArts,
@@ -1921,66 +1858,66 @@ function graduationEnvironmentFingerprint(environment: GraduationEnvironment) {
     script: environment.script,
     divinecraft: environment.divinecraft,
     skillOverrides: environment.skillOverrides,
-  });
+  })
 }
 
 export function buildPresetRotationBundle(
   environment: GraduationEnvironment,
   buildId: string,
 ): RotationSimulationBundle | undefined {
-  const { pathId } = environment;
-  const path = typedPathDefinitions[pathId];
-  if (!path || buildId === "empty") return undefined;
-  const build = defaultBuildPresets.find((candidate) => candidate.id === buildId);
-  const configuredWeapons = path.lockedWeapons ?? build?.martialArts;
-  if (!build || configuredWeapons?.length !== 2) return undefined;
+  const { pathId } = environment
+  const path = typedPathDefinitions[pathId]
+  if (!path || buildId === "empty") return undefined
+  const build = defaultBuildPresets.find(candidate => candidate.id === buildId)
+  const configuredWeapons = path.lockedWeapons ?? build?.martialArts
+  if (!build || configuredWeapons?.length !== 2) return undefined
 
-  const weapons = [...configuredWeapons] as [WeaponId, WeaponId];
+  const weapons = [...configuredWeapons] as [WeaponId, WeaponId]
   const settings: CalculatorSettings = {
     weapons,
     breakthrough: environment.breakthrough,
     ping: resolvePing(environment.rotation.ping),
-  };
-  const buildSetup = normalizeBuildSetup(build.setup);
-  const equippedGear = calculateEquippedGearEffects(buildPresetInventory(build), weapons, false);
-  const gearStatEffect: StatEffectContainer = { rawStat: equippedGear.stats };
+  }
+  const buildSetup = normalizeBuildSetup(build.setup)
+  const equippedGear = calculateEquippedGearEffects(buildPresetInventory(build), weapons, false)
+  const gearStatEffect: StatEffectContainer = { rawStat: equippedGear.stats }
   const setupEffects = selectedSetupEffects(
     settings,
     gearStatEffect,
     buildSetup,
     { food: environment.food, divinecraft: environment.divinecraft, script: environment.script },
     pathId,
-  );
-  const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId);
-  const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId);
+  )
+  const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId)
+  const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId)
   const innerWayStatEffects = innerWayRules
     .filter(
-      (rule) =>
+      rule =>
         requirementIsUnconditional(rule.requirement) &&
         (rule.effect.rawStat || rule.effect.stat || rule.effect.effectiveStat),
     )
-    .map((rule) => rule.effect as StatEffectContainer);
+    .map(rule => rule.effect as StatEffectContainer)
   const unconditionalSetupEffects = setupEffects.filter(
-    (effect) => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
-  );
-  const enemy = breakthroughProfile(settings);
+    effect => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
+  )
+  const enemy = breakthroughProfile(settings)
   const statState = calculateStatsWithOverrides(
     emptyStats,
     [...unconditionalSetupEffects, ...innerWayStatEffects],
     enemy.judgementResistance,
     {},
     weapons,
-  );
+  )
   const definitions = resolveSkillCalculationDefinitions(
     defaultSkillMaps,
     effectDefinitions,
     dotDefinitions,
     environment.skillOverrides,
-  );
-  const rotation = { ...environment.rotation, ping: resolvePing(environment.rotation.ping) };
+  )
+  const rotation = { ...environment.rotation, ping: resolvePing(environment.rotation.ping) }
   const rotationAnchor = rotation.start
     ? { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action }
-    : { rowId: "rotation-0" };
+    : { rowId: "rotation-0" }
 
   return {
     timeline: {
@@ -1994,7 +1931,7 @@ export function buildPresetRotationBundle(
       setupEffects,
       weapons,
       martialArtState: Object.fromEntries(
-        weapons.map((martialArt) => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
+        weapons.map(martialArt => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
       ),
       initialBuffs: globalBuffTimelineEffects(environment.globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(environment.globalDebuffs),
@@ -2015,7 +1952,7 @@ export function buildPresetRotationBundle(
     attunementPriority: [],
     innerWayPriority: [],
     setupComparisons: {},
-  };
+  }
 }
 
 function StatField({
@@ -2029,41 +1966,43 @@ function StatField({
   derivedUnit,
   compact,
 }: {
-  definition: StatDefinition;
-  stats: CharacterStats;
-  onChange: (key: keyof CharacterStats, value: number) => void;
-  onReset?: () => void;
-  modified?: boolean;
-  derivedLabel?: string;
-  derivedValue?: number;
-  derivedUnit?: string;
-  compact?: boolean;
+  definition: StatDefinition
+  stats: CharacterStats
+  onChange: (key: keyof CharacterStats, value: number) => void
+  onReset?: () => void
+  modified?: boolean
+  derivedLabel?: string
+  derivedValue?: number
+  derivedUnit?: string
+  compact?: boolean
 }) {
-  const displayValue = (value: number) => (definition.unit === "%" ? value * 100 : value);
-  const [draftValue, setDraftValue] = useState(() => formatNumber(displayValue(stats[definition.key])));
-  const [editing, setEditing] = useState(false);
-  const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    if (!editing) setDraftValue(formatNumber(displayValue(stats[definition.key])));
-  }, [editing, stats, definition.key]);
+  const displayValue = (value: number) => (definition.unit === "%" ? value * 100 : value)
+  const [draftValue, setDraftValue] = useState(() => formatNumber(displayValue(stats[definition.key])))
+  const [editing, setEditing] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const statValue = stats[definition.key]
+  const [syncedStat, setSyncedStat] = useState(() => ({ editing: false, value: statValue }))
+  if (!editing && (syncedStat.editing || !Object.is(syncedStat.value, statValue))) {
+    setSyncedStat({ editing, value: statValue })
+    setDraftValue(formatNumber(displayValue(statValue)))
+  }
 
   function commitValue(rawValue: string) {
-    const normalized = Number(rawValue);
-    const displayedValue = Number.isFinite(normalized) ? normalized : 0;
-    const uncappedValue = definition.unit === "%" ? displayedValue / 100 : displayedValue;
-    const value = Math.min(definition.maximum ?? Number.POSITIVE_INFINITY, uncappedValue);
-    setDraftValue(String(displayValue(value)));
-    setEditing(false);
-    setDirty(false);
-    onChange(definition.key, value);
+    const normalized = Number(rawValue)
+    const displayedValue = Number.isFinite(normalized) ? normalized : 0
+    const uncappedValue = definition.unit === "%" ? displayedValue / 100 : displayedValue
+    const value = Math.min(definition.maximum ?? Number.POSITIVE_INFINITY, uncappedValue)
+    setDraftValue(String(displayValue(value)))
+    setEditing(false)
+    setDirty(false)
+    onChange(definition.key, value)
   }
 
   function finishEditing(rawValue: string) {
-    if (dirty) commitValue(rawValue);
+    if (dirty) commitValue(rawValue)
     else {
-      setEditing(false);
-      setDraftValue(formatNumber(displayValue(stats[definition.key])));
+      setEditing(false)
+      setDraftValue(formatNumber(displayValue(stats[definition.key])))
     }
   }
 
@@ -2080,9 +2019,9 @@ function StatField({
             type="button"
             aria-label={t("ui.app.resetNamedValue", { name: gameText(definition.label) })}
             title={t("ui.app.resetToCalculatedValue")}
-            onClick={(event) => {
-              event.preventDefault();
-              onReset?.();
+            onClick={event => {
+              event.preventDefault()
+              onReset?.()
             }}
           >
             <UiIcon name="reset" />
@@ -2103,16 +2042,16 @@ function StatField({
           step={definition.step ?? "0.01"}
           value={draftValue}
           onFocus={() => {
-            setEditing(true);
-            setDirty(false);
+            setEditing(true)
+            setDirty(false)
           }}
-          onChange={(event) => {
-            setDraftValue(event.target.value);
-            setDirty(true);
+          onChange={event => {
+            setDraftValue(event.target.value)
+            setDirty(true)
           }}
-          onBlur={(event) => finishEditing(event.currentTarget.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") event.currentTarget.blur();
+          onBlur={event => finishEditing(event.currentTarget.value)}
+          onKeyDown={event => {
+            if (event.key === "Enter") event.currentTarget.blur()
           }}
         />
         {definition.unit && definition.showUnitInInput !== false && (
@@ -2129,8 +2068,11 @@ function StatField({
         <span className="derived-spacer" />
       )}
     </label>
-  );
+  )
 }
+
+const emptyPriorityRows: RotationPriority[] = []
+const tabSuspenseFallback = <div className="viewport-tab-content" />
 
 function PriorityPanel({
   title,
@@ -2140,24 +2082,24 @@ function PriorityPanel({
   showMaxRoll = false,
   showHealing = false,
 }: {
-  title: string;
-  rows: RotationPriority[];
-  calculationCategory: RotationCalculationCategory;
-  sectionBreakAt?: number;
-  showMaxRoll?: boolean;
-  showHealing?: boolean;
+  title: string
+  rows: RotationPriority[]
+  calculationCategory: RotationCalculationCategory
+  sectionBreakAt?: number
+  showMaxRoll?: boolean
+  showHealing?: boolean
 }) {
-  const [statMode, setStatMode] = useState<StatPriorityMode>("max");
-  const isStatPriority = calculationCategory === "statPriority";
+  const [statMode, setStatMode] = useState<StatPriorityMode>("max")
+  const isStatPriority = calculationCategory === "statPriority"
   const displayedRows = useMemo(
     () => statPriorityDisplayRows(rows, isStatPriority ? statMode : "max"),
     [rows, isStatPriority, statMode],
-  );
+  )
   const modeLabels = {
     max: t("ui.app.priorityModeMax"),
     relayed: t("ui.buildTab.relayedOptionLabel"),
     both: t("ui.app.priorityModeBoth"),
-  };
+  }
   return (
     <section className="panel priority-panel">
       <div className="panel-heading">
@@ -2209,13 +2151,9 @@ function PriorityPanel({
               <span>
                 {gameText(row.label)}
                 {isStatPriority && statMode === "both" && row.rollKind === "relayed" && (
-                  <span
-                    className="priority-relayed-indicator"
-                    role="img"
-                    aria-label={t("ui.buildTab.relayedOptionLabel")}
-                    title={t("ui.buildTab.relayedOptionLabel")}
-                  >
+                  <span className="priority-relayed-indicator" title={t("ui.buildTab.relayedOptionLabel")}>
                     <UiIcon name="arrowUp" />
+                    <span className="visually-hidden">{t("ui.buildTab.relayedOptionLabel")}</span>
                   </span>
                 )}
               </span>
@@ -2251,21 +2189,21 @@ function PriorityPanel({
         <p className="priority-empty">{t("ui.app.openTheRotationEditorToCalculatePriority")}</p>
       )}
     </section>
-  );
+  )
 }
 
 function BreakdownGroupTable({
   title,
   rows,
-  healingRows = [],
+  healingRows,
   colored = false,
 }: {
-  title: string;
-  rows: RotationGroupBreakdown[];
-  healingRows?: RotationHealingGroupBreakdown[];
-  colored?: boolean;
+  title: string
+  rows: RotationGroupBreakdown[]
+  healingRows?: RotationHealingGroupBreakdown[]
+  colored?: boolean
 }) {
-  const hasHealing = healingRows.some((row) => row.healing > 0);
+  const hasHealing = (healingRows ?? []).some(row => row.healing > 0)
   return (
     <section className="panel breakdown-panel">
       <div className="panel-heading">
@@ -2280,7 +2218,7 @@ function BreakdownGroupTable({
           <span>{t("ui.app.damage")}</span>
           <span>{t("ui.app.total")}</span>
         </div>
-        {rows.map((row) => (
+        {rows.map(row => (
           <div className="breakdown-table-row" key={row.id}>
             <span className={colored ? `damage-${row.id}` : ""}>{gameText(row.name)}</span>
             <strong>{formatDamageNumber(row.damage)}</strong>
@@ -2297,9 +2235,9 @@ function BreakdownGroupTable({
               <span>{t("ui.app.healing")}</span>
               <span>{t("ui.app.total")}</span>
             </div>
-            {healingRows
-              .filter((row) => row.healing > 0)
-              .map((row) => (
+            {(healingRows ?? [])
+              .filter(row => row.healing > 0)
+              .map(row => (
                 <div className="breakdown-table-row" key={row.id}>
                   <span className={colored ? `healing-${row.id}` : ""}>{gameText(row.name)}</span>
                   <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
@@ -2310,7 +2248,7 @@ function BreakdownGroupTable({
         </>
       ) : null}
     </section>
-  );
+  )
 }
 
 function CastBreakdownComparison({
@@ -2318,30 +2256,30 @@ function CastBreakdownComparison({
   valueWithBuff,
   stacked,
 }: {
-  value: number | undefined;
-  valueWithBuff: number | undefined;
-  stacked: boolean;
+  value: number | undefined
+  valueWithBuff: number | undefined
+  stacked: boolean
 }) {
-  if (valueWithBuff === undefined) return value === undefined ? "—" : formatDamageNumber(value);
-  if (!stacked) return `${formatDamageNumber(value ?? 0)} (${formatDamageNumber(valueWithBuff)})`;
+  if (valueWithBuff === undefined) return value === undefined ? "—" : formatDamageNumber(value)
+  if (!stacked) return `${formatDamageNumber(value ?? 0)} (${formatDamageNumber(valueWithBuff)})`
   return (
     <span className="breakdown-stacked-value">
       <span>{formatDamageNumber(value ?? 0)}</span>
       <span>({formatDamageNumber(valueWithBuff)})</span>
     </span>
-  );
+  )
 }
 
-const stackedBuffAttributionTags = new Set(["FluteOfTheTides", "GhostlySteps"]);
+const stackedBuffAttributionTags = new Set(["FluteOfTheTides", "GhostlySteps"])
 
 function EffectCoveragePanel({
   title,
   rows,
   showTimeCoverage = false,
 }: {
-  title: string;
-  rows: RotationEffectCoverage[];
-  showTimeCoverage?: boolean;
+  title: string
+  rows: RotationEffectCoverage[]
+  showTimeCoverage?: boolean
 }) {
   return (
     <section className="panel breakdown-panel">
@@ -2356,7 +2294,7 @@ function EffectCoveragePanel({
           <span>{t("ui.app.averageStack")}</span>
           {showTimeCoverage ? <span>{t("ui.app.timeCoverage")}</span> : null}
         </div>
-        {rows.map((row) => (
+        {rows.map(row => (
           <div className="breakdown-table-row" key={row.id}>
             <span>{gameText(effectDefinitions[row.id]?.name ?? row.id)}</span>
             <strong>{formatNumber(row.averageStacks)}</strong>
@@ -2367,27 +2305,27 @@ function EffectCoveragePanel({
         ))}
       </div>
     </section>
-  );
+  )
 }
 
 function SkillBreakdownRows({
   row,
 }: {
-  row: SkillBreakdownGroup<RotationSkillBreakdown | RotationHealingSkillBreakdown>;
+  row: SkillBreakdownGroup<RotationSkillBreakdown | RotationHealingSkillBreakdown>
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const label = row.children ? gameText(row.name) : skillDisplayName(allSkillDefinitions[row.id], row.name, row.id);
+  const [expanded, setExpanded] = useState(false)
+  const label = row.children ? gameText(row.name) : skillDisplayName(allSkillDefinitions[row.id], row.name, row.id)
   const toggle = row.children ? (
     <button
       type="button"
       className="breakdown-category-toggle"
       aria-label={label}
       aria-expanded={expanded}
-      onClick={() => setExpanded((value) => !value)}
+      onClick={() => setExpanded(value => !value)}
     >
       <span aria-hidden="true">{expanded ? "▾" : "▸"}</span>
     </button>
-  ) : null;
+  ) : null
   return (
     <Fragment>
       {"damage" in row ? (
@@ -2419,13 +2357,13 @@ function SkillBreakdownRows({
       )}
       {expanded && row.children ? (
         <div className="breakdown-category-children">
-          {row.children.map((child) => (
+          {row.children.map(child => (
             <SkillBreakdownRows key={child.id} row={child} />
           ))}
         </div>
       ) : null}
     </Fragment>
-  );
+  )
 }
 
 function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: PathId }) {
@@ -2435,21 +2373,21 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
         <h2>{t("ui.app.dpsBreakdown", { dps: t("system.dps") })}</h2>
         <p>{t("ui.app.openTheRotationEditorToCalculateTheActive")}</p>
       </section>
-    );
-  const { breakdown } = metrics;
-  const hasHealing = metrics.totalHealing > 0;
-  const showDamagePerVitality = pathId === "silkbindDeluge";
+    )
+  const { breakdown } = metrics
+  const hasHealing = metrics.totalHealing > 0
+  const showDamagePerVitality = pathId === "silkbindDeluge"
   const castRows = showDamagePerVitality
     ? [...breakdown.casts].sort((left, right) => {
-        const leftPerVitality = left.damagePerVitalityWithBuff ?? left.damagePerVitality ?? Number.NEGATIVE_INFINITY;
-        const rightPerVitality = right.damagePerVitalityWithBuff ?? right.damagePerVitality ?? Number.NEGATIVE_INFINITY;
+        const leftPerVitality = left.damagePerVitalityWithBuff ?? left.damagePerVitality ?? Number.NEGATIVE_INFINITY
+        const rightPerVitality = right.damagePerVitalityWithBuff ?? right.damagePerVitality ?? Number.NEGATIVE_INFINITY
         return (
           rightPerVitality - leftPerVitality ||
           (right.averageDpsWithBuff ?? right.averageDps ?? Number.NEGATIVE_INFINITY) -
             (left.averageDpsWithBuff ?? left.averageDps ?? Number.NEGATIVE_INFINITY)
-        );
+        )
       })
-    : breakdown.casts;
+    : breakdown.casts
   return (
     <div className="breakdown-page">
       <section className="panel breakdown-panel breakdown-skill-panel">
@@ -2492,7 +2430,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             <span>{t("ui.app.damage")}</span>
             <span>{t("ui.app.total")}</span>
           </div>
-          {breakdown.groupedSkills.map((row) => (
+          {breakdown.groupedSkills.map(row => (
             <SkillBreakdownRows key={row.id} row={row} />
           ))}
         </div>
@@ -2511,7 +2449,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
                 <span>{t("ui.app.healing")}</span>
                 <span>{t("ui.app.total")}</span>
               </div>
-              {breakdown.groupedHealingSkills.map((row) => (
+              {breakdown.groupedHealingSkills.map(row => (
                 <SkillBreakdownRows key={row.id} row={row} />
               ))}
             </div>
@@ -2539,9 +2477,9 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             </span>
             <span>{t("ui.app.percentage")}</span>
           </div>
-          {castRows.map((row) => {
+          {castRows.map(row => {
             const stackBuffComparison =
-              allSkillDefinitions[row.skillId]?.tags?.some((tag) => stackedBuffAttributionTags.has(tag)) ?? false;
+              allSkillDefinitions[row.skillId]?.tags?.some(tag => stackedBuffAttributionTags.has(tag)) ?? false
             return (
               <div className="breakdown-table-row" key={row.id}>
                 <span>{skillDisplayName(allSkillDefinitions[row.skillId], row.name, row.skillId)}</span>
@@ -2582,7 +2520,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
                 </strong>
                 <strong>{formatNumber(row.percentage)}%</strong>
               </div>
-            );
+            )
           })}
         </div>
         {hasHealing ? (
@@ -2598,7 +2536,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
                 <span>{t("ui.app.total")}</span>
                 <span>{t("ui.app.percentage")}</span>
               </div>
-              {breakdown.healingCasts.map((row) => (
+              {breakdown.healingCasts.map(row => (
                 <div className="breakdown-table-row" key={row.id}>
                   <span>{skillDisplayName(allSkillDefinitions[row.skillId], row.name, row.skillId)}</span>
                   <strong>{row.casts}</strong>
@@ -2634,7 +2572,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
         colored
       />
     </div>
-  );
+  )
 }
 
 function DamageBreakdownValue({ breakdown, className = "" }: { breakdown: DamageBreakdown; className?: string }) {
@@ -2644,7 +2582,7 @@ function DamageBreakdownValue({ breakdown, className = "" }: { breakdown: Damage
     ["stonesplit", "Stonesplit"],
     ["silkbind", "Silkbind"],
     ["bamboocut", "Bamboocut"],
-  ];
+  ]
   return (
     <span className={`damage-breakdown-wrap ${className}`}>
       <span>{formatDamageNumber(breakdown.total)}</span>
@@ -2657,15 +2595,15 @@ function DamageBreakdownValue({ breakdown, className = "" }: { breakdown: Damage
         ))}
       </span>
     </span>
-  );
+  )
 }
 
 function HealingBreakdownValue({
   breakdown,
   className = "",
 }: {
-  breakdown: NonNullable<RotationActionBreakdown["healing"]>;
-  className?: string;
+  breakdown: NonNullable<RotationActionBreakdown["healing"]>
+  className?: string
 }) {
   return (
     <span className={`damage-breakdown-wrap healing-value ${className}`}>
@@ -2681,7 +2619,7 @@ function HealingBreakdownValue({
         </span>
       </span>
     </span>
-  );
+  )
 }
 
 function RotationActionBreakdownValue({ breakdown }: { breakdown: RotationActionBreakdown }) {
@@ -2692,37 +2630,79 @@ function RotationActionBreakdownValue({ breakdown }: { breakdown: RotationAction
         <HealingBreakdownValue breakdown={breakdown.healing} />
       ) : null}
     </span>
-  );
+  )
 }
 
 function CalculationStatus({
   category,
   className = "",
 }: {
-  category: RotationCalculationCategory;
-  className?: string;
+  category: RotationCalculationCategory
+  className?: string
 }) {
   const statuses = useSyncExternalStore(
     subscribeToRotationCalculationStatus,
     getRotationCalculationStatus,
     getRotationCalculationStatus,
-  );
-  const { recalculating, progress } = statuses[category];
-  const percentage = Math.round(progress * 100);
+  )
+  const { recalculating, progress } = statuses[category]
+  const percentage = Math.round(progress * 100)
+  const progressStyle = useMemo(() => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties, [percentage])
   return (
     <div
       className={`calculation-status ${className} ${recalculating ? "" : "idle"}`}
-      style={{ "--calculation-progress": `${percentage}%` } as CSSProperties}
-      role="progressbar"
-      aria-label={t("ui.app.recalculatingProgress", { percentage })}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={recalculating ? percentage : 100}
+      style={progressStyle}
       aria-live="polite"
     >
+      <progress
+        className="visually-hidden"
+        max={100}
+        value={recalculating ? percentage : 100}
+        aria-label={t("ui.app.recalculatingProgress", { percentage })}
+      />
       {recalculating ? t("ui.app.recalculatingProgress", { percentage }) : t("ui.app.upToDate")}
     </div>
-  );
+  )
+}
+
+function CalculatedStatField({
+  definition,
+  derivedLabel,
+  derivedValue,
+  derivedUnit,
+  compact,
+  stats,
+  statOverrides,
+  onStatChange,
+  onStatReset,
+}: {
+  definition: StatDefinition
+  derivedLabel?: string
+  derivedValue?: number
+  derivedUnit?: string
+  compact?: boolean
+  stats: CharacterStats
+  statOverrides: CharacterStatOverrides
+  onStatChange: (key: keyof CharacterStats, value: number) => void
+  onStatReset: (key: keyof CharacterStats) => void
+}) {
+  function updateStat(key: keyof CharacterStats, value: number) {
+    onStatChange(key, Number.isFinite(value) ? value : 0)
+  }
+
+  return (
+    <StatField
+      definition={definition}
+      stats={stats}
+      onChange={updateStat}
+      modified={Object.prototype.hasOwnProperty.call(statOverrides, definition.key)}
+      onReset={() => onStatReset(definition.key)}
+      derivedLabel={derivedLabel}
+      derivedValue={derivedValue}
+      derivedUnit={derivedUnit}
+      compact={compact}
+    />
+  )
 }
 
 function StatsTab({
@@ -2747,121 +2727,117 @@ function StatsTab({
   activeRotationName,
   onInnerWayChange,
 }: {
-  character: CharacterState;
-  pathId: PathId;
-  statOverrides: CharacterStatOverrides;
-  attunementOverrides: AttunementOverrides;
-  characterProfiles: CharacterProfile[];
-  buildSetupOverrides: BuildSetupOverrides;
-  onStatChange: (key: keyof CharacterStats, value: number) => void;
-  onStatReset: (key: keyof CharacterStats) => void;
-  onAttunementChange: (key: keyof AttunementStats, value: number) => void;
-  onAttunementReset: (key: keyof AttunementStats) => void;
-  onApplyCharacterProfile: (profile?: CharacterProfile) => void;
-  onCharacterProfilesChange: (profiles: CharacterProfile[]) => void;
-  onBreakthroughChange: (breakthrough: string) => void;
-  onBuildSetupChange: <K extends keyof BuildSetup>(key: K, value: BuildSetup[K]) => void;
-  onBuildSetupReset: (key: keyof BuildSetup) => void;
-  rotationMetrics?: RotationMetrics;
-  graduationDps?: number;
-  activeBuildName: string;
-  activeRotationName: string;
-  onInnerWayChange: () => void;
+  character: CharacterState
+  pathId: PathId
+  statOverrides: CharacterStatOverrides
+  attunementOverrides: AttunementOverrides
+  characterProfiles: CharacterProfile[]
+  buildSetupOverrides: BuildSetupOverrides
+  onStatChange: (key: keyof CharacterStats, value: number) => void
+  onStatReset: (key: keyof CharacterStats) => void
+  onAttunementChange: (key: keyof AttunementStats, value: number) => void
+  onAttunementReset: (key: keyof AttunementStats) => void
+  onApplyCharacterProfile: (profile?: CharacterProfile) => void
+  onCharacterProfilesChange: (profiles: CharacterProfile[]) => void
+  onBreakthroughChange: (breakthrough: string) => void
+  onBuildSetupChange: <K extends keyof BuildSetup>(key: K, value: BuildSetup[K]) => void
+  onBuildSetupReset: (key: keyof BuildSetup) => void
+  rotationMetrics?: RotationMetrics
+  graduationDps?: number
+  activeBuildName: string
+  activeRotationName: string
+  onInnerWayChange: () => void
 }) {
-  const { stats, derivedStats, displayedAttunementStats: attunementStats, buildSetup, settings } = character;
-  const showHealingStats = pathId === "silkbindDeluge";
-  const breakthrough = breakthroughProfile(settings);
-  const [food, setFood] = useState(loadFood);
-  const [script, setScript] = useState(loadScript);
-  const [divinecraft, setDivinecraft] = useState(loadDivinecraft);
-  const [globalDebuffs, setGlobalDebuffs] = useState(loadGlobalDebuffs);
-  const [attunementDrafts, setAttunementDrafts] = useState<Partial<Record<keyof AttunementStats, string>>>({});
-  const [newProfileName, setNewProfileName] = useState("");
-  const profileDialogRef = useRef<HTMLDialogElement>(null);
+  const { stats, derivedStats, displayedAttunementStats: attunementStats, buildSetup, settings } = character
+  const showHealingStats = pathId === "silkbindDeluge"
+  const breakthrough = breakthroughProfile(settings)
+  const [food, setFood] = useState(loadFood)
+  const [script, setScript] = useState(loadScript)
+  const [divinecraft, setDivinecraft] = useState(loadDivinecraft)
+  const [globalDebuffs, setGlobalDebuffs] = useState(loadGlobalDebuffs)
+  const [attunementDrafts, setAttunementDrafts] = useState<Partial<Record<keyof AttunementStats, string>>>({})
+  const [newProfileName, setNewProfileName] = useState("")
+  const profileDialogRef = useRef<HTMLDialogElement>(null)
   const graduationRate =
-    rotationMetrics && graduationDps && graduationDps > 0 ? (rotationMetrics.dps / graduationDps) * 100 : undefined;
+    rotationMetrics && graduationDps && graduationDps > 0 ? (rotationMetrics.dps / graduationDps) * 100 : undefined
 
-  useEffect(() => setPersistentItem(foodStorageKey, food), [food]);
-  useEffect(() => setPersistentItem(scriptStorageKey, script), [script]);
-  useEffect(() => setPersistentItem(divinecraftStorageKey, divinecraft), [divinecraft]);
-  useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs]);
+  useEffect(() => setPersistentItem(foodStorageKey, food), [food])
+  useEffect(() => setPersistentItem(scriptStorageKey, script), [script])
+  useEffect(() => setPersistentItem(divinecraftStorageKey, divinecraft), [divinecraft])
+  useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs])
 
-  const { arsenal, bowRingSet, innerWays } = buildSetup;
-  const currentProfileData = {
-    statOverrides,
-    attunementOverrides,
-    innerWays,
-    buildSetup,
-  };
-  const matchingProfile = characterProfiles.find((profile) => characterProfileMatches(profile, currentProfileData));
+  const { arsenal, bowRingSet, innerWays } = buildSetup
+  const currentProfileData = useMemo(
+    () => ({ statOverrides, attunementOverrides, innerWays, buildSetup }),
+    [statOverrides, attunementOverrides, innerWays, buildSetup],
+  )
+  const matchingProfile = characterProfiles.find(profile => characterProfileMatches(profile, currentProfileData))
   const isCalculated =
     Object.keys(statOverrides).length === 0 &&
     Object.keys(attunementOverrides).length === 0 &&
-    Object.keys(buildSetupOverrides).length === 0;
+    Object.keys(buildSetupOverrides).length === 0
   const [selectedProfileId, setSelectedProfileId] = useState(() =>
     isCalculated ? "__calculated" : (matchingProfile?.id ?? "__modified"),
-  );
+  )
 
+  if (selectedProfileId === "__calculated") {
+    if (!isCalculated) setSelectedProfileId("__modified")
+  } else if (selectedProfileId !== "__modified") {
+    const selectedProfile = characterProfiles.find(({ id }) => id === selectedProfileId)
+    if (!selectedProfile) setSelectedProfileId(isCalculated ? "__calculated" : "__modified")
+  }
   useEffect(() => {
-    if (selectedProfileId === "__calculated") {
-      if (!isCalculated) setSelectedProfileId("__modified");
-      return;
-    }
-    if (selectedProfileId === "__modified") return;
-    const selectedProfile = characterProfiles.find(({ id }) => id === selectedProfileId);
-    if (!selectedProfile) {
-      setSelectedProfileId(isCalculated ? "__calculated" : "__modified");
-      return;
-    }
-    if (characterProfileMatches(selectedProfile, currentProfileData)) return;
+    if (selectedProfileId === "__calculated" || selectedProfileId === "__modified") return
+    const selectedProfile = characterProfiles.find(({ id }) => id === selectedProfileId)
+    if (!selectedProfile || characterProfileMatches(selectedProfile, currentProfileData)) return
     onCharacterProfilesChange(
-      characterProfiles.map((profile) =>
+      characterProfiles.map(profile =>
         profile.id === selectedProfileId
           ? {
               ...profile,
               statOverrides: { ...statOverrides },
               attunementOverrides: { ...attunementOverrides },
-              innerWays: innerWays.map((row) => ({ ...row })),
+              innerWays: innerWays.map(row => ({ ...row })),
               buildSetup: {
                 ...buildSetup,
-                innerWays: innerWays.map((row) => ({ ...row })),
+                innerWays: innerWays.map(row => ({ ...row })),
                 weaponSets: { ...buildSetup.weaponSets },
                 armorSets: { ...buildSetup.armorSets },
               },
             }
           : profile,
       ),
-    );
+    )
   }, [
     attunementOverrides,
     buildSetup,
     characterProfiles,
+    currentProfileData,
     innerWays,
-    isCalculated,
     onCharacterProfilesChange,
     selectedProfileId,
     statOverrides,
-  ]);
+  ])
 
   function applyProfile(profile?: CharacterProfile) {
-    setAttunementDrafts({});
-    onApplyCharacterProfile(profile);
-    onInnerWayChange();
+    setAttunementDrafts({})
+    onApplyCharacterProfile(profile)
+    onInnerWayChange()
   }
 
   function selectProfile(profile?: CharacterProfile) {
-    setSelectedProfileId(profile?.id ?? "__calculated");
-    applyProfile(profile);
+    setSelectedProfileId(profile?.id ?? "__calculated")
+    applyProfile(profile)
   }
 
   function createProfile() {
-    const name = newProfileName.trim();
-    if (!name) return;
-    const usedIds = new Set(characterProfiles.map(({ id }) => id));
-    const baseId = `character-profile-${Date.now()}`;
-    let id = baseId;
-    let suffix = 2;
-    while (usedIds.has(id)) id = `${baseId}-${suffix++}`;
+    const name = newProfileName.trim()
+    if (!name) return
+    const usedIds = new Set(characterProfiles.map(({ id }) => id))
+    const baseId = `character-profile-${Date.now()}`
+    let id = baseId
+    let suffix = 2
+    while (usedIds.has(id)) id = `${baseId}-${suffix++}`
     onCharacterProfilesChange([
       ...characterProfiles,
       {
@@ -2869,109 +2845,77 @@ function StatsTab({
         name,
         statOverrides: { ...statOverrides },
         attunementOverrides: { ...attunementOverrides },
-        innerWays: innerWays.map((row) => ({ ...row })),
+        innerWays: innerWays.map(row => ({ ...row })),
         buildSetup: {
           ...buildSetup,
-          innerWays: innerWays.map((row) => ({ ...row })),
+          innerWays: innerWays.map(row => ({ ...row })),
           weaponSets: { ...buildSetup.weaponSets },
           armorSets: { ...buildSetup.armorSets },
         },
       },
-    ]);
-    setSelectedProfileId(id);
-    setNewProfileName("");
-    publishNotice({ id: "profile-transfer", message: t("ui.app.profileSaved", { name }) });
+    ])
+    setSelectedProfileId(id)
+    setNewProfileName("")
+    publishNotice({ id: "profile-transfer", message: t("ui.app.profileSaved", { name }) })
   }
 
   function exportProfiles() {
-    const blob = new Blob([exportCharacterProfiles(characterProfiles)], { type: "application/json" });
-    const href = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = `where-builds-meet-character-profiles-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(href);
+    const blob = new Blob([exportCharacterProfiles(characterProfiles)], { type: "application/json" })
+    const href = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = href
+    link.download = `where-builds-meet-character-profiles-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(href)
     publishNotice({
       id: "profile-transfer",
       message: t("ui.app.profilesExported", { count: characterProfiles.length }),
-    });
+    })
   }
 
   async function importProfiles(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
     try {
-      const result = mergeImportedCharacterProfiles(characterProfiles, JSON.parse(await file.text()));
-      onCharacterProfilesChange(result.profiles);
-      publishNotice({ id: "profile-transfer", message: t("ui.app.profilesImported", { count: result.importedCount }) });
+      const result = mergeImportedCharacterProfiles(characterProfiles, JSON.parse(await file.text()))
+      onCharacterProfilesChange(result.profiles)
+      publishNotice({ id: "profile-transfer", message: t("ui.app.profilesImported", { count: result.importedCount }) })
     } catch (error) {
       publishNotice({
         id: "profile-transfer",
         message: error instanceof Error ? error.message : t("ui.app.profileImportError"),
         error: true,
-      });
+      })
     }
   }
 
-  function updateStat(key: keyof CharacterStats, value: number) {
-    onStatChange(key, Number.isFinite(value) ? value : 0);
-  }
-
   function commitAttunement(key: keyof AttunementStats, rawValue: string) {
-    const displayedValue = Number(rawValue);
-    const normalizedValue = Number.isFinite(displayedValue) ? displayedValue : 0;
-    const nextValue = percentageAttunementKeys.has(key) ? normalizedValue / 100 : normalizedValue;
-    setAttunementDrafts((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
-    onAttunementChange(key, nextValue);
+    const displayedValue = Number(rawValue)
+    const normalizedValue = Number.isFinite(displayedValue) ? displayedValue : 0
+    const nextValue = percentageAttunementKeys.has(key) ? normalizedValue / 100 : normalizedValue
+    setAttunementDrafts(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    onAttunementChange(key, nextValue)
   }
 
   function resetAttunement(key: keyof AttunementStats) {
-    setAttunementDrafts((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
-    onAttunementReset(key);
+    setAttunementDrafts(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    onAttunementReset(key)
   }
 
   function updateGlobalDebuff<K extends keyof GlobalDebuffState>(key: K, value: GlobalDebuffState[K]) {
-    const next = { ...globalDebuffs, [key]: value };
-    setPersistentItem(globalDebuffStorageKey, JSON.stringify(next));
-    setGlobalDebuffs(next);
-    onInnerWayChange();
-  }
-
-  function CalculatedStatField({
-    definition,
-    derivedLabel,
-    derivedValue,
-    derivedUnit,
-    compact,
-  }: {
-    definition: StatDefinition;
-    derivedLabel?: string;
-    derivedValue?: number;
-    derivedUnit?: string;
-    compact?: boolean;
-  }) {
-    return (
-      <StatField
-        definition={definition}
-        stats={stats}
-        onChange={updateStat}
-        modified={Object.prototype.hasOwnProperty.call(statOverrides, definition.key)}
-        onReset={() => onStatReset(definition.key)}
-        derivedLabel={derivedLabel}
-        derivedValue={derivedValue}
-        derivedUnit={derivedUnit}
-        compact={compact}
-      />
-    );
+    const next = { ...globalDebuffs, [key]: value }
+    setPersistentItem(globalDebuffStorageKey, JSON.stringify(next))
+    setGlobalDebuffs(next)
+    onInnerWayChange()
   }
 
   const physicalRows = [
@@ -2980,24 +2924,24 @@ function StatsTab({
     [statDefinition("momentum"), statDefinition("precision")],
     [statDefinition("crit"), statDefinition("directCrit")],
     [statDefinition("affinity"), statDefinition("directAffinity")],
-  ];
-  const bodyStat = statDefinition("body");
-  const defenseStat = statDefinition("defense");
-  const maxHpStat = statDefinition("maxHp");
-  const physicalDefenseStat = statDefinition("physicalDefense");
+  ]
+  const bodyStat = statDefinition("body")
+  const defenseStat = statDefinition("defense")
+  const maxHpStat = statDefinition("maxHp")
+  const physicalDefenseStat = statDefinition("physicalDefense")
   const martialRows = [
     [statDefinition("minBellstrike"), statDefinition("maxBellstrike")],
     [statDefinition("minStonesplit"), statDefinition("maxStonesplit")],
     [statDefinition("minSilkbind"), statDefinition("maxSilkbind")],
     [statDefinition("minBamboocut"), statDefinition("maxBamboocut")],
-  ];
+  ]
   const selectedArtStats = Array.from(
-    new Set(settings.weapons.map((weapon) => artStatByWeaponFamily[martialArtDefinitions[weapon].weapon])),
-  ).map(statDefinition);
+    new Set(settings.weapons.map(weapon => artStatByWeaponFamily[martialArtDefinitions[weapon].weapon])),
+  ).map(statDefinition)
   const penetrationRows = [
     [statDefinition("bellstrikePenetration"), statDefinition("silkbindPenetration")],
     [statDefinition("stonesplitPenetration"), statDefinition("bamboocutPenetration")],
-  ];
+  ]
   const innerWayOptions = [
     ["", t("ui.app.none")],
     ...innerWayEntriesForTag(typedPathDefinitions[pathId].tag).map(
@@ -3007,7 +2951,7 @@ function StatsTab({
           string,
         ],
     ),
-  ];
+  ]
   const attunementFields = Object.entries(attunementData)
     .filter(([key]) => attunementAvailableForSettings(key, pathId, settings))
     .map(
@@ -3017,13 +2961,13 @@ function StatsTab({
           dataText(`system.attunement.${key}`, definition.name),
           definition.percentage ? "%" : "",
         ] as const,
-    );
-  const armorAttunementStart = attunementFields.findIndex(([key]) => attunementData[key]?.tags.includes("Armor"));
-  const availableWeaponSets = availableSetEntriesForSettings(typedWeaponSetDefinitions, settings, pathId);
-  const availableArmorSets = availableSetEntriesForSettings(typedArmorSetDefinitions, settings, pathId);
+    )
+  const armorAttunementStart = attunementFields.findIndex(([key]) => attunementData[key]?.tags.includes("Armor"))
+  const availableWeaponSets = availableSetEntriesForSettings(typedWeaponSetDefinitions, settings, pathId)
+  const availableArmorSets = availableSetEntriesForSettings(typedArmorSetDefinitions, settings, pathId)
   const setupStatus = (group: string, value: string, active: boolean) => {
-    if (active) return <small className="setup-active-label">{t("ui.app.active")}</small>;
-    const comparison = rotationMetrics?.setupComparisons[group]?.find((row) => row.label === value);
+    if (active) return <small className="setup-active-label">{t("ui.app.active")}</small>
+    const comparison = rotationMetrics?.setupComparisons[group]?.find(row => row.label === value)
     return comparison ? (
       <small className="setup-delta-label">
         <span className={throughputDeltaClass(comparison.dpsDifference, "damage")}>
@@ -3049,8 +2993,8 @@ function StatsTab({
       </small>
     ) : (
       <small className="setup-inactive-label">—</small>
-    );
-  };
+    )
+  }
   const setPanel = (
     title: string,
     key: "weaponSets" | "armorSets",
@@ -3077,13 +3021,13 @@ function StatsTab({
       </div>
       <div className="gear-set-list">
         {entries.map(([setName, definition]) => {
-          const selectedTier = buildSetup[key][setName] ?? 0;
+          const selectedTier = buildSetup[key][setName] ?? 0
           return (
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
                 <div className="setup-option-list">
-                  {[0, 2, 4].map((tier) => (
+                  {[0, 2, 4].map(tier => (
                     <button
                       className={selectedTier === tier ? "selected" : ""}
                       type="button"
@@ -3099,14 +3043,14 @@ function StatsTab({
                 </div>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </section>
-  );
+  )
   const globalDebuffOption = (key: (typeof globalDebuffRows)[number]["key"], value: boolean, label: string) => {
-    const active = globalDebuffs[key] === value;
-    const optionValue = value ? "on" : "off";
+    const active = globalDebuffs[key] === value
+    const optionValue = value ? "on" : "off"
     return (
       <button
         className={active ? "selected" : ""}
@@ -3117,18 +3061,18 @@ function StatsTab({
         {label}
         <span>{setupStatus(`debuff:${key}`, optionValue, active)}</span>
       </button>
-    );
-  };
+    )
+  }
   const floatingGraceOptionLabel = (value: GlobalDebuffState["floatingGrace"]) => {
     switch (value) {
       case "none":
-        return t("ui.app.none");
+        return t("ui.app.none")
       case "mixed":
-        return t("data.path.mixed.name");
+        return t("data.path.mixed.name")
       case "deluge":
-        return t("system.path.deluge");
+        return t("system.path.deluge")
     }
-  };
+  }
 
   return (
     <>
@@ -3143,9 +3087,9 @@ function StatsTab({
                 <select
                   aria-label={t("ui.app.characterProfile")}
                   value={selectedProfileId}
-                  onChange={(event) => {
-                    if (event.target.value === "__calculated") selectProfile();
-                    else selectProfile(characterProfiles.find(({ id }) => id === event.target.value));
+                  onChange={event => {
+                    if (event.target.value === "__calculated") selectProfile()
+                    else selectProfile(characterProfiles.find(({ id }) => id === event.target.value))
                   }}
                 >
                   <option value="__calculated">{t("ui.app.calculated")}</option>
@@ -3154,7 +3098,7 @@ function StatsTab({
                       {t("ui.app.unsavedChanges")}
                     </option>
                   )}
-                  {characterProfiles.map((profile) => (
+                  {characterProfiles.map(profile => (
                     <option value={profile.id} key={profile.id}>
                       {profile.name}
                     </option>
@@ -3164,8 +3108,8 @@ function StatsTab({
                   className="button button-secondary"
                   type="button"
                   onClick={() => {
-                    dismissNotice("profile-transfer");
-                    profileDialogRef.current?.showModal();
+                    dismissNotice("profile-transfer")
+                    profileDialogRef.current?.showModal()
                   }}
                 >
                   {t("ui.app.profiles")}
@@ -3180,6 +3124,10 @@ function StatsTab({
                 <div className="stat-row" key={left.key}>
                   <CalculatedStatField
                     definition={left}
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
                     derivedLabel={
                       index === 0
                         ? t("ui.app.effectiveMinAttack", { name: t("system.damageType.physical") })
@@ -3202,6 +3150,10 @@ function StatsTab({
                   />
                   <CalculatedStatField
                     definition={right}
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
                     derivedLabel={
                       index === 0
                         ? t("ui.app.effectiveMaxAttack", { name: t("system.damageType.physical") })
@@ -3232,6 +3184,10 @@ function StatsTab({
                 <div className="stat-row" key={left.key}>
                   <CalculatedStatField
                     definition={left}
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
                     derivedLabel={t("ui.app.effectiveMinAttack", {
                       name: t(`system.damageType.${["bellstrike", "stonesplit", "silkbind", "bamboocut"][index]}`),
                     })}
@@ -3248,6 +3204,10 @@ function StatsTab({
                   />
                   <CalculatedStatField
                     definition={right}
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
                     derivedLabel={t("ui.app.effectiveMaxAttack", {
                       name: t(`system.damageType.${["bellstrike", "stonesplit", "silkbind", "bamboocut"][index]}`),
                     })}
@@ -3265,18 +3225,50 @@ function StatsTab({
                 </div>
               ))}
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("minVoidAttack")} compact />
-                <CalculatedStatField definition={statDefinition("maxVoidAttack")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("minVoidAttack")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={statDefinition("maxVoidAttack")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               {penetrationRows.map(([left, right]) => (
                 <div className="stat-row" key={left.key}>
-                  <CalculatedStatField definition={left} compact />
-                  <CalculatedStatField definition={right} compact />
+                  <CalculatedStatField
+                    definition={left}
+                    compact
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
+                  />
+                  <CalculatedStatField
+                    definition={right}
+                    compact
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
+                  />
                 </div>
               ))}
               <div className="stat-row">
                 <CalculatedStatField
                   definition={statDefinition("critDmgBonus")}
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
                   derivedLabel={t("ui.app.effectiveNamedStat", {
                     name: gameText(statDefinition("critDmgBonus").label),
                   })}
@@ -3284,47 +3276,167 @@ function StatsTab({
                   derivedUnit="%"
                   compact
                 />
-                <CalculatedStatField definition={statDefinition("affinityDmgBonus")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("affinityDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("physDmgBonus")} compact />
-                <CalculatedStatField definition={statDefinition("bellstrikeDmgBonus")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("physDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={statDefinition("bellstrikeDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("stonesplitDmgBonus")} compact />
-                <CalculatedStatField definition={statDefinition("bamboocutDmgBonus")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("stonesplitDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={statDefinition("bamboocutDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("silkbindDmgBonus")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("silkbindDmgBonus")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
                 <span />
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("allMartialArts")} compact />
-                <CalculatedStatField definition={statDefinition("vsBossDmg")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("allMartialArts")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={statDefinition("vsBossDmg")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               <div className="stat-row">
-                {selectedArtStats.map((definition) => (
-                  <CalculatedStatField definition={definition} compact key={definition.key} />
+                {selectedArtStats.map(definition => (
+                  <CalculatedStatField
+                    definition={definition}
+                    compact
+                    key={definition.key}
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
+                  />
                 ))}
                 {selectedArtStats.length === 1 && <span />}
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={statDefinition("singleTargetMysticDmgBoost")} compact />
-                <CalculatedStatField definition={statDefinition("areaMysticDmgBoost")} compact />
+                <CalculatedStatField
+                  definition={statDefinition("singleTargetMysticDmgBoost")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={statDefinition("areaMysticDmgBoost")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               {showHealingStats ? (
                 <div className="stat-row">
-                  <CalculatedStatField definition={statDefinition("criticalHealingBonus")} compact />
-                  <CalculatedStatField definition={statDefinition("silkbindHealingBonus")} compact />
+                  <CalculatedStatField
+                    definition={statDefinition("criticalHealingBonus")}
+                    compact
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
+                  />
+                  <CalculatedStatField
+                    definition={statDefinition("silkbindHealingBonus")}
+                    compact
+                    stats={stats}
+                    statOverrides={statOverrides}
+                    onStatChange={onStatChange}
+                    onStatReset={onStatReset}
+                  />
                 </div>
               ) : null}
               <div className="stat-row">
-                <CalculatedStatField definition={maxHpStat} compact />
-                <CalculatedStatField definition={bodyStat} compact />
+                <CalculatedStatField
+                  definition={maxHpStat}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={bodyStat}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
               <div className="stat-row">
-                <CalculatedStatField definition={physicalDefenseStat} compact />
-                <CalculatedStatField definition={defenseStat} compact />
+                <CalculatedStatField
+                  definition={physicalDefenseStat}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+                <CalculatedStatField
+                  definition={defenseStat}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
               </div>
             </div>
           </section>
@@ -3350,9 +3462,9 @@ function StatsTab({
                           type="button"
                           aria-label={t("ui.app.resetNamedValue", { name: label })}
                           title={t("ui.app.resetToCalculatedValue")}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            resetAttunement(key);
+                          onClick={event => {
+                            event.preventDefault()
+                            resetAttunement(key)
                           }}
                         >
                           <UiIcon name="reset" />
@@ -3367,14 +3479,12 @@ function StatsTab({
                           attunementDrafts[key] ??
                           formatNumber(unit ? attunementStats[key] * 100 : attunementStats[key])
                         }
-                        onChange={(event) =>
-                          setAttunementDrafts((current) => ({ ...current, [key]: event.target.value }))
-                        }
-                        onBlur={(event) => {
-                          if (attunementDrafts[key] !== undefined) commitAttunement(key, event.currentTarget.value);
+                        onChange={event => setAttunementDrafts(current => ({ ...current, [key]: event.target.value }))}
+                        onBlur={event => {
+                          if (attunementDrafts[key] !== undefined) commitAttunement(key, event.currentTarget.value)
                         }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") event.currentTarget.blur();
+                        onKeyDown={event => {
+                          if (event.key === "Enter") event.currentTarget.blur()
                         }}
                       />
                       {unit && <i>{unit}</i>}
@@ -3407,8 +3517,8 @@ function StatsTab({
                     {gameText("Floating Grace")} ({t("system.path.deluge")})
                   </span>
                   <div className="setup-option-list global-debuff-options qingyi-options">
-                    {(["none", "mixed", "deluge"] as const).map((value) => {
-                      const active = globalDebuffs.floatingGrace === value;
+                    {(["none", "mixed", "deluge"] as const).map(value => {
+                      const active = globalDebuffs.floatingGrace === value
                       return (
                         <button
                           className={active ? "selected" : ""}
@@ -3419,15 +3529,15 @@ function StatsTab({
                           {floatingGraceOptionLabel(value)}
                           <span>{setupStatus("buff:floatingGrace", value, active)}</span>
                         </button>
-                      );
+                      )
                     })}
                   </div>
                 </div>
                 <div className="global-debuff-row">
                   <span>{t("system.innerWay.bitterSeasons")}</span>
                   <div className="setup-option-list global-debuff-options qingyi-options">
-                    {(["none", "T1", "T6"] as const).map((value) => {
-                      const active = globalDebuffs.qingyisCharm === value;
+                    {(["none", "T1", "T6"] as const).map(value => {
+                      const active = globalDebuffs.qingyisCharm === value
                       return (
                         <button
                           className={active ? "selected" : ""}
@@ -3438,7 +3548,7 @@ function StatsTab({
                           {value === "none" ? t("ui.app.none") : value}
                           <span>{setupStatus("debuff:qingyisCharm", value, active)}</span>
                         </button>
-                      );
+                      )
                     })}
                   </div>
                 </div>
@@ -3487,8 +3597,8 @@ function StatsTab({
               </div>
               <label className="editor-field breakthrough-control">
                 <span className="visually-hidden">{t("ui.app.breakthrough")}</span>
-                <select value={settings.breakthrough} onChange={(event) => onBreakthroughChange(event.target.value)}>
-                  {Object.keys(typedBreakthroughProfiles).map((key) => (
+                <select value={settings.breakthrough} onChange={event => onBreakthroughChange(event.target.value)}>
+                  {Object.keys(typedBreakthroughProfiles).map(key => (
                     <option key={key} value={key}>
                       {key}
                     </option>
@@ -3520,12 +3630,12 @@ function StatsTab({
                   <select
                     aria-label={t("ui.app.innerWayNumber", { number: index + 1 })}
                     value={innerWayAvailableForPath(row.innerWay, pathId) ? row.innerWay : ""}
-                    onChange={(event) => {
+                    onChange={event => {
                       const next = innerWays.map((item, itemIndex) =>
                         itemIndex === index ? { ...item, innerWay: event.target.value } : item,
-                      );
-                      onBuildSetupChange("innerWays", next);
-                      onInnerWayChange();
+                      )
+                      onBuildSetupChange("innerWays", next)
+                      onInnerWayChange()
                     }}
                   >
                     {innerWayOptions.map(([value, label]) => (
@@ -3544,12 +3654,12 @@ function StatsTab({
                   <select
                     aria-label={t("ui.app.innerWayTierNumber", { number: index + 1 })}
                     value={row.tier}
-                    onChange={(event) => {
+                    onChange={event => {
                       const next = innerWays.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, tier: event.target.value } : item,
-                      );
-                      onBuildSetupChange("innerWays", next);
-                      onInnerWayChange();
+                        itemIndex === index ? Object.assign({}, item, { tier: event.target.value }) : item,
+                      )
+                      onBuildSetupChange("innerWays", next)
+                      onInnerWayChange()
                     }}
                   >
                     {Array.from({ length: 7 }, (_, tier) => (
@@ -3641,9 +3751,9 @@ function StatsTab({
                   type="button"
                   key={value}
                   onClick={() => {
-                    setFood(value);
-                    setPersistentItem(foodStorageKey, value);
-                    onInnerWayChange();
+                    setFood(value)
+                    setPersistentItem(foodStorageKey, value)
+                    onInnerWayChange()
                   }}
                 >
                   {gameText(definition.name)}
@@ -3660,9 +3770,9 @@ function StatsTab({
               </div>
             </div>
             <div className="script-option-list">
-              {scriptDisplayOrder.map((value) => {
-                const definition = typedScriptDefinitions[value];
-                if (!definition) return null;
+              {scriptDisplayOrder.map(value => {
+                const definition = typedScriptDefinitions[value]
+                if (!definition) return null
                 return (
                   <button
                     className={`script-option ${script === value ? "selected" : ""}`}
@@ -3670,9 +3780,9 @@ function StatsTab({
                     key={value}
                     title={`${gameText(definition.name)}: ${gameText(definition.description)}`}
                     onClick={() => {
-                      setScript(value);
-                      setPersistentItem(scriptStorageKey, value);
-                      onInnerWayChange();
+                      setScript(value)
+                      setPersistentItem(scriptStorageKey, value)
+                      onInnerWayChange()
                     }}
                   >
                     <span className="script-image-frame">
@@ -3685,7 +3795,7 @@ function StatsTab({
                     <strong>{gameText(definition.name)}</strong>
                     <span className="script-option-status">{setupStatus("script", value, script === value)}</span>
                   </button>
-                );
+                )
               })}
             </div>
           </section>
@@ -3697,12 +3807,12 @@ function StatsTab({
               </div>
             </div>
             <div className="divinecraft-option-list">
-              {divinecraftDisplayOrder.map((value, index) => {
+              {divinecraftDisplayOrder.map(value => {
                 if (value === null)
-                  return <span className="divinecraft-option-spacer" aria-hidden="true" key={`spacer-${index}`} />;
-                const definition = typedDivinecraftDefinitions[value];
-                if (!definition) return null;
-                const available = definition.available !== false;
+                  return <span className="divinecraft-option-spacer" aria-hidden="true" key="spacer" />
+                const definition = typedDivinecraftDefinitions[value]
+                if (!definition) return null
+                const available = definition.available !== false
                 return (
                   <button
                     className={`divinecraft-option ${divinecraft === value ? "selected" : ""}`}
@@ -3711,9 +3821,9 @@ function StatsTab({
                     disabled={!available}
                     title={`${gameText(definition.name)}: ${gameText(definition.description)}${available ? "" : t("ui.app.notAvailableYet")}`}
                     onClick={() => {
-                      setDivinecraft(value);
-                      setPersistentItem(divinecraftStorageKey, value);
-                      onInnerWayChange();
+                      setDivinecraft(value)
+                      setPersistentItem(divinecraftStorageKey, value)
+                      onInnerWayChange()
                     }}
                   >
                     <span className="divinecraft-image-frame">
@@ -3732,7 +3842,7 @@ function StatsTab({
                       )}
                     </span>
                   </button>
-                );
+                )
               })}
             </div>
           </section>
@@ -3810,14 +3920,14 @@ function StatsTab({
           </section>
           <PriorityPanel
             title={t("ui.app.statsPriority")}
-            rows={rotationMetrics?.statPriority ?? []}
+            rows={rotationMetrics?.statPriority ?? emptyPriorityRows}
             calculationCategory="statPriority"
             showMaxRoll
             showHealing={Boolean(rotationMetrics && rotationMetrics.hps > 0)}
           />
           <PriorityPanel
             title={t("ui.app.attunementStatsPriority")}
-            rows={rotationMetrics?.attunementPriority ?? []}
+            rows={rotationMetrics?.attunementPriority ?? emptyPriorityRows}
             calculationCategory="attunementPriority"
             sectionBreakAt={2}
             showMaxRoll
@@ -3825,7 +3935,7 @@ function StatsTab({
           />
           <PriorityPanel
             title={t("ui.app.innerWaysPriority")}
-            rows={rotationMetrics?.innerWayPriority ?? []}
+            rows={rotationMetrics?.innerWayPriority ?? emptyPriorityRows}
             calculationCategory="innerWays"
             showHealing={Boolean(rotationMetrics && rotationMetrics.hps > 0)}
           />
@@ -3851,9 +3961,9 @@ function StatsTab({
             value={newProfileName}
             placeholder={t("ui.app.profileName")}
             aria-label={t("ui.app.newCharacterProfileName")}
-            onChange={(event) => setNewProfileName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") createProfile();
+            onChange={event => setNewProfileName(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter") createProfile()
             }}
           />
           <button
@@ -3872,30 +3982,30 @@ function StatsTab({
               className="button button-secondary button-small"
               type="button"
               onClick={() => {
-                selectProfile();
-                profileDialogRef.current?.close();
+                selectProfile()
+                profileDialogRef.current?.close()
               }}
             >
               {t("ui.app.load")}
             </button>
           </div>
-          {characterProfiles.map((profile) => (
+          {characterProfiles.map(profile => (
             <div className="character-profile-row" key={profile.id}>
               <input
                 defaultValue={profile.name}
                 aria-label={t("ui.app.renameNamedProfile", { name: profile.name })}
-                onBlur={(event) => {
-                  const name = event.currentTarget.value.trim();
+                onBlur={event => {
+                  const name = event.currentTarget.value.trim()
                   if (!name) {
-                    event.currentTarget.value = profile.name;
-                    return;
+                    event.currentTarget.value = profile.name
+                    return
                   }
                   if (name !== profile.name)
                     onCharacterProfilesChange(
-                      characterProfiles.map((candidate) =>
+                      characterProfiles.map(candidate =>
                         candidate.id === profile.id ? { ...candidate, name } : candidate,
                       ),
-                    );
+                    )
                 }}
               />
               <div>
@@ -3903,8 +4013,8 @@ function StatsTab({
                   className="button button-secondary button-small"
                   type="button"
                   onClick={() => {
-                    selectProfile(profile);
-                    profileDialogRef.current?.close();
+                    selectProfile(profile)
+                    profileDialogRef.current?.close()
                   }}
                 >
                   {t("ui.app.load")}
@@ -3913,11 +4023,11 @@ function StatsTab({
                   className="button button-secondary button-small"
                   type="button"
                   onClick={() => {
-                    const usedIds = new Set(characterProfiles.map(({ id }) => id));
-                    const baseId = `${profile.id}:copy`;
-                    let id = baseId;
-                    let suffix = 2;
-                    while (usedIds.has(id)) id = `${baseId}:${suffix++}`;
+                    const usedIds = new Set(characterProfiles.map(({ id }) => id))
+                    const baseId = `${profile.id}:copy`
+                    let id = baseId
+                    let suffix = 2
+                    while (usedIds.has(id)) id = `${baseId}:${suffix++}`
                     onCharacterProfilesChange([
                       ...characterProfiles,
                       {
@@ -3926,15 +4036,15 @@ function StatsTab({
                         name: `${profile.name} Copy`,
                         statOverrides: { ...profile.statOverrides },
                         attunementOverrides: { ...profile.attunementOverrides },
-                        innerWays: profile.innerWays.map((row) => ({ ...row })),
+                        innerWays: profile.innerWays.map(row => ({ ...row })),
                         buildSetup: {
                           ...profile.buildSetup,
-                          innerWays: profile.innerWays.map((row) => ({ ...row })),
+                          innerWays: profile.innerWays.map(row => ({ ...row })),
                           weaponSets: { ...profile.buildSetup.weaponSets },
                           armorSets: { ...profile.buildSetup.armorSets },
                         },
                       },
-                    ]);
+                    ])
                   }}
                 >
                   {t("ui.app.duplicate")}
@@ -3976,16 +4086,16 @@ function StatsTab({
         </div>
       </dialog>
     </>
-  );
+  )
 }
 
 function skillToDraft(skill: SkillRecord) {
-  const { name = "", shortName = "", castTime = 0, action = [], modifier = [], tags = [] } = skill;
+  const { name = "", shortName = "", castTime = 0, action = [], modifier = [], tags = [] } = skill
   const toObjects = (items: unknown[]) =>
-    items.map((item) => (item && typeof item === "object" && !Array.isArray(item) ? (item as EditableObject) : {}));
-  const stackEffects = Array.isArray(skill.stackEffects) ? skill.stackEffects : [];
-  const periodicActions = Array.isArray(skill.periodic?.action) ? skill.periodic.action : [];
-  const isDot = tags.includes("DOT");
+    items.map(item => (item && typeof item === "object" && !Array.isArray(item) ? (item as EditableObject) : {}))
+  const stackEffects = Array.isArray(skill.stackEffects) ? skill.stackEffects : []
+  const periodicActions = Array.isArray(skill.periodic?.action) ? skill.periodic.action : []
+  const isDot = tags.includes("DOT")
   return {
     name,
     shortName,
@@ -4003,8 +4113,8 @@ function skillToDraft(skill: SkillRecord) {
     actionItems: toObjects(isDot ? periodicActions : action),
     modifierItems: toObjects(modifier),
     effectItems: toObjects(Array.isArray(skill.effect) ? skill.effect : []),
-    stackEffectGroups: stackEffects.map((group) => toObjects(Array.isArray(group) ? group : [])),
-  };
+    stackEffectGroups: stackEffects.map(group => toObjects(Array.isArray(group) ? group : [])),
+  }
 }
 
 const actionTypes = [
@@ -4018,7 +4128,7 @@ const actionTypes = [
   "setResource",
   "addResource",
   "consumeResource",
-];
+]
 const conditionTargets = [
   "self",
   "target",
@@ -4029,7 +4139,7 @@ const conditionTargets = [
   "currentWeapon",
   "resource",
   "skillCooldown",
-];
+]
 const effectFields = [
   "castTimeModifier",
   "castTimeMultiplier",
@@ -4052,59 +4162,59 @@ const effectFields = [
   "affinityDmgBonus",
   "SteadfastGuaranteedCrit",
   "enhanceDrunkenPoet",
-];
-const booleanEffectFields = new Set(["SteadfastGuaranteedCrit", "enhanceDrunkenPoet"]);
+]
+const booleanEffectFields = new Set(["SteadfastGuaranteedCrit", "enhanceDrunkenPoet"])
 
 function asNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback
 }
 
 function asString(value: unknown) {
-  return typeof value === "string" ? value : "";
+  return typeof value === "string" ? value : ""
 }
 
 function itemSummary(item: string, index: number, kind: "action" | "modifier" | "effect") {
   try {
-    const parsed = JSON.parse(item) as EditableObject;
+    const parsed = JSON.parse(item) as EditableObject
     if (kind === "effect") {
       const payload =
         parsed.effect && typeof parsed.effect === "object" && !Array.isArray(parsed.effect)
           ? (parsed.effect as EditableObject)
-          : parsed;
-      const fields = Object.keys(payload).filter((field) => field !== "requirement");
-      return `${index + 1}. ${fields.join(", ") || "effect"}`;
+          : parsed
+      const fields = Object.keys(payload).filter(field => field !== "requirement")
+      return `${index + 1}. ${fields.join(", ") || "effect"}`
     }
-    const type = typeof parsed.type === "string" ? parsed.type : kind;
-    const time = typeof parsed.time === "number" ? ` at ${parsed.time}s` : "";
-    return `${index + 1}. ${type}${time}`;
+    const type = typeof parsed.type === "string" ? parsed.type : kind
+    const time = typeof parsed.time === "number" ? ` at ${parsed.time}s` : ""
+    return `${index + 1}. ${type}${time}`
   } catch {
-    return `${index + 1}. ${kind}`;
+    return `${index + 1}. ${kind}`
   }
 }
 
 function updateObjectField(object: EditableObject, field: string, value: unknown) {
-  return { ...object, [field]: value };
+  return { ...object, [field]: value }
 }
 
 function RequirementEditor({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) {
   const wrapper =
     value && typeof value === "object" && !Array.isArray(value) && (value as EditableObject).resolveAt === "skillStart"
       ? (value as EditableObject)
-      : undefined;
+      : undefined
   const requirements = Array.isArray(wrapper?.operand)
     ? (wrapper.operand as unknown[])
     : Array.isArray(value)
       ? (value as unknown[])
-      : [];
-  const emit = (next: unknown[]) => onChange(wrapper ? { ...wrapper, operand: next } : next);
+      : []
+  const emit = (next: unknown[]) => onChange(wrapper ? { ...wrapper, operand: next } : next)
   function editLeaf(leaf: unknown, field: string, fieldValue: string) {
-    const current = leaf && typeof leaf === "object" && !Array.isArray(leaf) ? (leaf as EditableObject) : {};
-    return { ...current, [field]: fieldValue };
+    const current = leaf && typeof leaf === "object" && !Array.isArray(leaf) ? (leaf as EditableObject) : {}
+    return { ...current, [field]: fieldValue }
   }
   function updateLeaf(index: number, field: string, fieldValue: string) {
-    const next = [...requirements];
-    next[index] = editLeaf(next[index], field, fieldValue);
-    emit(next);
+    const next = [...requirements]
+    next[index] = editLeaf(next[index], field, fieldValue)
+    emit(next)
   }
   function updateOrLeaf(
     groupIndex: number,
@@ -4113,17 +4223,17 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
     fieldValue: string,
     nestedIndex?: number,
   ) {
-    const group = requirements[groupIndex] as EditableObject;
-    const operands = Array.isArray(group.operand) ? [...group.operand] : [];
-    if (nestedIndex === undefined) operands[operandIndex] = editLeaf(operands[operandIndex], field, fieldValue);
+    const group = requirements[groupIndex] as EditableObject
+    const operands = Array.isArray(group.operand) ? [...group.operand] : []
+    if (nestedIndex === undefined) operands[operandIndex] = editLeaf(operands[operandIndex], field, fieldValue)
     else {
-      const nested = Array.isArray(operands[operandIndex]) ? [...(operands[operandIndex] as unknown[])] : [];
-      nested[nestedIndex] = editLeaf(nested[nestedIndex], field, fieldValue);
-      operands[operandIndex] = nested;
+      const nested = Array.isArray(operands[operandIndex]) ? [...(operands[operandIndex] as unknown[])] : []
+      nested[nestedIndex] = editLeaf(nested[nestedIndex], field, fieldValue)
+      operands[operandIndex] = nested
     }
-    const next = [...requirements];
-    next[groupIndex] = { ...group, operand: operands };
-    emit(next);
+    const next = [...requirements]
+    next[groupIndex] = { ...group, operand: operands }
+    emit(next)
   }
   function addOrGroup() {
     emit([
@@ -4135,32 +4245,32 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
           { target: "self", value: "" },
         ],
       },
-    ]);
+    ])
   }
   function addOrOperand(groupIndex: number) {
-    const group = requirements[groupIndex] as EditableObject;
-    const next = [...requirements];
+    const group = requirements[groupIndex] as EditableObject
+    const next = [...requirements]
     next[groupIndex] = {
       ...group,
       operand: [...(Array.isArray(group.operand) ? group.operand : []), { target: "self", value: "" }],
-    };
-    emit(next);
+    }
+    emit(next)
   }
   function removeOrOperand(groupIndex: number, operandIndex: number, nestedIndex?: number) {
-    const group = requirements[groupIndex] as EditableObject;
-    const operands = Array.isArray(group.operand) ? [...group.operand] : [];
-    if (nestedIndex === undefined) operands.splice(operandIndex, 1);
+    const group = requirements[groupIndex] as EditableObject
+    const operands = Array.isArray(group.operand) ? [...group.operand] : []
+    if (nestedIndex === undefined) operands.splice(operandIndex, 1)
     else {
-      const nested = Array.isArray(operands[operandIndex]) ? [...(operands[operandIndex] as unknown[])] : [];
-      nested.splice(nestedIndex, 1);
-      operands[operandIndex] = nested;
+      const nested = Array.isArray(operands[operandIndex]) ? [...(operands[operandIndex] as unknown[])] : []
+      nested.splice(nestedIndex, 1)
+      operands[operandIndex] = nested
     }
-    const next = [...requirements];
-    next[groupIndex] = { ...group, operand: operands };
-    emit(next);
+    const next = [...requirements]
+    next[groupIndex] = { ...group, operand: operands }
+    emit(next)
   }
-  const addLeaf = () => emit([...requirements, { target: "self", value: "" }]);
-  const remove = (index: number) => emit(requirements.filter((_, itemIndex) => itemIndex !== index));
+  const addLeaf = () => emit([...requirements, { target: "self", value: "" }])
+  const remove = (index: number) => emit(requirements.filter((_, itemIndex) => itemIndex !== index))
   return (
     <div className="requirement-editor">
       <div className="sub-editor-heading">
@@ -4181,9 +4291,9 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
         const item =
           requirement && typeof requirement === "object" && !Array.isArray(requirement)
             ? (requirement as EditableObject)
-            : {};
+            : {}
         if (item.operator === "or") {
-          const operands = Array.isArray(item.operand) ? item.operand : [];
+          const operands = Array.isArray(item.operand) ? item.operand : []
           return (
             <div className="or-condition" key={index}>
               <div className="or-condition-heading">
@@ -4200,18 +4310,18 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                       <div className="condition-row" key={nestedIndex}>
                         <select
                           value={asString((leaf as EditableObject)?.target) || "self"}
-                          onChange={(event) =>
+                          onChange={event =>
                             updateOrLeaf(index, operandIndex, "target", event.target.value, nestedIndex)
                           }
                         >
-                          {conditionTargets.map((target) => (
+                          {conditionTargets.map(target => (
                             <option key={target}>{target}</option>
                           ))}
                         </select>
                         <input
                           value={asString((leaf as EditableObject)?.value)}
                           placeholder={t("ui.app.value")}
-                          onChange={(event) =>
+                          onChange={event =>
                             updateOrLeaf(index, operandIndex, "value", event.target.value, nestedIndex)
                           }
                         />
@@ -4229,16 +4339,16 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                   <div className="condition-row" key={operandIndex}>
                     <select
                       value={asString((operand as EditableObject)?.target) || "self"}
-                      onChange={(event) => updateOrLeaf(index, operandIndex, "target", event.target.value)}
+                      onChange={event => updateOrLeaf(index, operandIndex, "target", event.target.value)}
                     >
-                      {conditionTargets.map((target) => (
+                      {conditionTargets.map(target => (
                         <option key={target}>{target}</option>
                       ))}
                     </select>
                     <input
                       value={asString((operand as EditableObject)?.value)}
                       placeholder={t("ui.app.value")}
-                      onChange={(event) => updateOrLeaf(index, operandIndex, "value", event.target.value)}
+                      onChange={event => updateOrLeaf(index, operandIndex, "value", event.target.value)}
                     />
                     <button
                       type="button"
@@ -4254,31 +4364,31 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                 {t("ui.app.addAlternative")}
               </button>
             </div>
-          );
+          )
         }
         return (
           <div className="condition-row" key={index}>
             <select
               value={asString(item.target) || "self"}
-              onChange={(event) => updateLeaf(index, "target", event.target.value)}
+              onChange={event => updateLeaf(index, "target", event.target.value)}
             >
-              {conditionTargets.map((target) => (
+              {conditionTargets.map(target => (
                 <option key={target}>{target}</option>
               ))}
             </select>
             <input
               value={asString(item.value)}
               placeholder={t("ui.app.value")}
-              onChange={(event) => updateLeaf(index, "value", event.target.value)}
+              onChange={event => updateLeaf(index, "value", event.target.value)}
             />
             <button type="button" aria-label={t("ui.app.removeCondition")} onClick={() => remove(index)}>
               <UiIcon name="close" />
             </button>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 function NumberField({ label, value, onChange }: { label: string; value: unknown; onChange: (value: number) => void }) {
@@ -4289,10 +4399,10 @@ function NumberField({ label, value, onChange }: { label: string; value: unknown
         type="number"
         step="0.0001"
         value={typeof value === "number" ? value : ""}
-        onChange={(event) => onChange(Number(event.target.value))}
+        onChange={event => onChange(Number(event.target.value))}
       />
     </label>
-  );
+  )
 }
 
 function ActionDetails({
@@ -4300,45 +4410,41 @@ function ActionDetails({
   onChange,
   skillIds,
 }: {
-  item: EditableObject;
-  onChange: (item: EditableObject) => void;
-  skillIds: string[];
+  item: EditableObject
+  onChange: (item: EditableObject) => void
+  skillIds: string[]
 }) {
-  const type = asString(item.type) || "damage";
-  const isResourceAction = type === "setResource" || type === "addResource" || type === "consumeResource";
-  const set = (field: string, value: unknown) => onChange(updateObjectField(item, field, value));
+  const type = asString(item.type) || "damage"
+  const isResourceAction = type === "setResource" || type === "addResource" || type === "consumeResource"
+  const set = (field: string, value: unknown) => onChange(updateObjectField(item, field, value))
   const consumeValueObject =
     item.value && typeof item.value === "object" && !Array.isArray(item.value)
       ? (item.value as EditableObject)
-      : undefined;
-  const firstConsume = consumeValueObject?.operator === "first";
-  const consumeResolvesAtSkillStart = firstConsume && consumeValueObject.resolveAt === "skillStart";
+      : undefined
+  const firstConsume = consumeValueObject?.operator === "first"
+  const consumeResolvesAtSkillStart = firstConsume && consumeValueObject.resolveAt === "skillStart"
   const requirementObject =
     item.requirement && typeof item.requirement === "object" && !Array.isArray(item.requirement)
       ? (item.requirement as EditableObject)
-      : undefined;
+      : undefined
   const requirementResolvesAtSkillStart =
-    requirementObject?.resolveAt === "skillStart" && Array.isArray(requirementObject.operand);
+    requirementObject?.resolveAt === "skillStart" && Array.isArray(requirementObject.operand)
   const consumeText = firstConsume
     ? Array.isArray(consumeValueObject?.operand)
       ? (consumeValueObject.operand as unknown[]).map(asString).join(", ")
       : ""
-    : asString(item.value);
+    : asString(item.value)
   function setConsumeMode(mode: string) {
     const current = consumeText
       .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
+      .map(value => value.trim())
+      .filter(Boolean)
     set(
       "value",
       mode === "first"
-        ? {
-            operator: "first",
-            operand: current,
-            ...(consumeResolvesAtSkillStart ? { resolveAt: "skillStart" } : {}),
-          }
+        ? { operator: "first", operand: current, ...(consumeResolvesAtSkillStart ? { resolveAt: "skillStart" } : {}) }
         : (current[0] ?? ""),
-    );
+    )
   }
   function setConsumeText(value: string) {
     set(
@@ -4348,90 +4454,90 @@ function ActionDetails({
             operator: "first",
             operand: value
               .split(",")
-              .map((part) => part.trim())
+              .map(part => part.trim())
               .filter(Boolean),
             ...(consumeResolvesAtSkillStart ? { resolveAt: "skillStart" } : {}),
           }
         : value,
-    );
+    )
   }
   function setConsumeResolveAtSkillStart(enabled: boolean) {
-    if (!firstConsume) return;
-    const nextValue = { ...consumeValueObject };
-    if (enabled) nextValue.resolveAt = "skillStart";
-    else delete nextValue.resolveAt;
-    set("value", nextValue);
+    if (!firstConsume) return
+    const nextValue = { ...consumeValueObject }
+    if (enabled) nextValue.resolveAt = "skillStart"
+    else delete nextValue.resolveAt
+    set("value", nextValue)
   }
   function setRequirementResolveAtSkillStart(enabled: boolean) {
     const operand = requirementResolvesAtSkillStart
       ? (requirementObject?.operand as unknown[])
       : Array.isArray(item.requirement)
         ? item.requirement
-        : [];
-    set("requirement", enabled ? { resolveAt: "skillStart", operand } : operand);
+        : []
+    set("requirement", enabled ? { resolveAt: "skillStart", operand } : operand)
   }
   return (
     <div className="structured-detail">
       <div className="detail-fields">
         <label className="detail-field">
           <span>{t("ui.app.type")}</span>
-          <select value={type} onChange={(event) => set("type", event.target.value)}>
-            {actionTypes.map((actionType) => (
+          <select value={type} onChange={event => set("type", event.target.value)}>
+            {actionTypes.map(actionType => (
               <option key={actionType}>{actionType}</option>
             ))}
           </select>
         </label>
-        <NumberField label={t("ui.app.time")} value={item.time} onChange={(value) => set("time", value)} />
+        <NumberField label={t("ui.app.time")} value={item.time} onChange={value => set("time", value)} />
       </div>
       {(type === "damage" || type === "heal") && (
         <div className="detail-fields detail-fields-four">
           <NumberField
             label={t("ui.app.physicalCoefficient")}
             value={item.phyCoef}
-            onChange={(value) => set("phyCoef", value)}
+            onChange={value => set("phyCoef", value)}
           />
           {type === "heal" ? (
             <NumberField
               label={t("ui.app.silkbindCoefficient")}
               value={item.silkbindCoef}
-              onChange={(value) => set("silkbindCoef", value)}
+              onChange={value => set("silkbindCoef", value)}
             />
           ) : (
             <NumberField
               label={t("ui.app.attributeCoefficient")}
               value={item.attrCoef}
-              onChange={(value) => set("attrCoef", value)}
+              onChange={value => set("attrCoef", value)}
             />
           )}
           <NumberField
             label={t("ui.app.physicalBonus")}
             value={item.phyBonus}
-            onChange={(value) => set("phyBonus", value)}
+            onChange={value => set("phyBonus", value)}
           />
           <NumberField
             label={t("ui.app.attributeBonus")}
             value={item.attrBonus}
-            onChange={(value) => set("attrBonus", value)}
+            onChange={value => set("attrBonus", value)}
           />
         </div>
       )}
       {type === "replay" && (
         <div className="detail-fields">
-          <NumberField label={t("ui.app.coefficient")} value={item.coef} onChange={(value) => set("coef", value)} />
+          <NumberField label={t("ui.app.coefficient")} value={item.coef} onChange={value => set("coef", value)} />
         </div>
       )}
       {(type === "apply" || type === "extend" || type === "clearCD") && (
         <div className="detail-fields">
           <label className="detail-field">
             <span>{t("ui.app.target")}</span>
-            <select value={asString(item.target) || "self"} onChange={(event) => set("target", event.target.value)}>
+            <select value={asString(item.target) || "self"} onChange={event => set("target", event.target.value)}>
               <option value="self">{"self"}</option>
               <option value="target">{"target"}</option>
             </select>
           </label>
           <label className="detail-field">
             <span>{t("ui.app.value")}</span>
-            <input value={asString(item.value)} onChange={(event) => set("value", event.target.value)} />
+            <input value={asString(item.value)} onChange={event => set("value", event.target.value)} />
           </label>
         </div>
       )}
@@ -4439,21 +4545,21 @@ function ActionDetails({
         <div className="detail-fields consume-fields">
           <label className="detail-field">
             <span>{t("ui.app.target")}</span>
-            <select value={asString(item.target) || "self"} onChange={(event) => set("target", event.target.value)}>
+            <select value={asString(item.target) || "self"} onChange={event => set("target", event.target.value)}>
               <option value="self">{"self"}</option>
               <option value="target">{"target"}</option>
             </select>
           </label>
           <label className="detail-field">
             <span>{t("ui.app.valueMode")}</span>
-            <select value={firstConsume ? "first" : "name"} onChange={(event) => setConsumeMode(event.target.value)}>
+            <select value={firstConsume ? "first" : "name"} onChange={event => setConsumeMode(event.target.value)}>
               <option value="name">{t("ui.app.singleName")}</option>
               <option value="first">{t("ui.app.firstAvailable")}</option>
             </select>
           </label>
           <label className="detail-field consume-value-field">
             <span>{firstConsume ? t("ui.app.valuesCommaSeparated") : t("ui.app.value")}</span>
-            <input value={consumeText} onChange={(event) => setConsumeText(event.target.value)} />
+            <input value={consumeText} onChange={event => setConsumeText(event.target.value)} />
           </label>
         </div>
       )}
@@ -4461,7 +4567,7 @@ function ActionDetails({
         <div className="detail-fields">
           <label className="detail-field">
             <span>{t("ui.app.value")}</span>
-            <input value={asString(item.value)} onChange={(event) => set("value", event.target.value)} />
+            <input value={asString(item.value)} onChange={event => set("value", event.target.value)} />
           </label>
           {type === "consumeResource" && item.amount === "all" ? (
             <label className="checkbox-field">
@@ -4470,7 +4576,7 @@ function ActionDetails({
             </label>
           ) : (
             <>
-              <NumberField label={t("ui.app.amount")} value={item.amount} onChange={(value) => set("amount", value)} />
+              <NumberField label={t("ui.app.amount")} value={item.amount} onChange={value => set("amount", value)} />
               {type === "consumeResource" && (
                 <label className="checkbox-field">
                   <input type="checkbox" checked={false} onChange={() => set("amount", "all")} />
@@ -4488,7 +4594,7 @@ function ActionDetails({
               <input
                 type="checkbox"
                 checked={item.stack === "all"}
-                onChange={(event) => set("stack", event.target.checked ? "all" : 1)}
+                onChange={event => set("stack", event.target.checked ? "all" : 1)}
               />
               <span>{t("ui.app.allStacks")}</span>
             </label>
@@ -4498,20 +4604,20 @@ function ActionDetails({
               <input
                 type="checkbox"
                 checked={consumeResolvesAtSkillStart}
-                onChange={(event) => setConsumeResolveAtSkillStart(event.target.checked)}
+                onChange={event => setConsumeResolveAtSkillStart(event.target.checked)}
               />
               <span>{t("ui.app.resolveAtSkillStart")}</span>
             </label>
           )}
           {item.stack !== "all" && (
-            <NumberField label={t("ui.app.stack")} value={item.stack} onChange={(value) => set("stack", value)} />
+            <NumberField label={t("ui.app.stack")} value={item.stack} onChange={value => set("stack", value)} />
           )}
           {type === "apply" && (
             <label className="checkbox-field">
               <input
                 type="checkbox"
                 checked={item.reapply === true}
-                onChange={(event) => set("reapply", event.target.checked)}
+                onChange={event => set("reapply", event.target.checked)}
               />
               <span>{t("ui.app.reapply")}</span>
             </label>
@@ -4519,14 +4625,14 @@ function ActionDetails({
         </div>
       )}
       {(type === "apply" || type === "extend") && (
-        <NumberField label={t("ui.app.duration")} value={item.duration} onChange={(value) => set("duration", value)} />
+        <NumberField label={t("ui.app.duration")} value={item.duration} onChange={value => set("duration", value)} />
       )}
       {type === "trigger" && (
         <label className="detail-field">
           <span>{t("ui.app.triggeredSkill")}</span>
-          <select value={asString(item.value)} onChange={(event) => set("value", event.target.value)}>
+          <select value={asString(item.value)} onChange={event => set("value", event.target.value)}>
             <option value="">{t("ui.app.selectASkill")}</option>
-            {skillIds.map((skillId) => (
+            {skillIds.map(skillId => (
               <option key={skillId}>{skillId}</option>
             ))}
           </select>
@@ -4538,39 +4644,37 @@ function ActionDetails({
             <input
               type="checkbox"
               checked={requirementResolvesAtSkillStart}
-              onChange={(event) => setRequirementResolveAtSkillStart(event.target.checked)}
+              onChange={event => setRequirementResolveAtSkillStart(event.target.checked)}
             />
             <span>{t("ui.app.resolveAtSkillStart")}</span>
           </label>
-          <RequirementEditor value={item.requirement} onChange={(value) => set("requirement", value)} />
+          <RequirementEditor value={item.requirement} onChange={value => set("requirement", value)} />
         </>
       )}
     </div>
-  );
+  )
 }
 
 function ModifierDetails({ item, onChange }: { item: EditableObject; onChange: (item: EditableObject) => void }) {
-  const set = (field: string, value: unknown) => onChange(updateObjectField(item, field, value));
+  const set = (field: string, value: unknown) => onChange(updateObjectField(item, field, value))
   const effect =
-    item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
-      ? (item.effect as EditableObject)
-      : {};
-  const effectEntries = Object.entries(effect);
+    item.effect && typeof item.effect === "object" && !Array.isArray(item.effect) ? (item.effect as EditableObject) : {}
+  const effectEntries = Object.entries(effect)
   function updateEffect(field: string, value: unknown) {
-    set("effect", { ...effect, [field]: value });
+    set("effect", { ...effect, [field]: value })
   }
   function addEffect() {
-    const field = effectFields.find((candidate) => !(candidate in effect));
-    if (field) updateEffect(field, booleanEffectFields.has(field) ? false : 0);
+    const field = effectFields.find(candidate => !(candidate in effect))
+    if (field) updateEffect(field, booleanEffectFields.has(field) ? false : 0)
   }
   function removeEffect(field: string) {
-    const next = { ...effect };
-    delete next[field];
-    set("effect", next);
+    const next = { ...effect }
+    delete next[field]
+    set("effect", next)
   }
   return (
     <div className="structured-detail">
-      <RequirementEditor value={item.requirement} onChange={(value) => set("requirement", value)} />
+      <RequirementEditor value={item.requirement} onChange={value => set("requirement", value)} />
       <div className="sub-editor-heading">
         <span>{t("ui.app.effects")}</span>
         <button className="button button-small" type="button" onClick={addEffect}>
@@ -4581,37 +4685,37 @@ function ModifierDetails({ item, onChange }: { item: EditableObject; onChange: (
         <div className="effect-row" key={field}>
           <select
             value={field}
-            onChange={(event) => {
-              const next = { ...effect };
-              const nextField = event.target.value;
+            onChange={event => {
+              const next = { ...effect }
+              const nextField = event.target.value
               if (nextField !== field) {
-                next[nextField] = next[field];
-                delete next[field];
-                set("effect", next);
+                next[nextField] = next[field]
+                delete next[field]
+                set("effect", next)
               }
             }}
           >
             {!effectFields.includes(field) && <option value={field}>{field}</option>}
-            {effectFields.map((effectField) => (
+            {effectFields.map(effectField => (
               <option key={effectField}>{effectField}</option>
             ))}
           </select>
-          <EffectValueEditor value={value} onChange={(nextValue) => updateEffect(field, nextValue)} />
+          <EffectValueEditor value={value} onChange={nextValue => updateEffect(field, nextValue)} />
           <button type="button" aria-label={t("ui.app.removeEffect")} onClick={() => removeEffect(field)}>
             <UiIcon name="close" />
           </button>
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 function DynamicByStackValueEditor({
   value,
   onChange,
 }: {
-  value: EditableObject;
-  onChange: (value: EditableObject) => void;
+  value: EditableObject
+  onChange: (value: EditableObject) => void
 }) {
   return (
     <div className="dynamic-effect-editor">
@@ -4619,7 +4723,7 @@ function DynamicByStackValueEditor({
         <span>{t("ui.app.effect")}</span>
         <input
           value={asString(value.param1)}
-          onChange={(event) => onChange({ ...value, function: "byStack", param1: event.target.value })}
+          onChange={event => onChange({ ...value, function: "byStack", param1: event.target.value })}
         />
       </label>
       <label className="detail-field">
@@ -4628,29 +4732,29 @@ function DynamicByStackValueEditor({
           type="number"
           step="0.0001"
           value={typeof value.param2 === "number" ? value.param2 : ""}
-          onChange={(event) => onChange({ ...value, function: "byStack", param2: Number(event.target.value) })}
+          onChange={event => onChange({ ...value, function: "byStack", param2: Number(event.target.value) })}
         />
       </label>
       <label className="detail-field">
         <span>{t("ui.app.target")}</span>
         <select
           value={value.target === "target" ? "target" : "self"}
-          onChange={(event) => onChange({ ...value, function: "byStack", target: event.target.value })}
+          onChange={event => onChange({ ...value, function: "byStack", target: event.target.value })}
         >
           <option value="self">{"self"}</option>
           <option value="target">{"target"}</option>
         </select>
       </label>
     </div>
-  );
+  )
 }
 
 function DynamicMultiplyValueEditor({
   value,
   onChange,
 }: {
-  value: EditableObject;
-  onChange: (value: EditableObject) => void;
+  value: EditableObject
+  onChange: (value: EditableObject) => void
 }) {
   return (
     <div className="dynamic-effect-editor">
@@ -4658,7 +4762,7 @@ function DynamicMultiplyValueEditor({
         <span>{t("ui.app.parameter")}</span>
         <input
           value={asString(value.param1)}
-          onChange={(event) => onChange({ ...value, function: "multiply", param1: event.target.value })}
+          onChange={event => onChange({ ...value, function: "multiply", param1: event.target.value })}
         />
       </label>
       <label className="detail-field">
@@ -4667,31 +4771,31 @@ function DynamicMultiplyValueEditor({
           type="number"
           step="0.0001"
           value={typeof value.param2 === "number" || typeof value.param2 === "string" ? value.param2 : ""}
-          onChange={(event) => onChange({ ...value, function: "multiply", param2: Number(event.target.value) })}
+          onChange={event => onChange({ ...value, function: "multiply", param2: Number(event.target.value) })}
         />
       </label>
     </div>
-  );
+  )
 }
 
 function DynamicSegmentValueEditor({
   value,
   onChange,
 }: {
-  value: EditableObject;
-  onChange: (value: EditableObject) => void;
+  value: EditableObject
+  onChange: (value: EditableObject) => void
 }) {
-  const thresholds = Array.isArray(value.param2) ? value.param2.map((item) => asNumber(item)) : [];
-  const results = Array.isArray(value.param3) ? value.param3.map((item) => asNumber(item)) : [];
+  const thresholds = Array.isArray(value.param2) ? value.param2.map(item => asNumber(item)) : []
+  const results = Array.isArray(value.param3) ? value.param3.map(item => asNumber(item)) : []
   const resizeResults = (nextThresholds: number[]) =>
-    Array.from({ length: nextThresholds.length + 1 }, (_, index) => results[index] ?? 0);
+    Array.from({ length: nextThresholds.length + 1 }, (_, index) => results[index] ?? 0)
   return (
     <div className="dynamic-effect-editor">
       <label className="detail-field">
         <span>{t("ui.app.parameter")}</span>
         <input
           value={typeof value.param1 === "number" ? value.param1 : asString(value.param1)}
-          onChange={(event) => onChange({ ...value, function: "segment", param1: event.target.value })}
+          onChange={event => onChange({ ...value, function: "segment", param1: event.target.value })}
         />
       </label>
       <div className="sub-editor-heading">
@@ -4700,8 +4804,8 @@ function DynamicSegmentValueEditor({
           className="button button-small"
           type="button"
           onClick={() => {
-            const nextThresholds = [...thresholds, 0];
-            onChange({ ...value, function: "segment", param2: nextThresholds, param3: resizeResults(nextThresholds) });
+            const nextThresholds = [...thresholds, 0]
+            onChange({ ...value, function: "segment", param2: nextThresholds, param3: resizeResults(nextThresholds) })
           }}
         >
           {t("ui.app.add")}
@@ -4715,7 +4819,7 @@ function DynamicSegmentValueEditor({
               type="number"
               step="0.0001"
               value={item}
-              onChange={(event) =>
+              onChange={event =>
                 onChange({
                   ...value,
                   function: "segment",
@@ -4729,8 +4833,8 @@ function DynamicSegmentValueEditor({
               type="button"
               aria-label={t("ui.app.removeThresholdNumber", { number: index + 1 })}
               onClick={() => {
-                const nextThresholds = thresholds.filter((_, thresholdIndex) => thresholdIndex !== index);
-                const nextResults = results.filter((_, resultIndex) => resultIndex !== index);
+                const nextThresholds = thresholds.filter((_, thresholdIndex) => thresholdIndex !== index)
+                const nextResults = results.filter((_, resultIndex) => resultIndex !== index)
                 onChange({
                   ...value,
                   function: "segment",
@@ -4739,7 +4843,7 @@ function DynamicSegmentValueEditor({
                     { length: nextThresholds.length + 1 },
                     (_, resultIndex) => nextResults[resultIndex] ?? 0,
                   ),
-                });
+                })
               }}
             >
               <UiIcon name="close" />
@@ -4758,7 +4862,7 @@ function DynamicSegmentValueEditor({
               type="number"
               step="0.0001"
               value={item}
-              onChange={(event) =>
+              onChange={event =>
                 onChange({
                   ...value,
                   function: "segment",
@@ -4772,16 +4876,16 @@ function DynamicSegmentValueEditor({
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function EffectValueEditor({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) {
   const objectValue =
-    value && typeof value === "object" && !Array.isArray(value) ? (value as EditableObject) : undefined;
+    value && typeof value === "object" && !Array.isArray(value) ? (value as EditableObject) : undefined
   const dynamicValue =
     objectValue?.function === "byStack" || objectValue?.function === "segment" || objectValue?.function === "multiply"
       ? objectValue
-      : undefined;
+      : undefined
   const kind =
     dynamicValue?.function === "byStack"
       ? "byStack"
@@ -4793,14 +4897,14 @@ function EffectValueEditor({ value, onChange }: { value: unknown; onChange: (val
             ? "boolean"
             : typeof value === "string"
               ? "text"
-              : "number";
+              : "number"
   return (
     <div className="effect-value-editor">
       <select
         aria-label={t("ui.app.effectValueType")}
         value={kind}
-        onChange={(event) => {
-          const nextKind = event.target.value;
+        onChange={event => {
+          const nextKind = event.target.value
           onChange(
             nextKind === "byStack"
               ? { function: "byStack", param1: "", param2: 0.2, target: "self" }
@@ -4813,7 +4917,7 @@ function EffectValueEditor({ value, onChange }: { value: unknown; onChange: (val
                     : nextKind === "text"
                       ? ""
                       : 0,
-          );
+          )
         }}
       >
         <option value="number">{"number"}</option>
@@ -4831,7 +4935,7 @@ function EffectValueEditor({ value, onChange }: { value: unknown; onChange: (val
         <DynamicMultiplyValueEditor value={dynamicValue} onChange={onChange} />
       ) : kind === "boolean" ? (
         <label className="checkbox-field">
-          <input type="checkbox" checked={value === true} onChange={(event) => onChange(event.target.checked)} />
+          <input type="checkbox" checked={value === true} onChange={event => onChange(event.target.checked)} />
           <span>{value === true ? "true" : "false"}</span>
         </label>
       ) : (
@@ -4839,38 +4943,38 @@ function EffectValueEditor({ value, onChange }: { value: unknown; onChange: (val
           type={kind === "number" ? "number" : "text"}
           step={kind === "number" ? "0.0001" : undefined}
           value={kind === "number" ? (typeof value === "number" ? value : "") : asString(value)}
-          onChange={(event) => onChange(kind === "number" ? Number(event.target.value) : event.target.value)}
+          onChange={event => onChange(kind === "number" ? Number(event.target.value) : event.target.value)}
         />
       )}
     </div>
-  );
+  )
 }
 
 function EffectRuleDetails({ item, onChange }: { item: EditableObject; onChange: (item: EditableObject) => void }) {
-  const wrapped = item.effect && typeof item.effect === "object" && !Array.isArray(item.effect);
+  const wrapped = item.effect && typeof item.effect === "object" && !Array.isArray(item.effect)
   const effect = wrapped
     ? (item.effect as EditableObject)
-    : Object.fromEntries(Object.entries(item).filter(([field]) => field !== "requirement"));
-  const effectEntries = Object.entries(effect);
+    : Object.fromEntries(Object.entries(item).filter(([field]) => field !== "requirement"))
+  const effectEntries = Object.entries(effect)
   function setEffect(nextEffect: EditableObject) {
-    if (wrapped) onChange({ ...item, effect: nextEffect });
-    else onChange({ ...(Array.isArray(item.requirement) ? { requirement: item.requirement } : {}), ...nextEffect });
+    if (wrapped) onChange({ ...item, effect: nextEffect })
+    else onChange({ ...(Array.isArray(item.requirement) ? { requirement: item.requirement } : {}), ...nextEffect })
   }
   function updateEffect(field: string, value: unknown) {
-    setEffect({ ...effect, [field]: value });
+    setEffect({ ...effect, [field]: value })
   }
   function addEffect() {
-    const field = effectFields.find((candidate) => !(candidate in effect));
-    if (field) updateEffect(field, booleanEffectFields.has(field) ? false : 0);
+    const field = effectFields.find(candidate => !(candidate in effect))
+    if (field) updateEffect(field, booleanEffectFields.has(field) ? false : 0)
   }
   function removeEffect(field: string) {
-    const next = { ...effect };
-    delete next[field];
-    setEffect(next);
+    const next = { ...effect }
+    delete next[field]
+    setEffect(next)
   }
   return (
     <div className="structured-detail">
-      <RequirementEditor value={item.requirement} onChange={(requirement) => onChange({ ...item, requirement })} />
+      <RequirementEditor value={item.requirement} onChange={requirement => onChange({ ...item, requirement })} />
       <div className="sub-editor-heading">
         <span>
           {t("ui.app.effects")} <small>({wrapped ? t("ui.app.wrapped") : t("ui.app.direct")})</small>
@@ -4884,22 +4988,22 @@ function EffectRuleDetails({ item, onChange }: { item: EditableObject; onChange:
         <div className="effect-row effect-rule-row" key={field}>
           <select
             value={field}
-            onChange={(event) => {
-              const next = { ...effect };
-              const nextField = event.target.value;
+            onChange={event => {
+              const next = { ...effect }
+              const nextField = event.target.value
               if (nextField !== field) {
-                next[nextField] = next[field];
-                delete next[field];
-                setEffect(next);
+                next[nextField] = next[field]
+                delete next[field]
+                setEffect(next)
               }
             }}
           >
             {!effectFields.includes(field) && <option value={field}>{field}</option>}
-            {effectFields.map((effectField) => (
+            {effectFields.map(effectField => (
               <option key={effectField}>{effectField}</option>
             ))}
           </select>
-          <EffectValueEditor value={value} onChange={(nextValue) => updateEffect(field, nextValue)} />
+          <EffectValueEditor value={value} onChange={nextValue => updateEffect(field, nextValue)} />
           <button
             type="button"
             aria-label={t("ui.app.removeNamedEffect", { name: field })}
@@ -4910,7 +5014,7 @@ function EffectRuleDetails({ item, onChange }: { item: EditableObject; onChange:
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 function ArrayItemEditor({
@@ -4920,39 +5024,39 @@ function ArrayItemEditor({
   onChange,
   skillIds,
 }: {
-  label: string;
-  kind: "action" | "modifier" | "effect";
-  items: EditableObject[];
-  onChange: (items: EditableObject[]) => void;
-  skillIds: string[];
+  label: string
+  kind: "action" | "modifier" | "effect"
+  items: EditableObject[]
+  onChange: (items: EditableObject[]) => void
+  skillIds: string[]
 }) {
-  const [expanded, setExpanded] = useState<number | null>(items.length ? 0 : null);
+  const [expanded, setExpanded] = useState<number | null>(items.length ? 0 : null)
 
   function updateItem(index: number, value: EditableObject) {
-    const next = [...items];
-    next[index] = value;
-    onChange(next);
+    const next = [...items]
+    next[index] = value
+    onChange(next)
   }
 
   function addItem() {
-    const item: EditableObject = kind === "action" ? { type: "damage", time: 0 } : { requirement: [], effect: {} };
-    const next = [...items, item];
-    onChange(next);
-    setExpanded(next.length - 1);
+    const item: EditableObject = kind === "action" ? { type: "damage", time: 0 } : { requirement: [], effect: {} }
+    const next = [...items, item]
+    onChange(next)
+    setExpanded(next.length - 1)
   }
 
   function moveItem(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= items.length) return;
-    const next = [...items];
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
-    setExpanded(target);
+    const target = index + direction
+    if (target < 0 || target >= items.length) return
+    const next = [...items]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    onChange(next)
+    setExpanded(target)
   }
 
   function deleteItem(index: number) {
-    onChange(items.filter((_, itemIndex) => itemIndex !== index));
-    setExpanded(null);
+    onChange(items.filter((_, itemIndex) => itemIndex !== index))
+    setExpanded(null)
   }
 
   return (
@@ -5005,20 +5109,20 @@ function ArrayItemEditor({
               {expanded === index && (
                 <div className="array-item-detail">
                   {kind === "action" ? (
-                    <ActionDetails item={item} onChange={(next) => updateItem(index, next)} skillIds={skillIds} />
+                    <ActionDetails item={item} onChange={next => updateItem(index, next)} skillIds={skillIds} />
                   ) : kind === "modifier" ? (
-                    <ModifierDetails item={item} onChange={(next) => updateItem(index, next)} />
+                    <ModifierDetails item={item} onChange={next => updateItem(index, next)} />
                   ) : (
-                    <EffectRuleDetails item={item} onChange={(next) => updateItem(index, next)} />
+                    <EffectRuleDetails item={item} onChange={next => updateItem(index, next)} />
                   )}
                 </div>
               )}
             </div>
-          );
+          )
         })}
       </div>
     </section>
-  );
+  )
 }
 
 function StackEffectsEditor({
@@ -5026,18 +5130,18 @@ function StackEffectsEditor({
   onChange,
   skillIds,
 }: {
-  groups: EditableObject[][];
-  onChange: (groups: EditableObject[][]) => void;
-  skillIds: string[];
+  groups: EditableObject[][]
+  onChange: (groups: EditableObject[][]) => void
+  skillIds: string[]
 }) {
-  const [expanded, setExpanded] = useState<number | null>(groups.length ? 0 : null);
+  const [expanded, setExpanded] = useState<number | null>(groups.length ? 0 : null)
   function moveGroup(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= groups.length) return;
-    const next = [...groups];
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
-    setExpanded(target);
+    const target = index + direction
+    if (target < 0 || target >= groups.length) return
+    const next = [...groups]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    onChange(next)
+    setExpanded(target)
   }
   return (
     <section className="array-editor stack-effects-editor">
@@ -5047,9 +5151,9 @@ function StackEffectsEditor({
           className="button button-small"
           type="button"
           onClick={() => {
-            const next = [...groups, []];
-            onChange(next);
-            setExpanded(next.length - 1);
+            const next = [...groups, []]
+            onChange(next)
+            setExpanded(next.length - 1)
           }}
         >
           {t("ui.app.addStack")}
@@ -5089,8 +5193,8 @@ function StackEffectsEditor({
                   type="button"
                   aria-label={t("ui.app.deleteStack")}
                   onClick={() => {
-                    onChange(groups.filter((_, groupIndex) => groupIndex !== index));
-                    setExpanded(null);
+                    onChange(groups.filter((_, groupIndex) => groupIndex !== index))
+                    setExpanded(null)
                   }}
                 >
                   <UiIcon name="close" />
@@ -5104,7 +5208,7 @@ function StackEffectsEditor({
                   kind="effect"
                   items={group}
                   skillIds={skillIds}
-                  onChange={(items) =>
+                  onChange={items =>
                     onChange(groups.map((candidate, groupIndex) => (groupIndex === index ? items : candidate)))
                   }
                 />
@@ -5114,7 +5218,7 @@ function StackEffectsEditor({
         ))}
       </div>
     </section>
-  );
+  )
 }
 
 function SkillEditorTab({
@@ -5122,64 +5226,73 @@ function SkillEditorTab({
   overrides,
   onOverridesChange,
 }: {
-  weapons: [WeaponId, WeaponId];
-  overrides: SkillOverrides;
-  onOverridesChange: (overrides: SkillOverrides) => void;
+  weapons: [WeaponId, WeaponId]
+  overrides: SkillOverrides
+  onOverridesChange: (overrides: SkillOverrides) => void
 }) {
-  const [category, setCategory] = useState<EditorCategory>("Snowparting");
-  const [selectedSkill, setSelectedSkill] = useState(Object.keys(defaultEditorMaps.Snowparting)[0]);
-  const [draft, setDraft] = useState(() => skillToDraft(defaultEditorMaps.Snowparting[selectedSkill]));
-  const [error, setError] = useState("");
+  const [category, setCategory] = useState<EditorCategory>("Snowparting")
+  const [selectedSkill, setSelectedSkill] = useState(Object.keys(defaultEditorMaps.Snowparting)[0])
+  const [draft, setDraft] = useState(() => skillToDraft(defaultEditorMaps.Snowparting[selectedSkill]))
+  const [error, setError] = useState("")
   const setStatus = (message: string) => {
-    if (message) publishNotice({ id: "skill-save", message });
-    else dismissNotice("skill-save");
-  };
+    if (message) publishNotice({ id: "skill-save", message })
+    else dismissNotice("skill-save")
+  }
 
-  const skills = useMemo(() => ({ ...defaultEditorMaps[category], ...overrides[category] }), [category, overrides]);
-  const skillIds = useMemo(() => Object.keys(skills), [skills]);
-  const editorModified = hasSkillOverrides(overrides);
+  const skills = useMemo(() => ({ ...defaultEditorMaps[category], ...overrides[category] }), [category, overrides])
+  const skillIds = useMemo(() => Object.keys(skills), [skills])
+  const editorModified = hasSkillOverrides(overrides)
   const visibleCategories = useMemo<EditorCategory[]>(() => {
-    const martialCategories = weapons.flatMap((weapon) => {
-      const item = skillCategoryByWeapon[weapon];
-      return item ? [item] : [];
-    });
+    const martialCategories = weapons.flatMap(weapon => {
+      const item = skillCategoryByWeapon[weapon]
+      return item ? [item] : []
+    })
     return [
       ...new Set<EditorCategory>([...martialCategories, "Mystic", "General", "Buff", "Debuff", "DOT"]),
-    ] as EditorCategory[];
-  }, [weapons]);
+    ] as EditorCategory[]
+  }, [weapons])
 
+  if (!visibleCategories.includes(category)) setCategory(visibleCategories[0])
+  const [prevSkillCategory, setPrevSkillCategory] = useState(category)
+  if (prevSkillCategory !== category) {
+    setPrevSkillCategory(category)
+    setSelectedSkill(Object.keys(defaultEditorMaps[category])[0])
+  }
+  const [draftSkillSource, setDraftSkillSource] = useState<{
+    selectedSkill: string
+    skills: typeof skills
+    skillIds: string[]
+  } | null>(null)
+  const draftSkill = skills[selectedSkill] ?? skills[skillIds[0]]
+  if (
+    draftSkill &&
+    (draftSkillSource === null ||
+      draftSkillSource.selectedSkill !== selectedSkill ||
+      draftSkillSource.skills !== skills ||
+      draftSkillSource.skillIds !== skillIds)
+  ) {
+    setDraftSkillSource({ selectedSkill, skills, skillIds })
+    setDraft(skillToDraft(draftSkill))
+    setError("")
+  }
   useEffect(() => {
-    if (!visibleCategories.includes(category)) setCategory(visibleCategories[0]);
-  }, [category, visibleCategories]);
-
-  useEffect(() => {
-    const firstSkill = Object.keys(defaultEditorMaps[category])[0];
-    setSelectedSkill(firstSkill);
-  }, [category]);
-
-  useEffect(() => {
-    const skill = skills[selectedSkill] ?? skills[skillIds[0]];
-    if (skill) {
-      setDraft(skillToDraft(skill));
-      setError("");
-      setStatus("");
-    }
-  }, [selectedSkill, skills, skillIds]);
+    dismissNotice("skill-save")
+  }, [draftSkillSource])
 
   function selectSkill(id: string) {
-    setSelectedSkill(id);
+    setSelectedSkill(id)
   }
 
   function save() {
     try {
-      const isDefinition = category === "Buff" || category === "Debuff";
+      const isDefinition = category === "Buff" || category === "Debuff"
       const optionalNumber = (value: string, label: string) => {
-        if (!value.trim()) return undefined;
-        const number = Number(value);
-        if (!Number.isFinite(number)) throw new Error(`${label} must be a number.`);
-        return number;
-      };
-      let updatedSkill: SkillRecord;
+        if (!value.trim()) return undefined
+        const number = Number(value)
+        if (!Number.isFinite(number)) throw new Error(`${label} must be a number.`)
+        return number
+      }
+      let updatedSkill: SkillRecord
       if (isDefinition) {
         updatedSkill = {
           ...skills[selectedSkill],
@@ -5191,31 +5304,31 @@ function SkillEditorTab({
           maxStack: optionalNumber(draft.maxStack, "Max stack"),
           effect: draft.effectItems,
           stackEffects: draft.stackEffectGroups,
-        };
-      } else {
-        const action = draft.actionItems;
-        const modifier = draft.modifierItems;
-        const actionTimes = action.map((item) => item.time);
-        if (actionTimes.some((time) => typeof time !== "number" || !Number.isFinite(time))) {
-          throw new Error("Every action must have a numeric time.");
         }
-        const numericActionTimes = actionTimes as number[];
+      } else {
+        const action = draft.actionItems
+        const modifier = draft.modifierItems
+        const actionTimes = action.map(item => item.time)
+        if (actionTimes.some(time => typeof time !== "number" || !Number.isFinite(time))) {
+          throw new Error("Every action must have a numeric time.")
+        }
+        const numericActionTimes = actionTimes as number[]
         const firstOutOfOrder = numericActionTimes.findIndex(
           (time, index) => index > 0 && time < numericActionTimes[index - 1],
-        );
+        )
         if (firstOutOfOrder !== -1) {
           throw new Error(
             `Actions are out of order: action ${firstOutOfOrder + 1} occurs before action ${firstOutOfOrder}.`,
-          );
+          )
         }
-        const parsedCastTime = category === "DOT" ? undefined : Number(draft.castTime);
+        const parsedCastTime = category === "DOT" ? undefined : Number(draft.castTime)
         if (parsedCastTime !== undefined && !Number.isFinite(parsedCastTime))
-          throw new Error("Cast time must be a number.");
-        const originalFallback = baseSkillCastTime({ castTime: draft.originalCastTime });
+          throw new Error("Cast time must be a number.")
+        const originalFallback = baseSkillCastTime({ castTime: draft.originalCastTime })
         const castTime =
           parsedCastTime !== undefined && draft.castTime === String(originalFallback)
             ? draft.originalCastTime
-            : parsedCastTime;
+            : parsedCastTime
         updatedSkill = {
           ...skills[selectedSkill],
           name: draft.name,
@@ -5226,7 +5339,7 @@ function SkillEditorTab({
           modifier,
           tags: draft.tags
             .split(",")
-            .map((tag) => tag.trim())
+            .map(tag => tag.trim())
             .filter(Boolean),
           ...(category === "DOT"
             ? {
@@ -5242,75 +5355,75 @@ function SkillEditorTab({
                 refresh: draft.refresh,
               }
             : {}),
-        };
+        }
       }
-      const nextCategoryOverrides = { ...overrides[category] };
+      const nextCategoryOverrides = { ...overrides[category] }
       if (JSON.stringify(updatedSkill) === JSON.stringify(defaultEditorMaps[category][selectedSkill])) {
-        delete nextCategoryOverrides[selectedSkill];
+        delete nextCategoryOverrides[selectedSkill]
       } else {
-        nextCategoryOverrides[selectedSkill] = updatedSkill;
+        nextCategoryOverrides[selectedSkill] = updatedSkill
       }
-      const nextOverrides: SkillOverrides = { ...overrides };
-      if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides;
-      else delete nextOverrides[category];
-      onOverridesChange(nextOverrides);
-      setStatus(t("ui.app.savedForThisSession"));
-      setError("");
+      const nextOverrides: SkillOverrides = { ...overrides }
+      if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides
+      else delete nextOverrides[category]
+      onOverridesChange(nextOverrides)
+      setStatus(t("ui.app.savedForThisSession"))
+      setError("")
     } catch (saveError) {
       publishNotice({
         id: "skill-save",
         error: true,
         message: saveError instanceof Error ? saveError.message : t("ui.app.recordSaveError"),
-      });
+      })
     }
   }
 
   function restoreDefault() {
-    const nextCategoryOverrides = { ...overrides[category] };
-    delete nextCategoryOverrides[selectedSkill];
-    const nextOverrides: SkillOverrides = { ...overrides };
-    if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides;
-    else delete nextOverrides[category];
-    onOverridesChange(nextOverrides);
-    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]));
-    setError("");
-    setStatus("");
+    const nextCategoryOverrides = { ...overrides[category] }
+    delete nextCategoryOverrides[selectedSkill]
+    const nextOverrides: SkillOverrides = { ...overrides }
+    if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides
+    else delete nextOverrides[category]
+    onOverridesChange(nextOverrides)
+    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]))
+    setError("")
+    setStatus("")
   }
 
   function restoreAllDefaults() {
-    onOverridesChange({});
-    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]));
-    setError("");
-    setStatus("");
+    onOverridesChange({})
+    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]))
+    setError("")
+    setStatus("")
   }
 
-  const isDefinitionCategory = category === "Buff" || category === "Debuff";
+  const isDefinitionCategory = category === "Buff" || category === "Debuff"
   const categoryLabel = (item: EditorCategory) => {
     switch (item) {
       case "Snowparting":
-        return "Snowparting Blade";
+        return "Snowparting Blade"
       case "Phalanxbane":
-        return "Phalanxbane Blade";
+        return "Phalanxbane Blade"
       case "Infernal":
-        return "Infernal Twinblades";
+        return "Infernal Twinblades"
       case "Mortal":
-        return "Mortal Rope Dart";
+        return "Mortal Rope Dart"
       case "Soulshade":
-        return "Soulshade Umbrella";
+        return "Soulshade Umbrella"
       case "Panacea":
-        return "Panacea Fan";
+        return "Panacea Fan"
       default:
-        return item;
+        return item
     }
-  };
+  }
 
   return (
     <>
       <section className="panel skill-editor-panel">
         <div className="skill-editor-toolbar">
           <div className="skill-category-tabs" role="tablist" aria-label={t("ui.app.skillCategories")}>
-            {visibleCategories.map((item) => {
-              const categoryModified = Object.keys(overrides[item] ?? {}).length > 0;
+            {visibleCategories.map(item => {
+              const categoryModified = Object.keys(overrides[item] ?? {}).length > 0
               return (
                 <button
                   key={item}
@@ -5320,7 +5433,7 @@ function SkillEditorTab({
                 >
                   {categoryLabel(item)}
                 </button>
-              );
+              )
             })}
           </div>
           <button
@@ -5334,7 +5447,7 @@ function SkillEditorTab({
         </div>
         <div className="skill-editor-layout">
           <aside className="skill-list" aria-label={t("ui.app.namedSkills", { name: category })}>
-            {skillIds.map((id) => (
+            {skillIds.map(id => (
               <button
                 key={id}
                 className={`skill-list-item ${selectedSkill === id ? "active" : ""} ${overrides[category]?.[id] ? "modified" : ""}`}
@@ -5358,7 +5471,7 @@ function SkillEditorTab({
                 <div className="skill-basic-fields definition-basic-fields">
                   <label className="editor-field">
                     <span>{t("ui.app.name")}</span>
-                    <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+                    <input value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} />
                   </label>
                   <label className="editor-field">
                     <span>{t("ui.app.maxStack")}</span>
@@ -5367,14 +5480,14 @@ function SkillEditorTab({
                       min="1"
                       step="1"
                       value={draft.maxStack}
-                      onChange={(event) => setDraft({ ...draft, maxStack: event.target.value })}
+                      onChange={event => setDraft({ ...draft, maxStack: event.target.value })}
                     />
                   </label>
                   <label className="editor-field editor-field-wide">
                     <span>{t("ui.app.description")}</span>
                     <input
                       value={draft.description}
-                      onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+                      onChange={event => setDraft({ ...draft, description: event.target.value })}
                     />
                   </label>
                   <label className="editor-field">
@@ -5384,7 +5497,7 @@ function SkillEditorTab({
                       min="0"
                       step="0.0001"
                       value={draft.duration}
-                      onChange={(event) => setDraft({ ...draft, duration: event.target.value })}
+                      onChange={event => setDraft({ ...draft, duration: event.target.value })}
                     />
                   </label>
                   <label className="editor-field">
@@ -5394,7 +5507,7 @@ function SkillEditorTab({
                       min="0"
                       step="0.0001"
                       value={draft.cooldown}
-                      onChange={(event) => setDraft({ ...draft, cooldown: event.target.value })}
+                      onChange={event => setDraft({ ...draft, cooldown: event.target.value })}
                     />
                   </label>
                   <label className="editor-field">
@@ -5402,7 +5515,7 @@ function SkillEditorTab({
                     <input
                       type="checkbox"
                       checked={draft.refresh}
-                      onChange={(event) => setDraft({ ...draft, refresh: event.target.checked })}
+                      onChange={event => setDraft({ ...draft, refresh: event.target.checked })}
                     />
                   </label>
                 </div>
@@ -5411,12 +5524,12 @@ function SkillEditorTab({
                     label={t("ui.app.effects")}
                     kind="effect"
                     items={draft.effectItems}
-                    onChange={(effectItems) => setDraft({ ...draft, effectItems })}
+                    onChange={effectItems => setDraft({ ...draft, effectItems })}
                     skillIds={editorSkillIds}
                   />
                   <StackEffectsEditor
                     groups={draft.stackEffectGroups}
-                    onChange={(stackEffectGroups) => setDraft({ ...draft, stackEffectGroups })}
+                    onChange={stackEffectGroups => setDraft({ ...draft, stackEffectGroups })}
                     skillIds={editorSkillIds}
                   />
                 </div>
@@ -5426,13 +5539,13 @@ function SkillEditorTab({
                 <div className="skill-basic-fields">
                   <label className="editor-field">
                     <span>{t("ui.app.name")}</span>
-                    <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+                    <input value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} />
                   </label>
                   <label className="editor-field">
                     <span>{t("ui.app.shortName")}</span>
                     <input
                       value={draft.shortName}
-                      onChange={(event) => setDraft({ ...draft, shortName: event.target.value })}
+                      onChange={event => setDraft({ ...draft, shortName: event.target.value })}
                     />
                   </label>
                   {category === "DOT" ? (
@@ -5444,7 +5557,7 @@ function SkillEditorTab({
                           min="0"
                           step="0.0001"
                           value={draft.periodicInterval}
-                          onChange={(event) => setDraft({ ...draft, periodicInterval: event.target.value })}
+                          onChange={event => setDraft({ ...draft, periodicInterval: event.target.value })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5454,7 +5567,7 @@ function SkillEditorTab({
                           min="0"
                           step="0.0001"
                           value={draft.firstTick}
-                          onChange={(event) => setDraft({ ...draft, firstTick: event.target.value })}
+                          onChange={event => setDraft({ ...draft, firstTick: event.target.value })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5464,7 +5577,7 @@ function SkillEditorTab({
                           min="0"
                           step="0.0001"
                           value={draft.duration}
-                          onChange={(event) => setDraft({ ...draft, duration: event.target.value })}
+                          onChange={event => setDraft({ ...draft, duration: event.target.value })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5474,7 +5587,7 @@ function SkillEditorTab({
                           min="1"
                           step="1"
                           value={draft.maxStack}
-                          onChange={(event) => setDraft({ ...draft, maxStack: event.target.value })}
+                          onChange={event => setDraft({ ...draft, maxStack: event.target.value })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5482,7 +5595,7 @@ function SkillEditorTab({
                         <input
                           type="checkbox"
                           checked={draft.refresh}
-                          onChange={(event) => setDraft({ ...draft, refresh: event.target.checked })}
+                          onChange={event => setDraft({ ...draft, refresh: event.target.checked })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5490,7 +5603,7 @@ function SkillEditorTab({
                         <input
                           type="checkbox"
                           checked={draft.resetOnRefresh}
-                          onChange={(event) => setDraft({ ...draft, resetOnRefresh: event.target.checked })}
+                          onChange={event => setDraft({ ...draft, resetOnRefresh: event.target.checked })}
                         />
                       </label>
                     </>
@@ -5503,7 +5616,7 @@ function SkillEditorTab({
                           min="0"
                           step="0.0001"
                           value={draft.castTime}
-                          onChange={(event) => setDraft({ ...draft, castTime: event.target.value })}
+                          onChange={event => setDraft({ ...draft, castTime: event.target.value })}
                         />
                       </label>
                       <label className="editor-field">
@@ -5513,7 +5626,7 @@ function SkillEditorTab({
                           min="0"
                           step="0.0001"
                           value={draft.cooldown}
-                          onChange={(event) => setDraft({ ...draft, cooldown: event.target.value })}
+                          onChange={event => setDraft({ ...draft, cooldown: event.target.value })}
                         />
                       </label>
                     </>
@@ -5522,7 +5635,7 @@ function SkillEditorTab({
                     <span>
                       {t("ui.app.tags")} <small>{t("ui.app.commaSeparated")}</small>
                     </span>
-                    <input value={draft.tags} onChange={(event) => setDraft({ ...draft, tags: event.target.value })} />
+                    <input value={draft.tags} onChange={event => setDraft({ ...draft, tags: event.target.value })} />
                   </label>
                 </div>
                 <div className="json-editor-grid">
@@ -5530,14 +5643,14 @@ function SkillEditorTab({
                     label={t("ui.app.actions")}
                     kind="action"
                     items={draft.actionItems}
-                    onChange={(actionItems) => setDraft({ ...draft, actionItems })}
+                    onChange={actionItems => setDraft({ ...draft, actionItems })}
                     skillIds={editorSkillIds}
                   />
                   <ArrayItemEditor
                     label={t("ui.app.modifiers")}
                     kind="modifier"
                     items={draft.modifierItems}
-                    onChange={(modifierItems) => setDraft({ ...draft, modifierItems })}
+                    onChange={modifierItems => setDraft({ ...draft, modifierItems })}
                     skillIds={editorSkillIds}
                   />
                 </div>
@@ -5556,7 +5669,7 @@ function SkillEditorTab({
         </div>
       </section>
     </>
-  );
+  )
 }
 
 function SettingsTab({
@@ -5567,14 +5680,14 @@ function SettingsTab({
   onSettingsChange,
   onLayoutChange,
 }: {
-  settings: CalculatorSettings;
-  pathId: PathId;
-  devMode: boolean;
-  layoutMode: LayoutMode;
-  onSettingsChange: Dispatch<SetStateAction<CalculatorSettings>>;
-  onLayoutChange: (layout: LayoutMode) => void;
+  settings: CalculatorSettings
+  pathId: PathId
+  devMode: boolean
+  layoutMode: LayoutMode
+  onSettingsChange: Dispatch<SetStateAction<CalculatorSettings>>
+  onLayoutChange: (layout: LayoutMode) => void
 }) {
-  const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons);
+  const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons)
 
   return (
     <section className="panel settings-panel">
@@ -5586,14 +5699,14 @@ function SettingsTab({
               <select
                 value={weapon}
                 disabled={weaponsLocked}
-                onChange={(event) =>
-                  onSettingsChange((current) => {
-                    const nextWeapon = event.target.value as WeaponId;
-                    const otherWeapon = current.weapons[index === 0 ? 1 : 0];
-                    if (pathId === "mixed" && nextWeapon === otherWeapon) return current;
-                    const weapons: [WeaponId, WeaponId] = [...current.weapons] as [WeaponId, WeaponId];
-                    weapons[index] = nextWeapon;
-                    return { ...current, weapons };
+                onChange={event =>
+                  onSettingsChange(current => {
+                    const nextWeapon = event.target.value as WeaponId
+                    const otherWeapon = current.weapons[index === 0 ? 1 : 0]
+                    if (pathId === "mixed" && nextWeapon === otherWeapon) return current
+                    const weapons: [WeaponId, WeaponId] = [...current.weapons] as [WeaponId, WeaponId]
+                    weapons[index] = nextWeapon
+                    return { ...current, weapons }
                   })
                 }
               >
@@ -5616,7 +5729,7 @@ function SettingsTab({
           <span>{t("ui.app.ping")}</span>
           <PingInput
             value={settings.ping}
-            onCommit={(ping) => onSettingsChange((current) => ({ ...current, ping: ping ?? 0 }))}
+            onCommit={ping => onSettingsChange(current => ({ ...current, ping: ping ?? 0 }))}
           />
         </label>
         <div className="settings-layout-row">
@@ -5625,7 +5738,7 @@ function SettingsTab({
             <select
               value={layoutMode}
               disabled={!devMode}
-              onChange={(event) => onLayoutChange(event.target.value as LayoutMode)}
+              onChange={event => onLayoutChange(event.target.value as LayoutMode)}
             >
               <option value="pc">{t("ui.app.pc")}</option>
               <option value="mobile">{t("ui.app.mobile")}</option>
@@ -5634,7 +5747,179 @@ function SettingsTab({
         </div>
       </div>
     </section>
-  );
+  )
+}
+
+function useRotationTimelineDisplay({
+  rotation,
+  calculationDefinitions,
+  editingRotationId,
+  editorTimelineReady,
+  editorTimelineState,
+  rotationResults,
+  editorStepReplacements,
+  startAnchor,
+  expandedSkillRows,
+  readableDialogOpen,
+}: {
+  rotation: RotationRecord
+  calculationDefinitions: { skills: SkillMap }
+  editingRotationId: string
+  editorTimelineReady: boolean
+  editorTimelineState: (EditorTimelineResult & { revision: EditorRevision }) | undefined
+  rotationResults: Record<string, { key: string; result: RotationSimulationResult }>
+  editorStepReplacements: WeakMap<RotationStep, RotationStep>
+  startAnchor: { rowId: string; actionIndex?: number }
+  expandedSkillRows: ReadonlySet<string>
+  readableDialogOpen: boolean
+}) {
+  const structuralTimeline = useMemo(
+    () =>
+      editorTimelineReady
+        ? withUnresolvedEditorSteps(
+            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
+            editorTimelineState!.timeline,
+          )
+        : pendingEditorTimeline(
+            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
+            editorTimelineState?.revision.id === editingRotationId ? editorTimelineState : undefined,
+            editorStepReplacements,
+          ),
+    [
+      rotation,
+      calculationDefinitions,
+      editingRotationId,
+      editorTimelineReady,
+      editorTimelineState,
+      editorStepReplacements,
+    ],
+  )
+  const matchingCalculation =
+    rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint
+      ? rotationResults[editingRotationId]
+      : undefined
+  const [displayedCalculationState, setDisplayedCalculationState] = useState(matchingCalculation)
+  if (matchingCalculation && displayedCalculationState !== matchingCalculation)
+    setDisplayedCalculationState(matchingCalculation)
+  const displayedCalculation =
+    editorTimelineState?.revision.id === editingRotationId &&
+    displayedCalculationState?.key === editorTimelineState?.fingerprint
+      ? displayedCalculationState?.result
+      : undefined
+  const timeline = useMemo(
+    () => mergeCalculatedTimelineState(structuralTimeline, displayedCalculation?.timeline),
+    [structuralTimeline, displayedCalculation],
+  )
+  const displayedStart =
+    editorTimelineState?.revision.id === editingRotationId ? editorTimelineState.rotation.start : rotation.start
+  const anchorTime = useMemo(
+    () =>
+      timelineAnchorTime(timeline, {
+        rowId: `rotation-${displayedStart?.step ?? 0}`,
+        actionIndex: displayedStart?.action,
+      }),
+    [displayedStart, timeline],
+  )
+  const damageRowsByOwner = useMemo(() => {
+    const result = new Map<string, TimelineRow[]>()
+    for (const row of timeline) {
+      const owner = row.kind === "rotation" || row.kind === "damageGroup" ? row.id : row.sourceRowId
+      if (!owner) continue
+      const rows = result.get(owner) ?? []
+      rows.push(row)
+      result.set(owner, rows)
+    }
+    return result
+  }, [timeline])
+  const attachmentTargets = useMemo(() => {
+    const triggeredRowsBySourceAndSkill = new Map<string, TimelineRow[]>()
+    timeline.forEach(row => {
+      if (row.kind !== "trigger" || !row.sourceRowId || row.step.type !== "skill") return
+      const key = `${row.sourceRowId}:${row.step.skill}`
+      const matches = triggeredRowsBySourceAndSkill.get(key)
+      if (matches) matches.push(row)
+      else triggeredRowsBySourceAndSkill.set(key, [row])
+    })
+
+    return timeline
+      .filter(
+        row =>
+          row.kind === "rotation" &&
+          row.rotationIndex !== undefined &&
+          isAttachmentAnchorStep(row.step) &&
+          !row.skipped,
+      )
+      .flatMap(sourceRow => {
+        const sourceStepIndex = sourceRow.rotationIndex ?? -1
+        const targets: Array<{
+          sourceRowId: string
+          sourceStepIndex: number
+          target: AttachedEventTarget
+          time: number
+          order: number
+        }> = []
+        if (sourceRow.step.type === "skill")
+          targets.push({
+            sourceRowId: sourceRow.id,
+            sourceStepIndex,
+            target: { action: "start" },
+            time: sourceRow.startTime,
+            order: sourceRow.order,
+          })
+        sourceRow.actions.forEach((action, actionIndex) => {
+          if (action.type === "damage" || action.type === "takeDamage")
+            targets.push({
+              sourceRowId: sourceRow.id,
+              sourceStepIndex,
+              target: { action: actionIndex },
+              time: sourceRow.startTime + Number(action.time ?? 0),
+              order: sourceRow.order + 10 + actionIndex,
+            })
+        })
+        if (sourceRow.step.type !== "skill") return targets
+        const nextTriggeredRowBySkill = new Map<string, number>()
+        let triggerOrdinal = 0
+        sourceRow.actions.forEach(action => {
+          if (action.type !== "trigger" || typeof action.value !== "string") return
+          const key = `${sourceRow.id}:${action.value}`
+          const matchIndex = nextTriggeredRowBySkill.get(action.value) ?? 0
+          const triggeredRow = triggeredRowsBySourceAndSkill.get(key)?.[matchIndex]
+          nextTriggeredRowBySkill.set(action.value, matchIndex + 1)
+          if (triggeredRow) {
+            triggeredRow.actions.forEach((triggeredAction, actionIndex) => {
+              if (triggeredAction.type === "damage")
+                targets.push({
+                  sourceRowId: sourceRow.id,
+                  sourceStepIndex,
+                  target: { trigger: triggerOrdinal, action: actionIndex },
+                  time: triggeredRow.startTime + Number(triggeredAction.time ?? 0),
+                  order: triggeredRow.order + 10 + actionIndex,
+                })
+            })
+          }
+          triggerOrdinal += 1
+        })
+        return targets
+      })
+      .sort((left, right) => compareTimelineTime(left.time, right.time) || left.order - right.order)
+  }, [timeline])
+  const displayEntries = useMemo(() => {
+    const actionsExpanded = (rowId: string) => expandedSkillRows.has(`${editingRotationId}:${rowId}`)
+    return buildTimelineDisplayEntries(timeline, actionsExpanded, startAnchor)
+  }, [editingRotationId, expandedSkillRows, startAnchor, timeline])
+  const readableRotation = useMemo(
+    () => (readableDialogOpen ? readableRotationText(timeline, startAnchor, anchorTime) : ""),
+    [anchorTime, readableDialogOpen, startAnchor, timeline],
+  )
+  return {
+    timeline,
+    anchorTime,
+    damageRowsByOwner,
+    attachmentTargets,
+    displayEntries,
+    readableRotation,
+    displayedCalculation,
+  }
 }
 
 function RotationEditorTab({
@@ -5651,24 +5936,24 @@ function RotationEditorTab({
   onActiveSimulationBundleChange,
   onGraduationDpsChange,
 }: {
-  character: CharacterState;
-  pathId: PathId;
-  devMode: boolean;
-  defaultRotationId: string;
-  selectedRotationId: string;
-  calculationCache: RotationCalculationCache;
-  skillOverrides: SkillOverrides;
-  onSelectRotationWeapons: (weapons: [WeaponId, WeaponId], rotationId: string) => boolean;
-  onActiveRotationChange: (id: string) => void;
-  onMetricsChange: (metrics: RotationMetrics, isActive: boolean) => void;
+  character: CharacterState
+  pathId: PathId
+  devMode: boolean
+  defaultRotationId: string
+  selectedRotationId: string
+  calculationCache: RotationCalculationCache
+  skillOverrides: SkillOverrides
+  onSelectRotationWeapons: (weapons: [WeaponId, WeaponId], rotationId: string) => boolean
+  onActiveRotationChange: (id: string) => void
+  onMetricsChange: (metrics: RotationMetrics, isActive: boolean) => void
   onActiveSimulationBundleChange: (
     bundle: RotationSimulationBundle,
     rotationName: string,
     bundleKey: string,
     isDefault: boolean,
     graduation?: { fingerprint: string; dps?: number },
-  ) => void;
-  onGraduationDpsChange: (fingerprint: string, dps: number) => void;
+  ) => void
+  onGraduationDpsChange: (fingerprint: string, dps: number) => void
 }) {
   const {
     stats: displayedCharacterStats,
@@ -5680,112 +5965,113 @@ function RotationEditorTab({
     innerWayRevision: _innerWayRevision,
     gearStatEffect,
     buildSetup,
-  } = character;
-  const rotationSkillIds = useMemo(() => selectableRotationSkillIds(settings.weapons), [settings.weapons]);
-  const innerWayConditions = useMemo(() => innerWayConditionsFor(buildSetup.innerWays), [buildSetup.innerWays]);
-  const soloLevel = breakthroughProfile(settings).soloLevel;
+  } = character
+  const rotationSkillIds = useMemo(() => selectableRotationSkillIds(settings.weapons), [settings.weapons])
+  const innerWayConditions = useMemo(() => innerWayConditionsFor(buildSetup.innerWays), [buildSetup.innerWays])
+  const soloLevel = breakthroughProfile(settings).soloLevel
   const innerWayEffectRules = useMemo(
     () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel),
     [buildSetup.innerWays, soloLevel],
-  );
+  )
   const calculationDefinitions = useMemo(
     () => resolveSkillCalculationDefinitions(defaultSkillMaps, effectDefinitions, dotDefinitions, skillOverrides),
     [skillOverrides],
-  );
+  )
   const manualEffectMaxStacks = useMemo(() => {
-    const maxStacks = new Map<string, number>();
+    const maxStacks = new Map<string, number>()
     for (const [id, definition] of Object.entries(calculationDefinitions.effectDefinitions)) {
       const modifiedDefinition = innerWayEffectRules.reduce((current, rule) => {
-        if (rule.target !== id || !rule.modify || rule.requirement !== undefined) return current;
-        return mergeEffectDefinition(current, rule.modify);
-      }, definition);
-      maxStacks.set(id, modifiedDefinition.maxStack ?? 1);
+        if (rule.target !== id || !rule.modify || rule.requirement !== undefined) return current
+        return mergeEffectDefinition(current, rule.modify)
+      }, definition)
+      maxStacks.set(id, modifiedDefinition.maxStack ?? 1)
     }
-    return maxStacks;
-  }, [calculationDefinitions.effectDefinitions, innerWayEffectRules]);
+    return maxStacks
+  }, [calculationDefinitions.effectDefinitions, innerWayEffectRules])
   const [initialState] = useState(() =>
     initialRotationEditorState(devMode, selectedRotationId || defaultRotationId, settings.weapons),
-  );
-  const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>(initialState.entries);
-  const savedRotationSnapshotsRef = useRef<Map<string, RotationRecord> | null>(null);
+  )
+  const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>(initialState.entries)
+  const savedRotationSnapshotsRef = useRef<Map<string, RotationRecord> | null>(null)
   if (savedRotationSnapshotsRef.current === null)
     savedRotationSnapshotsRef.current = new Map(
-      initialState.entries.map((entry) => [entry.id, JSON.parse(JSON.stringify(entry.rotation)) as RotationRecord]),
-    );
-  const [editingRotationId, setEditingRotationId] = useState(initialState.activeId);
-  const [rotation, setRotation] = useState<RotationRecord>(initialState.rotation);
-  const editorStepReplacements = useRef(new WeakMap<RotationStep, RotationStep>());
-  const [startAnchor, setStartAnchor] = useState<{ rowId: string; actionIndex?: number }>(initialState.startAnchor);
-  const [expandedSkillRows, setExpandedSkillRows] = useState<Set<string>>(() => new Set());
-  const [editingName, setEditingName] = useState(false);
+      initialState.entries.map(entry => [entry.id, JSON.parse(JSON.stringify(entry.rotation)) as RotationRecord]),
+    )
+  const [editingRotationId, setEditingRotationId] = useState(initialState.activeId)
+  const rotationNameInputRef = useRef<HTMLInputElement>(null)
+  const [rotation, setRotation] = useState<RotationRecord>(() => migrateRotation(initialState.rotation))
+  const [editorStepReplacements] = useState(() => new WeakMap<RotationStep, RotationStep>())
+  const [startAnchor, setStartAnchor] = useState<{ rowId: string; actionIndex?: number }>(initialState.startAnchor)
+  const [expandedSkillRows, setExpandedSkillRows] = useState<Set<string>>(() => new Set())
+  const [editingName, setEditingName] = useState(false)
   const setStatus = (message: string) => {
-    if (message) publishNotice({ id: "rotation-save", message });
-    else dismissNotice("rotation-save");
-  };
-  const [error, setError] = useState("");
-  const [eventTimeDrafts, setEventTimeDrafts] = useState<Record<string, string>>({});
-  const [eventDurationDrafts, setEventDurationDrafts] = useState<Record<string, string>>({});
-  const [eventDistanceDrafts, setEventDistanceDrafts] = useState<Record<string, string>>({});
-  const [eventHPDrafts, setEventHPDrafts] = useState<Record<string, string>>({});
+    if (message) publishNotice({ id: "rotation-save", message })
+    else dismissNotice("rotation-save")
+  }
+  const [error, setError] = useState("")
+  const [eventTimeDrafts, setEventTimeDrafts] = useState<Record<string, string>>({})
+  const [eventDurationDrafts, setEventDurationDrafts] = useState<Record<string, string>>({})
+  const [eventDistanceDrafts, setEventDistanceDrafts] = useState<Record<string, string>>({})
+  const [eventHPDrafts, setEventHPDrafts] = useState<Record<string, string>>({})
   const [rotationResults, setRotationResults] = useState<
     Record<string, { key: string; result: RotationSimulationResult }>
-  >({});
-  const rotationResultsRef = useRef(rotationResults);
-  const calculationCacheRef = useRef(calculationCache);
-  const editorPreviewRequestSequenceRef = useRef(0);
-  const diffRequestSequenceRef = useRef(0);
-  const scheduledRefreshTargetRef = useRef<string | null>(null);
-  const runningRefreshTargetRef = useRef<string | null>(null);
-  const graduationFingerprintRef = useRef<string | null>(null);
-  const [refreshRetryRevision, setRefreshRetryRevision] = useState(0);
-  const [readableDialogOpen, setReadableDialogOpen] = useState(false);
-  const [readableCopyStatus, setReadableCopyStatus] = useState("");
-  const readableDialogRef = useRef<HTMLDialogElement>(null);
-  const readableTextRef = useRef<HTMLTextAreaElement>(null);
-  const rotationScrollRef = useRef<HTMLDivElement>(null);
+  >({})
+  const rotationResultsRef = useRef(rotationResults)
+  const calculationCacheRef = useRef(calculationCache)
+  const editorPreviewRequestSequenceRef = useRef(0)
+  const diffRequestSequenceRef = useRef(0)
+  const scheduledRefreshTargetRef = useRef<string | null>(null)
+  const runningRefreshTargetRef = useRef<string | null>(null)
+  const graduationFingerprintRef = useRef<string | null>(null)
+  const [refreshRetryRevision, setRefreshRetryRevision] = useState(0)
+  const [readableDialogOpen, setReadableDialogOpen] = useState(false)
+  const [readableCopyStatus, setReadableCopyStatus] = useState("")
+  const readableDialogRef = useRef<HTMLDialogElement>(null)
+  const readableTextRef = useRef<HTMLTextAreaElement>(null)
+  const rotationScrollRef = useRef<HTMLDivElement>(null)
   const pendingEventScrollRef = useRef<{
-    stepIndex: number;
-    top: number;
-    step?: RotationStep;
-    rotationId?: string;
-  } | null>(null);
-  const pendingSkillFocusRef = useRef<number | null>(null);
+    stepIndex: number
+    top: number
+    step?: RotationStep
+    rotationId?: string
+  } | null>(null)
+  const pendingSkillFocusRef = useRef<number | null>(null)
   useEffect(
     () => () => {
-      editorPreviewRequestSequenceRef.current += 1;
-      diffRequestSequenceRef.current += 1;
-      scheduledRefreshTargetRef.current = null;
-      runningRefreshTargetRef.current = null;
+      editorPreviewRequestSequenceRef.current += 1
+      diffRequestSequenceRef.current += 1
+      scheduledRefreshTargetRef.current = null
+      runningRefreshTargetRef.current = null
     },
     [],
-  );
+  )
   const listedRotationEntries = useMemo(
     () =>
       rotationEntries.filter(
-        (entry) =>
-          (devMode || !entry.test) && (!entry.isDefault || rotationAvailableForWeapons(entry, settings.weapons)),
+        entry => (devMode || !entry.test) && (!entry.isDefault || rotationAvailableForWeapons(entry, settings.weapons)),
       ),
     [devMode, rotationEntries, settings.weapons],
-  );
+  )
   const compatibleRotationEntries = useMemo(
-    () => listedRotationEntries.filter((entry) => rotationAvailableForWeapons(entry, settings.weapons)),
+    () => listedRotationEntries.filter(entry => rotationAvailableForWeapons(entry, settings.weapons)),
     [listedRotationEntries, settings.weapons],
-  );
+  )
   const editingEntry =
-    listedRotationEntries.find((entry) => entry.id === editingRotationId) ?? compatibleRotationEntries[0];
+    listedRotationEntries.find(entry => entry.id === editingRotationId) ?? compatibleRotationEntries[0]
   const activeRotationId =
-    compatibleRotationEntries.find((entry) => entry.id === selectedRotationId)?.id ??
-    compatibleRotationEntries.find((entry) => entry.id === defaultRotationId)?.id ??
-    compatibleRotationEntries[0]?.id;
-  const resolvedActiveRotationIdRef = useRef(activeRotationId);
-  resolvedActiveRotationIdRef.current = activeRotationId;
-  const rotationLocked = editingEntry?.isDefault === true;
-  const editingRotationDisplayName = (rotationLocked ? gameText(rotation.name) : rotation.name) || "Unnamed Rotation";
-  const currentGlobalDebuffs = loadGlobalDebuffs();
-  const currentFood = loadFood();
-  const currentScript = loadScript();
-  const currentDivinecraft = loadDivinecraft();
-  const currentGlobalDebuffsKey = JSON.stringify(currentGlobalDebuffs);
+    compatibleRotationEntries.find(entry => entry.id === selectedRotationId)?.id ??
+    compatibleRotationEntries.find(entry => entry.id === defaultRotationId)?.id ??
+    compatibleRotationEntries[0]?.id
+  const resolvedActiveRotationIdRef = useRef(activeRotationId)
+  useEffect(() => {
+    resolvedActiveRotationIdRef.current = activeRotationId
+  }, [activeRotationId])
+  const rotationLocked = editingEntry?.isDefault === true
+  const editingRotationDisplayName = (rotationLocked ? gameText(rotation.name) : rotation.name) || "Unnamed Rotation"
+  const currentGlobalDebuffs = loadGlobalDebuffs()
+  const currentFood = loadFood()
+  const currentScript = loadScript()
+  const currentDivinecraft = loadDivinecraft()
   const calculationContextKey = useMemo(
     () =>
       calculationFingerprint({
@@ -5817,62 +6103,68 @@ function RotationEditorTab({
       currentFood,
       currentScript,
       currentDivinecraft,
-      currentGlobalDebuffsKey,
+      currentGlobalDebuffs,
       skillOverrides,
     ],
-  );
-  const calculationContextKeyRef = useRef(calculationContextKey);
-  calculationContextKeyRef.current = calculationContextKey;
-  rotationResultsRef.current = rotationResults;
+  )
+  const calculationContextKeyRef = useRef(calculationContextKey)
+  useEffect(() => {
+    calculationContextKeyRef.current = calculationContextKey
+  }, [calculationContextKey])
+  useEffect(() => {
+    rotationResultsRef.current = rotationResults
+  }, [rotationResults])
 
   function persistRotationEntries(entries: RotationEntry[]) {
-    setPersistentItem(rotationListStorageKey, serializeRotationEntries(entries));
+    setPersistentItem(rotationListStorageKey, serializeRotationEntries(entries))
   }
 
   useEffect(() => {
-    const migrated = migrateRotation(rotation);
-    setRotation(migrated);
-  }, []);
+    if (activeRotationId && selectedRotationId !== activeRotationId) onActiveRotationChange(activeRotationId)
+  }, [activeRotationId, onActiveRotationChange, selectedRotationId])
 
-  useEffect(() => {
-    if (activeRotationId && selectedRotationId !== activeRotationId) onActiveRotationChange(activeRotationId);
-  }, [activeRotationId, onActiveRotationChange, selectedRotationId]);
-
-  useEffect(() => {
-    if (startAnchor.actionIndex === undefined) return;
-    const key = `${editingRotationId}:${startAnchor.rowId}`;
-    setExpandedSkillRows((current) => (current.has(key) ? current : new Set(current).add(key)));
-  }, [editingRotationId, startAnchor.rowId, startAnchor.actionIndex]);
-
-  useEffect(() => {
-    const dialog = readableDialogRef.current;
-    if (!dialog) return;
-    if (readableDialogOpen && !dialog.open) dialog.showModal();
-    else if (!readableDialogOpen && dialog.open) dialog.close();
-  }, [readableDialogOpen]);
-
-  function findSkill(skillId: string) {
-    return calculationDefinitions.skills[skillId];
+  const expansionAnchor = `${editingRotationId}:${startAnchor.rowId}:${startAnchor.actionIndex ?? "start"}`
+  const [previousExpansionAnchor, setPreviousExpansionAnchor] = useState<string>()
+  if (previousExpansionAnchor !== expansionAnchor) {
+    setPreviousExpansionAnchor(expansionAnchor)
+    // Reveal newly selected action anchors without overriding a later manual collapse.
+    const anchorKey = `${editingRotationId}:${startAnchor.rowId}`
+    if (startAnchor.actionIndex !== undefined && !expandedSkillRows.has(anchorKey)) {
+      const nextExpandedSkillRows = new Set(expandedSkillRows)
+      nextExpandedSkillRows.add(anchorKey)
+      setExpandedSkillRows(nextExpandedSkillRows)
+    }
   }
+
+  useEffect(() => {
+    const dialog = readableDialogRef.current
+    if (!dialog) return
+    if (readableDialogOpen && !dialog.open) dialog.showModal()
+    else if (!readableDialogOpen && dialog.open) dialog.close()
+  }, [readableDialogOpen])
+
+  useEffect(() => {
+    if (editingName) rotationNameInputRef.current?.focus()
+  }, [editingName])
 
   function updateStep(index: number, changes: Record<string, unknown>) {
-    if (rotationLocked) return;
-    const step = rotation.steps[index];
-    if (!step || isAutomaticDelay(step)) return;
-    const replacement = { ...step, ...changes } as RotationStep;
-    editorStepReplacements.current.set(step, replacement);
+    if (rotationLocked) return
+    const step = rotation.steps[index]
+    if (!step || isAutomaticDelay(step)) return
+    const replacement = { ...step, ...changes } as RotationStep
+    editorStepReplacements.set(step, replacement)
     setRotation({
       ...rotation,
       steps: rotation.steps.map((candidate, stepIndex) => (stepIndex === index ? replacement : candidate)),
-    });
+    })
   }
   function updateRotationCalculationSetting(value: SetStateAction<RotationRecord>) {
-    scheduledRefreshTargetRef.current = null;
-    setRotation(value);
+    scheduledRefreshTargetRef.current = null
+    setRotation(value)
   }
   function selectRotationItem(index: number, value: string, control: HTMLSelectElement) {
-    if (rotationLocked) return;
-    if (isAutomaticDelay(rotation.steps[index])) return;
+    if (rotationLocked) return
+    if (isAutomaticDelay(rotation.steps[index])) return
     if (
       [
         "__event:Move",
@@ -5884,35 +6176,35 @@ function RotationEditorTab({
         "__event:MartialArt",
       ].includes(value)
     ) {
-      const scrollContainer = rotationScrollRef.current;
-      const row = control.closest<HTMLElement>("[data-rotation-step-index]");
+      const scrollContainer = rotationScrollRef.current
+      const row = control.closest<HTMLElement>("[data-rotation-step-index]")
       if (scrollContainer && row)
         pendingEventScrollRef.current = {
           stepIndex: index,
           top: row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top,
-        };
+        }
     }
-    const rowId = `rotation-${index}`;
-    setEventDistanceDrafts((current) => {
-      if (!(rowId in current)) return current;
-      const next = { ...current };
-      delete next[rowId];
-      return next;
-    });
+    const rowId = `rotation-${index}`
+    setEventDistanceDrafts(current => {
+      if (!(rowId in current)) return current
+      const next = { ...current }
+      delete next[rowId]
+      return next
+    })
     const previousSkills = timeline.filter(
-      (row) => row.kind === "rotation" && (row.rotationIndex ?? -1) < index && row.step.type === "skill",
-    );
-    const previousSkill = previousSkills[previousSkills.length - 1];
-    const current = rotation;
+      row => row.kind === "rotation" && (row.rotationIndex ?? -1) < index && row.step.type === "skill",
+    )
+    const previousSkill = previousSkills[previousSkills.length - 1]
+    const current = rotation
     const nextRotation = (() => {
       if (
         value.startsWith("__event:") &&
         current.steps[index]?.type === "skill" &&
-        current.steps.filter((step) => step.type === "skill").length <= 1
+        current.steps.filter(step => step.type === "skill").length <= 1
       )
-        return current;
+        return current
       let steps = current.steps.map((step, stepIndex) => {
-        if (stepIndex !== index) return step;
+        if (stepIndex !== index) return step
         switch (value) {
           case "__event:Hellfire":
             return {
@@ -5920,48 +6212,48 @@ function RotationEditorTab({
               event: "Hellfire",
               startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
               amount: 0,
-            };
+            }
           case "__event:Delay":
-            return { type: "event", event: "Delay", duration: 1 };
+            return { type: "event", event: "Delay", duration: 1 }
           case "__event:Controlled":
             return {
               type: "event",
               event: "Controlled",
               startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
               duration: eventDefaultDuration("Controlled"),
-            };
+            }
           case "__event:ShieldBroken":
             return {
               type: "event",
               event: "ShieldBroken",
               startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-            };
+            }
           case "__event:BattleEnd":
             return {
               type: "event",
               event: "BattleEnd",
               startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
-            };
+            }
           case "__event:Move":
-            return { type: "event", event: "Move", before: { action: "start" }, distance: 1 };
+            return { type: "event", event: "Move", before: { action: "start" }, distance: 1 }
           case "__event:SelfHP":
             return {
               type: "event",
               event: "SelfHP",
               before: { action: "start" },
               currentHP: displayedCharacterStats.maxHp,
-            };
+            }
           case "__event:TakeDamage":
             return {
               type: "event",
               event: "TakeDamage",
               startTime: previousSkill ? previousSkill.startTime - anchorTime : 0,
               damage: 0,
-            };
+            }
           case "__event:HP":
-            return { type: "event", event: "HP", before: { action: "start" }, targetHPRatio: 1 };
+            return { type: "event", event: "HP", before: { action: "start" }, targetHPRatio: 1 }
           case "__event:Qi":
-            return { type: "event", event: "Qi", before: { action: "start" }, targetQiRatio: 1 };
+            return { type: "event", event: "Qi", before: { action: "start" }, targetQiRatio: 1 }
           case "__event:Buff":
             return {
               type: "event",
@@ -5969,7 +6261,7 @@ function RotationEditorTab({
               before: { action: "start" },
               buff: Object.keys(manualBuffDefinitions)[0],
               stack: 1,
-            };
+            }
           case "__event:Debuff":
             return {
               type: "event",
@@ -5977,18 +6269,13 @@ function RotationEditorTab({
               before: { action: "start" },
               debuff: Object.keys(manualDebuffDefinitions)[0],
               stack: 1,
-            };
+            }
           case "__event:MartialArt":
-            return {
-              type: "event",
-              event: "MartialArt",
-              before: { action: "start" },
-              martialArt: settings.weapons[0],
-            };
+            return { type: "event", event: "MartialArt", before: { action: "start" }, martialArt: settings.weapons[0] }
           default:
-            return { type: "skill", skill: value };
+            return { type: "skill", skill: value }
         }
-      }) as RotationStep[];
+      }) as RotationStep[]
       const attached = [
         "__event:Move",
         "__event:SelfHP",
@@ -5997,198 +6284,198 @@ function RotationEditorTab({
         "__event:Buff",
         "__event:Debuff",
         "__event:MartialArt",
-      ].includes(value);
-      if (attached && !steps.slice(index + 1).some((step) => step.type === "skill"))
-        steps.push({ type: "skill", skill: rotationSkillIds[0] });
-      return { ...current, steps };
-    })();
+      ].includes(value)
+      if (attached && !steps.slice(index + 1).some(step => step.type === "skill"))
+        steps.push({ type: "skill", skill: rotationSkillIds[0] })
+      return { ...current, steps }
+    })()
     if (nextRotation !== current) {
-      editorStepReplacements.current.set(current.steps[index], nextRotation.steps[index]);
-      setRotation(nextRotation);
+      editorStepReplacements.set(current.steps[index], nextRotation.steps[index])
+      setRotation(nextRotation)
     }
   }
   function commitEventTime(rowId: string, stepIndex: number) {
-    const draft = eventTimeDrafts[rowId];
-    if (draft === undefined) return;
-    const time = Number(draft);
-    if (Number.isFinite(time)) updateStep(stepIndex, { startTime: time });
-    setEventTimeDrafts((current) => {
-      const next = { ...current };
-      delete next[rowId];
-      return next;
-    });
+    const draft = eventTimeDrafts[rowId]
+    if (draft === undefined) return
+    const time = Number(draft)
+    if (Number.isFinite(time)) updateStep(stepIndex, { startTime: time })
+    setEventTimeDrafts(current => {
+      const next = { ...current }
+      delete next[rowId]
+      return next
+    })
   }
   function commitEventDuration(rowId: string, stepIndex: number) {
-    const draft = eventDurationDrafts[rowId];
-    if (draft === undefined) return;
-    const duration = Number(draft);
-    if (Number.isFinite(duration)) updateStep(stepIndex, { duration: Math.max(0, duration) });
-    setEventDurationDrafts((current) => {
-      const next = { ...current };
-      delete next[rowId];
-      return next;
-    });
+    const draft = eventDurationDrafts[rowId]
+    if (draft === undefined) return
+    const duration = Number(draft)
+    if (Number.isFinite(duration)) updateStep(stepIndex, { duration: Math.max(0, duration) })
+    setEventDurationDrafts(current => {
+      const next = { ...current }
+      delete next[rowId]
+      return next
+    })
   }
   function commitEventDistance(rowId: string, stepIndex: number) {
-    const draft = eventDistanceDrafts[rowId];
-    if (draft === undefined) return;
-    const distance = Number(draft);
-    if (Number.isFinite(distance)) updateStep(stepIndex, { distance: Math.max(1, Math.floor(distance)) });
-    setEventDistanceDrafts((current) => {
-      const next = { ...current };
-      delete next[rowId];
-      return next;
-    });
+    const draft = eventDistanceDrafts[rowId]
+    if (draft === undefined) return
+    const distance = Number(draft)
+    if (Number.isFinite(distance)) updateStep(stepIndex, { distance: Math.max(1, Math.floor(distance)) })
+    setEventDistanceDrafts(current => {
+      const next = { ...current }
+      delete next[rowId]
+      return next
+    })
   }
   function commitEventHP(rowId: string, stepIndex: number) {
-    const draft = eventHPDrafts[rowId];
-    if (draft === undefined) return;
-    const value = Number(draft);
-    const step = rotation.steps[stepIndex];
+    const draft = eventHPDrafts[rowId]
+    if (draft === undefined) return
+    const value = Number(draft)
+    const step = rotation.steps[stepIndex]
     if (Number.isFinite(value) && step?.type === "event") {
       switch (step.event) {
         case "Hellfire":
-          updateStep(stepIndex, { amount: value });
-          break;
+          updateStep(stepIndex, { amount: value })
+          break
         case "SelfHP":
           updateStep(stepIndex, {
             currentHP: (Math.min(100, Math.max(0, value)) / 100) * displayedCharacterStats.maxHp,
             currentHPRatio: undefined,
-          });
-          break;
+          })
+          break
         case "TakeDamage":
-          updateStep(stepIndex, { damage: Math.max(0, value) });
-          break;
+          updateStep(stepIndex, { damage: Math.max(0, value) })
+          break
         case "HP":
-          updateStep(stepIndex, { targetHPRatio: Math.min(1, Math.max(0, value / 100)) });
-          break;
+          updateStep(stepIndex, { targetHPRatio: Math.min(1, Math.max(0, value / 100)) })
+          break
         case "Qi":
-          updateStep(stepIndex, { targetQiRatio: Math.min(1, Math.max(0, value / 100)) });
-          break;
+          updateStep(stepIndex, { targetQiRatio: Math.min(1, Math.max(0, value / 100)) })
+          break
       }
     }
-    setEventHPDrafts((current) => {
-      const next = { ...current };
-      delete next[rowId];
-      return next;
-    });
+    setEventHPDrafts(current => {
+      const next = { ...current }
+      delete next[rowId]
+      return next
+    })
   }
   function moveAttachedEvent(stepIndex: number, direction: -1 | 1, control: HTMLButtonElement) {
-    if (rotationLocked) return;
-    const eventStep = rotation.steps[stepIndex];
-    const eventTarget = attachedTargetForStep(eventStep);
-    if (eventStep?.type !== "event" || !eventTarget) return;
-    const reordered = reorderAttachedEventWithinTarget(rotation.steps, stepIndex, direction);
+    if (rotationLocked) return
+    const eventStep = rotation.steps[stepIndex]
+    const eventTarget = attachedTargetForStep(eventStep)
+    if (eventStep?.type !== "event" || !eventTarget) return
+    const reordered = reorderAttachedEventWithinTarget(rotation.steps, stepIndex, direction)
     if (reordered) {
-      const scrollContainer = rotationScrollRef.current;
-      const eventElement = control.closest<HTMLElement>("[data-rotation-step-index]");
+      const scrollContainer = rotationScrollRef.current
+      const eventElement = control.closest<HTMLElement>("[data-rotation-step-index]")
       if (scrollContainer && eventElement)
         pendingEventScrollRef.current = {
           stepIndex: reordered.movedIndex,
           top: eventElement.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top,
-        };
-      const startStep = rotation.start ? rotation.steps[rotation.start.step] : undefined;
-      const nextStartStep = startStep ? reordered.steps.indexOf(startStep) : -1;
+        }
+      const startStep = rotation.start ? rotation.steps[rotation.start.step] : undefined
+      const nextStartStep = startStep ? reordered.steps.indexOf(startStep) : -1
       setRotation({
         ...rotation,
         steps: reordered.steps,
         ...(rotation.start && nextStartStep >= 0 ? { start: { ...rotation.start, step: nextStartStep } } : {}),
-      });
+      })
       if (nextStartStep >= 0 && rotation.start)
-        setStartAnchor({ rowId: `rotation-${nextStartStep}`, actionIndex: rotation.start.action });
-      return;
+        setStartAnchor({ rowId: `rotation-${nextStartStep}`, actionIndex: rotation.start.action })
+      return
     }
-    const eventAfterAction = attachedEventPhase(eventStep) === "after";
+    const eventAfterAction = attachedEventPhase(eventStep) === "after"
     const availableTargets =
       eventStep.event === "MartialArt"
-        ? attachmentTargets.filter((target) => target.target.action === "start")
+        ? attachmentTargets.filter(target => target.target.action === "start")
         : eventAfterAction
-          ? attachmentTargets.filter((target) => target.target.action !== "start")
-          : attachmentTargets;
-    const eventRow = timeline.find((row) => row.rotationIndex === stepIndex);
+          ? attachmentTargets.filter(target => target.target.action !== "start")
+          : attachmentTargets
+    const eventRow = timeline.find(row => row.rotationIndex === stepIndex)
     const currentTargetIndex = availableTargets.findIndex(
-      (target) =>
+      target =>
         target.sourceRowId === eventRow?.sourceRowId &&
         target.target.action === eventTarget.action &&
         target.target.trigger === eventTarget.trigger,
-    );
-    const nextTarget = availableTargets[currentTargetIndex + direction];
-    if (!nextTarget) return;
+    )
+    const nextTarget = availableTargets[currentTargetIndex + direction]
+    if (!nextTarget) return
 
-    const startStep = rotation.start ? rotation.steps[rotation.start.step] : undefined;
-    const currentTargetRow = timeline.find((row) => row.id === eventRow?.sourceRowId);
+    const startStep = rotation.start ? rotation.steps[rotation.start.step] : undefined
+    const currentTargetRow = timeline.find(row => row.id === eventRow?.sourceRowId)
     const currentTargetStep =
-      currentTargetRow?.rotationIndex === undefined ? undefined : rotation.steps[currentTargetRow.rotationIndex];
-    const targetStep = rotation.steps[nextTarget.sourceStepIndex];
-    const withoutEvent = rotation.steps.filter((_, index) => index !== stepIndex);
-    const targetIndex = withoutEvent.indexOf(targetStep);
-    if (targetIndex < 0) return;
+      currentTargetRow?.rotationIndex === undefined ? undefined : rotation.steps[currentTargetRow.rotationIndex]
+    const targetStep = rotation.steps[nextTarget.sourceStepIndex]
+    const withoutEvent = rotation.steps.filter((_, index) => index !== stepIndex)
+    const targetIndex = withoutEvent.indexOf(targetStep)
+    if (targetIndex < 0) return
     const movedEvent = eventAfterAction
       ? ({ ...eventStep, after: nextTarget.target } as RotationStep)
-      : ({ ...eventStep, before: nextTarget.target } as RotationStep);
-    editorStepReplacements.current.set(eventStep, movedEvent);
-    const steps = [...withoutEvent.slice(0, targetIndex), movedEvent, ...withoutEvent.slice(targetIndex)];
-    const movedEventIndex = steps.indexOf(movedEvent);
-    const nextStartStep = startStep ? steps.indexOf(startStep) : -1;
+      : ({ ...eventStep, before: nextTarget.target } as RotationStep)
+    editorStepReplacements.set(eventStep, movedEvent)
+    const steps = [...withoutEvent.slice(0, targetIndex), movedEvent, ...withoutEvent.slice(targetIndex)]
+    const movedEventIndex = steps.indexOf(movedEvent)
+    const nextStartStep = startStep ? steps.indexOf(startStep) : -1
     const nextRotation = {
       ...rotation,
       steps,
       ...(rotation.start && nextStartStep >= 0 ? { start: { ...rotation.start, step: nextStartStep } } : {}),
-    };
-    const scrollContainer = rotationScrollRef.current;
-    const eventElement = control.closest<HTMLElement>("[data-rotation-step-index]");
+    }
+    const scrollContainer = rotationScrollRef.current
+    const eventElement = control.closest<HTMLElement>("[data-rotation-step-index]")
     if (scrollContainer && eventElement)
       pendingEventScrollRef.current = {
         stepIndex: movedEventIndex,
         top: eventElement.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top,
-      };
-    setRotation(nextRotation);
+      }
+    setRotation(nextRotation)
     if (nextStartStep >= 0 && rotation.start)
-      setStartAnchor({ rowId: `rotation-${nextStartStep}`, actionIndex: rotation.start.action });
-    const movedTargetIndex = steps.indexOf(targetStep);
-    const previousTargetIndex = currentTargetStep ? steps.indexOf(currentTargetStep) : -1;
-    setExpandedSkillRows((current) => {
-      const next = new Set(current);
+      setStartAnchor({ rowId: `rotation-${nextStartStep}`, actionIndex: rotation.start.action })
+    const movedTargetIndex = steps.indexOf(targetStep)
+    const previousTargetIndex = currentTargetStep ? steps.indexOf(currentTargetStep) : -1
+    setExpandedSkillRows(current => {
+      const next = new Set(current)
       if (currentTargetStep !== targetStep) {
-        if (currentTargetRow) next.delete(`${editingRotationId}:${currentTargetRow.id}`);
-        if (previousTargetIndex >= 0) next.delete(`${editingRotationId}:rotation-${previousTargetIndex}`);
+        if (currentTargetRow) next.delete(`${editingRotationId}:${currentTargetRow.id}`)
+        if (previousTargetIndex >= 0) next.delete(`${editingRotationId}:rotation-${previousTargetIndex}`)
       }
       if (targetStep?.type === "skill" && nextTarget.target.action !== "start")
-        next.add(`${editingRotationId}:rotation-${movedTargetIndex}`);
-      return next;
-    });
+        next.add(`${editingRotationId}:rotation-${movedTargetIndex}`)
+      return next
+    })
   }
   function addStepBelow(index: number) {
-    if (rotationLocked) return;
-    pendingSkillFocusRef.current = index + 1;
-    setRotation((current) => ({
+    if (rotationLocked) return
+    pendingSkillFocusRef.current = index + 1
+    setRotation(current => ({
       ...current,
       steps: [
         ...current.steps.slice(0, index + 1),
         { type: "skill", skill: rotationSkillIds[0] },
         ...current.steps.slice(index + 1),
       ],
-    }));
+    }))
   }
   function moveStep(index: number, direction: number) {
-    if (rotationLocked) return;
-    setRotation((current) => {
-      if (isAutomaticDelay(current.steps[index])) return current;
+    if (rotationLocked) return
+    setRotation(current => {
+      if (isAutomaticDelay(current.steps[index])) return current
       const movable = (step: RotationStep | undefined) =>
-        step?.type === "skill" || (step?.type === "event" && step.event === "Delay" && !isAutomaticDelay(step));
-      if (!movable(current.steps[index])) return current;
-      const attached = (step: RotationStep | undefined) => Boolean(attachedTargetForStep(step));
-      let blockStart = index;
+        step?.type === "skill" || (step?.type === "event" && step.event === "Delay" && !isAutomaticDelay(step))
+      if (!movable(current.steps[index])) return current
+      const attached = (step: RotationStep | undefined) => Boolean(attachedTargetForStep(step))
+      let blockStart = index
       if (current.steps[index]?.type === "skill")
-        while (blockStart > 0 && attached(current.steps[blockStart - 1])) blockStart -= 1;
-      const currentBlock = current.steps.slice(blockStart, index + 1);
+        while (blockStart > 0 && attached(current.steps[blockStart - 1])) blockStart -= 1
+      const currentBlock = current.steps.slice(blockStart, index + 1)
       if (direction < 0) {
-        let previousSkill = blockStart - 1;
-        while (previousSkill >= 0 && !movable(current.steps[previousSkill])) previousSkill -= 1;
-        if (previousSkill < 0) return current;
-        let previousStart = previousSkill;
+        let previousSkill = blockStart - 1
+        while (previousSkill >= 0 && !movable(current.steps[previousSkill])) previousSkill -= 1
+        if (previousSkill < 0) return current
+        let previousStart = previousSkill
         if (current.steps[previousSkill]?.type === "skill")
-          while (previousStart > 0 && attached(current.steps[previousStart - 1])) previousStart -= 1;
+          while (previousStart > 0 && attached(current.steps[previousStart - 1])) previousStart -= 1
         return {
           ...current,
           steps: [
@@ -6197,11 +6484,11 @@ function RotationEditorTab({
             ...current.steps.slice(previousStart, blockStart),
             ...current.steps.slice(index + 1),
           ],
-        };
+        }
       }
-      let nextSkill = index + 1;
-      while (nextSkill < current.steps.length && !movable(current.steps[nextSkill])) nextSkill += 1;
-      if (nextSkill >= current.steps.length) return current;
+      let nextSkill = index + 1
+      while (nextSkill < current.steps.length && !movable(current.steps[nextSkill])) nextSkill += 1
+      if (nextSkill >= current.steps.length) return current
       return {
         ...current,
         steps: [
@@ -6210,270 +6497,266 @@ function RotationEditorTab({
           ...currentBlock,
           ...current.steps.slice(nextSkill + 1),
         ],
-      };
-    });
+      }
+    })
   }
   function removeStep(index: number) {
-    if (rotationLocked) return;
-    const step = rotation.steps[index];
-    if (!step || isAutomaticDelay(step)) return;
-    let start = index;
+    if (rotationLocked) return
+    const step = rotation.steps[index]
+    if (!step || isAutomaticDelay(step)) return
+    let start = index
     if (step.type === "skill") {
-      if (rotation.steps.filter((candidate) => candidate.type === "skill").length <= 1) return;
-      while (start > 0 && attachedTargetForStep(rotation.steps[start - 1])) start -= 1;
+      if (rotation.steps.filter(candidate => candidate.type === "skill").length <= 1) return
+      while (start > 0 && attachedTargetForStep(rotation.steps[start - 1])) start -= 1
     }
-    const steps = rotation.steps.filter((_, stepIndex) => stepIndex < start || stepIndex > index);
-    const scrollContainer = rotationScrollRef.current;
-    pendingEventScrollRef.current = null;
-    pendingSkillFocusRef.current = null;
+    const steps = rotation.steps.filter((_, stepIndex) => stepIndex < start || stepIndex > index)
+    const scrollContainer = rotationScrollRef.current
+    pendingEventScrollRef.current = null
+    pendingSkillFocusRef.current = null
     if (scrollContainer) {
-      const rows = [...scrollContainer.querySelectorAll<HTMLElement>(".rotation-table-row[data-rotation-step-index]")];
-      const deletedPosition = rows.findIndex((row) => Number(row.dataset.rotationStepIndex) === index);
-      const surviving = (row: HTMLElement) => steps.includes(rotation.steps[Number(row.dataset.rotationStepIndex)]);
+      const rows = [...scrollContainer.querySelectorAll<HTMLElement>(".rotation-table-row[data-rotation-step-index]")]
+      const deletedPosition = rows.findIndex(row => Number(row.dataset.rotationStepIndex) === index)
+      const surviving = (row: HTMLElement) => steps.includes(rotation.steps[Number(row.dataset.rotationStepIndex)])
       const anchor =
-        rows.slice(0, deletedPosition).reverse().find(surviving) ?? rows.slice(deletedPosition + 1).find(surviving);
+        rows.slice(0, deletedPosition).reverse().find(surviving) ?? rows.slice(deletedPosition + 1).find(surviving)
       if (anchor) {
-        const anchorStep = rotation.steps[Number(anchor.dataset.rotationStepIndex)];
+        const anchorStep = rotation.steps[Number(anchor.dataset.rotationStepIndex)]
         pendingEventScrollRef.current = {
           stepIndex: steps.indexOf(anchorStep),
           step: anchorStep,
           rotationId: editingRotationId,
           top: anchor.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top,
-        };
+        }
       }
     }
-    setRotation({ ...rotation, steps });
+    setRotation({ ...rotation, steps })
   }
   function selectStart(step: number, action?: number) {
-    if (rotationLocked) return;
-    setStartAnchor({ rowId: `rotation-${step}`, actionIndex: action });
-    setRotation((current) => ({ ...current, start: { step, ...(action === undefined ? {} : { action }) } }));
+    if (rotationLocked) return
+    setStartAnchor({ rowId: `rotation-${step}`, actionIndex: action })
+    setRotation(current => ({ ...current, start: { step, ...(action === undefined ? {} : { action }) } }))
   }
   function save() {
-    if (rotationLocked) return;
+    if (rotationLocked) return
     if (!rotation.name.trim()) {
-      setError(t("ui.app.rotationNameRequired"));
-      setStatus("");
-      return;
+      setError(t("ui.app.rotationNameRequired"))
+      setStatus("")
+      return
     }
-    const normalized = migrateRotation(rotation);
-    const nextEntries = rotationEntries.map((entry) =>
+    const normalized = migrateRotation(rotation)
+    const nextEntries = rotationEntries.map(entry =>
       entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: normalized } : entry,
-    );
-    setRotationEntries(nextEntries);
-    setRotation(normalized);
-    savedRotationSnapshotsRef.current?.set(editingRotationId, JSON.parse(JSON.stringify(normalized)) as RotationRecord);
-    persistRotationEntries(nextEntries);
-    setError("");
-    setStatus(t("ui.app.savedForThisSession"));
+    )
+    setRotationEntries(nextEntries)
+    setRotation(normalized)
+    savedRotationSnapshotsRef.current?.set(editingRotationId, JSON.parse(JSON.stringify(normalized)) as RotationRecord)
+    persistRotationEntries(nextEntries)
+    setError("")
+    setStatus(t("ui.app.savedForThisSession"))
     if (editingRotationId === activeRotationId && editorTimelineReady)
-      void calculateDiffsForRotation(editingRotationId, normalized);
+      void calculateDiffsForRotation(editingRotationId, normalized)
   }
   function resetRotation() {
-    if (rotationLocked) return;
-    const saved = savedRotationSnapshotsRef.current?.get(editingRotationId);
-    if (!saved) return;
-    const restored = JSON.parse(JSON.stringify(saved)) as RotationRecord;
-    setRotation(restored);
+    if (rotationLocked) return
+    const saved = savedRotationSnapshotsRef.current?.get(editingRotationId)
+    if (!saved) return
+    const restored = JSON.parse(JSON.stringify(saved)) as RotationRecord
+    setRotation(restored)
     setStartAnchor(
       restored.start
         ? { rowId: `rotation-${restored.start.step}`, actionIndex: restored.start.action }
         : { rowId: "rotation-0" },
-    );
-    setEventTimeDrafts({});
-    setEventDurationDrafts({});
-    setEventDistanceDrafts({});
-    setEventHPDrafts({});
-    setEditingName(false);
-    setStatus("");
-    setError("");
+    )
+    setEventTimeDrafts({})
+    setEventDurationDrafts({})
+    setEventDistanceDrafts({})
+    setEventHPDrafts({})
+    setEditingName(false)
+    setStatus("")
+    setError("")
   }
   function activateRotation(id: string) {
-    if (id === activeRotationId) return;
-    const current = migrateRotation(rotation);
-    const nextEntries = rotationEntries.map((entry) =>
+    if (id === activeRotationId) return
+    const current = migrateRotation(rotation)
+    const nextEntries = rotationEntries.map(entry =>
       entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: current } : entry,
-    );
-    const nextEntry = nextEntries.find((entry) => entry.id === id);
-    if (!nextEntry) return;
-    const nextRotation = rotationRecordForEntry(nextEntry);
-    setRotationEntries(nextEntries);
-    onActiveRotationChange(id);
-    setEditingRotationId(id);
-    setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord);
+    )
+    const nextEntry = nextEntries.find(entry => entry.id === id)
+    if (!nextEntry) return
+    const nextRotation = rotationRecordForEntry(nextEntry)
+    setRotationEntries(nextEntries)
+    onActiveRotationChange(id)
+    setEditingRotationId(id)
+    setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
     setStartAnchor(
       nextRotation.start
         ? { rowId: `rotation-${nextRotation.start.step}`, actionIndex: nextRotation.start.action }
         : { rowId: "rotation-0" },
-    );
-    setEventTimeDrafts({});
-    persistRotationEntries(nextEntries);
+    )
+    setEventTimeDrafts({})
+    persistRotationEntries(nextEntries)
   }
   function editRotation(id: string) {
-    if (id === editingRotationId) return;
-    const current = migrateRotation(rotation);
-    const nextEntries = rotationEntries.map((entry) =>
+    if (id === editingRotationId) return
+    const current = migrateRotation(rotation)
+    const nextEntries = rotationEntries.map(entry =>
       entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: current } : entry,
-    );
-    const nextEntry = nextEntries.find((entry) => entry.id === id);
-    if (!nextEntry) return;
-    const nextRotation = rotationRecordForEntry(nextEntry);
-    setRotationEntries(nextEntries);
-    setEditingRotationId(id);
-    setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord);
+    )
+    const nextEntry = nextEntries.find(entry => entry.id === id)
+    if (!nextEntry) return
+    const nextRotation = rotationRecordForEntry(nextEntry)
+    setRotationEntries(nextEntries)
+    setEditingRotationId(id)
+    setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
     setStartAnchor(
       nextRotation.start
         ? { rowId: `rotation-${nextRotation.start.step}`, actionIndex: nextRotation.start.action }
         : { rowId: "rotation-0" },
-    );
-    setEventTimeDrafts({});
-    persistRotationEntries(nextEntries);
+    )
+    setEventTimeDrafts({})
+    persistRotationEntries(nextEntries)
   }
   function selectRotation(entry: RotationEntry) {
     if (!rotationAvailableForWeapons(entry, settings.weapons)) {
-      const entryMartialArts = [...new Set(entry.martialArts)];
-      if (entryMartialArts.length !== 2) return;
-      persistRotationEntries(currentRotationEntries());
-      onSelectRotationWeapons([entryMartialArts[0], entryMartialArts[1]], entry.id);
-      return;
+      const entryMartialArts = [...new Set(entry.martialArts)]
+      if (entryMartialArts.length !== 2) return
+      persistRotationEntries(currentRotationEntries())
+      onSelectRotationWeapons([entryMartialArts[0], entryMartialArts[1]], entry.id)
+      return
     }
-    editRotation(entry.id);
+    editRotation(entry.id)
   }
   function addRotation() {
-    const current = migrateRotation(rotation);
-    const id = `rotation-${Date.now()}`;
+    const current = migrateRotation(rotation)
+    const id = createRotationId()
     const nextRotation: RotationRecord = {
       name: t("ui.app.newRotation"),
       steps: [{ type: "skill", skill: rotationSkillIds[0] }],
       groupSize: 1,
       eventTimeReference: "battleStart",
-    };
+    }
     const nextEntries = [
-      ...rotationEntries.map((entry) =>
+      ...rotationEntries.map(entry =>
         entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: current } : entry,
       ),
       { id, rotation: nextRotation, martialArts: [...new Set(settings.weapons)] },
-    ];
-    setRotationEntries(nextEntries);
-    setEditingRotationId(id);
-    setRotation(nextRotation);
-    savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(nextRotation)) as RotationRecord);
-    setStartAnchor({ rowId: "rotation-0" });
-    setEventTimeDrafts({});
-    persistRotationEntries(nextEntries);
+    ]
+    setRotationEntries(nextEntries)
+    setEditingRotationId(id)
+    setRotation(nextRotation)
+    savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
+    setStartAnchor({ rowId: "rotation-0" })
+    setEventTimeDrafts({})
+    persistRotationEntries(nextEntries)
   }
   function duplicateRotation() {
-    const id = `rotation-${Date.now()}`;
-    const source = migrateRotation(rotation);
+    const id = createRotationId()
+    const source = migrateRotation(rotation)
     const duplicate: RotationRecord = JSON.parse(
       JSON.stringify({ ...source, name: `${source.name || "Rotation"} Copy` }),
-    ) as RotationRecord;
-    const sourceEntry = rotationEntries.find((entry) => entry.id === editingRotationId);
+    ) as RotationRecord
+    const sourceEntry = rotationEntries.find(entry => entry.id === editingRotationId)
     const nextEntries = [
       ...rotationEntries,
       { id, rotation: duplicate, martialArts: [...(sourceEntry?.martialArts ?? new Set(settings.weapons))] },
-    ];
-    setRotationEntries(nextEntries);
-    setEditingRotationId(id);
-    setRotation(duplicate);
-    savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(duplicate)) as RotationRecord);
+    ]
+    setRotationEntries(nextEntries)
+    setEditingRotationId(id)
+    setRotation(duplicate)
+    savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(duplicate)) as RotationRecord)
     setStartAnchor(
       duplicate.start
         ? { rowId: `rotation-${duplicate.start.step}`, actionIndex: duplicate.start.action }
         : { rowId: "rotation-0" },
-    );
-    setEventTimeDrafts({});
-    setEventDurationDrafts({});
-    setEditingName(false);
-    setStatus("");
-    setError("");
-    persistRotationEntries(nextEntries);
+    )
+    setEventTimeDrafts({})
+    setEventDurationDrafts({})
+    setEditingName(false)
+    setStatus("")
+    setError("")
+    persistRotationEntries(nextEntries)
   }
   function removeRotation(id: string) {
-    const entry = rotationEntries.find((candidate) => candidate.id === id);
+    const entry = rotationEntries.find(candidate => candidate.id === id)
     if (
       !entry ||
       entry.isDefault ||
-      !window.confirm(
-        t("ui.app.deleteNamedRotationConfirmation", {
-          name: rotationEntryDisplayName(entry),
-        }),
-      )
+      !window.confirm(t("ui.app.deleteNamedRotationConfirmation", { name: rotationEntryDisplayName(entry) }))
     )
-      return;
-    if (listedRotationEntries.length <= 1) return;
-    const nextEntries = rotationEntries.filter((entry) => entry.id !== id);
-    savedRotationSnapshotsRef.current?.delete(id);
+      return
+    if (listedRotationEntries.length <= 1) return
+    const nextEntries = rotationEntries.filter(entry => entry.id !== id)
+    savedRotationSnapshotsRef.current?.delete(id)
     if (id !== editingRotationId && id !== activeRotationId) {
-      setRotationEntries(nextEntries);
-      persistRotationEntries(nextEntries);
-      return;
+      setRotationEntries(nextEntries)
+      persistRotationEntries(nextEntries)
+      return
     }
-    const nextVisibleEntries = nextEntries.filter((entry) => rotationAvailableForWeapons(entry, settings.weapons));
+    const nextVisibleEntries = nextEntries.filter(entry => rotationAvailableForWeapons(entry, settings.weapons))
     const nextActive =
-      nextVisibleEntries[Math.max(0, listedRotationEntries.findIndex((entry) => entry.id === id) - 1)] ??
-      nextVisibleEntries[0];
-    if (!nextActive) return;
-    setRotationEntries(nextEntries);
+      nextVisibleEntries[Math.max(0, listedRotationEntries.findIndex(entry => entry.id === id) - 1)] ??
+      nextVisibleEntries[0]
+    if (!nextActive) return
+    setRotationEntries(nextEntries)
     if (id === activeRotationId) {
-      onActiveRotationChange(nextActive.id);
+      onActiveRotationChange(nextActive.id)
     }
     if (id === editingRotationId) {
-      setEditingRotationId(nextActive.id);
-      setRotation(JSON.parse(JSON.stringify(nextActive.rotation)) as RotationRecord);
+      setEditingRotationId(nextActive.id)
+      setRotation(JSON.parse(JSON.stringify(nextActive.rotation)) as RotationRecord)
       setStartAnchor(
         nextActive.rotation.start
           ? { rowId: `rotation-${nextActive.rotation.start.step}`, actionIndex: nextActive.rotation.start.action }
           : { rowId: "rotation-0" },
-      );
+      )
     }
-    setEventTimeDrafts({});
-    persistRotationEntries(nextEntries);
+    setEventTimeDrafts({})
+    persistRotationEntries(nextEntries)
   }
 
   function currentRotationEntries() {
-    const current = migrateRotation(rotation);
-    return rotationEntries.map((entry) =>
+    const current = migrateRotation(rotation)
+    return rotationEntries.map(entry =>
       entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: current } : entry,
-    );
+    )
   }
 
   function exportRotations() {
-    const entries = currentRotationEntries();
-    const exportedCount = entries.filter((entry) => !entry.isDefault).length;
-    const blob = new Blob([exportRotationEntries(entries)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `where-builds-meet-rotations-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    publishNotice({ id: "rotation-transfer", message: t("ui.app.rotationsExported", { count: exportedCount }) });
+    const entries = currentRotationEntries()
+    const exportedCount = entries.filter(entry => !entry.isDefault).length
+    const blob = new Blob([exportRotationEntries(entries)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `where-builds-meet-rotations-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    publishNotice({ id: "rotation-transfer", message: t("ui.app.rotationsExported", { count: exportedCount }) })
   }
 
   async function importRotations(event: ChangeEvent<HTMLInputElement>) {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    input.value = ""
+    if (!file) return
     try {
-      const result = mergeImportedRotationEntries(currentRotationEntries(), JSON.parse(await file.text()) as unknown);
-      const migratedEntries = result.entries.map((entry) =>
+      const result = mergeImportedRotationEntries(currentRotationEntries(), JSON.parse(await file.text()) as unknown)
+      const migratedEntries = result.entries.map(entry =>
         result.importedIds.includes(entry.id) ? { ...entry, rotation: migrateRotation(entry.rotation) } : entry,
-      );
-      result.importedIds.forEach((id) => {
-        const imported = migratedEntries.find((entry) => entry.id === id);
+      )
+      result.importedIds.forEach(id => {
+        const imported = migratedEntries.find(entry => entry.id === id)
         if (imported)
-          savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(imported.rotation)) as RotationRecord);
-      });
-      setRotationEntries(migratedEntries);
-      persistRotationEntries(migratedEntries);
-      const importedEntry = migratedEntries.find((entry) => entry.id === result.importedIds[0]);
+          savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(imported.rotation)) as RotationRecord)
+      })
+      setRotationEntries(migratedEntries)
+      persistRotationEntries(migratedEntries)
+      const importedEntry = migratedEntries.find(entry => entry.id === result.importedIds[0])
       if (importedEntry) {
-        setEditingRotationId(importedEntry.id);
-        setRotation(JSON.parse(JSON.stringify(importedEntry.rotation)) as RotationRecord);
+        setEditingRotationId(importedEntry.id)
+        setRotation(JSON.parse(JSON.stringify(importedEntry.rotation)) as RotationRecord)
         setStartAnchor(
           importedEntry.rotation.start
             ? {
@@ -6481,143 +6764,92 @@ function RotationEditorTab({
                 actionIndex: importedEntry.rotation.start.action,
               }
             : { rowId: "rotation-0" },
-        );
-        setEventTimeDrafts({});
-        setEventDurationDrafts({});
-        setEditingName(false);
-        setStatus("");
-        setError("");
+        )
+        setEventTimeDrafts({})
+        setEventDurationDrafts({})
+        setEditingName(false)
+        setStatus("")
+        setError("")
       }
       publishNotice({
         id: "rotation-transfer",
         message: t("ui.app.rotationsImported", { count: result.importedCount }),
-      });
+      })
     } catch (error) {
       publishNotice({
         id: "rotation-transfer",
         message: error instanceof Error ? error.message : t("ui.app.rotationImportError"),
         error: true,
-      });
+      })
     }
   }
 
-  const currentCachedResult = rotationResults[editingRotationId]?.result;
-  const editorRevision: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation };
-  const editorRevisionRef = useRef(editorRevision);
-  editorRevisionRef.current = editorRevision;
-  const [editorTimelineState, setEditorTimelineState] = useState<EditorTimelineResult & { revision: EditorRevision }>();
+  const currentCachedResult = rotationResults[editingRotationId]?.result
+  const editorRevision: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation }
+
+  const [editorTimelineState, setEditorTimelineState] = useState<EditorTimelineResult & { revision: EditorRevision }>()
   const editorTimelineReady = Boolean(
     editorTimelineState && sameEditorRevision(editorTimelineState.revision, editorRevision),
-  );
-  useEffect(() => {
-    if (editorTimelineReady) return;
-    const requested = editorRevisionRef.current;
-    let cancelled = false;
-    let timer: ReturnType<typeof window.setTimeout>;
-    const current = () => !cancelled && sameEditorRevision(editorRevisionRef.current, requested);
-    const run = async () => {
-      try {
-        const result = await requestEditorTimeline(calculationBundleFor(requested.rotation, false), {
-          key: `editor:${requested.id}`,
-          priority: 450,
-        });
-        if (!current()) return;
-        setEditorTimelineState({ ...result, rotation: requested.rotation, revision: requested });
-      } catch (error) {
-        if (!current()) return;
-        if (error instanceof Error && error.message.includes("superseded")) {
-          timer = window.setTimeout(() => void run(), 150);
-          return;
-        }
-        publishNotice({
-          id: "editor-timeline",
-          error: true,
-          message: error instanceof Error ? error.message : t("ui.notices.calculationError"),
-        });
-      }
-    };
-    timer = window.setTimeout(() => void run(), 100);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-      cancelEditorTimelineRequest(`editor:${requested.id}`);
-    };
-  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady]);
-  const structuralTimeline = useMemo(
-    () =>
-      editorTimelineReady
-        ? withUnresolvedEditorSteps(
-            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
-            editorTimelineState!.timeline,
-          )
-        : pendingEditorTimeline(
-            { rotation, skills: calculationDefinitions.skills, eventDefinitions: rotationEventDefinitions },
-            editorTimelineState?.revision.id === editingRotationId ? editorTimelineState : undefined,
-            editorStepReplacements.current,
-          ),
-    [rotation, calculationDefinitions, editingRotationId, editorTimelineReady, editorTimelineState],
-  );
+  )
+  const {
+    timeline,
+    anchorTime,
+    damageRowsByOwner,
+    attachmentTargets,
+    displayEntries,
+    readableRotation,
+    displayedCalculation,
+  } = useRotationTimelineDisplay({
+    rotation,
+    calculationDefinitions,
+    editingRotationId,
+    editorTimelineReady,
+    editorTimelineState,
+    rotationResults,
+    editorStepReplacements,
+    startAnchor,
+    expandedSkillRows,
+    readableDialogOpen,
+  })
   const rotationSkillCount = useMemo(
-    () => rotation.steps.filter((step) => step.type === "skill").length,
+    () => rotation.steps.filter(step => step.type === "skill").length,
     [rotation.steps],
-  );
-  const displayedCalculationRef = useRef(rotationResults[editingRotationId]);
-  if (rotationResults[editingRotationId]?.key === editorTimelineState?.fingerprint)
-    displayedCalculationRef.current = rotationResults[editingRotationId];
-  const displayedCalculation =
-    editorTimelineState?.revision.id === editingRotationId &&
-    displayedCalculationRef.current?.key === editorTimelineState?.fingerprint
-      ? displayedCalculationRef.current?.result
-      : undefined;
-  const timeline = useMemo(
-    () => mergeCalculatedTimelineState(structuralTimeline, displayedCalculation?.timeline),
-    [structuralTimeline, displayedCalculation],
-  );
-  const displayedStart =
-    editorTimelineState?.revision.id === editingRotationId ? editorTimelineState.rotation.start : rotation.start;
-  const anchorTime = useMemo(
-    () =>
-      timelineAnchorTime(timeline, {
-        rowId: `rotation-${displayedStart?.step ?? 0}`,
-        actionIndex: displayedStart?.action,
-      }),
-    [displayedStart, timeline],
-  );
+  )
   useLayoutEffect(() => {
-    if (!editorTimelineReady) return;
-    const scrollContainer = rotationScrollRef.current;
-    const pendingScroll = pendingEventScrollRef.current;
+    if (!editorTimelineReady) return
+    const scrollContainer = rotationScrollRef.current
+    const pendingScroll = pendingEventScrollRef.current
     if (scrollContainer && pendingScroll) {
-      let stepIndex = pendingScroll.stepIndex;
+      let stepIndex = pendingScroll.stepIndex
       if (pendingScroll.step) {
-        let step = pendingScroll.step;
-        while (editorStepReplacements.current.has(step)) step = editorStepReplacements.current.get(step)!;
-        stepIndex = rotation.steps.indexOf(step);
+        let step = pendingScroll.step
+        while (editorStepReplacements.has(step)) step = editorStepReplacements.get(step)!
+        stepIndex = rotation.steps.indexOf(step)
       }
-      const sameRotation = pendingScroll.rotationId === undefined || pendingScroll.rotationId === editingRotationId;
+      const sameRotation = pendingScroll.rotationId === undefined || pendingScroll.rotationId === editingRotationId
       const row = sameRotation
         ? scrollContainer.querySelector<HTMLElement>(`[data-rotation-step-index="${stepIndex}"]`)
-        : null;
+        : null
       if (row) {
-        const currentTop = row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top;
-        scrollContainer.scrollTop += currentTop - pendingScroll.top;
+        const currentTop = row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top
+        scrollContainer.scrollTop += currentTop - pendingScroll.top
       }
-      pendingEventScrollRef.current = null;
+      pendingEventScrollRef.current = null
     }
-    const pendingFocus = pendingSkillFocusRef.current;
+    const pendingFocus = pendingSkillFocusRef.current
     if (scrollContainer && pendingFocus !== null) {
       const select = scrollContainer.querySelector<HTMLSelectElement>(
         `select[data-rotation-step-index="${pendingFocus}"]`,
-      );
+      )
       if (select) {
-        select.focus({ preventScroll: true });
-        select.scrollIntoView({ block: "nearest" });
-        pendingSkillFocusRef.current = null;
+        select.focus({ preventScroll: true })
+        select.scrollIntoView({ block: "nearest" })
+        pendingSkillFocusRef.current = null
       }
     }
-  }, [timeline, editorTimelineReady]);
-  const workerActionBreakdowns = displayedCalculation?.actionBreakdowns ?? {};
-  const displayTime = (time: number) => time - anchorTime;
+  }, [timeline, editorTimelineReady, rotation.steps, editorStepReplacements, editingRotationId])
+  const workerActionBreakdowns = displayedCalculation?.actionBreakdowns ?? {}
+  const displayTime = (time: number) => time - anchorTime
   const calculateTimelineActionBreakdown = (row: TimelineRow, actionIndex: number): RotationActionBreakdown =>
     workerActionBreakdowns[`${row.id}:${actionIndex}`] ?? {
       physical: 0,
@@ -6626,193 +6858,125 @@ function RotationEditorTab({
       silkbind: 0,
       bamboocut: 0,
       total: 0,
-    };
-  const skillExpansionKey = (rowId: string) => `${editingRotationId}:${rowId}`;
-  const skillActionsExpanded = (rowId: string) => expandedSkillRows.has(skillExpansionKey(rowId));
-  const toggleSkillActions = (rowId: string) =>
-    setExpandedSkillRows((current) => {
-      const next = new Set(current);
-      const key = skillExpansionKey(rowId);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  const damageRowsByOwner = useMemo(() => {
-    const result = new Map<string, TimelineRow[]>();
-    for (const row of timeline) {
-      const owner = row.kind === "rotation" || row.kind === "damageGroup" ? row.id : row.sourceRowId;
-      if (!owner) continue;
-      const rows = result.get(owner) ?? [];
-      rows.push(row);
-      result.set(owner, rows);
     }
-    return result;
-  }, [timeline]);
-  const attachmentTargets = useMemo(() => {
-    const triggeredRowsBySourceAndSkill = new Map<string, TimelineRow[]>();
-    timeline.forEach((row) => {
-      if (row.kind !== "trigger" || !row.sourceRowId || row.step.type !== "skill") return;
-      const key = `${row.sourceRowId}:${row.step.skill}`;
-      const matches = triggeredRowsBySourceAndSkill.get(key);
-      if (matches) matches.push(row);
-      else triggeredRowsBySourceAndSkill.set(key, [row]);
-    });
-
-    return timeline
-      .filter(
-        (row) =>
-          row.kind === "rotation" &&
-          row.rotationIndex !== undefined &&
-          isAttachmentAnchorStep(row.step) &&
-          !row.skipped,
-      )
-      .flatMap((sourceRow) => {
-        const sourceStepIndex = sourceRow.rotationIndex ?? -1;
-        const targets: Array<{
-          sourceRowId: string;
-          sourceStepIndex: number;
-          target: AttachedEventTarget;
-          time: number;
-          order: number;
-        }> = [];
-        if (sourceRow.step.type === "skill")
-          targets.push({
-            sourceRowId: sourceRow.id,
-            sourceStepIndex,
-            target: { action: "start" },
-            time: sourceRow.startTime,
-            order: sourceRow.order,
-          });
-        sourceRow.actions.forEach((action, actionIndex) => {
-          if (action.type === "damage" || action.type === "takeDamage")
-            targets.push({
-              sourceRowId: sourceRow.id,
-              sourceStepIndex,
-              target: { action: actionIndex },
-              time: sourceRow.startTime + Number(action.time ?? 0),
-              order: sourceRow.order + 10 + actionIndex,
-            });
-        });
-        if (sourceRow.step.type !== "skill") return targets;
-        const nextTriggeredRowBySkill = new Map<string, number>();
-        let triggerOrdinal = 0;
-        sourceRow.actions.forEach((action) => {
-          if (action.type !== "trigger" || typeof action.value !== "string") return;
-          const key = `${sourceRow.id}:${action.value}`;
-          const matchIndex = nextTriggeredRowBySkill.get(action.value) ?? 0;
-          const triggeredRow = triggeredRowsBySourceAndSkill.get(key)?.[matchIndex];
-          nextTriggeredRowBySkill.set(action.value, matchIndex + 1);
-          if (triggeredRow) {
-            triggeredRow.actions.forEach((triggeredAction, actionIndex) => {
-              if (triggeredAction.type === "damage")
-                targets.push({
-                  sourceRowId: sourceRow.id,
-                  sourceStepIndex,
-                  target: { trigger: triggerOrdinal, action: actionIndex },
-                  time: triggeredRow.startTime + Number(triggeredAction.time ?? 0),
-                  order: triggeredRow.order + 10 + actionIndex,
-                });
-            });
-          }
-          triggerOrdinal += 1;
-        });
-        return targets;
-      })
-      .sort((left, right) => compareTimelineTime(left.time, right.time) || left.order - right.order);
-  }, [timeline]);
-  const displayEntries = useMemo(() => {
-    const actionsExpanded = (rowId: string) => expandedSkillRows.has(`${editingRotationId}:${rowId}`);
-    return buildTimelineDisplayEntries(timeline, actionsExpanded, startAnchor);
-  }, [editingRotationId, expandedSkillRows, startAnchor, timeline]);
+  const skillExpansionKey = (rowId: string) => `${editingRotationId}:${rowId}`
+  const skillActionsExpanded = (rowId: string) => expandedSkillRows.has(skillExpansionKey(rowId))
+  const toggleSkillActions = (rowId: string) =>
+    setExpandedSkillRows(current => {
+      const next = new Set(current)
+      const key = skillExpansionKey(rowId)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   const showDistanceColumn = useMemo(
     () =>
       rotation.steps.some(
-        (step) =>
+        step =>
           (step.type === "event" && step.event === "Move") ||
-          (step.type === "skill" && findSkill(step.skill ?? "")?.tags?.includes("Distance")),
+          (step.type === "skill" && calculationDefinitions.skills[step.skill ?? ""]?.tags?.includes("Distance")),
       ),
-    [rotation.steps],
-  );
+    [calculationDefinitions, rotation.steps],
+  )
   const showSelfHPColumn = useMemo(
     () =>
       rotation.dummyAttack === true ||
       rotation.steps.some(
-        (step) =>
+        step =>
           (step.type === "event" && (step.event === "SelfHP" || step.event === "TakeDamage")) ||
-          (step.type === "skill" && findSkill(step.skill ?? "")?.tags?.includes("HP")),
+          (step.type === "skill" && calculationDefinitions.skills[step.skill ?? ""]?.tags?.includes("HP")),
       ),
-    [rotation.dummyAttack, rotation.steps],
-  );
+    [calculationDefinitions, rotation.dummyAttack, rotation.steps],
+  )
   const showTargetHPColumn = useMemo(
-    () =>
-      rotation.targetHP !== undefined || rotation.steps.some((step) => step.type === "event" && step.event === "HP"),
+    () => rotation.targetHP !== undefined || rotation.steps.some(step => step.type === "event" && step.event === "HP"),
     [rotation.steps, rotation.targetHP],
-  );
+  )
   const showQiColumn = useMemo(
-    () => rotation.steps.some((step) => step.type === "event" && step.event === "Qi"),
+    () => rotation.steps.some(step => step.type === "event" && step.event === "Qi"),
     [rotation.steps],
-  );
+  )
   const showHellfireColumn =
     settings.weapons.includes("infernalTwinblades") ||
-    rotation.steps.some((step) => step.type === "event" && step.event === "Hellfire");
-  const showHeavensWillColumn = settings.weapons.includes("heavenwill") && settings.weapons.includes("skygrasp");
+    rotation.steps.some(step => step.type === "event" && step.event === "Hellfire")
+  const showHeavensWillColumn = settings.weapons.includes("heavenwill") && settings.weapons.includes("skygrasp")
   const showVitalityColumn = useMemo(
     () =>
-      rotation.steps.some((step) => {
-        if (step.type !== "skill") return false;
-        const skill = findSkill(step.skill ?? "");
-        return skill?.tags?.includes("Mystic") === true && skill.tags.includes("Triggered") === false;
+      rotation.steps.some(step => {
+        if (step.type !== "skill") return false
+        const skill = calculationDefinitions.skills[step.skill ?? ""]
+        return skill?.tags?.includes("Mystic") === true && skill.tags.includes("Triggered") === false
       }),
-    [rotation.steps],
-  );
-  const totalRotationTime = currentCachedResult?.duration ?? 0;
-  const readableRotation = useMemo(
-    () => (readableDialogOpen ? readableRotationText(timeline, startAnchor, anchorTime) : ""),
-    [anchorTime, readableDialogOpen, startAnchor, timeline],
-  );
-  const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0;
-  const rotationDps = currentCachedResult?.metrics.dps ?? 0;
-  const totalRotationHealing = currentCachedResult?.metrics.totalHealing ?? 0;
-  const rotationHps = currentCachedResult?.metrics.hps ?? 0;
+    [calculationDefinitions, rotation.steps],
+  )
+  const rotationTableStyle = useMemo(
+    () =>
+      ({
+        "--rotation-state-columns": [
+          showDistanceColumn ? "10ch" : "",
+          showSelfHPColumn ? "8ch" : "",
+          showTargetHPColumn ? "8ch" : "",
+          showQiColumn ? "8ch" : "",
+          showHellfireColumn ? "10ch" : "",
+          showHeavensWillColumn ? "13ch" : "",
+          showVitalityColumn ? "10ch" : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHellfireColumn) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
+      }) as CSSProperties,
+    [
+      showDistanceColumn,
+      showSelfHPColumn,
+      showTargetHPColumn,
+      showQiColumn,
+      showHellfireColumn,
+      showHeavensWillColumn,
+      showVitalityColumn,
+    ],
+  )
+  const totalRotationTime = currentCachedResult?.duration ?? 0
+  const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0
+  const rotationDps = currentCachedResult?.metrics.dps ?? 0
+  const totalRotationHealing = currentCachedResult?.metrics.totalHealing ?? 0
+  const rotationHps = currentCachedResult?.metrics.hps ?? 0
   const applyPriorityStatLine = (key: keyof CharacterStats, amount: number) => {
-    return { ...rawCharacterStats, [key]: rawCharacterStats[key] + amount };
-  };
-  const priorityLevelData = statRollsForLevel(enemy.level);
+    return { ...rawCharacterStats, [key]: rawCharacterStats[key] + amount }
+  }
+  const priorityLevelData = statRollsForLevel(enemy.level)
   const priorityCharacter = Object.fromEntries(
     Object.entries(priorityLevelData?.affix ?? {}).filter(([key]) =>
       characterStatAvailableForSettings(key as keyof CharacterStats, settings, pathId),
     ),
-  ) as Partial<Record<keyof CharacterStats, number>>;
+  ) as Partial<Record<keyof CharacterStats, number>>
   const priorityAttunement = Object.keys(attunementData)
-    .filter((key) => attunementAvailableForSettings(key, loadSelectedPath(), settings))
-    .flatMap((key) => {
-      const amount = maxGearRoll(key, "attunement", false, enemy.level);
-      return typeof amount === "number" ? [[key, amount] as const] : [];
-    });
-  const selectedInnerWays = buildSetup.innerWays.filter(
-    (row) => row.innerWay && innerWayAvailableForPath(row.innerWay),
-  );
-  const priorityStats: RotationPriority[] = [];
-  const priorityAttunementRows: RotationPriority[] = [];
-  const priorityInnerWays: RotationPriority[] = [];
-  const setupComparisons: Record<string, RotationPriority[]> = {};
+    .filter(key => attunementAvailableForSettings(key, loadSelectedPath(), settings))
+    .flatMap(key => {
+      const amount = maxGearRoll(key, "attunement", false, enemy.level)
+      return typeof amount === "number" ? [[key, amount] as const] : []
+    })
+  const selectedInnerWays = buildSetup.innerWays.filter(row => row.innerWay && innerWayAvailableForPath(row.innerWay))
+  const priorityStats: RotationPriority[] = []
+  const priorityAttunementRows: RotationPriority[] = []
+  const priorityInnerWays: RotationPriority[] = []
+  const setupComparisons: Record<string, RotationPriority[]> = {}
   function openReadableRotation() {
-    setReadableCopyStatus("");
-    setReadableDialogOpen(true);
+    setReadableCopyStatus("")
+    setReadableDialogOpen(true)
   }
   async function copyReadableRotation() {
     try {
-      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(readableRotation);
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(readableRotation)
       else {
-        readableTextRef.current?.focus();
-        readableTextRef.current?.select();
-        if (!document.execCommand("copy")) throw new Error("Copy is unavailable");
+        readableTextRef.current?.focus()
+        readableTextRef.current?.select()
+        if (!document.execCommand("copy")) throw new Error("Copy is unavailable")
       }
-      setReadableCopyStatus(t("ui.app.copied"));
+      setReadableCopyStatus(t("ui.app.copied"))
     } catch {
-      readableTextRef.current?.focus();
-      readableTextRef.current?.select();
-      setReadableCopyStatus(t("ui.app.manualCopyInstruction"));
+      readableTextRef.current?.focus()
+      readableTextRef.current?.select()
+      setReadableCopyStatus(t("ui.app.manualCopyInstruction"))
     }
   }
   function makeTimelineInput(
@@ -6833,276 +6997,277 @@ function RotationEditorTab({
       setupEffects,
       weapons: settings.weapons,
       martialArtState: Object.fromEntries(
-        settings.weapons.map((martialArt) => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
+        settings.weapons.map(martialArt => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
       ),
       initialBuffs: globalBuffTimelineEffects(globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(globalDebuffs),
-      initialResources: {
-        ...typedSystemStats.initialResources,
-        Vitality: displayedCharacterStats.maxVitality,
-      },
+      initialResources: { ...typedSystemStats.initialResources, Vitality: displayedCharacterStats.maxVitality },
       resourceRegeneration: { HeavensWill: displayedCharacterStats.heavensWillRegen },
-      resourceMaximums: {
-        ...typedSystemStats.resourceMaximums,
-        Vitality: displayedCharacterStats.maxVitality,
-      },
+      resourceMaximums: { ...typedSystemStats.resourceMaximums, Vitality: displayedCharacterStats.maxVitality },
       resourceEvents: typedSystemStats.resourceEvents,
       maxHP: displayedCharacterStats.maxHp,
-    };
-  }
-  function calculationBundleFor(rotationRecord: RotationRecord, includeDiffs: boolean): RotationSimulationBundle {
-    const rotationAnchor = rotationRecord.start
-      ? { rowId: `rotation-${rotationRecord.start.step}`, actionIndex: rotationRecord.start.action }
-      : { rowId: "rotation-0" };
-    const baselineSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup);
-    const setComparisonGroups = includeDiffs
-      ? Object.fromEntries(
-          (
-            [
-              ["weaponSets", typedWeaponSetDefinitions],
-              ["armorSets", typedArmorSetDefinitions],
-            ] as const
-          ).flatMap(([key, definitions]) =>
-            Object.entries(definitions)
-              .filter(([, definition]) => setAvailableForSettings(definition, settings))
-              .map(([setName]) => [
-                `${key}:${setName}`,
-                [0, 2, 4]
-                  .filter((tier) => tier !== buildSetup[key][setName])
-                  .map((tier) => {
-                    const selections = selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions);
-                    const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
-                      [key]: selections,
-                    });
-                    const rebuildTimeline = setSelectionChangesTimeline(buildSetup[key], selections, definitions);
-                    return {
-                      label: String(tier),
-                      setupEffects,
-                      ...(rebuildTimeline
-                        ? {
-                            timeline: makeTimelineInput(
-                              rotationRecord,
-                              innerWayConditions,
-                              innerWayEffectRules,
-                              setupEffects,
-                            ),
-                          }
-                        : {}),
-                    };
-                  }),
-              ]),
-          ),
-        )
-      : {};
-    const selectedFood = currentFood;
-    const selectedScript = currentScript;
-    const selectedDivinecraft = currentDivinecraft;
-    return {
-      timeline: makeTimelineInput(rotationRecord, innerWayConditions, innerWayEffectRules, baselineSetupEffects),
-      startAnchor: rotationAnchor,
-      stats: displayedCharacterStats,
-      rawStats: talentFormulaStats,
-      baseStats: rawCharacterStats,
-      attunement: attunementStats,
-      enemy,
-      weapons: settings.weapons,
-      statPriority: includeDiffs
-        ? Object.entries(priorityCharacter).map(([key, amount]) => {
-            const variantStats = applyPriorityStatLine(key as keyof CharacterStats, Number(amount));
-            const definition = allStatDefinitions.find((candidate) => candidate.key === key);
-            return {
-              label: definition?.label ?? key,
-              maxRoll: Number(amount) * (definition?.unit === "%" ? 100 : 1),
-              stats: variantStats,
-            };
-          })
-        : [],
-      attunementPriority: includeDiffs
-        ? priorityAttunement.map(([key, amount]) => {
-            const variantAttunement = {
-              ...attunementStats,
-              [key]: attunementStats[key as keyof AttunementStats] + Number(amount),
-            };
-            return {
-              label: attunementData[key]?.name ?? key,
-              maxRoll: Number(amount) * (percentageAttunementKeys.has(key as keyof AttunementStats) ? 100 : 1),
-              attunement: variantAttunement,
-            };
-          })
-        : [],
-      innerWayPriority: includeDiffs
-        ? selectedInnerWays.map((selected) => {
-            const definition = innerWayDefinitions[selected.innerWay as keyof typeof innerWayDefinitions];
-            const variantRules = innerWayEffectRules.filter((rule) => rule.source !== selected.innerWay);
-            const variantConditions = innerWayConditionsFor(buildSetup.innerWays, selected.innerWay);
-            const setupEffects = baselineSetupEffects;
-            return {
-              label: definition?.name ?? selected.innerWay,
-              ...(definition?.altersTimeline
-                ? { timeline: makeTimelineInput(rotationRecord, variantConditions, variantRules, setupEffects) }
-                : {}),
-              innerWayRules: variantRules,
-              innerWayConditions: [...variantConditions, ...setupConditionsFor(setupEffects)],
-            };
-          })
-        : [],
-      setupComparisons: includeDiffs
-        ? {
-            arsenal: Object.keys(typedArsenalDefinitions)
-              .filter((value) => value !== buildSetup.arsenal)
-              .map((value) => ({
-                label: value,
-                setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { arsenal: value }),
-              })),
-            bowRingSet: Object.keys(typedBowRingSetDefinitions)
-              .filter((value) => value !== buildSetup.bowRingSet)
-              .map((value) => ({
-                label: value,
-                setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { bowRingSet: value }),
-              })),
-            food: Object.keys(typedFoodDefinitions)
-              .filter((value) => value !== selectedFood)
-              .map((value) => ({
-                label: value,
-                setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { food: value }),
-              })),
-            script: Object.entries(typedScriptDefinitions)
-              .filter(([value]) => value !== selectedScript)
-              .map(([value]) => {
-                const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, { script: value });
-                const rebuildTimeline = setupSelectionChangesTimeline(selectedScript, value, typedScriptDefinitions);
-                return {
-                  label: value,
-                  setupEffects,
-                  ...(rebuildTimeline
-                    ? {
-                        timeline: makeTimelineInput(
-                          rotationRecord,
-                          innerWayConditions,
-                          innerWayEffectRules,
-                          setupEffects,
-                        ),
-                      }
-                    : {}),
-                };
-              }),
-            divinecraft: Object.entries(typedDivinecraftDefinitions)
-              .filter(([value, definition]) => definition.available !== false && value !== selectedDivinecraft)
-              .map(([value]) => {
-                const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
-                  divinecraft: value,
-                });
-                const rebuildTimeline = setupSelectionChangesTimeline(
-                  selectedDivinecraft,
-                  value,
-                  typedDivinecraftDefinitions,
-                );
-                return {
-                  label: value,
-                  setupEffects,
-                  ...(rebuildTimeline
-                    ? {
-                        timeline: makeTimelineInput(
-                          rotationRecord,
-                          innerWayConditions,
-                          innerWayEffectRules,
-                          setupEffects,
-                        ),
-                      }
-                    : {}),
-                };
-              }),
-            ...Object.fromEntries(
-              globalDebuffRows.map(({ key }) => [
-                `debuff:${key}`,
-                [false, true]
-                  .filter((enabled) => enabled !== currentGlobalDebuffs[key])
-                  .map((enabled) => {
-                    const globalDebuffs = { ...currentGlobalDebuffs, [key]: enabled };
-                    return {
-                      label: enabled ? "on" : "off",
-                      timeline: makeTimelineInput(
-                        rotationRecord,
-                        innerWayConditions,
-                        innerWayEffectRules,
-                        baselineSetupEffects,
-                        globalDebuffs,
-                      ),
-                    };
-                  }),
-              ]),
-            ),
-            "debuff:qingyisCharm": (["none", "T1", "T6"] as const)
-              .filter((value) => value !== currentGlobalDebuffs.qingyisCharm)
-              .map((value) => {
-                const globalDebuffs = { ...currentGlobalDebuffs, qingyisCharm: value };
-                return {
-                  label: value,
-                  timeline: makeTimelineInput(
-                    rotationRecord,
-                    innerWayConditions,
-                    innerWayEffectRules,
-                    baselineSetupEffects,
-                    globalDebuffs,
-                  ),
-                };
-              }),
-            "buff:floatingGrace": (["none", "mixed", "deluge"] as const)
-              .filter((value) => value !== currentGlobalDebuffs.floatingGrace)
-              .map((value) => {
-                const globalDebuffs = { ...currentGlobalDebuffs, floatingGrace: value };
-                return {
-                  label: value,
-                  timeline: makeTimelineInput(
-                    rotationRecord,
-                    innerWayConditions,
-                    innerWayEffectRules,
-                    baselineSetupEffects,
-                    globalDebuffs,
-                  ),
-                };
-              }),
-            ...setComparisonGroups,
-          }
-        : ({} as Record<string, RotationSimulationVariant[]>),
-    };
-  }
-
-  useEffect(() => {
-    if (!activeRotationId) return;
-    const activeEntry = rotationEntries.find((entry) => entry.id === activeRotationId);
-    const activeRotation =
-      activeRotationId === editingRotationId ? rotation : activeEntry ? rotationRecordForEntry(activeEntry) : undefined;
-    if (activeRotation) {
-      const graduation = prepareGraduationCalculation(activeRotation);
-      graduationFingerprintRef.current = graduation?.fingerprint ?? null;
-      const cachedGraduation = graduation
-        ? calculationCacheRef.current.baseline(graduation.fingerprint)?.metrics.dps
-        : undefined;
-      onActiveSimulationBundleChange(
-        calculationBundleFor(activeRotation, false),
-        activeRotation.name || "Active rotation",
-        `${activeRotationId}:${calculationContextKey}:${JSON.stringify(activeRotation)}`,
-        activeEntry?.isDefault === true,
-        graduation ? { fingerprint: graduation.fingerprint, dps: cachedGraduation } : undefined,
-      );
     }
-  }, [
-    editingRotationId,
-    rotation,
-    rotationEntries,
-    calculationContextKey,
-    pathId,
-    defaultRotationId,
-    activeRotationId,
-    onActiveSimulationBundleChange,
-  ]);
+  }
+  const calculationBundleFor = useEffectEvent(
+    (rotationRecord: RotationRecord, includeDiffs: boolean): RotationSimulationBundle => {
+      const rotationAnchor = rotationRecord.start
+        ? { rowId: `rotation-${rotationRecord.start.step}`, actionIndex: rotationRecord.start.action }
+        : { rowId: "rotation-0" }
+      const baselineSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup)
+      const setComparisonGroups = includeDiffs
+        ? Object.fromEntries(
+            (
+              [
+                ["weaponSets", typedWeaponSetDefinitions],
+                ["armorSets", typedArmorSetDefinitions],
+              ] as const
+            ).flatMap(([key, definitions]) =>
+              Object.entries(definitions)
+                .filter(([, definition]) => setAvailableForSettings(definition, settings))
+                .map(([setName]) => [
+                  `${key}:${setName}`,
+                  [0, 2, 4]
+                    .filter(tier => tier !== buildSetup[key][setName])
+                    .map(tier => {
+                      const selections = selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions)
+                      const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
+                        [key]: selections,
+                      })
+                      const rebuildTimeline = setSelectionChangesTimeline(buildSetup[key], selections, definitions)
+                      return Object.assign(
+                        { label: String(tier), setupEffects },
+                        rebuildTimeline
+                          ? {
+                              timeline: makeTimelineInput(
+                                rotationRecord,
+                                innerWayConditions,
+                                innerWayEffectRules,
+                                setupEffects,
+                              ),
+                            }
+                          : {},
+                      )
+                    }),
+                ]),
+            ),
+          )
+        : {}
+      const selectedFood = currentFood
+      const selectedScript = currentScript
+      const selectedDivinecraft = currentDivinecraft
+      return {
+        timeline: makeTimelineInput(rotationRecord, innerWayConditions, innerWayEffectRules, baselineSetupEffects),
+        startAnchor: rotationAnchor,
+        stats: displayedCharacterStats,
+        rawStats: talentFormulaStats,
+        baseStats: rawCharacterStats,
+        attunement: attunementStats,
+        enemy,
+        weapons: settings.weapons,
+        statPriority: includeDiffs
+          ? Object.entries(priorityCharacter).map(([key, amount]) => {
+              const variantStats = applyPriorityStatLine(key as keyof CharacterStats, Number(amount))
+              const definition = allStatDefinitions.find(candidate => candidate.key === key)
+              return {
+                label: definition?.label ?? key,
+                maxRoll: Number(amount) * (definition?.unit === "%" ? 100 : 1),
+                stats: variantStats,
+              }
+            })
+          : [],
+        attunementPriority: includeDiffs
+          ? priorityAttunement.map(([key, amount]) => {
+              const variantAttunement = {
+                ...attunementStats,
+                [key]: attunementStats[key as keyof AttunementStats] + Number(amount),
+              }
+              return {
+                label: attunementData[key]?.name ?? key,
+                maxRoll: Number(amount) * (percentageAttunementKeys.has(key as keyof AttunementStats) ? 100 : 1),
+                attunement: variantAttunement,
+              }
+            })
+          : [],
+        innerWayPriority: includeDiffs
+          ? selectedInnerWays.map(selected => {
+              const definition = innerWayDefinitions[selected.innerWay as keyof typeof innerWayDefinitions]
+              const variantRules = innerWayEffectRules.filter(rule => rule.source !== selected.innerWay)
+              const variantConditions = innerWayConditionsFor(buildSetup.innerWays, selected.innerWay)
+              const setupEffects = baselineSetupEffects
+              return Object.assign(
+                { label: definition?.name ?? selected.innerWay },
+                definition?.altersTimeline
+                  ? { timeline: makeTimelineInput(rotationRecord, variantConditions, variantRules, setupEffects) }
+                  : {},
+                {
+                  innerWayRules: variantRules,
+                  innerWayConditions: [...variantConditions, ...setupConditionsFor(setupEffects)],
+                },
+              )
+            })
+          : [],
+        setupComparisons: includeDiffs
+          ? {
+              arsenal: Object.keys(typedArsenalDefinitions)
+                .filter(value => value !== buildSetup.arsenal)
+                .map(value => ({
+                  label: value,
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { arsenal: value }),
+                })),
+              bowRingSet: Object.keys(typedBowRingSetDefinitions)
+                .filter(value => value !== buildSetup.bowRingSet)
+                .map(value => ({
+                  label: value,
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { bowRingSet: value }),
+                })),
+              food: Object.keys(typedFoodDefinitions)
+                .filter(value => value !== selectedFood)
+                .map(value => ({
+                  label: value,
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { food: value }),
+                })),
+              script: Object.entries(typedScriptDefinitions)
+                .filter(([value]) => value !== selectedScript)
+                .map(([value]) => {
+                  const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, { script: value })
+                  const rebuildTimeline = setupSelectionChangesTimeline(selectedScript, value, typedScriptDefinitions)
+                  return Object.assign(
+                    { label: value, setupEffects },
+                    rebuildTimeline
+                      ? {
+                          timeline: makeTimelineInput(
+                            rotationRecord,
+                            innerWayConditions,
+                            innerWayEffectRules,
+                            setupEffects,
+                          ),
+                        }
+                      : {},
+                  )
+                }),
+              divinecraft: Object.entries(typedDivinecraftDefinitions)
+                .filter(([value, definition]) => definition.available !== false && value !== selectedDivinecraft)
+                .map(([value]) => {
+                  const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
+                    divinecraft: value,
+                  })
+                  const rebuildTimeline = setupSelectionChangesTimeline(
+                    selectedDivinecraft,
+                    value,
+                    typedDivinecraftDefinitions,
+                  )
+                  return Object.assign(
+                    { label: value, setupEffects },
+                    rebuildTimeline
+                      ? {
+                          timeline: makeTimelineInput(
+                            rotationRecord,
+                            innerWayConditions,
+                            innerWayEffectRules,
+                            setupEffects,
+                          ),
+                        }
+                      : {},
+                  )
+                }),
+              ...Object.fromEntries(
+                globalDebuffRows.map(({ key }) => [
+                  `debuff:${key}`,
+                  [false, true]
+                    .filter(enabled => enabled !== currentGlobalDebuffs[key])
+                    .map(enabled => {
+                      const globalDebuffs = { ...currentGlobalDebuffs, [key]: enabled }
+                      return {
+                        label: enabled ? "on" : "off",
+                        timeline: makeTimelineInput(
+                          rotationRecord,
+                          innerWayConditions,
+                          innerWayEffectRules,
+                          baselineSetupEffects,
+                          globalDebuffs,
+                        ),
+                      }
+                    }),
+                ]),
+              ),
+              "debuff:qingyisCharm": (["none", "T1", "T6"] as const)
+                .filter(value => value !== currentGlobalDebuffs.qingyisCharm)
+                .map(value => {
+                  const globalDebuffs = { ...currentGlobalDebuffs, qingyisCharm: value }
+                  return {
+                    label: value,
+                    timeline: makeTimelineInput(
+                      rotationRecord,
+                      innerWayConditions,
+                      innerWayEffectRules,
+                      baselineSetupEffects,
+                      globalDebuffs,
+                    ),
+                  }
+                }),
+              "buff:floatingGrace": (["none", "mixed", "deluge"] as const)
+                .filter(value => value !== currentGlobalDebuffs.floatingGrace)
+                .map(value => {
+                  const globalDebuffs = { ...currentGlobalDebuffs, floatingGrace: value }
+                  return {
+                    label: value,
+                    timeline: makeTimelineInput(
+                      rotationRecord,
+                      innerWayConditions,
+                      innerWayEffectRules,
+                      baselineSetupEffects,
+                      globalDebuffs,
+                    ),
+                  }
+                }),
+              ...setComparisonGroups,
+            }
+          : ({} as Record<string, RotationSimulationVariant[]>),
+      }
+    },
+  )
+  // Requests the structural editor timeline for the current revision. Declared after
+  // calculationBundleFor so the effect only references initialized bindings.
+  useEffect(() => {
+    if (editorTimelineReady) return
+    const requested: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation }
+    let cancelled = false
+    let timer: ReturnType<typeof window.setTimeout>
+    const current = () => !cancelled
+    const run = async () => {
+      try {
+        const result = await requestEditorTimeline(calculationBundleFor(requested.rotation, false), {
+          key: `editor:${requested.id}`,
+          priority: 450,
+        })
+        if (!current()) return
+        setEditorTimelineState({ ...result, rotation: requested.rotation, revision: requested })
+      } catch (error) {
+        if (!current()) return
+        if (error instanceof Error && error.message.includes("superseded")) {
+          timer = window.setTimeout(() => void run(), 150)
+          return
+        }
+        publishNotice({
+          id: "editor-timeline",
+          error: true,
+          message: error instanceof Error ? error.message : t("ui.notices.calculationError"),
+        })
+      }
+    }
+    timer = window.setTimeout(() => void run(), 100)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+      cancelEditorTimelineRequest(`editor:${requested.id}`)
+    }
+  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
-  const prepareBaselineCalculation = (rotationRecord: RotationRecord) => {
-    const bundle = calculationBundleFor(rotationRecord, false);
-    return { bundle, fingerprint: rotationBundleFingerprint(bundle) };
-  };
-  const prepareGraduationCalculation = (rotationRecord: RotationRecord) => {
+  const prepareBaselineCalculation = useEffectEvent((rotationRecord: RotationRecord) => {
+    const bundle = calculationBundleFor(rotationRecord, false)
+    return { bundle, fingerprint: rotationBundleFingerprint(bundle) }
+  })
+  const prepareGraduationCalculation = useEffectEvent((rotationRecord: RotationRecord) => {
     const environment: GraduationEnvironment = {
       pathId,
       martialArts: [...settings.weapons],
@@ -7113,21 +7278,48 @@ function RotationEditorTab({
       script: currentScript,
       divinecraft: currentDivinecraft,
       skillOverrides,
-    };
-    const bundle = buildPresetRotationBundle(environment, typedPathDefinitions[environment.pathId].graduated);
-    return bundle
-      ? {
-          bundle,
-          fingerprint: `graduation:${graduationEnvironmentFingerprint(environment)}`,
-        }
-      : undefined;
-  };
-  const workerCacheKeyFor = (fingerprint: string) => `rotation:${fingerprint}`;
+    }
+    const bundle = buildPresetRotationBundle(environment, typedPathDefinitions[environment.pathId].graduated)
+    return bundle ? { bundle, fingerprint: `graduation:${graduationEnvironmentFingerprint(environment)}` } : undefined
+  })
+  // Publishes the active rotation's simulation bundle. Declared after
+  // prepareGraduationCalculation so the effect only references initialized bindings.
+  useEffect(() => {
+    if (!activeRotationId) return
+    const activeEntry = rotationEntries.find(entry => entry.id === activeRotationId)
+    const activeRotation =
+      activeRotationId === editingRotationId ? rotation : activeEntry ? rotationRecordForEntry(activeEntry) : undefined
+    if (activeRotation) {
+      const graduation = prepareGraduationCalculation(activeRotation)
+      graduationFingerprintRef.current = graduation?.fingerprint ?? null
+      const cachedGraduation = graduation
+        ? calculationCacheRef.current.baseline(graduation.fingerprint)?.metrics.dps
+        : undefined
+      onActiveSimulationBundleChange(
+        calculationBundleFor(activeRotation, false),
+        activeRotation.name || "Active rotation",
+        `${activeRotationId}:${calculationContextKey}:${JSON.stringify(activeRotation)}`,
+        activeEntry?.isDefault === true,
+        graduation ? { fingerprint: graduation.fingerprint, dps: cachedGraduation } : undefined,
+      )
+    }
+  }, [
+    editingRotationId,
+    rotation,
+    rotationEntries,
+    calculationContextKey,
+    pathId,
+    defaultRotationId,
+    activeRotationId,
+    onActiveSimulationBundleChange,
+  ])
+
+  const workerCacheKeyFor = (fingerprint: string) => `rotation:${fingerprint}`
 
   function storeBaselineResult(id: string, key: string, result: RotationSimulationResult) {
-    const next = { ...rotationResultsRef.current, [id]: { key, result } };
-    rotationResultsRef.current = next;
-    setRotationResults(next);
+    const next = { ...rotationResultsRef.current, [id]: { key, result } }
+    rotationResultsRef.current = next
+    setRotationResults(next)
   }
 
   async function calculateBaselineForRotation(
@@ -7136,158 +7328,172 @@ function RotationEditorTab({
     priority = 100,
     prepared = prepareBaselineCalculation(rotationRecord),
   ) {
-    const resultKey = prepared.fingerprint;
-    const displayed = rotationResultsRef.current[id];
+    const resultKey = prepared.fingerprint
+    const displayed = rotationResultsRef.current[id]
     if (displayed?.key === resultKey) {
-      const cachedBaseline = calculationCacheRef.current.baseline(resultKey);
-      if (cachedBaseline) return cachedBaseline;
+      const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
+      if (cachedBaseline) return cachedBaseline
     }
-    const cachedBaseline = calculationCacheRef.current.baseline(resultKey);
+    const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
     if (cachedBaseline) {
-      storeBaselineResult(id, resultKey, cachedBaseline);
-      return cachedBaseline;
+      storeBaselineResult(id, resultKey, cachedBaseline)
+      return cachedBaseline
     }
     const result = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(resultKey), {
       key: `baseline:${id}`,
       priority,
-    });
-    calculationCacheRef.current.storeBaseline(resultKey, result);
-    storeBaselineResult(id, resultKey, result);
-    return result;
+    })
+    calculationCacheRef.current.storeBaseline(resultKey, result)
+    storeBaselineResult(id, resultKey, result)
+    return result
   }
 
-  async function calculateEditorPreview(id: string, rotationRecord: RotationRecord, requestSequence: number) {
-    const prepared = prepareBaselineCalculation(rotationRecord);
-    const resultKey = prepared.fingerprint;
-    const refreshTarget = `${id}:${resultKey}`;
-    const cachedBaseline = calculationCacheRef.current.baseline(resultKey);
-    if (cachedBaseline) {
-      if (editorPreviewRequestSequenceRef.current === requestSequence)
-        storeBaselineResult(id, resultKey, cachedBaseline);
-      return;
-    }
-    if (runningRefreshTargetRef.current === refreshTarget) return;
-    const result = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(resultKey), {
-      key: `preview:${id}`,
-      priority: 200,
-    });
-    calculationCacheRef.current.storeBaseline(resultKey, result);
-    if (editorPreviewRequestSequenceRef.current === requestSequence) storeBaselineResult(id, resultKey, result);
-  }
+  const calculateEditorPreview = useEffectEvent(
+    async (id: string, rotationRecord: RotationRecord, requestSequence: number) => {
+      const prepared = prepareBaselineCalculation(rotationRecord)
+      const resultKey = prepared.fingerprint
+      const refreshTarget = `${id}:${resultKey}`
+      const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
+      if (cachedBaseline) {
+        if (editorPreviewRequestSequenceRef.current === requestSequence)
+          storeBaselineResult(id, resultKey, cachedBaseline)
+        return
+      }
+      if (runningRefreshTargetRef.current === refreshTarget) return
+      const result = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(resultKey), {
+        key: `preview:${id}`,
+        priority: 200,
+      })
+      calculationCacheRef.current.storeBaseline(resultKey, result)
+      if (editorPreviewRequestSequenceRef.current === requestSequence) storeBaselineResult(id, resultKey, result)
+    },
+  )
 
   async function calculateGraduationDps(rotationRecord: RotationRecord) {
-    const prepared = prepareGraduationCalculation(rotationRecord);
-    if (!prepared) return;
-    let baseline = calculationCacheRef.current.baseline(prepared.fingerprint);
+    const prepared = prepareGraduationCalculation(rotationRecord)
+    if (!prepared) return
+    let baseline = calculationCacheRef.current.baseline(prepared.fingerprint)
     if (!baseline) {
       baseline = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(prepared.fingerprint), {
         key: "graduation",
         priority: 390,
-      });
-      calculationCacheRef.current.storeBaseline(prepared.fingerprint, baseline);
+      })
+      calculationCacheRef.current.storeBaseline(prepared.fingerprint, baseline)
     }
     if (graduationFingerprintRef.current === prepared.fingerprint)
-      onGraduationDpsChange(prepared.fingerprint, baseline.metrics.dps);
+      onGraduationDpsChange(prepared.fingerprint, baseline.metrics.dps)
   }
 
-  async function calculateDiffsForRotation(
-    id: string,
-    rotationRecord: RotationRecord,
-    prepared = prepareBaselineCalculation(rotationRecord),
-  ) {
-    const requestSequence = ++diffRequestSequenceRef.current;
-    supersedeRotationCalculationRequests();
-    beginRotationCalculation();
-    const contextKey = calculationContextKey;
-    const resultKey = prepared.fingerprint;
-    const refreshTarget = `${id}:${resultKey}`;
-    scheduledRefreshTargetRef.current = refreshTarget;
-    runningRefreshTargetRef.current = refreshTarget;
-    try {
-      const baseline = await calculateBaselineForRotation(id, rotationRecord, 400, prepared);
-      if (calculationContextKeyRef.current !== contextKey) {
-        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
-        endRotationCalculation();
-        return "discarded" as const;
-      }
-      if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
-      if (resolvedActiveRotationIdRef.current !== id) {
-        endRotationCalculation();
-        return "discarded" as const;
-      }
-
-      let metrics = baselineMetricsWithPreviousComparisons(baseline.metrics, getRotationMetrics());
-      onMetricsChange(metrics, true);
-      completeRotationCalculationCategory("baseline");
-
+  const calculateDiffsForRotation = useEffectEvent(
+    async (id: string, rotationRecord: RotationRecord, prepared = prepareBaselineCalculation(rotationRecord)) => {
+      const requestSequence = ++diffRequestSequenceRef.current
+      supersedeRotationCalculationRequests()
+      beginRotationCalculation()
+      const contextKey = calculationContextKey
+      const resultKey = prepared.fingerprint
+      const refreshTarget = `${id}:${resultKey}`
+      scheduledRefreshTargetRef.current = refreshTarget
+      runningRefreshTargetRef.current = refreshTarget
       try {
-        await calculateGraduationDps(rotationRecord);
-      } catch (graduationError) {
-        if (diffRequestSequenceRef.current === requestSequence)
-          publishNotice({
-            id: "graduation-calculation",
-            error: true,
-            message: graduationError instanceof Error ? graduationError.message : t("ui.notices.calculationError"),
-          });
-      }
-      if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
-
-      const comparisonBundle = calculationBundleFor(rotationRecord, true);
-      for (const category of comparisonCategoryOrder) {
-        const variants = comparisonVariantRequests(comparisonBundle, category);
-        if (variants.length === 0) {
-          metrics = mergeComparisonCategory(metrics, baseline.metrics, category);
-          onMetricsChange(metrics, true);
-          completeRotationCalculationCategory(category);
-          continue;
-        }
-        const variantMetrics: RotationMetrics[] = [];
-        for (let index = 0; index < variants.length; index += 1) {
-          const variant = variants[index];
-          let calculated = calculationCacheRef.current.variant(resultKey, variant.key);
-          if (!calculated) {
-            calculated = await requestRotationComparisons(variant.bundle, workerCacheKeyFor(resultKey), baseline, {
-              key: `diff:${id}:${category}:${variant.key}`,
-              priority: 350,
-              onProgress: (progress) => {
-                if (diffRequestSequenceRef.current === requestSequence)
-                  publishRotationCategoryProgress(category, (index + progress) / variants.length);
-              },
-            });
-            calculationCacheRef.current.storeVariant(resultKey, variant.key, calculated);
-          }
-          variantMetrics.push(calculated);
-          if (diffRequestSequenceRef.current === requestSequence)
-            publishRotationCategoryProgress(category, (index + 1) / variants.length);
-        }
+        const baseline = await calculateBaselineForRotation(id, rotationRecord, 400, prepared)
         if (calculationContextKeyRef.current !== contextKey) {
-          if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
-          endRotationCalculation();
-          return "discarded" as const;
+          if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+          endRotationCalculation()
+          return "discarded" as const
         }
-        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
+        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
         if (resolvedActiveRotationIdRef.current !== id) {
-          endRotationCalculation();
-          return "discarded" as const;
+          endRotationCalculation()
+          return "discarded" as const
         }
-        metrics = combineComparisonVariantMetrics(metrics, variantMetrics, category);
-        onMetricsChange(metrics, true);
-        completeRotationCalculationCategory(category);
+
+        let metrics = baselineMetricsWithPreviousComparisons(baseline.metrics, getRotationMetrics())
+        onMetricsChange(metrics, true)
+        completeRotationCalculationCategory("baseline")
+
+        try {
+          await calculateGraduationDps(rotationRecord)
+        } catch (graduationError) {
+          if (diffRequestSequenceRef.current === requestSequence)
+            publishNotice({
+              id: "graduation-calculation",
+              error: true,
+              message: graduationError instanceof Error ? graduationError.message : t("ui.notices.calculationError"),
+            })
+        }
+        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+
+        const comparisonBundle = calculationBundleFor(rotationRecord, true)
+        const calculateComparisonCategory = async (
+          category: RotationCalculationCategory,
+          previousMetrics: RotationMetrics,
+        ): Promise<RotationMetrics | "superseded" | "discarded"> => {
+          const variants = comparisonVariantRequests(comparisonBundle, category)
+          if (variants.length === 0) return mergeComparisonCategory(previousMetrics, baseline.metrics, category)
+          const variantMetrics: RotationMetrics[] = []
+          const calculateComparisonVariant = async (variant: ComparisonVariantRequest, index: number) => {
+            let calculated = calculationCacheRef.current.variant(resultKey, variant.key)
+            if (!calculated) {
+              calculated = await requestRotationComparisons(variant.bundle, workerCacheKeyFor(resultKey), baseline, {
+                key: `diff:${id}:${category}:${variant.key}`,
+                priority: 350,
+                onProgress: progress => {
+                  if (diffRequestSequenceRef.current === requestSequence)
+                    publishRotationCategoryProgress(category, (index + progress) / variants.length)
+                },
+              })
+              calculationCacheRef.current.storeVariant(resultKey, variant.key, calculated)
+            }
+            variantMetrics.push(calculated)
+            if (diffRequestSequenceRef.current === requestSequence)
+              publishRotationCategoryProgress(category, (index + 1) / variants.length)
+          }
+          await variants.reduce(
+            (previous, variant, index) => previous.then(() => calculateComparisonVariant(variant, index)),
+            Promise.resolve(),
+          )
+          if (calculationContextKeyRef.current !== contextKey) {
+            if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+            endRotationCalculation()
+            return "discarded" as const
+          }
+          if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+          if (resolvedActiveRotationIdRef.current !== id) {
+            endRotationCalculation()
+            return "discarded" as const
+          }
+          return combineComparisonVariantMetrics(previousMetrics, variantMetrics, category)
+        }
+        type ComparisonProgress = { status: "published" | "superseded" | "discarded"; metrics: RotationMetrics }
+        const comparisonOutcome = await comparisonCategoryOrder.reduce(
+          async (previous, category): Promise<ComparisonProgress> => {
+            const state = await previous
+            if (state.status !== "published") return state
+            const result = await calculateComparisonCategory(category, state.metrics)
+            if (result === "superseded" || result === "discarded") return { status: result, metrics: state.metrics }
+            onMetricsChange(result, true)
+            completeRotationCalculationCategory(category)
+            return { status: "published" as const, metrics: result }
+          },
+          Promise.resolve({ status: "published" as const, metrics }),
+        )
+        if (comparisonOutcome.status !== "published") return comparisonOutcome.status
+        metrics = comparisonOutcome.metrics
+        return "published" as const
+      } catch (calculationError) {
+        if (diffRequestSequenceRef.current === requestSequence) endRotationCalculation()
+        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+        publishNotice({
+          id: "rotation-calculation",
+          error: true,
+          message: calculationError instanceof Error ? calculationError.message : t("ui.notices.calculationError"),
+        })
+        return "failed" as const
+      } finally {
+        if (diffRequestSequenceRef.current === requestSequence) runningRefreshTargetRef.current = null
       }
-      return "published" as const;
-    } catch (calculationError) {
-      if (diffRequestSequenceRef.current === requestSequence) endRotationCalculation();
-      if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const;
-      publishNotice({
-        id: "rotation-calculation",
-        error: true,
-        message: calculationError instanceof Error ? calculationError.message : t("ui.notices.calculationError"),
-      });
-      return "failed" as const;
-    } finally {
-      if (diffRequestSequenceRef.current === requestSequence) runningRefreshTargetRef.current = null;
-    }
-  }
+    },
+  )
 
   const localRotationCalculation: RotationMetrics = {
     totalDamage: totalRotationDamage,
@@ -7301,58 +7507,59 @@ function RotationEditorTab({
     attunementPriority: priorityAttunementRows,
     innerWayPriority: priorityInnerWays,
     setupComparisons,
-  };
-  const rotationCalculation = currentCachedResult?.metrics ?? localRotationCalculation;
+  }
+  const rotationCalculation = currentCachedResult?.metrics ?? localRotationCalculation
 
   useEffect(() => {
-    const requestSequence = ++editorPreviewRequestSequenceRef.current;
-    if (!editorTimelineReady) return;
+    const requestSequence = ++editorPreviewRequestSequenceRef.current
+    if (!editorTimelineReady) return
     const timer = window.setTimeout(() => {
-      void calculateEditorPreview(editingRotationId, rotation, requestSequence).catch((calculationError) => {
-        if (editorPreviewRequestSequenceRef.current !== requestSequence) return;
-        if (calculationError instanceof Error && calculationError.message.includes("superseded")) return;
+      void calculateEditorPreview(editingRotationId, rotation, requestSequence).catch(calculationError => {
+        if (editorPreviewRequestSequenceRef.current !== requestSequence) return
+        if (calculationError instanceof Error && calculationError.message.includes("superseded")) return
         publishNotice({
           id: "rotation-preview",
           error: true,
           message: calculationError instanceof Error ? calculationError.message : t("ui.notices.calculationError"),
-        });
-      });
-    }, 250);
+        })
+      })
+    }, 250)
     return () => {
-      window.clearTimeout(timer);
-      if (editorPreviewRequestSequenceRef.current === requestSequence) editorPreviewRequestSequenceRef.current += 1;
-    };
-  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady]);
+      window.clearTimeout(timer)
+      if (editorPreviewRequestSequenceRef.current === requestSequence) editorPreviewRequestSequenceRef.current += 1
+    }
+  }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
   useEffect(() => {
-    const entries = rotationEntries.filter((entry) => rotationAvailableForWeapons(entry, settings.weapons));
+    const entries = rotationEntries.filter(entry => rotationAvailableForWeapons(entry, settings.weapons))
     const activeEntry =
-      entries.find((entry) => entry.id === activeRotationId) ??
-      entries.find((entry) => entry.id === defaultRotationId) ??
-      entries[0];
-    if (!activeEntry) return;
-    if (activeEntry.id === editingRotationId && !editorTimelineReady) return;
-    const activeRotation = activeEntry.id === editingRotationId ? rotation : rotationRecordForEntry(activeEntry);
-    const prepared = prepareBaselineCalculation(activeRotation);
-    const refreshTarget = `${activeEntry.id}:${prepared.fingerprint}`;
-    if (scheduledRefreshTargetRef.current === refreshTarget) return;
+      entries.find(entry => entry.id === activeRotationId) ??
+      entries.find(entry => entry.id === defaultRotationId) ??
+      entries[0]
+    if (!activeEntry) return
+    if (activeEntry.id === editingRotationId && !editorTimelineReady) return
+    const activeRotation = activeEntry.id === editingRotationId ? rotation : rotationRecordForEntry(activeEntry)
+    const prepared = prepareBaselineCalculation(activeRotation)
+    const refreshTarget = `${activeEntry.id}:${prepared.fingerprint}`
+    if (scheduledRefreshTargetRef.current === refreshTarget) return
     void (async () => {
-      const outcome = await calculateDiffsForRotation(activeEntry.id, activeRotation, prepared);
+      const outcome = await calculateDiffsForRotation(activeEntry.id, activeRotation, prepared)
       if (outcome === "discarded") {
-        setRefreshRetryRevision((current) => current + 1);
-        return;
+        setRefreshRetryRevision(current => current + 1)
+        return
       }
-      if (outcome !== "published") return;
-      if (calculationContextKeyRef.current !== calculationContextKey) return;
-      for (const entry of entries) {
-        if (entry.id === activeEntry.id) continue;
+      if (outcome !== "published") return
+      if (calculationContextKeyRef.current !== calculationContextKey) return
+      const refreshEntryBaseline = async (entry: RotationEntry) => {
+        if (entry.id === activeEntry.id) return
         try {
-          await calculateBaselineForRotation(entry.id, rotationRecordForEntry(entry), 100);
+          await calculateBaselineForRotation(entry.id, rotationRecordForEntry(entry), 100)
         } catch {
           /* Superseded by newer work. */
         }
       }
-    })();
+      await entries.reduce((previous, entry) => previous.then(() => refreshEntryBaseline(entry)), Promise.resolve())
+    })()
   }, [
     activeRotationId,
     calculationContextKey,
@@ -7362,7 +7569,8 @@ function RotationEditorTab({
     editorTimelineReady,
     rotation,
     rotationEntries,
-  ]);
+    settings.weapons,
+  ])
   return (
     <section className="panel rotation-editor-panel">
       <div className="rotation-editor-layout">
@@ -7374,28 +7582,28 @@ function RotationEditorTab({
             </button>
           </div>
           <div className="rotation-list-entries">
-            {listedRotationEntries.map((entry) => {
-              const incompatible = !rotationAvailableForWeapons(entry, settings.weapons);
+            {listedRotationEntries.map(entry => {
+              const incompatible = !rotationAvailableForWeapons(entry, settings.weapons)
               return (
                 <div
                   className={`rotation-list-item ${entry.id === activeRotationId ? "active" : ""} ${entry.id === editingRotationId ? "editing" : ""} ${incompatible ? "incompatible" : ""}`}
                   key={entry.id}
-                  role="button"
-                  tabIndex={0}
-                  title={incompatible ? t("ui.app.selectThisRotationAndSwitchToItsMartial") : undefined}
-                  onClick={() => selectRotation(entry)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") selectRotation(entry);
-                  }}
                 >
-                  <strong>
-                    {entry.id === activeRotationId && (
-                      <span className="active-rotation-icon" title={t("ui.app.activeRotation")}>
-                        <UiIcon name="active" />
-                      </span>
-                    )}
-                    {rotationEntryDisplayName(entry)}
-                  </strong>
+                  <button
+                    className="rotation-select-button"
+                    type="button"
+                    title={incompatible ? t("ui.app.selectThisRotationAndSwitchToItsMartial") : undefined}
+                    onClick={() => selectRotation(entry)}
+                  >
+                    <strong>
+                      {entry.id === activeRotationId && (
+                        <span className="active-rotation-icon" title={t("ui.app.activeRotation")}>
+                          <UiIcon name="active" />
+                        </span>
+                      )}
+                      {rotationEntryDisplayName(entry)}
+                    </strong>
+                  </button>
                   {!entry.isDefault && (
                     <span className="rotation-list-actions">
                       <button
@@ -7406,9 +7614,9 @@ function RotationEditorTab({
                         })}
                         title={t("ui.app.removeRotation")}
                         disabled={listedRotationEntries.length <= 1}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeRotation(entry.id);
+                        onClick={event => {
+                          event.stopPropagation()
+                          removeRotation(entry.id)
                         }}
                       >
                         <UiIcon name="close" />
@@ -7416,7 +7624,7 @@ function RotationEditorTab({
                     </span>
                   )}
                 </div>
-              );
+              )
             })}
           </div>
           <div className="rotation-transfer-actions">
@@ -7442,13 +7650,13 @@ function RotationEditorTab({
               <div>
                 {editingName && !rotationLocked ? (
                   <input
+                    ref={rotationNameInputRef}
                     className="rotation-name-input"
-                    autoFocus
                     value={rotation.name}
-                    onChange={(event) => setRotation({ ...rotation, name: event.target.value })}
+                    onChange={event => setRotation({ ...rotation, name: event.target.value })}
                     onBlur={() => setEditingName(false)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") setEditingName(false);
+                    onKeyDown={event => {
+                      if (event.key === "Enter") setEditingName(false)
                     }}
                   />
                 ) : (
@@ -7479,14 +7687,14 @@ function RotationEditorTab({
                       disabled={rotationLocked}
                       placeholder={t("ui.app.notSpecified")}
                       value={rotation.targetHP ?? ""}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        const parsed = Number(value);
-                        if (value !== "" && !Number.isFinite(parsed)) return;
-                        updateRotationCalculationSetting((current) => ({
+                      onChange={event => {
+                        const value = event.target.value
+                        const parsed = Number(value)
+                        if (value !== "" && !Number.isFinite(parsed)) return
+                        updateRotationCalculationSetting(current => ({
                           ...current,
                           ...(value === "" ? { targetHP: undefined } : { targetHP: Math.max(1, parsed) }),
-                        }));
+                        }))
                       }}
                     />
                   </label>
@@ -7495,8 +7703,8 @@ function RotationEditorTab({
                       type="checkbox"
                       disabled={rotationLocked}
                       checked={rotation.infiniteVitality === true}
-                      onChange={(event) =>
-                        updateRotationCalculationSetting((current) => ({
+                      onChange={event =>
+                        updateRotationCalculationSetting(current => ({
                           ...current,
                           infiniteVitality: event.target.checked,
                         }))
@@ -7509,11 +7717,8 @@ function RotationEditorTab({
                       type="checkbox"
                       disabled={rotationLocked}
                       checked={rotation.dummyAttack === true}
-                      onChange={(event) =>
-                        updateRotationCalculationSetting((current) => ({
-                          ...current,
-                          dummyAttack: event.target.checked,
-                        }))
+                      onChange={event =>
+                        updateRotationCalculationSetting(current => ({ ...current, dummyAttack: event.target.checked }))
                       }
                     />
                     <span>{t("ui.app.dummyAttack")}</span>
@@ -7523,10 +7728,10 @@ function RotationEditorTab({
                     <select
                       disabled={rotationLocked}
                       value={rotation.groupSize ?? 1}
-                      onChange={(event) => {
-                        const groupSize = Number(event.target.value);
-                        if (groupSize !== 1 && groupSize !== 5 && groupSize !== 10) return;
-                        updateRotationCalculationSetting((current) => ({ ...current, groupSize }));
+                      onChange={event => {
+                        const groupSize = Number(event.target.value)
+                        if (groupSize !== 1 && groupSize !== 5 && groupSize !== 10) return
+                        updateRotationCalculationSetting(current => ({ ...current, groupSize }))
                       }}
                     >
                       <option value={1}>{t("ui.app.solo")}</option>
@@ -7539,7 +7744,7 @@ function RotationEditorTab({
                     value={rotation.ping}
                     inheritedValue={settings.ping}
                     disabled={rotationLocked}
-                    onCommit={(ping) => updateRotationCalculationSetting((current) => ({ ...current, ping }))}
+                    onCommit={ping => updateRotationCalculationSetting(current => ({ ...current, ping }))}
                   />
                 </div>
               </div>
@@ -7581,7 +7786,7 @@ function RotationEditorTab({
             </div>
             <div className="rotation-toolbar">
               <span>
-                {rotation.steps.filter((step) => step.type === "skill").length} {t("ui.app.steps")}{" "}
+                {rotation.steps.filter(step => step.type === "skill").length} {t("ui.app.steps")}{" "}
                 {formatNumber(totalRotationTime)}
                 {t("ui.app.sTotalTime")}
               </span>
@@ -7606,25 +7811,7 @@ function RotationEditorTab({
               </span>
             </div>
             <div className="rotation-scroll-content" ref={rotationScrollRef}>
-              <div
-                className="rotation-table"
-                style={
-                  {
-                    "--rotation-state-columns": [
-                      showDistanceColumn ? "10ch" : "",
-                      showSelfHPColumn ? "8ch" : "",
-                      showTargetHPColumn ? "8ch" : "",
-                      showQiColumn ? "8ch" : "",
-                      showHellfireColumn ? "10ch" : "",
-                      showHeavensWillColumn ? "13ch" : "",
-                      showVitalityColumn ? "10ch" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                    minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHellfireColumn) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
-                  } as CSSProperties
-                }
-              >
+              <div className="rotation-table" style={rotationTableStyle}>
                 <div className="rotation-table-header">
                   <span></span>
                   <span>#</span>
@@ -7644,13 +7831,13 @@ function RotationEditorTab({
                   <span>{t("ui.app.actions")}</span>
                 </div>
                 <div className="rotation-step-list">
-                  {displayEntries.map((entry) => {
-                    const row = entry.row;
+                  {displayEntries.map(entry => {
+                    const row = entry.row
                     if (row.kind === "damageGroup") {
-                      const groupSkillId = row.step.type === "skill" ? row.step.skill : undefined;
+                      const groupSkillId = row.step.type === "skill" ? row.step.skill : undefined
                       const damage =
-                        currentCachedResult?.metrics.breakdown.casts.find((cast) => cast.skillId === groupSkillId)
-                          ?.damage ?? 0;
+                        currentCachedResult?.metrics.breakdown.casts.find(cast => cast.skillId === groupSkillId)
+                          ?.damage ?? 0
                       return (
                         <div className="rotation-row-group" key={`${row.id}-summary`}>
                           <div className="rotation-table-row">
@@ -7676,20 +7863,20 @@ function RotationEditorTab({
                             <span aria-hidden="true" />
                           </div>
                         </div>
-                      );
+                      )
                     }
-                    const isAction = entry.kind === "action";
-                    const { step, startTime, skill } = row;
-                    const castTime = row.effectiveCastTime;
+                    const isAction = entry.kind === "action"
+                    const { step, startTime, skill } = row
+                    const castTime = row.effectiveCastTime
                     const effectNames = (
                       effects: Array<{
-                        name: string;
-                        stack?: number;
-                        maxStack?: number;
-                        remainingTriggers?: number;
-                        expiresAt?: number;
-                        hideRemainingTime?: boolean;
-                        averageStackOnly?: boolean;
+                        name: string
+                        stack?: number
+                        maxStack?: number
+                        remainingTriggers?: number
+                        expiresAt?: number
+                        hideRemainingTime?: boolean
+                        averageStackOnly?: boolean
                       }>,
                       atTime: number,
                     ) =>
@@ -7697,35 +7884,35 @@ function RotationEditorTab({
                         ""
                       ) : (
                         <span className="effect-plates">
-                          {effects.map((effect) => {
-                            const definition = calculationDefinitions.effectDefinitions[effect.name];
-                            const description = gameText(definition?.description?.trim());
-                            const name = gameText(definition?.name ?? effect.name);
+                          {effects.map(effect => {
+                            const definition = calculationDefinitions.effectDefinitions[effect.name]
+                            const description = gameText(definition?.description?.trim())
+                            const name = gameText(definition?.name ?? effect.name)
                             const showStack =
                               effect.stack !== undefined &&
                               (effect.maxStack === undefined ||
                                 effect.maxStack > 1 ||
-                                (effect.averageStackOnly && Math.abs(effect.stack - 1) > 1e-9));
-                            const label = `${gameText(definition?.shortName) || name}${showStack ? ` ×${formatNumber(effect.stack ?? 0)}` : ""}`;
+                                (effect.averageStackOnly && Math.abs(effect.stack - 1) > 1e-9))
+                            const label = `${gameText(definition?.shortName) || name}${showStack ? ` ×${formatNumber(effect.stack ?? 0)}` : ""}`
                             const timeLeft =
-                              effect.expiresAt === undefined ? "∞" : Math.max(0, effect.expiresAt - atTime).toFixed(2);
+                              effect.expiresAt === undefined ? "∞" : Math.max(0, effect.expiresAt - atTime).toFixed(2)
                             const finiteListener = definition?.listen?.find(
-                              (listener) =>
+                              listener =>
                                 typeof listener.maxTriggers === "number" &&
                                 Number.isFinite(listener.maxTriggers) &&
                                 listener.action?.type === "trigger" &&
                                 typeof listener.action.value === "string",
-                            );
-                            const triggerSkillId = finiteListener?.action?.value;
+                            )
+                            const triggerSkillId = finiteListener?.action?.value
                             const remainingTriggerName =
                               typeof triggerSkillId === "string"
                                 ? gameText(calculationDefinitions.skills[triggerSkillId]?.name ?? triggerSkillId)
-                                : "";
+                                : ""
                             const plateKind = dotEffectIds.has(effect.name)
                               ? " effect-plate-dot"
                               : generalDebuffIds.has(effect.name)
                                 ? " effect-plate-general-debuff"
-                                : "";
+                                : ""
                             return (
                               <span className={`effect-plate${plateKind}`} key={`${effect.name}-${effect.stack ?? 1}`}>
                                 {label}
@@ -7761,56 +7948,56 @@ function RotationEditorTab({
                                   )}
                                 </span>
                               </span>
-                            );
+                            )
                           })}
                         </span>
-                      );
-                    const actionIndex = entry.actionIndex;
-                    const actionTime = entry.time;
-                    const isManualEvent = step.type === "event";
-                    const isDelayEvent = isManualEvent && step.event === "Delay";
-                    const isProtectedDelay = isAutomaticDelay(step);
+                      )
+                    const actionIndex = entry.actionIndex
+                    const actionTime = entry.time
+                    const isManualEvent = step.type === "event"
+                    const isDelayEvent = isManualEvent && step.event === "Delay"
+                    const isProtectedDelay = isAutomaticDelay(step)
                     const isGeneratedEvent =
                       step.type === "event" &&
                       step.event === "TakeDamage" &&
                       "automatic" in step &&
-                      step.automatic === "dummyAttack";
-                    const rowReadOnly = rotationLocked || isGeneratedEvent || row.rotationIndex === undefined;
+                      step.automatic === "dummyAttack"
+                    const rowReadOnly = rotationLocked || isGeneratedEvent || row.rotationIndex === undefined
                     const resolvedTakeDamage =
                       step.type === "event" && step.event === "TakeDamage"
-                        ? Number(row.actions.find((action) => action.type === "takeDamage")?.damage ?? step.damage)
-                        : 0;
+                        ? Number(row.actions.find(action => action.type === "takeDamage")?.damage ?? step.damage)
+                        : 0
                     const skillNumber =
                       step.type === "skill" && row.rotationIndex !== undefined
-                        ? rotation.steps.slice(0, row.rotationIndex).filter((candidate) => candidate.type === "skill")
+                        ? rotation.steps.slice(0, row.rotationIndex).filter(candidate => candidate.type === "skill")
                             .length
-                        : "";
-                    const attachedTarget = attachedTargetForStep(step);
-                    const isAttachedEvent = Boolean(attachedTarget);
+                        : ""
+                    const attachedTarget = attachedTargetForStep(step)
+                    const isAttachedEvent = Boolean(attachedTarget)
                     const availableAttachmentTargets =
                       step.type === "event" && step.event === "MartialArt"
-                        ? attachmentTargets.filter((target) => target.target.action === "start")
+                        ? attachmentTargets.filter(target => target.target.action === "start")
                         : attachedEventPhase(step) === "after"
-                          ? attachmentTargets.filter((target) => target.target.action !== "start")
-                          : attachmentTargets;
+                          ? attachmentTargets.filter(target => target.target.action !== "start")
+                          : attachmentTargets
                     const attachedTargetIndex = attachedTarget
                       ? availableAttachmentTargets.findIndex(
-                          (target) =>
+                          target =>
                             target.sourceRowId === row.sourceRowId &&
                             target.target.action === attachedTarget.action &&
                             target.target.trigger === attachedTarget.trigger,
                         )
-                      : -1;
+                      : -1
                     const attachedSiblingAbove =
                       row.rotationIndex === undefined
                         ? -1
-                        : attachedEventSiblingIndex(rotation.steps, row.rotationIndex, -1);
+                        : attachedEventSiblingIndex(rotation.steps, row.rotationIndex, -1)
                     const attachedSiblingBelow =
                       row.rotationIndex === undefined
                         ? -1
-                        : attachedEventSiblingIndex(rotation.steps, row.rotationIndex, 1);
-                    const stepSkill = step.type === "skill" ? step.skill : undefined;
-                    const actionsExpanded = skillActionsExpanded(row.id);
+                        : attachedEventSiblingIndex(rotation.steps, row.rotationIndex, 1)
+                    const stepSkill = step.type === "skill" ? step.skill : undefined
+                    const actionsExpanded = skillActionsExpanded(row.id)
                     const actionState =
                       actionIndex === undefined
                         ? undefined
@@ -7822,67 +8009,67 @@ function RotationEditorTab({
                             targetHPRatio: row.targetHPRatio,
                             targetQiRatio: row.targetQiRatio,
                             resources: row.resources,
-                          });
-                    const selfHPMaximum = Math.max(1, displayedCharacterStats.maxHp);
-                    const selfHPPercentage = (actionState?.currentHPRatio ?? row.currentHPRatio) * 100;
+                          })
+                    const selfHPMaximum = Math.max(1, displayedCharacterStats.maxHp)
+                    const selfHPPercentage = (actionState?.currentHPRatio ?? row.currentHPRatio) * 100
                     const selfHPEventPercentage =
                       step.type === "event" && step.event === "SelfHP"
                         ? ("currentHP" in step && typeof step.currentHP === "number"
                             ? step.currentHP / selfHPMaximum
                             : (step.currentHPRatio ?? 1)) * 100
-                        : selfHPPercentage;
+                        : selfHPPercentage
                     const durationEvent =
-                      isManualEvent && (step.event === "Controlled" || step.event === "Delay") ? step.event : undefined;
-                    const editableCastTime = step.type === "skill" && row.skill?.editableCastTime === true;
-                    let durationValue = 0;
+                      isManualEvent && (step.event === "Controlled" || step.event === "Delay") ? step.event : undefined
+                    const editableCastTime = step.type === "skill" && row.skill?.editableCastTime === true
+                    let durationValue = 0
                     switch (step.type) {
                       case "skill":
-                        durationValue = step.duration ?? baseSkillCastTime(row.skill);
-                        break;
+                        durationValue = step.duration ?? baseSkillCastTime(row.skill)
+                        break
                       case "event":
                         if (durationEvent)
                           durationValue =
                             ("duration" in step ? step.duration : undefined) ??
-                            (durationEvent === "Delay" ? 1 : eventDefaultDuration(durationEvent));
-                        break;
+                            (durationEvent === "Delay" ? 1 : eventDefaultDuration(durationEvent))
+                        break
                     }
                     const actionBuffs =
                       Array.from(actionState?.buffs.values() ?? []).filter(
-                        (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
-                      ) ?? [];
+                        effect => effect.expiresAt === undefined || effect.expiresAt > actionTime,
+                      ) ?? []
                     const actionDebuffs =
                       Array.from(actionState?.debuffs.values() ?? []).filter(
-                        (effect) => effect.expiresAt === undefined || effect.expiresAt > actionTime,
-                      ) ?? [];
+                        effect => effect.expiresAt === undefined || effect.expiresAt > actionTime,
+                      ) ?? []
                     const skillDamageRows =
-                      !isAction && row.kind === "rotation" ? (damageRowsByOwner.get(row.id) ?? [row]) : [row];
+                      !isAction && row.kind === "rotation" ? (damageRowsByOwner.get(row.id) ?? [row]) : [row]
                     const skillExpectedBuffStacks = skillDamageRows.reduce<
                       { time: number; stacks: Record<string, number> } | undefined
                     >((earliest, damageRow) => {
-                      let next = earliest;
+                      let next = earliest
                       damageRow.actions.forEach((action, damageIndex) => {
-                        if (action.type !== "damage") return;
+                        if (action.type !== "damage") return
                         const expectedBuffStacks =
-                          workerActionBreakdowns[`${damageRow.id}:${damageIndex}`]?.expectedBuffStacks;
-                        if (!expectedBuffStacks) return;
-                        const time = damageRow.startTime + Number(action.time ?? 0);
-                        if (!next || time < next.time) next = { time, stacks: expectedBuffStacks };
-                      });
-                      return next;
-                    }, undefined);
+                          workerActionBreakdowns[`${damageRow.id}:${damageIndex}`]?.expectedBuffStacks
+                        if (!expectedBuffStacks) return
+                        const time = damageRow.startTime + Number(action.time ?? 0)
+                        if (!next || time < next.time) next = { time, stacks: expectedBuffStacks }
+                      })
+                      return next
+                    }, undefined)
                     const displayedSkillBuffs = withExpectedOutcomeBuffPlates(
                       Array.from(row.buffs.values()),
                       skillExpectedBuffStacks?.stacks,
-                    );
+                    )
                     const skillBreakdown = skillDamageRows.reduce<RotationActionBreakdown>(
                       (skillTotal, damageRow) =>
                         damageRow.actions.reduce<RotationActionBreakdown>((total, action, damageIndex) => {
                           if (action.type !== "damage" && action.type !== "replay" && action.type !== "heal")
-                            return total;
-                          const breakdown = calculateTimelineActionBreakdown(damageRow, damageIndex);
-                          const physicalHealing = (total.healing?.physical ?? 0) + (breakdown.healing?.physical ?? 0);
-                          const silkbindHealing = (total.healing?.silkbind ?? 0) + (breakdown.healing?.silkbind ?? 0);
-                          const totalHealing = (total.healing?.total ?? 0) + (breakdown.healing?.total ?? 0);
+                            return total
+                          const breakdown = calculateTimelineActionBreakdown(damageRow, damageIndex)
+                          const physicalHealing = (total.healing?.physical ?? 0) + (breakdown.healing?.physical ?? 0)
+                          const silkbindHealing = (total.healing?.silkbind ?? 0) + (breakdown.healing?.silkbind ?? 0)
+                          const totalHealing = (total.healing?.total ?? 0) + (breakdown.healing?.total ?? 0)
                           return {
                             physical: total.physical + breakdown.physical,
                             bellstrike: total.bellstrike + breakdown.bellstrike,
@@ -7899,7 +8086,7 @@ function RotationEditorTab({
                                   },
                                 }
                               : {}),
-                          };
+                          }
                         }, skillTotal),
                       {
                         physical: 0,
@@ -7909,7 +8096,7 @@ function RotationEditorTab({
                         bamboocut: 0,
                         total: 0,
                       } as RotationActionBreakdown,
-                    );
+                    )
                     return (
                       <div className="rotation-row-group" key={`${row.id}-${entry.kind}-${actionIndex ?? "skill"}`}>
                         {!isAction && (
@@ -7945,12 +8132,12 @@ function RotationEditorTab({
                                       type="number"
                                       step="0.01"
                                       value={eventTimeDrafts[row.id] ?? formatNumber(displayTime(startTime))}
-                                      onChange={(event) =>
-                                        setEventTimeDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                      onChange={event =>
+                                        setEventTimeDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                       }
                                       onBlur={() => commitEventTime(row.id, row.rotationIndex ?? 0)}
-                                      onKeyDown={(event) => {
-                                        if (event.key === "Enter") event.currentTarget.blur();
+                                      onKeyDown={event => {
+                                        if (event.key === "Enter") event.currentTarget.blur()
                                       }}
                                     />
                                   )
@@ -7975,15 +8162,12 @@ function RotationEditorTab({
                                     min="0"
                                     step="0.01"
                                     value={eventDurationDrafts[row.id] ?? String(durationValue)}
-                                    onChange={(event) =>
-                                      setEventDurationDrafts((current) => ({
-                                        ...current,
-                                        [row.id]: event.target.value,
-                                      }))
+                                    onChange={event =>
+                                      setEventDurationDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                     }
                                     onBlur={() => commitEventDuration(row.id, row.rotationIndex ?? 0)}
-                                    onKeyDown={(event) => {
-                                      if (event.key === "Enter") event.currentTarget.blur();
+                                    onKeyDown={event => {
+                                      if (event.key === "Enter") event.currentTarget.blur()
                                     }}
                                   />
                                 )
@@ -8013,7 +8197,7 @@ function RotationEditorTab({
                                     data-rotation-step-index={row.rotationIndex}
                                     aria-label={t("ui.app.skillOrEvent")}
                                     value={isManualEvent ? `__event:${step.event}` : (stepSkill ?? "")}
-                                    onChange={(event) =>
+                                    onChange={event =>
                                       selectRotationItem(
                                         row.rotationIndex ?? 0,
                                         event.target.value,
@@ -8023,15 +8207,16 @@ function RotationEditorTab({
                                   >
                                     {stepSkill && !rotationSkillIds.includes(stepSkill) && (
                                       <option value={stepSkill} disabled>
-                                        {skillDisplayName(findSkill(stepSkill), stepSkill)} {t("ui.app.unavailable")}
+                                        {skillDisplayName(calculationDefinitions.skills[stepSkill], stepSkill)}{" "}
+                                        {t("ui.app.unavailable")}
                                       </option>
                                     )}
-                                    {rotationSkillIds.map((id) => (
+                                    {rotationSkillIds.map(id => (
                                       <option key={id} value={id}>
-                                        {skillDisplayName(findSkill(id), id)}
+                                        {skillDisplayName(calculationDefinitions.skills[id], id)}
                                       </option>
                                     ))}
-                                    {rotationEventOptionIds.map((id) => (
+                                    {rotationEventOptionIds.map(id => (
                                       <option key={id} value={id}>
                                         {rotationEventDisplayName(id.slice(8))}
                                       </option>
@@ -8061,15 +8246,15 @@ function RotationEditorTab({
                                         min="1"
                                         step="1"
                                         value={eventDistanceDrafts[row.id] ?? String(step.distance)}
-                                        onChange={(event) =>
-                                          setEventDistanceDrafts((current) => ({
+                                        onChange={event =>
+                                          setEventDistanceDrafts(current => ({
                                             ...current,
                                             [row.id]: event.target.value,
                                           }))
                                         }
                                         onBlur={() => commitEventDistance(row.id, row.rotationIndex ?? 0)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") event.currentTarget.blur();
+                                        onKeyDown={event => {
+                                          if (event.key === "Enter") event.currentTarget.blur()
                                         }}
                                       />
                                       <span>{t("ui.app.m")}</span>
@@ -8097,12 +8282,12 @@ function RotationEditorTab({
                                         min="0"
                                         step="0.01"
                                         value={eventHPDrafts[row.id] ?? String(step.damage)}
-                                        onChange={(event) =>
-                                          setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                        onChange={event =>
+                                          setEventHPDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                         }
                                         onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") event.currentTarget.blur();
+                                        onKeyDown={event => {
+                                          if (event.key === "Enter") event.currentTarget.blur()
                                         }}
                                       />
                                     </span>
@@ -8120,12 +8305,12 @@ function RotationEditorTab({
                                         max="100"
                                         step="0.01"
                                         value={eventHPDrafts[row.id] ?? String(selfHPEventPercentage)}
-                                        onChange={(event) =>
-                                          setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                        onChange={event =>
+                                          setEventHPDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                         }
                                         onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") event.currentTarget.blur();
+                                        onKeyDown={event => {
+                                          if (event.key === "Enter") event.currentTarget.blur()
                                         }}
                                       />
                                       <span>%</span>
@@ -8151,12 +8336,12 @@ function RotationEditorTab({
                                         max="100"
                                         step="0.01"
                                         value={eventHPDrafts[row.id] ?? String(step.targetHPRatio * 100)}
-                                        onChange={(event) =>
-                                          setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                        onChange={event =>
+                                          setEventHPDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                         }
                                         onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") event.currentTarget.blur();
+                                        onKeyDown={event => {
+                                          if (event.key === "Enter") event.currentTarget.blur()
                                         }}
                                       />
                                       <span>%</span>
@@ -8182,12 +8367,12 @@ function RotationEditorTab({
                                         max="100"
                                         step="0.01"
                                         value={eventHPDrafts[row.id] ?? String(step.targetQiRatio * 100)}
-                                        onChange={(event) =>
-                                          setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                        onChange={event =>
+                                          setEventHPDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                         }
                                         onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") event.currentTarget.blur();
+                                        onKeyDown={event => {
+                                          if (event.key === "Enter") event.currentTarget.blur()
                                         }}
                                       />
                                       <span>%</span>
@@ -8219,12 +8404,12 @@ function RotationEditorTab({
                                       type="number"
                                       step="0.01"
                                       value={eventHPDrafts[row.id] ?? String(step.amount)}
-                                      onChange={(event) =>
-                                        setEventHPDrafts((current) => ({ ...current, [row.id]: event.target.value }))
+                                      onChange={event =>
+                                        setEventHPDrafts(current => ({ ...current, [row.id]: event.target.value }))
                                       }
                                       onBlur={() => commitEventHP(row.id, row.rotationIndex ?? 0)}
-                                      onKeyDown={(event) => {
-                                        if (event.key === "Enter") event.currentTarget.blur();
+                                      onKeyDown={event => {
+                                        if (event.key === "Enter") event.currentTarget.blur()
                                       }}
                                     />
                                   )
@@ -8255,7 +8440,7 @@ function RotationEditorTab({
                                       className="rotation-martial-art-select"
                                       aria-label={t("ui.app.martialArtToSwitchTo")}
                                       value={step.martialArt}
-                                      onChange={(event) =>
+                                      onChange={event =>
                                         updateStep(row.rotationIndex ?? 0, {
                                           martialArt: event.target.value as WeaponId,
                                         })
@@ -8267,7 +8452,7 @@ function RotationEditorTab({
                                           {t("ui.app.unavailable")}
                                         </option>
                                       )}
-                                      {settings.weapons.map((martialArt) => (
+                                      {settings.weapons.map(martialArt => (
                                         <option value={martialArt} key={martialArt}>
                                           {gameText(martialArtDefinitions[martialArt].name)}
                                         </option>
@@ -8299,15 +8484,15 @@ function RotationEditorTab({
                                       className="rotation-effect-select"
                                       aria-label={t("ui.app.buffToApply")}
                                       value={step.buff}
-                                      onChange={(event) => {
-                                        const buff = event.target.value;
+                                      onChange={event => {
+                                        const buff = event.target.value
                                         updateStep(row.rotationIndex ?? 0, {
                                           buff,
                                           stack: Math.min(step.stack ?? 1, manualEffectMaxStacks.get(buff) ?? 1),
-                                        });
+                                        })
                                       }}
                                     >
-                                      {Object.keys(manualBuffDefinitions).map((id) => (
+                                      {Object.keys(manualBuffDefinitions).map(id => (
                                         <option value={id} key={id}>
                                           {calculationDefinitions.effectDefinitions[id]?.name ?? id}
                                         </option>
@@ -8322,15 +8507,15 @@ function RotationEditorTab({
                                         max={manualEffectMaxStacks.get(step.buff) ?? 1}
                                         step="1"
                                         value={step.stack ?? 1}
-                                        onChange={(event) => {
-                                          const stack = Number(event.target.value);
+                                        onChange={event => {
+                                          const stack = Number(event.target.value)
                                           if (Number.isFinite(stack))
                                             updateStep(row.rotationIndex ?? 0, {
                                               stack: Math.max(
                                                 1,
                                                 Math.min(manualEffectMaxStacks.get(step.buff) ?? 1, Math.floor(stack)),
                                               ),
-                                            });
+                                            })
                                         }}
                                       />
                                     )}
@@ -8357,15 +8542,15 @@ function RotationEditorTab({
                                       className="rotation-effect-select"
                                       aria-label={t("ui.app.debuffToApply")}
                                       value={step.debuff}
-                                      onChange={(event) => {
-                                        const debuff = event.target.value;
+                                      onChange={event => {
+                                        const debuff = event.target.value
                                         updateStep(row.rotationIndex ?? 0, {
                                           debuff,
                                           stack: Math.min(step.stack ?? 1, manualEffectMaxStacks.get(debuff) ?? 1),
-                                        });
+                                        })
                                       }}
                                     >
-                                      {Object.keys(manualDebuffDefinitions).map((id) => (
+                                      {Object.keys(manualDebuffDefinitions).map(id => (
                                         <option value={id} key={id}>
                                           {calculationDefinitions.effectDefinitions[id]?.name ?? id}
                                         </option>
@@ -8380,8 +8565,8 @@ function RotationEditorTab({
                                         max={manualEffectMaxStacks.get(step.debuff) ?? 1}
                                         step="1"
                                         value={step.stack ?? 1}
-                                        onChange={(event) => {
-                                          const stack = Number(event.target.value);
+                                        onChange={event => {
+                                          const stack = Number(event.target.value)
                                           if (Number.isFinite(stack))
                                             updateStep(row.rotationIndex ?? 0, {
                                               stack: Math.max(
@@ -8391,7 +8576,7 @@ function RotationEditorTab({
                                                   Math.floor(stack),
                                                 ),
                                               ),
-                                            });
+                                            })
                                         }}
                                       />
                                     )}
@@ -8411,7 +8596,7 @@ function RotationEditorTab({
                                     type="button"
                                     aria-label={t("ui.app.moveEventToPreviousAction")}
                                     disabled={rowReadOnly || (attachedSiblingAbove < 0 && attachedTargetIndex <= 0)}
-                                    onClick={(event) =>
+                                    onClick={event =>
                                       moveAttachedEvent(row.rotationIndex ?? 0, -1, event.currentTarget)
                                     }
                                   >
@@ -8426,9 +8611,7 @@ function RotationEditorTab({
                                         (attachedTargetIndex < 0 ||
                                           attachedTargetIndex >= availableAttachmentTargets.length - 1))
                                     }
-                                    onClick={(event) =>
-                                      moveAttachedEvent(row.rotationIndex ?? 0, 1, event.currentTarget)
-                                    }
+                                    onClick={event => moveAttachedEvent(row.rotationIndex ?? 0, 1, event.currentTarget)}
                                   >
                                     <UiIcon name="down" />
                                   </button>
@@ -8496,14 +8679,14 @@ function RotationEditorTab({
                         )}
                         {isAction &&
                           (() => {
-                            const actionKey = `${row.id}:${actionIndex ?? 0}`;
+                            const actionKey = `${row.id}:${actionIndex ?? 0}`
                             const actionCalculated = Object.prototype.hasOwnProperty.call(
                               workerActionBreakdowns,
                               actionKey,
-                            );
-                            const actionBreakdown = workerActionBreakdowns[actionKey];
-                            const expectedBuffStacks = actionBreakdown?.expectedBuffStacks;
-                            const displayedActionBuffs = withExpectedOutcomeBuffPlates(actionBuffs, expectedBuffStacks);
+                            )
+                            const actionBreakdown = workerActionBreakdowns[actionKey]
+                            const expectedBuffStacks = actionBreakdown?.expectedBuffStacks
+                            const displayedActionBuffs = withExpectedOutcomeBuffPlates(actionBuffs, expectedBuffStacks)
                             return (
                               <div
                                 className={`rotation-action-row ${row.kind === "trigger" ? "rotation-action-trigger" : row.kind === "dot" ? "rotation-action-dot" : ""}`}
@@ -8594,10 +8777,10 @@ function RotationEditorTab({
                                 </span>
                                 <span aria-hidden="true" />
                               </div>
-                            );
+                            )
                           })()}
                       </div>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -8631,10 +8814,10 @@ function RotationEditorTab({
           readOnly
           value={readableRotation}
           aria-label={t("ui.app.readableRotation")}
-          onFocus={(event) => event.currentTarget.select()}
+          onFocus={event => event.currentTarget.select()}
         />
         <div className="rotation-readable-actions">
-          <span role="status">{readableCopyStatus}</span>
+          <output>{readableCopyStatus}</output>
           <button className="button button-secondary" type="button" onClick={() => readableDialogRef.current?.close()}>
             {t("ui.app.close")}
           </button>
@@ -8644,113 +8827,117 @@ function RotationEditorTab({
         </div>
       </dialog>
     </section>
-  );
+  )
 }
 
 export default function App() {
-  const compactViewport = useSyncExternalStore(subscribeToCompactLayout, compactLayoutSnapshot, () => false);
-  const [locale, setLocale] = useState(getLocale);
+  const compactViewport = useSyncExternalStore(subscribeToCompactLayout, compactLayoutSnapshot, () => false)
+  const [locale, setLocale] = useState(getLocale)
   const [activeTab, setActiveTab] = useState<
     "main" | "build" | "breakdown" | "rotations" | "simulation" | "skills" | "settings"
-  >("main");
+  >("main")
   // Mount the simulator only on first use, then keep it mounted while hidden. Its module is preloaded below.
   // Remounting would cancel its worker and discard progress/results on every tab switch.
-  const [simulationMounted, setSimulationMounted] = useState(false);
+  const [simulationMounted, setSimulationMounted] = useState(false)
 
   useEffect(() => {
     const preloadDeferredTabs = () => {
-      void Promise.allSettled([loadBuildTab(), loadSimulationTab()]);
-    };
-    if (typeof window.requestIdleCallback === "function") {
-      const idleCallback = window.requestIdleCallback(preloadDeferredTabs, { timeout: 1500 });
-      return () => window.cancelIdleCallback(idleCallback);
+      void Promise.allSettled([loadBuildTab(), loadSimulationTab()])
     }
-    const timeout = window.setTimeout(preloadDeferredTabs, 1);
-    return () => window.clearTimeout(timeout);
-  }, []);
+    if (typeof window.requestIdleCallback === "function") {
+      const idleCallback = window.requestIdleCallback(preloadDeferredTabs, { timeout: 1500 })
+      return () => window.cancelIdleCallback(idleCallback)
+    }
+    const timeout = window.setTimeout(preloadDeferredTabs, 1)
+    return () => window.clearTimeout(timeout)
+  }, [])
 
-  const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides);
-  const skillEditorModified = hasSkillOverrides(skillOverrides);
+  const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides)
+  const skillEditorModified = hasSkillOverrides(skillOverrides)
   const [activeSimulation, setActiveSimulation] = useState<{
-    bundle: RotationSimulationBundle;
-    rotationName: string;
-    bundleKey: string;
-    rotationIsDefault: boolean;
-    graduationFingerprint?: string;
-    graduationDps?: number;
-  }>();
-  const rotationMetrics = useSyncExternalStore(subscribeToRotationMetrics, getRotationMetrics, getRotationMetrics);
-  const [innerWayRevision, setInnerWayRevision] = useState(0);
-  const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides);
-  const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides);
-  const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles);
-  const [devMode, setDevMode] = useState(loadDevMode);
-  const [layoutPreview, setLayoutPreview] = useState<LayoutMode>(() => loadLayoutPreview(compactViewport));
-  const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc";
-  const [pathId, setPathId] = useState<PathId>(() => loadSelectedPath(devMode));
-  const [settings, setSettings] = useState<CalculatorSettings>(() => settingsForPath(loadSettings(), pathId));
-  const [buildState, setBuildState] = useState<BuildState>(loadBuildState);
+    bundle: RotationSimulationBundle
+    rotationName: string
+    bundleKey: string
+    rotationIsDefault: boolean
+    graduationFingerprint?: string
+    graduationDps?: number
+  }>()
+  const rotationMetrics = useSyncExternalStore(subscribeToRotationMetrics, getRotationMetrics, getRotationMetrics)
+  const [innerWayRevision, setInnerWayRevision] = useState(0)
+  const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
+  const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
+  const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
+  const [devMode, setDevMode] = useState(loadDevMode)
+  const [layoutPreview, setLayoutPreview] = useState<LayoutMode>(() => loadLayoutPreview(compactViewport))
+  const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
+  const [pathId, setPathId] = useState<PathId>(() => loadSelectedPath(devMode))
+  const [settings, setSettings] = useState<CalculatorSettings>(() => settingsForPath(loadSettings(), pathId))
+  const [buildState, setBuildState] = useState<BuildState>(loadBuildState)
   const [activeBuildIdsByPath, setActiveBuildIdsByPath] = useState<PathSelectionIds>(() =>
     loadPathSelectionIds(activeBuildByPathStorageKey, activeBuildStorageKey, pathId),
-  );
+  )
   const [activeRotationIdsByPath, setActiveRotationIdsByPath] = useState<PathSelectionIds>(() =>
     loadPathSelectionIds(activeRotationByPathStorageKey, activeRotationStorageKey, pathId),
-  );
-  const rotationCalculationCacheRef = useRef(new RotationCalculationCache());
-  const breakthrough = breakthroughProfile(settings);
-  const enemy: EnemyProfile = breakthrough;
+  )
+  const [rotationCalculationCache] = useState(() => new RotationCalculationCache())
+  const breakthrough = breakthroughProfile(settings)
+  const enemy: EnemyProfile = breakthrough
   const availableBuildEntries = buildState.entries.filter(
-    (entry) =>
+    entry =>
       (devMode || !buildEntryIsTestPreset(entry)) &&
       buildEntryAvailableForPath(entry, typedPathDefinitions[pathId].buildGroup, settings.weapons),
-  );
+  )
   const activeBuild =
-    availableBuildEntries.find((entry) => entry.id === activeBuildIdsByPath[pathId]) ??
-    availableBuildEntries.find((entry) => entry.id === defaultBuildIdForPath(pathId)) ??
-    availableBuildEntries[0];
+    availableBuildEntries.find(entry => entry.id === activeBuildIdsByPath[pathId]) ??
+    availableBuildEntries.find(entry => entry.id === defaultBuildIdForPath(pathId)) ??
+    availableBuildEntries[0]
   const effectiveBuildState = useMemo(
     () => ({ ...buildState, activeBuildId: activeBuild?.id ?? "" }),
     [activeBuild?.id, buildState],
-  );
-  const selectedRotationId = activeRotationIdsByPath[pathId] ?? defaultRotationIdForPath(pathId);
+  )
+  const buildTabMartialArtTags = useMemo(
+    () => settings.weapons.map(weapon => martialArtDefinitions[weapon].tag),
+    [settings.weapons],
+  )
+  const selectedRotationId = activeRotationIdsByPath[pathId] ?? defaultRotationIdForPath(pathId)
   const activeBuildDisplayName = activeBuild
     ? (activeBuild.isDefault ? gameText(activeBuild.name) : activeBuild.name) || "Unnamed Build"
-    : "Unnamed Build";
-  const activeBuildSetup = useMemo(() => resolveBuildSetup(activeBuild), [activeBuild]);
+    : "Unnamed Build"
+  const activeBuildSetup = useMemo(() => resolveBuildSetup(activeBuild), [activeBuild])
   const [buildSetupOverrides, setBuildSetupOverrides] = useState<BuildSetupOverrides>(() =>
     loadBuildSetupOverrides(activeBuildSetup),
-  );
+  )
   const buildSetup = useMemo<BuildSetup>(
     () => ({
-      innerWays: (buildSetupOverrides.innerWays ?? activeBuildSetup.innerWays).map((row) => ({ ...row })),
+      innerWays: (buildSetupOverrides.innerWays ?? activeBuildSetup.innerWays).map(row => Object.assign({}, row)),
       weaponSets: { ...(buildSetupOverrides.weaponSets ?? activeBuildSetup.weaponSets) },
       armorSets: { ...(buildSetupOverrides.armorSets ?? activeBuildSetup.armorSets) },
       bowRingSet: buildSetupOverrides.bowRingSet ?? activeBuildSetup.bowRingSet,
       arsenal: buildSetupOverrides.arsenal ?? activeBuildSetup.arsenal,
     }),
     [activeBuildSetup, buildSetupOverrides],
-  );
+  )
   const activeGearInventory = useMemo(
     () =>
       activeBuild
         ? resolveBuildInventory(activeBuild, buildState.gearItems, settings.weapons)
         : { items: [], equipped: {} },
     [activeBuild, buildState.gearItems, settings.weapons],
-  );
+  )
   const equippedGearEffects = useMemo(
     () => calculateEquippedGearEffects(activeGearInventory, settings.weapons, activeBuild?.isDefault !== true),
     [activeGearInventory, settings.weapons, activeBuild?.isDefault],
-  );
+  )
   const gearStatEffect = useMemo<StatEffectContainer>(
     () => ({ rawStat: equippedGearEffects.stats }),
     [equippedGearEffects],
-  );
+  )
   const globalStatState = useMemo(
     () => calculateGlobalStatState(statOverrides, settings, gearStatEffect, buildSetup),
-    [statOverrides, settings, gearStatEffect, buildSetup, innerWayRevision],
-  );
-  const displayedStats = globalStatState.stats;
-  const derivedStats = globalStatState.derivedStats;
+    [statOverrides, settings, gearStatEffect, buildSetup],
+  )
+  const displayedStats = globalStatState.stats
+  const derivedStats = globalStatState.derivedStats
   const resolvedAttunementStats = useMemo(
     () =>
       resolveAttunementStats(defaultAttunementStats, equippedGearEffects.attunement, attunementOverrides, {
@@ -8763,7 +8950,7 @@ export default function App() {
       displayedStats.formlessPenetration,
       equippedGearEffects.attunement,
     ],
-  );
+  )
   const character = useMemo(
     () => ({
       stats: displayedStats,
@@ -8790,57 +8977,57 @@ export default function App() {
       gearStatEffect,
       buildSetup,
     ],
-  );
+  )
   const updateStatOverride = (key: keyof CharacterStats, value: number) => {
-    setStatOverrides((current) => ({ ...current, [key]: value }));
-  };
+    setStatOverrides(current => ({ ...current, [key]: value }))
+  }
   const resetStatOverride = (key: keyof CharacterStats) => {
-    setStatOverrides((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
-  };
+    setStatOverrides(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+  }
   const updateAttunementOverride = (key: keyof AttunementStats, value: number) =>
-    setAttunementOverrides((current) => ({ ...current, [key]: value }));
+    setAttunementOverrides(current => ({ ...current, [key]: value }))
   const resetAttunementOverride = (key: keyof AttunementStats) =>
-    setAttunementOverrides((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
+    setAttunementOverrides(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
   function updateBuildSetupOverride<K extends keyof BuildSetup>(key: K, value: BuildSetup[K]) {
-    setBuildSetupOverrides((current) => {
-      if (!sameBuildSetupValue(key, value, activeBuildSetup[key])) return { ...current, [key]: value };
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
+    setBuildSetupOverrides(current => {
+      if (!sameBuildSetupValue(key, value, activeBuildSetup[key])) return { ...current, [key]: value }
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
   }
   const resetBuildSetupOverride = (key: keyof BuildSetup) =>
-    setBuildSetupOverrides((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
+    setBuildSetupOverrides(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
   const applyCharacterProfile = (profile?: CharacterProfile) => {
-    setStatOverrides(profile ? { ...profile.statOverrides } : {});
-    setAttunementOverrides(profile ? { ...profile.attunementOverrides } : {});
+    setStatOverrides(profile ? { ...profile.statOverrides } : {})
+    setAttunementOverrides(profile ? { ...profile.attunementOverrides } : {})
     if (!profile) {
-      setBuildSetupOverrides({});
-      return;
+      setBuildSetupOverrides({})
+      return
     }
     setBuildSetupOverrides({
-      innerWays: profile.innerWays.map((row) => ({ ...row })),
+      innerWays: profile.innerWays.map(row => ({ ...row })),
       weaponSets: { ...profile.buildSetup.weaponSets },
       armorSets: { ...profile.buildSetup.armorSets },
       bowRingSet: profile.buildSetup.bowRingSet,
       arsenal: profile.buildSetup.arsenal,
-    });
-  };
+    })
+  }
   const handleRotationMetrics = (metrics: RotationMetrics, isActive: boolean) => {
-    if (isActive) publishRotationMetrics(metrics);
-  };
+    if (isActive) publishRotationMetrics(metrics)
+  }
   const handleActiveSimulationBundle = useCallback(
     (
       bundle: RotationSimulationBundle,
@@ -8858,85 +9045,85 @@ export default function App() {
         graduationDps: graduation?.dps,
       }),
     [],
-  );
+  )
   const handleGraduationDps = useCallback((fingerprint: string, dps: number) => {
-    setActiveSimulation((current) =>
+    setActiveSimulation(current =>
       current?.graduationFingerprint === fingerprint ? { ...current, graduationDps: dps } : current,
-    );
-  }, []);
+    )
+  }, [])
   const activeRotationDisplayName = activeSimulation
     ? activeSimulation.rotationIsDefault
       ? gameText(activeSimulation.rotationName)
       : activeSimulation.rotationName
-    : "—";
+    : "—"
   const activateBuildForPath = useCallback(
     (id: string, targetPathId = pathId) => {
-      setActiveBuildIdsByPath((current) => {
-        const next = withPathSelection(current, targetPathId, id);
-        if (next !== current) setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(next));
-        return next;
-      });
-      setBuildState((current) => (current.activeBuildId === id ? current : { ...current, activeBuildId: id }));
+      setActiveBuildIdsByPath(current => {
+        const next = withPathSelection(current, targetPathId, id)
+        if (next !== current) setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(next))
+        return next
+      })
+      setBuildState(current => (current.activeBuildId === id ? current : { ...current, activeBuildId: id }))
     },
     [pathId],
-  );
+  )
   const activateRotationForPath = useCallback(
     (id: string, targetPathId = pathId) => {
-      setActiveRotationIdsByPath((current) => {
-        const next = withPathSelection(current, targetPathId, id);
-        if (next !== current) setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(next));
-        return next;
-      });
+      setActiveRotationIdsByPath(current => {
+        const next = withPathSelection(current, targetPathId, id)
+        if (next !== current) setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(next))
+        return next
+      })
     },
     [pathId],
-  );
+  )
   const transitionPath = (
     nextPathId: PathId,
     options: { weapons?: [WeaponId, WeaponId]; rotationId?: string } = {},
   ) => {
-    if (pathRequiresDev(typedPathDefinitions[nextPathId]) && !devMode) return;
+    if (pathRequiresDev(typedPathDefinitions[nextPathId]) && !devMode) return
     const nextSettings =
       nextPathId === "mixed" && options.weapons
         ? { ...settingsForPath(settings, nextPathId), weapons: [...options.weapons] as [WeaponId, WeaponId] }
-        : settingsForPath(settings, nextPathId);
+        : settingsForPath(settings, nextPathId)
     const nextBuildEntries = buildState.entries.filter(
-      (entry) =>
+      entry =>
         (devMode || !buildEntryIsTestPreset(entry)) &&
         buildEntryAvailableForPath(entry, typedPathDefinitions[nextPathId].buildGroup, nextSettings.weapons),
-    );
+    )
     const nextRotationEntries = loadRotationEntries().filter(
-      (entry) => (devMode || !entry.test) && rotationAvailableForWeapons(entry, nextSettings.weapons),
-    );
+      entry => (devMode || !entry.test) && rotationAvailableForWeapons(entry, nextSettings.weapons),
+    )
     const selection = resolvePathWorkspaceSelection({
-      buildIds: nextBuildEntries.map((entry) => entry.id),
-      rotationIds: nextRotationEntries.map((entry) => entry.id),
+      buildIds: nextBuildEntries.map(entry => entry.id),
+      rotationIds: nextRotationEntries.map(entry => entry.id),
       savedBuildId: activeBuildIdsByPath[nextPathId],
       savedRotationId: activeRotationIdsByPath[nextPathId],
       requestedRotationId: options.rotationId,
       defaultBuildId: defaultBuildIdForPath(nextPathId),
       defaultRotationId: defaultRotationIdForPath(nextPathId),
-    });
-    if (!selection) return;
+    })
+    if (!selection) return
 
-    supersedeRotationCalculationRequests();
-    endRotationCalculation();
-    setActiveSimulation(undefined);
+    supersedeRotationCalculationRequests()
+    endRotationCalculation()
+    setActiveSimulation(undefined)
 
-    const nextBuildIds = withPathSelection(activeBuildIdsByPath, nextPathId, selection.buildId);
-    const nextRotationIds = withPathSelection(activeRotationIdsByPath, nextPathId, selection.rotationId);
+    const nextBuildIds = withPathSelection(activeBuildIdsByPath, nextPathId, selection.buildId)
+    const nextRotationIds = withPathSelection(activeRotationIdsByPath, nextPathId, selection.rotationId)
     if (nextBuildIds !== activeBuildIdsByPath)
-      setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(nextBuildIds));
+      setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(nextBuildIds))
     if (nextRotationIds !== activeRotationIdsByPath)
-      setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(nextRotationIds));
-    setPersistentItem(pathStorageKey, nextPathId);
-    setActiveBuildIdsByPath(nextBuildIds);
-    setActiveRotationIdsByPath(nextRotationIds);
-    setBuildState((current) => ({ ...current, activeBuildId: selection.buildId }));
-    setPathId(nextPathId);
-    setSettings(nextSettings);
-    setInnerWayRevision((current) => current + 1);
-  };
-  const selectPath = (nextPathId: PathId) => transitionPath(nextPathId);
+      setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(nextRotationIds))
+    setPersistentItem(pathStorageKey, nextPathId)
+    setActiveBuildIdsByPath(nextBuildIds)
+    setActiveRotationIdsByPath(nextRotationIds)
+    setBuildState(current => ({ ...current, activeBuildId: selection.buildId }))
+    setPathId(nextPathId)
+    setSettings(nextSettings)
+    setInnerWayRevision(current => current + 1)
+  }
+  const selectPath = (nextPathId: PathId) => transitionPath(nextPathId)
   const selectBuildWeapons = (nextWeapons: [WeaponId, WeaponId], rotationId?: string) => {
     const matchingPath = (Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).find(
       ([candidateId, definition]) =>
@@ -8944,57 +9131,58 @@ export default function App() {
         (!pathRequiresDev(definition) || devMode) &&
         definition.lockedWeapons &&
         sameWeaponPair(definition.lockedWeapons, nextWeapons),
-    );
-    const nextPathId = matchingPath?.[0] ?? (devMode ? "mixed" : undefined);
-    if (!nextPathId) return false;
-    transitionPath(nextPathId, { weapons: nextWeapons, rotationId });
-    return true;
-  };
+    )
+    const nextPathId = matchingPath?.[0] ?? (devMode ? "mixed" : undefined)
+    if (!nextPathId) return false
+    transitionPath(nextPathId, { weapons: nextWeapons, rotationId })
+    return true
+  }
   const toggleDevMode = () => {
-    const nextDevMode = !devMode;
-    localStorage.setItem(devModeStorageKey, String(nextDevMode));
-    setDevMode(nextDevMode);
-    if (!nextDevMode && pathRequiresDev(typedPathDefinitions[pathId])) selectPath("stonesplitStrength");
-    if (!nextDevMode && isLocaleWip(locale)) void changeLocale("en");
-  };
+    const nextDevMode = !devMode
+    localStorage.setItem(devModeStorageKey, String(nextDevMode))
+    setDevMode(nextDevMode)
+    if (!nextDevMode && pathRequiresDev(typedPathDefinitions[pathId])) selectPath("stonesplitStrength")
+    if (!nextDevMode && isLocaleWip(locale)) void changeLocale("en")
+  }
   const changeLocale = async (nextLocale: string) => {
-    if (await selectLocale(nextLocale)) setLocale(getLocale());
-  };
+    if (await selectLocale(nextLocale)) setLocale(getLocale())
+  }
   const changeLayoutPreview = (nextLayout: LayoutMode) => {
-    setPersistentItem(layoutPreviewStorageKey, nextLayout);
-    setLayoutPreview(nextLayout);
-  };
+    setPersistentItem(layoutPreviewStorageKey, nextLayout)
+    setLayoutPreview(nextLayout)
+  }
   const updateSkillOverrides = (nextOverrides: SkillOverrides) => {
-    setSkillOverrides(nextOverrides);
-    if (hasSkillOverrides(nextOverrides)) setPersistentItem(skillStorageKey, serializeSkillOverrides(nextOverrides));
-    else removePersistentItem(skillStorageKey);
-  };
+    setSkillOverrides(nextOverrides)
+    if (hasSkillOverrides(nextOverrides)) setPersistentItem(skillStorageKey, serializeSkillOverrides(nextOverrides))
+    else removePersistentItem(skillStorageKey)
+  }
 
-  useEffect(() => localStorage.setItem(statOverrideStorageKey, JSON.stringify(statOverrides)), [statOverrides]);
+  useEffect(() => localStorage.setItem(statOverrideStorageKey, JSON.stringify(statOverrides)), [statOverrides])
   useEffect(
     () => localStorage.setItem(characterProfileStorageKey, serializeCharacterProfiles(characterProfiles)),
     [characterProfiles],
-  );
+  )
+  if (activeBuild && activeBuildIdsByPath[pathId] === activeBuild.id && activeBuild.id !== buildState.activeBuildId)
+    setBuildState(current => ({ ...current, activeBuildId: activeBuild.id }))
+  if (activeBuild && activeBuildIdsByPath[pathId] !== activeBuild.id)
+    setActiveBuildIdsByPath(withPathSelection(activeBuildIdsByPath, pathId, activeBuild.id))
   useEffect(() => {
-    if (!activeBuild) return;
-    if (activeBuildIdsByPath[pathId] !== activeBuild.id) activateBuildForPath(activeBuild.id);
-    else if (activeBuild.id !== buildState.activeBuildId)
-      setBuildState((current) => ({ ...current, activeBuildId: activeBuild.id }));
-  }, [activateBuildForPath, activeBuild, activeBuildIdsByPath, buildState.activeBuildId, pathId]);
-  useEffect(() => localStorage.setItem(buildListStorageKey, serializeBuildState(buildState)), [buildState]);
+    setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(activeBuildIdsByPath))
+  }, [activeBuildIdsByPath])
+  useEffect(() => localStorage.setItem(buildListStorageKey, serializeBuildState(buildState)), [buildState])
   useEffect(
     () => setPersistentItem(attunementOverrideStorageKey, JSON.stringify(attunementOverrides)),
     [attunementOverrides],
-  );
+  )
   useEffect(
     () => setPersistentItem(buildSetupOverrideStorageKey, JSON.stringify(buildSetupOverrides)),
     [buildSetupOverrides],
-  );
+  )
   useEffect(
     () => setPersistentItem(settingsStorageKey, JSON.stringify({ weapons: settings.weapons, ping: settings.ping })),
     [settings.weapons, settings.ping],
-  );
-  useEffect(() => setPersistentItem(pathStorageKey, pathId), [pathId]);
+  )
+  useEffect(() => setPersistentItem(pathStorageKey, pathId), [pathId])
 
   return (
     <main
@@ -9010,8 +9198,8 @@ export default function App() {
           <NoticeArea />
           <label className="locale-selector">
             <span>{t("ui.app.language")}</span>
-            <select value={locale} onChange={(event) => void changeLocale(event.target.value)}>
-              {getSupportedLocales().map((supportedLocale) => (
+            <select value={locale} onChange={event => void changeLocale(event.target.value)}>
+              {getSupportedLocales().map(supportedLocale => (
                 <option
                   value={supportedLocale}
                   key={supportedLocale}
@@ -9080,8 +9268,8 @@ export default function App() {
           className={activeTab === "simulation" ? "active" : ""}
           type="button"
           onClick={() => {
-            setSimulationMounted(true);
-            setActiveTab("simulation");
+            setSimulationMounted(true)
+            setActiveTab("simulation")
           }}
         >
           {t("ui.app.simulation")}
@@ -9115,22 +9303,22 @@ export default function App() {
           onAttunementReset={resetAttunementOverride}
           onApplyCharacterProfile={applyCharacterProfile}
           onCharacterProfilesChange={setCharacterProfiles}
-          onBreakthroughChange={(breakthrough) => setSettings((current) => ({ ...current, breakthrough }))}
+          onBreakthroughChange={breakthrough => setSettings(current => ({ ...current, breakthrough }))}
           onBuildSetupChange={updateBuildSetupOverride}
           onBuildSetupReset={resetBuildSetupOverride}
           rotationMetrics={rotationMetrics}
           graduationDps={activeSimulation?.graduationDps}
           activeBuildName={activeBuildDisplayName}
           activeRotationName={activeRotationDisplayName}
-          onInnerWayChange={() => setInnerWayRevision((current) => current + 1)}
+          onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
         />
       ) : activeTab === "build" ? (
         <FeatureLoadBoundary>
-          <Suspense fallback={<div className="viewport-tab-content" />}>
+          <Suspense fallback={tabSuspenseFallback}>
             <div className="viewport-tab-content">
               <BuildTab
                 weapons={settings.weapons}
-                martialArtTags={settings.weapons.map((weapon) => martialArtDefinitions[weapon].tag)}
+                martialArtTags={buildTabMartialArtTags}
                 pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildId={typedPathDefinitions[pathId].graduated}
@@ -9169,7 +9357,7 @@ export default function App() {
           devMode={devMode}
           defaultRotationId={defaultRotationIdForPath(pathId)}
           selectedRotationId={selectedRotationId}
-          calculationCache={rotationCalculationCacheRef.current}
+          calculationCache={rotationCalculationCache}
           skillOverrides={skillOverrides}
           onSelectRotationWeapons={selectBuildWeapons}
           onActiveRotationChange={activateRotationForPath}
@@ -9205,5 +9393,5 @@ export default function App() {
         </a>
       </footer>
     </main>
-  );
+  )
 }

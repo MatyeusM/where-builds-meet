@@ -40,25 +40,8 @@
       ]
     },
     "ExquisiteSceneryT3": {},
-    "ExquisiteSceneryT4": {
-      "effect": [
-        {
-          "target": "Riposte",
-          "modify": {
-            "cooldown": 5
-          }
-        }
-      ]
-    },
-    "ExquisiteSceneryT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "critDmgBonus": 0.044
-          }
-        }
-      ]
-    },
+    "ExquisiteSceneryT4": { "effect": [{ "target": "Riposte", "modify": { "cooldown": 5 } }] },
+    "ExquisiteSceneryT5": { "effect": [{ "rawStat": { "critDmgBonus": 0.044 } }] },
     "ExquisiteSceneryT6": {
       "effect": [
         {
@@ -67,51 +50,25 @@
               "operator": "or",
               "operand": [
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Light"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  }
+                  { "target": "skillTag", "value": "Light" },
+                  { "target": "skillTag", "value": "Charged" }
                 ],
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Heavy"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  }
+                  { "target": "skillTag", "value": "Heavy" },
+                  { "target": "skillTag", "value": "Charged" }
                 ],
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Light"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Light" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ],
                 [
-                  {
-                    "target": "skillTag",
-                    "value": "Heavy"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Heavy" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               ]
             }
           ],
-          "effect": {
-            "baseDMGBonus": 0.5
-          }
+          "effect": { "baseDMGBonus": 0.5 }
         }
       ]
     }

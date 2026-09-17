@@ -69,9 +69,5 @@
       }
     }
   },
-  "None": {
-    "name": "None",
-    "description": "No Script effect.",
-    "effect": {}
-  }
+  "None": { "name": "None", "description": "No Script effect.", "effect": {} }
 }

@@ -41,15 +41,7 @@
     },
     "GourdTossT3": {},
     "GourdTossT4": {},
-    "GourdTossT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "silkbindPenetration": 6
-          }
-        }
-      ]
-    },
+    "GourdTossT5": { "effect": [{ "rawStat": { "silkbindPenetration": 6 } }] },
     "GourdTossT6": {}
   }
 }

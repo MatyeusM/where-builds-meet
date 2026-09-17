@@ -5,137 +5,140 @@ import {
   type ChangeEvent,
   type ClipboardEvent as ReactClipboardEvent,
   type DragEvent,
-} from "react";
-import { Modal } from "../ui/Modal";
-import { gearData } from "../gear";
-import type { GearOcrResult } from "../gearOcr";
-import { t } from "../i18n";
-import { publishNotice, dismissNotice } from "../notices";
+} from "react"
 
-type GearOcrModule = typeof import("../gearOcr");
+import { gearData } from "../gear"
+import type { GearOcrResult } from "../gearOcr"
+import { t } from "../i18n"
+import { publishNotice, dismissNotice } from "../notices"
+import { Modal } from "../ui/Modal"
 
-let gearOcrModulePromise: Promise<GearOcrModule> | undefined;
+type GearOcrModule = typeof import("../gearOcr")
+
+let gearOcrModulePromise: Promise<GearOcrModule> | undefined
 
 function loadGearOcrModule() {
   if (!gearOcrModulePromise) {
-    gearOcrModulePromise = import("../gearOcr").catch((error) => {
-      gearOcrModulePromise = undefined;
-      throw error;
-    });
+    gearOcrModulePromise = import("../gearOcr").catch(error => {
+      gearOcrModulePromise = undefined
+      throw error
+    })
   }
-  return gearOcrModulePromise;
+  return gearOcrModulePromise
 }
 
 type GearOcrModalProps = {
-  open: boolean;
-  definitionId: string;
-  definitionName: string;
-  onClose: () => void;
-  onImport: (result: GearOcrResult) => void;
-};
+  open: boolean
+  definitionId: string
+  definitionName: string
+  onClose: () => void
+  onImport: (result: GearOcrResult) => void
+}
 
 export function GearOcrModal({ open, definitionId, definitionName, onClose, onImport }: GearOcrModalProps) {
-  const ocrInputRef = useRef<HTMLInputElement>(null);
-  const [ocrBusy, setOcrBusy] = useState(false);
-  const [ocrDragging, setOcrDragging] = useState(false);
-  const [ocrStatus, setOcrStatus] = useState("");
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [ocrPreview, setOcrPreview] = useState("");
+  const ocrInputRef = useRef<HTMLInputElement>(null)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const [ocrDragging, setOcrDragging] = useState(false)
+  const [ocrStatus, setOcrStatus] = useState("")
+  const [ocrProgress, setOcrProgress] = useState(0)
+  const [ocrPreview, setOcrPreview] = useState("")
+  const [wasOcrOpen, setWasOcrOpen] = useState(open)
+  if (open && !wasOcrOpen) {
+    setWasOcrOpen(true)
+    setOcrPreview("")
+    setOcrStatus("")
+    setOcrProgress(0)
+    setOcrDragging(false)
+  }
+  if (!open && wasOcrOpen) setWasOcrOpen(false)
 
   useEffect(() => {
-    if (!open) return;
-    void loadGearOcrModule().catch(() => undefined);
-    setOcrPreview((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return "";
-    });
-    if (ocrInputRef.current) ocrInputRef.current.value = "";
-    dismissNotice("image-import");
-    setOcrStatus("");
-    setOcrProgress(0);
-    setOcrDragging(false);
-  }, [open]);
+    if (!open) return
+    void loadGearOcrModule().catch(() => undefined)
+    if (ocrInputRef.current) ocrInputRef.current.value = ""
+    dismissNotice("image-import")
+  }, [open])
 
   useEffect(
     () => () => {
-      if (ocrPreview) URL.revokeObjectURL(ocrPreview);
+      if (ocrPreview) URL.revokeObjectURL(ocrPreview)
     },
     [ocrPreview],
-  );
+  )
 
   const closeOcr = () => {
-    if (!ocrBusy) onClose();
-  };
+    if (!ocrBusy) onClose()
+  }
   const importImage = async (file?: File) => {
-    if (!file || ocrBusy) return;
+    if (!file || ocrBusy) return
     if (file.size > 15 * 1024 * 1024) {
-      publishNotice({ id: "image-import", error: true, message: t("ui.buildTab.imageTooLargeError") });
-      return;
+      publishNotice({ id: "image-import", error: true, message: t("ui.buildTab.imageTooLargeError") })
+      return
     }
-    dismissNotice("image-import");
-    setOcrBusy(true);
-    setOcrStatus(t("ui.buildTab.loadingOcrModel"));
-    setOcrProgress(0);
-    setOcrPreview((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return URL.createObjectURL(file);
-    });
+    dismissNotice("image-import")
+    setOcrBusy(true)
+    setOcrStatus(t("ui.buildTab.loadingOcrModel"))
+    setOcrProgress(0)
+    setOcrPreview(current => {
+      if (current) URL.revokeObjectURL(current)
+      return URL.createObjectURL(file)
+    })
     try {
-      const { recognizeGearImage } = await loadGearOcrModule();
+      const { recognizeGearImage } = await loadGearOcrModule()
       const result = await recognizeGearImage(
         file,
         (progress, status) => {
-          setOcrProgress(Math.max(0, Math.min(1, progress)));
-          setOcrStatus(status);
+          setOcrProgress(Math.max(0, Math.min(1, progress)))
+          setOcrStatus(status)
         },
         definitionId,
-      );
+      )
       if (result.definitionId !== definitionId) {
-        const recognizedName = gearData.gear[result.definitionId]?.name ?? result.definitionId;
+        const recognizedName = gearData.gear[result.definitionId]?.name ?? result.definitionId
         throw new Error(
           `This image contains ${recognizedName}, but the current editor expects ${definitionName}. Open the matching gear slot and try again.`,
-        );
+        )
       }
-      onImport(result);
-      onClose();
+      onImport(result)
+      onClose()
     } catch (caught) {
       publishNotice({
         id: "image-import",
         error: true,
         message: caught instanceof Error ? caught.message : t("ui.buildTab.imageImportError"),
-      });
+      })
     } finally {
-      setOcrBusy(false);
-      setOcrStatus("");
+      setOcrBusy(false)
+      setOcrStatus("")
     }
-  };
+  }
   const selectOcrFile = (event: ChangeEvent<HTMLInputElement>) => {
-    void importImage(event.target.files?.[0]);
-    event.target.value = "";
-  };
+    void importImage(event.target.files?.[0])
+    event.target.value = ""
+  }
   const dropOcrFile = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setOcrDragging(false);
-    void importImage(event.dataTransfer.files?.[0]);
-  };
+    event.preventDefault()
+    setOcrDragging(false)
+    void importImage(event.dataTransfer.files?.[0])
+  }
   const pasteOcrImage = (event: ReactClipboardEvent<HTMLDivElement>) => {
     const clipboardFile =
       Array.from(event.clipboardData.items)
-        .find((item) => item.kind === "file" && item.type.startsWith("image/"))
-        ?.getAsFile() ?? Array.from(event.clipboardData.files).find((file) => file.type.startsWith("image/"));
+        .find(item => item.kind === "file" && item.type.startsWith("image/"))
+        ?.getAsFile() ?? Array.from(event.clipboardData.files).find(file => file.type.startsWith("image/"))
     if (!clipboardFile) {
-      publishNotice({ id: "image-import", error: true, message: t("ui.buildTab.clipboardImageError") });
-      return;
+      publishNotice({ id: "image-import", error: true, message: t("ui.buildTab.clipboardImageError") })
+      return
     }
-    event.preventDefault();
-    void importImage(clipboardFile);
-  };
+    event.preventDefault()
+    void importImage(clipboardFile)
+  }
   return (
     <Modal
       open={open}
       onClose={closeOcr}
-      onCancel={(event) => {
-        if (ocrBusy) event.preventDefault();
+      onCancel={event => {
+        if (ocrBusy) event.preventDefault()
       }}
       className="gear-ocr-dialog"
       label={`${t("ui.buildTab.import")} ${definitionName} ${t("ui.buildTab.fromImage")}`}
@@ -155,13 +158,13 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
         <div className="gear-ocr-grid">
           <div
             className={`gear-ocr-dropzone ${ocrDragging ? "dragging" : ""}`}
-            onDragEnter={(event) => {
-              event.preventDefault();
-              setOcrDragging(true);
+            onDragEnter={event => {
+              event.preventDefault()
+              setOcrDragging(true)
             }}
-            onDragOver={(event) => event.preventDefault()}
-            onDragLeave={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node)) setOcrDragging(false);
+            onDragOver={event => event.preventDefault()}
+            onDragLeave={event => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node)) setOcrDragging(false)
             }}
             onDrop={dropOcrFile}
           >
@@ -208,5 +211,5 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
         )}
       </div>
     </Modal>
-  );
+  )
 }

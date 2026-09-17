@@ -67,15 +67,7 @@
     },
     "StarReacherT3": {},
     "StarReacherT4": {},
-    "StarReacherT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalPenetration": 5.1
-          }
-        }
-      ]
-    },
+    "StarReacherT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
     "StarReacherT6": {}
   }
 }

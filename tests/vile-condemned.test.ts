@@ -1,33 +1,34 @@
-import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises"
+
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-vile-condemned.mjs.
 describe("vile-condemned", () => {
   it("Vile Condemned branch, cooldown status, start-bound requirement, and consumption checks passed", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const heavenwillSkills = JSON.parse(await readFile("data/skill/heavenwill-gauntlets.json", "utf8"));
-    const kiteDebuffs = JSON.parse(await readFile("data/debuff/bamboocut-kite.json", "utf8"));
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const heavenwillSkills = JSON.parse(await readFile("data/skill/heavenwill-gauntlets.json", "utf8"))
+    const kiteDebuffs = JSON.parse(await readFile("data/debuff/bamboocut-kite.json", "utf8"))
     const observer = {
       name: "Observe Heaven's Will",
       castTime: 0.01,
       action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0.01 }],
       modifier: [],
       tags: ["General"],
-    };
+    }
     const restore = {
       name: "Restore Heaven's Will",
       castTime: 0,
       action: [{ type: "setResource", value: "HeavensWill", amount: 3, time: 0 }],
       modifier: [],
       tags: ["General"],
-    };
+    }
     const falcon = {
       name: "Falcon Probe",
       castTime: 0,
       action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0 }],
       modifier: [],
       tags: ["Falcon"],
-    };
+    }
     const build = (
       steps,
       {
@@ -55,12 +56,12 @@ describe("vile-condemned", () => {
         resourceRegeneration,
         resourceMaximums: { HeavensWill: 4 },
         initialDebuffs,
-      });
-    const damageAction = (row) => row.actions.find((action) => action.type === "damage");
-    const damageModifierEffects = (row) => {
-      const actionIndex = row.actions.findIndex((action) => action.type === "damage");
-      return row.actionModifierEffects[actionIndex] ?? [];
-    };
+      })
+    const damageAction = row => row.actions.find(action => action.type === "damage")
+    const damageModifierEffects = row => {
+      const actionIndex = row.actions.findIndex(action => action.type === "damage")
+      return row.actionModifierEffects[actionIndex] ?? []
+    }
 
     const weakTimeline = build(
       [
@@ -68,19 +69,19 @@ describe("vile-condemned", () => {
         { type: "skill", skill: "ObserveHeavensWill" },
       ],
       { initialResources: { HeavensWill: 2 } },
-    );
-    const weakCast = weakTimeline.find((row) => row.step.skill === "VileCondemned");
-    const weakObserver = weakTimeline.find((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
+    )
+    const weakCast = weakTimeline.find(row => row.step.skill === "VileCondemned")
+    const weakObserver = weakTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       weakCast.effectiveCastTime ===
         heavenwillSkills.VileCondemnedCharge.castTime + heavenwillSkills.VileCondemnedHit.castTime,
       "Vile Condemned must use the combined charge and release cast time.",
-    ).toBeTruthy();
-    expect(damageAction(weakCast).phyCoef === 7.2178, "Two Heaven's Will must select Vile Condemned Hit.").toBeTruthy();
-    expect(
+    )
+    assert(damageAction(weakCast).phyCoef === 7.2178, "Two Heaven's Will must select Vile Condemned Hit.")
+    assert(
       weakObserver.actionStates[0].resources.HeavensWill === 0,
       "Vile Condemned Hit must consume exactly two Heaven's Will.",
-    ).toBeTruthy();
+    )
 
     const fractionalFallbackTimeline = build(
       [
@@ -88,40 +89,35 @@ describe("vile-condemned", () => {
         { type: "skill", skill: "ObserveHeavensWill" },
       ],
       { initialResources: { HeavensWill: 3.5 } },
-    );
-    const fractionalFallbackCast = fractionalFallbackTimeline.find((row) => row.step.skill === "VileCondemned");
-    const fractionalFallbackObserver = fractionalFallbackTimeline.find(
-      (row) => row.step.skill === "ObserveHeavensWill",
-    );
-    expect(
+    )
+    const fractionalFallbackCast = fractionalFallbackTimeline.find(row => row.step.skill === "VileCondemned")
+    const fractionalFallbackObserver = fractionalFallbackTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       damageAction(fractionalFallbackCast).phyCoef === 7.2178,
       "Vile Condemned without Soaring High T0 must use the normal release.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       fractionalFallbackObserver.actionStates[0].resources.HeavensWill === 1.5,
       "Vile Condemned Hit must consume exactly two from a fractional resource value.",
-    ).toBeTruthy();
+    )
 
     const fractionalEndTimeline = build(
       [
         { type: "skill", skill: "VileCondemned" },
         { type: "skill", skill: "ObserveHeavensWill" },
       ],
-      {
-        initialResources: { HeavensWill: 3.5 },
-        innerWayConditions: ["SoaringHighT0"],
-      },
-    );
-    const fractionalEndCast = fractionalEndTimeline.find((row) => row.step.skill === "VileCondemned");
-    const fractionalEndObserver = fractionalEndTimeline.find((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
+      { initialResources: { HeavensWill: 3.5 }, innerWayConditions: ["SoaringHighT0"] },
+    )
+    const fractionalEndCast = fractionalEndTimeline.find(row => row.step.skill === "VileCondemned")
+    const fractionalEndObserver = fractionalEndTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       damageAction(fractionalEndCast).phyCoef === 11.7527,
       "Vile Condemned with Soaring High T0 must select End Hit at 3.5 Heaven's Will.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       fractionalEndObserver.actionStates[0].resources.HeavensWill === 0.5,
       "Vile Condemned End Hit must consume exactly three at 3.5 Heaven's Will.",
-    ).toBeTruthy();
+    )
 
     const endTimeline = build(
       [
@@ -140,12 +136,12 @@ describe("vile-condemned", () => {
           "SoaringHighT5",
         ],
       },
-    );
-    const endCast = endTimeline.find((row) => row.step.skill === "VileCondemned");
-    expect(
+    )
+    const endCast = endTimeline.find(row => row.step.skill === "VileCondemned")
+    assert(
       damageAction(endCast).phyCoef === 11.7527,
       "The release-start resource snapshot must select Vile Condemned End Hit at three Heaven's Will.",
-    ).toBeTruthy();
+    )
 
     const cappedTimeline = build(
       [
@@ -157,21 +153,21 @@ describe("vile-condemned", () => {
         resourceRegeneration: { HeavensWill: 0.1 },
         innerWayConditions: ["SoaringHighT0"],
       },
-    );
-    const cappedCast = cappedTimeline.find((row) => row.step.skill === "VileCondemned");
-    const cappedObserver = cappedTimeline.find((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
+    )
+    const cappedCast = cappedTimeline.find(row => row.step.skill === "VileCondemned")
+    const cappedObserver = cappedTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       cappedCast.actionStates[0].resources.HeavensWill === 4,
       "Heaven's Will regeneration must respect the four-point cap.",
-    ).toBeTruthy();
-    expect(
-      !damageModifierEffects(cappedCast).some((effect) => effect.baseDMGBonus === 0.3 || effect.critDmgBonus === 0.1),
+    )
+    assert(
+      !damageModifierEffects(cappedCast).some(effect => effect.baseDMGBonus === 0.3 || effect.critDmgBonus === 0.1),
       "Four Heaven's Will must not grant the End Hit T6 damage bonuses before Soaring High T6.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       cappedObserver.actionStates[0].resources.HeavensWill > 1,
       "Vile Condemned End Hit must consume only three Heaven's Will before Soaring High T6.",
-    ).toBeTruthy();
+    )
 
     const t6Timeline = build(
       [
@@ -190,17 +186,17 @@ describe("vile-condemned", () => {
           "SoaringHighT6",
         ],
       },
-    );
-    const t6Cast = t6Timeline.find((row) => row.step.skill === "VileCondemned");
-    const t6Observer = t6Timeline.find((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
-      damageModifierEffects(t6Cast).some((effect) => effect.baseDMGBonus === 0.3 && effect.critDmgBonus === 0.1),
+    )
+    const t6Cast = t6Timeline.find(row => row.step.skill === "VileCondemned")
+    const t6Observer = t6Timeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
+      damageModifierEffects(t6Cast).some(effect => effect.baseDMGBonus === 0.3 && effect.critDmgBonus === 0.1),
       "Four Heaven's Will with Soaring High T6 must lock the 30% base-damage and 10% Critical Damage bonuses.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       t6Observer.actionStates[0].resources.HeavensWill < 1,
       "Vile Condemned End Hit must consume all four Heaven's Will with Soaring High T6.",
-    ).toBeTruthy();
+    )
 
     const regeneratedToFourTimeline = build(
       [
@@ -220,19 +216,19 @@ describe("vile-condemned", () => {
           "SoaringHighT6",
         ],
       },
-    );
-    const regeneratedToFourCast = regeneratedToFourTimeline.find((row) => row.step.skill === "VileCondemned");
-    const regeneratedToFourObserver = regeneratedToFourTimeline.find((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
+    )
+    const regeneratedToFourCast = regeneratedToFourTimeline.find(row => row.step.skill === "VileCondemned")
+    const regeneratedToFourObserver = regeneratedToFourTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       !damageModifierEffects(regeneratedToFourCast).some(
-        (effect) => effect.baseDMGBonus === 0.3 || effect.critDmgBonus === 0.1,
+        effect => effect.baseDMGBonus === 0.3 || effect.critDmgBonus === 0.1,
       ),
       "Reaching four Heaven's Will after release start must not activate the T6 damage bonuses.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       regeneratedToFourObserver.actionStates[0].resources.HeavensWill > 1,
       "A start-bound failed requirement must not consume the fourth Heaven's Will after later regeneration.",
-    ).toBeTruthy();
+    )
 
     const cooldownTimeline = build(
       [
@@ -241,25 +237,22 @@ describe("vile-condemned", () => {
         { type: "skill", skill: "VileCondemned" },
       ],
       { initialResources: { HeavensWill: 3 }, innerWayConditions: ["SoaringHighT0"] },
-    );
-    const cooldownCasts = cooldownTimeline.filter((row) => row.step.skill === "VileCondemned");
-    expect(
-      damageAction(cooldownCasts[0]).phyCoef === 11.7527,
-      "The first ready release must use End Hit.",
-    ).toBeTruthy();
-    expect(
+    )
+    const cooldownCasts = cooldownTimeline.filter(row => row.step.skill === "VileCondemned")
+    assert(damageAction(cooldownCasts[0]).phyCoef === 11.7527, "The first ready release must use End Hit.")
+    assert(
       damageAction(cooldownCasts[1]).phyCoef === 7.2178,
       "A release while Vile Condemned End Cooldown is active must fall back to the weaker hit.",
-    ).toBeTruthy();
+    )
 
     const noSoaringHighTimeline = build([{ type: "skill", skill: "VileCondemned" }], {
       initialResources: { HeavensWill: 3 },
-    });
-    const noSoaringHighCast = noSoaringHighTimeline.find((row) => row.step.skill === "VileCondemned");
-    expect(
+    })
+    const noSoaringHighCast = noSoaringHighTimeline.find(row => row.step.skill === "VileCondemned")
+    assert(
       damageAction(noSoaringHighCast).phyCoef === 7.2178,
       "Vile Condemned End Hit must remain disabled without Soaring High T0.",
-    ).toBeTruthy();
+    )
 
     const t3Rule = {
       source: "SoaringHigh",
@@ -273,17 +266,14 @@ describe("vile-condemned", () => {
         target: "self",
         action: [{ type: "consume", target: "self", value: "VileCondemnedEndCooldown", stack: "all" }],
       },
-    };
+    }
     const t6RefundRule = {
       source: "SoaringHigh",
       tier: 6,
       requirement: [{ target: "skillTag", value: "VileCondemnedEnd" }],
       effect: {},
-      trigger: {
-        target: "self",
-        action: [{ type: "trigger", value: "SoaringHighT6Refund" }],
-      },
-    };
+      trigger: { target: "self", action: [{ type: "trigger", value: "SoaringHighT6Refund" }] },
+    }
     const resetTimeline = build(
       [
         { type: "skill", skill: "VileCondemned" },
@@ -297,12 +287,12 @@ describe("vile-condemned", () => {
         innerWayRules: [t3Rule],
         initialDebuffs: [{ name: "Exhausted", stack: 1, expiresAt: 100 }],
       },
-    );
-    const resetCasts = resetTimeline.filter((row) => row.step.skill === "VileCondemned");
-    expect(
-      resetCasts.every((row) => damageAction(row).phyCoef === 11.7527),
+    )
+    const resetCasts = resetTimeline.filter(row => row.step.skill === "VileCondemned")
+    assert(
+      resetCasts.every(row => damageAction(row).phyCoef === 11.7527),
       "Soaring High T3 Falcon damage against an exhausted target must remove Vile Condemned End Cooldown.",
-    ).toBeTruthy();
+    )
 
     const refundTimeline = build(
       [
@@ -327,15 +317,15 @@ describe("vile-condemned", () => {
         innerWayRules: [t3Rule, t6RefundRule],
         initialDebuffs: [{ name: "Exhausted", stack: 1, expiresAt: 100 }],
       },
-    );
-    const refundObservers = refundTimeline.filter((row) => row.step.skill === "ObserveHeavensWill");
-    expect(
+    )
+    const refundObservers = refundTimeline.filter(row => row.step.skill === "ObserveHeavensWill")
+    assert(
       refundObservers[0].actionStates[0].resources.HeavensWill === 1,
       "The first Soaring High T6 End Hit must refund one Heaven's Will.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       refundObservers[1].actionStates[0].resources.HeavensWill === 0,
       "Resetting End Hit must not reset the separate T6 refund cooldown.",
-    ).toBeTruthy();
-  });
-});
+    )
+  })
+})

@@ -67,15 +67,7 @@
     },
     "LightAndShadowAlikeT3": {},
     "LightAndShadowAlikeT4": {},
-    "LightAndShadowAlikeT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalPenetration": 5.1
-          }
-        }
-      ]
-    },
+    "LightAndShadowAlikeT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
     "LightAndShadowAlikeT6": {}
   }
 }

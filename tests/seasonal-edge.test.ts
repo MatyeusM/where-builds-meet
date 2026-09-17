@@ -1,31 +1,31 @@
-import { describe, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
+import { assert, describe, it } from "vitest"
+
+import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-seasonal-edge.mjs.
 describe("seasonal-edge", () => {
   it("Seasonal Edge chance branches, proc window, damage, simulation, and Vitality range checks passed", async () => {
     const { calculateRotationBaseline, calculateRotationDamageSequence } = await probeLoad(
       "/src/calculations/rotationCalculator.ts",
-    );
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
+    )
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad(
       "/src/calculations/rotationTimeline.ts",
-    );
-    const { seasonalEdgeEffectFor, seasonalEdgeWindows } = await probeLoad("/src/calculations/seasonalEdge.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const generalBuffs = (await import("../data/buff/general.json")).default;
-    const seasonalDefinition = (await import("../data/innerway/seasonal-edge.json")).default;
+    )
+    const { seasonalEdgeEffectFor, seasonalEdgeWindows } = await probeLoad("/src/calculations/seasonalEdge.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const generalBuffs = (await import("../data/buff/general.json")).default
+    const seasonalDefinition = (await import("../data/innerway/seasonal-edge.json")).default
     const closeTo = (actual, expected, message, tolerance = 1e-8) => {
-      if (Math.abs(actual - expected) > tolerance)
-        throw new Error(`${message}: expected ${expected}, received ${actual}`);
-    };
+      assert(Math.abs(actual - expected) <= tolerance, `${message}: expected ${expected}, received ${actual}`)
+    }
 
-    const trigger = seasonalDefinition.effect.SeasonalEdgeT0.trigger[0];
-    const rule = { source: "SeasonalEdge", tier: 0, effect: {}, trigger };
-    const rulesThroughTier = (tier) => [
+    const trigger = seasonalDefinition.effect.SeasonalEdgeT0.trigger[0]
+    const rule = { source: "SeasonalEdge", tier: 0, effect: {}, trigger }
+    const rulesThroughTier = tier => [
       rule,
-      ...Array.from({ length: tier }, (_, index) => index + 1).flatMap((currentTier) =>
-        (seasonalDefinition.effect[`SeasonalEdgeT${currentTier}`].effect ?? []).map((effect) => ({
+      ...Array.from({ length: tier }, (_, index) => index + 1).flatMap(currentTier =>
+        (seasonalDefinition.effect[`SeasonalEdgeT${currentTier}`].effect ?? []).map(effect => ({
           source: "SeasonalEdge",
           tier: currentTier,
           effect: effect.stat ? { stat: effect.stat } : (effect.effect ?? {}),
@@ -33,8 +33,8 @@ describe("seasonal-edge", () => {
           modify: effect.modify,
         })),
       ),
-    ];
-    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+    ]
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Seasonal Edge probe",
       level: 96,
@@ -45,7 +45,7 @@ describe("seasonal-edge", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const timeline = {
       rotation: {
         name: "Seasonal Edge probe",
@@ -86,45 +86,45 @@ describe("seasonal-edge", () => {
       weapons: [],
       initialResources: { Vitality: 10 },
       resourceMaximums: { Vitality: 100 },
-    };
-    const t1 = seasonalEdgeEffectFor(rulesThroughTier(1), generalBuffs);
-    closeTo(t1.duration, 12, "T1 must extend the shared season duration from eight to twelve seconds");
-    const t3 = seasonalEdgeEffectFor(rulesThroughTier(3), generalBuffs);
+    }
+    const t1 = seasonalEdgeEffectFor(rulesThroughTier(1), generalBuffs)
+    closeTo(t1.duration, 12, "T1 must extend the shared season duration from eight to twelve seconds")
+    const t3 = seasonalEdgeEffectFor(rulesThroughTier(3), generalBuffs)
     closeTo(
-      t3.outcomes.filter((outcome) => outcome.buffs.length === 2).reduce((total, outcome) => total + outcome.weight, 0),
+      t3.outcomes.filter(outcome => outcome.buffs.length === 2).reduce((total, outcome) => total + outcome.weight, 0),
       0.3,
       "T3 must grant two distinct seasons in 30% of proc branches",
-    );
-    if (t3.outcomes.some((outcome) => new Set(outcome.buffs).size !== outcome.buffs.length))
-      throw new Error("T3 must roll its second season without replacement.");
-    const t4 = seasonalEdgeEffectFor(rulesThroughTier(4), generalBuffs);
+    )
+    if (t3.outcomes.some(outcome => new Set(outcome.buffs).size !== outcome.buffs.length))
+      throw new Error("T3 must roll its second season without replacement.")
+    const t4 = seasonalEdgeEffectFor(rulesThroughTier(4), generalBuffs)
     if (!t4.additionalSkills.includes("SereneBreeze"))
-      throw new Error("T4 must allow Serene Breeze to trigger Seasonal Edge.");
-    const t6 = seasonalEdgeEffectFor(rulesThroughTier(6), generalBuffs);
-    if (t6.outcomes.some((outcome) => outcome.buffs.includes("Frost")))
-      throw new Error("T6 must remove Frost from every possible outcome.");
+      throw new Error("T4 must allow Serene Breeze to trigger Seasonal Edge.")
+    const t6 = seasonalEdgeEffectFor(rulesThroughTier(6), generalBuffs)
+    if (t6.outcomes.some(outcome => outcome.buffs.includes("Frost")))
+      throw new Error("T6 must remove Frost from every possible outcome.")
     closeTo(
-      t6.outcomes.filter((outcome) => outcome.buffs.length === 1).reduce((total, outcome) => total + outcome.weight, 0),
+      t6.outcomes.filter(outcome => outcome.buffs.length === 1).reduce((total, outcome) => total + outcome.weight, 0),
       0.5,
       "T6 must grant one season in 50% of proc branches",
-    );
+    )
     closeTo(
-      t6.outcomes.filter((outcome) => outcome.buffs.length === 2).reduce((total, outcome) => total + outcome.weight, 0),
+      t6.outcomes.filter(outcome => outcome.buffs.length === 2).reduce((total, outcome) => total + outcome.weight, 0),
       0.3,
       "T6 must grant two seasons in 30% of proc branches",
-    );
+    )
     closeTo(
-      t6.outcomes.filter((outcome) => outcome.buffs.length === 3).reduce((total, outcome) => total + outcome.weight, 0),
+      t6.outcomes.filter(outcome => outcome.buffs.length === 3).reduce((total, outcome) => total + outcome.weight, 0),
       0.2,
       "T6 must grant all three remaining seasons in 20% of proc branches",
-    );
+    )
     const sereneTimeline = buildRotationTimeline({
       ...timeline,
       rotation: { name: "Serene Breeze T4 probe", steps: [{ type: "skill", skill: "SereneBreeze" }] },
       skills: { SereneBreeze: { name: "Serene Breeze", castTime: 1, tags: ["Mystic"], action: [] } },
-    });
+    })
     if (seasonalEdgeWindows(sereneTimeline, t3).length !== 0 || seasonalEdgeWindows(sereneTimeline, t4).length !== 1)
-      throw new Error("Serene Breeze must begin triggering Seasonal Edge at T4, and not before T4.");
+      throw new Error("Serene Breeze must begin triggering Seasonal Edge at T4, and not before T4.")
     const result = calculateRotationBaseline({
       timeline,
       startAnchor: { rowId: "rotation-0" },
@@ -137,48 +137,48 @@ describe("seasonal-edge", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
+    })
     closeTo(
       result.actionBreakdowns["rotation-2:0"].total,
       105,
       "The martial hit must average the neutral and 20% Flare branches",
-    );
+    )
     closeTo(
       result.actionBreakdowns["rotation-3:1"].total,
       102.5,
       "The Mystic hit must average the neutral and 10% Yield branches",
-    );
+    )
     closeTo(
       result.actionBreakdowns["rotation-6:0"].total,
       100,
       "A Conversion used during the 30-second cooldown must not open a new season window",
-    );
-    const cooldownPlate = result.timeline[1].buffs.get("SeasonalEdgeCooldown");
-    if (!cooldownPlate) throw new Error("Seasonal Edge must expose its deterministic cooldown as a timeline buff.");
-    closeTo(cooldownPlate.expiresAt, 31, "Seasonal Edge cooldown must expire 30 seconds after the trigger");
+    )
+    const cooldownPlate = result.timeline[1].buffs.get("SeasonalEdgeCooldown")
+    if (!cooldownPlate) throw new Error("Seasonal Edge must expose its deterministic cooldown as a timeline buff.")
+    closeTo(cooldownPlate.expiresAt, 31, "Seasonal Edge cooldown must expire 30 seconds after the trigger")
     if (
       Object.values(result.actionBreakdowns).some(
-        (breakdown) => breakdown.expectedBuffStacks?.SeasonalEdgeCooldown !== undefined,
+        breakdown => breakdown.expectedBuffStacks?.SeasonalEdgeCooldown !== undefined,
       )
     )
-      throw new Error("Seasonal Edge cooldown must not be represented as a probability-weighted buff plate.");
-    const mysticState = result.timeline[3].actionStates[1];
-    closeTo(mysticState.resources.Vitality, -10, "Vitality consumption must be allowed below zero");
-    closeTo(mysticState.resourceRanges.Vitality.minimum, -10, "The Vitality lower bound must exclude Yield");
+      throw new Error("Seasonal Edge cooldown must not be represented as a probability-weighted buff plate.")
+    const mysticState = result.timeline[3].actionStates[1]
+    closeTo(mysticState.resources.Vitality, -10, "Vitality consumption must be allowed below zero")
+    closeTo(mysticState.resourceRanges.Vitality.minimum, -10, "The Vitality lower bound must exclude Yield")
     if (!(mysticState.resourceRanges.Vitality.maximum > -10))
-      throw new Error("The Vitality upper bound must include possible Yield regeneration.");
+      throw new Error("The Vitality upper bound must include possible Yield regeneration.")
     if (
       !(
         mysticState.resourceRanges.Vitality.expected > mysticState.resourceRanges.Vitality.minimum &&
         mysticState.resourceRanges.Vitality.expected < mysticState.resourceRanges.Vitality.maximum
       )
     )
-      throw new Error("Expected Vitality must probability-weight Yield between its lower and upper bounds.");
+      throw new Error("Expected Vitality must probability-weight Yield between its lower and upper bounds.")
     closeTo(
       result.mysticVitalityDamageScale,
       0.625,
       "A resource-surplus Yield branch must not erase the Mystic damage loss from deficit branches",
-    );
+    )
     const resourceBoostedResult = calculateRotationBaseline({
       timeline: {
         ...timeline,
@@ -190,13 +190,7 @@ describe("seasonal-edge", () => {
           },
         },
         setupEffects: [
-          {
-            trigger: {
-              event: "heal",
-              cooldown: 3,
-              action: { type: "addResource", value: "Vitality", amount: 2 },
-            },
-          },
+          { trigger: { event: "heal", cooldown: 3, action: { type: "addResource", value: "Vitality", amount: 2 } } },
         ],
       },
       startAnchor: { rowId: "rotation-0" },
@@ -209,26 +203,26 @@ describe("seasonal-edge", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
+    })
     if (
       resourceBoostedResult.mysticVitalityDamageScale <= result.mysticVitalityDamageScale ||
       resourceBoostedResult.metrics.totalDamage <= result.metrics.totalDamage
     )
-      throw new Error("Healing-triggered Vitality must improve expected Mystic damage while deficit branches remain.");
-    const displayedTimeline = mergeCalculatedTimelineState(buildRotationTimeline(timeline), result.timeline);
+      throw new Error("Healing-triggered Vitality must improve expected Mystic damage while deficit branches remain.")
+    const displayedTimeline = mergeCalculatedTimelineState(buildRotationTimeline(timeline), result.timeline)
     closeTo(
       displayedTimeline[3].actionStates[1].resourceRanges.Vitality.minimum,
       -10,
       "Calculated Vitality bounds must survive the editor's structural-timeline merge",
-    );
+    )
 
-    const flareSimulation = calculateRotationDamageSequence(result.baseline, () => 0.3);
-    closeTo(flareSimulation[0].breakdown.total, 120, "A simulated Flare branch must persist through its proc window");
-    closeTo(flareSimulation[1].breakdown.total, 100, "Flare must not increase Mystic Skill damage");
-    closeTo(flareSimulation[2].breakdown.total, 100, "The cooldown-blocked Conversion must not reroll Flare");
-    const yieldSimulation = calculateRotationDamageSequence(result.baseline, () => 0.6);
-    closeTo(yieldSimulation[0].breakdown.total, 100, "Yield must not increase Martial Art damage");
-    closeTo(yieldSimulation[1].breakdown.total, 110, "A simulated Yield branch must increase Mystic Skill damage");
-    closeTo(yieldSimulation[2].breakdown.total, 100, "The cooldown-blocked Conversion must not reroll Yield");
-  });
-});
+    const flareSimulation = calculateRotationDamageSequence(result.baseline, () => 0.3)
+    closeTo(flareSimulation[0].breakdown.total, 120, "A simulated Flare branch must persist through its proc window")
+    closeTo(flareSimulation[1].breakdown.total, 100, "Flare must not increase Mystic Skill damage")
+    closeTo(flareSimulation[2].breakdown.total, 100, "The cooldown-blocked Conversion must not reroll Flare")
+    const yieldSimulation = calculateRotationDamageSequence(result.baseline, () => 0.6)
+    closeTo(yieldSimulation[0].breakdown.total, 100, "Yield must not increase Martial Art damage")
+    closeTo(yieldSimulation[1].breakdown.total, 110, "A simulated Yield branch must increase Mystic Skill damage")
+    closeTo(yieldSimulation[2].breakdown.total, 100, "The cooldown-blocked Conversion must not reroll Yield")
+  })
+})

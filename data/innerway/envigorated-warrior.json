@@ -48,24 +48,7 @@
     },
     "EnvigoratedWarriorT3": {},
     "EnvigoratedWarriorT4": {},
-    "EnvigoratedWarriorT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalPenetration": 5.1
-          }
-        }
-      ]
-    },
-    "EnvigoratedWarriorT6": {
-      "effect": [
-        {
-          "effect": {
-            "dmgBonus": 0.08,
-            "healingBonus": 0.08
-          }
-        }
-      ]
-    }
+    "EnvigoratedWarriorT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
+    "EnvigoratedWarriorT6": { "effect": [{ "effect": { "dmgBonus": 0.08, "healingBonus": 0.08 } }] }
   }
 }

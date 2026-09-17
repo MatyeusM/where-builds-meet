@@ -1,12 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-delay-event.mjs.
 describe("delay-event", () => {
   it("Sequential Delay timing, modifier shifting, and trailing duration checks passed", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const skills = {
       Opening: {
         name: "Opening",
@@ -22,7 +22,7 @@ describe("delay-event", () => {
         modifier: [],
         tags: ["DirectDamage"],
       },
-    };
+    }
     const rotation = {
       name: "Delay probe",
       steps: [
@@ -31,7 +31,7 @@ describe("delay-event", () => {
         { type: "skill", skill: "FollowUp" },
       ],
       start: { step: 0, action: 0 },
-    };
+    }
     const timelineInput = {
       rotation,
       skills,
@@ -42,17 +42,17 @@ describe("delay-event", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    };
-    const timeline = buildRotationTimeline(timelineInput);
-    const delay = timeline.find((row) => row.step.type === "event" && row.step.event === "Delay");
-    const followUp = timeline.find((row) => row.step.type === "skill" && row.step.skill === "FollowUp");
-    expect(
+    }
+    const timeline = buildRotationTimeline(timelineInput)
+    const delay = timeline.find(row => row.step.type === "event" && row.step.event === "Delay")
+    const followUp = timeline.find(row => row.step.type === "skill" && row.step.skill === "FollowUp")
+    assert(
       delay?.startTime === 1 && delay.effectiveCastTime === 3,
       "Delay must start after the adjusted preceding cast and retain its duration.",
-    ).toBeTruthy();
-    expect(followUp?.startTime === 4, "Delay must shift every following skill by its duration.").toBeTruthy();
+    )
+    assert(followUp?.startTime === 4, "Delay must shift every following skill by its duration.")
 
-    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 };
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Probe",
       level: 96,
@@ -63,7 +63,7 @@ describe("delay-event", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const trailingRotation = {
       name: "Trailing delay",
       steps: [
@@ -71,7 +71,7 @@ describe("delay-event", () => {
         { type: "event", event: "Delay", duration: 3 },
       ],
       start: { step: 0, action: 0 },
-    };
+    }
     const result = calculateRotationBaseline({
       timeline: { ...timelineInput, rotation: trailingRotation },
       startAnchor: { rowId: "rotation-0", actionIndex: 0 },
@@ -84,10 +84,7 @@ describe("delay-event", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
-    expect(
-      result.duration === 4,
-      "A trailing Delay must extend rotation duration even though it has no actions.",
-    ).toBeTruthy();
-  });
-});
+    })
+    assert(result.duration === 4, "A trailing Delay must extend rotation duration even though it has no actions.")
+  })
+})

@@ -1,17 +1,18 @@
-import { describe, it } from "vitest";
-import assert from "node:assert/strict";
+import assert from "node:assert/strict"
+
+import { describe, it } from "vitest"
 
 // Ported from script/probe/check-attunement-import.mjs.
 describe("attunement-import", () => {
   it("attunement-import checks", async () => {
     const close = (actual, expected, label) =>
-      assert(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-9, `${label}: ${actual} != ${expected}`);
-    const { parseOfficialGearExport } = await import("../src/officialGearImport.ts");
-    const { mergeImportedBuildState, calculateEquippedGearEffects, maxGearRoll } = await import("../src/gear.ts");
-    const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts");
-    const { calculateHealingBreakdown } = await import("../src/calculations/healing.ts");
-    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
+      assert(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-9, `${label}: ${actual} != ${expected}`)
+    const { parseOfficialGearExport } = await import("../src/officialGearImport.ts")
+    const { mergeImportedBuildState, calculateEquippedGearEffects, maxGearRoll } = await import("../src/gear.ts")
+    const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
+    const { calculateHealingBreakdown } = await import("../src/calculations/healing.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const cases = [
       [279551, "driftcleaveDeepdazeBoost"],
       [279552, "skystrikeSpecialBoost"],
@@ -64,8 +65,8 @@ describe("attunement-import", () => {
       [280503, "infernalSpecialBoost"],
       [280504, "mortalMartialBoost"],
       [280505, "mortalRodentBoost"],
-    ];
-    const imported = new Map();
+    ]
+    const imported = new Map()
     for (const [id, key] of cases) {
       for (const value of [0.047, 4.7]) {
         const parsed = parseOfficialGearExport(
@@ -84,18 +85,18 @@ describe("attunement-import", () => {
             },
           },
           ["snowparting", "phalanxbane"],
-        );
-        const merged = mergeImportedBuildState({ entries: [], activeBuildId: "", gearItems: [] }, parsed.exportValue);
-        assert.equal(merged.importedGearCount, 1, `Attunement ${id} survives normal gear validation`);
-        const item = merged.state.gearItems[0];
-        assert.equal(item.attunement?.key, key, `Official ID ${id} resolves to its attunement`);
-        close(item.attunement.value, 0.047, `Official ID ${id} preserves its roll`);
+        )
+        const merged = mergeImportedBuildState({ entries: [], activeBuildId: "", gearItems: [] }, parsed.exportValue)
+        assert.equal(merged.importedGearCount, 1, `Attunement ${id} survives normal gear validation`)
+        const item = merged.state.gearItems[0]
+        assert.equal(item.attunement?.key, key, `Official ID ${id} resolves to its attunement`)
+        close(item.attunement.value, 0.047, `Official ID ${id} preserves its roll`)
         const equipped = calculateEquippedGearEffects(
           { items: merged.state.gearItems, equipped: merged.state.entries[0].equipped },
           ["snowparting", "phalanxbane"],
-        );
-        close(equipped.attunement[key], 0.047, `Official ID ${id} reaches equipped calculation inputs`);
-        imported.set(id, equipped.attunement);
+        )
+        close(equipped.attunement[key], 0.047, `Official ID ${id} reaches equipped calculation inputs`)
+        imported.set(id, equipped.attunement)
       }
     }
     const stats = {
@@ -107,7 +108,7 @@ describe("attunement-import", () => {
       minSilkbind: 100,
       maxSilkbind: 100,
       precision: 1,
-    };
+    }
     const enemy = {
       name: "Attunement probe",
       level: 96,
@@ -118,7 +119,7 @@ describe("attunement-import", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const context = (attunement, skillTags) => ({
       stats,
       attunement,
@@ -128,9 +129,9 @@ describe("attunement-import", () => {
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       effects: [],
-    });
+    })
     const damage = (attunement, tags) =>
-      calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context(attunement, tags)).total;
+      calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context(attunement, tags)).total
     const matchingCases = [
       [279551, ["Deepdaze"]],
       [279552, ["SkystrikeGauntlets", "Special"]],
@@ -161,23 +162,23 @@ describe("attunement-import", () => {
       [280503, ["InfernalTwinblades", "Special"]],
       [280504, ["MortalRopeDart", "MartialArt"]],
       [280505, ["MortalRopeDart", "Rodent"]],
-    ];
+    ]
     for (const [id, tags] of matchingCases) {
-      const key = cases.find(([candidate]) => candidate === id)[1];
-      const maxRoll = maxGearRoll(key, "attunement", false, 96);
+      const key = cases.find(([candidate]) => candidate === id)[1]
+      const maxRoll = maxGearRoll(key, "attunement", false, 96)
       close(
         damage({ [key]: maxRoll }, tags) / damage({}, tags),
         1.06,
         `Level 96 maximum for ${id} boosts matching damage by 6%`,
-      );
-      close(damage(imported.get(id), tags) / damage({}, tags), 1.047, `Imported ${id} boosts matching damage once`);
+      )
+      close(damage(imported.get(id), tags) / damage({}, tags), 1.047, `Imported ${id} boosts matching damage once`)
       for (let index = 0; index < tags.length; index++) {
-        const missing = tags.filter((_, i) => i !== index);
+        const missing = tags.filter((_, i) => i !== index)
         close(
           damage(imported.get(id), missing),
           damage({}, missing),
           `Imported ${id} requires every configured skill tag`,
-        );
+        )
       }
     }
     for (const buffs of [[], ["InebriateDeepdaze"]]) {
@@ -189,16 +190,16 @@ describe("attunement-import", () => {
         ["RivenTwinblades"],
         ["InebriateDeepdaze"],
       ]) {
-        const baseline = calculateDamageBreakdown({ phyCoef: 1 }, { ...context({}, tags), buffs }).total;
+        const baseline = calculateDamageBreakdown({ phyCoef: 1 }, { ...context({}, tags), buffs }).total
         const boosted = calculateDamageBreakdown(
           { phyCoef: 1 },
           { ...context(imported.get(279551), tags), buffs },
-        ).total;
+        ).total
         close(
           boosted / baseline,
           tags.includes("Deepdaze") ? 1.047 : 1,
           `Driftcleave matches the Deepdaze skill tag independently of buffs: ${tags}`,
-        );
+        )
       }
     }
     for (const [id, tags, matches] of [
@@ -223,7 +224,7 @@ describe("attunement-import", () => {
       [279753, ["HeavenwillGauntlets", "VariedCombo"], false],
       [279753, ["Light", "VariedCombo"], false],
     ]) {
-      close(damage(imported.get(id), tags) / damage({}, tags), matches ? 1.047 : 1, `${id}: ${tags.join(" + ")}`);
+      close(damage(imported.get(id), tags) / damage({}, tags), matches ? 1.047 : 1, `${id}: ${tags.join(" + ")}`)
     }
     for (const id of [280201]) {
       const tags = [
@@ -236,8 +237,8 @@ describe("attunement-import", () => {
         "FrequentProjectile",
         "ThundercryBlade",
         "Shield",
-      ];
-      close(damage(imported.get(id), tags), damage({}, tags), `Deferred ${id} preserves gear without inventing damage`);
+      ]
+      close(damage(imported.get(id), tags), damage({}, tags), `Deferred ${id} preserves gear without inventing damage`)
     }
     for (const [id, tags] of [
       [280401, ["PanaceaFan", "MartialArt"]],
@@ -246,14 +247,14 @@ describe("attunement-import", () => {
       [280404, ["SoulshadeUmbrella", "MartialArt"]],
       [280405, ["SoulshadeUmbrella", "Special"]],
     ]) {
-      const healing = (attunement) =>
-        calculateHealingBreakdown({ phyCoef: 1, silkbindCoef: 1 }, context(attunement, tags)).total;
-      close(healing(imported.get(id)) / healing({}), 1.047, `Imported ${id} retains existing healing behavior`);
-      close(damage(imported.get(id), tags), damage({}, tags), `Healing attunement ${id} does not boost damage`);
+      const healing = attunement =>
+        calculateHealingBreakdown({ phyCoef: 1, silkbindCoef: 1 }, context(attunement, tags)).total
+      close(healing(imported.get(id)) / healing({}), 1.047, `Imported ${id} retains existing healing behavior`)
+      close(damage(imported.get(id), tags), damage({}, tags), `Healing attunement ${id} does not boost damage`)
     }
-    const panacea = (await import("../data/skill/panacea-fan.json")).default;
-    const soulshade = (await import("../data/skill/soulshade-umbrella.json")).default;
-    const delugeBuffs = (await import("../data/buff/silkbind-deluge.json")).default;
+    const panacea = (await import("../data/skill/panacea-fan.json")).default
+    const soulshade = (await import("../data/skill/soulshade-umbrella.json")).default
+    const delugeBuffs = (await import("../data/buff/silkbind-deluge.json")).default
     for (const [id, skills, supported] of [
       [
         280401,
@@ -264,13 +265,13 @@ describe("attunement-import", () => {
     ]) {
       for (const [skillId, definition] of [...Object.entries(skills), ...Object.entries(delugeBuffs)]) {
         for (const action of definition.action ?? []) {
-          if (action.type !== "heal") continue;
-          const tags = definition.tags ?? [];
-          const baseline = calculateHealingBreakdown(action, context({}, tags)).total;
-          const boosted = calculateHealingBreakdown(action, context(imported.get(id), tags)).total;
-          close(boosted / baseline, supported.has(skillId) ? 1.047 : 1, `${id} healing scope: ${skillId}`);
+          if (action.type !== "heal") continue
+          const tags = definition.tags ?? []
+          const baseline = calculateHealingBreakdown(action, context({}, tags)).total
+          const boosted = calculateHealingBreakdown(action, context(imported.get(id), tags)).total
+          close(boosted / baseline, supported.has(skillId) ? 1.047 : 1, `${id} healing scope: ${skillId}`)
         }
       }
     }
-  });
-});
+  })
+})

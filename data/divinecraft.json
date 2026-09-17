@@ -1,17 +1,6 @@
 {
-  "None": {
-    "name": "None",
-    "description": "No Divinecraft effect.",
-    "effect": {}
-  },
-  "Fire": {
-    "name": "Fire",
-    "description": "HP DMG +1.5%.",
-    "image": "fire.png",
-    "effect": {
-      "hpDMGBonus": 0.015
-    }
-  },
+  "None": { "name": "None", "description": "No Divinecraft effect.", "effect": {} },
+  "Fire": { "name": "Fire", "description": "HP DMG +1.5%.", "image": "fire.png", "effect": { "hpDMGBonus": 0.015 } },
   "FireWater": {
     "name": "Fire-Water",
     "description": "HP DMG +1.5%. Healing grants 0.8 Vitality with a 3s cooldown.",
@@ -22,11 +11,7 @@
       "trigger": {
         "event": "heal",
         "cooldown": 3,
-        "action": {
-          "type": "addResource",
-          "value": "Vitality",
-          "amount": 0.8
-        }
+        "action": { "type": "addResource", "value": "Vitality", "amount": 0.8 }
       }
     }
   },
@@ -34,10 +19,7 @@
     "name": "Fire-Poison",
     "description": "HP DMG +1.5% and Qi DMG +4%.",
     "image": "firepoison.png",
-    "effect": {
-      "hpDMGBonus": 0.015,
-      "qiDMGBonus": 0.04
-    }
+    "effect": { "hpDMGBonus": 0.015, "qiDMGBonus": 0.04 }
   },
   "WaterFire": {
     "name": "Water-Fire",
@@ -49,11 +31,7 @@
       "trigger": {
         "event": "heal",
         "cooldown": 3,
-        "action": {
-          "type": "addResource",
-          "value": "Vitality",
-          "amount": 1
-        }
+        "action": { "type": "addResource", "value": "Vitality", "amount": 1 }
       }
     }
   },
@@ -68,11 +46,7 @@
       "trigger": {
         "event": "heal",
         "cooldown": 3,
-        "action": {
-          "type": "addResource",
-          "value": "Vitality",
-          "amount": 1
-        }
+        "action": { "type": "addResource", "value": "Vitality", "amount": 1 }
       }
     }
   },
@@ -80,10 +54,7 @@
     "name": "Poison-Fire",
     "description": "HP DMG +1.4% and Qi DMG +5%.",
     "image": "poisonfire.png",
-    "effect": {
-      "hpDMGBonus": 0.014,
-      "qiDMGBonus": 0.05
-    }
+    "effect": { "hpDMGBonus": 0.014, "qiDMGBonus": 0.05 }
   },
   "PoisonWater": {
     "name": "Poison-Water",
@@ -96,11 +67,7 @@
       "trigger": {
         "event": "heal",
         "cooldown": 3,
-        "action": {
-          "type": "addResource",
-          "value": "Vitality",
-          "amount": 0.8
-        }
+        "action": { "type": "addResource", "value": "Vitality", "amount": 0.8 }
       }
     }
   }

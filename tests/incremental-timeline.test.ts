@@ -1,12 +1,13 @@
-import { describe, it } from "vitest";
-import assert from "node:assert/strict";
+import assert from "node:assert/strict"
+
+import { describe, it } from "vitest"
 
 // Ported from script/probe/check-incremental-timeline.mjs.
 describe("incremental-timeline", () => {
   it("Incremental scheduling passed: live cooldown resets, no input waits, cast/Delay/Battle End cutoffs and migration anchors", async () => {
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts");
-    const { calculateEditorTimeline } = await import("../src/calculations/editorTimeline.ts");
-    const { migrateAutomaticDelays } = await import("../src/rotationEditing.ts");
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const { calculateEditorTimeline } = await import("../src/calculations/editorTimeline.ts")
+    const { migrateAutomaticDelays } = await import("../src/rotationEditing.ts")
     const base = {
       eventDefinitions: { BattleEnd: { action: [] }, Delay: { action: [] } },
       dots: {},
@@ -15,7 +16,7 @@ describe("incremental-timeline", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    };
+    }
     const skills = {
       Hit: {
         castTime: 1,
@@ -33,25 +34,25 @@ describe("incremental-timeline", () => {
           { type: "damage", phyCoef: 1, time: 2 },
         ],
       },
-    };
+    }
     const rotation = {
       name: "Live reset",
       steps: [
         { type: "skill", skill: "Hit" },
         { type: "skill", skill: "Hit" },
       ],
-    };
-    const result = calculateEditorTimeline({ ...base, skills, rotation });
-    assert.equal(result.rotation, rotation);
-    const second = result.timeline.find((row) => row.rotationIndex === 1);
-    assert.equal(second.startTime, 3, "A delayed trigger must wake the next waiting skill when it clears cooldown");
-    assert.equal(second.cooldownWait, 2);
-    assert.equal(result.timeline[0].timelineEndTime, 4);
+    }
+    const result = calculateEditorTimeline({ ...base, skills, rotation })
+    assert.equal(result.rotation, rotation)
+    const second = result.timeline.find(row => row.rotationIndex === 1)
+    assert.equal(second.startTime, 3, "A delayed trigger must wake the next waiting skill when it clears cooldown")
+    assert.equal(second.cooldownWait, 2)
+    assert.equal(result.timeline[0].timelineEndTime, 4)
     assert.equal(
-      result.timeline.filter((row) => row.rotationIndex === 1).length,
+      result.timeline.filter(row => row.rotationIndex === 1).length,
       1,
       "Obsolete retry cannot duplicate a cast",
-    );
+    )
     const attached = buildRotationTimeline({
       ...base,
       skills,
@@ -68,35 +69,35 @@ describe("incremental-timeline", () => {
           rotation.steps[1],
         ],
       },
-    });
+    })
     assert.equal(
-      attached.find((row) => row.rotationIndex === 1).startTime,
+      attached.find(row => row.rotationIndex === 1).startTime,
       3,
       "Before-start attachments wait until the cast becomes ready",
-    );
+    )
     assert.equal(
-      attached.find((row) => row.rotationIndex === 2).actionStates[0].buffs.get("ReadyBuff")?.stack,
+      attached.find(row => row.rotationIndex === 2).actionStates[0].buffs.get("ReadyBuff")?.stack,
       1,
       "The attachment is still active at the accepted cast's hit",
-    );
+    )
 
-    const build = (steps) => buildRotationTimeline({ ...base, skills, rotation: { name: "Cutoff", steps } });
-    const damageTimes = (rows) =>
-      rows.flatMap((row) =>
-        row.actions.flatMap((action) => (action.type === "damage" ? [row.startTime + action.time] : [])),
-      );
-    const tail = { type: "skill", skill: "Tail" };
-    assert.deepEqual(damageTimes(build([tail])), [1], "Cast-end damage resolves, delayed tail does not");
-    assert.deepEqual(damageTimes(build([tail, { type: "event", event: "Delay", duration: 1 }])), [1, 2]);
-    assert.deepEqual(damageTimes(build([tail, { type: "event", event: "BattleEnd", startTime: 3 }])), [1, 2]);
+    const build = steps => buildRotationTimeline({ ...base, skills, rotation: { name: "Cutoff", steps } })
+    const damageTimes = rows =>
+      rows.flatMap(row =>
+        row.actions.flatMap(action => (action.type === "damage" ? [row.startTime + action.time] : [])),
+      )
+    const tail = { type: "skill", skill: "Tail" }
+    assert.deepEqual(damageTimes(build([tail])), [1], "Cast-end damage resolves, delayed tail does not")
+    assert.deepEqual(damageTimes(build([tail, { type: "event", event: "Delay", duration: 1 }])), [1, 2])
+    assert.deepEqual(damageTimes(build([tail, { type: "event", event: "BattleEnd", startTime: 3 }])), [1, 2])
     assert.deepEqual(
       damageTimes(build([tail, { type: "event", event: "BattleEnd", startTime: 1 }])),
       [],
       "Battle End excludes equal-time damage",
-    );
-    const stopped = build([tail, { type: "event", event: "BattleEnd", startTime: 0.5 }, tail]);
-    assert(!stopped.some((row) => row.rotationIndex === 2), "Future ordered casts must not expand after Battle End");
-    const { withUnresolvedEditorSteps } = await import("../src/editorTimelinePreview.ts");
+    )
+    const stopped = build([tail, { type: "event", event: "BattleEnd", startTime: 0.5 }, tail])
+    assert(!stopped.some(row => row.rotationIndex === 2), "Future ordered casts must not expand after Battle End")
+    const { withUnresolvedEditorSteps } = await import("../src/editorTimelinePreview.ts")
     const displayed = withUnresolvedEditorSteps(
       {
         rotation: { name: "Stopped", steps: [tail, { type: "event", event: "BattleEnd", startTime: 0.5 }, tail] },
@@ -104,13 +105,13 @@ describe("incremental-timeline", () => {
         eventDefinitions: base.eventDefinitions,
       },
       stopped,
-    );
+    )
     assert.equal(
-      displayed.find((row) => row.rotationIndex === 2).actions.length,
+      displayed.find(row => row.rotationIndex === 2).actions.length,
       0,
       "Unreached input remains editable without expanded actions",
-    );
-    assert.deepEqual(build([]), []);
+    )
+    assert.deepEqual(build([]), [])
     const resourceTail = buildRotationTimeline({
       ...base,
       skills,
@@ -118,24 +119,24 @@ describe("incremental-timeline", () => {
       resourceMaximums: { Energy: 100 },
       resourceRegeneration: { Energy: 1 },
       rotation: { name: "Quiet cast tail", steps: [{ type: "event", event: "Delay", duration: 3 }] },
-    });
+    })
     assert.equal(
       resourceTail[0].timelineResourceSummary.Energy.final,
       3,
       "Passive regeneration includes the final quiet cast/Delay tail",
-    );
+    )
     const skipped = buildRotationTimeline({
       ...base,
       skills,
       cooldownPolicy: "skip",
       rotation: { ...rotation, steps: [...rotation.steps, tail] },
-    });
-    assert(skipped.find((row) => row.rotationIndex === 1).skipped);
+    })
+    assert(skipped.find(row => row.rotationIndex === 1).skipped)
     assert.equal(
-      skipped.find((row) => row.rotationIndex === 2).startTime,
+      skipped.find(row => row.rotationIndex === 2).startTime,
       1,
       "Skipping an unavailable cast advances the ordered cursor",
-    );
+    )
     assert.throws(
       () =>
         buildRotationTimeline({
@@ -145,13 +146,13 @@ describe("incremental-timeline", () => {
         }),
       /safety limit/,
       "An unbounded same-time trigger cycle must not publish a partial result",
-    );
+    )
     const timedOnly = buildRotationTimeline({
       ...base,
       skills,
       rotation: { name: "Timed only", dummyAttack: true, steps: [{ type: "event", event: "BattleEnd", startTime: 7 }] },
-    });
-    assert.equal(timedOnly.filter((row) => row.step.automatic === "dummyAttack").length, 2);
+    })
+    assert.equal(timedOnly.filter(row => row.step.automatic === "dummyAttack").length, 2)
     const legacy = {
       name: "Legacy",
       steps: [
@@ -161,16 +162,16 @@ describe("incremental-timeline", () => {
         tail,
       ],
       start: { step: 3, action: 0 },
-    };
-    const migrated = migrateAutomaticDelays(legacy);
-    assert.equal(migrated.start.step, 2);
-    assert.equal(migrated.steps[1].buff, "Example");
-    assert.equal(migrated.steps[2], tail);
-    assert.equal(migrateAutomaticDelays(migrated), migrated);
+    }
+    const migrated = migrateAutomaticDelays(legacy)
+    assert.equal(migrated.start.step, 2)
+    assert.equal(migrated.steps[1].buff, "Example")
+    assert.equal(migrated.steps[2], tail)
+    assert.equal(migrateAutomaticDelays(migrated), migrated)
     assert.deepEqual(
       migrateAutomaticDelays({ ...legacy, start: { step: 1 } }).start,
       { step: 1 },
       "An anchor on a removed wait falls forward to the next retained step",
-    );
-  });
-});
+    )
+  })
+})

@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader";
-import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline";
-import { buildPresetRotationBundle } from "../src/App";
-import paths from "../data/path.json";
+import { describe, expect, it } from "vitest"
+
+import paths from "../data/path.json"
+import { buildPresetRotationBundle } from "../src/App"
+import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
+import { probeLoad } from "./helpers/probe-loader"
 
 describe("preset Qi event attachments", () => {
   const rotationPaths = [
@@ -17,12 +18,10 @@ describe("preset Qi event attachments", () => {
     "/data/rotation/stonesplit-might/dummy-1-min.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json",
-  ];
-  it.each(rotationPaths)("resolves authored Qi attachments using production inputs: %s", async (rotationPath) => {
-    const rotation = (await probeLoad(rotationPath)).default;
-    const [pathId, path] = Object.entries(paths).find(([, path]) =>
-      rotationPath.includes("/" + path.buildGroup + "/"),
-    )!;
+  ]
+  it.each(rotationPaths)("resolves authored Qi attachments using production inputs: %s", async rotationPath => {
+    const rotation = (await probeLoad(rotationPath)).default
+    const [pathId, path] = Object.entries(paths).find(([, path]) => rotationPath.includes("/" + path.buildGroup + "/"))!
     const bundle = buildPresetRotationBundle(
       {
         pathId,
@@ -44,61 +43,61 @@ describe("preset Qi event attachments", () => {
         },
       },
       path.defaultBuild,
-    );
-    expect(bundle).toBeDefined();
-    const timeline = buildRotationTimeline(bundle!.timeline);
-    const qiRows = timeline.filter((row) => row.step.type === "event" && row.step.event === "Qi");
-    expect(qiRows.length).toBeGreaterThan(0);
+    )
+    expect(bundle).toBeDefined()
+    const timeline = buildRotationTimeline(bundle!.timeline)
+    const qiRows = timeline.filter(row => row.step.type === "event" && row.step.event === "Qi")
+    expect(qiRows.length).toBeGreaterThan(0)
     for (const row of qiRows) {
-      const attachment = row.step.before ?? row.step.after;
-      expect(attachment).toBeDefined();
-      const source = timeline.find((candidate) => candidate.id === row.sourceRowId)!;
-      expect(source).toBeDefined();
+      const attachment = row.step.before ?? row.step.after
+      expect(attachment).toBeDefined()
+      const source = timeline.find(candidate => candidate.id === row.sourceRowId)!
+      expect(source).toBeDefined()
       const trigger =
         attachment.trigger === undefined
           ? undefined
-          : source.actions.filter((action) => action.type === "trigger")[attachment.trigger];
+          : source.actions.filter(action => action.type === "trigger")[attachment.trigger]
       const target =
         attachment.trigger === undefined
           ? source
           : timeline.find(
-              (candidate) =>
+              candidate =>
                 candidate.kind === "trigger" &&
                 candidate.triggerSource === "skill" &&
                 candidate.sourceRowId === source.id &&
                 candidate.step.skill === trigger?.value,
-            );
-      expect(target).toBeDefined();
+            )
+      expect(target).toBeDefined()
       const expectedTime =
-        target!.startTime + (attachment.action === "start" ? 0 : Number(target!.actions[attachment.action].time ?? 0));
-      expect(row.startTime).toBeCloseTo(expectedTime, 8);
-      const setIndex = row.actions.findIndex((action) => action.type === "setQi");
-      expect(setIndex).toBeGreaterThanOrEqual(0);
-      const nextState = row.actionStates[setIndex + 1];
-      expect(nextState).toBeDefined();
-      expect(nextState.targetQiRatio).toBeCloseTo(row.step.targetQiRatio, 8);
+        target!.startTime + (attachment.action === "start" ? 0 : Number(target!.actions[attachment.action].time ?? 0))
+      expect(row.startTime).toBeCloseTo(expectedTime, 8)
+      const setIndex = row.actions.findIndex(action => action.type === "setQi")
+      expect(setIndex).toBeGreaterThanOrEqual(0)
+      const nextState = row.actionStates[setIndex + 1]
+      expect(nextState).toBeDefined()
+      expect(nextState.targetQiRatio).toBeCloseTo(row.step.targetQiRatio, 8)
     }
     // Every attachment to an executed in-window action must resolve, irrespective of preset ramp counts.
     for (const [index, step] of rotation.steps.entries()) {
-      if (step.type !== "event" || step.event !== "Qi") continue;
-      const attachment = step.before ?? step.after;
+      if (step.type !== "event" || step.event !== "Qi") continue
+      const attachment = step.before ?? step.after
       const nextIndex = rotation.steps.findIndex(
         (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
-      );
-      const target = timeline.find((row) => row.id === `rotation-${nextIndex}`);
-      if (!target || target.skipped) continue;
-      const action = target.actions[attachment.action];
-      if (attachment.action !== "start" && (!action || action.type === "inactive")) continue;
+      )
+      const target = timeline.find(row => row.id === `rotation-${nextIndex}`)
+      if (!target || target.skipped) continue
+      const action = target.actions[attachment.action]
+      if (attachment.action !== "start" && (!action || action.type === "inactive")) continue
       expect(
-        qiRows.some((row) => row.id === `rotation-${index}`),
+        qiRows.some(row => row.id === `rotation-${index}`),
         `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${attachment.action} must retain its Qi event`,
-      ).toBe(true);
+      ).toBe(true)
     }
-  });
-});
+  })
+})
 
 describe("Qi attachment ordering", () => {
-  it.each(["before", "after"])("applies %s the selected hit and expires independently", (placement) => {
+  it.each(["before", "after"])("applies %s the selected hit and expires independently", placement => {
     const timeline = buildRotationTimeline({
       rotation: {
         name: "Attachment ordering",
@@ -112,7 +111,7 @@ describe("Qi attachment ordering", () => {
           name: "Probe",
           castTime: 2,
           tags: [],
-          action: [0.2, 0.6, 1.3].map((time) => ({ type: "damage", phyCoef: 1, time })),
+          action: [0.2, 0.6, 1.3].map(time => ({ type: "damage", phyCoef: 1, time })),
         },
       },
       eventDefinitions: {
@@ -137,11 +136,11 @@ describe("Qi attachment ordering", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    });
-    const row = timeline.find((row) => row.step.skill === "Probe")!;
-    const states = row.actions.map((_, index) => row.actionStates[index]);
-    expect(states.map((state) => state.debuffs.has("Depleted"))).toEqual([placement === "before", true, false]);
-    expect(states[0].targetQiRatio).toBe(placement === "before" ? 0 : 1);
-    expect(states[1].targetQiRatio).toBe(0);
-  });
-});
+    })
+    const row = timeline.find(row => row.step.skill === "Probe")!
+    const states = row.actions.map((_, index) => row.actionStates[index])
+    expect(states.map(state => state.debuffs.has("Depleted"))).toEqual([placement === "before", true, false])
+    expect(states[0].targetQiRatio).toBe(placement === "before" ? 0 : 1)
+    expect(states[1].targetQiRatio).toBe(0)
+  })
+})

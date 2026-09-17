@@ -1,25 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest"
 
 // Ported from script/probe/check-rotation-transfer.mjs.
 describe("rotation-transfer", () => {
   it("Rotation export and import checks passed", async () => {
-    const transfer = await import("../src/rotationTransfer.ts");
-    const { normalizeStoredWeaponIds, weaponIds } = await import("../src/types.ts");
+    const transfer = await import("../src/rotationTransfer.ts")
+    const { normalizeStoredWeaponIds, weaponIds } = await import("../src/types.ts")
 
     const previousUniversalMartialArts = weaponIds.filter(
-      (weapon) => weapon !== "skystrikeGauntlets" && weapon !== "rivenTwinblades",
-    );
+      weapon => weapon !== "skystrikeGauntlets" && weapon !== "rivenTwinblades",
+    )
     expect(
       normalizeStoredWeaponIds(previousUniversalMartialArts).length === weaponIds.length,
       "A universal martial-art list saved before Draught must expand to include the new pair.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const defaultEntry = {
       id: "dummy-1-min",
       isDefault: true,
       martialArts: ["snowparting", "phalanxbane"],
       rotation: { name: "Default", steps: [{ type: "skill", skill: "SnowpartingQStab" }] },
-    };
+    }
     const customEntry = {
       id: "custom-rotation",
       martialArts: ["snowparting", "phalanxbane"],
@@ -43,33 +43,33 @@ describe("rotation-transfer", () => {
         ],
         start: { step: 8, action: 1 },
       },
-    };
-    const current = [defaultEntry, customEntry];
-    const serialized = JSON.parse(transfer.serializeRotationEntries(current));
+    }
+    const current = [defaultEntry, customEntry]
+    const serialized = JSON.parse(transfer.serializeRotationEntries(current))
     expect(
       serialized.length === 1 && serialized[0].id === customEntry.id && !("isDefault" in serialized[0]),
       "Bundled default rotations must not be persisted.",
-    ).toBeTruthy();
-    const exported = JSON.parse(transfer.exportRotationEntries(current));
+    ).toBeTruthy()
+    const exported = JSON.parse(transfer.exportRotationEntries(current))
     expect(
       exported.format === transfer.rotationExportFormat &&
         exported.version === 9 &&
         exported.rotations.length === 1 &&
         exported.rotations[0].id === customEntry.id,
       "Rotation export must omit the bundled default.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       exported.rotations[0].martialArts.join(",") === "snowparting,phalanxbane",
       "Rotation export must retain martial-art eligibility tags.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
-    const merged = transfer.mergeImportedRotationEntries(current, exported);
+    const merged = transfer.mergeImportedRotationEntries(current, exported)
     expect(
       merged.importedCount === 1 && merged.entries.length === 3,
       "Rotation import must append custom rotations and skip the default.",
-    ).toBeTruthy();
-    expect(merged.importedIds[0] !== customEntry.id, "A colliding imported rotation ID must be remapped.").toBeTruthy();
-    const imported = merged.entries.find((entry) => entry.id === merged.importedIds[0]);
+    ).toBeTruthy()
+    expect(merged.importedIds[0] !== customEntry.id, "A colliding imported rotation ID must be remapped.").toBeTruthy()
+    const imported = merged.entries.find(entry => entry.id === merged.importedIds[0])
     expect(
       imported?.rotation.steps.length === 10 &&
         imported.rotation.targetHP === 123456 &&
@@ -79,7 +79,7 @@ describe("rotation-transfer", () => {
         imported.rotation.start.step === 8 &&
         imported.rotation.start.action === 1,
       "Rotation steps and start anchor must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const legacyGroupSizeImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,
@@ -90,57 +90,57 @@ describe("rotation-transfer", () => {
           rotation: { name: "Legacy Group Size", steps: [{ type: "skill", skill: "SnowpartingQStab" }] },
         },
       ],
-    });
+    })
     expect(
-      legacyGroupSizeImport.entries.find((entry) => entry.id === legacyGroupSizeImport.importedIds[0])?.rotation
+      legacyGroupSizeImport.entries.find(entry => entry.id === legacyGroupSizeImport.importedIds[0])?.rotation
         .groupSize === 1,
       "A rotation without group metadata must migrate to Solo.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.martialArts.join(",") === "snowparting,phalanxbane",
       "Rotation martial-art eligibility tags must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[0].event === "Move" &&
         imported.rotation.steps[0].before.trigger === 0 &&
         imported.rotation.steps[0].before.action === 1 &&
         imported.rotation.steps[0].distance === 6,
       "Attached event targets must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[1].event === "SelfHP" && imported.rotation.steps[1].currentHPRatio === 0.555,
       "Self HP events must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[2].event === "TakeDamage" &&
         imported.rotation.steps[2].startTime === 0.75 &&
         imported.rotation.steps[2].damage === 1234,
       "Take Damage events must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[3].event === "HP" && imported.rotation.steps[3].targetHPRatio === 0.75,
       "Target HP events must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[4].event === "Qi" && imported.rotation.steps[4].targetQiRatio === 0.5,
       "Qi events must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[5].event === "Buff" &&
         imported.rotation.steps[5].buff === "Flute" &&
         imported.rotation.steps[5].stack === 3,
       "Buff events and their stack counts must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[6].event === "Debuff" &&
         imported.rotation.steps[6].debuff === "Controlled" &&
         imported.rotation.steps[6].stack === 2,
       "Debuff events and their stack counts must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       imported?.rotation.steps[7].event === "Delay" && imported.rotation.steps[7].duration === 1.25,
       "Delay events and their durations must survive export and import.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const skillStartImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,
@@ -150,14 +150,14 @@ describe("rotation-transfer", () => {
           rotation: { name: "Skill Start", steps: [{ type: "skill", skill: "SnowpartingQStab" }], start: { step: 0 } },
         },
       ],
-    });
+    })
     const skillStartRotation = skillStartImport.entries.find(
-      (entry) => entry.id === skillStartImport.importedIds[0],
-    )?.rotation;
+      entry => entry.id === skillStartImport.importedIds[0],
+    )?.rotation
     expect(
       skillStartRotation?.start?.step === 0 && skillStartRotation.start.action === undefined,
       "A skill-level start anchor must survive import without becoming hit 1.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const automaticHPImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,
@@ -175,10 +175,10 @@ describe("rotation-transfer", () => {
           },
         },
       ],
-    });
+    })
     const automaticHPRotation = automaticHPImport.entries.find(
-      (entry) => entry.id === automaticHPImport.importedIds[0],
-    )?.rotation;
+      entry => entry.id === automaticHPImport.importedIds[0],
+    )?.rotation
     expect(
       automaticHPRotation !== undefined &&
         !Object.hasOwn(automaticHPRotation, "autoHP") &&
@@ -186,11 +186,11 @@ describe("rotation-transfer", () => {
         automaticHPRotation.steps[0].event === "HP" &&
         automaticHPRotation.start?.step === 1,
       "Legacy Auto HP import must drop the flag while retaining manual HP events and the anchored skill.",
-    ).toBeTruthy();
-    const migratedExport = JSON.parse(transfer.exportRotationEntries(automaticHPImport.entries));
-    const migratedRotation = migratedExport.rotations.find((entry) => entry.id === automaticHPImport.importedIds[0]);
-    expect(migratedRotation.rotation).toEqual(automaticHPRotation);
-    expect(Object.hasOwn(migratedRotation.rotation, "autoHP")).toBe(false);
+    ).toBeTruthy()
+    const migratedExport = JSON.parse(transfer.exportRotationEntries(automaticHPImport.entries))
+    const migratedRotation = migratedExport.rotations.find(entry => entry.id === automaticHPImport.importedIds[0])
+    expect(migratedRotation.rotation).toEqual(automaticHPRotation)
+    expect(Object.hasOwn(migratedRotation.rotation, "autoHP")).toBe(false)
 
     const legacyExhaustedImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,
@@ -207,17 +207,17 @@ describe("rotation-transfer", () => {
           },
         },
       ],
-    });
+    })
     const legacyExhausted = legacyExhaustedImport.entries.find(
-      (entry) => entry.id === legacyExhaustedImport.importedIds[0],
-    )?.rotation.steps[0];
+      entry => entry.id === legacyExhaustedImport.importedIds[0],
+    )?.rotation.steps[0]
     expect(
       legacyExhausted?.event === "Qi" &&
         legacyExhausted.targetQiRatio === 0 &&
         legacyExhausted.after?.action === 3 &&
         !("before" in legacyExhausted),
       "Legacy Exhausted attachments must migrate to after-action Qi depletion.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const partiallyInvalid = {
       ...exported,
@@ -225,21 +225,21 @@ describe("rotation-transfer", () => {
         { id: "invalid", rotation: { name: "Invalid", steps: [{ type: "event", event: "Unknown", startTime: 0 }] } },
         customEntry,
       ],
-    };
+    }
     expect(
       transfer.mergeImportedRotationEntries(current, partiallyInvalid).importedCount === 1,
       "Malformed rotations must be skipped without blocking valid rotations.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
-    let invalidFormatRejected = false;
+    let invalidFormatRejected = false
     try {
-      transfer.mergeImportedRotationEntries(current, { version: 1, rotations: [] });
+      transfer.mergeImportedRotationEntries(current, { version: 1, rotations: [] })
     } catch {
-      invalidFormatRejected = true;
+      invalidFormatRejected = true
     }
     expect(
       invalidFormatRejected,
       "Rotation import must reject files without the export format identifier.",
-    ).toBeTruthy();
-  });
-});
+    ).toBeTruthy()
+  })
+})

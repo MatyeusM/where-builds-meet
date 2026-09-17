@@ -1,40 +1,42 @@
-import { effectState } from "../src/calculations/trackedEffectState";
-import { describe, expect, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
-import { readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises"
+
+import { describe, expect, it } from "vitest"
+
+import { effectState } from "../src/calculations/trackedEffectState"
+import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-resource-requirement.mjs.
 describe("resource-requirement", () => {
   it("Numeric resource action and requirement checks passed", async () => {
-    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts");
-    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts");
-    const { emptyStats } = await import("../src/data/statDefinitions.ts");
-    const system = JSON.parse(await readFile("data/system.json", "utf8"));
-    const heavenwillSkills = JSON.parse(await readFile("data/skill/heavenwill-gauntlets.json", "utf8"));
-    const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"));
-    const kiteBuffs = JSON.parse(await readFile("data/buff/bamboocut-kite.json", "utf8"));
-    const requirement = [{ target: "resource", value: "HeavensWill", comparison: ">=", amount: 1 }];
+    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
+    const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const system = JSON.parse(await readFile("data/system.json", "utf8"))
+    const heavenwillSkills = JSON.parse(await readFile("data/skill/heavenwill-gauntlets.json", "utf8"))
+    const mysticSkills = JSON.parse(await readFile("data/skill/mystic.json", "utf8"))
+    const kiteBuffs = JSON.parse(await readFile("data/buff/bamboocut-kite.json", "utf8"))
+    const requirement = [{ target: "resource", value: "HeavensWill", comparison: ">=", amount: 1 }]
 
-    const systemCharacter = calculateStatsWithEffects(emptyStats, [system.baseStats], 0).stats;
+    const systemCharacter = calculateStatsWithEffects(emptyStats, [system.baseStats], 0).stats
     expect(
       systemCharacter.heavensWillRegen === 0.1,
       "The innate character pipeline must provide 0.1 Heaven's Will per second.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       system.initialResources.HeavensWill === 2,
       "Heaven's Will must start at the system-defined value of two.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     expect(
       !requirementsPass(requirement, effectState([]), effectState([]), [], new Set(), ["heavenwill", "skygrasp"], {}),
       "A missing resource must default to zero.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       requirementsPass(requirement, effectState([]), effectState([]), [], new Set(), ["heavenwill", "skygrasp"], {
         HeavensWill: 1,
       }),
       "A resource equal to the threshold must pass a greater-than-or-equal requirement.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       !requirementsPass(
         [{ target: "resource", value: "HeavensWill", comparison: ">", amount: 1 }],
@@ -46,7 +48,7 @@ describe("resource-requirement", () => {
         { HeavensWill: 1 },
       ),
       "Resource comparisons must preserve their declared operator.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const timeline = buildRotationTimeline({
       rotation: { name: "Resource probe", steps: [{ type: "skill", skill: "ResourceSequence" }] },
@@ -72,14 +74,14 @@ describe("resource-requirement", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["heavenwill", "skygrasp"],
-    });
-    const row = timeline[0];
+    })
+    const row = timeline[0]
     expect(
       (row.actionStates[0].resources.HeavensWill ?? 0) === 0 &&
         row.actionStates[2].resources.HeavensWill === 1 &&
         row.actionStates[4].resources.HeavensWill === 0,
       "Resource actions must affect only subsequent actions in timeline order.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const regenerationTimeline = buildRotationTimeline({
       rotation: { name: "Resource regeneration probe", steps: [{ type: "skill", skill: "RegenerationSequence" }] },
@@ -106,15 +108,15 @@ describe("resource-requirement", () => {
       setupEffects: [],
       weapons: ["heavenwill", "skygrasp"],
       resourceRegeneration: { HeavensWill: 0.1 },
-    });
-    const regenerationStates = regenerationTimeline[0].actionStates;
+    })
+    const regenerationStates = regenerationTimeline[0].actionStates
     expect(
       (regenerationStates[0].resources.HeavensWill ?? 0) === 0 &&
         regenerationStates[1].resources.HeavensWill === 0.5 &&
         regenerationStates[3].resources.HeavensWill === 0.25 &&
         regenerationStates[4].resources.HeavensWill === 0.75,
       "Resource regeneration must accrue by elapsed time and preserve same-time action ordering.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const fightStartTimeline = buildRotationTimeline({
       rotation: {
@@ -154,15 +156,15 @@ describe("resource-requirement", () => {
       initialResources: system.initialResources,
       resourceRegeneration: { HeavensWill: systemCharacter.heavensWillRegen },
       resourceMaximums: system.resourceMaximums,
-    });
+    })
     expect(
       fightStartTimeline[0].actionStates[0].resources.HeavensWill === 2 &&
         fightStartTimeline[1].actionStates[0].resources.HeavensWill === 2 &&
         fightStartTimeline[1].actionStates[1].resources.HeavensWill === 2.5,
       "Heaven's Will must not regenerate during prepull time and must begin regenerating at fight start.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
-    const buildMandateTimeline = (withUnity) =>
+    const buildMandateTimeline = withUnity =>
       buildRotationTimeline({
         rotation: {
           name: `Celestial Mandate ${withUnity ? "with" : "without"} Heaven's Unity`,
@@ -196,16 +198,16 @@ describe("resource-requirement", () => {
         innerWayRules: [],
         setupEffects: [],
         weapons: ["heavenwill", "skygrasp"],
-      });
+      })
 
-    const withoutUnity = buildMandateTimeline(false).at(-1).actionStates[0].resources.HeavensWill;
-    const unityTimeline = buildMandateTimeline(true);
-    const withUnity = unityTimeline.at(-1).actionStates[0].resources.HeavensWill;
+    const withoutUnity = buildMandateTimeline(false).at(-1).actionStates[0].resources.HeavensWill
+    const unityTimeline = buildMandateTimeline(true)
+    const withUnity = unityTimeline.at(-1).actionStates[0].resources.HeavensWill
     expect(
       withoutUnity === 0.1,
       "Celestial Mandate must generate 0.1 Heaven's Will without Heaven's Unity.",
-    ).toBeTruthy();
-    expect(withUnity === 0.3, "Celestial Mandate must generate 0.3 Heaven's Will with Heaven's Unity.").toBeTruthy();
+    ).toBeTruthy()
+    expect(withUnity === 0.3, "Celestial Mandate must generate 0.3 Heaven's Will with Heaven's Unity.").toBeTruthy()
 
     const vitalityTimeline = buildRotationTimeline({
       rotation: {
@@ -247,15 +249,15 @@ describe("resource-requirement", () => {
       resourceMaximums: { Vitality: 100 },
       resourceEvents: system.resourceEvents,
       maxHP: 1000,
-    });
-    const vitalityStates = vitalityTimeline[0].actionStates;
+    })
+    const vitalityStates = vitalityTimeline[0].actionStates
     expect(
       vitalityStates[0].resources.Vitality === 0 &&
         vitalityStates[1].resources.Vitality === 2 &&
         vitalityStates[2].resources.Vitality === 2 &&
         vitalityTimeline[1].actionStates[0].resources.Vitality === 14,
       "Attack Vitality must respect its cooldown, while actual Max-HP loss grants stepped Vitality.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const mysticVitalityTimeline = buildRotationTimeline({
       rotation: {
@@ -285,10 +287,10 @@ describe("resource-requirement", () => {
       initialResources: { Vitality: 40 },
       resourceMaximums: { Vitality: 40 },
       resourceEvents: system.resourceEvents,
-    });
+    })
     expect(
       mysticVitalityTimeline[1].resources.Vitality === 27,
       "A direct Mystic cast must consume its Vitality once and may regain Vitality from its attack.",
-    ).toBeTruthy();
-  });
-});
+    ).toBeTruthy()
+  })
+})

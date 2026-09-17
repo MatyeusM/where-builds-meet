@@ -7,20 +7,10 @@
     "maxStack": 1,
     "shared": true,
     "effect": [
+      { "qiDMGBonus": 0.1 },
       {
-        "qiDMGBonus": 0.1
-      },
-      {
-        "requirement": [
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
-        ],
-        "effect": {
-          "globalHPDMGBonus": 0.08,
-          "globalBellstrikeDMGBonus": 0.08
-        }
+        "requirement": [{ "target": "target", "value": "Exhausted" }],
+        "effect": { "globalHPDMGBonus": 0.08, "globalBellstrikeDMGBonus": 0.08 }
       }
     ],
     "refresh": true

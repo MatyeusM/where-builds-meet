@@ -14,73 +14,41 @@
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"]
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"] },
         "stack": 1,
         "time": 0
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"]
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"] },
         "stack": 1,
         "time": 0
       },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.3875
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.3972,
-        "phyBonus": 110,
-        "attrBonus": 60,
-        "time": 0.3875,
-        "attrCoef": 0.3972
-      },
+      { "type": "damage", "phyCoef": 0.3972, "phyBonus": 110, "attrBonus": 60, "time": 0.3875, "attrCoef": 0.3972 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.4875
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.9269,
-        "phyBonus": 256,
-        "attrBonus": 140,
-        "time": 0.4875,
-        "attrCoef": 0.9269
-      }
+      { "type": "damage", "phyCoef": 0.9269, "phyBonus": 256, "attrBonus": 140, "time": 0.4875, "attrCoef": 0.9269 }
     ],
     "modifier": [],
     "tags": [
@@ -105,86 +73,44 @@
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"]
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"] },
         "stack": 1,
         "time": 0
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"]
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"] },
         "stack": 1,
         "time": 0
       },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.3875
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.3972,
-        "phyBonus": 110,
-        "attrBonus": 60,
-        "time": 0.3875,
-        "attrCoef": 0.3972
-      },
+      { "type": "damage", "phyCoef": 0.3972, "phyBonus": 110, "attrBonus": 60, "time": 0.3875, "attrCoef": 0.3972 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.4875
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.9269,
-        "phyBonus": 256,
-        "attrBonus": 140,
-        "time": 0.4875,
-        "attrCoef": 0.9269
-      }
+      { "type": "damage", "phyCoef": 0.9269, "phyBonus": 256, "attrBonus": 140, "time": 0.4875, "attrCoef": 0.9269 }
     ],
     "modifier": [
-      {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT4"
-          }
-        ],
-        "effect": {
-          "baseDMGBonus": 0.32
-        }
-      }
+      { "requirement": [{ "target": "self", "value": "SteadfastDevotionT4" }], "effect": { "baseDMGBonus": 0.32 } }
     ],
     "tags": [
       "DirectDamage",
@@ -207,23 +133,14 @@
     "action": [
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart2",
         "time": 0.95
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"],
-          "resolveAt": "skillStart"
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"], "resolveAt": "skillStart" },
         "stack": 1,
         "time": 0.96
       }
@@ -250,23 +167,14 @@
     "action": [
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart2",
         "time": 0.6333333333333333
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"],
-          "resolveAt": "skillStart"
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"], "resolveAt": "skillStart" },
         "stack": 1,
         "time": 0.64
       }
@@ -294,53 +202,27 @@
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.7
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.8827,
-        "phyBonus": 244,
-        "attrBonus": 133,
-        "time": 0.7,
-        "attrCoef": 0.8827
-      },
+      { "type": "damage", "phyCoef": 0.8827, "phyBonus": 244, "attrBonus": 133, "time": 0.7, "attrCoef": 0.8827 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.85
       },
-      {
-        "type": "damage",
-        "phyCoef": 2.0597,
-        "phyBonus": 569,
-        "attrBonus": 310,
-        "time": 0.85,
-        "attrCoef": 2.0597
-      }
+      { "type": "damage", "phyCoef": 2.0597, "phyBonus": 569, "attrBonus": 310, "time": 0.85, "attrCoef": 2.0597 }
     ],
     "modifier": [],
     "tags": [
@@ -365,66 +247,30 @@
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.7
       },
-      {
-        "type": "damage",
-        "phyCoef": 0.8827,
-        "phyBonus": 244,
-        "attrBonus": 133,
-        "time": 0.7,
-        "attrCoef": 0.8827
-      },
+      { "type": "damage", "phyCoef": 0.8827, "phyBonus": 244, "attrBonus": 133, "time": 0.7, "attrCoef": 0.8827 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.85
       },
-      {
-        "type": "damage",
-        "phyCoef": 2.0597,
-        "phyBonus": 569,
-        "attrBonus": 310,
-        "time": 0.85,
-        "attrCoef": 2.0597
-      }
+      { "type": "damage", "phyCoef": 2.0597, "phyBonus": 569, "attrBonus": 310, "time": 0.85, "attrCoef": 2.0597 }
     ],
     "modifier": [
-      {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT4"
-          }
-        ],
-        "effect": {
-          "baseDMGBonus": 0.32
-        }
-      }
+      { "requirement": [{ "target": "self", "value": "SteadfastDevotionT4" }], "effect": { "baseDMGBonus": 0.32 } }
     ],
     "tags": [
       "DirectDamage",
@@ -447,34 +293,20 @@
     "action": [
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart2",
         "time": 0.95
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart3",
         "time": 1.55
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"],
-          "resolveAt": "skillStart"
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"], "resolveAt": "skillStart" },
         "stack": 1,
         "time": 1.56
       }
@@ -501,34 +333,20 @@
     "action": [
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart2",
         "time": 0.6333333333333333
       },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierBurningHeart3",
         "time": 1.0333333333333334
       },
       {
         "type": "consume",
         "target": "self",
-        "value": {
-          "operator": "first",
-          "operand": ["InnerPassion", "ChargeEnhancement"],
-          "resolveAt": "skillStart"
-        },
+        "value": { "operator": "first", "operand": ["InnerPassion", "ChargeEnhancement"], "resolveAt": "skillStart" },
         "stack": 1,
         "time": 1.0433333333333332
       }
@@ -556,53 +374,27 @@
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.7
       },
-      {
-        "type": "damage",
-        "phyCoef": 1.7199,
-        "phyBonus": 475,
-        "attrBonus": 259,
-        "time": 0.7,
-        "attrCoef": 1.7199
-      },
+      { "type": "damage", "phyCoef": 1.7199, "phyBonus": 475, "attrBonus": 259, "time": 0.7, "attrCoef": 1.7199 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.775
       },
-      {
-        "type": "damage",
-        "phyCoef": 4.0131,
-        "phyBonus": 1110,
-        "attrBonus": 604,
-        "time": 0.775,
-        "attrCoef": 4.0131
-      }
+      { "type": "damage", "phyCoef": 4.0131, "phyBonus": 1110, "attrBonus": 604, "time": 0.775, "attrCoef": 4.0131 }
     ],
     "modifier": [],
     "tags": [
@@ -627,66 +419,30 @@
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.7
       },
-      {
-        "type": "damage",
-        "phyCoef": 1.7199,
-        "phyBonus": 475,
-        "attrBonus": 259,
-        "time": 0.7,
-        "attrCoef": 1.7199
-      },
+      { "type": "damage", "phyCoef": 1.7199, "phyBonus": 475, "attrBonus": 259, "time": 0.7, "attrCoef": 1.7199 },
       {
         "type": "apply",
         "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT6"
-          },
-          {
-            "target": "target",
-            "value": "Exhausted"
-          }
+          { "target": "self", "value": "SteadfastDevotionT6" },
+          { "target": "target", "value": "Exhausted" }
         ],
         "target": "self",
         "value": "ChargeEnhancement",
         "stack": 3,
         "time": 0.775
       },
-      {
-        "type": "damage",
-        "phyCoef": 4.0131,
-        "phyBonus": 1110,
-        "attrBonus": 604,
-        "time": 0.775,
-        "attrCoef": 4.0131
-      }
+      { "type": "damage", "phyCoef": 4.0131, "phyBonus": 1110, "attrBonus": 604, "time": 0.775, "attrCoef": 4.0131 }
     ],
     "modifier": [
-      {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT4"
-          }
-        ],
-        "effect": {
-          "baseDMGBonus": 0.32
-        }
-      }
+      { "requirement": [{ "target": "self", "value": "SteadfastDevotionT4" }], "effect": { "baseDMGBonus": 0.32 } }
     ],
     "tags": [
       "DirectDamage",
@@ -709,23 +465,15 @@
     "castTime": 0,
     "action": [],
     "subAction": [
-      {
-        "value": "PhalanxbaneHeavyPreCharge"
-      },
+      { "value": "PhalanxbaneHeavyPreCharge" },
       {
         "value": ["PhalanxbaneHeavyFastSlam1"],
         "requirement": [
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "self",
-                "value": "InnerPassion"
-              },
-              {
-                "target": "self",
-                "value": "ChargeEnhancement"
-              }
+              { "target": "self", "value": "InnerPassion" },
+              { "target": "self", "value": "ChargeEnhancement" }
             ]
           }
         ],
@@ -753,23 +501,15 @@
     "castTime": 0,
     "action": [],
     "subAction": [
-      {
-        "value": "PhalanxbaneHeavyPreCharge"
-      },
+      { "value": "PhalanxbaneHeavyPreCharge" },
       {
         "value": ["PhalanxbaneHeavyFastCharge2", "PhalanxbaneHeavyFastSlam2"],
         "requirement": [
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "self",
-                "value": "InnerPassion"
-              },
-              {
-                "target": "self",
-                "value": "ChargeEnhancement"
-              }
+              { "target": "self", "value": "InnerPassion" },
+              { "target": "self", "value": "ChargeEnhancement" }
             ]
           }
         ],
@@ -797,23 +537,15 @@
     "castTime": 0,
     "action": [],
     "subAction": [
-      {
-        "value": "PhalanxbaneHeavyPreCharge"
-      },
+      { "value": "PhalanxbaneHeavyPreCharge" },
       {
         "value": ["PhalanxbaneHeavyFastCharge3", "PhalanxbaneHeavyFastSlam3"],
         "requirement": [
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "self",
-                "value": "InnerPassion"
-              },
-              {
-                "target": "self",
-                "value": "ChargeEnhancement"
-              }
+              { "target": "self", "value": "InnerPassion" },
+              { "target": "self", "value": "ChargeEnhancement" }
             ]
           }
         ],
@@ -839,28 +571,11 @@
     "shortName": "Mo Special",
     "castTime": 1.167,
     "cooldown": 20,
-    "action": [
-      {
-        "type": "apply",
-        "requirement": [],
-        "target": "self",
-        "value": "IronGuard",
-        "stack": 1,
-        "time": 1
-      }
-    ],
+    "action": [{ "type": "apply", "requirement": [], "target": "self", "value": "IronGuard", "stack": 1, "time": 1 }],
     "modifier": [
       {
-        "requirement": [
-          {
-            "target": "self",
-            "value": "SteadfastDevotionT1"
-          }
-        ],
-        "effect": {
-          "cooldown": 1,
-          "duration": 40
-        }
+        "requirement": [{ "target": "self", "value": "SteadfastDevotionT1" }],
+        "effect": { "cooldown": 1, "duration": 40 }
       }
     ],
     "tags": ["DirectDamage", "MartialArts", "Special", "MoBlade", "PhalanxbaneBlade", "LegionSummon"],
@@ -873,22 +588,10 @@
     "castTime": 0.7,
     "cooldown": 15,
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 1.8948,
-        "phyBonus": 525,
-        "attrBonus": 286,
-        "time": 0.311,
-        "attrCoef": 1.8948
-      },
+      { "type": "damage", "phyCoef": 1.8948, "phyBonus": 525, "attrBonus": 286, "time": 0.311, "attrCoef": 1.8948 },
       {
         "type": "trigger",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "IronGuard"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "IronGuard" }],
         "value": "AnxiSoldierTotalAnnihilation",
         "time": 0.913
       }
@@ -910,22 +613,10 @@
     "name": "Anxi Soldier Burning Heart 2nd Stage",
     "castTime": 0,
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.5,
-        "phyBonus": 0,
-        "attrBonus": 0,
-        "time": 0.45,
-        "attrCoef": 0.5
-      },
+      { "type": "damage", "phyCoef": 0.5, "phyBonus": 0, "attrBonus": 0, "time": 0.45, "attrCoef": 0.5 },
       {
         "type": "apply",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "InnerPassion"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "InnerPassion" }],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0.45
@@ -948,22 +639,10 @@
     "name": "Anxi Soldier Burning Heart 3rd Stage",
     "castTime": 0,
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.9,
-        "phyBonus": 0,
-        "attrBonus": 0,
-        "time": 0.45,
-        "attrCoef": 0.9
-      },
+      { "type": "damage", "phyCoef": 0.9, "phyBonus": 0, "attrBonus": 0, "time": 0.45, "attrCoef": 0.9 },
       {
         "type": "apply",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "InnerPassion"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "InnerPassion" }],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0.45
@@ -986,30 +665,11 @@
     "name": "Anxi Soldier Total Annihilation",
     "castTime": 0,
     "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.5,
-        "phyBonus": 0,
-        "attrBonus": 0,
-        "time": 0,
-        "attrCoef": 0.5
-      },
-      {
-        "type": "damage",
-        "phyCoef": 0.5,
-        "phyBonus": 0,
-        "attrBonus": 0,
-        "time": 0,
-        "attrCoef": 0.5
-      },
+      { "type": "damage", "phyCoef": 0.5, "phyBonus": 0, "attrBonus": 0, "time": 0, "attrCoef": 0.5 },
+      { "type": "damage", "phyCoef": 0.5, "phyBonus": 0, "attrBonus": 0, "time": 0, "attrCoef": 0.5 },
       {
         "type": "apply",
-        "requirement": [
-          {
-            "target": "self",
-            "value": "InnerPassion"
-          }
-        ],
+        "requirement": [{ "target": "self", "value": "InnerPassion" }],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0

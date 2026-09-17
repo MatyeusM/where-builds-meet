@@ -1,25 +1,23 @@
-import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
+import { existsSync } from "node:fs"
+
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-divinecraft.mjs.
 describe("divinecraft", () => {
   it("Divinecraft damage and healing-triggered Vitality checks passed", async () => {
-    const definitions = (await import("../data/divinecraft.json")).default;
+    const definitions = (await import("../data/divinecraft.json")).default
 
-    const damage = await import("../src/calculations/damage.ts");
-    const timelineCalculation = await import("../src/calculations/rotationTimeline.ts");
-    const statDefinitions = await import("../src/data/statDefinitions.ts");
-    const effectiveStats = await import("../src/calculations/effectiveStats.ts");
+    const damage = await import("../src/calculations/damage.ts")
+    const timelineCalculation = await import("../src/calculations/rotationTimeline.ts")
+    const statDefinitions = await import("../src/data/statDefinitions.ts")
+    const effectiveStats = await import("../src/calculations/effectiveStats.ts")
 
     for (const definition of Object.values(definitions)) {
       if (definition.image)
-        expect(
-          existsSync(`public/divinecraft/${definition.image}`),
-          `Missing Divinecraft image: ${definition.image}`,
-        ).toBeTruthy();
+        assert(existsSync(`public/divinecraft/${definition.image}`), `Missing Divinecraft image: ${definition.image}`)
     }
 
-    const stats = { ...statDefinitions.emptyStats, minPhys: 100, maxPhys: 100 };
+    const stats = { ...statDefinitions.emptyStats, minPhys: 100, maxPhys: 100 }
     const context = {
       stats,
       attunement: {
@@ -47,41 +45,41 @@ describe("divinecraft", () => {
       },
       derivedStats: effectiveStats.calculateDerivedStats(stats, 0),
       effects: [],
-    };
-    const damageFor = (id) =>
+    }
+    const damageFor = id =>
       damage.calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [definitions[id].effect] })
-        .total;
-    const baseline = damage.calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context).total;
-    expect(
+        .total
+    const baseline = damage.calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, context).total
+    assert(
       Math.abs(damageFor("Fire") / baseline - 1.015) < 1e-9,
       "Fire HP damage must apply as a 1.5% Category 1 bonus.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("WaterFire") / baseline - 1.014) < 1e-9,
       "Water-Fire HP damage must apply as a 1.4% Category 1 bonus.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("WaterPoison") / baseline - 1.01) < 1e-9,
       "Water-Poison HP damage must apply as a 1% Category 1 bonus.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("PoisonFire") / baseline - 1.014) < 1e-9,
       "Poison-Fire HP damage must apply as a 1.4% Category 1 bonus.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("PoisonWater") / baseline - 1.01) < 1e-9,
       "Poison-Water HP damage must apply as a 1% Category 1 bonus.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("FireWater") - damageFor("Fire")) < 1e-9,
       "A healing-triggered resource effect must not alter direct damage.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       Math.abs(damageFor("FirePoison") - damageFor("Fire")) < 1e-9,
       "Stored Qi damage must remain inert until implemented.",
-    ).toBeTruthy();
+    )
 
-    const vitalityAfterHeals = (id) => {
+    const vitalityAfterHeals = id => {
       const timeline = timelineCalculation.buildRotationTimeline({
         rotation: {
           name: `${id} healing trigger probe`,
@@ -112,24 +110,21 @@ describe("divinecraft", () => {
         weapons: [],
         initialResources: { Vitality: 0 },
         resourceMaximums: { Vitality: 100 },
-      });
-      return timeline.find((row) => row.step.type === "skill" && row.step.skill === "Observe")?.resources.Vitality;
-    };
+      })
+      return timeline.find(row => row.step.type === "skill" && row.step.skill === "Observe")?.resources.Vitality
+    }
 
-    [
+    ;[
       ["FireWater", 2.4],
       ["WaterFire", 3],
       ["WaterPoison", 3],
       ["PoisonWater", 2.4],
     ].forEach(([id, expected]) => {
-      expect(
+      assert(
         Math.abs(vitalityAfterHeals(id) - expected) < 1e-9,
         `${id} must grant Vitality on the first heal and again at each three-second cooldown boundary.`,
-      ).toBeTruthy();
-    });
-    expect(
-      vitalityAfterHeals("Fire") === 0,
-      "Divinecraft without a healing trigger must not grant Vitality.",
-    ).toBeTruthy();
-  });
-});
+      )
+    })
+    assert(vitalityAfterHeals("Fire") === 0, "Divinecraft without a healing trigger must not grant Vitality.")
+  })
+})

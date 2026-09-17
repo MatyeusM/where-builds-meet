@@ -41,15 +41,7 @@
     },
     "EsotericRevivalT3": {},
     "EsotericRevivalT4": {},
-    "EsotericRevivalT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "criticalHealingBonus": 0.04
-          }
-        }
-      ]
-    },
+    "EsotericRevivalT5": { "effect": [{ "rawStat": { "criticalHealingBonus": 0.04 } }] },
     "EsotericRevivalT6": {}
   }
 }

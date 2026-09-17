@@ -41,15 +41,7 @@
     },
     "SongOfTangT3": {},
     "SongOfTangT4": {},
-    "SongOfTangT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "critDmgBonus": 0.04
-          }
-        }
-      ]
-    },
+    "SongOfTangT5": { "effect": [{ "rawStat": { "critDmgBonus": 0.04 } }] },
     "SongOfTangT6": {}
   }
 }

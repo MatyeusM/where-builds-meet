@@ -41,15 +41,7 @@
     },
     "WindBeneathWingsT3": {},
     "WindBeneathWingsT4": {},
-    "WindBeneathWingsT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalDmgReduction": 0.022
-          }
-        }
-      ]
-    },
+    "WindBeneathWingsT5": { "effect": [{ "rawStat": { "physicalDmgReduction": 0.022 } }] },
     "WindBeneathWingsT6": {}
   }
 }

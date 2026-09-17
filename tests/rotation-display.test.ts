@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline";
-import { withUnresolvedEditorSteps } from "../src/editorTimelinePreview";
-import { buildTimelineDisplayEntries } from "../src/rotationDisplay";
+import { describe, expect, it } from "vitest"
+
+import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
+import { withUnresolvedEditorSteps } from "../src/editorTimelinePreview"
+import { buildTimelineDisplayEntries } from "../src/rotationDisplay"
 
 describe("rotation editor after battle end", () => {
   it("keeps unreached skills editable in saved order without exposing unexecuted actions", () => {
@@ -23,18 +24,16 @@ describe("rotation editor after battle end", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
-    };
-    const resolved = buildRotationTimeline(input);
-    expect(resolved.some((row) => row.id === "rotation-1")).toBe(false);
-    const timeline = withUnresolvedEditorSteps(input, resolved);
-    const entries = buildTimelineDisplayEntries(timeline, () => true, { rowId: "rotation-0" });
-    const skills = entries.filter((entry) => entry.kind === "skill");
-    expect(skills.map((entry) => entry.row.id)).toEqual(["rotation-0", "rotation-3", "rotation-1", "rotation-2"]);
-    expect(skills.slice(-2).every((entry) => entry.row.skipped)).toBe(true);
-    expect(skills.slice(-2).map((entry) => entry.row.rotationIndex)).toEqual([1, 2]);
-    expect(entries.filter((entry) => entry.kind === "action").every((entry) => entry.row.id === "rotation-0")).toBe(
-      true,
-    );
-    expect(resolved.some((row) => row.id === "rotation-1")).toBe(false);
-  });
-});
+    }
+    const resolved = buildRotationTimeline(input)
+    expect(resolved.some(row => row.id === "rotation-1")).toBe(false)
+    const timeline = withUnresolvedEditorSteps(input, resolved)
+    const entries = buildTimelineDisplayEntries(timeline, () => true, { rowId: "rotation-0" })
+    const skills = entries.filter(entry => entry.kind === "skill")
+    expect(skills.map(entry => entry.row.id)).toEqual(["rotation-0", "rotation-3", "rotation-1", "rotation-2"])
+    expect(skills.slice(-2).every(entry => entry.row.skipped)).toBe(true)
+    expect(skills.slice(-2).map(entry => entry.row.rotationIndex)).toEqual([1, 2])
+    expect(entries.filter(entry => entry.kind === "action").every(entry => entry.row.id === "rotation-0")).toBe(true)
+    expect(resolved.some(row => row.id === "rotation-1")).toBe(false)
+  })
+})

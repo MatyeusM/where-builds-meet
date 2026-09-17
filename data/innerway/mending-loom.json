@@ -67,15 +67,7 @@
     },
     "MendingLoomT3": {},
     "MendingLoomT4": {},
-    "MendingLoomT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalHealingBonus": 0.025
-          }
-        }
-      ]
-    },
+    "MendingLoomT5": { "effect": [{ "rawStat": { "physicalHealingBonus": 0.025 } }] },
     "MendingLoomT6": {}
   }
 }

@@ -279,14 +279,7 @@ rotation.
 An active effect may convert one named numeric calculation stat into another:
 
 ```json
-{
-  "convert": {
-    "from": "finalAffinity",
-    "to": "directCrit",
-    "ratio": 1,
-    "max": 0.12
-  }
-}
+{ "convert": { "from": "finalAffinity", "to": "directCrit", "ratio": 1, "max": 0.12 } }
 ```
 
 The calculator reads both names from the current per-action stat snapshot. It

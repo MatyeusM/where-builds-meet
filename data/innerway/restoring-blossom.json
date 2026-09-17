@@ -41,15 +41,7 @@
     },
     "RestoringBlossomT3": {},
     "RestoringBlossomT4": {},
-    "RestoringBlossomT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "criticalHealingBonus": 0.04
-          }
-        }
-      ]
-    },
+    "RestoringBlossomT5": { "effect": [{ "rawStat": { "criticalHealingBonus": 0.04 } }] },
     "RestoringBlossomT6": {}
   }
 }

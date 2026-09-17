@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { PingInput } from "./PingInput";
-import { UiIcon } from "../UiIcon";
-import { t } from "../i18n";
+import { useState } from "react"
+
+import { t } from "../i18n"
+import { UiIcon } from "../UiIcon"
+import { PingInput } from "./PingInput"
 
 type RotationPingFieldProps = {
-  value: number | undefined;
-  inheritedValue: number;
-  disabled: boolean;
-  onCommit: (value: number | undefined) => void;
-};
+  value: number | undefined
+  inheritedValue: number
+  disabled: boolean
+  onCommit: (value: number | undefined) => void
+}
 
 export function RotationPingField({ value, inheritedValue, disabled, onCommit }: RotationPingFieldProps) {
-  const [editing, setEditing] = useState(false);
-  const [resetRevision, setResetRevision] = useState(0);
-  const modified = editing || value !== undefined;
+  const [editing, setEditing] = useState(false)
+  const [resetRevision, setResetRevision] = useState(0)
+  const modified = editing || value !== undefined
 
   if (disabled) {
     return (
@@ -21,7 +22,7 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
         <span className="field-label">{t("ui.app.ping")}</span>
         <PingInput disabled value={value ?? inheritedValue} onCommit={onCommit} />
       </label>
-    );
+    )
   }
 
   return (
@@ -36,11 +37,11 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
             type="button"
             aria-label={t("ui.app.resetNamedValue", { name: t("ui.app.ping") })}
             title={t("ui.app.pingInherit")}
-            onClick={(event) => {
-              event.preventDefault();
-              setEditing(false);
-              setResetRevision((revision) => revision + 1);
-              onCommit(undefined);
+            onClick={event => {
+              event.preventDefault()
+              setEditing(false)
+              setResetRevision(revision => revision + 1)
+              onCommit(undefined)
             }}
           >
             <UiIcon name="reset" />
@@ -57,5 +58,5 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
         onCommit={onCommit}
       />
     </label>
-  );
+  )
 }

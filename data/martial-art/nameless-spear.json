@@ -20,11 +20,7 @@
       {
         "name": "Max Endurance Up",
         "effect": [
-          {
-            "stat": {
-              "maxEndurance": 10
-            }
-          },
+          { "stat": { "maxEndurance": 10 } },
           {
             "stat": {
               "maxEndurance": {
@@ -40,17 +36,7 @@
       {
         "name": "Affinity Rate Up",
         "effect": [
-          {
-            "stat": {
-              "affinity": {
-                "formula": {
-                  "source": "momentum",
-                  "multiplier": 0.000152,
-                  "max": 0.04256
-                }
-              }
-            }
-          }
+          { "stat": { "affinity": { "formula": { "source": "momentum", "multiplier": 0.000152, "max": 0.04256 } } } }
         ]
       },
       {
@@ -61,27 +47,12 @@
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "self",
-                    "value": "EndlessGale"
-                  },
-                  {
-                    "target": "endurancePercentage",
-                    "comparison": "<",
-                    "amount": 60
-                  }
+                  { "target": "self", "value": "EndlessGale" },
+                  { "target": "endurancePercentage", "comparison": "<", "amount": 60 }
                 ]
               }
             ],
-            "effect": {
-              "affinityDmgBonus": {
-                "formula": {
-                  "source": "affinity",
-                  "multiplier": 0.6,
-                  "max": 0.18
-                }
-              }
-            }
+            "effect": { "affinityDmgBonus": { "formula": { "source": "affinity", "multiplier": 0.6, "max": 0.18 } } }
           }
         ]
       },
@@ -89,26 +60,14 @@
         "name": "Bellstrike Attribute Up",
         "effect": [
           {
-            "rawStat": {
-              "maxBellstrike": 196,
-              "minBellstrike": 98
-            },
+            "rawStat": { "maxBellstrike": 196, "minBellstrike": 98 },
             "stat": {
-              "bellstrikeDmgBonus": {
-                "formula": {
-                  "source": "maxBellstrike",
-                  "multiplier": 0.000168,
-                  "max": 0.11
-                }
-              }
+              "bellstrikeDmgBonus": { "formula": { "source": "maxBellstrike", "multiplier": 0.000168, "max": 0.11 } }
             }
           }
         ]
       },
-      {
-        "name": "Attr. Attack DMG Up",
-        "effect": []
-      }
+      { "name": "Attr. Attack DMG Up", "effect": [] }
     ]
   ]
 }

@@ -21,37 +21,14 @@
         "name": "Perfect Dodge Enhancement",
         "effect": [
           {
-            "requirement": [
-              {
-                "target": "skillTag",
-                "value": "VileCondemned"
-              }
-            ],
-            "effect": {
-              "convert": {
-                "from": "abrasionRate",
-                "to": "normalRate",
-                "ratio": 1
-              }
-            }
+            "requirement": [{ "target": "skillTag", "value": "VileCondemned" }],
+            "effect": { "convert": { "from": "abrasionRate", "to": "normalRate", "ratio": 1 } }
           }
         ]
       },
       {
         "name": "Physical Attack Up",
-        "effect": [
-          {
-            "stat": {
-              "minPhys": {
-                "formula": {
-                  "source": "agility",
-                  "multiplier": 0.264,
-                  "max": 73.92
-                }
-              }
-            }
-          }
-        ]
+        "effect": [{ "stat": { "minPhys": { "formula": { "source": "agility", "multiplier": 0.264, "max": 73.92 } } } }]
       },
       {
         "name": "Raptor's Instinct Crit Boost",
@@ -61,25 +38,13 @@
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Falcon"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VileCondemned"
-                  }
+                  { "target": "skillTag", "value": "Falcon" },
+                  { "target": "skillTag", "value": "VileCondemned" }
                 ]
               }
             ],
             "effectiveStat": {
-              "critDmgBonus": {
-                "formula": {
-                  "source": "minPhys",
-                  "multiplier": 0.0004,
-                  "max": 0.3
-                }
-              }
+              "critDmgBonus": { "formula": { "source": "minPhys", "multiplier": 0.0004, "max": 0.3 } }
             }
           }
         ]
@@ -88,26 +53,14 @@
         "name": "Bamboocut Attribute Up",
         "effect": [
           {
-            "rawStat": {
-              "maxBamboocut": 196,
-              "minBamboocut": 98
-            },
+            "rawStat": { "maxBamboocut": 196, "minBamboocut": 98 },
             "stat": {
-              "bamboocutDmgBonus": {
-                "formula": {
-                  "source": "minBamboocut",
-                  "multiplier": 0.000336,
-                  "max": 0.11
-                }
-              }
+              "bamboocutDmgBonus": { "formula": { "source": "minBamboocut", "multiplier": 0.000336, "max": 0.11 } }
             }
           }
         ]
       },
-      {
-        "name": "Attr. Attack DMG Up",
-        "effect": []
-      }
+      { "name": "Attr. Attack DMG Up", "effect": [] }
     ]
   ]
 }

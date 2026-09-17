@@ -41,15 +41,7 @@
     },
     "RiptideReflexT3": {},
     "RiptideReflexT4": {},
-    "RiptideReflexT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "bamboocutPenetration": 6
-          }
-        }
-      ]
-    },
+    "RiptideReflexT5": { "effect": [{ "rawStat": { "bamboocutPenetration": 6 } }] },
     "RiptideReflexT6": {}
   }
 }

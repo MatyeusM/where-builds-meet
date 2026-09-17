@@ -1,24 +1,24 @@
-import phantomChimeDefinitions from "../data/debuff/bamboocut-dust.json";
-import qiImbalanceDefinitions from "../data/debuff/bellstrike-splendor.json";
-import soulShakenDefinitions from "../data/debuff/bellstrike-umbra.json";
-import qingyisCharmDefinitions from "../data/debuff/innerway.json";
-import vulnerableDefinitions from "../data/debuff/stonesplit-might.json";
-import fearfulBladeDefinitions from "../data/debuff/stonesplit-strength.json";
-import floatingGraceDefinitions from "../data/buff/silkbind-deluge.json";
-import type { TrackedEffect } from "./calculations/rotationTimeline";
-import { getPersistentItem } from "./persistentStorage";
+import floatingGraceDefinitions from "../data/buff/silkbind-deluge.json"
+import phantomChimeDefinitions from "../data/debuff/bamboocut-dust.json"
+import qiImbalanceDefinitions from "../data/debuff/bellstrike-splendor.json"
+import soulShakenDefinitions from "../data/debuff/bellstrike-umbra.json"
+import qingyisCharmDefinitions from "../data/debuff/innerway.json"
+import vulnerableDefinitions from "../data/debuff/stonesplit-might.json"
+import fearfulBladeDefinitions from "../data/debuff/stonesplit-strength.json"
+import type { TrackedEffect } from "./calculations/rotationTimeline"
+import { getPersistentItem } from "./persistentStorage"
 
-export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1";
+export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
 
 export type GlobalDebuffState = {
-  phantomChime: boolean;
-  qiImbalance: boolean;
-  soulShaken: boolean;
-  vulnerable: boolean;
-  fearfulBlade: boolean;
-  qingyisCharm: "none" | "T1" | "T6";
-  floatingGrace: "none" | "mixed" | "deluge";
-};
+  phantomChime: boolean
+  qiImbalance: boolean
+  soulShaken: boolean
+  vulnerable: boolean
+  fearfulBlade: boolean
+  qingyisCharm: "none" | "T1" | "T6"
+  floatingGrace: "none" | "mixed" | "deluge"
+}
 
 export const defaultGlobalDebuffs: GlobalDebuffState = {
   phantomChime: false,
@@ -28,7 +28,7 @@ export const defaultGlobalDebuffs: GlobalDebuffState = {
   fearfulBlade: false,
   qingyisCharm: "none",
   floatingGrace: "none",
-};
+}
 
 export const globalDebuffRows = [
   { key: "phantomChime", name: "Phantom Chime", path: "Dust" },
@@ -36,14 +36,14 @@ export const globalDebuffRows = [
   { key: "soulShaken", name: "Soul-Shaken", path: "Umbra" },
   { key: "vulnerable", name: "Vulnerable", path: "Might" },
   { key: "fearfulBlade", name: "Fearful Blade", path: "Strength" },
-] as const;
+] as const
 
 export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return { ...defaultGlobalDebuffs };
-  const source = value as Record<string, unknown>;
-  const qingyisCharm = source.qingyisCharm === "T1" || source.qingyisCharm === "T6" ? source.qingyisCharm : "none";
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { ...defaultGlobalDebuffs }
+  const source = value as Record<string, unknown>
+  const qingyisCharm = source.qingyisCharm === "T1" || source.qingyisCharm === "T6" ? source.qingyisCharm : "none"
   const floatingGrace =
-    source.floatingGrace === "mixed" || source.floatingGrace === "deluge" ? source.floatingGrace : "none";
+    source.floatingGrace === "mixed" || source.floatingGrace === "deluge" ? source.floatingGrace : "none"
   return {
     phantomChime: source.phantomChime === true,
     qiImbalance: source.qiImbalance === true,
@@ -52,14 +52,14 @@ export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
     fearfulBlade: source.fearfulBlade === true,
     qingyisCharm,
     floatingGrace,
-  };
+  }
 }
 
 export function loadGlobalDebuffs(): GlobalDebuffState {
   try {
-    return normalizeGlobalDebuffs(JSON.parse(getPersistentItem(globalDebuffStorageKey) ?? "null"));
+    return normalizeGlobalDebuffs(JSON.parse(getPersistentItem(globalDebuffStorageKey) ?? "null"))
   } catch {
-    return { ...defaultGlobalDebuffs };
+    return { ...defaultGlobalDebuffs }
   }
 }
 
@@ -73,20 +73,20 @@ const definitions = {
   QingyisCharmT6: qingyisCharmDefinitions.QingyisCharmT6,
   FloatingGrace: floatingGraceDefinitions.FloatingGrace,
   FloatingGraceDeluge: floatingGraceDefinitions.FloatingGraceDeluge,
-} as const;
+} as const
 
 function permanentEffect(name: string, definition: { maxStack?: number }): TrackedEffect {
-  return { name, stack: definition.maxStack ?? 1, maxStack: definition.maxStack, persistent: true };
+  return { name, stack: definition.maxStack ?? 1, maxStack: definition.maxStack, persistent: true }
 }
 
 export function globalBuffTimelineEffects(state: GlobalDebuffState): TrackedEffect[] {
   switch (state.floatingGrace) {
     case "mixed":
-      return [permanentEffect("FloatingGrace", definitions.FloatingGrace)];
+      return [permanentEffect("FloatingGrace", definitions.FloatingGrace)]
     case "deluge":
-      return [permanentEffect("FloatingGraceDeluge", definitions.FloatingGraceDeluge)];
+      return [permanentEffect("FloatingGraceDeluge", definitions.FloatingGraceDeluge)]
     case "none":
-      return [];
+      return []
   }
 }
 
@@ -102,6 +102,6 @@ export function globalDebuffTimelineEffects(state: GlobalDebuffState): TrackedEf
       : state.qingyisCharm === "T6"
         ? (["QingyisCharmT6", definitions.QingyisCharmT6] as const)
         : undefined,
-  ];
-  return selectedDefinitions.flatMap((entry) => (entry ? [permanentEffect(entry[0], entry[1])] : []));
+  ]
+  return selectedDefinitions.flatMap(entry => (entry ? [permanentEffect(entry[0], entry[1])] : []))
 }

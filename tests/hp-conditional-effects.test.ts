@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator";
-import { calculateDerivedStats } from "../src/calculations/effectiveStats";
-import { emptyStats } from "../src/data/statDefinitions";
+import { describe, expect, it } from "vitest"
+
+import { calculateDerivedStats } from "../src/calculations/effectiveStats"
+import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
+import { emptyStats } from "../src/data/statDefinitions"
 
 describe("HP-conditional effects", () => {
   it("removes and restores conditional stats and damage/healing bonuses as HP changes", () => {
@@ -12,7 +13,7 @@ describe("HP-conditional effects", () => {
       precision: 1,
       critDmgBonus: 0.5,
       criticalHealingBonus: 0.5,
-    };
+    }
     const enemy = {
       name: "Fixture",
       level: 96,
@@ -23,12 +24,12 @@ describe("HP-conditional effects", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
+    }
     const result = calculateRotationBaseline({
       timeline: {
         rotation: {
           name: "HP transitions",
-          steps: [10000, 5000, 10000].flatMap((currentHP) => [
+          steps: [10000, 5000, 10000].flatMap(currentHP => [
             { type: "event", event: "SelfHP", before: { action: "start" }, currentHP },
             { type: "skill", skill: "Probe" },
           ]),
@@ -69,20 +70,20 @@ describe("HP-conditional effects", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
-    const samples = [1, 3, 5].map((index) => ({
+    })
+    const samples = [1, 3, 5].map(index => ({
       damage: result.actionBreakdowns[`rotation-${index}:0`],
       healing: result.actionBreakdowns[`rotation-${index}:1`].healing!,
-    }));
+    }))
     for (const index of [0, 2]) {
-      expect(samples[index].damage.outcomeRates.critical).toBeCloseTo(0.3);
-      expect(samples[index].healing.criticalRate).toBeCloseTo(0.3);
-      expect(samples[index].damage.total).toBeCloseTo(124);
-      expect(samples[index].healing.total).toBeCloseTo(127);
+      expect(samples[index].damage.outcomeRates.critical).toBeCloseTo(0.3)
+      expect(samples[index].healing.criticalRate).toBeCloseTo(0.3)
+      expect(samples[index].damage.total).toBeCloseTo(124)
+      expect(samples[index].healing.total).toBeCloseTo(127)
     }
-    expect(samples[1].damage.outcomeRates.critical).toBeCloseTo(0.1);
-    expect(samples[1].healing.criticalRate).toBeCloseTo(0.1);
-    expect(samples[1].damage.total).toBeCloseTo(105);
-    expect(samples[1].healing.total).toBeCloseTo(105);
-  });
-});
+    expect(samples[1].damage.outcomeRates.critical).toBeCloseTo(0.1)
+    expect(samples[1].healing.criticalRate).toBeCloseTo(0.1)
+    expect(samples[1].damage.total).toBeCloseTo(105)
+    expect(samples[1].healing.total).toBeCloseTo(105)
+  })
+})

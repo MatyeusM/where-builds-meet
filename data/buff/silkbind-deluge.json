@@ -11,23 +11,10 @@
       "firstTick": 1,
       "resetOnRefresh": true,
       "action": [
-        {
-          "type": "heal",
-          "phyCoef": 0.7721,
-          "phyBonus": 214,
-          "attrBonus": 116,
-          "time": 0,
-          "silkbindCoef": 0.7721
-        }
+        { "type": "heal", "phyCoef": 0.7721, "phyBonus": 214, "attrBonus": 116, "time": 0, "silkbindCoef": 0.7721 }
       ]
     },
-    "effect": [
-      {
-        "effect": {
-          "healingBonus": 0.15
-        }
-      }
-    ],
+    "effect": [{ "effect": { "healingBonus": 0.15 } }],
     "modifier": [],
     "tags": ["Heal", "HOT", "MartialArts", "Special", "Umbrella", "SoulshadeUmbrella"]
   },
@@ -43,14 +30,7 @@
       "firstTick": 0,
       "resetOnRefresh": true,
       "action": [
-        {
-          "type": "heal",
-          "phyCoef": 1.69,
-          "phyBonus": 470,
-          "attrBonus": 256,
-          "time": 0,
-          "silkbindCoef": 1.69
-        }
+        { "type": "heal", "phyCoef": 1.69, "phyBonus": 470, "attrBonus": 256, "time": 0, "silkbindCoef": 1.69 }
       ]
     },
     "modifier": [],
@@ -62,13 +42,7 @@
     "description": "Increases damage dealt by 10%.",
     "maxStack": 1,
     "refresh": true,
-    "effect": [
-      {
-        "effect": {
-          "dmgBonus": 0.1
-        }
-      }
-    ]
+    "effect": [{ "effect": { "dmgBonus": 0.1 } }]
   },
   "FloatingGraceDeluge": {
     "name": "Floating Grace - Deluge",
@@ -77,12 +51,6 @@
     "description": "Increases damage dealt by 24%.",
     "maxStack": 1,
     "refresh": true,
-    "effect": [
-      {
-        "effect": {
-          "dmgBonus": 0.24
-        }
-      }
-    ]
+    "effect": [{ "effect": { "dmgBonus": 0.24 } }]
   }
 }

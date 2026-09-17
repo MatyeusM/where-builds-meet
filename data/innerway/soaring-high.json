@@ -10,20 +10,12 @@
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "skillTag",
-                  "value": "Falcon"
-                },
-                {
-                  "target": "skillTag",
-                  "value": "VileCondemned"
-                }
+                { "target": "skillTag", "value": "Falcon" },
+                { "target": "skillTag", "value": "VileCondemned" }
               ]
             }
           ],
-          "effect": {
-            "hpDMGBonus": 0.2
-          }
+          "effect": { "hpDMGBonus": 0.2 }
         }
       ]
     },
@@ -67,71 +59,28 @@
         {
           "target": "self",
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "Falcon"
-            },
-            {
-              "target": "target",
-              "value": "Exhausted"
-            }
+            { "target": "skillTag", "value": "Falcon" },
+            { "target": "target", "value": "Exhausted" }
           ],
-          "action": [
-            {
-              "type": "consume",
-              "target": "self",
-              "value": "VileCondemnedEndCooldown",
-              "stack": "all"
-            }
-          ]
+          "action": [{ "type": "consume", "target": "self", "value": "VileCondemnedEndCooldown", "stack": "all" }]
         }
       ]
     },
     "SoaringHighT4": {
       "effect": [
         {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "VileCondemned"
-            }
-          ],
-          "effect": {
-            "convert": {
-              "from": "finalAffinity",
-              "to": "directCrit",
-              "ratio": 1,
-              "max": 0.12
-            }
-          }
+          "requirement": [{ "target": "skillTag", "value": "VileCondemned" }],
+          "effect": { "convert": { "from": "finalAffinity", "to": "directCrit", "ratio": 1, "max": 0.12 } }
         }
       ]
     },
-    "SoaringHighT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directCrit": 0.046
-          }
-        }
-      ]
-    },
+    "SoaringHighT5": { "effect": [{ "rawStat": { "directCrit": 0.046 } }] },
     "SoaringHighT6": {
       "trigger": [
         {
           "target": "self",
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "VileCondemnedEnd"
-            }
-          ],
-          "action": [
-            {
-              "type": "trigger",
-              "value": "SoaringHighT6Refund"
-            }
-          ]
+          "requirement": [{ "target": "skillTag", "value": "VileCondemnedEnd" }],
+          "action": [{ "type": "trigger", "value": "SoaringHighT6Refund" }]
         }
       ]
     }

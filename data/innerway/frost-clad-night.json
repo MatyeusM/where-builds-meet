@@ -44,58 +44,26 @@
       "effect": [
         {
           "requirement": [
-            {
-              "target": "skillTag",
-              "value": "SnowbreakSpring"
-            },
+            { "target": "skillTag", "value": "SnowbreakSpring" },
             {
               "operator": "or",
               "operand": [
-                {
-                  "target": "self",
-                  "value": "InnerPassion"
-                },
+                { "target": "self", "value": "InnerPassion" },
                 [
-                  {
-                    "target": "self",
-                    "value": "FrostCladNightT6"
-                  },
-                  {
-                    "target": "target",
-                    "value": "Exhausted"
-                  }
+                  { "target": "self", "value": "FrostCladNightT6" },
+                  { "target": "target", "value": "Exhausted" }
                 ]
               ]
             }
           ],
-          "effect": {
-            "hpDMGBonus": 0.4
-          }
+          "effect": { "hpDMGBonus": 0.4 }
         }
       ]
     },
-    "FrostCladNightT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directCrit": 0.046
-          }
-        }
-      ]
-    },
+    "FrostCladNightT5": { "effect": [{ "rawStat": { "directCrit": 0.046 } }] },
     "FrostCladNightT6": {
       "effect": [
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "SnowbreakSpring"
-            }
-          ],
-          "effect": {
-            "dmgBonus": 0.1
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "SnowbreakSpring" }], "effect": { "dmgBonus": 0.1 } }
       ]
     }
   }

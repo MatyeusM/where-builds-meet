@@ -1,4 +1,4 @@
-import { publishNotice, dismissNotice } from "./notices";
+import { nanoid } from "nanoid"
 import {
   useEffect,
   useMemo,
@@ -9,9 +9,10 @@ import {
   type Dispatch,
   type ReactElement,
   type SetStateAction,
-} from "react";
-import { UiIcon } from "./UiIcon";
-import { Modal } from "./ui/Modal";
+} from "react"
+
+import arsenalDefinitions from "../data/arsenal.json"
+import bowRingSetDefinitions from "../data/bow-ring-set.json"
 import {
   GearEditor,
   capAndFilterGearDraft,
@@ -22,10 +23,8 @@ import {
   newDraft,
   normalizeDraftValue,
   type GearDraft,
-} from "./components/GearEditor";
-import arsenalDefinitions from "../data/arsenal.json";
-import bowRingSetDefinitions from "../data/bow-ring-set.json";
-import { innerWayEntriesForTag } from "./data/innerWayDefinitions";
+} from "./components/GearEditor"
+import { innerWayEntriesForTag } from "./data/innerWayDefinitions"
 import {
   defaultBuildSetup,
   duplicateBuildState,
@@ -60,94 +59,123 @@ import {
   type GearItem,
   type GearLevel,
   type GearSlot,
-} from "./gear";
-import type { WeaponId } from "./types";
-import { createOfficialGearBookmarklet } from "./officialGearBookmarklet";
-import { dataText, gameText, t } from "./i18n";
+} from "./gear"
+import { dataText, gameText, t } from "./i18n"
+import { publishNotice, dismissNotice } from "./notices"
+import { createOfficialGearBookmarklet } from "./officialGearBookmarklet"
+import type { WeaponId } from "./types"
+import { Modal } from "./ui/Modal"
+import { UiIcon } from "./UiIcon"
 
 function gearSlotLabel(slot: GearSlot) {
-  return dataText(`system.gearSlot.${slot}`, gearData.slots[slot]);
+  return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
 }
 
 function buildEntryDisplayName(entry: Pick<BuildEntry, "name" | "isDefault">) {
-  return (entry.isDefault ? gameText(entry.name) : entry.name) || "Unnamed Build";
+  return (entry.isDefault ? gameText(entry.name) : entry.name) || "Unnamed Build"
+}
+
+function createBuildId() {
+  return `build-${nanoid()}`
 }
 
 type BuildTabProps = {
-  weapons: [WeaponId, WeaponId];
-  martialArtTags: string[];
-  pathTag?: string;
-  buildGroup: string;
-  graduatedBuildId: string;
-  devMode: boolean;
-  buildState: BuildState;
-  onBuildStateChange: Dispatch<SetStateAction<BuildState>>;
-  onActiveBuildChange: (id: string) => void;
-  onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean;
-};
+  weapons: [WeaponId, WeaponId]
+  martialArtTags: string[]
+  pathTag?: string
+  buildGroup: string
+  graduatedBuildId: string
+  devMode: boolean
+  buildState: BuildState
+  onBuildStateChange: Dispatch<SetStateAction<BuildState>>
+  onActiveBuildChange: (id: string) => void
+  onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean
+}
 
 type BuildManagementProps = {
-  weapons: [WeaponId, WeaponId];
-  martialArtTags: string[];
-  pathTag?: string;
-  inventory: GearInventory;
-  setup: BuildSetup;
-  usageCounts: ReadonlyMap<string, number>;
-  locked: boolean;
-  onInventoryChange: Dispatch<SetStateAction<GearInventory>>;
-  onSetupChange: (setup: BuildSetup) => void;
-};
+  weapons: [WeaponId, WeaponId]
+  martialArtTags: string[]
+  pathTag?: string
+  inventory: GearInventory
+  setup: BuildSetup
+  usageCounts: ReadonlyMap<string, number>
+  locked: boolean
+  onInventoryChange: Dispatch<SetStateAction<GearInventory>>
+  onSetupChange: (setup: BuildSetup) => void
+}
 
-const stackedBuildLayoutQuery = "(max-width: 80em)";
+const stackedBuildLayoutQuery = "(max-width: 80em)"
 
 function subscribeToStackedBuildLayout(callback: () => void) {
-  const query = window.matchMedia(stackedBuildLayoutQuery);
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
+  const query = window.matchMedia(stackedBuildLayoutQuery)
+  query.addEventListener("change", callback)
+  return () => query.removeEventListener("change", callback)
 }
 
 function stackedBuildLayoutSnapshot() {
-  return window.matchMedia(stackedBuildLayoutQuery).matches;
+  return window.matchMedia(stackedBuildLayoutQuery).matches
 }
 
-function ResponsiveBuildOverview({ children, setup }: { children: ReactElement; setup: ReactElement }) {
-  const setupFirst = useSyncExternalStore(subscribeToStackedBuildLayout, stackedBuildLayoutSnapshot, () => false);
-  return <div className="build-overview-grid">{setupFirst ? [setup, children] : [children, setup]}</div>;
+function ResponsiveBuildOverview({ children }: { children: [ReactElement, ReactElement] }) {
+  const setupFirst = useSyncExternalStore(subscribeToStackedBuildLayout, stackedBuildLayoutSnapshot, () => false)
+  const [setup, gear] = children
+  return <div className="build-overview-grid">{setupFirst ? [setup, gear] : [gear, setup]}</div>
+}
+
+const noGearOptions: string[] = []
+
+const attunementOptionCache = new Map<string, string[]>()
+function cachedAttunementOptions(
+  definitionId: string,
+  pathTag: string | undefined,
+  martialArtTags: string[],
+): string[] {
+  const cacheKey = `${definitionId}|${pathTag ?? ""}|${martialArtTags.join(",")}`
+  const cached = attunementOptionCache.get(cacheKey)
+  if (cached) return cached
+  const definition = gearData.gear[definitionId]
+  const options = (definition ? attunementsForGearDefinition(definition) : noGearOptions).filter(key => {
+    const tags = attunementData[key]?.tags ?? []
+    if (tags.includes("Weapon")) return true
+    return (!pathTag || tags.includes(pathTag)) && martialArtTags.some(tag => tags.includes(tag))
+  })
+  attunementOptionCache.set(cacheKey, options)
+  return options
 }
 
 function displayValue(value: number, definition?: { percentage?: boolean }) {
-  return `${formatNumber(definition?.percentage ? value * 100 : value)}${definition?.percentage ? "%" : ""}`;
+  return `${formatNumber(definition?.percentage ? value * 100 : value)}${definition?.percentage ? "%" : ""}`
 }
 
 function itemAttributes(item: GearItem) {
-  const rows: Array<{ label: string; value: string; kind: string }> = [];
-  const baseDefinition = gearData.affixes[item.baseAffix.key];
+  const rows: Array<{ label: string; value: string; kind: string }> = []
+  const baseDefinition = gearData.affixes[item.baseAffix.key]
   rows.push({
     label: gameText(baseDefinition?.name ?? item.baseAffix.key),
     value: displayValue(item.baseAffix.value, baseDefinition),
     kind: "Base affix",
-  });
+  })
   for (const affix of item.additionalAffixes) {
-    const definition = gearData.affixes[affix.key];
+    const definition = gearData.affixes[affix.key]
     rows.push({
       label: gameText(definition?.name ?? affix.key),
       value: displayValue(affix.value, definition),
       kind: "Affix",
-    });
+    })
   }
   if (item.attunement) {
-    const attunementDefinition = attunementData[item.attunement.key];
+    const attunementDefinition = attunementData[item.attunement.key]
     rows.push({
       label: gameText(attunementDefinition?.name ?? item.attunement.key),
       value: displayValue(item.attunement.value, attunementDefinition),
       kind: "Attunement",
-    });
+    })
   }
-  return rows;
+  return rows
 }
 
 function GearBaseStatSummary({ item }: { item: GearItem }) {
-  const stats = gearBaseStats(item);
+  const stats = gearBaseStats(item)
   if (typeof stats.minPhys === "number" && typeof stats.maxPhys === "number") {
     return (
       <span className="gear-base-stats">
@@ -158,7 +186,7 @@ function GearBaseStatSummary({ item }: { item: GearItem }) {
           </strong>
         </span>
       </span>
-    );
+    )
   }
   if (typeof stats.minPhys === "number")
     return (
@@ -167,7 +195,7 @@ function GearBaseStatSummary({ item }: { item: GearItem }) {
           {t("stat.minPhys")} <strong>{formatNumber(stats.minPhys)}</strong>
         </span>
       </span>
-    );
+    )
   if (typeof stats.maxPhys === "number")
     return (
       <span className="gear-base-stats">
@@ -175,7 +203,7 @@ function GearBaseStatSummary({ item }: { item: GearItem }) {
           {t("stat.maxPhys")} <strong>{formatNumber(stats.maxPhys)}</strong>
         </span>
       </span>
-    );
+    )
   if (typeof stats.maxHp === "number" || typeof stats.physicalDefense === "number")
     return (
       <span className="gear-base-stats">
@@ -190,17 +218,17 @@ function GearBaseStatSummary({ item }: { item: GearItem }) {
           </span>
         )}
       </span>
-    );
-  return null;
+    )
+  return null
 }
 
 function GearAttributes({ item, compact = false }: { item: GearItem; compact?: boolean }) {
   return (
     <div className={`gear-attribute-list ${compact ? "compact" : ""}`}>
-      {itemAttributes(item).map((row, index) => (
+      {itemAttributes(item).map(row => (
         <div
           className={`gear-attribute ${row.kind === "Attunement" ? "gear-attunement-attribute" : ""}`}
-          key={`${row.kind}-${row.label}-${index}`}
+          key={`${row.kind}-${row.label}-${row.value}`}
         >
           <span>
             {row.kind === "Attunement" && <small>{t("ui.buildTab.attunement")}</small>}
@@ -210,7 +238,7 @@ function GearAttributes({ item, compact = false }: { item: GearItem; compact?: b
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 function RelayedIndicator({ item }: { item?: GearItem }) {
@@ -222,7 +250,7 @@ function RelayedIndicator({ item }: { item?: GearItem }) {
     >
       <UiIcon name="arrowUp" />
     </span>
-  ) : null;
+  ) : null
 }
 
 export default function BuildTab({
@@ -237,11 +265,12 @@ export default function BuildTab({
   onActiveBuildChange,
   onSelectBuildWeapons,
 }: BuildTabProps) {
-  const [editingBuildId, setEditingBuildId] = useState(buildState.activeBuildId);
-  const [editingName, setEditingName] = useState(false);
-  const [officialImportText, setOfficialImportText] = useState("");
-  const officialImportDialogRef = useRef<HTMLDialogElement>(null);
-  const officialBookmarkletRef = useRef<HTMLAnchorElement>(null);
+  const [editingBuildId, setEditingBuildId] = useState(buildState.activeBuildId)
+  const [editingName, setEditingName] = useState(false)
+  const [officialImportText, setOfficialImportText] = useState("")
+  const officialImportDialogRef = useRef<HTMLDialogElement>(null)
+  const officialBookmarkletRef = useRef<HTMLAnchorElement>(null)
+  const buildNameInputRef = useRef<HTMLInputElement>(null)
   const officialGearBookmarklet = createOfficialGearBookmarklet({
     noGearData: t("ui.buildTab.bookmarkletNoGearData"),
     copyPrompt: t("ui.buildTab.bookmarkletCopyPrompt"),
@@ -249,22 +278,24 @@ export default function BuildTab({
     notLoggedIn: t("ui.buildTab.bookmarkletNotLoggedIn"),
     unreadableData: t("ui.buildTab.bookmarkletUnreadableData"),
     dashboardUnreachable: t("ui.buildTab.bookmarkletDashboardUnreachable"),
-  });
+  })
   useEffect(() => {
-    officialBookmarkletRef.current?.setAttribute("href", officialGearBookmarklet);
-  }, [officialGearBookmarklet]);
+    if (editingName) buildNameInputRef.current?.focus()
+  }, [editingName])
+  useEffect(() => {
+    // React sanitizes javascript: href props; this trusted, generated bookmarklet must be assigned to the DOM.
+    officialBookmarkletRef.current?.setAttribute("href", officialGearBookmarklet)
+  }, [officialGearBookmarklet])
   const listedEntries = buildState.entries.filter(
-    (entry) =>
+    entry =>
       (devMode || !buildEntryIsTestPreset(entry)) &&
       (!entry.isDefault || buildEntryAvailableForPath(entry, buildGroup, weapons)),
-  );
-  const editingEntry = listedEntries.find((entry) => entry.id === editingBuildId) ?? listedEntries[0];
-  useEffect(() => {
-    if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id);
-  }, [editingBuildId, editingEntry]);
+  )
+  const editingEntry = listedEntries.find(entry => entry.id === editingBuildId) ?? listedEntries[0]
+  if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
-    const id = `build-${Date.now()}`;
-    onBuildStateChange((current) => ({
+    const id = createBuildId()
+    onBuildStateChange(current => ({
       ...current,
       entries: [
         ...current.entries,
@@ -276,9 +307,9 @@ export default function BuildTab({
           setup: normalizeBuildSetup(defaultBuildSetup),
         },
       ],
-    }));
-    setEditingBuildId(id);
-    setEditingName(true);
+    }))
+    setEditingBuildId(id)
+    setEditingName(true)
   }
   if (!editingEntry)
     return (
@@ -295,162 +326,159 @@ export default function BuildTab({
           </aside>
         </div>
       </section>
-    );
-  const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons);
-  const setup = resolveBuildSetup(editingEntry);
-  const usageCounts = new Map<string, number>();
+    )
+  const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons)
+  const setup = resolveBuildSetup(editingEntry)
+  const usageCounts = new Map<string, number>()
   for (const entry of buildState.entries) {
-    if (entry.isDefault) continue;
+    if (entry.isDefault) continue
     for (const itemId of new Set(Object.values(entry.equipped ?? {}))) {
-      if (itemId) usageCounts.set(itemId, (usageCounts.get(itemId) ?? 0) + 1);
+      if (itemId) usageCounts.set(itemId, (usageCounts.get(itemId) ?? 0) + 1)
     }
   }
 
   function updateInventory(update: SetStateAction<GearInventory>) {
-    if (editingEntry.isDefault) return;
-    onBuildStateChange((current) => {
-      const currentEntry = current.entries.find((entry) => entry.id === editingEntry.id);
-      if (!currentEntry || currentEntry.isDefault) return current;
-      const currentInventory = { items: current.gearItems, equipped: currentEntry.equipped ?? {} };
-      const nextInventory = typeof update === "function" ? update(currentInventory) : update;
-      const availableItems = new Map(nextInventory.items.map((item) => [item.id, item]));
+    if (editingEntry.isDefault) return
+    onBuildStateChange(current => {
+      const currentEntry = current.entries.find(entry => entry.id === editingEntry.id)
+      if (!currentEntry || currentEntry.isDefault) return current
+      const currentInventory = { items: current.gearItems, equipped: currentEntry.equipped ?? {} }
+      const nextInventory = typeof update === "function" ? update(currentInventory) : update
+      const availableItems = new Map(nextInventory.items.map(item => [item.id, item]))
       return {
         ...current,
         gearItems: nextInventory.items,
-        entries: current.entries.map((entry) => {
-          if (entry.isDefault) return entry;
-          const candidateEquipped = entry.id === editingEntry.id ? nextInventory.equipped : (entry.equipped ?? {});
+        entries: current.entries.map(entry => {
+          if (entry.isDefault) return entry
+          const candidateEquipped = entry.id === editingEntry.id ? nextInventory.equipped : (entry.equipped ?? {})
           const equipped = Object.fromEntries(
-            gearSlots.flatMap((slot) => {
-              const itemId = candidateEquipped[slot];
-              const item = itemId ? availableItems.get(itemId) : undefined;
-              return item && gearItemSupportsSlot(item, slot) ? [[slot, itemId]] : [];
+            gearSlots.flatMap(slot => {
+              const itemId = candidateEquipped[slot]
+              const item = itemId ? availableItems.get(itemId) : undefined
+              return item && gearItemSupportsSlot(item, slot) ? [[slot, itemId]] : []
             }),
-          ) as Partial<Record<GearSlot, string>>;
-          return { ...entry, equipped };
+          ) as Partial<Record<GearSlot, string>>
+          return { ...entry, equipped }
         }),
-      };
-    });
+      }
+    })
   }
 
   function renameBuild(name: string) {
-    onBuildStateChange((current) => ({
+    onBuildStateChange(current => ({
       ...current,
-      entries: current.entries.map((entry) =>
+      entries: current.entries.map(entry =>
         entry.id === editingEntry.id && !entry.isDefault ? { ...entry, name } : entry,
       ),
-    }));
+    }))
   }
 
   function activateBuild() {
-    onActiveBuildChange(editingEntry.id);
+    onActiveBuildChange(editingEntry.id)
   }
 
   function duplicateBuild() {
-    const id = `build-${Date.now()}`;
-    const name = t("ui.buildTab.copyOfNamedBuild", { name: buildEntryDisplayName(editingEntry) });
-    onBuildStateChange((current) => duplicateBuildState(current, editingEntry.id, { id, name }));
-    setEditingBuildId(id);
-    setEditingName(false);
+    const id = createBuildId()
+    const name = t("ui.buildTab.copyOfNamedBuild", { name: buildEntryDisplayName(editingEntry) })
+    onBuildStateChange(current => duplicateBuildState(current, editingEntry.id, { id, name }))
+    setEditingBuildId(id)
+    setEditingName(false)
   }
 
   function updateSetup(nextSetup: BuildSetup) {
-    if (editingEntry.isDefault) return;
-    onBuildStateChange((current) => ({
+    if (editingEntry.isDefault) return
+    onBuildStateChange(current => ({
       ...current,
-      entries: current.entries.map((entry) =>
+      entries: current.entries.map(entry =>
         entry.id === editingEntry.id ? { ...entry, setup: normalizeBuildSetup(nextSetup) } : entry,
       ),
-    }));
+    }))
   }
 
   function removeBuild(id: string) {
-    const entry = buildState.entries.find((candidate) => candidate.id === id);
+    const entry = buildState.entries.find(candidate => candidate.id === id)
     if (
       !entry ||
       entry.isDefault ||
       !window.confirm(t("ui.buildTab.deleteNamedBuildConfirmation", { name: buildEntryDisplayName(entry) }))
     )
-      return;
-    const remaining = listedEntries.filter((candidate) => candidate.id !== id);
-    const fallback = remaining.find((candidate) => candidate.isDefault) ?? remaining[0];
-    onBuildStateChange((current) => ({
-      ...current,
-      entries: current.entries.filter((candidate) => candidate.id !== id),
-    }));
-    if (buildState.activeBuildId === id && fallback) onActiveBuildChange(fallback.id);
-    if (editingBuildId === id) setEditingBuildId(fallback?.id ?? "");
+      return
+    const remaining = listedEntries.filter(candidate => candidate.id !== id)
+    const fallback = remaining.find(candidate => candidate.isDefault) ?? remaining[0]
+    onBuildStateChange(current => ({ ...current, entries: current.entries.filter(candidate => candidate.id !== id) }))
+    if (buildState.activeBuildId === id && fallback) onActiveBuildChange(fallback.id)
+    if (editingBuildId === id) setEditingBuildId(fallback?.id ?? "")
   }
 
   function exportBuilds() {
-    const blob = new Blob([exportBuildState(buildState)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `where-builds-meet-builds-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const blob = new Blob([exportBuildState(buildState)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `where-builds-meet-builds-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
   }
 
   async function importBuilds(event: ChangeEvent<HTMLInputElement>) {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
-    dismissNotice("build-import");
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    input.value = ""
+    if (!file) return
+    dismissNotice("build-import")
     try {
-      const result = mergeImportedBuildState(buildState, JSON.parse(await file.text()) as unknown);
-      onBuildStateChange(result.state);
+      const result = mergeImportedBuildState(buildState, JSON.parse(await file.text()) as unknown)
+      onBuildStateChange(result.state)
       if (result.importedBuildIds[0]) {
-        setEditingBuildId(result.importedBuildIds[0]);
-        setEditingName(false);
+        setEditingBuildId(result.importedBuildIds[0])
+        setEditingName(false)
       }
     } catch (error) {
       publishNotice({
         id: "build-import",
         error: true,
         message: error instanceof Error ? error.message : t("ui.notices.buildImportError"),
-      });
+      })
     }
   }
 
   function openOfficialImport() {
-    setOfficialImportText("");
-    dismissNotice("official-import");
-    officialImportDialogRef.current?.showModal();
+    setOfficialImportText("")
+    dismissNotice("official-import")
+    officialImportDialogRef.current?.showModal()
   }
 
   async function importFromOfficial() {
-    dismissNotice("official-import");
+    dismissNotice("official-import")
     try {
-      const { parseOfficialGearExport } = await import("./officialGearImport");
-      const official = parseOfficialGearExport(JSON.parse(officialImportText), weapons);
-      const result = mergeImportedBuildState(buildState, official.exportValue, { reuseIdenticalGear: true });
+      const { parseOfficialGearExport } = await import("./officialGearImport")
+      const official = parseOfficialGearExport(JSON.parse(officialImportText), weapons)
+      const result = mergeImportedBuildState(buildState, official.exportValue, { reuseIdenticalGear: true })
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)
-        throw new Error(t("ui.buildTab.dashboardValidationError"));
-      if (official.warnings.length) publishNotice({ id: "official-import", message: official.warnings.join("\n") });
-      onBuildStateChange(result.state);
-      setEditingBuildId(result.importedBuildIds[0]);
-      setEditingName(false);
-      officialImportDialogRef.current?.close();
+        throw new Error(t("ui.buildTab.dashboardValidationError"))
+      if (official.warnings.length) publishNotice({ id: "official-import", message: official.warnings.join("\n") })
+      onBuildStateChange(result.state)
+      setEditingBuildId(result.importedBuildIds[0])
+      setEditingName(false)
+      officialImportDialogRef.current?.close()
     } catch (error) {
       publishNotice({
         id: "official-import",
         error: true,
         message: error instanceof Error ? error.message : t("ui.buildTab.dashboardImportError"),
-      });
+      })
     }
   }
 
   function selectBuild(entry: typeof editingEntry) {
     if (!buildEntryAvailableForMartialArts(entry, weapons)) {
-      const entryMartialArts = buildEntryMartialArts(entry);
-      if (entryMartialArts.length !== 2 || !onSelectBuildWeapons([entryMartialArts[0], entryMartialArts[1]])) return;
+      const entryMartialArts = buildEntryMartialArts(entry)
+      if (entryMartialArts.length !== 2 || !onSelectBuildWeapons([entryMartialArts[0], entryMartialArts[1]])) return
     }
-    setEditingBuildId(entry.id);
-    setEditingName(false);
+    setEditingBuildId(entry.id)
+    setEditingName(false)
   }
 
   return (
@@ -464,52 +492,52 @@ export default function BuildTab({
             </button>
           </div>
           <div className="build-list-entries">
-            {listedEntries.map((entry) => {
-              const incompatible = !buildEntryAvailableForMartialArts(entry, weapons);
+            {listedEntries.map(entry => {
+              const incompatible = !buildEntryAvailableForMartialArts(entry, weapons)
               return (
                 <div
                   className={`build-list-item ${entry.id === buildState.activeBuildId ? "active" : ""} ${entry.id === editingBuildId ? "editing" : ""} ${incompatible ? "incompatible" : ""}`}
                   key={entry.id}
-                  role="button"
-                  tabIndex={0}
-                  title={incompatible ? t("ui.buildTab.selectThisBuildAndSwitchToItsMartial") : undefined}
-                  onClick={() => selectBuild(entry)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") selectBuild(entry);
-                  }}
                 >
-                  <span>
-                    <strong>
-                      {entry.id === buildState.activeBuildId && (
-                        <i className="active-build-icon" title={t("ui.buildTab.activeBuild")}>
-                          <UiIcon name="active" />
-                        </i>
+                  <button
+                    className="build-select-button"
+                    type="button"
+                    title={incompatible ? t("ui.buildTab.selectThisBuildAndSwitchToItsMartial") : undefined}
+                    onClick={() => selectBuild(entry)}
+                  >
+                    <span>
+                      <strong>
+                        {entry.id === buildState.activeBuildId && (
+                          <i className="active-build-icon" title={t("ui.buildTab.activeBuild")}>
+                            <UiIcon name="active" />
+                          </i>
+                        )}
+                        {buildEntryDisplayName(entry)}
+                      </strong>
+                      {entry.isDefault && (
+                        <small>
+                          {entry.presetId === graduatedBuildId
+                            ? t("ui.buildTab.graduatePreset")
+                            : t("ui.buildTab.defaultPreset")}
+                        </small>
                       )}
-                      {buildEntryDisplayName(entry)}
-                    </strong>
-                    {entry.isDefault && (
-                      <small>
-                        {entry.presetId === graduatedBuildId
-                          ? t("ui.buildTab.graduatePreset")
-                          : t("ui.buildTab.defaultPreset")}
-                      </small>
-                    )}
-                  </span>
+                    </span>
+                  </button>
                   {!entry.isDefault && (
                     <button
                       className="build-remove-button"
                       type="button"
                       aria-label={t("ui.buildTab.removeNamedBuild", { name: entry.name || t("ui.buildTab.build") })}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeBuild(entry.id);
+                      onClick={event => {
+                        event.stopPropagation()
+                        removeBuild(entry.id)
                       }}
                     >
                       <UiIcon name="close" />
                     </button>
                   )}
                 </div>
-              );
+              )
             })}
           </div>
           <div className="build-transfer-actions">
@@ -541,13 +569,13 @@ export default function BuildTab({
             <div>
               {editingName && !editingEntry.isDefault ? (
                 <input
+                  ref={buildNameInputRef}
                   className="build-name-input"
-                  autoFocus
                   value={editingEntry.name}
-                  onChange={(event) => renameBuild(event.target.value)}
+                  onChange={event => renameBuild(event.target.value)}
                   onBlur={() => setEditingName(false)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") setEditingName(false);
+                  onKeyDown={event => {
+                    if (event.key === "Enter") setEditingName(false)
                   }}
                 />
               ) : (
@@ -614,6 +642,7 @@ export default function BuildTab({
         <ol className="official-import-steps">
           <li>
             {t("ui.buildTab.drag")}{" "}
+            {/* oxlint-disable-next-line jsx-a11y/anchor-is-valid -- The effect assigns the trusted bookmarklet href. */}
             <a className="button button-primary official-bookmarklet" ref={officialBookmarkletRef}>
               {t("ui.buildTab.exportWwmGear")}
             </a>{" "}
@@ -633,9 +662,9 @@ export default function BuildTab({
           aria-label={t("ui.buildTab.officialDashboardGearJson")}
           placeholder={t("ui.buildTab.pasteTheCopiedDashboardJsonHere")}
           value={officialImportText}
-          onChange={(event) => {
-            setOfficialImportText(event.target.value);
-            dismissNotice("official-import");
+          onChange={event => {
+            setOfficialImportText(event.target.value)
+            dismissNotice("official-import")
           }}
         />
         <div className="official-import-actions">
@@ -658,7 +687,7 @@ export default function BuildTab({
         <p className="official-import-privacy">{t("ui.buildTab.theBookmarkRunsOnlyOnTheOfficialDashboard")}</p>
       </dialog>
     </section>
-  );
+  )
 }
 
 function BuildSetupPanel({
@@ -669,17 +698,17 @@ function BuildSetupPanel({
   locked,
   onChange,
 }: {
-  setup: BuildSetup;
-  affixSummary: GearAffixSummary;
-  martialArtTags: string[];
-  pathTag?: string;
-  locked: boolean;
-  onChange: (setup: BuildSetup) => void;
+  setup: BuildSetup
+  affixSummary: GearAffixSummary
+  martialArtTags: string[]
+  pathTag?: string
+  locked: boolean
+  onChange: (setup: BuildSetup) => void
 }) {
-  const lockedTitle = locked ? "Fixed by this default preset" : undefined;
-  const innerWayOptions = innerWayEntriesForTag(pathTag);
-  const availableWeaponSets = availableSetEntriesForTags(weaponSetDefinitions, martialArtTags, pathTag);
-  const availableArmorSets = availableSetEntriesForTags(armorSetDefinitions, martialArtTags, pathTag);
+  const lockedTitle = locked ? "Fixed by this default preset" : undefined
+  const innerWayOptions = innerWayEntriesForTag(pathTag)
+  const availableWeaponSets = availableSetEntriesForTags(weaponSetDefinitions, martialArtTags, pathTag)
+  const availableArmorSets = availableSetEntriesForTags(armorSetDefinitions, martialArtTags, pathTag)
   const setPanel = (
     title: string,
     key: "weaponSets" | "armorSets",
@@ -694,13 +723,13 @@ function BuildSetupPanel({
       </div>
       <div className="gear-set-list">
         {entries.map(([setName, definition]) => {
-          const selectedTier = setup[key][setName] ?? 0;
+          const selectedTier = setup[key][setName] ?? 0
           return (
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
                 <div className="setup-option-list">
-                  {[0, 2, 4].map((tier) => (
+                  {[0, 2, 4].map(tier => (
                     <button
                       className={selectedTier === tier ? "selected" : ""}
                       type="button"
@@ -720,11 +749,11 @@ function BuildSetupPanel({
                 </div>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </section>
-  );
+  )
   return (
     <div className="build-setup-column" aria-label={t("ui.buildTab.buildSetup")}>
       <section className="panel setup-placeholder-panel build-setup-panel">
@@ -741,7 +770,7 @@ function BuildSetupPanel({
                 value={innerWayOptions.some(([value]) => value === row.innerWay) ? row.innerWay : ""}
                 disabled={locked}
                 title={lockedTitle}
-                onChange={(event) =>
+                onChange={event =>
                   onChange({
                     ...setup,
                     innerWays: setup.innerWays.map((item, itemIndex) =>
@@ -766,7 +795,7 @@ function BuildSetupPanel({
                 value={row.tier}
                 disabled={locked}
                 title={lockedTitle}
-                onChange={(event) =>
+                onChange={event =>
                   onChange({
                     ...setup,
                     innerWays: setup.innerWays.map((item, itemIndex) =>
@@ -849,7 +878,7 @@ function BuildSetupPanel({
         )}
       </section>
     </div>
-  );
+  )
 }
 
 function BuildManagement({
@@ -863,112 +892,109 @@ function BuildManagement({
   onInventoryChange,
   onSetupChange,
 }: BuildManagementProps) {
-  const [selectedSlot, setSelectedSlot] = useState<GearSlot>("leftWeapon");
-  const [editing, setEditing] = useState(false);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<GearDraft>(newDraft);
-  const [error, setError] = useState("");
-  const selected = gearDefinitionForSlot(selectedSlot, weapons);
+  const [selectedSlot, setSelectedSlot] = useState<GearSlot>("leftWeapon")
+  const [editing, setEditing] = useState(false)
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [draft, setDraft] = useState<GearDraft>(newDraft)
+  const [error, setError] = useState("")
+  const selected = gearDefinitionForSlot(selectedSlot, weapons)
   const availableItems = inventory.items.filter(
-    (item) => item.definitionId === selected.definitionId && gearItemSupportsSlot(item, selectedSlot),
-  );
+    item => item.definitionId === selected.definitionId && gearItemSupportsSlot(item, selectedSlot),
+  )
   const equippedItems = useMemo(
     () =>
       Object.fromEntries(
-        gearSlots.map((slot) => {
-          const equippedId = inventory.equipped[slot];
+        gearSlots.map(slot => {
+          const equippedId = inventory.equipped[slot]
           const item = inventory.items.find(
-            (candidate) => candidate.id === equippedId && gearItemSupportsSlot(candidate, slot),
-          );
-          return [slot, item && (locked || isGearItemCompatible(item, slot, weapons)) ? item : undefined];
+            candidate => candidate.id === equippedId && gearItemSupportsSlot(candidate, slot),
+          )
+          return [slot, item && (locked || isGearItemCompatible(item, slot, weapons)) ? item : undefined]
         }),
       ) as Partial<Record<GearSlot, GearItem>>,
     [inventory, weapons, locked],
-  );
-  const affixSummary = useMemo(
-    () => summarizeGearAffixes(gearSlots.map((slot) => equippedItems[slot])),
-    [equippedItems],
-  );
+  )
+  const affixSummary = useMemo(() => summarizeGearAffixes(gearSlots.map(slot => equippedItems[slot])), [equippedItems])
 
   function selectSlot(slot: GearSlot) {
-    setSelectedSlot(slot);
-    setEditing(false);
-    setEditingItemId(null);
-    setPendingDeleteId(null);
-    setDraft(newDraft());
-    setError("");
+    setSelectedSlot(slot)
+    setEditing(false)
+    setEditingItemId(null)
+    setPendingDeleteId(null)
+    setDraft(newDraft())
+    setError("")
   }
 
   function beginAdd() {
-    if (editing && editingItemId === null) return;
-    setDraft(newDraft());
-    setError("");
-    setEditingItemId(null);
-    setPendingDeleteId(null);
-    setEditing(true);
+    if (editing && editingItemId === null) return
+    setDraft(newDraft())
+    setError("")
+    setEditingItemId(null)
+    setPendingDeleteId(null)
+    setEditing(true)
   }
 
   function beginEdit(item: GearItem) {
-    setDraft(itemToDraft(item));
-    setError("");
-    setEditingItemId(item.id);
-    setPendingDeleteId(null);
-    setEditing(true);
+    setDraft(itemToDraft(item))
+    setError("")
+    setEditingItemId(item.id)
+    setPendingDeleteId(null)
+    setEditing(true)
   }
 
   function cancelEditing() {
-    setEditing(false);
-    setEditingItemId(null);
-    setError("");
+    setEditing(false)
+    setEditingItemId(null)
+    setError("")
   }
 
   function updateLevel(level: GearLevel) {
-    setDraft((current) => capAndFilterGearDraft({ ...current, level }, selected.definition));
+    setDraft(current => capAndFilterGearDraft({ ...current, level }, selected.definition))
   }
 
   function updateRelayed(relayed: boolean) {
-    setDraft((current) => capAndFilterGearDraft(current, selected.definition, relayed));
+    setDraft(current => capAndFilterGearDraft(current, selected.definition, relayed))
   }
 
   function save() {
-    const definition = selected.definition;
-    if (!definition) return;
-    const baseAffix = normalizeDraftValue(draft.baseAffix, gearData.affixes, "affix", draft.relayed, draft.level);
-    const additionalAffixDrafts = draft.additionalAffixes.filter((affix) => affix.key || affix.value.trim());
-    const additionalAffixes = additionalAffixDrafts.map((affix) =>
+    const definition = selected.definition
+    if (!definition) return
+    const baseAffix = normalizeDraftValue(draft.baseAffix, gearData.affixes, "affix", draft.relayed, draft.level)
+    const additionalAffixDrafts = draft.additionalAffixes.filter(affix => affix.key || affix.value.trim())
+    const additionalAffixes = additionalAffixDrafts.map(affix =>
       normalizeDraftValue(affix, gearData.affixes, "affix", draft.relayed, draft.level),
-    );
-    const hasAttunementDraft = Boolean(draft.attunement.key || draft.attunement.value.trim());
+    )
+    const hasAttunementDraft = Boolean(draft.attunement.key || draft.attunement.value.trim())
     const attunement = hasAttunementDraft
       ? normalizeDraftValue(draft.attunement, attunementData, "attunement", draft.relayed, draft.level)
-      : undefined;
+      : undefined
     if (!baseAffix) {
-      setError(t("ui.buildTab.baseAffixValueError"));
-      return;
+      setError(t("ui.buildTab.baseAffixValueError"))
+      return
     }
     if (!baseAffixOptions.includes(baseAffix.key)) {
-      setError(t("ui.buildTab.baseAffixAvailabilityError"));
-      return;
+      setError(t("ui.buildTab.baseAffixAvailabilityError"))
+      return
     }
-    if (additionalAffixes.some((affix) => !affix) || (hasAttunementDraft && !attunement)) {
-      setError(t("ui.buildTab.optionalAttributeError"));
-      return;
+    if (additionalAffixes.some(affix => !affix) || (hasAttunementDraft && !attunement)) {
+      setError(t("ui.buildTab.optionalAttributeError"))
+      return
     }
     if (attunement && !attunementOptions.includes(attunement.key)) {
-      setError(t("ui.buildTab.attunementAvailabilityError"));
-      return;
+      setError(t("ui.buildTab.attunementAvailabilityError"))
+      return
     }
     const normalizedAdditional = additionalAffixes.filter((affix): affix is { key: string; value: number } =>
       Boolean(affix),
-    );
-    if (normalizedAdditional.some((affix) => !additionalAffixOptions.includes(affix.key))) {
-      setError(t("ui.buildTab.additionalAffixAvailabilityError"));
-      return;
+    )
+    if (normalizedAdditional.some(affix => !additionalAffixOptions.includes(affix.key))) {
+      setError(t("ui.buildTab.additionalAffixAvailabilityError"))
+      return
     }
-    if (new Set(normalizedAdditional.map((affix) => affix.key)).size !== normalizedAdditional.length) {
-      setError(t("ui.buildTab.duplicateAffixError"));
-      return;
+    if (new Set(normalizedAdditional.map(affix => affix.key)).size !== normalizedAdditional.length) {
+      setError(t("ui.buildTab.duplicateAffixError"))
+      return
     }
     const item: GearItem = {
       id: editingItemId ?? createGearId(),
@@ -980,78 +1006,72 @@ function BuildManagement({
       baseAffix,
       additionalAffixes: normalizedAdditional,
       ...(attunement ? { attunement } : {}),
-    };
-    onInventoryChange((current) => ({
+    }
+    onInventoryChange(current => ({
       ...current,
       items: editingItemId
-        ? current.items.map((candidate) => (candidate.id === editingItemId ? item : candidate))
+        ? current.items.map(candidate => (candidate.id === editingItemId ? item : candidate))
         : [...current.items, item],
-    }));
-    setEditing(false);
-    setEditingItemId(null);
-    setDraft(newDraft());
-    setError("");
+    }))
+    setEditing(false)
+    setEditingItemId(null)
+    setDraft(newDraft())
+    setError("")
   }
 
   function equip(item: GearItem) {
-    setPendingDeleteId(null);
-    onInventoryChange((current) => ({
+    setPendingDeleteId(null)
+    onInventoryChange(current => ({
       ...current,
       equipped: {
         ...Object.fromEntries(Object.entries(current.equipped).filter(([, itemId]) => itemId !== item.id)),
         [selectedSlot]: item.id,
       },
-    }));
+    }))
   }
 
   function remove(item: GearItem) {
     if (pendingDeleteId !== item.id) {
-      setPendingDeleteId(item.id);
-      return;
+      setPendingDeleteId(item.id)
+      return
     }
-    onInventoryChange((current) => ({
-      items: current.items.filter((candidate) => candidate.id !== item.id),
+    onInventoryChange(current => ({
+      items: current.items.filter(candidate => candidate.id !== item.id),
       equipped: Object.fromEntries(Object.entries(current.equipped).filter(([, itemId]) => itemId !== item.id)),
-    }));
-    setPendingDeleteId(null);
+    }))
+    setPendingDeleteId(null)
     if (editingItemId === item.id) {
-      setEditing(false);
-      setEditingItemId(null);
-      setDraft(newDraft());
-      setError("");
+      setEditing(false)
+      setEditingItemId(null)
+      setDraft(newDraft())
+      setError("")
     }
   }
 
   const baseAffixOptions = selected.definition
     ? affixOptionsForGearDefinition(selected.definition, "baseAffixes", draft.level, draft.relayed)
-    : [];
+    : noGearOptions
   const additionalAffixOptions = selected.definition
     ? affixOptionsForGearDefinition(selected.definition, "additionalAffixes", draft.level, draft.relayed)
-    : [];
-  const attunementOptions = (selected.definition ? attunementsForGearDefinition(selected.definition) : []).filter(
-    (key) => {
-      const tags = attunementData[key]?.tags ?? [];
-      if (tags.includes("Weapon")) return true;
-      return (!pathTag || tags.includes(pathTag)) && martialArtTags.some((tag) => tags.includes(tag));
-    },
-  );
-  const selectedAdditionalKeys = new Set(draft.additionalAffixes.map((affix) => affix.key).filter(Boolean));
+    : noGearOptions
+  const attunementOptions = cachedAttunementOptions(selected.definitionId, pathTag, martialArtTags)
+  const selectedAdditionalKeys = useMemo(
+    () => new Set(draft.additionalAffixes.map(affix => affix.key).filter(Boolean)),
+    [draft.additionalAffixes],
+  )
 
   return (
     <div className="build-page">
-      <ResponsiveBuildOverview
-        setup={
-          <BuildSetupPanel
-            key="setup"
-            setup={setup}
-            affixSummary={affixSummary}
-            martialArtTags={martialArtTags}
-            pathTag={pathTag}
-            locked={locked}
-            onChange={onSetupChange}
-          />
-        }
-      >
+      <ResponsiveBuildOverview>
+        <BuildSetupPanel
+          key="setup"
+          setup={setup}
+          affixSummary={affixSummary}
+          martialArtTags={martialArtTags}
+          pathTag={pathTag}
+          locked={locked}
+          onChange={onSetupChange}
+        />
         <div key="gear" className="build-management-grid">
           <section className="panel build-equipped-panel">
             <div className="panel-heading">
@@ -1065,11 +1085,11 @@ function BuildManagement({
               </div>
             </div>
             <div className="equipped-gear-grid">
-              {gearSlots.map((slot) => {
-                const item = equippedItems[slot];
+              {gearSlots.map(slot => {
+                const item = equippedItems[slot]
                 const definition = item
                   ? gearData.gear[item.definitionId]
-                  : gearDefinitionForSlot(slot, weapons).definition;
+                  : gearDefinitionForSlot(slot, weapons).definition
                 return (
                   <button
                     className={`equipped-gear-card ${!locked && selectedSlot === slot ? "selected" : ""}`}
@@ -1094,7 +1114,7 @@ function BuildManagement({
                       <span className="gear-empty">{t("ui.buildTab.noGearEquipped")}</span>
                     )}
                   </button>
-                );
+                )
               })}
             </div>
           </section>
@@ -1111,7 +1131,7 @@ function BuildManagement({
                 </div>
               </div>
               <div className="available-gear-grid">
-                {availableItems.map((item) => (
+                {availableItems.map(item => (
                   <article
                     className={`available-gear-card ${inventory.equipped[selectedSlot] === item.id ? "equipped" : ""} ${item.relayed ? "relayed" : ""}`}
                     key={item.id}
@@ -1216,5 +1236,5 @@ function BuildManagement({
         </div>
       </ResponsiveBuildOverview>
     </div>
-  );
+  )
 }

@@ -6,29 +6,13 @@
   "relayed": true,
   "setup": {
     "innerWays": [
-      {
-        "innerWay": "RoyalRemedy",
-        "tier": "T5"
-      },
-      {
-        "innerWay": "FuryHarvest",
-        "tier": "T6"
-      },
-      {
-        "innerWay": "MoraleChant",
-        "tier": "T6"
-      },
-      {
-        "innerWay": "SeasonalEdge",
-        "tier": "T6"
-      }
+      { "innerWay": "RoyalRemedy", "tier": "T5" },
+      { "innerWay": "FuryHarvest", "tier": "T6" },
+      { "innerWay": "MoraleChant", "tier": "T6" },
+      { "innerWay": "SeasonalEdge", "tier": "T6" }
     ],
-    "weaponSets": {
-      "Hawkwing": 4
-    },
-    "armorSets": {
-      "Moonflare": 0
-    },
+    "weaponSets": { "Hawkwing": 4 },
+    "armorSets": { "Moonflare": 0 },
     "bowRingSet": "Critical",
     "arsenal": "Silkbind"
   },
@@ -37,249 +21,105 @@
       "definitionId": "fan",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "maxPhys",
-        "value": 73.132
-      },
+      "baseAffix": { "key": "maxPhys", "value": 73.132 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "power",
-          "value": 46.436
-        },
-        {
-          "key": "affinity",
-          "value": 0.04136
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "power", "value": 46.436 },
+        { "key": "affinity", "value": 0.04136 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "rightWeapon": {
       "definitionId": "umbrella",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "maxPhys",
-        "value": 73.132
-      },
+      "baseAffix": { "key": "maxPhys", "value": 73.132 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "agility",
-          "value": 46.436
-        },
-        {
-          "key": "affinity",
-          "value": 0.04136
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "agility", "value": 46.436 },
+        { "key": "affinity", "value": 0.04136 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "disc": {
       "definitionId": "disc",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "maxPhys",
-        "value": 73.132
-      },
+      "baseAffix": { "key": "maxPhys", "value": 73.132 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "agility",
-          "value": 46.436
-        },
-        {
-          "key": "power",
-          "value": 46.436
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "agility", "value": 46.436 },
+        { "key": "power", "value": 46.436 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "pendant": {
       "definitionId": "pendant",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "maxPhys",
-        "value": 73.132
-      },
+      "baseAffix": { "key": "maxPhys", "value": 73.132 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "agility",
-          "value": 46.436
-        },
-        {
-          "key": "crit",
-          "value": 0.0846
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "agility", "value": 46.436 },
+        { "key": "crit", "value": 0.0846 }
       ],
-      "attunement": {
-        "key": "physicalPenetration",
-        "value": 11
-      }
+      "attunement": { "key": "physicalPenetration", "value": 11 }
     },
     "helmet": {
       "definitionId": "helmet",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "affinity",
-        "value": 0.04136
-      },
+      "baseAffix": { "key": "affinity", "value": 0.04136 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "singleTargetMysticDmgBoost",
-          "value": 0.09212
-        },
-        {
-          "key": "power",
-          "value": 46.436
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "singleTargetMysticDmgBoost", "value": 0.09212 },
+        { "key": "power", "value": 46.436 }
       ],
-      "attunement": {
-        "key": "panaceaMartialHealingBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "panaceaMartialHealingBoost", "value": 0.06 }
     },
     "chestpiece": {
       "definitionId": "chestpiece",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "affinity",
-        "value": 0.04136
-      },
+      "baseAffix": { "key": "affinity", "value": 0.04136 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "singleTargetMysticDmgBoost",
-          "value": 0.09212
-        },
-        {
-          "key": "power",
-          "value": 46.436
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "singleTargetMysticDmgBoost", "value": 0.09212 },
+        { "key": "power", "value": 46.436 }
       ],
-      "attunement": {
-        "key": "panaceaMartialHealingBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "panaceaMartialHealingBoost", "value": 0.06 }
     },
     "greaves": {
       "definitionId": "greaves",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "power",
-        "value": 46.436
-      },
+      "baseAffix": { "key": "power", "value": 46.436 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "vsBossDmg",
-          "value": 0.03008
-        },
-        {
-          "key": "affinity",
-          "value": 0.04136
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "vsBossDmg", "value": 0.03008 },
+        { "key": "affinity", "value": 0.04136 }
       ],
-      "attunement": {
-        "key": "panaceaMartialHealingBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "panaceaMartialHealingBoost", "value": 0.06 }
     },
     "bracer": {
       "definitionId": "bracer",
       "level": 96,
       "rarity": "Gold",
-      "baseAffix": {
-        "key": "affinity",
-        "value": 0.04136
-      },
+      "baseAffix": { "key": "affinity", "value": 0.04136 },
       "additionalAffixes": [
-        {
-          "key": "maxPhys",
-          "value": 73.132
-        },
-        {
-          "key": "momentum",
-          "value": 46.436
-        },
-        {
-          "key": "vsBossDmg",
-          "value": 0.03008
-        },
-        {
-          "key": "affinity",
-          "value": 0.04136
-        }
+        { "key": "maxPhys", "value": 73.132 },
+        { "key": "momentum", "value": 46.436 },
+        { "key": "vsBossDmg", "value": 0.03008 },
+        { "key": "affinity", "value": 0.04136 }
       ],
-      "attunement": {
-        "key": "panaceaMartialHealingBoost",
-        "value": 0.06
-      }
+      "attunement": { "key": "panaceaMartialHealingBoost", "value": 0.06 }
     }
   }
 }

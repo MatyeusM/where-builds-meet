@@ -1,23 +1,24 @@
-import { describe, expect, it } from "vitest";
-import { calculateHealingAttackSnapshot, calculateHealingBreakdown } from "../src/calculations/healing";
+import { describe, expect, it } from "vitest"
+
+import mysticBuffs from "../data/buff/mystic.json"
+import delugeBuffs from "../data/buff/silkbind-deluge.json"
+import royalRemedy from "../data/innerway/royal-remedy.json"
+import mysticSkills from "../data/skill/mystic.json"
+import panaceaFanSkills from "../data/skill/panacea-fan.json"
+import soulshadeUmbrellaSkills from "../data/skill/soulshade-umbrella.json"
+import { calculateDerivedStats } from "../src/calculations/effectiveStats"
+import { calculateHealingAttackSnapshot, calculateHealingBreakdown } from "../src/calculations/healing"
 import {
   calculateRotationBaseline,
   calculateRotationSimulation,
   calculateSimulatedRotationRun,
-} from "../src/calculations/rotationCalculator";
-import { buildRotationTimeline, mergeCalculatedTimelineState } from "../src/calculations/rotationTimeline";
-import { calculateDerivedStats } from "../src/calculations/effectiveStats";
-import { emptyStats } from "../src/data/statDefinitions";
-import royalRemedy from "../data/innerway/royal-remedy.json";
-import panaceaFanSkills from "../data/skill/panacea-fan.json";
-import soulshadeUmbrellaSkills from "../data/skill/soulshade-umbrella.json";
-import delugeBuffs from "../data/buff/silkbind-deluge.json";
-import mysticSkills from "../data/skill/mystic.json";
-import mysticBuffs from "../data/buff/mystic.json";
+} from "../src/calculations/rotationCalculator"
+import { buildRotationTimeline, mergeCalculatedTimelineState } from "../src/calculations/rotationTimeline"
+import { emptyStats } from "../src/data/statDefinitions"
 
 // Ported from script/probe/check-healing.mjs. The probe stops at the first
 // failure, so this port keeps the same fail-fast order inside one test.
-const closeTo = (actual: number, expected: number) => Math.abs(actual - expected) < 1e-8;
+const closeTo = (actual: number, expected: number) => Math.abs(actual - expected) < 1e-8
 
 describe("healing", () => {
   it("verifies healing formula, self-HP restoration, World to Sword overheal, periodic healing, Royal Remedy, totals, HPS, and breakdown sorting", () => {
@@ -33,7 +34,7 @@ describe("healing", () => {
       precision: 1,
       crit: 0.2,
       directCrit: 0.1,
-    };
+    }
     const enemy = {
       name: "Healing probe",
       level: 96,
@@ -44,15 +45,10 @@ describe("healing", () => {
       silkbindResistance: 0,
       bamboocutResistance: 0,
       judgementResistance: 0,
-    };
-    const derivedStats = calculateDerivedStats(stats, 0);
-    const martialStats = {
-      ...stats,
-      allMartialArts: 0.05,
-      fanDmgBoost: 0.06,
-      umbrellaDmgBoost: 0.07,
-    };
-    const action = { type: "heal", phyCoef: 1, silkbindCoef: 1, phyBonus: 10, attrBonus: 20 };
+    }
+    const derivedStats = calculateDerivedStats(stats, 0)
+    const martialStats = { ...stats, allMartialArts: 0.05, fanDmgBoost: 0.06, umbrellaDmgBoost: 0.07 }
+    const action = { type: "heal", phyCoef: 1, silkbindCoef: 1, phyBonus: 10, attrBonus: 20 }
     const context = {
       stats: martialStats,
       derivedStats: calculateDerivedStats(martialStats, 0),
@@ -62,101 +58,97 @@ describe("healing", () => {
       buffs: [],
       effects: [{ physicalPenetration: 10 }, { healingBonus: 0.1 }, { criticalHealingBonus: 0.2 }],
       attunement: { physicalPenetration: 20, panaceaMartialHealingBoost: 0.1 },
-    };
-    const healing = calculateHealingBreakdown(action, context);
-    const physicalOnlyHealing = calculateHealingBreakdown({ type: "heal", phyCoef: 1 }, context);
-    const silkbindOnlyHealing = calculateHealingBreakdown({ type: "heal", silkbindCoef: 1 }, context);
+    }
+    const healing = calculateHealingBreakdown(action, context)
+    const physicalOnlyHealing = calculateHealingBreakdown({ type: "heal", phyCoef: 1 }, context)
+    const silkbindOnlyHealing = calculateHealingBreakdown({ type: "heal", silkbindCoef: 1 }, context)
     const combinedHealing = calculateHealingBreakdown(
       { type: "heal", phyCoef: 1, silkbindCoef: 2, attrCoef: 100 },
       context,
-    );
+    )
     expect(
       closeTo(combinedHealing.total, physicalOnlyHealing.total + 2 * silkbindOnlyHealing.total),
       "Healing must use independent Physical and Silkbind coefficients and ignore attrCoef.",
-    ).toBeTruthy();
-    const physical = 110 * 1.15;
-    const silkbind = 70 * 1.05 * 1.1;
-    const criticalRate = 0.3;
-    const expected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.21;
+    ).toBeTruthy()
+    const physical = 110 * 1.15
+    const silkbind = 70 * 1.05 * 1.1
+    const criticalRate = 0.3
+    const expected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.21
     expect(
       closeTo(healing.total, expected),
       `Healing must apply both attack channels, penetration, general healing, All Martial Arts, and matching Art of Fan bonuses (${JSON.stringify(healing)} !== ${expected}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     const panaceaHeavyAttunement = calculateHealingBreakdown(action, {
       ...context,
       attunement: { ...context.attunement, panaceaHealingSkillBoost: 0.06 },
-    });
+    })
     expect(
       closeTo(panaceaHeavyAttunement.total, expected * (1.27 / 1.21)),
       "Panacea Fan Healing Skill Boost must add General Healing Bonus to Fan Heavy healing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const panaceaSpecialAttunement = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Fan", "PanaceaFan"],
-      attunement: {
-        ...context.attunement,
-        panaceaSpecialHealingBoost: 0.06,
-        panaceaHealingSkillBoost: 0.06,
-      },
-    });
+      attunement: { ...context.attunement, panaceaSpecialHealingBoost: 0.06, panaceaHealingSkillBoost: 0.06 },
+    })
     const panaceaSpecialBaseline = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Fan", "PanaceaFan"],
-    });
+    })
     expect(
       closeTo(panaceaSpecialAttunement.total / panaceaSpecialBaseline.total, 1.27 / 1.21),
       "Panacea Fan Special Skill Healing Boost must match Special healing while the Heavy-only boost remains inactive.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const soulshadeSpecialBaseline = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Umbrella", "SoulshadeUmbrella"],
       attunement: {},
-    });
+    })
     const soulshadeSpecialAttunement = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Umbrella", "SoulshadeUmbrella"],
       attunement: { soulshadeSpecialHealingBoost: 0.06 },
-    });
+    })
     expect(
       closeTo(soulshadeSpecialAttunement.total / soulshadeSpecialBaseline.total, 1.28 / 1.22),
       "Soulshade Umbrella Special Skill Healing Boost must add General Healing Bonus only to matching Special healing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const silkbindPenetrationHealing = calculateHealingBreakdown(action, {
       ...context,
       stats: { ...context.stats, silkbindPenetration: context.stats.silkbindPenetration + 10 },
-    });
+    })
     const formlessPenetrationHealing = calculateHealingBreakdown(action, {
       ...context,
       attunement: { ...context.attunement, formlessPenetration: 10 },
-    });
-    const expectedSilkbindPenetrationIncrease = 70 * 0.05 * 1.1 * (1 + criticalRate * 0.7) * 1.21;
+    })
+    const expectedSilkbindPenetrationIncrease = 70 * 0.05 * 1.1 * (1 + criticalRate * 0.7) * 1.21
     expect(
       closeTo(silkbindPenetrationHealing.total - healing.total, expectedSilkbindPenetrationIncrease) &&
         closeTo(formlessPenetrationHealing.total - healing.total, expectedSilkbindPenetrationIncrease),
       "Native Silkbind Penetration and Formless Penetration converted by a Silkbind path must boost Silkbind healing equally.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const nonSilkbindFormlessHealing = calculateHealingBreakdown(action, {
       ...context,
       weapons: ["thundercry", "stormbreaker"],
       attunement: { ...context.attunement, formlessPenetration: 10 },
-    });
+    })
     expect(
       closeTo(nonSilkbindFormlessHealing.total, healing.total),
       "Formless Penetration converted to a non-Silkbind primary attribute must not boost Silkbind healing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const umbrellaHealing = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Umbrella", "SoulshadeUmbrella"],
-    });
-    const umbrellaExpected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.22;
+    })
+    const umbrellaExpected = (physical + silkbind) * (1 + criticalRate * 0.7) * 1.22
     expect(
       closeTo(umbrellaHealing.total, umbrellaExpected),
       `Umbrella healing must apply All Martial Arts and Art of Umbrella instead of Art of Fan (${JSON.stringify(umbrellaHealing)} !== ${umbrellaExpected}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       closeTo(healing.criticalRate, criticalRate) && closeTo(healing.normalRate, 1 - criticalRate),
       "Healing must resolve only Normal and Critical outcomes using Critical Rate times Effective Precision.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const healingTimeline = {
       rotation: {
@@ -189,7 +181,7 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    };
+    }
     const baselineInput = {
       timeline: healingTimeline,
       startAnchor: { rowId: "rotation-0" },
@@ -202,56 +194,48 @@ describe("healing", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    };
-    const result = calculateRotationBaseline(baselineInput);
+    }
+    const result = calculateRotationBaseline(baselineInput)
     const royalRemedyResult = calculateRotationBaseline({
       ...baselineInput,
       timeline: {
         ...healingTimeline,
         innerWayConditions: ["RoyalRemedyT0"],
-        innerWayRules: [
-          {
-            ...royalRemedy.effect.RoyalRemedyT0.effect[0],
-            source: "RoyalRemedy",
-            tier: 0,
-          },
-        ],
+        innerWayRules: [{ ...royalRemedy.effect.RoyalRemedyT0.effect[0], source: "RoyalRemedy", tier: 0 }],
       },
-    });
+    })
     const summedHealing = Object.values(result.actionBreakdowns).reduce(
       (total, breakdown) => total + (breakdown.healing?.total ?? 0),
       0,
-    );
+    )
     expect(
       result.metrics.totalDamage === 0 && closeTo(result.metrics.totalHealing, summedHealing),
       "Heal actions must contribute to healing without contributing to damage.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       closeTo(result.metrics.hps, result.metrics.totalHealing / result.duration),
       "HPS must use the rotation duration shared with DPS.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       result.metrics.breakdown.skills.length === 0 &&
-        result.metrics.breakdown.healingSkills.map((row) => row.id).join(",") === "LargerHeal,SmallerHeal",
+        result.metrics.breakdown.healingSkills.map(row => row.id).join(",") === "LargerHeal,SmallerHeal",
       "Healing skills must be excluded from damage rows and sorted independently by healing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
-      result.metrics.breakdown.healingSkills.every(
-        (row) => closeTo(row.normalRate, 70) && closeTo(row.criticalRate, 30),
-      ),
+      result.metrics.breakdown.healingSkills.every(row => closeTo(row.normalRate, 70) && closeTo(row.criticalRate, 30)),
       "Healing skill rows must expose their average Normal and Critical outcome rates.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
-      result.metrics.breakdown.healingCasts.map((row) => row.skillId).join(",") === "LargerHeal,SmallerHeal",
+      result.metrics.breakdown.healingCasts.map(row => row.skillId).join(",") === "LargerHeal,SmallerHeal",
       "Healing casts must be grouped and sorted independently by average HPS.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const healingBySkill = (calculation, skillId) =>
-      calculation.metrics.breakdown.healingSkills.find((row) => row.id === skillId)?.healing ?? 0;
+      calculation.metrics.breakdown.healingSkills.find(row => row.id === skillId)?.healing ?? 0
     expect(
       closeTo(healingBySkill(royalRemedyResult, "SmallerHeal"), healingBySkill(result, "SmallerHeal") * 1.1) &&
         closeTo(healingBySkill(royalRemedyResult, "LargerHeal"), healingBySkill(result, "LargerHeal")),
       "Royal Remedy T0 must increase Cloudburst Healing by 10% without affecting other healing skills.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const priorityResult = calculateRotationSimulation({
       ...baselineInput,
@@ -259,57 +243,55 @@ describe("healing", () => {
         { label: "Smaller healing increase", stats: { ...stats, allMartialArts: 0.05 } },
         { label: "Larger healing increase", stats: { ...stats, allMartialArts: 0.1 } },
       ],
-    });
+    })
     expect(
-      priorityResult.metrics.statPriority.map((row) => row.label).join(",") ===
+      priorityResult.metrics.statPriority.map(row => row.label).join(",") ===
         "Larger healing increase,Smaller healing increase" &&
         priorityResult.metrics.statPriority.every(
-          (row) => row.dpsDifference === 0 && row.hpsDifference > 0 && row.healingIncrease > 0,
+          row => row.dpsDifference === 0 && row.hpsDifference > 0 && row.healingIncrease > 0,
         ),
       "Healing stat-priority variants must expose HPS changes and use HPS to break equal-DPS ties.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const attunementPriorityResult = calculateRotationSimulation({
       ...baselineInput,
       attunementPriority: [
         { label: "Smaller healing attunement", attunement: { panaceaMartialHealingBoost: 0.05 } },
         { label: "Larger healing attunement", attunement: { panaceaMartialHealingBoost: 0.1 } },
       ],
-    });
+    })
     expect(
-      attunementPriorityResult.metrics.attunementPriority.map((row) => row.label).join(",") ===
+      attunementPriorityResult.metrics.attunementPriority.map(row => row.label).join(",") ===
         "Larger healing attunement,Smaller healing attunement" &&
         attunementPriorityResult.metrics.attunementPriority.every(
-          (row) => row.dpsDifference === 0 && row.hpsDifference > 0 && row.healingIncrease > 0,
+          row => row.dpsDifference === 0 && row.hpsDifference > 0 && row.healingIncrease > 0,
         ),
       "Healing Attunement variants must expose HPS changes and use HPS to break equal-DPS ties.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const setupComparisonResult = calculateRotationSimulation({
       ...baselineInput,
-      setupComparisons: {
-        healingSetup: [{ label: "Healing setup", attunement: { panaceaMartialHealingBoost: 0.1 } }],
-      },
-    });
-    const healingSetup = setupComparisonResult.metrics.setupComparisons.healingSetup[0];
+      setupComparisons: { healingSetup: [{ label: "Healing setup", attunement: { panaceaMartialHealingBoost: 0.1 } }] },
+    })
+    const healingSetup = setupComparisonResult.metrics.setupComparisons.healingSetup[0]
     expect(
       healingSetup.dpsDifference === 0 && healingSetup.hpsDifference > 0 && healingSetup.healingIncrease > 0,
       "Setup comparisons must expose HPS changes independently from DPS changes.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const innerWayPriorityResult = calculateRotationSimulation({
       ...baselineInput,
       innerWayPriority: [
         { label: "Larger healing increase", stats: { ...stats, allMartialArts: 0.1 } },
         { label: "Smaller healing increase", stats: { ...stats, allMartialArts: 0.05 } },
       ],
-    });
+    })
     expect(
-      innerWayPriorityResult.metrics.innerWayPriority.map((row) => row.label).join(",") ===
+      innerWayPriorityResult.metrics.innerWayPriority.map(row => row.label).join(",") ===
         "Smaller healing increase,Larger healing increase" &&
-        innerWayPriorityResult.metrics.innerWayPriority.every((row) => row.hpsDifference > 0),
+        innerWayPriorityResult.metrics.innerWayPriority.every(row => row.hpsDifference > 0),
       "Healing Inner Way variants must expose HPS changes and use ascending HPS for equal-DPS removal ties.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
-    const royalRemedyT1 = royalRemedy.effect.RoyalRemedyT1.trigger[0];
-    const fanQVitality = (skillId) => {
+    const royalRemedyT1 = royalRemedy.effect.RoyalRemedyT1.trigger[0]
+    const fanQVitality = skillId => {
       const timeline = buildRotationTimeline({
         rotation: {
           name: `${skillId} Royal Remedy T1 probe`,
@@ -341,13 +323,13 @@ describe("healing", () => {
         weapons: ["panaceaFan", "soulshadeUmbrella"],
         initialResources: { Vitality: 0 },
         resourceMaximums: { Vitality: 100 },
-      });
-      return timeline.find((row) => row.step.type === "skill" && row.step.skill === "Observe")?.resources.Vitality;
-    };
+      })
+      return timeline.find(row => row.step.type === "skill" && row.step.skill === "Observe")?.resources.Vitality
+    }
     expect(
       fanQVitality("CloudburstHealing") === 14 && fanQVitality("CloudburstHealingCancel") === 14,
       "Royal Remedy T1 must restore two Vitality for each of all seven Fan Q healing ticks.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const morningDrizzleTimeline = buildRotationTimeline({
       rotation: {
@@ -357,10 +339,7 @@ describe("healing", () => {
           { type: "skill", skill: "Wait" },
         ],
       },
-      skills: {
-        MorningDrizzle: panaceaFanSkills.MorningDrizzle,
-        Wait: { name: "Wait", castTime: 6, action: [] },
-      },
+      skills: { MorningDrizzle: panaceaFanSkills.MorningDrizzle, Wait: { name: "Wait", castTime: 6, action: [] } },
       eventDefinitions: {},
       dots: {},
       effectDefinitions: { MorningDrizzle: delugeBuffs.MorningDrizzle },
@@ -368,14 +347,14 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    });
+    })
     const morningDrizzleTicks = morningDrizzleTimeline
-      .filter((row) => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle")
-      .map((row) => row.startTime);
+      .filter(row => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle")
+      .map(row => row.startTime)
     expect(
       morningDrizzleTicks.length === 6 && morningDrizzleTicks.every((time, index) => closeTo(time, 0.55 + index)),
       `Morning Drizzle must heal immediately on application and once per second through 5 seconds (${morningDrizzleTicks.join(", ")}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     const refreshedMorningDrizzleTimeline = buildRotationTimeline({
       rotation: {
         name: "Morning Drizzle refresh probe",
@@ -385,10 +364,7 @@ describe("healing", () => {
           { type: "skill", skill: "Wait" },
         ],
       },
-      skills: {
-        MorningDrizzle: panaceaFanSkills.MorningDrizzle,
-        Wait: { name: "Wait", castTime: 6, action: [] },
-      },
+      skills: { MorningDrizzle: panaceaFanSkills.MorningDrizzle, Wait: { name: "Wait", castTime: 6, action: [] } },
       eventDefinitions: {},
       dots: {},
       effectDefinitions: { MorningDrizzle: delugeBuffs.MorningDrizzle },
@@ -396,16 +372,16 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    });
+    })
     const refreshedMorningDrizzleTicks = refreshedMorningDrizzleTimeline
-      .filter((row) => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle")
-      .map((row) => row.startTime);
+      .filter(row => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle")
+      .map(row => row.startTime)
     expect(
       refreshedMorningDrizzleTicks.length === 7 &&
         closeTo(refreshedMorningDrizzleTicks[0], 0.55) &&
         refreshedMorningDrizzleTicks.slice(1).every((time, index) => closeTo(time, 1.3125 + index)),
       `Refreshing Morning Drizzle must restart its six-tick cadence without retaining superseded ticks (${refreshedMorningDrizzleTicks.join(", ")}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     const teamEndlessCloudTimeline = buildRotationTimeline({
       rotation: {
         name: "Team Endless Cloud Morning Drizzle probe",
@@ -415,10 +391,7 @@ describe("healing", () => {
           { type: "skill", skill: "Wait" },
         ],
       },
-      skills: {
-        EndlessCloud: panaceaFanSkills.EndlessCloud,
-        Wait: { name: "Wait", castTime: 6, action: [] },
-      },
+      skills: { EndlessCloud: panaceaFanSkills.EndlessCloud, Wait: { name: "Wait", castTime: 6, action: [] } },
       eventDefinitions: {},
       dots: {},
       effectDefinitions: { MorningDrizzle: delugeBuffs.MorningDrizzle },
@@ -426,16 +399,16 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    });
+    })
     const teamMorningDrizzleTicks = teamEndlessCloudTimeline.filter(
-      (row) => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle",
-    );
+      row => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "MorningDrizzle",
+    )
     expect(
       teamMorningDrizzleTicks.length === 12 &&
-        teamMorningDrizzleTicks.filter((row) => row.playerRecipientIndex === 0).length === 6 &&
-        teamMorningDrizzleTicks.filter((row) => row.playerRecipientIndex === 1).length === 6,
+        teamMorningDrizzleTicks.filter(row => row.playerRecipientIndex === 0).length === 6 &&
+        teamMorningDrizzleTicks.filter(row => row.playerRecipientIndex === 1).length === 6,
       "Endless Cloud must maintain independent Morning Drizzle copies on self and one teammate in a team.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const replacedMorningDrizzleTimeline = buildRotationTimeline({
       rotation: {
         name: "Morning Drizzle recipient replacement probe",
@@ -456,18 +429,18 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    });
+    })
     const replacementObservation = replacedMorningDrizzleTimeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "Observe",
-    );
+      row => row.step.type === "skill" && row.step.skill === "Observe",
+    )
     const replacedCopies =
-      Array.from(replacementObservation?.buffs.values()).filter((buff) => buff.name === "MorningDrizzle") ?? [];
+      Array.from(replacementObservation?.buffs.values()).filter(buff => buff.name === "MorningDrizzle") ?? []
     expect(
       replacedCopies.length === 5 &&
-        closeTo(replacedCopies.find((buff) => buff.playerRecipientIndex === 0)?.appliedAt, 4.3625) &&
-        closeTo(replacedCopies.find((buff) => buff.playerRecipientIndex === 1)?.appliedAt, 1.3125),
+        closeTo(replacedCopies.find(buff => buff.playerRecipientIndex === 0)?.appliedAt, 4.3625) &&
+        closeTo(replacedCopies.find(buff => buff.playerRecipientIndex === 1)?.appliedAt, 1.3125),
       "A full player-target buff roster must replace the copy with the least remaining duration.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const echoesTimelineInput = {
       rotation: {
@@ -488,17 +461,17 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-    };
-    const echoesTimeline = buildRotationTimeline(echoesTimelineInput);
+    }
+    const echoesTimeline = buildRotationTimeline(echoesTimelineInput)
     const echoesTicks = echoesTimeline
       .filter(
-        (row) => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlants",
+        row => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlants",
       )
-      .map((row) => row.startTime);
+      .map(row => row.startTime)
     expect(
       echoesTicks.length === 60 && echoesTicks.every((time, index) => closeTo(time, 1.625 + index)),
       `Echoes of a Thousand Plants must begin healing 1 second after application and repeat every second for its 60-second duration (${echoesTicks.length} ticks).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     const cutoffEchoesResult = calculateRotationBaseline({
       timeline: {
         ...echoesTimelineInput,
@@ -524,21 +497,21 @@ describe("healing", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    });
+    })
     const cutoffEchoesHealing = cutoffEchoesResult.metrics.breakdown.healingSkills.find(
-      (row) => row.id === "EchoesOfAThousandPlants",
-    );
+      row => row.id === "EchoesOfAThousandPlants",
+    )
     const cutoffEchoesDamage = cutoffEchoesResult.metrics.breakdown.skills.find(
-      (row) => row.id === "EchoesOfAThousandPlants",
-    );
+      row => row.id === "EchoesOfAThousandPlants",
+    )
     expect(
       cutoffEchoesHealing?.triggers === 4 && cutoffEchoesHealing.heals === 4,
       `Periodic healing triggers after Battle End must not enter the healing breakdown (${JSON.stringify(cutoffEchoesHealing)}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       cutoffEchoesDamage?.triggers === 0,
       `Healing-only periodic rows must not count as damage triggers (${JSON.stringify(cutoffEchoesDamage)}).`,
-    ).toBeTruthy();
+    ).toBeTruthy()
     const consumedEchoesTimeline = buildRotationTimeline({
       ...echoesTimelineInput,
       rotation: {
@@ -554,13 +527,13 @@ describe("healing", () => {
         FloatingGrace: soulshadeUmbrellaSkills.FloatingGrace,
         Wait: { name: "Wait", castTime: 2, action: [] },
       },
-    });
+    })
     expect(
       !consumedEchoesTimeline.some(
-        (row) => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlants",
+        row => row.kind === "periodic" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlants",
       ),
       "Casting Floating Grace must consume Echoes of a Thousand Plants before its pending healing ticks resolve.",
-    ).toBeTruthy();
+    ).toBeTruthy()
 
     const worldToSwordBundle = {
       timeline: {
@@ -613,7 +586,7 @@ describe("healing", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    };
+    }
     const groupHealingContext = {
       stats,
       derivedStats,
@@ -623,15 +596,15 @@ describe("healing", () => {
       buffs: [],
       effects: [],
       attunement: {},
-    };
+    }
     const groupHealingThreshold = (() => {
-      const snapshot = calculateHealingAttackSnapshot(groupHealingContext);
-      return snapshot.averagePhysicalAttack * 12 + snapshot.averageSilkbindAttack * 18;
-    })();
+      const snapshot = calculateHealingAttackSnapshot(groupHealingContext)
+      return snapshot.averagePhysicalAttack * 12 + snapshot.averageSilkbindAttack * 18
+    })()
     const healingPerPhysicalBonus = calculateHealingBreakdown(
       { type: "heal", phyCoef: 0, silkbindCoef: 0, phyBonus: 1, attrBonus: 0 },
       groupHealingContext,
-    ).total;
+    ).total
     const groupHealAction = {
       type: "heal",
       phyCoef: 0,
@@ -639,8 +612,8 @@ describe("healing", () => {
       phyBonus: (groupHealingThreshold * 0.7) / healingPerPhysicalBonus,
       attrBonus: 0,
       time: 0.1,
-    };
-    const groupHealingBundle = (groupSize) => ({
+    }
+    const groupHealingBundle = groupSize => ({
       ...worldToSwordBundle,
       timeline: {
         ...worldToSwordBundle.timeline,
@@ -655,36 +628,28 @@ describe("healing", () => {
         skills: {
           WorldToSword: mysticSkills.WorldToSword,
           QiBlade: mysticSkills.QiBlade,
-          GroupHeal: {
-            name: "Group Heal",
-            group: true,
-            castTime: 0.1,
-            action: [groupHealAction],
-            tags: ["Heal"],
-          },
+          GroupHeal: { name: "Group Heal", group: true, castTime: 0.1, action: [groupHealAction], tags: ["Heal"] },
         },
       },
-    });
-    const soloGroupHealing = calculateRotationBaseline(groupHealingBundle(1));
-    const teamGroupHealing = calculateRotationBaseline(groupHealingBundle(5));
-    const raidGroupHealing = calculateRotationBaseline(groupHealingBundle(10));
+    })
+    const soloGroupHealing = calculateRotationBaseline(groupHealingBundle(1))
+    const teamGroupHealing = calculateRotationBaseline(groupHealingBundle(5))
+    const raidGroupHealing = calculateRotationBaseline(groupHealingBundle(10))
     expect(
       closeTo(teamGroupHealing.metrics.totalHealing, soloGroupHealing.metrics.totalHealing * 5) &&
         closeTo(raidGroupHealing.metrics.totalHealing, soloGroupHealing.metrics.totalHealing * 10),
       "A group heal must report one healing copy for every recipient in the rotation group.",
-    ).toBeTruthy();
-    const groupHealCount = (result) =>
-      result.metrics.breakdown.healingSkills.find((row) => row.id === "GroupHeal")?.heals;
+    ).toBeTruthy()
+    const groupHealCount = result => result.metrics.breakdown.healingSkills.find(row => row.id === "GroupHeal")?.heals
     expect(
       groupHealCount(soloGroupHealing) === 1 &&
         groupHealCount(teamGroupHealing) === 5 &&
         groupHealCount(raidGroupHealing) === 10,
       "A group heal's breakdown must count one heal for every recipient.",
-    ).toBeTruthy();
-    const groupQiBladeCount = (result) =>
-      result.timeline.filter(
-        (row) => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "QiBlade",
-      ).length;
+    ).toBeTruthy()
+    const groupQiBladeCount = result =>
+      result.timeline.filter(row => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "QiBlade")
+        .length
     const buffedThresholdResult = calculateRotationBaseline({
       ...worldToSwordBundle,
       timeline: {
@@ -717,17 +682,17 @@ describe("healing", () => {
         },
         setupEffects: [{ physicalAttackBonus: 4, silkbindAttackBonus: 4 }],
       },
-    });
+    })
     expect(
       groupQiBladeCount(buffedThresholdResult) === 0,
       "World to Sword's cast snapshot must include attack multipliers, raising the threshold for a fixed heal.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       groupQiBladeCount(soloGroupHealing) === 0 &&
         groupQiBladeCount(teamGroupHealing) === 1 &&
         groupQiBladeCount(raidGroupHealing) === 1,
       "WTS must count teammate group healing as one-fifth overhealing while retaining one threshold cap per action.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const playerTargetHealing = calculateRotationBaseline({
       ...worldToSwordBundle,
       timeline: {
@@ -764,43 +729,43 @@ describe("healing", () => {
           },
         },
       },
-    });
+    })
     expect(
       groupQiBladeCount(playerTargetHealing) === 1,
       "WTS must count all overhealing from a single-target heal assigned to a teammate, rather than applying the group-heal one-fifth weight.",
-    ).toBeTruthy();
-    const worldToSwordResult = calculateRotationBaseline(worldToSwordBundle);
+    ).toBeTruthy()
+    const worldToSwordResult = calculateRotationBaseline(worldToSwordBundle)
     const qiBlades = worldToSwordResult.timeline.filter(
-      (row) => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "QiBlade",
-    );
+      row => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "QiBlade",
+    )
     expect(
       qiBlades.length === 2 && closeTo(qiBlades[1].startTime - qiBlades[0].startTime, 0.3),
       "Expected overhealing must retain threshold credit during cooldown and launch queued Qi Blades 0.3 seconds apart.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const overflowHealRow = worldToSwordResult.timeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "OverflowHeal",
-    );
+      row => row.step.type === "skill" && row.step.skill === "OverflowHeal",
+    )
     expect(
       overflowHealRow?.actionStates[1]?.currentHP === 1000,
       "Healing must restore missing self HP before later healing is counted entirely as overhealing.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
       overflowHealRow?.actionStates[1]?.buffs.get("WorldToSword")?.remainingTriggers === 19,
       "World to Sword must expose its remaining Qi Blade budget after a successful launch.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const mergedWorldToSwordTimeline = mergeCalculatedTimelineState(
       buildRotationTimeline(worldToSwordBundle.timeline),
       worldToSwordResult.timeline,
-    );
+    )
     const mergedOverflowHealRow = mergedWorldToSwordTimeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "OverflowHeal",
-    );
+      row => row.step.type === "skill" && row.step.skill === "OverflowHeal",
+    )
     expect(
       mergedOverflowHealRow?.actionStates[1]?.currentHP === 1000 &&
         mergedOverflowHealRow.currentHPRatio === overflowHealRow.currentHPRatio &&
         mergedOverflowHealRow.actionStates[1]?.buffs.get("WorldToSword")?.remainingTriggers === 19,
       "The editor timeline must retain calculated self-HP restoration and finite buff-trigger progress when it merges worker results.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const exhaustedWorldToSword = calculateRotationBaseline({
       ...worldToSwordBundle,
       timeline: {
@@ -832,18 +797,18 @@ describe("healing", () => {
           Observe: { name: "Observe", castTime: 0, action: [] },
         },
       },
-    });
+    })
     const exhaustedWorldToSwordObserve = exhaustedWorldToSword.timeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "Observe",
-    );
-    const exhaustedWorldToSwordBuff = exhaustedWorldToSwordObserve?.buffs.get("WorldToSword");
+      row => row.step.type === "skill" && row.step.skill === "Observe",
+    )
+    const exhaustedWorldToSwordBuff = exhaustedWorldToSwordObserve?.buffs.get("WorldToSword")
     expect(
       groupQiBladeCount(exhaustedWorldToSword) === 20 &&
         exhaustedWorldToSwordBuff?.remainingTriggers === 0 &&
         (exhaustedWorldToSwordBuff.expiresAt ?? 0) >
           (exhaustedWorldToSwordObserve?.startTime ?? Number.POSITIVE_INFINITY),
       "World to Sword must remain active until its normal expiry after all 20 Qi Blades have launched.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const ordinaryHealingResult = calculateRotationBaseline({
       ...worldToSwordBundle,
       timeline: {
@@ -856,24 +821,21 @@ describe("healing", () => {
             { type: "skill", skill: "Observe" },
           ],
         },
-        skills: {
-          ...worldToSwordBundle.timeline.skills,
-          Observe: { name: "Observe", castTime: 0, action: [] },
-        },
+        skills: { ...worldToSwordBundle.timeline.skills, Observe: { name: "Observe", castTime: 0, action: [] } },
         effectDefinitions: {},
       },
       startAnchor: { rowId: "rotation-0" },
-    });
+    })
     const ordinaryHealRow = ordinaryHealingResult.timeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "OverflowHeal",
-    );
+      row => row.step.type === "skill" && row.step.skill === "OverflowHeal",
+    )
     const ordinaryObserveRow = ordinaryHealingResult.timeline.find(
-      (row) => row.step.type === "skill" && row.step.skill === "Observe",
-    );
+      row => row.step.type === "skill" && row.step.skill === "Observe",
+    )
     expect(
       ordinaryHealRow?.actionStates[1]?.currentHP === 1000 && ordinaryObserveRow?.currentHP === 1000,
       "Ordinary healing must restore timeline self HP even when World to Sword is not active.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const fanQQTimeline = buildRotationTimeline({
       rotation: {
         name: "Fan QQ automatic Echoes probe",
@@ -892,62 +854,57 @@ describe("healing", () => {
       innerWayRules: [],
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-      martialArtState: {
-        panaceaFan: { weapon: "Fan" },
-        soulshadeUmbrella: { weapon: "Umbrella" },
-      },
-    });
+      martialArtState: { panaceaFan: { weapon: "Fan" }, soulshadeUmbrella: { weapon: "Umbrella" } },
+    })
     const fanQQEchoes = fanQQTimeline.filter(
-      (row) => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlantsFanQQ",
-    );
+      row => row.kind === "trigger" && row.step.type === "skill" && row.step.skill === "EchoesOfAThousandPlantsFanQQ",
+    )
     expect(
-      fanQQEchoes.length === 2 && fanQQEchoes.every((row) => row.actions.every((action) => action.type !== "damage")),
+      fanQQEchoes.length === 2 && fanQQEchoes.every(row => row.actions.every(action => action.type !== "damage")),
       "Fan QQ must trigger the non-damaging Echoes utility cast only while its shared cooldown is ready.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
-      fanQQEchoes.every((row) => row.currentMartialArt === "panaceaFan" && row.currentWeapon === "Fan"),
+      fanQQEchoes.every(row => row.currentMartialArt === "panaceaFan" && row.currentWeapon === "Fan"),
       "The automatic Echoes utility cast must not switch the current martial art or weapon.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     const secondFanQQ = fanQQTimeline.find(
-      (row) => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "EndlessCloudCancel",
-    );
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "EndlessCloudCancel",
+    )
     expect(
       secondFanQQ?.buffs.has("MorningDrizzle"),
       "Fan QQ and Fan QQ Cancel must apply Morning Drizzle at their healing timestamp.",
-    ).toBeTruthy();
+    ).toBeTruthy()
     expect(
-      worldToSwordResult.metrics.breakdown.skills.some((skill) => skill.id === "QiBlade" && skill.hits === 2),
+      worldToSwordResult.metrics.breakdown.skills.some(skill => skill.id === "QiBlade" && skill.hits === 2),
       "Every launched Qi Blade must resolve its delayed damage through the normal damage pipeline.",
-    ).toBeTruthy();
-    const simulatedWorldToSword = calculateSimulatedRotationRun(worldToSwordBundle, () => 0.25);
+    ).toBeTruthy()
+    const simulatedWorldToSword = calculateSimulatedRotationRun(worldToSwordBundle, () => 0.25)
     expect(
       simulatedWorldToSword.resolvedSequence.filter(({ entry }) => entry.context.skillTags.includes("QiBlade"))
         .length === 2,
       "Simulation must use rolled healing while retaining overheal accumulated during the Qi Blade cooldown.",
-    ).toBeTruthy();
-    let recipientRoll = 0;
+    ).toBeTruthy()
+    let recipientRoll = 0
     const independentlyRolledGroupHealing = calculateSimulatedRotationRun(groupHealingBundle(5), () => {
-      recipientRoll += 1;
+      recipientRoll += 1
       switch (recipientRoll % 4) {
         case 1:
-          return 0;
+          return 0
         case 3:
-          return 0.99;
+          return 0.99
         default:
-          return 0.5;
+          return 0.5
       }
-    });
+    })
     const groupHealingEntry = independentlyRolledGroupHealing.resolvedSequence.find(
       ({ entry }) => entry.id === "rotation-1:0",
-    );
-    const groupHealingOutcomes = new Set(
-      groupHealingEntry?.breakdown.recipientHealing?.map((healing) => healing.outcome),
-    );
+    )
+    const groupHealingOutcomes = new Set(groupHealingEntry?.breakdown.recipientHealing?.map(healing => healing.outcome))
     expect(
       groupHealingEntry?.breakdown.recipientHealing?.length === 5 &&
         groupHealingOutcomes.has("normal") &&
         groupHealingOutcomes.has("critical"),
       "Simulation must independently roll every recipient of a group healing action.",
-    ).toBeTruthy();
-  });
-});
+    ).toBeTruthy()
+  })
+})

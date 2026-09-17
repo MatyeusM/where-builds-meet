@@ -41,15 +41,7 @@
     },
     "VitalLeechT3": {},
     "VitalLeechT4": {},
-    "VitalLeechT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalDmgReduction": 0.025
-          }
-        }
-      ]
-    },
+    "VitalLeechT5": { "effect": [{ "rawStat": { "physicalDmgReduction": 0.025 } }] },
     "VitalLeechT6": {}
   }
 }

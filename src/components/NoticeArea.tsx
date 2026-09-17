@@ -1,22 +1,23 @@
-import { Component, useSyncExternalStore, type ReactNode } from "react";
-import { isDeploymentImportError } from "../deploymentUpdates";
-import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../notices";
-import { UiIcon } from "../UiIcon";
-import { t } from "../i18n";
+import { Component, useSyncExternalStore, type ReactNode } from "react"
+
+import { isDeploymentImportError } from "../deploymentUpdates"
+import { t } from "../i18n"
+import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../notices"
+import { UiIcon } from "../UiIcon"
 
 function noticeText(message: NoticeMessage) {
-  return typeof message === "string" ? message : message();
+  return typeof message === "string" ? message : message()
 }
 
 export function NoticeArea() {
-  const notices = useSyncExternalStore(subscribeToNotices, getNotices);
+  const notices = useSyncExternalStore(subscribeToNotices, getNotices)
   return (
     <aside className="notice-area" aria-label={t("ui.notices.title")} aria-live="polite" aria-relevant="additions text">
       {notices.length > 0 && (
         <div className="notice-area-panel">
           <h2>{t("ui.notices.title")}</h2>
           <ul>
-            {notices.map((notice) => (
+            {notices.map(notice => (
               <li className={notice.error ? "notice-item notice-item-error" : "notice-item"} key={notice.id}>
                 <div>
                   {notice.error && <strong>{t("ui.notices.error")}</strong>}
@@ -41,19 +42,19 @@ export function NoticeArea() {
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 export class FeatureLoadBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
-  state = { error: undefined as unknown };
+  state = { error: undefined as unknown }
   static getDerivedStateFromError(error: unknown) {
-    return { error };
+    return { error }
   }
   render() {
     if (this.state.error) {
-      if (!isDeploymentImportError(this.state.error)) throw this.state.error;
-      return <p role="alert">{t("ui.deployment.featureUnavailable")}</p>;
+      if (!isDeploymentImportError(this.state.error)) throw this.state.error
+      return <p role="alert">{t("ui.deployment.featureUnavailable")}</p>
     }
-    return this.props.children;
+    return this.props.children
   }
 }

@@ -1,5 +1,6 @@
-import { describe, it } from "vitest";
-import { probeLoad } from "./helpers/probe-loader.js";
+import { assert, describe, it } from "vitest"
+
+import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-worker-recovery.mjs.
 describe("worker-recovery", () => {
@@ -12,42 +13,42 @@ describe("worker-recovery", () => {
       attunementPriority: [],
       innerWayPriority: [],
       setupComparisons: {},
-    };
+    }
 
-    let workersCreated = 0;
+    let workersCreated = 0
 
     class RecoveringWorker {
-      listeners = new Map();
+      listeners = new Map()
 
       constructor() {
-        workersCreated += 1;
-        this.instance = workersCreated;
+        workersCreated += 1
+        this.instance = workersCreated
       }
 
       addEventListener(type, listener) {
-        const listeners = this.listeners.get(type) ?? [];
-        listeners.push(listener);
-        this.listeners.set(type, listeners);
+        const listeners = this.listeners.get(type) ?? []
+        listeners.push(listener)
+        this.listeners.set(type, listeners)
       }
 
       postMessage(message) {
         queueMicrotask(() => {
-          const type = this.instance === 1 ? "error" : "message";
+          const type = this.instance === 1 ? "error" : "message"
           const event =
-            type === "error" ? { message: "Worker load interrupted" } : { data: { id: message.id, metrics } };
-          for (const listener of this.listeners.get(type) ?? []) listener(event);
-        });
+            type === "error" ? { message: "Worker load interrupted" } : { data: { id: message.id, metrics } }
+          for (const listener of this.listeners.get(type) ?? []) listener(event)
+        })
       }
 
       terminate() {}
     }
 
-    globalThis.Worker = RecoveringWorker;
+    globalThis.Worker = RecoveringWorker
 
     try {
       const { disposeRotationCalculationWorker, requestRotationCalculation } = await probeLoad(
         "/src/calculations/rotationWorkerClient.ts",
-      );
+      )
       const result = await requestRotationCalculation({
         duration: 1,
         baseline: [],
@@ -55,12 +56,12 @@ describe("worker-recovery", () => {
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      });
-      if (result.dps !== metrics.dps) throw new Error("The interrupted calculation did not recover.");
-      if (workersCreated !== 2) throw new Error(`Expected one replacement worker, but created ${workersCreated}.`);
-      disposeRotationCalculationWorker();
+      })
+      assert(result.dps === metrics.dps, "The interrupted calculation did not recover.")
+      assert(workersCreated === 2, `Expected one replacement worker, but created ${workersCreated}.`)
+      disposeRotationCalculationWorker()
     } finally {
-      delete globalThis.Worker;
+      delete globalThis.Worker
     }
-  });
-});
+  })
+})

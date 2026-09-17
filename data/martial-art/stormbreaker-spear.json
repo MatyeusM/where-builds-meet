@@ -17,42 +17,21 @@
     [],
     [],
     [
-      {
-        "name": "Max Battle Will Increase",
-        "effect": []
-      },
-      {
-        "name": "Max HP Up",
-        "effect": []
-      },
-      {
-        "name": "DMG Reduction Enhancement",
-        "effect": []
-      },
+      { "name": "Max Battle Will Increase", "effect": [] },
+      { "name": "Max HP Up", "effect": [] },
+      { "name": "DMG Reduction Enhancement", "effect": [] },
       {
         "name": "Stonesplit Attribute Up",
         "effect": [
           {
-            "rawStat": {
-              "maxStonesplit": 196,
-              "minStonesplit": 98
-            },
+            "rawStat": { "maxStonesplit": 196, "minStonesplit": 98 },
             "stat": {
-              "stonesplitDmgBonus": {
-                "formula": {
-                  "source": "minStonesplit",
-                  "multiplier": 0.000336,
-                  "max": 0.11
-                }
-              }
+              "stonesplitDmgBonus": { "formula": { "source": "minStonesplit", "multiplier": 0.000336, "max": 0.11 } }
             }
           }
         ]
       },
-      {
-        "name": "Attr. Attack DMG Up",
-        "effect": []
-      }
+      { "name": "Attr. Attack DMG Up", "effect": [] }
     ]
   ]
 }

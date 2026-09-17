@@ -1,35 +1,35 @@
-import { normalizePing } from "./calculations/combatDefaults";
-import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline";
-import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing";
-import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types";
+import { normalizePing } from "./calculations/combatDefaults"
+import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
+import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing"
+import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types"
 
-export const rotationExportFormat = "where-builds-meet-rotations";
+export const rotationExportFormat = "where-builds-meet-rotations"
 
 export type RotationEntry = {
-  id: string;
-  rotation: RotationRecord;
-  martialArts: WeaponId[];
-  isDefault?: boolean;
-  test?: boolean;
-};
+  id: string
+  rotation: RotationRecord
+  martialArts: WeaponId[]
+  isDefault?: boolean
+  test?: boolean
+}
 
-const weaponIdSet = new Set<WeaponId>(weaponIds);
+const weaponIdSet = new Set<WeaponId>(weaponIds)
 const parseMartialArts = (value: unknown) => {
-  const parsed = normalizeStoredWeaponIds(value);
-  return parsed.length ? parsed : [...weaponIds];
-};
+  const parsed = normalizeStoredWeaponIds(value)
+  return parsed.length ? parsed : [...weaponIds]
+}
 
 export function serializeRotationEntries(entries: RotationEntry[]) {
   return JSON.stringify(
     entries
-      .filter((entry) => !entry.isDefault)
+      .filter(entry => !entry.isDefault)
       .map(({ id, rotation, martialArts }) => ({ id, rotation, martialArts: parseMartialArts(martialArts) })),
-  );
+  )
 }
 
 function parseRotationStep(value: unknown): RotationStep | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
-  const step = value as Record<string, unknown>;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const step = value as Record<string, unknown>
   if (step.type === "skill" && typeof step.skill === "string" && step.skill) {
     return {
       type: "skill",
@@ -39,23 +39,23 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
         : {}),
       ...(typeof step.causesBreak === "boolean" ? { causesBreak: step.causesBreak } : {}),
       ...(typeof step.condition === "string" ? { condition: step.condition } : {}),
-    };
+    }
   }
   const parseAttachment = (value: unknown) => {
     const attachment =
-      value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
-    const action = attachment?.action;
-    const trigger = attachment?.trigger;
+      value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined
+    const action = attachment?.action
+    const trigger = attachment?.trigger
     if (
       !attachment ||
       !(action === "start" || (typeof action === "number" && Number.isInteger(action) && action >= 0)) ||
       !(trigger === undefined || (typeof trigger === "number" && Number.isInteger(trigger) && trigger >= 0))
     )
-      return undefined;
-    return { action: action as number | "start", ...(typeof trigger === "number" ? { trigger } : {}) };
-  };
-  const before = parseAttachment(step.before);
-  const after = parseAttachment(step.after);
+      return undefined
+    return { action: action as number | "start", ...(typeof trigger === "number" ? { trigger } : {}) }
+  }
+  const before = parseAttachment(step.before)
+  const after = parseAttachment(step.after)
   if (
     step.type === "event" &&
     step.event === "Hellfire" &&
@@ -64,15 +64,10 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.amount === "number" &&
     Number.isFinite(step.amount)
   ) {
-    return { type: "event", event: "Hellfire", startTime: step.startTime, amount: step.amount };
+    return { type: "event", event: "Hellfire", startTime: step.startTime, amount: step.amount }
   }
   if (step.type === "event" && step.event === "Exhausted" && (after || before)) {
-    return {
-      type: "event",
-      event: "Qi",
-      after: after ?? before!,
-      targetQiRatio: 0,
-    };
+    return { type: "event", event: "Qi", after: after ?? before!, targetQiRatio: 0 }
   }
   if (
     step.type === "event" &&
@@ -81,7 +76,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.distance === "number" &&
     Number.isFinite(step.distance)
   ) {
-    return { type: "event", event: "Move", before, distance: Math.max(1, Math.floor(step.distance)) };
+    return { type: "event", event: "Move", before, distance: Math.max(1, Math.floor(step.distance)) }
   }
   if (
     step.type === "event" &&
@@ -97,7 +92,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
           event: "SelfHP",
           before,
           currentHPRatio: Math.min(1, Math.max(0, step.currentHPRatio as number)),
-        };
+        }
   }
   if (
     step.type === "event" &&
@@ -107,7 +102,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.damage === "number" &&
     Number.isFinite(step.damage)
   ) {
-    return { type: "event", event: "TakeDamage", startTime: step.startTime, damage: Math.max(0, step.damage) };
+    return { type: "event", event: "TakeDamage", startTime: step.startTime, damage: Math.max(0, step.damage) }
   }
   if (
     step.type === "event" &&
@@ -116,7 +111,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.damage === "number" &&
     Number.isFinite(step.damage)
   ) {
-    return { type: "event", event: "TakeDamage", before, damage: Math.max(0, step.damage) };
+    return { type: "event", event: "TakeDamage", before, damage: Math.max(0, step.damage) }
   }
   if (
     step.type === "event" &&
@@ -125,7 +120,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.targetHPRatio === "number" &&
     Number.isFinite(step.targetHPRatio)
   ) {
-    return { type: "event", event: "HP", before, targetHPRatio: Math.min(1, Math.max(0, step.targetHPRatio)) };
+    return { type: "event", event: "HP", before, targetHPRatio: Math.min(1, Math.max(0, step.targetHPRatio)) }
   }
   if (
     step.type === "event" &&
@@ -139,18 +134,18 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
       event: "Qi",
       ...(before ? { before } : { after: after! }),
       targetQiRatio: Math.min(1, Math.max(0, step.targetQiRatio)),
-    };
+    }
   }
   if (step.type === "event" && step.event === "Buff" && before && typeof step.buff === "string" && step.buff) {
     const stack =
-      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined;
-    return { type: "event", event: "Buff", before, buff: step.buff, ...(stack === undefined ? {} : { stack }) };
+      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
+    return { type: "event", event: "Buff", before, buff: step.buff, ...(stack === undefined ? {} : { stack }) }
   }
   if (step.type === "event" && step.event === "Debuff" && before && typeof step.debuff === "string" && step.debuff) {
-    if (step.debuff === "Exhausted") return { type: "event", event: "Qi", before, targetQiRatio: 0 };
+    if (step.debuff === "Exhausted") return { type: "event", event: "Qi", before, targetQiRatio: 0 }
     const stack =
-      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined;
-    return { type: "event", event: "Debuff", before, debuff: step.debuff, ...(stack === undefined ? {} : { stack }) };
+      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
+    return { type: "event", event: "Debuff", before, debuff: step.debuff, ...(stack === undefined ? {} : { stack }) }
   }
   if (
     step.type === "event" &&
@@ -160,12 +155,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.martialArt === "string" &&
     weaponIdSet.has(step.martialArt as WeaponId)
   ) {
-    return {
-      type: "event",
-      event: "MartialArt",
-      before: { action: "start" },
-      martialArt: step.martialArt as WeaponId,
-    };
+    return { type: "event", event: "MartialArt", before: { action: "start" }, martialArt: step.martialArt as WeaponId }
   }
   if (
     step.type === "event" &&
@@ -180,7 +170,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
       ...(step.automatic === "cooldown" || step.automatic === "attack" || step.automatic === "requirement"
         ? { automatic: step.automatic }
         : {}),
-    };
+    }
   }
   if (
     step.type === "event" &&
@@ -195,7 +185,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
       ...(typeof step.duration === "number" && Number.isFinite(step.duration)
         ? { duration: Math.max(0, step.duration) }
         : {}),
-    };
+    }
   }
   if (
     step.type === "event" &&
@@ -210,7 +200,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
       ...(typeof step.duration === "number" && Number.isFinite(step.duration)
         ? { duration: Math.max(0, step.duration) }
         : {}),
-    };
+    }
   }
   if (
     step.type === "event" &&
@@ -220,54 +210,49 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.distance === "number" &&
     Number.isFinite(step.distance)
   ) {
-    return {
-      type: "event",
-      event: "Move",
-      startTime: step.startTime,
-      distance: Math.max(1, Math.floor(step.distance)),
-    };
+    return { type: "event", event: "Move", startTime: step.startTime, distance: Math.max(1, Math.floor(step.distance)) }
   }
-  return undefined;
+  return undefined
 }
 
 function parseRotation(value: unknown): RotationRecord | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
   const candidate = value as {
-    name?: unknown;
-    steps?: unknown;
-    targetHP?: unknown;
-    dummyAttack?: unknown;
-    groupSize?: unknown;
-    ping?: unknown;
-    infiniteVitality?: unknown;
-    start?: unknown;
-    eventTimeReference?: unknown;
-  };
-  if (typeof candidate.name !== "string" || !candidate.name.trim() || !Array.isArray(candidate.steps)) return undefined;
-  const steps = candidate.steps.map(parseRotationStep);
-  if (steps.some((step) => !step)) return undefined;
+    name?: unknown
+    steps?: unknown
+    targetHP?: unknown
+    dummyAttack?: unknown
+    groupSize?: unknown
+    ping?: unknown
+    infiniteVitality?: unknown
+    start?: unknown
+    eventTimeReference?: unknown
+  }
+  if (typeof candidate.name !== "string" || !candidate.name.trim() || !Array.isArray(candidate.steps)) return undefined
+  const steps = candidate.steps.map(parseRotationStep)
+  if (steps.some(step => !step)) return undefined
   // Legacy autoHP is ignored; preserve authored HP events and their anchors.
-  const parsedSteps = steps.filter((step): step is RotationStep => Boolean(step));
+  const parsedSteps = steps.filter((step): step is RotationStep => Boolean(step))
   const startValue =
     candidate.start && typeof candidate.start === "object" && !Array.isArray(candidate.start)
       ? (candidate.start as { step?: unknown; action?: unknown })
-      : undefined;
+      : undefined
   const validStartStep =
     startValue &&
     typeof startValue.step === "number" &&
     Number.isInteger(startValue.step) &&
     startValue.step >= 0 &&
-    startValue.step < parsedSteps.length;
+    startValue.step < parsedSteps.length
   const validStartAction =
     startValue?.action === undefined ||
-    (typeof startValue.action === "number" && Number.isInteger(startValue.action) && startValue.action >= 0);
+    (typeof startValue.action === "number" && Number.isInteger(startValue.action) && startValue.action >= 0)
   const start =
     validStartStep && validStartAction
       ? {
           step: startValue.step as number,
           ...(typeof startValue.action === "number" ? { action: startValue.action } : {}),
         }
-      : undefined;
+      : undefined
   return migrateGeneralsBaneSlides(
     migrateDefenseActionAnchors(
       migrateAutomaticDelays({
@@ -288,20 +273,20 @@ function parseRotation(value: unknown): RotationRecord | undefined {
         ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
       }),
     ),
-  );
+  )
 }
 
 function importedId(originalId: string, usedIds: Set<string>) {
   if (!usedIds.has(originalId)) {
-    usedIds.add(originalId);
-    return originalId;
+    usedIds.add(originalId)
+    return originalId
   }
-  const baseId = `${originalId}:imported`;
-  let id = baseId;
-  let suffix = 2;
-  while (usedIds.has(id)) id = `${baseId}:${suffix++}`;
-  usedIds.add(id);
-  return id;
+  const baseId = `${originalId}:imported`
+  let id = baseId
+  let suffix = 2
+  while (usedIds.has(id)) id = `${baseId}:${suffix++}`
+  usedIds.add(id)
+  return id
 }
 
 export function exportRotationEntries(entries: RotationEntry[]) {
@@ -311,18 +296,18 @@ export function exportRotationEntries(entries: RotationEntry[]) {
       version: 9,
       exportedAt: new Date().toISOString(),
       rotations: entries
-        .filter((entry) => !entry.isDefault)
+        .filter(entry => !entry.isDefault)
         .map(({ id, rotation, martialArts }) => ({ id, rotation, martialArts: parseMartialArts(martialArts) })),
     },
     null,
     2,
-  );
+  )
 }
 
 export function mergeImportedRotationEntries(current: RotationEntry[], value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new Error("This is not a Where Builds Meet rotation export file.");
-  const source = value as { format?: unknown; version?: unknown; rotations?: unknown };
+    throw new Error("This is not a Where Builds Meet rotation export file.")
+  const source = value as { format?: unknown; version?: unknown; rotations?: unknown }
   if (
     source.format !== rotationExportFormat ||
     (source.version !== 1 &&
@@ -336,23 +321,23 @@ export function mergeImportedRotationEntries(current: RotationEntry[], value: un
       source.version !== 9) ||
     !Array.isArray(source.rotations)
   ) {
-    throw new Error("This file uses an unsupported rotation export format.");
+    throw new Error("This file uses an unsupported rotation export format.")
   }
 
-  const usedIds = new Set(current.map((entry) => entry.id));
+  const usedIds = new Set(current.map(entry => entry.id))
   const importedEntries = source.rotations.flatMap((value): RotationEntry[] => {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return [];
-    const candidate = value as { id?: unknown; rotation?: unknown; martialArts?: unknown; isDefault?: unknown };
-    if (candidate.isDefault === true || typeof candidate.id !== "string" || !candidate.id) return [];
-    const rotation = parseRotation(candidate.rotation);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return []
+    const candidate = value as { id?: unknown; rotation?: unknown; martialArts?: unknown; isDefault?: unknown }
+    if (candidate.isDefault === true || typeof candidate.id !== "string" || !candidate.id) return []
+    const rotation = parseRotation(candidate.rotation)
     return rotation
       ? [{ id: importedId(candidate.id, usedIds), rotation, martialArts: parseMartialArts(candidate.martialArts) }]
-      : [];
-  });
+      : []
+  })
 
   return {
     entries: [...current, ...importedEntries],
     importedCount: importedEntries.length,
-    importedIds: importedEntries.map((entry) => entry.id),
-  };
+    importedIds: importedEntries.map(entry => entry.id),
+  }
 }

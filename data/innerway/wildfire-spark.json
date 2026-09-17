@@ -67,15 +67,7 @@
     },
     "WildfireSparkT3": {},
     "WildfireSparkT4": {},
-    "WildfireSparkT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physDmgBonus": 0.025
-          }
-        }
-      ]
-    },
+    "WildfireSparkT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.025 } }] },
     "WildfireSparkT6": {}
   }
 }

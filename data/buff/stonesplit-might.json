@@ -5,19 +5,7 @@
     "description": "Increases Charged Skill damage by 15%. Converted into Breakthrough by Predator's Shield.",
     "duration": 6,
     "maxStack": 1,
-    "effect": [
-      {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "Charged"
-          }
-        ],
-        "effect": {
-          "dmgBonus": 0.15
-        }
-      }
-    ],
+    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Charged" }], "effect": { "dmgBonus": 0.15 } }],
     "refresh": true
   },
   "Breakthrough": {
@@ -27,19 +15,7 @@
     "description": "Increases Charged Skill damage by 42%.",
     "duration": 12,
     "maxStack": 1,
-    "effect": [
-      {
-        "requirement": [
-          {
-            "target": "skillTag",
-            "value": "Charged"
-          }
-        ],
-        "effect": {
-          "dmgBonus": 0.42
-        }
-      }
-    ],
+    "effect": [{ "requirement": [{ "target": "skillTag", "value": "Charged" }], "effect": { "dmgBonus": 0.42 } }],
     "refresh": true
   },
   "HardenedFoe": {
@@ -48,13 +24,7 @@
     "description": "Increases damage by 10% after a shield breaks.",
     "duration": 12,
     "maxStack": 1,
-    "effect": [
-      {
-        "effect": {
-          "dmgBonus": 0.1
-        }
-      }
-    ],
+    "effect": [{ "effect": { "dmgBonus": 0.1 } }],
     "refresh": true
   }
 }

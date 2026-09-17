@@ -41,15 +41,7 @@
     },
     "FuryHarvestT3": {},
     "FuryHarvestT4": {},
-    "FuryHarvestT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "physicalResistance": 5.1
-          }
-        }
-      ]
-    },
+    "FuryHarvestT5": { "effect": [{ "rawStat": { "physicalResistance": 5.1 } }] },
     "FuryHarvestT6": {}
   }
 }

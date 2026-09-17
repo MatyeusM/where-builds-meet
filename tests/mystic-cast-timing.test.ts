@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline";
-import mystic from "../data/skill/mystic.json";
-import mysticBuffs from "../data/buff/mystic.json";
-import generalBuffs from "../data/buff/general.json";
-import mysticDebuffs from "../data/debuff/mystic.json";
+import { describe, expect, it } from "vitest"
+
+import generalBuffs from "../data/buff/general.json"
+import mysticBuffs from "../data/buff/mystic.json"
+import mysticDebuffs from "../data/debuff/mystic.json"
+import mystic from "../data/skill/mystic.json"
+import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
 
 function castWithFollowup(skill: string, intoxicated = false) {
   const input: TimelineBuildInput = {
@@ -25,9 +26,9 @@ function castWithFollowup(skill: string, intoxicated = false) {
     innerWayRules: [],
     setupEffects: [],
     weapons: [],
-  };
-  const rows = buildRotationTimeline(input);
-  return { cast: rows.find((row) => row.rotationIndex === 0)!, next: rows.find((row) => row.rotationIndex === 1)! };
+  }
+  const rows = buildRotationTimeline(input)
+  return { cast: rows.find(row => row.rotationIndex === 0)!, next: rows.find(row => row.rotationIndex === 1)! }
 }
 
 describe("Mystic cast timing with ping", () => {
@@ -40,43 +41,43 @@ describe("Mystic cast timing with ping", () => {
   ])(
     "$skill preserves its hits, finishes at the selected boundary, and then pays the next ping",
     ({ skill, duration, hits }) => {
-      const { cast, next } = castWithFollowup(skill);
-      expect(cast.startTime).toBeCloseTo(0.04, 10);
-      expect(cast.effectiveCastTime).toBeCloseTo(duration, 10);
-      expect(next.startTime).toBeCloseTo(0.04 + duration + 0.04, 10);
-      const damage = cast.actions.flatMap((action, index) => (action.type === "damage" ? [{ action, index }] : []));
-      expect(damage).toHaveLength(hits.length);
+      const { cast, next } = castWithFollowup(skill)
+      expect(cast.startTime).toBeCloseTo(0.04, 10)
+      expect(cast.effectiveCastTime).toBeCloseTo(duration, 10)
+      expect(next.startTime).toBeCloseTo(0.04 + duration + 0.04, 10)
+      const damage = cast.actions.flatMap((action, index) => (action.type === "damage" ? [{ action, index }] : []))
+      expect(damage).toHaveLength(hits.length)
       damage.forEach(({ action, index }, i) => {
-        expect(action.time).toBeCloseTo(hits[i], 10);
-        expect(cast.actionStates[index]).toBeDefined();
-      });
-      const turnaround = next.buffs.get("Turnaround");
-      expect(turnaround?.appliedAt).toBeCloseTo(cast.startTime + duration, 10);
+        expect(action.time).toBeCloseTo(hits[i], 10)
+        expect(cast.actionStates[index]).toBeDefined()
+      })
+      const turnaround = next.buffs.get("Turnaround")
+      expect(turnaround?.appliedAt).toBeCloseTo(cast.startTime + duration, 10)
     },
-  );
+  )
 
   it.each(
-    ["DragonsBreath1", "DragonsBreathSmolder1", "DragonsBreath2", "DragonsBreathSmolder2"].flatMap((skill) =>
-      [false, true].map((intoxicated) => ({ skill, intoxicated })),
+    ["DragonsBreath1", "DragonsBreathSmolder1", "DragonsBreath2", "DragonsBreathSmolder2"].flatMap(skill =>
+      [false, true].map(intoxicated => ({ skill, intoxicated })),
     ),
   )("$skill resolves the complete selected route with intoxicated=$intoxicated", ({ skill, intoxicated }) => {
-    const { cast, next } = castWithFollowup(skill, intoxicated);
-    const times = intoxicated ? [0.6064791536363635, 1.6975969436363636] : [1.27292535, 2.72768958];
+    const { cast, next } = castWithFollowup(skill, intoxicated)
+    const times = intoxicated ? [0.6064791536363635, 1.6975969436363636] : [1.27292535, 2.72768958]
     const two = skill.endsWith("2"),
-      duration = times[two ? 1 : 0];
-    expect(cast.effectiveCastTime).toBeCloseTo(duration, 10);
-    expect(next.startTime).toBeCloseTo(cast.startTime + duration + 0.04, 10);
-    const damage = cast.actions.filter((action) => action.type === "damage");
-    expect(damage).toHaveLength(two ? 3 : 1);
-    expect(damage[0].time).toBeCloseTo(times[0], 10);
-    damage.slice(1).forEach((action) => expect(action.time).toBeCloseTo(times[1], 10));
-    const burn = skill.includes("Smolder") ? "Smolder" : "Combustion";
+      duration = times[two ? 1 : 0]
+    expect(cast.effectiveCastTime).toBeCloseTo(duration, 10)
+    expect(next.startTime).toBeCloseTo(cast.startTime + duration + 0.04, 10)
+    const damage = cast.actions.filter(action => action.type === "damage")
+    expect(damage).toHaveLength(two ? 3 : 1)
+    expect(damage[0].time).toBeCloseTo(times[0], 10)
+    damage.slice(1).forEach(action => expect(action.time).toBeCloseTo(times[1], 10))
+    const burn = skill.includes("Smolder") ? "Smolder" : "Combustion"
     cast.actions.forEach((action, index) => {
-      if (action.value !== burn) return;
-      expect(action.time).toBeCloseTo(action.type === "extend" && index > 5 ? times[1] : times[0], 10);
-      expect(cast.actionStates[index]).toBeDefined();
-    });
-    expect(next.buffs.get("Turnaround")?.appliedAt).toBeCloseTo(cast.startTime + duration, 10);
-    expect(next.buffs.has("Intoxicated")).toBe(true);
-  });
-});
+      if (action.value !== burn) return
+      expect(action.time).toBeCloseTo(action.type === "extend" && index > 5 ? times[1] : times[0], 10)
+      expect(cast.actionStates[index]).toBeDefined()
+    })
+    expect(next.buffs.get("Turnaround")?.appliedAt).toBeCloseTo(cast.startTime + duration, 10)
+    expect(next.buffs.has("Intoxicated")).toBe(true)
+  })
+})

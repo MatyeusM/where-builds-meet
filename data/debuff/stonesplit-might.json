@@ -8,30 +8,18 @@
     "maxStack": 1,
     "shared": true,
     "effect": [
-      {
-        "hpDMGBonus": 0.08,
-        "qiDMGBonus": 0.08
-      },
+      { "hpDMGBonus": 0.08, "qiDMGBonus": 0.08 },
       {
         "requirement": [
           {
             "operator": "or",
             "operand": [
-              {
-                "target": "martialArt",
-                "value": "StormbreakerSpear"
-              },
-              {
-                "target": "martialArt",
-                "value": "ThundercryBlade"
-              }
+              { "target": "martialArt", "value": "StormbreakerSpear" },
+              { "target": "martialArt", "value": "ThundercryBlade" }
             ]
           }
         ],
-        "effect": {
-          "hpDMGBonus": 0.08,
-          "qiDMGBonus": 0.08
-        }
+        "effect": { "hpDMGBonus": 0.08, "qiDMGBonus": 0.08 }
       }
     ],
     "refresh": true

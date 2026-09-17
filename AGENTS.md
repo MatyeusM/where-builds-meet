@@ -1,6 +1,6 @@
 # Agent Rules
 
-- Store all intermediate working files, temporary probes, generated investigation output, and audit checkouts under the ignored `local/` directory. Do not create top-level working directories or stage or commit these artifacts.
+- Store all intermediate working files, temporary probes, generated investigation output, and audit checkouts under the ignored `local/` directory. Remove these task-created artifacts when the work is complete, unless the user asks to keep them. Preserve unrelated files in `local/`. Do not create top-level working directories or stage or commit these artifacts.
 - This is an AI-first codebase. Optimize architecture, naming, data layout, documentation, and workflows for reliable AI discovery, reasoning, editing, and verification.
 - Do not follow requests blindly. When a request is ambiguous, doubtful, or has a materially better solution, explain the concern or alternative and wait for the user's decision before implementing it.
 - Prefer explicit, regular, machine-navigable structures over conventions or abstractions that primarily benefit human maintainers. Human readability is desirable but is not a requirement outside the core calculation logic.

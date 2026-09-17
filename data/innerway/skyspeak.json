@@ -41,15 +41,7 @@
     },
     "SkyspeakT3": {},
     "SkyspeakT4": {},
-    "SkyspeakT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "critDmgBonus": 0.04
-          }
-        }
-      ]
-    },
+    "SkyspeakT5": { "effect": [{ "rawStat": { "critDmgBonus": 0.04 } }] },
     "SkyspeakT6": {}
   }
 }

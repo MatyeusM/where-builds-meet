@@ -1,15 +1,16 @@
-import { describe, expect, it } from "vitest";
-import rotation from "../data/rotation/bamboocut-wind/wind-dummy-1-min-infinite-vitality.json";
-import { buildPresetRotationBundle } from "../src/App";
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator";
-import { calculateDerivedStats } from "../src/calculations/effectiveStats";
-import { emptyStats } from "../src/data/statDefinitions";
-import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures";
-import type { RotationRecord } from "../src/calculations/rotationTimeline";
+import { describe, expect, it } from "vitest"
+
+import rotation from "../data/rotation/bamboocut-wind/wind-dummy-1-min-infinite-vitality.json"
+import { buildPresetRotationBundle } from "../src/App"
+import { calculateDerivedStats } from "../src/calculations/effectiveStats"
+import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
+import type { RotationRecord } from "../src/calculations/rotationTimeline"
+import { emptyStats } from "../src/data/statDefinitions"
+import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
 
 function bundleFor(full = false) {
-  const preset = structuredClone(rotation) as RotationRecord;
-  if (full) preset.steps = preset.steps.filter((step) => step.type !== "event" || step.event !== "BattleEnd");
+  const preset = structuredClone(rotation) as RotationRecord
+  if (full) preset.steps = preset.steps.filter(step => step.type !== "event" || step.event !== "BattleEnd")
   const bundle = buildPresetRotationBundle(
     {
       ...dpsSnapshotEnvironment,
@@ -19,68 +20,68 @@ function bundleFor(full = false) {
       skillOverrides: {},
     },
     "wind-fully-relayed-min",
-  );
-  if (!bundle) throw new Error("Missing Wind production bundle");
-  return bundle;
+  )
+  if (!bundle) throw new Error("Missing Wind production bundle")
+  return bundle
 }
 
 describe("Wind dummy preset", () => {
   it("anchors combat to RD Q damage and preserves the authored sequence with a 60-second cutoff", () => {
-    const bundle = bundleFor();
-    const result = calculateRotationBaseline(bundle);
-    const full = calculateRotationBaseline(bundleFor(true));
-    const casts = result.timeline.filter((row) => row.kind === "rotation" && row.step.type === "skill");
-    const fullCasts = full.timeline.filter((row) => row.kind === "rotation" && row.step.type === "skill");
-    const firstQ = casts.find((row) => row.step.type === "skill" && row.step.skill === "BladeboundThreadCancel")!;
-    const fightStart = firstQ.startTime + Number(firstQ.actions[0].time);
-    expect(result.duration).toBeCloseTo(60);
-    expect(Math.min(...result.baseline.map((entry) => entry.timelineTime!))).toBeCloseTo(fightStart);
-    expect(result.baseline.every((entry) => entry.timelineTime! <= fightStart + 60)).toBe(true);
-    const activations = fullCasts.filter((row) => row.step.skill === "Flamelash");
-    expect(activations).toHaveLength(4);
-    const rodentCancels = fullCasts.filter((row) => row.step.skill?.endsWith("Rodent"));
-    expect(rodentCancels.length).toBeGreaterThan(0);
+    const bundle = bundleFor()
+    const result = calculateRotationBaseline(bundle)
+    const full = calculateRotationBaseline(bundleFor(true))
+    const casts = result.timeline.filter(row => row.kind === "rotation" && row.step.type === "skill")
+    const fullCasts = full.timeline.filter(row => row.kind === "rotation" && row.step.type === "skill")
+    const firstQ = casts.find(row => row.step.type === "skill" && row.step.skill === "BladeboundThreadCancel")!
+    const fightStart = firstQ.startTime + Number(firstQ.actions[0].time)
+    expect(result.duration).toBeCloseTo(60)
+    expect(Math.min(...result.baseline.map(entry => entry.timelineTime!))).toBeCloseTo(fightStart)
+    expect(result.baseline.every(entry => entry.timelineTime! <= fightStart + 60)).toBe(true)
+    const activations = fullCasts.filter(row => row.step.skill === "Flamelash")
+    expect(activations).toHaveLength(4)
+    const rodentCancels = fullCasts.filter(row => row.step.skill?.endsWith("Rodent"))
+    expect(rodentCancels.length).toBeGreaterThan(0)
     for (const row of rodentCancels) {
-      expect(row.effectiveCastTime).toBe(0);
-      expect(row.actions.some((action) => action.type === "damage")).toBe(false);
+      expect(row.effectiveCastTime).toBe(0)
+      expect(row.actions.some(action => action.type === "damage")).toBe(false)
     }
     // The authored sequence intentionally permits resource-invalid casts pending user review.
-    expect(fullCasts.length).toBe(bundle.timeline.rotation.steps.filter((step) => step.type === "skill").length);
-    expect(casts.map((row) => row.id)).toEqual(
-      fullCasts.filter((row) => row.startTime < fightStart + 60).map((row) => row.id),
-    );
-    expect(result.metrics.totalDamage).toBeGreaterThan(0);
-    expect(Number.isFinite(result.metrics.dps)).toBe(true);
-  });
+    expect(fullCasts.length).toBe(bundle.timeline.rotation.steps.filter(step => step.type === "skill").length)
+    expect(casts.map(row => row.id)).toEqual(
+      fullCasts.filter(row => row.startTime < fightStart + 60).map(row => row.id),
+    )
+    expect(result.metrics.totalDamage).toBeGreaterThan(0)
+    expect(Number.isFinite(result.metrics.dps)).toBe(true)
+  })
 
   it("resolves paired dummy attacks, infinite Vitality, and the break after FA1 damage", () => {
-    const bundle = bundleFor();
-    const { timeline } = calculateRotationBaseline(bundle);
-    const attacks = timeline.filter((row) => row.step.type === "event" && row.step.event === "TakeDamage");
-    expect(attacks).toHaveLength(20);
+    const bundle = bundleFor()
+    const { timeline } = calculateRotationBaseline(bundle)
+    const attacks = timeline.filter(row => row.step.type === "event" && row.step.event === "TakeDamage")
+    expect(attacks).toHaveLength(20)
     for (let index = 0; index < attacks.length; index += 2) {
-      expect(attacks[index].startTime).toBeCloseTo(attacks[index + 1].startTime);
+      expect(attacks[index].startTime).toBeCloseTo(attacks[index + 1].startTime)
     }
-    const states = timeline.flatMap((row) => Object.values(row.actionStates));
-    expect(states.every((state) => state.resources.Vitality === bundle.timeline.resourceMaximums!.Vitality)).toBe(true);
-    const breakIndex = bundle.timeline.rotation.steps.findIndex((step) => step.type === "event" && step.event === "Qi");
-    const fa1 = timeline.find((row) => row.id === "rotation-" + (breakIndex + 1))!;
-    const fa2 = timeline.find((row) => row.id === "rotation-" + (breakIndex + 2))!;
-    expect(fa1.actionStates[1].targetQiRatio).toBe(1);
-    expect(fa2.actionStates[0].targetQiRatio).toBe(0);
+    const states = timeline.flatMap(row => Object.values(row.actionStates))
+    expect(states.every(state => state.resources.Vitality === bundle.timeline.resourceMaximums!.Vitality)).toBe(true)
+    const breakIndex = bundle.timeline.rotation.steps.findIndex(step => step.type === "event" && step.event === "Qi")
+    const fa1 = timeline.find(row => row.id === "rotation-" + (breakIndex + 1))!
+    const fa2 = timeline.find(row => row.id === "rotation-" + (breakIndex + 2))!
+    expect(fa1.actionStates[1].targetQiRatio).toBe(1)
+    expect(fa2.actionStates[0].targetQiRatio).toBe(0)
     expect(
-      timeline.some((row) => row.step.type === "skill" && row.step.skill === "GhostlyStepsUmbraDodgeDualBlades"),
-    ).toBe(true);
-  });
+      timeline.some(row => row.step.type === "skill" && row.step.skill === "GhostlyStepsUmbraDodgeDualBlades"),
+    ).toBe(true)
+  })
 
   it("applies base Flamelash bonuses at cast start and removes them on Hellfire depletion", () => {
-    const bundle = bundleFor();
-    bundle.stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1, critDmgBonus: 0.5 };
-    bundle.derivedStats = calculateDerivedStats(bundle.stats, 0);
-    delete bundle.rawStats;
-    delete bundle.baseStats;
-    bundle.enemy = { ...bundle.enemy, defense: 0, physicalResistance: 0, judgementResistance: 0 };
-    bundle.startAnchor = { rowId: "rotation-0" };
+    const bundle = bundleFor()
+    bundle.stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1, critDmgBonus: 0.5 }
+    bundle.derivedStats = calculateDerivedStats(bundle.stats, 0)
+    delete bundle.rawStats
+    delete bundle.baseStats
+    bundle.enemy = { ...bundle.enemy, defense: 0, physicalResistance: 0, judgementResistance: 0 }
+    bundle.startAnchor = { rowId: "rotation-0" }
     bundle.timeline = {
       ...bundle.timeline,
       initialResources: { Hellfire: 80 },
@@ -103,16 +104,16 @@ describe("Wind dummy preset", () => {
         Observation: {
           castTime: 0,
           tags: ["Triggered"],
-          action: [0.199, 0.201, 5.529, 5.531].map((time) => ({ type: "damage", phyCoef: 1, time })),
+          action: [0.199, 0.201, 5.529, 5.531].map(time => ({ type: "damage", phyCoef: 1, time })),
         },
       },
-    };
-    const result = calculateRotationBaseline(bundle);
-    const row = result.timeline.find((row) => row.step.type === "skill" && row.step.skill === "Observation")!;
-    const damage = [0, 1, 2, 3].map((index) => result.actionBreakdowns[row.id + ":" + index]);
-    expect(damage.map((hit) => hit.outcomeRates.critical)).toEqual([0, 0.1, 0.1, 0]);
-    expect(damage[1].total / damage[0].total).toBeCloseTo(1.07);
-    expect(damage[2].total).toBeCloseTo(damage[1].total);
-    expect(damage[3].total).toBeCloseTo(damage[0].total);
-  });
-});
+    }
+    const result = calculateRotationBaseline(bundle)
+    const row = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "Observation")!
+    const damage = [0, 1, 2, 3].map(index => result.actionBreakdowns[row.id + ":" + index])
+    expect(damage.map(hit => hit.outcomeRates.critical)).toEqual([0, 0.1, 0.1, 0])
+    expect(damage[1].total / damage[0].total).toBeCloseTo(1.07)
+    expect(damage[2].total).toBeCloseTo(damage[1].total)
+    expect(damage[3].total).toBeCloseTo(damage[0].total)
+  })
+})

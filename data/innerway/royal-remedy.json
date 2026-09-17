@@ -5,36 +5,15 @@
   "effect": {
     "RoyalRemedyT0": {
       "effect": [
-        {
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "CloudburstHealing"
-            }
-          ],
-          "effect": {
-            "healingBonus": 0.1
-          }
-        }
+        { "requirement": [{ "target": "skillTag", "value": "CloudburstHealing" }], "effect": { "healingBonus": 0.1 } }
       ]
     },
     "RoyalRemedyT1": {
       "trigger": [
         {
           "event": "heal",
-          "requirement": [
-            {
-              "target": "skillTag",
-              "value": "CloudburstHealing"
-            }
-          ],
-          "action": [
-            {
-              "type": "addResource",
-              "value": "Vitality",
-              "amount": 2
-            }
-          ]
+          "requirement": [{ "target": "skillTag", "value": "CloudburstHealing" }],
+          "action": [{ "type": "addResource", "value": "Vitality", "amount": 2 }]
         }
       ]
     },
@@ -74,15 +53,7 @@
     },
     "RoyalRemedyT3": {},
     "RoyalRemedyT4": {},
-    "RoyalRemedyT5": {
-      "effect": [
-        {
-          "rawStat": {
-            "directCrit": 0.046
-          }
-        }
-      ]
-    },
+    "RoyalRemedyT5": { "effect": [{ "rawStat": { "directCrit": 0.046 } }] },
     "RoyalRemedyT6": {}
   }
 }

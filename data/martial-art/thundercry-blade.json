@@ -22,49 +22,25 @@
         "effect": [
           {
             "requirement": [
-              {
-                "target": "skillTag",
-                "value": "ThundercryBlade"
-              },
+              { "target": "skillTag", "value": "ThundercryBlade" },
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Charged" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               }
             ],
-            "effect": {
-              "convert": {
-                "from": "abrasionRate",
-                "to": "normalRate",
-                "ratio": 1
-              }
-            }
+            "effect": { "convert": { "from": "abrasionRate", "to": "normalRate", "ratio": 1 } }
           },
           {
             "requirement": [
-              {
-                "target": "skillTag",
-                "value": "ThundercryBlade"
-              },
+              { "target": "skillTag", "value": "ThundercryBlade" },
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Charged" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               }
             ],
@@ -87,54 +63,31 @@
           }
         ]
       },
-      {
-        "name": "Physical Attack Up",
-        "effect": []
-      },
+      { "name": "Physical Attack Up", "effect": [] },
       {
         "name": "Charge Critical Hit Enhancement",
         "effect": [
           {
             "requirement": [
-              {
-                "target": "skillTag",
-                "value": "ThundercryBlade"
-              },
+              { "target": "skillTag", "value": "ThundercryBlade" },
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Charged" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               }
             ],
-            "effectiveStat": {
-              "effectiveCritBonus": 0.09
-            }
+            "effectiveStat": { "effectiveCritBonus": 0.09 }
           },
           {
             "requirement": [
-              {
-                "target": "skillTag",
-                "value": "ThundercryBlade"
-              },
+              { "target": "skillTag", "value": "ThundercryBlade" },
               {
                 "operator": "or",
                 "operand": [
-                  {
-                    "target": "skillTag",
-                    "value": "Charged"
-                  },
-                  {
-                    "target": "skillTag",
-                    "value": "VariedCombo"
-                  }
+                  { "target": "skillTag", "value": "Charged" },
+                  { "target": "skillTag", "value": "VariedCombo" }
                 ]
               }
             ],
@@ -155,26 +108,14 @@
         "name": "Stonesplit Attribute Up",
         "effect": [
           {
-            "rawStat": {
-              "maxStonesplit": 196,
-              "minStonesplit": 98
-            },
+            "rawStat": { "maxStonesplit": 196, "minStonesplit": 98 },
             "stat": {
-              "stonesplitPenetration": {
-                "formula": {
-                  "source": "minStonesplit",
-                  "multiplier": 0.0672,
-                  "max": 22
-                }
-              }
+              "stonesplitPenetration": { "formula": { "source": "minStonesplit", "multiplier": 0.0672, "max": 22 } }
             }
           }
         ]
       },
-      {
-        "name": "Attr. Attack DMG Up",
-        "effect": []
-      }
+      { "name": "Attr. Attack DMG Up", "effect": [] }
     ]
   ]
 }

@@ -1,5 +1,5 @@
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vitest/config"
 
 // Test conventions: direct relative imports (no Vite server boilerplate);
 // `import data from "../data/<path>.json"` works out of the box. DOM tests
@@ -16,4 +16,4 @@ export default defineConfig({
     // keep a generous bound instead of the 5s unit-test default.
     testTimeout: 120_000,
   },
-});
+})

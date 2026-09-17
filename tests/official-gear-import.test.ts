@@ -1,27 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-official-gear-import.mjs.
 describe("official-gear-import", () => {
   it("Official dashboard gear parsing and additive build import checks passed", async () => {
-    const importer = await import("../src/officialGearImport.ts");
-    const bookmarklet = await import("../src/officialGearBookmarklet.ts");
-    const gear = await import("../src/gear.ts");
-    const affixMap = (await import("../data/official/affix-map.json")).default;
-    expect(
+    const importer = await import("../src/officialGearImport.ts")
+    const bookmarklet = await import("../src/officialGearBookmarklet.ts")
+    const gear = await import("../src/gear.ts")
+    const affixMap = (await import("../data/official/affix-map.json")).default
+    assert(
       bookmarklet.officialGearBookmarklet.startsWith("javascript:"),
       "The dashboard exporter must be a draggable JavaScript bookmark.",
-    ).toBeTruthy();
-    new Function(decodeURIComponent(bookmarklet.officialGearBookmarklet.slice("javascript:".length)));
-    const statId = (key) => Object.keys(affixMap).find((id) => affixMap[id] === key);
-    const row = (key, value) => ({ equipmentDetails: [statId(key), value, 5, 0, true] });
-    const weaponRows = (art) => [
+    )
+    new Function(decodeURIComponent(bookmarklet.officialGearBookmarklet.slice("javascript:".length)))
+    const statId = key => Object.keys(affixMap).find(id => affixMap[id] === key)
+    const row = (key, value) => ({ equipmentDetails: [statId(key), value, 5, 0, true] })
+    const weaponRows = art => [
       row("minPhys", 53),
       row("minPhys", 60),
       row("agility", 40),
       row(art, 5.2),
       row("maxStonesplit", 36.2),
       row("physicalPenetration", 9),
-    ];
+    ]
     const accessoryRows = [
       row("minPhys", 60),
       row("minPhys", 60),
@@ -29,7 +29,7 @@ describe("official-gear-import", () => {
       row("allMartialArts", 2.6),
       row("maxStonesplit", 36.2),
       row("physicalPenetration", 9),
-    ];
+    ]
     const armorRows = [
       row("precision", 6.6),
       row("minPhys", 60),
@@ -37,8 +37,8 @@ describe("official-gear-import", () => {
       row("crit", 7.4),
       row("maxStonesplit", 36.2),
       row("phalanxbaneChargedBoost", 5),
-    ];
-    const detail = (baseAttrs, baseAffixes, extra = {}) => ({ exVo: { ...extra, baseAttrs, baseAffixes } });
+    ]
+    const detail = (baseAttrs, baseAffixes, extra = {}) => ({ exVo: { ...extra, baseAttrs, baseAffixes } })
     const pasted = {
       source: "wwm-dashboard",
       v: 1,
@@ -54,37 +54,34 @@ describe("official-gear-import", () => {
         11: detail({ MAX_W_ATK: 106 }, accessoryRows),
         21: detail({}, []),
       },
-    };
+    }
 
-    const parsed = importer.parseOfficialGearExport(pasted, ["snowparting", "phalanxbane"]);
-    expect(
+    const parsed = importer.parseOfficialGearExport(pasted, ["snowparting", "phalanxbane"])
+    assert(
       parsed.gearCount === 8 && parsed.roleName === "Probe Character",
       "The official import must include only the eight supported gear slots.",
-    ).toBeTruthy();
-    expect(
-      parsed.warnings.length === 0,
-      "Known base signatures must infer level and rarity without warnings.",
-    ).toBeTruthy();
-    const merged = gear.mergeImportedBuildState({ entries: [], activeBuildId: "", gearItems: [] }, parsed.exportValue);
-    expect(
+    )
+    assert(parsed.warnings.length === 0, "Known base signatures must infer level and rarity without warnings.")
+    const merged = gear.mergeImportedBuildState({ entries: [], activeBuildId: "", gearItems: [] }, parsed.exportValue)
+    assert(
       merged.importedGearCount === 8 && merged.importedBuildCount === 1,
       "Official gear must pass the normal build validation pipeline.",
-    ).toBeTruthy();
-    const build = merged.state.entries[0];
-    expect(
+    )
+    const build = merged.state.entries[0]
+    assert(
       Object.keys(build.equipped).length === 8 && build.name === "Probe Character Import",
       "The imported build must equip every imported piece under the character import name.",
-    ).toBeTruthy();
-    expect(
-      merged.state.gearItems.every((item) => item.level === 91 && item.rarity === "Gold"),
+    )
+    assert(
+      merged.state.gearItems.every(item => item.level === 91 && item.rarity === "Gold"),
       "Base signatures must infer Tier 91 Gold gear.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       merged.state.gearItems
-        .find((item) => item.definitionId === "hengBlade")
-        ?.additionalAffixes.some((affix) => affix.key === "hengBladeDmgBoost"),
+        .find(item => item.definitionId === "hengBlade")
+        ?.additionalAffixes.some(affix => affix.key === "hengBladeDmgBoost"),
       "Official stat IDs must translate to internal affix keys.",
-    ).toBeTruthy();
+    )
     const tier96Purple = importer.parseOfficialGearExport(
       {
         roleName: "Purple Probe",
@@ -99,15 +96,15 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    expect(
+    )
+    assert(
       tier96Purple.exportValue.gearItems[0].level === 96 &&
         tier96Purple.exportValue.gearItems[0].rarity === "Purple" &&
         tier96Purple.exportValue.gearItems[0].relayed === true &&
         tier96Purple.warnings.length === 0,
       "Current Tier 96 base stats and relaying marker must import without a fallback.",
-    ).toBeTruthy();
-    const actualRow = (id, value) => ({ equipmentDetails: [id, value, 0.94, 3, true] });
+    )
+    const actualRow = (id, value) => ({ equipmentDetails: [id, value, 0.94, 3, true] })
     const dashboardShape = importer.parseOfficialGearExport(
       {
         source: "wwm-dashboard",
@@ -138,25 +135,25 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    const importedDisc = dashboardShape.exportValue.gearItems.find((item) => item.definitionId === "disc");
-    expect(
+    )
+    const importedDisc = dashboardShape.exportValue.gearItems.find(item => item.definitionId === "disc")
+    assert(
       dashboardShape.gearCount === 2 &&
-        dashboardShape.exportValue.gearItems.some((item) => item.definitionId === "moBlade") &&
+        dashboardShape.exportValue.gearItems.some(item => item.definitionId === "moBlade") &&
         importedDisc !== undefined &&
         importedDisc.attunement === undefined &&
-        dashboardShape.warnings.some((warning) => warning.includes("280702") && warning.includes("physicalResistance")),
+        dashboardShape.warnings.some(warning => warning.includes("280702") && warning.includes("physicalResistance")),
       "Dashboard rows and supported affixes must import; an unsupported defensive attunement must be omitted with a warning.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       JSON.stringify(dashboardShape.exportValue.builds[0].martialArts) ===
         JSON.stringify(["snowparting", "phalanxbane"]),
       "The imported build must preserve the current order when it uses the same weapon pair.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       JSON.stringify(dashboardShape.weapons) === JSON.stringify(["snowparting", "phalanxbane"]),
       "Importing the same weapon pair must not change the global weapon filter.",
-    ).toBeTruthy();
+    )
     const kiteSetupShape = importer.parseOfficialGearExport(
       {
         roleName: "Kite Setup",
@@ -173,9 +170,9 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    const kiteSetup = kiteSetupShape.exportValue.builds[0].setup;
-    expect(
+    )
+    const kiteSetup = kiteSetupShape.exportValue.builds[0].setup
+    assert(
       JSON.stringify(kiteSetup.innerWays) ===
         JSON.stringify([
           { innerWay: "MoraleChant", tier: "T6" },
@@ -186,7 +183,7 @@ describe("official-gear-import", () => {
         kiteSetup.weaponSets.Etherwrath === 4 &&
         kiteSetup.bowRingSet === "Critical",
       "Kite passive slots, weapon set, and matching bow/ring suffixes must import into the build setup.",
-    ).toBeTruthy();
+    )
     const delugeTestingSetupShape = importer.parseOfficialGearExport(
       {
         roleName: "Deluge Testing Setup",
@@ -203,9 +200,9 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    const delugeTestingSetup = delugeTestingSetupShape.exportValue.builds[0].setup;
-    expect(
+    )
+    const delugeTestingSetup = delugeTestingSetupShape.exportValue.builds[0].setup
+    assert(
       JSON.stringify(delugeTestingSetup.innerWays) ===
         JSON.stringify([
           { innerWay: "", tier: "T6" },
@@ -214,7 +211,7 @@ describe("official-gear-import", () => {
           { innerWay: "", tier: "T6" },
         ]) && delugeTestingSetup.armorSets.Formbend === 4,
       "Official imports must preserve empty passive slots, clear path-ineligible Inner Ways, and derive armor sets.",
-    ).toBeTruthy();
+    )
     const mismatchedBowRingShape = importer.parseOfficialGearExport(
       {
         roleName: "Mismatched Bow Ring",
@@ -225,11 +222,11 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    expect(
+    )
+    assert(
       mismatchedBowRingShape.exportValue.builds[0].setup.bowRingSet === "None",
       "Different bow and ring suffixes must import as no bow/ring set.",
-    ).toBeTruthy();
+    )
     const mightDashboardShape = importer.parseOfficialGearExport(
       {
         source: "wwm-dashboard",
@@ -246,17 +243,17 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    const mightBuild = mightDashboardShape.exportValue.builds[0];
-    const mightItems = new Map(mightDashboardShape.exportValue.gearItems.map((item) => [item.id, item]));
-    expect(
+    )
+    const mightBuild = mightDashboardShape.exportValue.builds[0]
+    const mightItems = new Map(mightDashboardShape.exportValue.gearItems.map(item => [item.id, item]))
+    assert(
       JSON.stringify(mightDashboardShape.weapons) === JSON.stringify(["thundercry", "stormbreaker"]) &&
         JSON.stringify(mightBuild.martialArts) === JSON.stringify(["thundercry", "stormbreaker"]) &&
         mightItems.get(mightBuild.equipped.leftWeapon)?.definitionId === "moBlade" &&
         mightItems.get(mightBuild.equipped.rightWeapon)?.definitionId === "spear" &&
         mightItems.get(mightBuild.equipped.helmet)?.attunement?.key === "thundercryChargedBoost",
       "Official Might IDs must import as left Thundercry Blade, right Stormbreaker Spear, and Thundercry Charged armor.",
-    ).toBeTruthy();
+    )
     const reversedMightDashboardShape = importer.parseOfficialGearExport(
       {
         source: "wwm-dashboard",
@@ -272,18 +269,16 @@ describe("official-gear-import", () => {
         },
       },
       ["thundercry", "stormbreaker"],
-    );
-    const reversedMightBuild = reversedMightDashboardShape.exportValue.builds[0];
-    const reversedMightItems = new Map(
-      reversedMightDashboardShape.exportValue.gearItems.map((item) => [item.id, item]),
-    );
-    expect(
+    )
+    const reversedMightBuild = reversedMightDashboardShape.exportValue.builds[0]
+    const reversedMightItems = new Map(reversedMightDashboardShape.exportValue.gearItems.map(item => [item.id, item]))
+    assert(
       JSON.stringify(reversedMightDashboardShape.weapons) === JSON.stringify(["thundercry", "stormbreaker"]) &&
         JSON.stringify(reversedMightBuild.martialArts) === JSON.stringify(["thundercry", "stormbreaker"]) &&
         reversedMightItems.get(reversedMightBuild.equipped.leftWeapon)?.definitionId === "moBlade" &&
         reversedMightItems.get(reversedMightBuild.equipped.rightWeapon)?.definitionId === "spear",
       "Official Might imports must classify the path before assigning reversed main/sub weapons to canonical slots.",
-    ).toBeTruthy();
+    )
     for (const [statId, expectedKey] of [
       [280201, "thundercryShieldBoost"],
       [280202, "thundercryChargedBoost"],
@@ -299,11 +294,8 @@ describe("official-gear-import", () => {
           },
         },
         ["thundercry", "stormbreaker"],
-      ).exportValue.gearItems[0]?.attunement?.key;
-      expect(
-        parsedAttunement === expectedKey,
-        `Official Might attunement ${statId} must import as ${expectedKey}.`,
-      ).toBeTruthy();
+      ).exportValue.gearItems[0]?.attunement?.key
+      assert(parsedAttunement === expectedKey, `Official Might attunement ${statId} must import as ${expectedKey}.`)
     }
     const dustMartialAttunement = importer.parseOfficialGearExport(
       {
@@ -313,11 +305,11 @@ describe("official-gear-import", () => {
         },
       },
       ["everspring", "unfettered"],
-    ).exportValue.gearItems[0]?.attunement?.key;
-    expect(
+    ).exportValue.gearItems[0]?.attunement?.key
+    assert(
       dustMartialAttunement === "everspringMartialBoost",
       "Official Dust attunement 280601 must import as Everspring Martial Art Skill DMG Boost.",
-    ).toBeTruthy();
+    )
     const relayedHengBlade = importer.parseOfficialGearExport(
       {
         roleInfo: {
@@ -337,21 +329,21 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    expect(
+    )
+    assert(
       relayedHengBlade.exportValue.gearItems[0].relayed === true &&
         relayedHengBlade.exportValue.gearItems[0].additionalAffixes.some(
-          (affix) => affix.key === "maxStonesplit" && affix.value === 41.548,
+          affix => affix.key === "maxStonesplit" && affix.value === 41.548,
         ) &&
         relayedHengBlade.warnings.length === 0,
       "A relay-only official affix must identify relayed gear even when the dashboard omits an explicit relay field.",
-    ).toBeTruthy();
-    const dashboardBuild = dashboardShape.exportValue.builds[0];
-    const dashboardItems = new Map(dashboardShape.exportValue.gearItems.map((item) => [item.id, item]));
-    expect(
+    )
+    const dashboardBuild = dashboardShape.exportValue.builds[0]
+    const dashboardItems = new Map(dashboardShape.exportValue.gearItems.map(item => [item.id, item]))
+    assert(
       dashboardItems.get(dashboardBuild.equipped.rightWeapon)?.definitionId === "moBlade",
       "A dashboard Mo Blade must be equipped in the matching current weapon slot.",
-    ).toBeTruthy();
+    )
     const unattunedWeapon = importer.parseOfficialGearExport(
       {
         roleName: "Unattuned Probe",
@@ -360,20 +352,20 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    expect(
+    )
+    assert(
       unattunedWeapon.exportValue.gearItems[0].additionalAffixes.length === 4 &&
         unattunedWeapon.exportValue.gearItems[0].attunement === undefined,
       "Official gear with no attunement row must import without inventing an attunement.",
-    ).toBeTruthy();
+    )
     const unattunedMerge = gear.mergeImportedBuildState(
       { entries: [], activeBuildId: "", gearItems: [] },
       unattunedWeapon.exportValue,
-    );
-    expect(
+    )
+    assert(
       unattunedMerge.importedGearCount === 1 && unattunedMerge.state.gearItems[0].attunement === undefined,
       "The normal build validator must preserve imported gear without an attunement.",
-    ).toBeTruthy();
+    )
     const defensiveAdditionalAffix = importer.parseOfficialGearExport(
       {
         roleName: "Gauntlet Defense Probe",
@@ -388,15 +380,15 @@ describe("official-gear-import", () => {
         },
       },
       ["heavenwill", "skygrasp"],
-    );
-    expect(
-      defensiveAdditionalAffix.exportValue.gearItems[0].additionalAffixes.some((affix) => affix.key === "defense") &&
+    )
+    assert(
+      defensiveAdditionalAffix.exportValue.gearItems[0].additionalAffixes.some(affix => affix.key === "defense") &&
         defensiveAdditionalAffix.exportValue.gearItems[0].additionalAffixes.some(
-          (affix) => affix.key === "gauntletDmgBoost" && affix.value === 0.06,
+          affix => affix.key === "gauntletDmgBoost" && affix.value === 0.06,
         ) &&
         defensiveAdditionalAffix.warnings.length === 0,
       "Official weapon Defense and Art of Gauntlet rolls must import as canonical additional affixes.",
-    ).toBeTruthy();
+    )
     const kiteArmor = importer.parseOfficialGearExport(
       {
         source: "wwm-dashboard",
@@ -430,35 +422,35 @@ describe("official-gear-import", () => {
         },
       },
       ["snowparting", "phalanxbane"],
-    );
-    const kiteItems = new Map(kiteArmor.exportValue.gearItems.map((item) => [item.slot, item]));
-    expect(
+    )
+    const kiteItems = new Map(kiteArmor.exportValue.gearItems.map(item => [item.slot, item]))
+    assert(
       kiteArmor.warnings.length === 0 &&
         kiteItems.get("helmet")?.attunement?.key === "skygraspSpecialBoost" &&
         kiteItems.get("chestpiece")?.attunement?.key === "heavenwillChargedBoost" &&
-        kiteItems.get("greaves")?.additionalAffixes.some((affix) => affix.key === "body") &&
+        kiteItems.get("greaves")?.additionalAffixes.some(affix => affix.key === "body") &&
         kiteItems.get("greaves")?.attunement?.key === "heavenwillLightVariedComboBoost" &&
         kiteItems.get("bracer")?.attunement?.key === "heavenwillMartialBoost",
       "Observed Kite armor IDs must import as Body and the matching Kite attunements.",
-    ).toBeTruthy();
+    )
     const firstOfficialMerge = gear.mergeImportedBuildState(
       { entries: [], activeBuildId: "", gearItems: [] },
       dashboardShape.exportValue,
       { reuseIdenticalGear: true },
-    );
+    )
     const secondOfficialMerge = gear.mergeImportedBuildState(firstOfficialMerge.state, dashboardShape.exportValue, {
       reuseIdenticalGear: true,
-    });
-    expect(
+    })
+    assert(
       secondOfficialMerge.importedGearCount === 0 &&
         secondOfficialMerge.reusedGearCount === 2 &&
         secondOfficialMerge.importedBuildCount === 1,
       "Repeated official imports must reuse exactly matching shared gear while creating a new build.",
-    ).toBeTruthy();
-    expect(
+    )
+    assert(
       secondOfficialMerge.state.entries[1].equipped.leftWeapon ===
         firstOfficialMerge.state.entries[0].equipped.leftWeapon,
       "A reused gear item must be referenced by the new build.",
-    ).toBeTruthy();
-  });
-});
+    )
+  })
+})

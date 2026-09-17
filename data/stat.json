@@ -35,12 +35,7 @@
       "singleTargetMysticDmgBoost": 0.098,
       "areaMysticDmgBoost": 0.098
     },
-    "attunement": {
-      "physicalPenetration": 11,
-      "formlessPenetration": 13,
-      "physicalResistance": 11,
-      "armor": 0.06
-    }
+    "attunement": { "physicalPenetration": 11, "formlessPenetration": 13, "physicalResistance": 11, "armor": 0.06 }
   },
   "91": {
     "affix": {
@@ -78,11 +73,6 @@
       "singleTargetMysticDmgBoost": 0.08,
       "areaMysticDmgBoost": 0.08
     },
-    "attunement": {
-      "physicalPenetration": 9,
-      "formlessPenetration": 10.8,
-      "physicalResistance": 9,
-      "armor": 0.05
-    }
+    "attunement": { "physicalPenetration": 9, "formlessPenetration": 10.8, "physicalResistance": 9, "armor": 0.05 }
   }
 }
