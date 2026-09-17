@@ -16,6 +16,7 @@ vi.mock("../src/calculations/rotationWorkerClient", () => ({
     ...calculateEditorTimeline(bundle.timeline),
     fingerprint: "editor-test",
   })),
+  cancelEditorTimelineRequest: vi.fn<() => void>(),
   supersedeRotationCalculationRequests: vi.fn<() => void>(),
 }))
 

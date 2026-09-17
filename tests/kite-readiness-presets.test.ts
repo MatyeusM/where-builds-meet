@@ -96,7 +96,7 @@ it("Kite BP's final Qi break follows Soaring Spin and enables the last VC reset"
   expect(spin.actionStates[firstHit].targetQiRatio).toBe(0)
   const mandate = result.timeline.findLast(row => row.step.type === "skill" && row.step.skill === "CelestialMandate")!
   const hits = mandate.actions.flatMap((action, index) => (action.type === "damage" ? [index] : []))
-  expect(mandate.actionStates[hits[0]].debuffs.some(buff => buff.name === "Exhausted")).toBe(true)
-  expect(mandate.actionStates[hits[0]].buffs.some(buff => buff.name === "VileCondemnedEndCooldown")).toBe(true)
-  expect(mandate.actionStates[hits[1]].buffs.some(buff => buff.name === "VileCondemnedEndCooldown")).toBe(false)
+  expect(mandate.actionStates[hits[0]].debuffs.has("Exhausted")).toBe(true)
+  expect(mandate.actionStates[hits[0]].buffs.has("VileCondemnedEndCooldown")).toBe(true)
+  expect(mandate.actionStates[hits[1]].buffs.has("VileCondemnedEndCooldown")).toBe(false)
 })

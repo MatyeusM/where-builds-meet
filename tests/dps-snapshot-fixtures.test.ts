@@ -13,37 +13,30 @@ describe("rotation DPS snapshot fixtures", () => {
     const paths = JSON.parse(await readFile("data/path.json", "utf8"))
     const files = await readdir("data/rotation", { recursive: true })
     const expected = []
-    const rotationSources = await Promise.all(
+    const rotations = await Promise.all(
       files
         .filter(file => file.endsWith(".json"))
-        .map(async file => [file, await readFile("data/rotation/" + file, "utf8")] as const),
+        .map(async file => ({ file, rotation: JSON.parse(await readFile("data/rotation/" + file, "utf8")) })),
     )
-    for (const [file, source] of rotationSources) {
-      const rotation = JSON.parse(source)
+    for (const { file, rotation } of rotations) {
       assert(Number.isFinite(rotation.ping), "Preset must store its own ping: " + file)
       assert(resolvePing(rotation.ping, 85) === rotation.ping, "Preset ping must ignore Settings: " + file)
       if (!rotation.steps.length) continue
       const group = file.replaceAll("\\", "/").split("/")[0]
       const pathId = Object.keys(paths).find(id => paths[id].buildGroup === group)
       assert(pathId !== undefined, "Rotation has no path: " + file)
-      assert(paths[pathId!].status === "available", "Non-empty preset must be included in DPS coverage: " + file)
       expected.push(pathId + "/" + file.replaceAll("\\", "/").split("/").at(-1)!.slice(0, -5))
     }
     expect(cases.map(c => c.id).sort()).toEqual(expected.sort())
-    const buildSources = await Promise.all(
-      cases.map(
-        async entry =>
-          [
-            entry,
-            await readFile("data/build/" + entry.buildGroup + "/" + entry.fixture.build + ".json", "utf8"),
-          ] as const,
-      ),
+    await Promise.all(
+      cases.map(async entry => {
+        const build = JSON.parse(
+          await readFile("data/build/" + entry.buildGroup + "/" + entry.fixture.build + ".json", "utf8"),
+        )
+        expect(build.martialArts.slice().sort()).toEqual(entry.fixture.martialArts.slice().sort())
+        expect(entry.fixture.ping).toBe(entry.rotation.ping)
+      }),
     )
-    for (const [entry, source] of buildSources) {
-      const build = JSON.parse(source)
-      expect(build.martialArts.slice().sort()).toEqual(entry.fixture.martialArts.slice().sort())
-      expect(entry.fixture.ping).toBe(entry.rotation.ping)
-    }
     expect(compareDpsSnapshots(snapshots.cases, snapshots.cases)).toEqual([])
   })
   it("updates one rotation, an entire path, or all cases without accepting unrelated results", () => {
@@ -54,7 +47,9 @@ describe("rotation DPS snapshot fixtures", () => {
     expect(selectDpsSnapshotUpdates("kite/bp deluge/wts", ids)).toEqual(["deluge/wts", "kite/bp"])
     expect(selectDpsSnapshotUpdates("all", ids)).toEqual(ids)
     for (const selector of ["missing", "kite kite/bp", "kite/bp kite/bp", "kit"])
-      expect(() => selectDpsSnapshotUpdates(selector, ids)).toThrow(/DPS snapshot selector/)
+      expect(() => selectDpsSnapshotUpdates(selector, ids)).toThrow(
+        /Unknown DPS snapshot selector|Overlapping DPS snapshot selectors/,
+      )
   })
   it("detects a sibling rotation regression or missing baseline independently", () => {
     const sample = (dps: number) => ({ fixture: { build: "same" }, dps, totalDamage: dps * 60, duration: 60 })

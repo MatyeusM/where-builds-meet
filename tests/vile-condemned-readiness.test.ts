@@ -119,7 +119,7 @@ describe("Vile Condemned pre-charge readiness", () => {
     const { row: spendingRow } = verifyRelease(data, 3, 4)
     assert(!spendingRow.skipped, "Same-time spending must release the cast.")
   })
-  it("replays prior accepted waits without losing the shared End Hit cooldown", () => {
+  it("resolves successive waits without losing the shared End Hit cooldown", () => {
     const data = input()
     data.rotation.steps.push(cast("VileCondemnedEnd"))
     const rows = buildRotationTimeline(data)
@@ -132,13 +132,51 @@ describe("Vile Condemned pre-charge readiness", () => {
       true,
     )
   })
-  it("keeps before-start attachments after the generated wait", () => {
+  it("executes explicit start attachments at the earliest possible start without backdating their effects", () => {
     const data = input()
     data.eventDefinitions = { Buff: { action: [{ type: "apply", target: "self", time: 0 }] } }
     data.effectDefinitions = { ...effects, Marker: { duration: 2, maxStack: 1 } }
     data.rotation.steps.unshift({ type: "event", event: "Buff", buff: "Marker", before: { action: "start" } })
     const { rows, row } = verifyRelease(data, 20, 4)
-    expect(rows.find(row => row.rotationIndex === 0)?.startTime).toBeCloseTo(row.startTime, 8)
+    expect(rows.find(row => row.rotationIndex === 0)?.startTime).toBe(0)
+    expect(row.actionStates[0].buffs.has("Marker")).toBe(false)
+  })
+  it("does not replay pending actions and switches weapons before the displayed charge begins", () => {
+    const data = input()
+    data.weapons = ["skygrasp", "heavenwill"]
+    data.skills.Pending = {
+      ignorePing: true,
+      castTime: 0,
+      action: [
+        { type: "damage", phyCoef: 1, time: 2 },
+        { type: "addResource", value: "HeavensWill", amount: 2, time: 3 },
+      ],
+    }
+    data.rotation.steps.unshift(cast("Pending"))
+    data.setupEffects = [
+      {
+        trigger: {
+          event: "skillStart",
+          requirement: [{ target: "skillTag", value: "VileCondemned" }],
+          action: { type: "addResource", value: "UnexpectedStart", amount: 1 },
+        },
+      },
+    ]
+    const calls: string[] = []
+    const rows = buildRotationTimeline(data, undefined, () => (row, index) => {
+      calls.push(`${row.id}:${index}`)
+      return undefined
+    })
+    const row = charged(rows)
+    expect(row.startTime + lead).toBeCloseTo(3, 8)
+    expect(new Set(calls).size).toBe(calls.length)
+    expect(rows.find(candidate => candidate.rotationIndex === 0)?.actionStates[0].currentMartialArt).toBe("heavenwill")
+    expect(row.actionStates[0].resources.UnexpectedStart ?? 0).toBe(0)
+  })
+  it("rejects side effects in a silent charge instead of silently backdating them", () => {
+    const data = input()
+    data.skills.VileCondemnedCharge.action = [{ type: "addResource", value: "HeavensWill", amount: 1 }]
+    expect(() => buildRotationTimeline(data)).toThrow("Silent skill VileCondemnedCharge")
   })
   it("stops the wait at Battle End without casting the weak fallback", () => {
     const data = input()

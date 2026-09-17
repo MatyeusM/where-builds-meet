@@ -30,9 +30,14 @@ export const dpsSnapshotEnvironment = {
 }
 export async function loadDpsSnapshotFixtures() {
   const paths = JSON.parse(await readFile(new URL("path.json", dataRoot), "utf8"))
+  const groups = new Set(
+    (await readdir(new URL("rotation/", dataRoot), { withFileTypes: true }))
+      .filter(entry => entry.isDirectory())
+      .map(entry => entry.name),
+  )
   const availablePathIds = Object.keys(paths)
     .sort()
-    .filter(pathId => paths[pathId].status === "available")
+    .filter(pathId => groups.has(paths[pathId].buildGroup))
   const nested = await Promise.all(
     availablePathIds.map(async pathId => {
       const definition = paths[pathId]

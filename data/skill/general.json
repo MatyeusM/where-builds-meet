@@ -139,7 +139,7 @@
         "Gauntlet": 0.5,
         "Sword": 0.5,
         "Fan": 0.5,
-        "DualBlades": 0.5
+        "DualBlades": 0.125
       },
       "fallback": 0.5
     },
@@ -183,15 +183,18 @@
         "stack": 1,
         "reapply": true,
         "time": 0,
-        "requirement": [
-          {
-            "operator": "or",
-            "operand": [
-              { "target": "self", "value": "Mystery" },
-              { "target": "self", "value": "MysteryUmbra" }
-            ]
-          }
-        ]
+        "requirement": [{ "target": "self", "value": "Mystery" }],
+        "boostDamageSource": "Mystery"
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "MysteryDMGBoost",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [{ "target": "self", "value": "MysteryUmbra" }],
+        "boostDamageSource": "MysteryUmbra"
       },
       {
         "type": "trigger",
@@ -206,7 +209,8 @@
             "Spear": "GhostlyStepsUmbraDodgeSpear",
             "Umbrella": "GhostlyStepsUmbraDodgeUmbrella",
             "RopeDart": "GhostlyStepsUmbraDodgeRopeDart",
-            "Gauntlet": "GhostlyStepsUmbraDodgeGauntlet"
+            "Gauntlet": "GhostlyStepsUmbraDodgeGauntlet",
+            "DualBlades": "GhostlyStepsUmbraDodgeDualBlades"
           },
           "resolveAt": "skillStart"
         },

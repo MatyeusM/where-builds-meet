@@ -1,4 +1,4 @@
-import { assert, describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json" with { type: "json" }
 
@@ -58,13 +58,16 @@ describe("multi-action", () => {
       ),
     )
     referencedSubActions.forEach(skillId => {
-      assert(phalanxbaneSkills[skillId], `Sub-action ${skillId} must have a skill definition.`)
-      assert(phalanxbaneSkills[skillId].tags?.includes("SubAction"), `${skillId} must carry the SubAction tag.`)
+      expect(phalanxbaneSkills[skillId], `Sub-action ${skillId} must have a skill definition.`).toBeTruthy()
+      expect(
+        phalanxbaneSkills[skillId].tags?.includes("SubAction"),
+        `${skillId} must carry the SubAction tag.`,
+      ).toBeTruthy()
     })
     Object.entries(phalanxbaneSkills)
       .filter(([, skill]) => skill.tags?.includes("SubAction"))
       .forEach(([skillId]) =>
-        assert(referencedSubActions.has(skillId), `${skillId} is not referenced by a parent skill.`),
+        expect(referencedSubActions.has(skillId), `${skillId} is not referenced by a parent skill.`).toBeTruthy(),
       )
 
     const genericSkills = {
@@ -110,32 +113,32 @@ describe("multi-action", () => {
     )
     const compositeRow = generic.timeline.find(row => row.id === "rotation-0")
     const followingRow = generic.timeline.find(row => row.id === "rotation-1")
-    assert(compositeRow && followingRow, "The composite and following rotation rows must exist.")
-    assert(
+    expect(compositeRow && followingRow, "The composite and following rotation rows must exist.").toBeTruthy()
+    expect(
       closeTo(compositeRow.effectiveCastTime, 2) && closeTo(followingRow.startTime, 2),
       "Sub-actions must consume sequential time and apply their timing modifiers at their own start.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       compositeRow.actions.length === 2 &&
         closeTo(compositeRow.actions[0].time, 1) &&
         closeTo(compositeRow.actions[1].time, 2),
       "Sub-action actions must be flattened into the parent skill at their effective times.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       compositeRow.actionSkillTags?.[1]?.includes("SpecialTag") &&
         compositeRow.actionModifierEffects?.[1]?.some(effect => effect.dmgBonus === 0.5),
       "Each flattened action must retain its sub-action tags and modifiers.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       closeTo(generic.actionBreakdowns["rotation-0:1"].total, 175),
       "Damage must use both the sub-action modifier and sub-action tag requirements.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       generic.metrics.breakdown.casts.some(
         cast => cast.skillId === "Composite" && closeTo(cast.damage, 175) && closeTo(cast.averageCastTime, 2),
       ) && !generic.metrics.breakdown.casts.some(cast => cast.skillId === "Strike"),
       "Sub-action damage and cast time must belong to the parent skill breakdown.",
-    )
+    ).toBeTruthy()
 
     const conditionalSkills = {
       ConditionalComposite: {
@@ -179,23 +182,23 @@ describe("multi-action", () => {
     const fallbackResult = calculateRotationBaseline(bundle(conditionalSkills, conditionalRotation))
     const fallbackRow = fallbackResult.timeline.find(row => row.id === "rotation-0")
     const fallbackFollowing = fallbackResult.timeline.find(row => row.id === "rotation-1")
-    assert(
+    expect(
       fallbackRow?.effectiveCastTime === 1 && fallbackFollowing?.startTime === 1,
       "A failed conditional sub-action requirement must select and time its fallback.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       fallbackRow.actions.filter(action => action.type === "damage").length === 1 &&
         fallbackRow.actions.filter(action => action.type === "inactive").length === 2,
       "A shorter fallback must leave its unused stable action slots inert.",
-    )
+    ).toBeTruthy()
     const primaryResult = calculateRotationBaseline(
       bundle(conditionalSkills, conditionalRotation, [], chooseLongDefinition, [{ name: "ChooseLong", stack: 1 }]),
     )
     const primaryRow = primaryResult.timeline.find(row => row.id === "rotation-0")
-    assert(
+    expect(
       primaryRow?.effectiveCastTime === 2 && primaryRow.actions.filter(action => action.type === "damage").length === 3,
       "A passing conditional sub-action requirement must select every primary action.",
-    )
+    ).toBeTruthy()
 
     const sequenceSkills = {
       SequenceComposite: {
@@ -245,19 +248,19 @@ describe("multi-action", () => {
         [{ name: "ChoosePrimary", stack: 1 }],
       ),
     ).timeline.find(row => row.id === "rotation-0")
-    assert(
+    expect(
       closeTo(primarySequence?.effectiveCastTime, 3) &&
         primarySequence?.actions.some(action => action.type === "damage" && action.phyCoef === 2),
       "A conditional sequence must keep its primary branch locked after its first component changes the requirement.",
-    )
+    ).toBeTruthy()
     const fallbackSequence = calculateRotationBaseline(bundle(sequenceSkills, sequenceRotation)).timeline.find(
       row => row.id === "rotation-0",
     )
-    assert(
+    expect(
       closeTo(fallbackSequence?.effectiveCastTime, 1.5) &&
         fallbackSequence?.actions.some(action => action.type === "damage" && action.phyCoef === 1),
       "A failed conditional sequence requirement must lock and execute the entire fallback branch.",
-    )
+    ).toBeTruthy()
 
     const startBoundSkills = {
       Primer: {
@@ -318,25 +321,24 @@ describe("multi-action", () => {
       bundle(startBoundSkills, startBoundRotation, [], startBoundDefinitions(0.5)),
     )
     const afterExpiredSelection = expiredSelection.timeline.find(row => row.id === "rotation-2")
-    assert(
-      afterExpiredSelection?.buffs.some(effect => effect.name === "ChargeEnhancement"),
+    expect(
+      afterExpiredSelection?.buffs.has("ChargeEnhancement"),
       "A start-bound consume must not fall through when its selected effect expires before execution.",
-    )
+    ).toBeTruthy()
 
     const liveSelection = calculateRotationBaseline(
       bundle(startBoundSkills, startBoundRotation, [], startBoundDefinitions(10)),
     )
     const liveComposite = liveSelection.timeline.find(row => row.id === "rotation-1")
     const afterLiveSelection = liveSelection.timeline.find(row => row.id === "rotation-2")
-    assert(
+    expect(
       liveComposite?.actionModifierEffects?.[1]?.some(effect => effect.dmgBonus === 0.5),
       "The following component must snapshot its modifier before the delayed consume executes.",
-    )
-    assert(
-      !afterLiveSelection?.buffs.some(effect => effect.name === "InnerPassion") &&
-        afterLiveSelection?.buffs.some(effect => effect.name === "ChargeEnhancement"),
+    ).toBeTruthy()
+    expect(
+      !afterLiveSelection?.buffs.has("InnerPassion") && afterLiveSelection?.buffs.has("ChargeEnhancement"),
       "A live start-bound selection must consume only the effect selected at component start.",
-    )
+    ).toBeTruthy()
 
     const burningPrimer = {
       name: "Burning Heart primer",
@@ -369,16 +371,16 @@ describe("multi-action", () => {
     const fastBurningDamageIndexes = fastBurning?.actions.flatMap((action, index) =>
       action.type === "damage" ? [index] : [],
     )
-    assert(
+    expect(
       closeTo(fastBurning?.effectiveCastTime, 0.4 + 0.95 / 1.5 + 1.05),
       "Inner Passion at the end of PreCharge must lock Burning Heart's exact fast sequence timing.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       fastBurningDamageIndexes?.every(index =>
         fastBurning?.actionModifierEffects?.[index]?.some(effect => effect.baseDMGBonus === 0.32),
       ),
       "The fast Slam must retain Steadfast Devotion T4's Base DMG Bonus after Inner Passion expires during Charge.",
-    )
+    ).toBeTruthy()
 
     const slowBurning = calculateRotationBaseline(
       bundle(
@@ -406,16 +408,16 @@ describe("multi-action", () => {
     const slowBurningDamageIndexes = slowBurning?.actions.flatMap((action, index) =>
       action.type === "damage" ? [index] : [],
     )
-    assert(
+    expect(
       closeTo(slowBurning?.effectiveCastTime, 0.4 + 0.95 + 1.05),
       "Burning Heart without Inner Passion or Charge Enhancement must lock the slow sequence.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       slowBurningDamageIndexes?.every(
         index => !slowBurning?.actionModifierEffects?.[index]?.some(effect => effect.baseDMGBonus === 0.32),
       ),
       "Steadfast Devotion T4 alone must not grant Slow Slam the fast-sequence Base DMG Bonus.",
-    )
+    ).toBeTruthy()
 
     const phalanxbane = calculateRotationBaseline(
       bundle(phalanxbaneSkills, {
@@ -428,22 +430,22 @@ describe("multi-action", () => {
     )
     const charged = phalanxbane.timeline.find(row => row.id === "rotation-0")
     const afterCharged = phalanxbane.timeline.find(row => row.id === "rotation-1")
-    assert(charged && afterCharged, "The Phalanxbane charged and following rows must exist.")
-    assert(
+    expect(charged && afterCharged, "The Phalanxbane charged and following rows must exist.").toBeTruthy()
+    expect(
       closeTo(charged.effectiveCastTime, 1.4375) && closeTo(afterCharged.startTime, 1.4375),
       "Burning Heart 1st Stage must preserve its previous total cast time.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       charged.actions
         .filter(action => action.type === "damage")
         .every(action => charged.actionSkillTags?.[charged.actions.indexOf(action)]?.includes("SubAction")),
       "Burning Heart damage actions must use their component skill tags.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       phalanxbane.metrics.breakdown.casts.some(
         cast => cast.skillId === "PhalanxbaneHeavyCharged1" && cast.damage > 0,
       ) && !phalanxbane.metrics.breakdown.casts.some(cast => cast.skillId === "PhalanxbaneHeavySlam1"),
       "Burning Heart component damage must be collected under the main charged skill.",
-    )
+    ).toBeTruthy()
   })
 })

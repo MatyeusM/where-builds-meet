@@ -40,22 +40,32 @@ describe("vendetta", () => {
     )
     for (const roll of [undefined, () => 0.5]) {
       for (let tier = 0; tier <= 6; tier++) {
+        const duration = tier < 4 ? 15 : 20
         const rows = build(tier, lateAttack, roll)
         assert.equal(rodent(rows).length, 1, "Every Vendetta tier retains T0 and enables attacks after ten seconds")
-        const buff = rows
-          .find(row => row.step.skill === "InfernalLight1")
-          .actionStates[0].buffs.find(buff => buff.name === "RodentRampage")
+        const buff = rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.get("RodentRampage")
         assert.ok(
-          Math.abs(buff.expiresAt - 25.541) < 1e-9,
-          "Vendetta adds fifteen seconds once, without stacking cumulative tier descriptions",
+          Math.abs(buff.expiresAt - (duration + 0.541)) < 1e-9,
+          "Vendetta sets the total duration to 15 seconds, upgraded to 20 at T4",
         )
         assert.equal(buff.stack, 1, "Duration extension preserves the one-stack cap")
+        for (const [offset, expected] of [
+          [-0.001, 1],
+          [0, 0],
+        ]) {
+          const boundary = build(
+            tier,
+            [cast("RodentRampage"), delay(duration - 0.339 + offset), cast("InfernalLight1")],
+            roll,
+          )
+          assert.equal(rodent(boundary).length, expected, "Rodent attacks stop at the selected tier's exact expiry")
+        }
       }
     }
     assert.equal(
-      rodent(build(0, [cast("RodentRampage"), delay(25 - 0.339), cast("InfernalLight1")])).length,
+      rodent(build(0, [cast("RodentRampage"), delay(15 - 0.339), cast("InfernalLight1")])).length,
       0,
-      "Extended buff expires at the exact 25-second boundary",
+      "Extended buff expires at the exact 15-second boundary",
     )
     const refresh = build(0, [
       cast("RodentRampage"),
@@ -65,12 +75,12 @@ describe("vendetta", () => {
       cast("InfernalLight1"),
     ])
     assert.equal(rodent(refresh).length, 1, "Recasting refreshes the full extended lifetime")
-    const refreshed = refresh
-      .find(row => row.step.skill === "InfernalLight1")
-      .actionStates[0].buffs.filter(buff => buff.name === "RodentRampage")
+    const refreshed = Array.from(
+      refresh.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
+    ).filter(buff => buff.name === "RodentRampage")
     assert.equal(refreshed.length, 1, "Refresh still produces one buff")
     assert.ok(
-      Math.abs(refreshed[0].expiresAt - 40.082) < 1e-9,
+      Math.abs(refreshed[0].expiresAt - 30.082) < 1e-9,
       "Refresh expiration is measured from the new application",
     )
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
@@ -94,7 +104,12 @@ describe("vendetta", () => {
         timeline: {
           rotation: {
             name: "Vendetta Token damage",
-            steps: [cast("RodentRampage"), cast(withToken ? "BladeboundThreadCancel" : "Wait"), cast("InfernalLight1")],
+            steps: [
+              cast("RodentRampage"),
+              cast(withToken ? "BladeboundThreadCancel" : "Wait"),
+              cast("InfernalLight1"),
+              delay(0.5),
+            ],
           },
           skills: { ...mortal, ...infernal, Wait: { castTime: 0.385, action: [] } },
           effectDefinitions: buffs,
@@ -128,8 +143,8 @@ describe("vendetta", () => {
     const unbuffed = damageRun(false)
     const token = damageRun(true)
     const tokenT6 = damageRun(true, true)
-    close(procDamage(token) / procDamage(unbuffed), 1.5, "Vendetta Token adds 50% Rodent base damage")
-    close(procDamage(tokenT6) / procDamage(unbuffed), 1.95, "T6 adds a separate 30% Rodent damage bonus")
+    close(procDamage(token) / procDamage(unbuffed), 1.5, "Vendetta Token adds 50% Rodent general damage")
+    close(procDamage(tokenT6) / procDamage(unbuffed), 1.8, "T6 adds 30% to Token's general damage bonus")
     close(procDamage(damageRun(false, true)), procDamage(unbuffed), "T6 has no effect without the self buff")
     close(
       token.actionBreakdowns["rotation-2:0"].total,
@@ -139,7 +154,7 @@ describe("vendetta", () => {
     const existingBonuses = [{ effect: { baseDMGBonus: 0.2, dmgBonus: 0.4 } }]
     close(
       procDamage(damageRun(true, true, existingBonuses)) / procDamage(unbuffed),
-      1.7 * 1.7,
+      1.2 * 2.2,
       "Base damage and Category 1 bonuses add within their own categories",
     )
     for (const roll of [undefined, () => 0.5]) {
@@ -151,14 +166,11 @@ describe("vendetta", () => {
       const casts = rows.filter(row => row.step.skill === "BladeboundThreadCancel")
       close(casts[0].effectiveCastTime, 0.385, "Cancel cast ends at the supplied hit time")
       close(casts[0].actions[0].time, 0.385, "Cancel hit uses the supplied local time")
-      assert.ok(
-        !casts[0].actionStates[0].buffs.some(buff => buff.name === "VendettaToken"),
-        "Token is applied after the initial damage",
-      )
+      assert.ok(!casts[0].actionStates[0].buffs.has("VendettaToken"), "Token is applied after the initial damage")
       close(casts[1].startTime, 8, "Repeated cancel casts honor the eight-second cooldown")
-      const active = rows
-        .find(row => row.step.skill === "InfernalLight1")
-        .actionStates[0].buffs.filter(buff => buff.name === "VendettaToken")
+      const active = Array.from(
+        rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
+      ).filter(buff => buff.name === "VendettaToken")
       assert.equal(active.length, 1, "Reapplication refreshes one Token buff")
       assert.equal(active[0].stack, 1, "Token does not stack damage on recast")
       close(active[0].expiresAt, 18.385, "Token refresh starts ten seconds at its new application")
@@ -174,15 +186,12 @@ describe("vendetta", () => {
           roll,
         )
         const hit = lifetime.find(row => row.step.skill === "InfernalLight1")
-        assert.ok(
-          !hit.actionStates[0].buffs.some(buff => buff.name === "VendettaToken"),
-          "Token expires at its exact tier-adjusted boundary",
-        )
+        assert.ok(!hit.actionStates[0].buffs.has("VendettaToken"), "Token expires at its exact tier-adjusted boundary")
         const before = build(tier, [cast("BladeboundThreadCancel"), cast("InfernalLight1")], roll).find(
           row => row.step.skill === "InfernalLight1",
         )
         close(
-          before.actionStates[0].buffs.find(buff => buff.name === "VendettaToken").expiresAt,
+          before.actionStates[0].buffs.get("VendettaToken").expiresAt,
           0.385 + duration,
           "Token duration uses the selected tier",
         )
@@ -205,7 +214,7 @@ describe("vendetta", () => {
       })
       const corrosion = rows
         .find(row => row.step.skill === "InfernalLight1")
-        .actionStates[0].debuffs.find(buff => buff.name === "BoneCorrosion")
+        .actionStates[0].debuffs.get("BoneCorrosion")
       assert.equal(Boolean(corrosion), rank === 13, "Bladebound Thread activates Bone Corrosion only with the talent")
       if (corrosion) close(corrosion.expiresAt, 5.385, "Bone Corrosion starts its five-second lifetime at the hit")
     }

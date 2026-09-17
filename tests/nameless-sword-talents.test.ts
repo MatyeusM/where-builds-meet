@@ -1,5 +1,6 @@
 import { assert, describe, it } from "vitest"
 
+import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-nameless-sword-talents.mjs.
@@ -14,7 +15,7 @@ describe("nameless-sword-talents", () => {
 
     const assertClose = (actual, expected, message) => {
       assert(
-        Number.isFinite(actual) || Math.abs(actual - expected) > 1e-9,
+        Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9,
         `${message} Expected ${expected}, received ${actual}.`,
       )
     }
@@ -31,41 +32,41 @@ describe("nameless-sword-talents", () => {
 
     const hpRule = effects.find(rule => rule.effect?.hpDMGBonus)
     const affinityRule = effects.find(rule => rule.effect?.affinityDmgBonus)
-    assert(hpRule || !affinityRule, "Nameless Sword conditional damage talent rules were not found.")
+    if (!hpRule || !affinityRule) throw new Error("Nameless Sword conditional damage talent rules were not found.")
 
-    assert(
-      requirementsPass(
+    if (
+      !requirementsPass(
         affinityRule.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["SwordEnergy"],
         new Set(),
         ["namelessSword", "namelessSpear"],
         {},
         { targetQiPercentage: 39.99 },
       ) ||
-        !requirementsPass(
-          affinityRule.requirement,
-          [],
-          [{ name: "QiImbalance" }],
-          ["SwordEnergy"],
-          new Set(),
-          ["namelessSword", "namelessSpear"],
-          {},
-          { targetQiPercentage: 100 },
-        ) ||
-        requirementsPass(
-          affinityRule.requirement,
-          [],
-          [],
-          ["SwordEnergy"],
-          new Set(),
-          ["namelessSword", "namelessSpear"],
-          {},
-          { targetQiPercentage: 40 },
-        ),
-      "Sword Qi Affinity Enhancement must require sub-40% Qi or Qi Imbalance at hit time.",
+      !requirementsPass(
+        affinityRule.requirement,
+        effectState([]),
+        effectState([{ name: "QiImbalance" }]),
+        ["SwordEnergy"],
+        new Set(),
+        ["namelessSword", "namelessSpear"],
+        {},
+        { targetQiPercentage: 100 },
+      ) ||
+      requirementsPass(
+        affinityRule.requirement,
+        effectState([]),
+        effectState([]),
+        ["SwordEnergy"],
+        new Set(),
+        ["namelessSword", "namelessSpear"],
+        {},
+        { targetQiPercentage: 40 },
+      )
     )
+      throw new Error("Sword Qi Affinity Enhancement must require sub-40% Qi or Qi Imbalance at hit time.")
 
     const damageStats = { ...emptyStats, minPhys: 1500, maxPhys: 1500, precision: 1, affinity: 1 }
     const enemy = {

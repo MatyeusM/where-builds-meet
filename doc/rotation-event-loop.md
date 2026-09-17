@@ -24,30 +24,34 @@ The readiness check precedes attachment expansion so before-start effects do not
 run during a cooldown wait. Once accepted, cast-start modifiers determine the
 new cooldown window and cast duration.
 
+Indefinite periodic effects keep only one upcoming tick in the event queue.
+Each tick schedules its successor using the original application cadence;
+consumption and refresh remove obsolete wakeups. Finite periodic effects retain
+their bounded schedule, and both obey the same combat endpoint. Periodic resource
+amounts can increase by a data-defined amount each tick, as used by Hellfire.
+
 ## Readiness after charging
 
-A composite reference can set `waitForRequirement: true` to delay the ordered
-cast until that component's existing requirement passes at its start. Its
-preceding components must form an unconditional, action-free charging prefix.
-The prefix's cast durations and per-component ping determine the lead time.
+A composite reference can set `waitForRequirement: true` after an unconditional
+`silent: true` charging prefix. Silent components cannot define actions,
+cooldowns, or attack responses and do not emit skill-start notifications.
+The weapon switches at the earliest possible cast start. Explicit start
+attachments also execute there; they are authored events, not charge emissions.
 
-An isolated replay of the same event loop pauses ordered input before this cast.
-Previously accepted readiness waits are replayed at their accepted start times,
-so forecasts do not recursively forecast earlier casts. Pending actions, timed
-events, triggers, resource gains/spending, and cooldown resets keep resolving.
-Between events, the next resource threshold or natural effect expiry supplies a
-candidate readiness boundary. All events at a tied boundary resolve first. The
-real cast begins at the later of its ordered ready time and the predicted release
-time minus the charging lead; the wait is never inserted inside the charge.
-The replay uses the same action-resolver factory and keyed simulation proc rolls,
-with fresh state and no forecast actions published into the real timeline.
+After the minimum charge duration and component ping, the release and remaining
+cast events are held outside the queue. The same live traversal continues with
+pending hits, resource changes, resets, and timed events. Between events, passive
+resource thresholds and natural effect expiry supply readiness boundaries.
+All events at a tied boundary resolve before readiness is accepted.
 
-Generated waits have `automatic: "requirement"` and share the existing output-only
-Delay representation and load/import migration. Before-start attachments remain
-attached to the actual cast. Without reachable readiness before Battle End, the
-cast does not start. Without an encounter end or any remaining event/regen that
-can satisfy it, it is skipped. No weak fallback is cast by the two explicit End
-variants. The ordinary Vile Condemned selection behavior is unchanged.
+When ready, shift the existing row's displayed start by the extra wait and resume
+its held events at the current clock. The charge duration stays unchanged, so
+the displayed interval ends at release. No past event is inserted or replayed.
+Rows are stable objects referenced by queued events; timestamp edits do not
+require a linked-list timeline. Generated `automatic: "requirement"` Delay rows
+describe the preceding wait. If combat ends first, no release is published. An
+unreachable release without a combat endpoint is skipped. The ordinary Vile
+Condemned fallback selection remains unchanged.
 
 ## Combat cutoff
 
@@ -60,17 +64,28 @@ including DOTs and feedback loops. No last-damage discovery pass is needed.
 
 ## Damage and reuse
 
-The event loop and damage formulas remain separate responsibilities. A resolved
-timeline can feed the existing centralized damage/heal pass and be reused only
-for variants that cannot change events. Damage/healing feedback must still resolve
-before publishing a final baseline; integrating those formulas into event
-resolution is an alternative to feedback reconstruction, not permission to ignore
-the feedback. Probability trackers remain effect-local, with isolated conditional
-branches and the shared expected DOT clock.
+The live state also owns buff/debuff snapshots and their numeric aggregate.
+Actions share unchanged immutable snapshots and consume prepared effects/stats
+from the existing action resolver. Named effect requirements query the
+authoritative maps directly; no parallel active-effect array is maintained. See
+[stat-pipeline.md](stat-pipeline.md#sequential-prepared-combat-state) for reuse
+keys, invalidation, historical ownership, and attribution behavior.
 
-Fight-relative anchors affected by prepull timing can require convergence. Auto HP
-without a fixed Battle End can require duration discovery. These are explicit
-dependencies, not a general preliminary probability pass for every rotation.
+Each baseline and event-changing variant performs one chronological combat
+traversal. A worker-local action resolver calls the shared damage/healing formulas
+inside that traversal. HP, accumulators, recording settlements, and damage-event
+listeners use each resolved result immediately. Generated replays enter the same
+queue and reference resolved source damage. Collectors retain those results for
+final aggregation; they never reconstruct or replay combat. Only event-invariant
+variants may reuse stored action snapshots. Probability trackers remain effect-local.
+
+The internal clock begins at the first ordered item. Battle start is recorded once
+as `battleStartTime` (`-1` until detected). Detection activates battle-relative
+encounter events, passive regeneration, Dummy Attack, and shared expected DOT
+ticks. Precombat DOT applications remain in their trackers until clock activation.
+The worker publishes internal timestamps and battle start; the UI subtracts the
+recorded start for display. There is no anchor-convergence or duration-discovery
+pass. Auto HP is removed, so HP never depends on future rotation duration.
 
 ## Verification
 
@@ -190,8 +205,8 @@ remains independent. Previous casts and cooldowns remain lower bounds.
 Selected attacks stay fixed through the wait. Reservations group simultaneous
 hits, preventing consecutive zero-duration responses from selecting the same
 attack. No next attack means no wait. Cooldown resets wake cooldown waits only.
-Attachments expand after readiness. Auto HP duration discovery retains dummy
-attacks because response alignment can extend the ordered rotation.
+Attachments expand after readiness. Response alignment can extend the ordered
+rotation, and dummy attacks remain part of that same event loop.
 
 Accepted casts register response windows. An incoming hit inside a window is
 avoided and queues one causal `attackResponse` event per defensive cast, ahead

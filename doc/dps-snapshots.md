@@ -1,6 +1,6 @@
 # DPS regression snapshots
 
-`npm run test:dps` compares every non-empty preset rotation for available paths
+`npm run test:dps` compares every non-empty preset rotation, including WIP paths
 against `tests/snapshots/rotation-dps.json`. The release deployment workflow
 runs this guard before publishing, including manual deployments. Ordinary build,
 tests, watch mode, and PR/main CI exclude the accepted-DPS comparison while
@@ -9,7 +9,7 @@ retaining its coverage, selector, and comparison-algorithm tests.
 ## Fixture selection
 
 `tests/helpers/dps-snapshot-fixtures.ts` discovers rotation JSON files from each
-available path's build group. Cases use stable `<pathId>/<rotationId>` keys.
+path's existing rotation directory. Cases use stable `<pathId>/<rotationId>` keys.
 Empty planner rotations are excluded. A durable coverage test checks all
 non-empty rotation files against this catalog. The release guard compares the
 catalog with accepted baseline keys, so new or removed presets cannot silently
@@ -18,7 +18,7 @@ escape review. A missing accepted baseline does not block ordinary builds.
 Each rotation uses its path's default build unless an explicit build override
 selects its corresponding variant: regular Kite uses the non-BP build, pure
 Strength uses the pure build, and Double Stab uses the double-min build. The
-remaining variants retain the path default. This covers all 12 current rotations,
+remaining variants retain the path default. This covers all non-empty presets,
 not every build/rotation combination.
 
 Current calculations use breakthrough 17, each rotation's saved ping (40 ms
@@ -63,9 +63,11 @@ VC readiness, defensive attack alignment, BP Qi-break anchor, and the updated
 Light Attack Falcon coefficients.
 
 Strength's Mixed Dummy 1 Min now uses its user-approved current result at 40 ms
-ping: 65,165.49 DPS, replacing 65,475.07 DPS at zero ping (-0.47%). This includes
-the current Strength skill data, General's Bane opener, and 0.33-second delay
-before the later Legion Summon.
+ping: 65,625.29 DPS, replacing the previous 65,165.49 DPS snapshot (+0.71%).
+Removing ping from Burning Heart's second and third charge stages accounts for
+442.42 DPS of the increase; shortening Grave Frost's cast from 1.832 to 1.605
+seconds accounts for the remaining 17.38 DPS. The General's Bane opener and
+0.33-second delay before the later Legion Summon remain included.
 
 Strength's Mixed Dummy Infinite Vitality 1 Min now uses its user-approved result
 at 40 ms ping: 66,557.01 DPS, replacing 66,827.33 DPS at zero ping (-0.40%).
@@ -97,6 +99,13 @@ Strength's Mixed Double Stab now uses its user-approved result at 40 ms ping:
 the revised opener and skill sequence, Burning Heart charge/slam ping exemptions,
 and the later Heng LC timing update. All current preset snapshots have now
 completed the ping-transition review.
+
+Wind's Dummy 1 Min Infinite Vitality uses the user-approved current rotation and
+`wind-fully-relayed-min` build at 40 ms ping: 67,931.14 DPS over 60 seconds,
+with 4,075,868.36 total damage. This user-approved refresh replaces the initial
+67,575.85 DPS baseline after correcting Flamelash's judgment-bypassing critical
+bonus and updating Wind's weapon affixes. It includes the current Hellfire,
+Enhanced Rodent Rampage, delayed Rodent hits, and authored rotation adjustments.
 
 ## Updating reviewed rotations
 

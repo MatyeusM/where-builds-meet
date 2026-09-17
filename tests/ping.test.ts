@@ -94,7 +94,7 @@ describe("ping scheduling", () => {
     expect(combo.startTime).toBe(0)
     expect(combo.effectiveCastTime).toBeCloseTo(2.08)
     expect(rows.find(row => row.rotationIndex === 0)?.startTime).toBeCloseTo(2.08)
-    expect(combo.actionStates[1].buffs.some(buff => buff.name === "Marker")).toBe(true)
+    expect(combo.actionStates[1].buffs.has("Marker")).toBe(true)
     expect(rows.find(row => row.rotationIndex === 2)?.startTime).toBeCloseTo(2.12)
   })
 

@@ -1,6 +1,6 @@
 {
-  "initialResources": { "HeavensWill": 2, "BladeMomentum": 4, "BattleWill": 4 },
-  "resourceMaximums": { "HeavensWill": 4 },
+  "initialResources": { "HeavensWill": 2, "BladeMomentum": 4, "BattleWill": 4, "Hellfire": 0 },
+  "resourceMaximums": { "HeavensWill": 4, "Hellfire": 80 },
   "resourceEvents": [
     {
       "event": "damage",

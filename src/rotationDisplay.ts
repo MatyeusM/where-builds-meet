@@ -18,11 +18,16 @@ export function buildTimelineDisplayEntries(
   const pending = timeline.some(row => row.pendingCalculation)
   const headers: TimelineDisplayEntry[] = []
   const entries: TimelineDisplayEntry[] = []
+  const unexecuted: TimelineDisplayEntry[] = []
   for (const row of timeline) {
     if (row.kind === "damageGroup") headers.push({ row, kind: "skill", time: row.startTime, order: row.order })
   }
   for (const row of timeline) {
-    if (row.skipped || row.kind === "damageGroup") continue
+    if (row.skipped) {
+      if (row.kind === "rotation") unexecuted.push({ row, kind: "skill", time: row.startTime, order: row.order })
+      continue
+    }
+    if (row.kind === "damageGroup") continue
     if (row.step.type === "event" && row.step.event === "HP" && "automatic" in row.step && row.step.automatic === true)
       continue
     const sourceRow = row.sourceRowId ? rowsById.get(row.sourceRowId) : undefined
@@ -48,5 +53,5 @@ export function buildTimelineDisplayEntries(
   }
   const compare = (left: TimelineDisplayEntry, right: TimelineDisplayEntry) =>
     pending ? left.order - right.order : compareTimelineTime(left.time, right.time) || left.order - right.order
-  return [...entries.sort(compare), ...headers]
+  return [...entries.sort(compare), ...unexecuted.sort((left, right) => left.order - right.order), ...headers]
 }

@@ -122,10 +122,6 @@ export function seasonalEdgeEffectFor(
 }
 
 export function seasonalEdgeWindows(timeline: TimelineRow[], effect: SeasonalEdgeEffect): SeasonalEdgeWindow[] {
-  const yieldProbability = effect.outcomes.reduce(
-    (total, outcome) => total + (outcome.buffs.includes("Yield") ? outcome.weight : 0),
-    0,
-  )
   const triggers = timeline
     .filter(
       row =>
@@ -139,20 +135,31 @@ export function seasonalEdgeWindows(timeline: TimelineRow[], effect: SeasonalEdg
         compareTimelineTime(leftTime, rightTime) || leftRow.order - rightRow.order,
     )
   const windows: SeasonalEdgeWindow[] = []
-  let cooldownExpiresAt = Number.NEGATIVE_INFINITY
-  for (const { row, time } of triggers) {
-    if (compareTimelineTime(time, cooldownExpiresAt) < 0) continue
-    cooldownExpiresAt = time + effect.cooldown
-    windows.push({
-      id: `SeasonalEdge:${row.id}`,
-      sourceRowId: row.id,
-      startsAt: time,
-      expiresAt: time + effect.duration,
-      cooldownExpiresAt,
-      yieldProbability,
-    })
-  }
+  for (const { row } of triggers) appendSeasonalEdgeWindow(windows, row, effect)
   return windows
+}
+
+/** Called in cast-completion order by the live scheduler. */
+export function appendSeasonalEdgeWindow(windows: SeasonalEdgeWindow[], row: TimelineRow, effect: SeasonalEdgeEffect) {
+  if (
+    row.skipped ||
+    row.step.type !== "skill" ||
+    !(row.skill?.tags?.includes("Conversion") || effect.additionalSkills.includes(row.step.skill ?? ""))
+  )
+    return
+  const time = row.startTime + row.effectiveCastTime
+  if (compareTimelineTime(time, windows.at(-1)?.cooldownExpiresAt ?? -Infinity) < 0) return
+  windows.push({
+    id: `SeasonalEdge:${row.id}`,
+    sourceRowId: row.id,
+    startsAt: time,
+    expiresAt: time + effect.duration,
+    cooldownExpiresAt: time + effect.cooldown,
+    yieldProbability: effect.outcomes.reduce(
+      (sum, outcome) => sum + (outcome.buffs.includes("Yield") ? outcome.weight : 0),
+      0,
+    ),
+  })
 }
 
 export function seasonalEdgeStateAt(
@@ -182,11 +189,17 @@ function seasonalEdgeCooldownAt(time: number, sourceRowId: string, windows: Seas
 
 export function applySeasonalEdgeCooldownToTimeline(timeline: TimelineRow[], windows: SeasonalEdgeWindow[]) {
   const withCooldown = (buffs: TimelineRow["buffs"], time: number, sourceRowId: string) => {
-    const retained = buffs.filter(buff => buff.name !== "SeasonalEdgeCooldown")
+    const next = new Map(buffs)
+    next.delete("SeasonalEdgeCooldown")
     const window = seasonalEdgeCooldownAt(time, sourceRowId, windows)
-    return window
-      ? [...retained, { name: "SeasonalEdgeCooldown", stack: 1, maxStack: 1, expiresAt: window.cooldownExpiresAt }]
-      : retained
+    if (window)
+      next.set("SeasonalEdgeCooldown", {
+        name: "SeasonalEdgeCooldown",
+        stack: 1,
+        maxStack: 1,
+        expiresAt: window.cooldownExpiresAt,
+      })
+    return next
   }
   for (const row of timeline) {
     row.buffs = withCooldown(row.buffs, row.startTime, row.id)

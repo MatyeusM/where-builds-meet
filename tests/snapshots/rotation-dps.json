@@ -49,6 +49,30 @@
       "totalDamage": 3610134.736524875,
       "duration": 60
     },
+    "bamboocutWind/wind-dummy-1-min-infinite-vitality": {
+      "fixture": {
+        "build": "wind-fully-relayed-min",
+        "rotation": "wind-dummy-1-min-infinite-vitality",
+        "martialArts": ["infernalTwinblades", "mortalRopeDart"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 63748.10393177961,
+      "totalDamage": 3824886.235906777,
+      "duration": 60.00000000000001
+    },
     "silkbindDeluge/dummy-1-min-regular-fire": {
       "fixture": {
         "build": "deluge-fully-relayed-min-ew",
@@ -189,8 +213,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 65165.4876095866,
-      "totalDamage": 3909929.2565751956,
+      "dps": 65625.28722277684,
+      "totalDamage": 3937517.2333666096,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab": {

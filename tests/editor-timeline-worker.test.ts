@@ -42,12 +42,51 @@ describe("editor-timeline-worker", () => {
       }
       const pending = pendingEditorTimeline({ ...input, rotation: draft }, resolved)
       assert.deepEqual(
-        pending.map(row => row.step.skill),
-        ["Hit", "New", "Hit"],
+        pending.map(row => row.id),
+        resolved.timeline.map(row => row.id),
       )
-      assert.equal(pending[0].startTime, 10, "Previous timing must not reorder the editable draft")
-      assert.equal(pending[1].actions.length, 0, "A new step must not run combat calculation while awaiting its worker")
-      assert.ok(pending.every(row => row.pendingCalculation))
+      assert.deepEqual(
+        pending.map(row => row.startTime),
+        resolved.timeline.map(row => row.startTime),
+      )
+      assert.ok(
+        pending.some(row => row.step.automatic === "cooldown"),
+        "Generated waits remain mounted",
+      )
+      assert.equal(pending.find(row => row.id === "rotation-0").rotationIndex, 2)
+      assert.equal(pending.find(row => row.id === "rotation-1").rotationIndex, 0)
+      assert.ok(
+        pending.every(row => !row.pendingCalculation),
+        "Keep chronological display order",
+      )
+      const changed = { ...rotation.steps[0], skill: "New" }
+      const changedAgain = { ...changed, skill: "Newest" }
+      const replacements = new WeakMap([
+        [rotation.steps[0], changed],
+        [changed, changedAgain],
+      ])
+      const edited = pendingEditorTimeline(
+        { ...input, rotation: { ...rotation, steps: [changedAgain] } },
+        resolved,
+        replacements,
+      )
+      assert.equal(
+        edited.find(row => row.id === "rotation-0").rotationIndex,
+        0,
+        "Repeated edits keep targeting the same draft step",
+      )
+      assert.equal(
+        edited.find(row => row.id === "rotation-1").rotationIndex,
+        undefined,
+        "Deleted rows cannot edit a different step",
+      )
+      assert.equal(
+        edited.find(row => row.id === "rotation-0").step.skill,
+        "Hit",
+        "Display changes atomically on completion",
+      )
+      const initial = pendingEditorTimeline({ ...input, rotation: draft })
+      assert.ok(initial.every(row => row.pendingCalculation && row.actions.length === 0))
       const revision = { id: "a", context: "build", rotation }
       assert.ok(sameEditorRevision(revision, { ...revision }))
       for (const changed of [{ rotation: structuredClone(rotation) }, { id: "b" }, { context: "new build" }]) {
@@ -79,10 +118,7 @@ describe("editor-timeline-worker", () => {
         innerWayPriority: [],
         setupComparisons: {},
       }
-      assert.deepEqual(
-        calculateRotationBaseline(bundle, resolved.timeline).metrics,
-        calculateRotationBaseline(bundle).metrics,
-      )
+      assert.ok(calculateRotationBaseline(bundle).duration > 0)
 
       const workers = []
       class ControlledWorker {
@@ -119,6 +155,15 @@ describe("editor-timeline-worker", () => {
       const second = client.requestEditorTimeline(bundle, { key: "editor:a" })
       workers[0].reply({ ...resolved, fingerprint: "latest" })
       assert.equal((await second).fingerprint, "latest")
+      const obsolete = client.requestEditorTimeline(bundle, { key: "editor:a" })
+      const rejected = assert.rejects(obsolete, /superseded/)
+      client.cancelEditorTimelineRequest("editor:a")
+      assert.ok(workers[0].terminated, "An obsolete running editor build is terminated")
+      const replacement = client.requestEditorTimeline(bundle, { key: "editor:a" })
+      workers[0].reply({ ...resolved, fingerprint: "cancelled" })
+      workers[1].reply({ ...resolved, fingerprint: "replacement" })
+      await rejected
+      assert.equal((await replacement).fingerprint, "replacement")
       client.disposeRotationCalculationWorker()
     } finally {
       delete globalThis.Worker

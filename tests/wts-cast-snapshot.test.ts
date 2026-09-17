@@ -112,7 +112,7 @@ describe("wts-cast-snapshot", () => {
     const observed = result =>
       result.timeline
         .filter(row => row.step.skill === "Observe")
-        .map(row => row.buffs.find(buff => buff.name === "WorldToSword")?.accumulatorThreshold)
+        .map(row => row.buffs.get("WorldToSword")?.accumulatorThreshold)
     const near = (actual, expected, message) =>
       assert.ok(Math.abs(actual - expected) < 1e-7, `${message}: ${actual} vs ${expected}`)
     const noAdjacentDamage = calculateRotationBaseline(fixture([step("WorldToSword"), step("Observe")]))

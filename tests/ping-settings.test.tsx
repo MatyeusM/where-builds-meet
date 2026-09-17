@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { afterEach, assert, beforeEach, expect, it, vi } from "vitest"
+import { assert, afterEach, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import App from "../src/App"
@@ -9,10 +9,11 @@ import { requestRotationBaseline, requestEditorTimeline } from "../src/calculati
 import { initializeI18n } from "../src/i18n"
 
 vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
-  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
-  requestEditorTimeline: vi.fn<() => Promise<unknown>>(() => new Promise<unknown>(() => {})),
+  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
+  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
+  requestEditorTimeline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
   supersedeRotationCalculationRequests: vi.fn<() => void>(),
+  cancelEditorTimelineRequest: vi.fn<() => void>(),
 }))
 
 let container: HTMLDivElement

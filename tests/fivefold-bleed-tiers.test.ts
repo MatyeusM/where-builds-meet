@@ -145,11 +145,10 @@ describe("fivefold-bleed-tiers", () => {
       "T3 weights natural expiration and its chance separately",
     )
     close(bursts(natural.timeline)[0].startTime, 5, "Expiration fires without a later attack")
-    let rollIndex = 0
-    const rolled = calculateSimulatedRotationRun(bundleFor(inputFor(3)), () => (++rollIndex <= 2 ? 0 : 0.5))
+    const rolled = calculateSimulatedRotationRun(bundleFor(inputFor(3)), () => 0.05)
     close(
       rolled.resolvedSequence.find(({ entry }) => entry.context.skillTags.includes("PiercingDamage")).breakdown.total,
-      262.3,
+      (100 + 62.3 * 0.05) * 2,
       "Expiration burst receives T1 and T2 in simulations",
     )
 

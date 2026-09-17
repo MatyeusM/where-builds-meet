@@ -1,4 +1,4 @@
-import { assert, describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -16,10 +16,10 @@ describe("hp-and-manual-events", () => {
     const generalDebuffs = (await import("../data/debuff/general.json")).default
     const scripts = (await import("../data/script.json")).default
     const generalSkills = (await import("../data/skill/general.json")).default
-    assert(
+    expect(
       mysticBuffs.DragonHeadTide.global === true,
       "Dragon Head - Tide must remain an always-active rule from the Mystic buff definitions.",
-    )
+    ).toBeTruthy()
     const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
     const eventDefinitions = {
       SelfHP: { name: "Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], tags: ["Event"] },
@@ -116,10 +116,10 @@ describe("hp-and-manual-events", () => {
     })
     const fullHPHit = hpResult.actionBreakdowns["rotation-1:0"].total
     const missingHPHit = hpResult.actionBreakdowns["rotation-1:1"].total
-    assert(
+    expect(
       closeTo(missingHPHit / fullHPHit, 1.09),
       "Twenty missing HP percentage points must grant Dragon Head 9% damage at hit time.",
-    )
+    ).toBeTruthy()
 
     const targetHPResult = calculateRotationBaseline({
       timeline: {
@@ -149,15 +149,15 @@ describe("hp-and-manual-events", () => {
     const targetHPRow = targetHPResult.timeline.find(row => row.id === "rotation-0")
     const noDamageRow = targetHPResult.timeline.find(row => row.id === "rotation-1")
     const finalTargetHPRatio = Math.max(0, 1 - (firstTargetHit * 2) / 10000)
-    assert(
+    expect(
       closeTo(targetHPRow.actionStates[1].targetHPRatio, Math.max(0, 1 - firstTargetHit / 10000)),
       "Specified target HP must decrease by each preceding calculated damage result.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       closeTo(noDamageRow.targetHPRatio, finalTargetHPRatio) &&
         closeTo(noDamageRow.actionStates[0].targetHPRatio, finalTargetHPRatio),
       "A non-damaging skill and its actions must inherit target HP from the preceding damage action.",
-    )
+    ).toBeTruthy()
     const structuralTargetHPTimeline = buildRotationTimeline({
       ...baseInput,
       rotation: {
@@ -173,26 +173,26 @@ describe("hp-and-manual-events", () => {
     const displayedTargetHPTimeline = mergeCalculatedTimelineState(structuralTargetHPTimeline, targetHPResult.timeline)
     const displayedHitRow = displayedTargetHPTimeline.find(row => row.id === "rotation-0")
     const displayedNoDamageRow = displayedTargetHPTimeline.find(row => row.id === "rotation-1")
-    assert(
+    expect(
       closeTo(displayedHitRow.actionStates[1].targetHPRatio, Math.max(0, 1 - firstTargetHit / 10000)) &&
         closeTo(displayedNoDamageRow.targetHPRatio, finalTargetHPRatio),
       "The editor's structural timeline must display target-HP snapshots from its completed calculation.",
-    )
+    ).toBeTruthy()
     const implicitTargetHPTimeline = buildRotationTimeline({
       ...baseInput,
       rotation: { name: "Implicit target HP probe", steps: [{ type: "skill", skill: "Hit" }] },
       skills: { Hit: hit },
     })
-    assert(
+    expect(
       implicitTargetHPTimeline[0].targetHPRatio === 0.99 &&
         Object.values(implicitTargetHPTimeline[0].actionStates).every(state => state.targetHPRatio === 0.99),
       "A rotation without preset target HP must expose the implicit 99% target state to every hit.",
-    )
+    ).toBeTruthy()
     const hpHitRow = hpResult.timeline.find(row => row.id === "rotation-1")
-    assert(
+    expect(
       hpHitRow.actionStates[0].currentHPRatio === 1 && hpHitRow.actionStates[1].currentHPRatio === 0.8,
       "The attached HP event must change only its target and subsequent action snapshots.",
-    )
+    ).toBeTruthy()
 
     const timedDamageTimeline = buildRotationTimeline({
       ...baseInput,
@@ -211,16 +211,19 @@ describe("hp-and-manual-events", () => {
     })
     const timedDamageRow = timedDamageTimeline.find(row => row.id === "rotation-1")
     const timedDamageHitRow = timedDamageTimeline.find(row => row.id === "rotation-0")
-    assert(closeTo(timedDamageRow.startTime, 1), "Take Damage must resolve at its fight-relative start time.")
-    assert(
+    expect(
+      closeTo(timedDamageRow.startTime, 1),
+      "Take Damage must resolve at its fight-relative start time.",
+    ).toBeTruthy()
+    expect(
       closeTo(timedDamageHitRow.actionStates[0].currentHPRatio, 1) &&
         closeTo(timedDamageHitRow.actionStates[1].currentHPRatio, 0.3),
       "Timed damage must affect only actions after its declared timestamp.",
-    )
-    assert(
-      timedDamageHitRow.actionStates[1].buffs.some(effect => effect.name === "Revelry"),
+    ).toBeTruthy()
+    expect(
+      timedDamageHitRow.actionStates[1].buffs.has("Revelry"),
       "Timed damage must continue to activate Take Damage setup triggers.",
-    )
+    ).toBeTruthy()
 
     const avoidedDamageTimeline = buildRotationTimeline({
       ...baseInput,
@@ -257,19 +260,18 @@ describe("hp-and-manual-events", () => {
     const perfectDodgeDamage = avoidedDamageTimeline.find(row => row.id === "rotation-3")
     const ordinaryDeflectDamage = avoidedDamageTimeline.find(row => row.id === "rotation-5")
     const afterAvoidance = avoidedDamageTimeline.find(row => row.id === "rotation-6")
-    assert(
+    expect(
       successfulDeflectDamage.actions[0].damage === 0 && perfectDodgeDamage.actions[0].damage === 0,
       "Take Damage inside Successful Deflect or Perfect Dodge cast time must resolve to zero.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       ordinaryDeflectDamage.actions[0].damage === 20 && closeTo(afterAvoidance.currentHPRatio, 0.8),
       "Ordinary Deflect must not avoid Take Damage.",
-    )
-    assert(
-      !ordinaryDeflectDamage.buffs.some(effect => effect.name === "DamageSeen") &&
-        afterAvoidance.buffs.some(effect => effect.name === "DamageSeen"),
+    ).toBeTruthy()
+    expect(
+      !ordinaryDeflectDamage.buffs.has("DamageSeen") && afterAvoidance.buffs.has("DamageSeen"),
       "Avoided damage must not fire take-damage triggers, while a real hit still must.",
-    )
+    ).toBeTruthy()
 
     const takeDamageAttachmentTimeline = buildRotationTimeline({
       ...baseInput,
@@ -288,15 +290,15 @@ describe("hp-and-manual-events", () => {
     })
     const attachedQiRow = takeDamageAttachmentTimeline.find(row => row.id === "rotation-0")
     const takeDamageAnchorRow = takeDamageAttachmentTimeline.find(row => row.id === "rotation-1")
-    assert(
+    expect(
       attachedQiRow.sourceRowId === takeDamageAnchorRow.id &&
         closeTo(attachedQiRow.startTime, takeDamageAnchorRow.startTime),
       "An attached Qi event must resolve against the following fixed-time Take Damage event.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       takeDamageAnchorRow.actionStates[0].targetQiRatio === 0,
       "An event attached before Take Damage must update state before Take Damage resolves.",
-    )
+    ).toBeTruthy()
 
     const skillAttachmentPastTakeDamageTimeline = buildRotationTimeline({
       ...baseInput,
@@ -315,11 +317,11 @@ describe("hp-and-manual-events", () => {
     })
     const skillAttachedQiRow = skillAttachmentPastTakeDamageTimeline.find(row => row.id === "rotation-0")
     const skillAnchorPastTakeDamageRow = skillAttachmentPastTakeDamageTimeline.find(row => row.id === "rotation-2")
-    assert(
+    expect(
       skillAttachedQiRow.sourceRowId === skillAnchorPastTakeDamageRow.id &&
         closeTo(skillAttachedQiRow.startTime, skillAnchorPastTakeDamageRow.startTime + 1),
       "An action target unsupported by Take Damage must continue to the following skill anchor.",
-    )
+    ).toBeTruthy()
 
     const durationProbe = {
       name: "Duration probe",
@@ -352,34 +354,34 @@ describe("hp-and-manual-events", () => {
       skills: { Probe: durationProbe },
     })
     const probeRow = manualTimeline.find(row => row.id === "rotation-3")
-    assert(
-      probeRow.actionStates[1].debuffs.some(effect => effect.name === "Controlled"),
+    expect(
+      probeRow.actionStates[1].debuffs.has("Controlled"),
       "A manual Debuff event must use Controlled's default duration.",
-    )
-    assert(
-      !probeRow.actionStates[2].debuffs.some(effect => effect.name === "Controlled"),
+    ).toBeTruthy()
+    expect(
+      !probeRow.actionStates[2].debuffs.has("Controlled"),
       "Controlled must expire at its data-defined duration.",
-    )
-    assert(
-      probeRow.actionStates[3].debuffs.some(effect => effect.name === "Exhausted"),
+    ).toBeTruthy()
+    expect(
+      probeRow.actionStates[3].debuffs.has("Exhausted"),
       "Exhausted must use its data-defined default duration.",
-    )
-    assert(
-      !probeRow.actionStates[4].debuffs.some(effect => effect.name === "Exhausted"),
+    ).toBeTruthy()
+    expect(
+      !probeRow.actionStates[4].debuffs.has("Exhausted"),
       "Exhausted must expire after its data-defined default duration.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       probeRow.actionStates[3].targetQiRatio === 0,
       `Qi zero must remain active while Exhausted is active (saw ${probeRow.actionStates[3].targetQiRatio}).`,
-    )
-    assert(probeRow.actionStates[4].targetQiRatio === 1, "Exhausted expiration must restore Qi to 100%.")
-    assert(
-      probeRow.actionStates[5].buffs.some(effect => effect.name === "Flute"),
+    ).toBeTruthy()
+    expect(probeRow.actionStates[4].targetQiRatio === 1, "Exhausted expiration must restore Qi to 100%.").toBeTruthy()
+    expect(
+      probeRow.actionStates[5].buffs.has("Flute"),
       "A manual Buff event must use the selected buff's default duration.",
-    )
-    assert(
-      !probeRow.actionStates[6].buffs.some(effect => effect.name === "Flute"),
+    ).toBeTruthy()
+    expect(
+      !probeRow.actionStates[6].buffs.has("Flute"),
       "The manually applied buff must expire at its data-defined duration.",
-    )
+    ).toBeTruthy()
   })
 })

@@ -62,17 +62,13 @@ describe("Heavenwill attack timings", () => {
     const rows = build([cast(a4), cast(a5), cast(a5), cast("Observe")])
     const fourth = find(rows, a4)[0]
     const [fast, normal] = find(rows, a5)
-    expect(fourth.actionStates[0].buffs.some(buff => buff.name === "HeavenwillGauntletsA4")).toBe(false)
-    expect(fast.buffs.find(buff => buff.name === "HeavenwillGauntletsA4")?.appliedAt).toBeCloseTo(
-      fourth.startTime + 0.417,
-    )
-    expect(fast.buffs.find(buff => buff.name === "HeavenwillGauntletsA4")?.expiresAt).toBeCloseTo(
-      fourth.startTime + 1.417,
-    )
+    expect(fourth.actionStates[0].buffs.has("HeavenwillGauntletsA4")).toBe(false)
+    expect(fast.buffs.get("HeavenwillGauntletsA4")?.appliedAt).toBeCloseTo(fourth.startTime + 0.417)
+    expect(fast.buffs.get("HeavenwillGauntletsA4")?.expiresAt).toBeCloseTo(fourth.startTime + 1.417)
     expect(fast.effectiveCastTime).toBeCloseTo(0.41)
     expect(hits(fast)[0]).toBeCloseTo(0.115)
     expect(hits(fast)[1]).toBeCloseTo(0.32)
-    expect(fast.actionStates[0].buffs.some(buff => buff.name === "HeavenwillGauntletsA4")).toBe(false)
+    expect(fast.actionStates[0].buffs.has("HeavenwillGauntletsA4")).toBe(false)
     expect(normal.effectiveCastTime).toBeCloseTo(0.512)
     expect(hits(normal)).toEqual([0.205, 0.423])
     expect(normal.startTime).toBeCloseTo(fast.startTime + 0.41 + 0.04)
@@ -88,7 +84,7 @@ describe("Heavenwill attack timings", () => {
   it("does not consume the marker or speed up unrelated attacks, and caps reapplication at one stack", () => {
     const rows = build([cast(a4), cast(a4), cast("RighteousReign3rdHit"), cast(a5), cast("Observe")])
     const third = find(rows, "RighteousReign3rdHit")[0]
-    expect(third.buffs.find(buff => buff.name === "HeavenwillGauntletsA4")?.stack).toBe(1)
+    expect(third.buffs.get("HeavenwillGauntletsA4")?.stack).toBe(1)
     expect(third.effectiveCastTime).toBeCloseTo(0.333)
     expect(find(rows, a5)[0].effectiveCastTime).toBeCloseTo(0.41)
   })

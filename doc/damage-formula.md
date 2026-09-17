@@ -24,9 +24,22 @@ Actions tagged `Rodent` gain a fixed 9% plus up to another 12% Physical and
 Bamboocut DMG Bonus, scaling at `0.00016 × raw Min Physical Attack` to the cap
 at 750. This uses the existing additive channel bonuses and raw-stat stages.
 Its Attr. Attack DMG UP also uses the shared primary-path multiplier.
-Rodent's physical and attribute coefficients are both 0.63 below 5m, 0.57 from
-5m to below 12m, and 0.6 at 12m or more. Rodent Rampage launches it once per
+Rodent uses the user-confirmed nonmatching-target route for PvE. Physical and
+attribute coefficients are both 0.348974526316, with zero flat bonuses. This is
+skill 20391's base coefficient 0.581624210526316 multiplied by the route's 0.6;
+0.6 itself is not the final coefficient. Ordinary coordinated and automatic
+triggers require distance below 12. The matching PvP routes (0.366423252632
+below 5 and 0.3315258 from 5 to below 12) are not used by the PvE simulator.
+Export distances use raw game units, whose correspondence with the editor's
+metres remains unverified. Rodent Rampage launches it once per
 Infernal/Mortal light-attack stage and once per two stages of other martial arts.
+Enhanced Rodent Rampage retains these coordinated launches and adds one automatic
+Rodent hit per second, starting one second after application: launches occur at
++0.5, +1.5, ... and each Rodent lands 0.5 seconds after launch. Coordinated
+Rodents also land 0.5 seconds after their triggers. Its 10/15/20-second
+lifetime includes the final automatic hit at expiry. These hits use the same
+damage coefficients, Vendetta Token bonuses, Rodent Hunt recording, and
+Samsara Hellfire gains as coordinated Rodents.
 Echoes T6 adds two more launches on FA5's first hit while the buff and Flamelash
 are active. Expected and sampled calculations use the same definite trigger
 schedule; individual damage outcomes remain mode-dependent.
@@ -36,6 +49,11 @@ Combat inclusion and the DPS/HPS duration follow the
 excludes damage at its timestamp. Otherwise the last ordered cast or explicit
 Delay ends combat, including same-time final actions but dropping later damage,
 healing, DOT ticks, and replays. Generated damage never extends the duration.
+
+Damage and healing resolve once as their events execute in the single combat
+traversal. HP feedback, recorded damage, and replay coefficients consume those
+resolved values immediately. Reporting retains the results; buff-attribution
+counterfactual formulas do not execute combat events or change live state.
 
 Expected shared-clock DOTs use the [tiny-state merging approximation](rotation-event-loop.md#tiny-expected-state-merging):
 compatible states below `1e-5` probability can share a weighted mean expiration
@@ -609,10 +627,10 @@ actions, even when the casting skill applies or extends a DOT. Soul-Shaken uses
 this field for its general DOT vulnerability and its additional Umbra-source
 vulnerability.
 
-Vendetta Token uses `baseDMGBonus: 0.5` for Rodent-tagged attacks, following the
-confirmed base-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
-while the same self buff is active. These bonuses belong to separate existing
-categories: without other bonuses they multiply to `1.5 × 1.3 = 1.95`.
+Vendetta Token uses `dmgBonus: 0.5` for Rodent-tagged attacks, following the
+confirmed general-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
+while the same self buff is active. These bonuses add together in the same existing
+category: without other bonuses their multiplier is `1 + 0.5 + 0.3 = 1.8`.
 Other attacks receive neither bonus. No Category 2 multiplier is introduced.
 
 ### Outcome multiplier
@@ -663,6 +681,13 @@ Each attribute starts with its corresponding character penetration stat. Stonesp
 
 Effects may adjust resistance directly with `bellstrikeResistance`, `stonesplitResistance`, `silkbindResistance`, or `bamboocutResistance`. These values are added to enemy resistance. For example, Fearful Blade contributes `-16` to each attribute resistance.
 
+Echoes of Oblivion applies `bamboocutResistance: -10` only to Infernal
+Twinblades Light Attacks against Karma, at every tier. This flat adjustment
+combines with other Bamboocut resistance adjustments in the existing channel;
+it does not scale with enemy resistance. Sin separately supplies 10% Physical
+Defense ignore for matching Light Attacks. Neither changes Judgment Resistance
+or its precision, critical, and affinity rate formulas.
+
 The Main tab can treat Phantom Chime, Qi Imbalance, Soul-Shaken, Vulnerable,
 Fearful Blade, Bitter Seasons, and Floating Grace as externally maintained
 global effects. An enabled choice initializes one permanent tracked buff or
@@ -687,7 +712,14 @@ Final Affinity = clamp(Effective Affinity + Direct Affinity, 0, 1)
 ```
 
 Effective Critical Bonus is added after Judgement Resistance and shares the
-80% Effective Critical cap. Direct Critical is a separate final-rate channel
+80% Effective Critical cap. Flamelash contributes `0.1` and Ivorybloom's
+full-HP four-piece effect contributes `0.05` through
+`effectiveStat.effectiveCritBonus`. At `J = 0.65`, these are equivalent to
+`0.165` and `0.0825` ordinary Critical respectively before the cap. Ivorybloom's
+unconditional `0.09` Critical remains subject to Judgement Resistance.
+These bonuses feed the shared damage and healing rate calculations; Precision
+and outcome competition still apply normally.
+Direct Critical is a separate final-rate channel
 and is not part of Effective Critical or its cap. When
 `Final Affinity + Direct Critical + Effective Critical <= 1`:
 
@@ -754,7 +786,7 @@ event, and is excluded from simulation outcome-rate hit counts. The average
 calculator and Monte Carlo simulator use the same source-link resolution, so a
 simulation replay copies that run's randomized source hits.
 
-Vendetta T3 records Rodent-tagged hits during Rodent Hunt's 15-second window.
+Vendetta T3 records Rodent-tagged hits during Rodent Hunt's base 20-second window (user-confirmed despite the Inner Way's 15-second wording).
 Expiry and reapplication each settle the active window once at 30% of its
 recorded total. Source damage already includes Token, talents, and individual
 outcomes; the payout applies none of them again. Chronological resolution also

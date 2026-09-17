@@ -1,4 +1,6 @@
-import { assert, describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
+
+import { effectState } from "../src/calculations/trackedEffectState"
 
 // Ported from script/probe/check-exquisite-scenery.mjs.
 describe("exquisite-scenery", () => {
@@ -11,8 +13,15 @@ describe("exquisite-scenery", () => {
 
     const sceneryT6 = exquisiteScenery.effect.ExquisiteSceneryT6.effect[0]
     const sceneryT6Applies = tags =>
-      requirementsPass(sceneryT6.requirement, [], [], tags, ["ExquisiteSceneryT6"], ["thundercry", "stormbreaker"])
-    assert(
+      requirementsPass(
+        sceneryT6.requirement,
+        effectState([]),
+        effectState([]),
+        tags,
+        ["ExquisiteSceneryT6"],
+        ["thundercry", "stormbreaker"],
+      )
+    expect(
       [
         ["Light", "Charged"],
         ["Heavy", "Charged"],
@@ -20,11 +29,11 @@ describe("exquisite-scenery", () => {
         ["Heavy", "VariedCombo"],
       ].every(sceneryT6Applies),
       "Exquisite Scenery T6 must grant its damage bonus to all four charged and charged-varied attack categories.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       !sceneryT6Applies(["Light"]) && !sceneryT6Applies(["Charged"]) && !sceneryT6Applies(["Heavy", "MartialArts"]),
       "Exquisite Scenery T6 must not affect attacks outside its charged and varied-combo categories.",
-    )
+    ).toBeTruthy()
 
     const t6Rule = { requirement: sceneryT6.requirement, effect: sceneryT6.effect, source: "ExquisiteScenery", tier: 6 }
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 }
@@ -73,18 +82,18 @@ describe("exquisite-scenery", () => {
       }).metrics.totalDamage
 
     const heavyChargedBase = sceneryDamage(["Heavy", "Charged"], [])
-    assert(
+    expect(
       Math.abs(sceneryDamage(["Heavy", "Charged"], [t6Rule]) / heavyChargedBase - 1.5) < 1e-9,
       "Exquisite Scenery T6 must multiply qualifying calculated damage by 1.5 when no other damage bonus is present.",
-    )
+    ).toBeTruthy()
     const categoryBonusRule = { requirement: [], effect: { dmgBonus: 0.2 }, source: "Category bonus probe", tier: 0 }
-    assert(
+    expect(
       Math.abs(sceneryDamage(["Heavy", "Charged"], [categoryBonusRule, t6Rule]) / heavyChargedBase - 1.8) < 1e-9,
       "Exquisite Scenery T6 must multiply ordinary damage bonuses as a separate Base DMG Bonus category.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       sceneryDamage(["Heavy", "MartialArts"], [t6Rule]) === sceneryDamage(["Heavy", "MartialArts"], []),
       "Exquisite Scenery T6 must leave non-qualifying calculated damage unchanged.",
-    )
+    ).toBeTruthy()
   })
 })

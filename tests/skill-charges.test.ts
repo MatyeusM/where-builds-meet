@@ -105,9 +105,7 @@ describe("skill-charges", () => {
       cast("Observe"),
     ])
     assert.deepEqual(
-      readyRows
-        .filter(row => row.step.skill === "Observe")
-        .map(row => row.buffs.some(effect => effect.name === "Ready")),
+      readyRows.filter(row => row.step.skill === "Observe").map(row => row.buffs.has("Ready")),
       [true, false, true],
       "skillCooldown requirements reflect remaining and restored charges",
     )

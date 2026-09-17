@@ -1,5 +1,6 @@
-import { assert, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-script.mjs.
@@ -31,11 +32,11 @@ describe("script", () => {
     const scripts = (await import("../data/script.json")).default
     const generalBuffs = (await import("../data/buff/general.json")).default
 
-    assert(
+    expect(
       requirementsPass(
         scripts.Wraithstrike.effect.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         [],
         new Set(),
         [],
@@ -43,12 +44,12 @@ describe("script", () => {
         { targetQiPercentage: 39 },
       ),
       "Wraithstrike must activate below 40% target Qi.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       !requirementsPass(
         scripts.Insight.effect.requirement,
-        [],
-        [],
+        effectState([]),
+        effectState([]),
         ["MartialArts"],
         new Set(),
         [],
@@ -56,7 +57,7 @@ describe("script", () => {
         { targetHPPercentage: 80 },
       ),
       "Insight must require the Mystic skill tag.",
-    )
+    ).toBeTruthy()
 
     const timeline = buildRotationTimeline({
       rotation: {
@@ -93,19 +94,18 @@ describe("script", () => {
     })
     const hit = timeline.find(row => row.id === "rotation-2")
     const takeDamageRow = timeline.find(row => row.id === "rotation-1")
-    assert(
+    expect(
       takeDamageRow?.sourceRowId === hit?.id && takeDamageRow?.startTime === 1,
       "Take Damage must remain attached to its selected skill action.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       hit?.actionStates[0].currentHP === 1000 && hit?.actionStates[1].currentHP === 199,
       "Self HP and Take Damage must affect only their attached action and later state.",
-    )
-    assert(
-      !hit?.actionStates[0].buffs.some(buff => buff.name === "Revelry") &&
-        hit?.actionStates[1].buffs.some(buff => buff.name === "Revelry"),
+    ).toBeTruthy()
+    expect(
+      !hit?.actionStates[0].buffs.has("Revelry") && hit?.actionStates[1].buffs.has("Revelry"),
       "Revelry Script must apply Revelry when Take Damage leaves self HP at 30% or below.",
-    )
+    ).toBeTruthy()
 
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, critical: 1, critDmgBonus: 0.35 }
     const thresholdResult = calculateRotationBaseline({
@@ -157,9 +157,9 @@ describe("script", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    assert(
+    expect(
       thresholdResult.actionBreakdowns["rotation-0:0"].total > thresholdResult.actionBreakdowns["rotation-0:1"].total,
       `Target-HP Script requirements must be reevaluated after preceding calculated damage (${thresholdResult.actionBreakdowns["rotation-0:0"].total} -> ${thresholdResult.actionBreakdowns["rotation-0:1"].total}).`,
-    )
+    ).toBeTruthy()
   })
 })

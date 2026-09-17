@@ -44,13 +44,25 @@ export class ExpectedPeriodicTracker {
   private readonly createList: () => PeriodicStateList
   private readonly interval: number
   private readonly firstTick: number
-  private readonly tickOrigin?: number
+  private tickOrigin?: number | null
 
-  constructor(interval: number, firstTick: number, tickOrigin?: number, storage: PeriodicStateStorage = "indexed") {
+  constructor(
+    interval: number,
+    firstTick: number,
+    tickOrigin?: number | null,
+    storage: PeriodicStateStorage = "indexed",
+  ) {
     this.interval = interval
     this.firstTick = firstTick
     this.tickOrigin = tickOrigin
     this.createList = periodicStateListFactory(storage)
+  }
+
+  /** Bind a shared clock that was waiting for battle start; existing applications are retained. */
+  startBattle(time: number) {
+    if (this.tickOrigin !== null) return
+    this.tickOrigin = time
+    this.advanceSharedTick(outcomeBuffTick(time + this.interval))
   }
 
   private partition(branch?: string) {
@@ -111,7 +123,7 @@ export class ExpectedPeriodicTracker {
     onlyBranch?: string,
   ) {
     const now = outcomeBuffTick(time)
-    if (this.tickOrigin !== undefined) {
+    if (this.tickOrigin !== undefined && this.tickOrigin !== null) {
       const origin = outcomeBuffTick(this.tickOrigin)
       const interval = outcomeBuffTick(this.interval)
       this.advanceSharedTick(origin + Math.max(1, Math.ceil((now - origin) / interval)) * interval)
@@ -276,6 +288,7 @@ export class ExpectedPeriodicTracker {
   }
 
   consumeTick(time: number) {
+    if (this.tickOrigin === null) return
     const tick = outcomeBuffTick(time),
       interval = outcomeBuffTick(this.interval)
     if (this.tickOrigin !== undefined) {
@@ -299,6 +312,7 @@ export class ExpectedPeriodicTracker {
   }
 
   nextTick(afterTime: number, includeCurrentTime = false) {
+    if (this.tickOrigin === null) return undefined
     const after = outcomeBuffTick(afterTime) + (includeCurrentTime ? 0 : 1),
       interval = outcomeBuffTick(this.interval)
     if (this.tickOrigin !== undefined) {
@@ -334,6 +348,7 @@ export class ExpectedPeriodicTracker {
     const tick = outcomeBuffTick(time),
       interval = outcomeBuffTick(this.interval)
     const result = { time, probability: 0, sources: {} as Record<string, number> }
+    if (this.tickOrigin === null) return result
     if (
       this.tickOrigin !== undefined &&
       (this.sharedTick === undefined ||

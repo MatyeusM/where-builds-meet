@@ -231,6 +231,7 @@ describe("cast-breakdown", () => {
                 type: "apply",
                 target: "self",
                 value: "MysteryDMGBoost",
+                boostDamageSource: "Mystery",
                 time: 0,
                 requirement: [{ target: "self", value: "Mystery" }],
               },

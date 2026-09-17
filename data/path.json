@@ -69,11 +69,11 @@
     "name": "Wind",
     "icon": "wind.png",
     "tag": "BamboocutWind",
-    "status": "wip",
+    "status": "available",
     "buildGroup": "bamboocut-wind",
     "defaultBuild": "wind-fully-relayed-min",
     "graduated": "wind-full-min",
-    "defaultRotation": "empty",
+    "defaultRotation": "wind-dummy-1-min-infinite-vitality",
     "lockedWeapons": ["infernalTwinblades", "mortalRopeDart"]
   },
   "bamboocutDust": {

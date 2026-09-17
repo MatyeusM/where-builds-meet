@@ -60,6 +60,14 @@ Surging Waves, missing-HP bonuses, and Exhausted-target doubling remain separate
 effects. The level-71 coefficient update preserves all existing cast, hit,
 cancel, trigger, and periodic timings.
 
+Ghostly Step - Umbra includes a Dual Blades afterimage
+(`GhostlyStepsUmbraDodgeDualBlades`). The shared `2300065` enlightenment
+specifies an explosion 0.8 seconds after a successful dodge, with the same
+level-71 baseline as the other weapon entries: physical and attribute coefficient
+2.041567357513, physical bonus 312, and no attribute bonus. The existing
+weapon dispatch selects `DualBlades`; the proc retains the dodge's weapon and
+row attribution when another cast switches weapons before the incoming attack.
+
 ### Mystic cast timing with separate ping
 
 Cast duration excludes input latency. Dragon Head - Tide uses its 5.8-second
@@ -153,6 +161,7 @@ type SkillMap = Record<string, SkillDefinition>
 type SkillDefinition = {
   name: string
   shortName?: string
+  skillBreakdownCategory?: string
   group?: boolean
   castTime: number
   cooldown?: number
@@ -167,6 +176,17 @@ type SkillDefinition = {
   weapon?: WeaponFamily
 }
 ```
+
+`skillBreakdownCategory` is an optional category name for the per-skill breakdown.
+Skills with the same nonblank name share a collapsed summary that expands to their
+individual rows. Uncategorized skills remain standalone. The worker sums damage,
+healing, casts, triggers, and hits/heals; outcome rates are weighted by hits/heals.
+Shares retain the whole-rotation denominator. Flat skill metrics remain available
+for numerical audits, while grouped metrics drive the UI. Categories are localized
+at the presentation boundary and do not change combat events or damage attribution.
+Wind FA1–5 use `Blade of Heaven's Wrath` and A1–4 use `Light Attack`. Both
+categories include their cancel and Rodent-only variants; separately
+triggered Rodent damage retains its own skill attribution.
 
 `shortName` is optional presentation metadata. Skill lists, selectors, timeline
 rows, and breakdowns display it as `Long Name (Short Name)` without changing the
@@ -304,8 +324,13 @@ reaching zero prevents further triggers but does not end the buff early.
 
 Ivorybloom is a Silkbind Deluge weapon set. Its two-piece effect adds 9%
 Critical Rate. Its four-piece effect retains that bonus and, while Self HP is
-full, adds another 5% Critical Rate plus 15% Critical Healing Bonus and 15%
-Critical DMG Bonus. The set is timeline-affecting because its healing changes
+full, adds 5% Effective Critical Bonus plus 15% Critical Healing Bonus and 15%
+Critical DMG Bonus. The conditional critical bonus bypasses Judgement Resistance
+through `effectiveStat.effectiveCritBonus`, while the unconditional 9% does not.
+Flamelash uses the same field for its 10% critical bonus while active, including
+Rodent and Blade of Heaven's Wrath hits. Both bonuses share the 80% Effective
+Critical cap and the ordinary final outcome calculation.
+The set is timeline-affecting because its healing changes
 can alter World to Sword's Qi Blade schedule.
 
 Soulshade Umbrella's Buff Enhancement appends an Exhausted-target-only 5% damage
@@ -518,13 +543,28 @@ sample. Skills with no attributed damage, including Deflect itself, are omitted.
 Boost-damage attribution is declared on the enabling skill with
 `collectBoostDamage`. Its value is the buff ID whose counterfactual damage
 should be credited to that cast. The field and source cast are passed into buffs
-applied by the skill. If the named buff is applied later, the active carrier
-buff passes the same source forward. Flute names its directly applied `Flute`
+applied by the skill. If the named buff is applied later, its applying action
+sets `boostDamageSource` to the enabling self-buff ID. A direct map lookup
+inherits that buff's source cast when its `collectBoostDamage` matches the
+applied effect. No other active buff is searched. Flute names its directly applied `Flute`
 buff. Ghostly Step names `MysteryDMGBoost`, so `Mystery` or `MysteryUmbra`
-carries the source until Perfect Dodge applies the damage buff. Both then use
+carries the source until Perfect Dodge applies the damage buff. Perfect Dodge
+has a conditional application for each enabling buff, each naming its source.
+Ghostly Step and Umbra consume the opposite enabling buff before applying their
+own, so the two cannot coexist through these casts. An existing damage boost
+retains its original credit until a later application replaces it. Both then use
 the same per-hit calculation with and without the named buff.
 
 ### Multi-action skills
+
+`silent: true` marks an inert skill/component. It cannot contain actions,
+cooldowns, or attack responses and does not emit a skill-start notification.
+Its weapon declaration still switches weapon at the earliest possible start.
+Vile Condemned's parent and charge are silent; its damage-bearing release is not.
+`waitForRequirement` requires a silent, unconditional prefix. The live scheduler
+holds release until ready and backdates only the displayed charging interval;
+explicit start attachments stay at the earliest start. See
+[Readiness after charging](rotation-event-loop.md#readiness-after-charging).
 
 A castable skill can declare an ordered `subAction` list of objects. `value`
 names the primary component. Its optional `requirement` is evaluated when that
@@ -666,11 +706,10 @@ An attached target HP event can set the percentage explicitly:
 { "type": "setTargetHP", "targetHPRatio": 0.5, "time": 0 }
 ```
 
-A rotation may instead set `"autoHP": true`. The timeline derives the rotation
-duration, starts target HP at 99.99% at the fight-start anchor, and applies a
-hidden ten-percentage-point reduction at every 10% duration boundary through
-90%. Enabling Auto HP removes stored manual HP events, and the editor does not
-offer the HP event while the option remains enabled.
+The former `autoHP` option is no longer supported. Saved and imported rotations
+drop that flag without removing authored HP events or shifting the fight-start
+anchor. HP changes must come from explicit events or damage against configured
+target maximum HP; no duration-dependent HP events are generated.
 
 A rotation with `"dummyAttack": true` derives two hidden Take Damage events at
 5.5 seconds after fight start and every six seconds thereafter. Both events at
@@ -844,6 +883,8 @@ Supported targets are:
 - `currentWeapon`: the active physical weapon family, such as `HengBlade` or `MoBlade`
 - `resource`: a named numeric timeline resource compared with `amount` using
   `comparison`; supported comparisons are `>=`, `>`, `<=`, `<`, `==`, and `!=`
+- `distance`: current target distance, compared with `amount` using the same operators;
+  used to reject Rodent triggers at distance 12 or above
 - `selfHPPercentage`, `targetHPPercentage`, and `targetQiPercentage`: the
   corresponding action-time percentage compared with `amount` using the same
   operators
@@ -930,6 +971,8 @@ subtracts 0.144 seconds from both cast and hit times, giving a 0.6-second cast.
 This explicit uniform shift places the third hit at 0.328 seconds, rather than
 the supplied active table's 0.329 seconds. End animation times are unused.
 Addled Mind does not change the Flamelash state.
+Its `MartialArt` tag enables the Infernal Twinblades Martial Art Skill DMG
+Boost attunement through the shared tag matcher.
 
 Infernal Twinblades rank 13 contains all five talents in source order, using
 the rank array directly without talent IDs. The implemented effects are:
@@ -948,10 +991,8 @@ the rank array directly without talent IDs. The implemented effects are:
 These conversions use the interpreted source rates without rounding them to
 match older talents' hand-entered caps. Formula inputs use the existing immutable
 raw-stat stage, including flat attribute talents but excluding later talent and
-food bonuses. Flamelash is a status usable through the existing manual Buff event;
-it has no default expiration and can be consumed or given an application duration
-by skill data. Automatic Flamelash entry/exit awaits Infernal skill data. No new
-mode lifecycle is inferred here. Perfect Dodge's wider success window and longer
+food bonuses. Flamelash is usable through its activation skill or the existing
+manual Buff event. Its lifetime follows the Hellfire resource described below. Perfect Dodge's wider success window and longer
 breath-hold remain unimplemented: the simulator does not currently resolve dodge
 input windows or track breath-hold duration.
 
@@ -969,13 +1010,79 @@ and attacks without the tag receive no Rodent bonus. The formulas use the
 shared raw-stat stage. The Rodent attack in `data/skill/mortal-rope-dart.json`
 carries `Rodent` and `MortalRopeDart`, activating its talent and attunement bonuses.
 
+Flamelash (`Flamelash`, source `20502003` in
+`local/datamine/wwm-skills-normal-all.json`) uses the exported 0.85-second
+interrupt as its cast time and applies the Flamelash status at cast start (time zero). Its
+base bonuses are 0.1 Critical Rate through the shared stat pipeline and 0.2
+Critical DMG Bonus, in addition to the existing rank-13 talent bonuses.
+Hellfire (the export calls it Karma Flame) starts at zero and caps at 80 through
+`system.json`. The rotation editor shows its shared resource snapshots whenever
+Infernal Twinblades is equipped. User-confirmed per-hit gains are:
+
+| Attack      | Hellfire per hit | Current total when all hits land |
+| ----------- | ---------------- | -------------------------------- |
+| A1          | 10               | 10                               |
+| A2, A3, A4  | 5                | 10 each                          |
+| FA1         | 5                | 10                               |
+| FA2         | 5                | 5                                |
+| FA3         | 1.25             | 10                               |
+| FA4         | 1.25             | 6.25                             |
+| FA5         | 2                | 10                               |
+| Addled Mind | 2                | 12                               |
+
+Each gain is an explicit `addResource` action at its hit timestamp. Resource
+entries follow the existing action list to preserve damage/attachment indexes;
+chronological execution still grants them at the hit. A4/FA5 cancel retain all
+landed-hit gains. A1/A3/A4/FA4 Rodent-only cancels have no blade hit and grant no base
+Hellfire; a triggered Rodent can still qualify for Echoes T3.
+
+The zero-time FA2 [Rodent] variant also launches one Rodent without a blade hit
+or base Hellfire gain. Like the other Rodent-only variants, it requires RR or ERR
+and distance below 12; its Rodent lands 0.5 seconds later.
+
+The editor's Modify Hellfire event stores a fight-relative `startTime` and signed
+`amount`: positive adds and negative consumes, clamped to the resource's 0-80 bounds.
+It uses the actions in `data/event.json`, ends Flamelash immediately if the result
+is zero, and neither activates Flamelash nor resets its drain ramp when adding.
+It consumes no cast time and survives rotation save, export, and import.
+
+Flamelash's indefinite periodic effect consumes Hellfire every 0.13 seconds,
+starting 0.13 seconds after activation. Tick n (starting at one) consumes
+`1 + 0.05 * (n - 1)`. A conditional consume action removes Flamelash on the
+same tick that Hellfire reaches zero and cancels future ticks. Activation at
+zero ends immediately. Gains replenish the resource without resetting the ramp;
+another activation resets it. At 80 with no gains, 40 ticks consume 79 and tick
+41 empties the remaining point, ending Flamelash at 5.33 seconds.
+
+The editor intentionally permits activation below 80 and FA casts outside
+Flamelash. Such FA casts retain their authored attacks and gains but do not
+implicitly activate Flamelash or receive its state-dependent effects. Presets
+should activate at 80 and cast FA stages only while active, subject to the
+current user-approved Wind sequence exception below. Attack HP drain remains
+unmodeled.
+
 Infernal Twinblades exposes A1–A4 (Dual Blade - Light Attack / 雙刀・輕擊)
 and FA1–FA5 (Blade of Heaven's Wrath / 天怒刀法) as independent castable stages.
 Each stage uses the supplied interrupt time as its cast time and retains every
 local hit's Level 100 physical/attribute coefficients and flat bonuses. End
 animation times are unused. FA stages also carry `Empowered` for their light
-attack attunement. Select the manual Flamelash buff for Flamelash-dependent
-bonuses and marks; these stages do not invent its entry or exit lifecycle.
+attack attunement. Activate Flamelash for its dependent bonuses and marks;
+these attack stages do not change its state automatically.
+
+Infernal A4 Cancel (`InfernalLight4Cancel`) ends at its simultaneous hits at
+0.167 seconds. Normal A4 retains its 0.529-second cast. FA5 Cancel
+(`InfernalFlamelashLight5Cancel`) ends at its final hit at 1.023 seconds,
+retaining all five blade hits and the conditional Echoes T6 Rodent triggers at
+its first hit. Normal FA5 retains its 1.401-second cast. The variants
+`InfernalLight1Rodent`, `InfernalLight3Rodent`, `InfernalLight4Rodent`, and `InfernalFlamelashLight4Rodent`,
+displayed as A1 [Rodent], A3 [Rodent], A4 [Rodent], and FA4 [Rodent], represent immediate
+cancellation after requesting the Rodent
+attack. They ignore ping, consume no cast time, and deal no Twinblades damage.
+Each uses the existing conditional trigger action to launch one Rodent at time
+zero while Rodent Rampage is active, retaining the Twinblades weapon context.
+They emit no Light Attack damage event, so the canceled blade cannot apply
+Sin/Karma or contribute a phantom hit to damage listeners; the actual Rodent
+attack still follows its ordinary damage and listener pipeline.
 
 Rodent Rampage (鼠鼠生威), Mortal Rope Dart Special, casts in 0.541 seconds,
 applies its self buff at 0.541 seconds, and has no cooldown. The buff lasts ten
@@ -989,9 +1096,19 @@ launches one Rodent at threshold and resets progress. A refresh preserves progre
 through `resetOnRefresh: false`; expiration or removal clears it. Probability-weighted
 expected proc rows do not advance this counter; actual sampled hits may do so.
 
-Rodent has zero cast time and inherits the current martial art without switching
+Rodent has zero cast time and lands its damage 0.5 seconds after triggering.
+Damage, hit-time buffs, recording, and Samsara gains resolve at landing; an
+already launched attack can land after its RR/ERR source expires or is replaced,
+subject to Battle End. It inherits the current martial art without switching
 weapons. Its independent physical and attribute coefficients both use distance
-segments `[5, 12]` with results `[0.63, 0.57, 0.6]`. It carries neither `Light`
+segments `[12]` with results `[0.348974526316, 0]`. The user confirmed that the
+nonmatching route applies to PvE and the matching route is for PvP. Both
+coordinated and automatic attacks use skill 20391's base coefficient
+0.581624210526316 multiplied by 0.6, with zero flat bonuses. All ordinary Rodent
+triggers require `distance < 12`, preventing out-of-range damage, proc counts,
+and Samsara gains. Matching PvP routes (0.366423252632 below 5 and 0.3315258
+below 12) are not selected. Export distances use raw game units; their mapping
+to the editor's metres remains unverified. It carries neither `Light`
 nor `Empowered`, so it cannot recursively trigger itself or apply Sin/Karma.
 Echoes T6 adds two ordinary conditional Rodent trigger actions at FA5's first hit
 (0.342 seconds). They require Rodent Rampage, Flamelash, and T6. Together with the
@@ -1241,6 +1358,12 @@ skill application actions:
   Infernal Twinblades Light Attacks ignore 10% of Physical Defense while
   the target has Sin. The rule uses `martialArt: InfernalTwinblades`,
   `skillTag: Light`, and `defenseBonus: -0.1`.
+  Against Karma, the same Light Attacks ignore 10 flat Bamboocut Resistance
+  through conditional `bamboocutResistance: -10`. This affects only those
+  attacks' Bamboocut damage, not other attacks or Judgment Resistance. The
+  user confirmed this flat value at all tiers, including T6: T0/T1/T3/T4 text
+  says 10, while the conflicting T6 main description says 10%. T6 inherits
+  the existing T0 rule without adding a second reduction.
 - T1: damage against a target with both Sin and Karma applies or refreshes
   Samsara after the hit. Samsara lasts 15 seconds and adds 5% HP damage.
   The duration comes from the catalog's English rank description.
@@ -1248,7 +1371,10 @@ skill application actions:
 - T3: both Perfect Dodge variants apply Samsara on the successful incoming attack when
   `EchoesOfOblivionT3` is selected. This uses the same conditional skill-action
   mechanism as their other Inner Way bonuses; the existing Infernal dodge
-  duration talent extends this application to 21 seconds.
+  duration talent extends this application to 21 seconds. While Samsara is active,
+  T3 adds one Hellfire for each outgoing damage hit, including triggered attacks
+  and DOTs. Expected probabilistic hits use the shared weighted resource-trigger
+  behavior; sampled timelines grant it for actual emitted hits.
 - T4: six definite damage hits within two seconds restore one Addled Mind
   charge, with a ten-second trigger cooldown. Addled Mind recovers each of its
   three charges independently after 15 seconds. This trigger reuses `clearCD`
@@ -1262,8 +1388,8 @@ skill application actions:
 Sin and Karma use the user-confirmed three-second duration and one-stack cap.
 Their application rules require both the Infernal Twinblades martial-art tag
 and the Light Attack tag; Heavy Attacks and other martial arts cannot apply
-either mark. Flamelash remains a manually selectable self status until the
-Infernal skill definitions supply its lifecycle. Manual Sin/Karma applications
+either mark. Flamelash can be applied by its activation skill or a manual Buff event;
+Hellfire depletion ends the state. Manual Sin/Karma applications
 also use the three-second expiration. Marks apply after damage; the later T1
 trigger can observe marks applied by T0 on the same hit and grant Samsara,
 which affects subsequent hits.
@@ -1275,26 +1401,56 @@ coefficients 0.0621375, physical bonus 17.5, and attribute bonus 9.5, then appli
 Vendetta Token to self. It carries `MartialArt` for the matching attunement.
 
 Vendetta Token (仇殺令) is a ten-second, one-stack refreshing self buff. Its
-Rodent-only `baseDMGBonus: 0.5` adds 50% base damage. The datamine's “Vendetta
+Rodent-only `dmgBonus: 0.5` adds 50% general damage. The datamine's “Vendetta
 Mark” means this same buff; there is no separate target mark or second status.
 
 Vendetta (452) implements the following supported effects:
 
-- T0: Rodent Rampage retains its 25-second duration. Vendetta Token becomes
-  15 seconds total, following the confirmed correction to its duration text.
+- T0: Rodent Rampage and Vendetta Token become 15 seconds total. The confirmed
+  durations replace the misleading exported wording "15 seconds longer"; they
+  do not add 15 to the base 10 seconds.
 - T1: Vendetta Token becomes 20 seconds total, retained at higher tiers.
+- T4: Rodent Rampage becomes 20 seconds total, retained at higher tiers.
+  The user-confirmed duration applies without simulating Tokens of Gratitude.
 - T2: Solo Level-based Min Physical Attack; T5: 5.1 Physical Penetration,
   both using existing raw-stat effects.
 - T6: while Vendetta Token is active, Rodent attacks gain another 30% damage
-  through `dmgBonus`. This is separate from Token's 50% base-damage bonus.
+  through `dmgBonus`. This adds to Token's 50% for an 80% general damage bonus.
 
 All Tokens of Gratitude recovery, restoration, consumption, and T4 resource
-calculations are intentionally ignored at the user's request. Charging Stance
-still lacks skill data. T6's enemy-healing reduction is outside the current
+calculations are intentionally ignored at the user's request. Rodent's Resilience
+has the fixed 1.5-second charge described below. T6's enemy-healing reduction is outside the current
 combat model.
 
+Rodent's Resilience (`RodentsResilienceCharge`, source skill `20700101` in
+`local/datamine/wwm-skills-normal-all.json`) represents the requested 1.5-second
+hold, rather than the export's animation interrupt. It applies two stacks of
+`RodentRampageEnhancement` at 1.5 seconds, using ordinary skill ping once before
+the charge. The status is capped at two stacks, survives weapon changes, and
+has no modeled expiration because the description supplies none. Rodent Rampage
+consumes one stack when its summon applies at 0.541 seconds to apply the separate
+Enhanced Rodent Rampage (ERR) buff instead of Rodent Rampage (RR). Without a
+charge it applies RR. Recharging replenishes the status to two stacks.
+
+ERR retains RR's coordinated light-attack accumulator and adds automatic Rodent
+launches at +0.5, +1.5, ... seconds after application. Each Rodent lands 0.5
+seconds later, at +1, +2, ... including the final hit at buff expiry.
+Both buffs last 10 seconds without Vendetta, 15 at T0–T3, or 20 at T4–T6;
+ERR therefore supplies 10, 15, or 20 automatic attacks over its full lifetime.
+Its data-defined periodic actions trigger the existing Rodent skill, preserving
+damage modifiers, Rodent Hunt recording, and Samsara's +1 Hellfire per hit.
+Reapplying active ERR refreshes its full duration while preserving the original
+automatic launch cadence; already launched Rodents retain their pending hits.
+The extended window can include an additional launch depending on refresh timing.
+Applying either RR or ERR consumes
+the other buff, canceling its pending periodic actions. Light-attack triggers,
+Rodent-only cancels, and FA5's T6 extras accept either buff. Automatic hits do not
+advance the light-attack accumulator. Battle End still cuts off pending hits.
+The three-second HP recovery and 4.5-second Qi recovery holds are outside this
+fixed-duration skill.
+
 T3 applies Rodent Hunt at Bladebound Thread's hit. This target effect records
-Rodent damage for 15 seconds and pays out 30% on expiry. Reapplication settles
+Rodent damage for 20 seconds by default and pays out 30% on expiry. This user-confirmed duration overrides the Inner Way description mentioning 15 seconds; it does not require a duration extension. Reapplication settles
 the previous window immediately, then starts a fresh window. Token refresh and
 extension actions cannot delay its settlement. FA5's extra Rodent attacks count;
 unrelated damage and settlement damage do not.
@@ -1311,13 +1467,6 @@ events from settling a replacement window. The window excludes hits at its
 expiry timestamp; generated settlement damage obeys the normal combat cutoff.
 Sky Gripped still records only its first eligible hit, using the same replay
 calculation with a single source reference.
-
-Remaining Echoes work is deliberately unimplemented:
-
-- Karma resistance ignore is 10 flat in T0–T4 text but 10% in the T6 main
-  description. Its value/units need confirmation before implementing it.
-- T3 Karma Flame generation can use the existing numeric-resource actions;
-  the resource definition, cap, spending, and Flamelash behavior need data.
 
 Run `npm run test:innerways` for registration/filtering, raw-stat channels,
 attunement override separation, and the supported Echoes lifecycle checks.
@@ -1433,7 +1582,10 @@ object keeps cadence separate from lifetime and stack behavior:
 `interval` must be positive. `firstTick` is the offset from initial application;
 it defaults to `interval` and may be zero for an immediate trigger. Periodic
 actions continue at `interval` steps through the resolved effect duration. An
-effect without a resolved duration does not schedule periodic actions.
+effect without a duration schedules one upcoming tick at a time until removal
+or combat end. A numeric resource action can declare `amountPerTick`; its
+resolved amount is `amount + amountPerTick * zeroBasedTickIndex`. The index
+follows the original cadence, resetting only when `resetOnRefresh` is true.
 `resetOnRefresh: false` preserves the original cadence when a refresh extends
 the effect; `true` starts a new cadence from the refresh timestamp. Consuming
 the final stack or removing the effect cancels its remaining periodic rows.
@@ -1603,11 +1755,11 @@ character-stat display. Timing values can likewise use action-time thresholds:
 `actionTime` resolves independently for the skill's original cast time and each
 original action time before timing modifiers are applied. Thus a segmented
 `castTimeModifier` may adjust early and late actions by different amounts.
-Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the current `distance` parameter in both expected and sampled calculations. Rodent coefficients use `[5, 12]` with `[0.63, 0.57, 0.6]`. Dragon's Breath retains its inclusive first-hit timing through the equivalent exclusive bound `1.2729253500000002` (the next representable number after `1.27292535`). Its Intoxicated modifier subtracts the difference between each route's corresponding hit times rather than a rounded shared latency allowance.
+Damage effects and damage-action `phyCoef`/`attrCoef` may similarly segment the current `distance` parameter in both expected and sampled calculations. Rodent coefficients use `[12]` with `[0.348974526316, 0]` for the nonmatching PvE route. Dragon's Breath retains its inclusive first-hit timing through the equivalent exclusive bound `1.2729253500000002` (the next representable number after `1.27292535`). Its Intoxicated modifier subtracts the difference between each route's corresponding hit times rather than a rounded shared latency allowance.
 
 `switch` selects a value from an explicit keyed table. `param1` names the
 timeline-state value to inspect, `param2` maps possible values to results, and
-the optional `fallback` is used while the structural timeline is built or when
+the optional `fallback` is used during initial row expansion or when
 no case matches:
 
 ```json
@@ -1615,7 +1767,7 @@ no case matches:
 ```
 
 A switched `castTime` is resolved from `currentWeapon` when the cast starts and
-is then locked for that cast. The fallback supplies the initial structural
+is then locked for that cast. The fallback supplies the initial row
 estimate before timeline events have established the weapon state. Actions may
 also use a switched `value` with `"resolveAt": "skillStart"`; Perfect Dodge
 uses this to select one weapon-tagged Ghostly Step - Umbra Dodge definition
@@ -2301,7 +2453,9 @@ omits it and uses its entered cast duration without an automatic attack wait.
 The window normally uses the skill's resolved weapon-dependent cast duration,
 including timing modifiers. `durationFrom: "PerfectDodge"` gives Perfect Dodge
 Cancel the normal dodge's modified window while its blocking cast duration stays
-zero. The window persists while subsequent skills cast.
+zero. The window persists while subsequent skills cast. Dual Blades uses the
+user-confirmed 0.125-second normal Perfect Dodge duration; its canceled variant
+inherits that response window while retaining a zero-second cast.
 
 After cooldown readiness, the scheduler finds the next manual Take Damage event
 or dummy attack before Battle End that is not already reserved by another response.
@@ -2346,6 +2500,9 @@ anchors combat start to the final hit of its first Fleeting Trace. At 40 ms ping
 its canceled dodge catches the second pair at 11.5 seconds, activating Ghostly
 Steps' Mystery DMG Boost before both Soaring Spin hits. Battle End remains
 60 seconds after the selected starting hit.
+A 0.227-second manual delay before the later Legion Summon preserves Iron Guard
+coverage on the final Anxi Soldier and Flute Ripple hits after Grave Frost's
+cast duration was shortened to 1.605 seconds.
 
 ### Heavenwill Gauntlets A1–A6 timing and A4 continuation
 
@@ -2462,3 +2619,28 @@ Bane. Step indices and attached-event anchors are preserved.
 Snowparting Conversion (`SnowpartingConversion`, Heng Tab) has a three-second
 cooldown. It uses ordinary cooldown readiness and then pays configured ping.
 Its 0.56-second cast and 0.498-second hit timing are unchanged.
+
+### Wind dummy rotation
+
+`data/rotation/bamboocut-wind/wind-dummy-1-min-infinite-vitality.json` is the
+default Wind preset. It preserves the complete authored sequence with 40 ms ping,
+dummy attacks, and infinite Vitality. Combat starts on the first RD Q Cancel hit;
+Battle End stops simulation 60 seconds later without deleting the remaining steps.
+The marked break sets target Qi to zero after the second hit of the specified FA1,
+so that hit lands before exhaustion and the following FA2 observes the break.
+
+Pre-pull deflects use ordinary Deflect, and both flute casts use the cancel variant. Rodent-only variants use zero cast time
+and launch their Rodent without blade damage; A4/FA5 cancels retain damage
+through their last hit. Perfect Dodges align to the paired dummy attacks.
+The preset JSON is the source of truth for the evolving authored sequence,
+including the FA2 [Rodent] after the first Flamelash's FA1.
+
+Flamelash now uses Hellfire depletion instead of a fixed timer. The corrected
+sequence runs beyond the 60-second Battle End. The original Hellfire model depleted before the observed roughly half-full bar
+at the first FA4 [Rodent] / Perfect Dodge checkpoint. ERR now contributes its
+automatic attacks and their Samsara gains; the full in-game comparison remains
+under review. FA casts can still occur after depletion.
+The user explicitly requested keeping this authored sequence unchanged for
+review. It is therefore an intentional temporary exception to preset FA-state
+legality; the editor and damage calculation show the actual inactive state.
+Battle End still excludes actions after 60 seconds. Attack HP drain remains unmodeled.

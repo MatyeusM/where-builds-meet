@@ -47,7 +47,7 @@ describe("Successful Deflect attack alignment", () => {
     expect(deflects).toHaveLength(2)
     expect(deflects.map(row => row.startTime + row.effectiveCastTime)).toEqual([5.1, 8.1])
     expect(rows.find(row => row.rotationIndex === 1)?.startTime).toBeCloseTo(4.762)
-    expect(deflects[0].buffs.some(buff => buff.name === "Marker")).toBe(true)
+    expect(deflects[0].buffs.has("Marker")).toBe(true)
     expect(damage(rows)).toEqual([0, 0])
     const waits = rows.filter(row => row.step.type === "event" && row.step.event === "Delay")
     expect(waits).toHaveLength(2)
@@ -137,21 +137,14 @@ describe("Successful Deflect attack alignment", () => {
     data.skills.DeflectSuccessful = { ...general.DeflectSuccessful, cooldown: 3 }
     expect(damage(buildRotationTimeline(data))).toEqual([0, 200, 0])
   })
-  it("includes alignment in Auto HP duration discovery", () => {
+  it("ends at the aligned response when no Battle End is specified", () => {
     const data = input([cast("Lead"), cast("DeflectSuccessful")])
-    data.eventDefinitions.HP = { action: [{ type: "setHP", time: 0 }] }
-    data.rotation = {
-      ...data.rotation,
-      autoHP: true,
-      dummyAttack: true,
-      eventTimeReference: "battleStart",
-      start: { step: 0 },
-    }
+    data.rotation = { ...data.rotation, dummyAttack: true, eventTimeReference: "battleStart", start: { step: 0 } }
     const rows = buildRotationTimeline(data)
     expect(rows[0].timelineEndTime).toBeCloseTo(5.6)
-    const hp = rows.filter(row => row.step.type === "event" && row.step.event === "HP")
-    expect(hp).toHaveLength(10)
-    expect(hp[9].startTime).toBeCloseTo(5.04)
+    const attacks = rows.filter(row => row.step.type === "event" && row.step.event === "TakeDamage")
+    expect(attacks).toHaveLength(2)
+    expect(attacks.every(row => row.startTime === 5.5)).toBe(true)
   })
   it("strips both kinds of generated waits and preserves the authored start anchor", () => {
     const rotation = {

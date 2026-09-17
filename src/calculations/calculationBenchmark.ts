@@ -1,5 +1,6 @@
 export type CalculationBenchmarkPhase =
   | "timelineConstruction"
+  | "liveActionResolution"
   | "timelineQueueOrdering"
   | "effectTriggering"
   | "damagePipeline"
@@ -89,7 +90,7 @@ function reportBenchmark(session: BenchmarkSession, totalDuration: number) {
 
   addRow("total", "Worker calculation", totalDuration, 1)
   const topLevelPhases: Array<[CalculationBenchmarkPhase, string]> = [
-    ["timelineConstruction", "Timeline construction"],
+    ["timelineConstruction", "Live combat traversal"],
     ["damagePipeline", "Damage entry and event pipeline"],
     ["timingResolution", "Anchor and duration resolution"],
     ["metricsAndBreakdown", "Metrics and breakdown aggregation"],
@@ -100,6 +101,7 @@ function reportBenchmark(session: BenchmarkSession, totalDuration: number) {
 
   const subphases: Array<[CalculationBenchmarkPhase, string]> = [
     ["timelineQueueOrdering", "Timeline queue ordering and removal"],
+    ["liveActionResolution", "Live action resolution (parent)"],
     ["effectTriggering", "Timeline effect-trigger evaluation"],
     ["damageEntryConstruction", "Damage entry/context construction"],
     ["skillStaticEffectAggregation", "Skill-static effect aggregation (cache misses)"],
@@ -135,7 +137,10 @@ function reportBenchmark(session: BenchmarkSession, totalDuration: number) {
   addRow(
     "remainder",
     "Other timeline construction",
-    duration("timelineConstruction") - duration("timelineQueueOrdering") - duration("effectTriggering"),
+    duration("timelineConstruction") -
+      duration("timelineQueueOrdering") -
+      duration("effectTriggering") -
+      duration("liveActionResolution"),
     "derived",
   )
   addRow(

@@ -1,6 +1,5 @@
 import { withCalculationBenchmark } from "./calculationBenchmark"
 import { compactInnerWayResults } from "./compactInnerWayResults"
-import { calculateEditorTimeline } from "./editorTimeline"
 import { rotationBundleFingerprint } from "./rotationCalculationCache"
 import {
   calculateRotationBaseline,
@@ -21,7 +20,7 @@ type WorkerRequest = {
 }
 
 const baselineCache = new Map<string, RotationSimulationBaseline>()
-const editorTimelineCache = new Map<string, ReturnType<typeof calculateEditorTimeline>["timeline"]>()
+const editorTimelineCache = new Map<string, RotationSimulationBaseline>()
 
 function benchmarkLabel(
   mode: NonNullable<WorkerRequest["mode"]>,
@@ -48,26 +47,28 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       switch (mode) {
         case "editorTimeline": {
           const editorBundle = bundle as RotationSimulationBundle
-          const editorTimeline = calculateEditorTimeline(editorBundle.timeline)
-          const start = editorTimeline.rotation.start
-          const fingerprint = rotationBundleFingerprint({
+          const start = editorBundle.timeline.rotation.start
+          const resolvedBundle = {
             ...editorBundle,
-            timeline: { ...editorBundle.timeline, rotation: editorTimeline.rotation },
             startAnchor: {
               rowId: `rotation-${start?.step ?? 0}`,
               ...(start?.action === undefined ? {} : { actionIndex: start.action }),
             },
-          })
-          editorTimelineCache.set(fingerprint, editorTimeline.timeline)
+          }
+          const fingerprint = rotationBundleFingerprint(resolvedBundle)
+          const calculated = calculateRotationBaseline(resolvedBundle)
+          editorTimelineCache.set(fingerprint, calculated)
           if (editorTimelineCache.size > 8) editorTimelineCache.delete(editorTimelineCache.keys().next().value!)
-          return { editorTimeline: { ...editorTimeline, fingerprint } }
+          return {
+            editorTimeline: { rotation: editorBundle.timeline.rotation, timeline: calculated.timeline, fingerprint },
+          }
         }
         case "baseline": {
           if (!cacheKey) throw new Error("A baseline cache key is required")
           const fingerprint = rotationBundleFingerprint(bundle as RotationSimulationBundle)
           const prepared = editorTimelineCache.get(fingerprint)
           editorTimelineCache.delete(fingerprint)
-          const calculated = calculateRotationBaseline(bundle as RotationSimulationBundle, prepared)
+          const calculated = prepared ?? calculateRotationBaseline(bundle as RotationSimulationBundle)
           baselineCache.set(cacheKey, calculated)
           if (baselineCache.size > 64) baselineCache.delete(baselineCache.keys().next().value!)
           return compactInnerWayResults(calculated)

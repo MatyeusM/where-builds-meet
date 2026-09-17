@@ -51,7 +51,7 @@ describe("Mystic cast timing with ping", () => {
         expect(action.time).toBeCloseTo(hits[i], 10)
         expect(cast.actionStates[index]).toBeDefined()
       })
-      const turnaround = next.buffs.find(buff => buff.name === "Turnaround")
+      const turnaround = next.buffs.get("Turnaround")
       expect(turnaround?.appliedAt).toBeCloseTo(cast.startTime + duration, 10)
     },
   )
@@ -77,7 +77,7 @@ describe("Mystic cast timing with ping", () => {
       expect(action.time).toBeCloseTo(action.type === "extend" && index > 5 ? times[1] : times[0], 10)
       expect(cast.actionStates[index]).toBeDefined()
     })
-    expect(next.buffs.find(buff => buff.name === "Turnaround")?.appliedAt).toBeCloseTo(cast.startTime + duration, 10)
-    expect(next.buffs.some(buff => buff.name === "Intoxicated")).toBe(true)
+    expect(next.buffs.get("Turnaround")?.appliedAt).toBeCloseTo(cast.startTime + duration, 10)
+    expect(next.buffs.has("Intoxicated")).toBe(true)
   })
 })

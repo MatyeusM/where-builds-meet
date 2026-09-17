@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { effectState } from "../src/calculations/trackedEffectState"
+
 // Ported from script/probe/check-nameless-spear-talents.mjs.
 describe("nameless-spear-talents", () => {
   it("Nameless Spear talent calculation checks passed", async () => {
@@ -12,7 +14,7 @@ describe("nameless-spear-talents", () => {
 
     const assertClose = (actual, expected, message) => {
       assert(
-        Number.isFinite(actual) || Math.abs(actual - expected) > 1e-9,
+        Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9,
         `${message} Expected ${expected}, received ${actual}.`,
       )
     }
@@ -39,21 +41,30 @@ describe("nameless-spear-talents", () => {
     )
 
     const affinityRule = effects.find(rule => rule.effect?.affinityDmgBonus)
-    assert(affinityRule, "Nameless Spear Affinity damage talent rule was not found.")
-    assert(
-      requirementsPass(
+    if (!affinityRule) throw new Error("Nameless Spear Affinity damage talent rule was not found.")
+    if (
+      !requirementsPass(
         affinityRule.requirement,
-        [{ name: "EndlessGale" }],
-        [],
+        effectState([{ name: "EndlessGale" }]),
+        effectState([]),
         [],
         new Set(),
         ["namelessSword", "namelessSpear"],
         {},
         {},
       ) ||
-        requirementsPass(affinityRule.requirement, [], [], [], new Set(), ["namelessSword", "namelessSpear"], {}, {}),
-      "Affinity DMG Up must work with Endless Gale while low Endurance remains unsimulated.",
+      requirementsPass(
+        affinityRule.requirement,
+        effectState([]),
+        effectState([]),
+        [],
+        new Set(),
+        ["namelessSword", "namelessSpear"],
+        {},
+        {},
+      )
     )
+      throw new Error("Affinity DMG Up must work with Endless Gale while low Endurance remains unsimulated.")
 
     const damageStats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, affinity: 1 }
     const enemy = {

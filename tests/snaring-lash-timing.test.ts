@@ -1,4 +1,4 @@
-import { assert, expect, it } from "vitest"
+import { assert, it, expect } from "vitest"
 
 import skills from "../data/skill/skygrasp-rope-dart.json"
 import { buildRotationTimeline, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
@@ -33,18 +33,14 @@ it.each([
   expect(hits).toHaveLength(hitTimes.length)
   for (const [index, actionIndex] of hits.entries()) {
     expect(cast.startTime + Number(cast.actions[actionIndex].time)).toBeCloseTo(hitTimes[index])
-    if (index > 0)
-      assert(
-        cast.actionStates[actionIndex].debuffs.some(b => b.name === "HeavensMight") === true,
-        "Later hits must apply HeavensMight.",
-      )
+    if (index > 0) assert(cast.actionStates[actionIndex].debuffs.has("HeavensMight"))
   }
   expect(cast.startTime + Number(cast.actions[0].time)).toBeCloseTo(0.405)
-  expect(cast.actionStates[0].debuffs.some(b => b.name === "HeavensMight")).toBe(false)
+  expect(cast.actionStates[0].debuffs.has("HeavensMight")).toBe(false)
   expect(falcon.startTime).toBeCloseTo(0.405)
   expect(falcon.sourceRowId).toBe(cast.id)
   expect(follow.startTime).toBeCloseTo(0.08 + duration)
-  expect(follow.debuffs.find(b => b.name === "HeavensMight")?.appliedAt).toBeCloseTo(0.405)
+  expect(follow.debuffs.get("HeavensMight")?.appliedAt).toBeCloseTo(0.405)
   expect(falcon.actions.filter(a => a.type === "damage")).toHaveLength(3)
   expect(falcon.actionStates[2]).toBeDefined()
 })

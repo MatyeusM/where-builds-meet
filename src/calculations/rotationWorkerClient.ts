@@ -249,6 +249,26 @@ export function disposeRotationCalculationWorker() {
   rejectAllRequests("Calculation worker disposed")
 }
 
+/** Cancel only this editor's obsolete build, preserving unrelated queued work. */
+export function cancelEditorTimelineRequest(key: string) {
+  const matches = (request: CalculationRequest) => request.mode === "editorTimeline" && request.key === key
+  const error = new Error("Calculation superseded by a newer editor revision")
+  pending = pending.filter(request => {
+    if (!matches(request)) return true
+    request.reject(error)
+    return false
+  })
+  if (running && matches(running.request)) {
+    const request = running.request
+    running = undefined
+    worker?.terminate()
+    worker = undefined
+    workerBaselineKeys = new Set()
+    request.reject(error)
+  }
+  dispatchNext()
+}
+
 export function requestEditorTimeline(bundle: RotationSimulationBundle, options?: RequestOptions) {
   return new Promise<EditorTimelineResult>((resolve, reject) => {
     enqueue(

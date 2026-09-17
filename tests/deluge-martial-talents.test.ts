@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-deluge-martial-talents.mjs.
@@ -37,7 +38,7 @@ describe("deluge-martial-talents", () => {
     }
     const effectsFor = (weapons, tags) =>
       martialArtEffectsForRank(arts, weapons, 13)
-        .filter(e => requirementsPass(e.requirement, [], [], tags, new Set(), weapons))
+        .filter(e => requirementsPass(e.requirement, effectState([]), effectState([]), tags, new Set(), weapons))
         .map(e => e.effect ?? e)
     for (const [minPhys, bonus] of [
       [0, 0.05],

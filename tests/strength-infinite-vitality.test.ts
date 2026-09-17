@@ -23,6 +23,5 @@ it("Infinite Vitality starts on Fleeting Trace's final hit and dodges the second
   const spin = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "SoaringSpin2")!
   const hits = spin.actions.flatMap((action, index) => (action.type === "damage" ? [index] : []))
   expect(hits.length).toBeGreaterThan(0)
-  for (const index of hits)
-    expect(spin.actionStates[index].buffs.some(buff => buff.name === "MysteryDMGBoost")).toBe(true)
+  for (const index of hits) expect(spin.actionStates[index].buffs.has("MysteryDMGBoost")).toBe(true)
 })

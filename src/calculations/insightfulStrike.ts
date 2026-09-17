@@ -71,7 +71,9 @@ function effectDirectAffinityRules(definition: EffectDefinition | undefined): Di
 export function insightfulStrikeDirectAffinityBonus(effect: InsightfulStrikeEffect, state: RequirementState): number {
   return effect.directAffinityRules.reduce(
     (total, rule) =>
-      requirementsPass(rule.requirement, [], [], [], new Set(), [], {}, state) ? total + rule.value : total,
+      requirementsPass(rule.requirement, new Map(), new Map(), [], new Set(), [], {}, state)
+        ? total + rule.value
+        : total,
     0,
   )
 }

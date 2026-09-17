@@ -9,11 +9,22 @@
     overflow-x: auto;
   }
 
+  .breakdown-skill-panel {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr);
+
+    & .breakdown-table {
+      inline-size: 100%;
+    }
+  }
+
   .breakdown-panel .panel-heading {
     margin-block-end: 12px;
   }
 
   .breakdown-totals {
+    margin-inline-start: auto;
+    text-align: end;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -38,8 +49,49 @@
   }
 
   .breakdown-skill-table {
-    grid-template-columns: minmax(15rem, 1fr) repeat(9, max-content);
+    grid-template-columns: 2.75rem minmax(15rem, 1fr) repeat(9, max-content);
     min-inline-size: 67.25rem;
+  }
+
+  .breakdown-skill-table,
+  .breakdown-healing-skill-table {
+    & .breakdown-table-row > .breakdown-skill-name {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    & .breakdown-table-header > :nth-child(2) {
+      text-align: start;
+    }
+  }
+
+  .breakdown-category-children {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+
+    & .breakdown-skill-name {
+      padding-inline-start: 1.5rem;
+    }
+  }
+
+  .breakdown-category-toggle {
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
   }
 
   .breakdown-cast-table {
@@ -53,7 +105,7 @@
   }
 
   .breakdown-healing-skill-table {
-    grid-template-columns: minmax(15rem, 1fr) repeat(7, max-content);
+    grid-template-columns: 2.75rem minmax(15rem, 1fr) repeat(7, max-content);
     min-inline-size: 58rem;
   }
 
@@ -174,10 +226,6 @@
   }
 
   @media (max-width: 43.75em) {
-    .breakdown-totals {
-      justify-content: flex-start;
-    }
-
     .breakdown-coverage-grid {
       grid-template-columns: minmax(0, 1fr);
     }

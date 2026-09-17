@@ -1,5 +1,6 @@
-import { assert, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-empirical-edge.mjs.
@@ -10,7 +11,10 @@ describe("empirical-edge", () => {
     const { innerWayDefinitions } = await import("../src/data/innerWayDefinitions.ts")
     const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
 
-    assert(innerWayDefinitions.EmpiricalEdge === empiricalEdge, "Empirical Edge must be registered as an Inner Way.")
+    expect(
+      innerWayDefinitions.EmpiricalEdge === empiricalEdge,
+      "Empirical Edge must be registered as an Inner Way.",
+    ).toBeTruthy()
     const trigger = empiricalEdge.effect.EmpiricalEdgeT0.trigger[0]
 
     const cognition = kiteBuffs.Cognition
@@ -24,7 +28,9 @@ describe("empirical-edge", () => {
     ]
     const resolvedPenetration = (tags, conditions = []) =>
       cognition.stackEffects[4]
-        .filter(effect => requirementsPass(effect.requirement, [], [], tags, new Set(conditions)))
+        .filter(effect =>
+          requirementsPass(effect.requirement, effectState([]), effectState([]), tags, new Set(conditions)),
+        )
         .reduce(
           (total, effect) => {
             for (const field of penetrationFields) total[field] += effect.effect[field] ?? 0
@@ -33,10 +39,10 @@ describe("empirical-edge", () => {
           Object.fromEntries(penetrationFields.map(field => [field, 0])),
         )
     const martialArtPenetration = resolvedPenetration(["MartialArtEffect"])
-    assert(
+    expect(
       martialArtPenetration.physicalPenetration === 0,
       "Cognition must not grant Physical Penetration before Empirical Edge T6.",
-    )
+    ).toBeTruthy()
     for (const tags of [
       ["MartialArtEffect", "HeavenwillGauntlets", "Falcon"],
       ["MartialArtEffect", "VileCondemned"],
@@ -46,10 +52,10 @@ describe("empirical-edge", () => {
       const t6Penetration = resolvedPenetration(tags, ["EmpiricalEdgeT6"])
       expect(t6Penetration.physicalPenetration).toBe(t6Penetration.bamboocutPenetration)
 
-      assert(
+      expect(
         penetration.physicalPenetration === 0,
         "Qualifying Cognition effects must not gain Physical Penetration before T6.",
-      )
+      ).toBeTruthy()
     }
 
     const probeSkill = {
@@ -78,11 +84,10 @@ describe("empirical-edge", () => {
       weapons: ["heavenwill", "skygrasp"],
     })
     const row = timeline.find(candidate => candidate.id === "rotation-0")
-    const cognitionStackAt = actionIndex =>
-      row.actionStates[actionIndex].buffs.find(buff => buff.name === "Cognition")?.stack ?? 0
-    assert(
+    const cognitionStackAt = actionIndex => row.actionStates[actionIndex].buffs.get("Cognition")?.stack ?? 0
+    expect(
       [0, 1, 1, 2].every((stack, index) => cognitionStackAt(index) === stack),
       "Cognition must apply after damage and reject reapplications during its one-second cooldown.",
-    )
+    ).toBeTruthy()
   })
 })

@@ -38,7 +38,10 @@
       "ThundercryBlade",
       "StormbreakerSpear",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "VernalUmbrella",
+      "InkwellFan"
     ],
     "options": {
       "0": { "name": "0", "effect": { "stat": {} } },
@@ -69,7 +72,11 @@
           { "stat": { "crit": 0.09 } },
           {
             "requirement": [{ "target": "selfHPPercentage", "comparison": ">=", "amount": 100 }],
-            "effect": { "stat": { "crit": 0.05 }, "critDmgBonus": 0.15, "criticalHealingBonus": 0.15 }
+            "effect": {
+              "effectiveStat": { "effectiveCritBonus": 0.05 },
+              "critDmgBonus": 0.15,
+              "criticalHealingBonus": 0.15
+            }
           }
         ]
       }
@@ -87,7 +94,10 @@
       "StrategicSword",
       "HeavenQuakerSpear",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "VernalUmbrella",
+      "InkwellFan"
     ],
     "options": {
       "0": { "name": "0", "effect": { "stat": {} } },
@@ -117,7 +127,13 @@
       "SnowpartingBlade",
       "PhalanxbaneBlade",
       "PanaceaFan",
-      "SoulshadeUmbrella"
+      "SoulshadeUmbrella",
+      "SilkbindJade",
+      "BamboocutDust",
+      "VernalUmbrella",
+      "InkwellFan",
+      "EverspringUmbrella",
+      "UnfetteredRopeDart"
     ],
     "options": {
       "0": { "name": "0", "effect": { "stat": {} } },
@@ -139,7 +155,14 @@
   "Jadeware": {
     "name": "Jadeware",
     "altersTimeline": false,
-    "tags": [],
+    "tags": [
+      "BellstrikeSplendor",
+      "BellstrikeUmbra",
+      "NamelessSword",
+      "NamelessSpear",
+      "StrategicSword",
+      "HeavenQuakerSpear"
+    ],
     "options": {
       "0": { "name": "0", "effect": {} },
       "2": { "name": "2", "effect": { "rawStat": { "maxPhys": 77.8 } } },
@@ -245,7 +268,7 @@
   "Mistwillow": {
     "name": "Mistwillow",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["SilkbindJade", "VernalUmbrella", "InkwellFan"],
     "options": {
       "0": { "name": "0", "effect": {} },
       "2": { "name": "2", "effect": { "rawStat": { "precision": 0.08 } } },
@@ -255,7 +278,7 @@
   "Starweave": {
     "name": "Starweave",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["BamboocutDust", "EverspringUmbrella", "UnfetteredRopeDart"],
     "options": {
       "0": { "name": "0", "effect": {} },
       "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
@@ -265,7 +288,7 @@
   "Tiltrim": {
     "name": "Tiltrim",
     "altersTimeline": false,
-    "tags": [],
+    "tags": ["BamboocutDraught", "SkystrikeGauntlets", "RivenTwinblades"],
     "options": {
       "0": { "name": "0", "effect": {} },
       "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },

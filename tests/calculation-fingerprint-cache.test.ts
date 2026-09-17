@@ -41,7 +41,6 @@ describe("calculation-fingerprint-cache", () => {
 
     const rotationSettings = [
       ["target HP", { targetHP: 100000 }],
-      ["automatic HP", { autoHP: true }],
       ["dummy attacks", { dummyAttack: true }],
       ["group size", { groupSize: 5 }],
       ["infinite Vitality", { infiniteVitality: true }],

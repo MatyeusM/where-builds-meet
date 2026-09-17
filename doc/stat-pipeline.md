@@ -77,8 +77,51 @@ Global damage multipliers retain their normal damage-effect handling.
 When a buff expires, its contribution is absent from the next aggregate. Never
 subtract a buff from the previous action's capped result: copy `skillStats`, add
 the currently active contributions, and derive the result. Equal consecutive
-contribution signatures reuse the last resolved snapshot for that baseline.
-The cache is bounded to one signature per live baseline using weak keys.
+contribution signatures reuse the resolved snapshot for that baseline, including
+when an attribution calculation temporarily excludes a buff. Immutable effect
+lists and aggregates prepare their stat contributions once. Resolved numerical
+signatures are stored under weak baseline keys, so releasing a calculation also
+allows its prepared stat snapshots to be released.
+
+## Sequential prepared combat state
+
+Build the timeline once per calculation run. Its chronological event loop owns
+the evolving buffs, debuffs, resources, HP, and effect aggregate. There is no
+second buff or stat reconstruction pass over the completed timeline.
+
+Prepare unmodified effect definitions once per name and stack count. Applying,
+refreshing, consuming, or expiring an effect publishes a new immutable snapshot;
+unchanged effects and snapshots are shared with later actions. Historical rows
+retain their original state, including source ownership and expiration times.
+
+The action resolver prepares contextual effect lists once per distinct semantic
+state: skill tag signature, effect identities/stacks/maxima/recipients,
+action modifiers, and numeric requirement outcomes. Numeric predicates include
+resource, distance, HP, and Qi comparisons, including predicates nested inside
+modified definitions. Remaining within a threshold region reuses the prepared
+list; crossing a threshold or changing effect membership selects another state.
+The preparation cache belongs to one resolver/run. Attribution excludes its buff
+before resolving requirements, so dependent buffs are handled correctly.
+
+Formula-valued contributions remain formula inputs; each damage/healing action
+still evaluates its own formula and outcomes. Reusing prepared contributions
+does not reuse damage results or skip combat events. Event-changing variants and
+Monte Carlo samples own separate live traversals and preparation caches.
+
+Active buffs/debuffs and historical snapshots are authoritative read-only maps.
+The self/target key is the effect ID; a teammate key encodes effect ID and recipient
+index. An omitted player recipient and recipient zero both identify self. There
+is one entry per identity, with no parallel ordered array or lookup index.
+Presence and stack queries use direct map lookup in amortized O(1) time.
+Lifecycle changes publish new maps while prior snapshots stay unchanged. Map
+copying and enumerating active effects remain O(n).
+
+Map insertion order has no selection meaning. The `first` resolver traverses
+the candidate IDs declared by the skill and queries map membership. Prepared
+state identities are canonicalized independently of map insertion order.
+Workers use structured cloning, which preserves native maps. Display code can
+enumerate values at its boundary; history does not require array serialization.
+Authored initial-effect lists are converted once on entry to the live loop.
 
 Direct Critical Rate shares an ordinary and final field name. Complete snapshots
 therefore retain `uncappedDirectCrit` for subsequent contribution changes, while

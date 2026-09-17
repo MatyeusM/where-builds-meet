@@ -95,17 +95,14 @@ describe("seasonal-edge", () => {
       0.3,
       "T3 must grant two distinct seasons in 30% of proc branches",
     )
-    assert(
-      !t3.outcomes.some(outcome => new Set(outcome.buffs).size !== outcome.buffs.length),
-      "T3 must roll its second season without replacement.",
-    )
+    if (t3.outcomes.some(outcome => new Set(outcome.buffs).size !== outcome.buffs.length))
+      throw new Error("T3 must roll its second season without replacement.")
     const t4 = seasonalEdgeEffectFor(rulesThroughTier(4), generalBuffs)
-    assert(t4.additionalSkills.includes("SereneBreeze"), "T4 must allow Serene Breeze to trigger Seasonal Edge.")
+    if (!t4.additionalSkills.includes("SereneBreeze"))
+      throw new Error("T4 must allow Serene Breeze to trigger Seasonal Edge.")
     const t6 = seasonalEdgeEffectFor(rulesThroughTier(6), generalBuffs)
-    assert(
-      !t6.outcomes.some(outcome => outcome.buffs.includes("Frost")),
-      "T6 must remove Frost from every possible outcome.",
-    )
+    if (t6.outcomes.some(outcome => outcome.buffs.includes("Frost")))
+      throw new Error("T6 must remove Frost from every possible outcome.")
     closeTo(
       t6.outcomes.filter(outcome => outcome.buffs.length === 1).reduce((total, outcome) => total + outcome.weight, 0),
       0.5,
@@ -126,10 +123,8 @@ describe("seasonal-edge", () => {
       rotation: { name: "Serene Breeze T4 probe", steps: [{ type: "skill", skill: "SereneBreeze" }] },
       skills: { SereneBreeze: { name: "Serene Breeze", castTime: 1, tags: ["Mystic"], action: [] } },
     })
-    assert(
-      !(seasonalEdgeWindows(sereneTimeline, t3).length !== 0 || seasonalEdgeWindows(sereneTimeline, t4).length !== 1),
-      "Serene Breeze must begin triggering Seasonal Edge at T4, and not before T4.",
-    )
+    if (seasonalEdgeWindows(sereneTimeline, t3).length !== 0 || seasonalEdgeWindows(sereneTimeline, t4).length !== 1)
+      throw new Error("Serene Breeze must begin triggering Seasonal Edge at T4, and not before T4.")
     const result = calculateRotationBaseline({
       timeline,
       startAnchor: { rowId: "rotation-0" },
@@ -158,27 +153,27 @@ describe("seasonal-edge", () => {
       100,
       "A Conversion used during the 30-second cooldown must not open a new season window",
     )
-    const cooldownPlate = result.timeline[1].buffs.find(buff => buff.name === "SeasonalEdgeCooldown")
-    assert(cooldownPlate, "Seasonal Edge must expose its deterministic cooldown as a timeline buff.")
+    const cooldownPlate = result.timeline[1].buffs.get("SeasonalEdgeCooldown")
+    if (!cooldownPlate) throw new Error("Seasonal Edge must expose its deterministic cooldown as a timeline buff.")
     closeTo(cooldownPlate.expiresAt, 31, "Seasonal Edge cooldown must expire 30 seconds after the trigger")
-    assert(
-      !Object.values(result.actionBreakdowns).some(
+    if (
+      Object.values(result.actionBreakdowns).some(
         breakdown => breakdown.expectedBuffStacks?.SeasonalEdgeCooldown !== undefined,
-      ),
-      "Seasonal Edge cooldown must not be represented as a probability-weighted buff plate.",
+      )
     )
+      throw new Error("Seasonal Edge cooldown must not be represented as a probability-weighted buff plate.")
     const mysticState = result.timeline[3].actionStates[1]
     closeTo(mysticState.resources.Vitality, -10, "Vitality consumption must be allowed below zero")
     closeTo(mysticState.resourceRanges.Vitality.minimum, -10, "The Vitality lower bound must exclude Yield")
-    assert(
-      mysticState.resourceRanges.Vitality.maximum > -10,
-      "The Vitality upper bound must include possible Yield regeneration.",
+    if (!(mysticState.resourceRanges.Vitality.maximum > -10))
+      throw new Error("The Vitality upper bound must include possible Yield regeneration.")
+    if (
+      !(
+        mysticState.resourceRanges.Vitality.expected > mysticState.resourceRanges.Vitality.minimum &&
+        mysticState.resourceRanges.Vitality.expected < mysticState.resourceRanges.Vitality.maximum
+      )
     )
-    assert(
-      mysticState.resourceRanges.Vitality.expected > mysticState.resourceRanges.Vitality.minimum &&
-        mysticState.resourceRanges.Vitality.expected < mysticState.resourceRanges.Vitality.maximum,
-      "Expected Vitality must probability-weight Yield between its lower and upper bounds.",
-    )
+      throw new Error("Expected Vitality must probability-weight Yield between its lower and upper bounds.")
     closeTo(
       result.mysticVitalityDamageScale,
       0.625,
@@ -209,13 +204,11 @@ describe("seasonal-edge", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    assert(
-      !(
-        resourceBoostedResult.mysticVitalityDamageScale <= result.mysticVitalityDamageScale ||
-        resourceBoostedResult.metrics.totalDamage <= result.metrics.totalDamage
-      ),
-      "Healing-triggered Vitality must improve expected Mystic damage while deficit branches remain.",
+    if (
+      resourceBoostedResult.mysticVitalityDamageScale <= result.mysticVitalityDamageScale ||
+      resourceBoostedResult.metrics.totalDamage <= result.metrics.totalDamage
     )
+      throw new Error("Healing-triggered Vitality must improve expected Mystic damage while deficit branches remain.")
     const displayedTimeline = mergeCalculatedTimelineState(buildRotationTimeline(timeline), result.timeline)
     closeTo(
       displayedTimeline[3].actionStates[1].resourceRanges.Vitality.minimum,

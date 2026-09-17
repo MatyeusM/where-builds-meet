@@ -1,4 +1,6 @@
-import { assert, describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
+
+import { effectState } from "../src/calculations/trackedEffectState"
 
 // Ported from script/probe/check-dot-damage.mjs.
 describe("dot-damage", () => {
@@ -42,27 +44,33 @@ describe("dot-damage", () => {
       () => 0.5,
     )
     for (const result of [physicalOnly, physicalOnlyRolled]) {
-      assert(
+      expect(
         closeTo(result.physical, 2) && closeTo(result.total, 2),
         "Physical-only DOT must ignore attribute attack when attrCoef is omitted.",
-      )
+      ).toBeTruthy()
     }
     const independent = calculateDamageBreakdown({ phyCoef: 0.02, attrCoef: 0.5 }, baseContext)
-    assert(
+    expect(
       closeTo(independent.physical, 2) && closeTo(independent.bellstrike, 50),
       "Physical and attribute coefficients must resolve independently.",
-    )
+    ).toBeTruthy()
     const baselineDot = damage([], true)
     const directWithBonus = damage([{ dotDamage: 0.25 }], false)
     const dotWithBonus = damage([{ dotDamage: 0.25 }], true)
     const dotWithTwoBonuses = damage([{ dotDamage: 0.25 }, { dotDamage: 0.25 }], true)
 
-    assert(closeTo(directWithBonus.total, baselineDirect.total), "dotDamage must not affect direct damage.")
-    assert(closeTo(dotWithBonus.total / baselineDot.total, 1.25), "dotDamage must multiply every DOT damage component.")
-    assert(
+    expect(
+      closeTo(directWithBonus.total, baselineDirect.total),
+      "dotDamage must not affect direct damage.",
+    ).toBeTruthy()
+    expect(
+      closeTo(dotWithBonus.total / baselineDot.total, 1.25),
+      "dotDamage must multiply every DOT damage component.",
+    ).toBeTruthy()
+    expect(
       closeTo(dotWithTwoBonuses.total / baselineDot.total, 1.5),
       "Multiple dotDamage effects must add within the DOT category.",
-    )
+    ).toBeTruthy()
     const simulatedBaseline = calculateSimulatedDamageBreakdown(
       { phyCoef: 1, attrCoef: 1 },
       { ...baseContext, isDot: true },
@@ -73,25 +81,25 @@ describe("dot-damage", () => {
       { ...baseContext, effects: [{ dotDamage: 0.25 }], isDot: true },
       () => 0.5,
     )
-    assert(
+    expect(
       closeTo(simulatedWithBonus.total / simulatedBaseline.total, 1.25),
       "The simulator must use the same DOT multiplier.",
-    )
+    ).toBeTruthy()
 
     const fifthStack = soulShaken.stackEffects[4]
     const umbraRule = fifthStack[1]
-    assert(
-      requirementsPass(umbraRule.requirement, [], [], ["HeavenQuakerSpear"], new Set()),
+    expect(
+      requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["HeavenQuakerSpear"], new Set()),
       "Heavenquaker Spear must satisfy Soul-Shaken's Umbra requirement.",
-    )
-    assert(
-      requirementsPass(umbraRule.requirement, [], [], ["StrategicSword"], new Set()),
+    ).toBeTruthy()
+    expect(
+      requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["StrategicSword"], new Set()),
       "Strategic Sword must satisfy Soul-Shaken's Umbra requirement.",
-    )
-    assert(
-      !requirementsPass(umbraRule.requirement, [], [], ["SnowpartingBlade"], new Set()),
+    ).toBeTruthy()
+    expect(
+      !requirementsPass(umbraRule.requirement, effectState([]), effectState([]), ["SnowpartingBlade"], new Set()),
       "Non-Umbra martial arts must not receive Soul-Shaken's conditional bonus.",
-    )
+    ).toBeTruthy()
 
     for (const [tags, multiplier] of [
       [["StrategicSword", "DOT", "HighBleed"], 2],
@@ -100,12 +108,12 @@ describe("dot-damage", () => {
       [["Other", "DOT"], 1.25],
     ]) {
       const selected = fifthStack
-        .filter(rule => requirementsPass(rule.requirement, [], [], tags, new Set()))
+        .filter(rule => requirementsPass(rule.requirement, effectState([]), effectState([]), tags, new Set()))
         .map(rule => rule.effect ?? rule)
-      assert(
+      expect(
         closeTo(damage(selected, true).total / baselineDot.total, multiplier),
         "Soul-Shaken's High Bleed bonus adds once and respects source tags",
-      )
+      ).toBeTruthy()
     }
   })
 })

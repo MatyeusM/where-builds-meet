@@ -1,8 +1,8 @@
-import { assert, describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 // Ported from script/probe/check-rotation-options.mjs.
 describe("rotation-options", () => {
-  it("Rotation Auto HP, Dummy Attack, and Infinite Vitality checks passed", async () => {
+  it("Legacy Auto HP, Dummy Attack, and Infinite Vitality behavior remains valid", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
     const commonInput = {
       dots: {},
@@ -23,14 +23,15 @@ describe("rotation-options", () => {
       },
     }
 
+    const legacyRotation = {
+      name: "Automatic HP probe",
+      autoHP: true,
+      eventTimeReference: "battleStart" as const,
+      steps: [{ type: "skill" as const, skill: "ObserveHP" }],
+    }
     const hpTimeline = buildRotationTimeline({
       ...commonInput,
-      rotation: {
-        name: "Automatic HP probe",
-        autoHP: true,
-        eventTimeReference: "battleStart",
-        steps: [{ type: "skill", skill: "ObserveHP" }],
-      },
+      rotation: legacyRotation,
       skills: {
         ObserveHP: {
           name: "Observe HP",
@@ -44,14 +45,14 @@ describe("rotation-options", () => {
     const automaticRows = hpTimeline.filter(
       row => row.step.type === "event" && row.step.event === "HP" && row.step.automatic,
     )
-    assert(automaticRows.length === 10, "Auto HP must create ten hidden state changes for a nonzero rotation.")
-    assert(
-      Object.values(hpRow.actionStates).every((state, index) => {
-        const expected = index === 0 ? 0.9999 : 0.9999 - Math.min(index, 9) * 0.1
-        return Math.abs(state.targetHPRatio - expected) < 1e-9
-      }),
-      "Auto HP must begin at 99.99% and lose ten percentage points at each 10% duration boundary.",
-    )
+    expect(
+      automaticRows.length === 0,
+      "A legacy Auto HP flag must not generate duration-dependent HP events.",
+    ).toBeTruthy()
+    expect(
+      Object.values(hpRow.actionStates).every(state => state.targetHPRatio === 0.99),
+      "Without manual HP events or maximum target HP, legacy rotations retain the ordinary 99% target state.",
+    ).toBeTruthy()
 
     const vitalityTimeline = buildRotationTimeline({
       ...commonInput,
@@ -77,10 +78,10 @@ describe("rotation-options", () => {
       initialResources: { Vitality: 100 },
       resourceMaximums: { Vitality: 100 },
     })
-    assert(
+    expect(
       Object.values(vitalityTimeline[0].actionStates).every(state => state.resources.Vitality === 100),
       "An infinite resource must remain at its maximum through gains and every form of consumption.",
-    )
+    ).toBeTruthy()
 
     const dummyAttackTimeline = buildRotationTimeline({
       ...commonInput,
@@ -106,21 +107,21 @@ describe("rotation-options", () => {
     const dummyAttackRows = dummyAttackTimeline.filter(
       row => row.step.type === "event" && row.step.event === "TakeDamage" && row.step.automatic === "dummyAttack",
     )
-    assert(
+    expect(
       dummyAttackRows.length === 6 &&
         dummyAttackRows.every((row, index) => Math.abs(row.startTime - (5.5 + Math.floor(index / 2) * 6)) < 1e-9),
       "Dummy Attack must create two generated 200-damage events together every six seconds from 5.5s until Battle End.",
-    )
-    assert(
+    ).toBeTruthy()
+    expect(
       dummyAttackRows.every(row => row.actions[0]?.damage === 200),
       "Every generated Dummy Attack hit must deal exactly 200 damage.",
-    )
+    ).toBeTruthy()
     const observedDamageRow = dummyAttackTimeline.find(
       row => row.step.type === "skill" && row.step.skill === "ObserveDamage",
     )
-    assert(
+    expect(
       observedDamageRow?.actionStates[0]?.currentHP === 800,
       "Generated Dummy Attack hits must update the same Self HP state as manual Take Damage events.",
-    )
+    ).toBeTruthy()
   })
 })

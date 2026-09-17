@@ -304,6 +304,7 @@
     "weapon": "Gauntlet"
   },
   "VileCondemned": {
+    "silent": true,
     "ignorePing": true,
     "name": "Vile Condemned",
     "shortName": "Gauntlet Charged",
@@ -335,6 +336,7 @@
     "weapon": "Gauntlet"
   },
   "VileCondemnedCharge": {
+    "silent": true,
     "name": "Vile Condemned Charge",
     "castTime": 0.775,
     "action": [],
@@ -434,6 +436,7 @@
     "tags": ["Triggered", "DOT", "Replayed", "BamboocutKite"]
   },
   "VileCondemnedEnd": {
+    "silent": true,
     "ignorePing": true,
     "name": "Vile Condemned End",
     "shortName": "Gauntlet End",
@@ -465,6 +468,7 @@
     "weapon": "Gauntlet"
   },
   "VileCondemnedEnd4": {
+    "silent": true,
     "ignorePing": true,
     "name": "Vile Condemned End [4 HW]",
     "shortName": "Gauntlet End [4 HW]",

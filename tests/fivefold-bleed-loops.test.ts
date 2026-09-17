@@ -60,8 +60,7 @@ describe("fivefold-bleed-loops", () => {
       tickRows(allSuccess).every(
         row =>
           row.actions[0].damageScale === 1 &&
-          row.actionStates[0].debuffs.find(effect => effect.name === "WeepingBlood")?.stack ===
-            (row.startTime < 5 ? 2 : 1),
+          row.actionStates[0].debuffs.get("WeepingBlood")?.stack === (row.startTime < 5 ? 2 : 1),
       ),
       "Only the threshold burst gets a T6 stack; every burst retains the independent Direct Damage roll",
     )
@@ -90,7 +89,7 @@ describe("fivefold-bleed-loops", () => {
       "T6 does not guarantee a stack on an initial natural-expiration burst either",
     )
     assert.ok(
-      bursts(onlyGuaranteed).every(row => !row.debuffs.some(effect => effect.name === "WeepingBlood")),
+      bursts(onlyGuaranteed).every(row => !row.debuffs.has("WeepingBlood")),
       "The burst deals damage before applying its new stack",
     )
     const tier5 = buildRotationTimeline(inputFor(Array(5).fill(0), 12, 5), () => 0)

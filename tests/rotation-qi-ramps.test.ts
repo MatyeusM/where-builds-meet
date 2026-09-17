@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import paths from "../data/path.json"
 import { buildPresetRotationBundle } from "../src/App"
-import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
 import { probeLoad } from "./helpers/probe-loader"
 
 describe("preset Qi event attachments", () => {
@@ -82,7 +82,7 @@ describe("preset Qi event attachments", () => {
       if (step.type !== "event" || step.event !== "Qi") continue
       const attachment = step.before ?? step.after
       const nextIndex = rotation.steps.findIndex(
-        (candidate, candidateIndex) => candidateIndex > index && candidate.type === "skill",
+        (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
       )
       const target = timeline.find(row => row.id === `rotation-${nextIndex}`)
       if (!target || target.skipped) continue
@@ -90,7 +90,7 @@ describe("preset Qi event attachments", () => {
       if (attachment.action !== "start" && (!action || action.type === "inactive")) continue
       expect(
         qiRows.some(row => row.id === `rotation-${index}`),
-        "An executed attachment must not lose its Qi event",
+        `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${attachment.action} must retain its Qi event`,
       ).toBe(true)
     }
   })
@@ -139,11 +139,7 @@ describe("Qi attachment ordering", () => {
     })
     const row = timeline.find(row => row.step.skill === "Probe")!
     const states = row.actions.map((_, index) => row.actionStates[index])
-    expect(states.map(state => state.debuffs.some(effect => effect.name === "Depleted"))).toEqual([
-      placement === "before",
-      true,
-      false,
-    ])
+    expect(states.map(state => state.debuffs.has("Depleted"))).toEqual([placement === "before", true, false])
     expect(states[0].targetQiRatio).toBe(placement === "before" ? 0 : 1)
     expect(states[1].targetQiRatio).toBe(0)
   })

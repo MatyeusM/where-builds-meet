@@ -296,17 +296,13 @@ describe("martial-art-talents", () => {
     )
     const final = rows.findLast(r => r.step.skill === "Observe")
     close(final.resources.Binge, 10, "Carouse dodge gain has a shared one-second cooldown")
-    close(final.buffs.find(b => b.name === "Carouse").expiresAt, 20, "Carouse lasts twenty seconds")
+    close(final.buffs.get("Carouse").expiresAt, 20, "Carouse lasts twenty seconds")
     const soulRows = timeline(
       talentEffects("heavenquakerSpear", "Damage Over Time Enhancement"),
       [...Array.from({ length: 6 }, () => cast("Charged")), cast("Observe")],
       { Charged: { ...observe, tags: ["HeavenQuakerSpear", "Charged"] }, Observe: observe },
     )
-    close(
-      soulRows.at(-1).debuffs.find(b => b.name === "SoulShaken").stack,
-      5,
-      "Heavenquaker trigger applies capped Soul-Shaken stacks",
-    )
+    close(soulRows.at(-1).debuffs.get("SoulShaken").stack, 5, "Heavenquaker trigger applies capped Soul-Shaken stacks")
     for (const [grace, baseBonus] of [
       ["FloatingGrace", 0.1],
       ["FloatingGraceDeluge", 0.24],
@@ -374,7 +370,7 @@ describe("martial-art-talents", () => {
         )
       }
       assert(
-        talented.timeline.every(row => !row.buffs.some(buff => buff.name === "SoulshadeExhaustedBoost")),
+        talented.timeline.every(row => !row.buffs.has("SoulshadeExhaustedBoost")),
         "The talent must not create a separate visible buff",
       )
       const permanent = {

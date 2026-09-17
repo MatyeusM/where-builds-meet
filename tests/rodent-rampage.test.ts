@@ -92,7 +92,7 @@ describe("rodent-rampage", () => {
         [0.43, 0.339, 1],
         [0.47, 0.242, 2],
         [0.6, 0.248, 2],
-        [0.529, 0.167, 1],
+        [0.529, 0.167, 2],
         [0.357, 0.104, 2],
         [0.5, 0.294, 1],
         [0.8, 0.253, 8],
@@ -104,7 +104,7 @@ describe("rodent-rampage", () => {
         assert.equal(
           row.actions.filter(a => a.type === "damage").length,
           hitCount,
-          "Stage keeps every original damage hit",
+          "Stage keeps every original damage hit: " + row.step.skill,
         )
         const procs = rodentRows(rows).filter(proc => Math.abs(proc.startTime - (offset + firstHit)) < 1e-9)
         assert.equal(procs.length, index === 8 ? 3 : 1, "Rodent fires only on the first hit of each stage")
@@ -148,11 +148,11 @@ describe("rodent-rampage", () => {
     )
     const refreshed = build([cast("RodentRampage"), cast("Slow"), cast("RodentRampage"), cast("Slow")])
     assert.equal(rodentRows(refreshed).length, 1, "Refresh preserves the half-complete counter")
-    const applications = refreshed.filter(row => row.step.skill === "RodentRampage")
+    const applications = refreshed.filter(row => row.kind === "rotation" && row.step.skill === "RodentRampage")
     close(applications[1].startTime, 1.041, "Rodent Rampage has no cooldown")
-    const latest = refreshed
-      .find(row => row.step.skill === "Slow" && row.startTime > 1.1)
-      .actionStates[0].buffs.filter(buff => buff.name === "RodentRampage")
+    const latest = Array.from(
+      refreshed.find(row => row.step.skill === "Slow" && row.startTime > 1.1).actionStates[0].buffs.values(),
+    ).filter(buff => buff.name === "RodentRampage")
     assert.equal(latest.length, 1, "Refreshing never duplicates the buff")
     assert.equal(latest[0].stack, 1, "The buff stays capped at one stack")
     close(latest[0].expiresAt, 11.582, "Refresh gives ten seconds from the new application time")
@@ -200,11 +200,11 @@ describe("rodent-rampage", () => {
       enemy,
     }
     for (const [distance, coef] of [
-      [4.999, 0.63],
-      [5, 0.57],
-      [11.999, 0.57],
-      [12, 0.6],
-      [20, 0.6],
+      [4.999, 0.348974526316],
+      [5, 0.348974526316],
+      [11.999, 0.348974526316],
+      [12, 0],
+      [20, 0],
     ]) {
       for (const calculate of [
         calculateDamageBreakdown,
@@ -213,7 +213,7 @@ describe("rodent-rampage", () => {
         close(
           calculate(mortal.Rodent.action[0], { ...context, distance }).total,
           calculate({ phyCoef: coef, attrCoef: coef }, context).total,
-          "Rodent physical and attribute coefficients use exact distance bands",
+          "PvE Rodent uses its final nonmatching coefficient below distance 12",
         )
       }
     }
@@ -233,9 +233,11 @@ describe("rodent-rampage", () => {
     const base = calculateRotationBaseline(bundle([]))
     const t6 = calculateRotationBaseline(bundle(["EchoesOfOblivionT6"]))
     const total = result => Object.values(result.actionBreakdowns).reduce((sum, entry) => sum + entry.total, 0)
+    const rodent = base.baseline.find(entry => entry.context.skillTags.includes("Rodent"))
+    assert(rodent, "Base rotation resolves a Rodent attack")
     close(
       total(t6) - total(base),
-      2 * calculateDamageBreakdown(mortal.Rodent.action[0], context).total,
+      2 * calculateDamageBreakdown(rodent.action, rodent.context).total,
       "Central worker calculation adds exactly two Rodent attacks for T6",
     )
   })

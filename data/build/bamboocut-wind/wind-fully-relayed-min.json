@@ -8,7 +8,7 @@
     "innerWays": [
       { "innerWay": "EchoesOfOblivion", "tier": "T6" },
       { "innerWay": "Vendetta", "tier": "T6" },
-      { "innerWay": "FivefoldBleed", "tier": "T6" },
+      { "innerWay": "MoraleChant", "tier": "T6" },
       { "innerWay": "BreakingPoint", "tier": "T6" }
     ],
     "weaponSets": { "Swallowcall": 4 },
@@ -26,7 +26,7 @@
         { "key": "minPhys", "value": 73.132 },
         { "key": "agility", "value": 46.436 },
         { "key": "dualBladesDmgBoost", "value": 0.05828 },
-        { "key": "crit", "value": 0.0846 }
+        { "key": "maxBamboocut", "value": 41.548 }
       ],
       "attunement": { "key": "physicalPenetration", "value": 11 }
     },
@@ -39,7 +39,7 @@
         { "key": "minPhys", "value": 73.132 },
         { "key": "agility", "value": 46.436 },
         { "key": "ropeDartDmgBoost", "value": 0.05828 },
-        { "key": "crit", "value": 0.0846 }
+        { "key": "maxBamboocut", "value": 41.548 }
       ],
       "attunement": { "key": "physicalPenetration", "value": 11 }
     },

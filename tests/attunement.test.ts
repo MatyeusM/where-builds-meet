@@ -1,4 +1,4 @@
-import { assert, describe, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 // Ported from script/probe/check-attunement.mjs.
 describe("attunement", () => {
@@ -45,6 +45,16 @@ describe("attunement", () => {
           effects: [],
         },
       ).total
+    const infernalSkills = (await import("../data/skill/infernal-twinblades.json")).default
+    for (const [skill, expectedMultiplier] of [
+      [infernalSkills.AddledMind, 1.06],
+      [infernalSkills.InfernalLight1, 1],
+    ] as const) {
+      const baseline = damage(baseAttunement, skill.tags)
+      const boosted = damage({ ...baseAttunement, infernalMartialBoost: 0.06 }, skill.tags)
+      expect(boosted / baseline).toBeCloseTo(expectedMultiplier, 9)
+    }
+
     const baseline = damage(baseAttunement, ["PhalanxbaneBlade", "Charged"])
     const oneMatching = damage({ ...baseAttunement, phalanxbaneChargedBoost: 0.06 }, ["PhalanxbaneBlade", "Charged"])
     const missingTag = damage({ ...baseAttunement, phalanxbaneChargedBoost: 0.06 }, ["PhalanxbaneBlade"])
