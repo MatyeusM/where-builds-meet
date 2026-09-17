@@ -11,6 +11,7 @@ import { t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { getPersistentItem, setPersistentItem } from "./persistentStorage"
 import { Button } from "./ui/Button"
+import { Panel } from "./ui/Panel"
 import { UiIcon } from "./UiIcon"
 
 type SimulationTabProps = {
@@ -253,7 +254,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
 
   const percentComplete = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0
   return (
-    <section className="panel simulation-panel">
+    <Panel className="simulation-panel">
       <div className="simulation-controls">
         <label className="editor-field">
           {t("ui.simulationTab.simulationCount")}
@@ -376,6 +377,6 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
           ))}
         </div>
       )}
-    </section>
+    </Panel>
   )
 }

@@ -33,6 +33,7 @@ import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
 import { Button } from "./ui/Button"
+import { Panel, PanelHeading } from "./ui/Panel"
 import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
 const loadSimulationTab = () => import("./SimulationTab")
@@ -2129,8 +2130,8 @@ function PriorityPanel({
     both: t("ui.app.priorityModeBoth"),
   }
   return (
-    <section className="panel priority-panel">
-      <div className="panel-heading">
+    <Panel className="priority-panel">
+      <PanelHeading>
         <div>
           <h2>{title}</h2>
           <CalculationStatus category={calculationCategory} />
@@ -2148,7 +2149,7 @@ function PriorityPanel({
             {modeLabels[statMode]}
           </Button>
         )}
-      </div>
+      </PanelHeading>
       {rows.length > 0 ? (
         <div
           className={`priority-list ${showMaxRoll ? "priority-list-with-roll" : ""} ${showHealing ? "priority-list-with-healing" : ""}`}
@@ -2216,7 +2217,7 @@ function PriorityPanel({
       ) : (
         <p className="priority-empty">{t("ui.app.openTheRotationEditorToCalculatePriority")}</p>
       )}
-    </section>
+    </Panel>
   )
 }
 
@@ -2233,12 +2234,12 @@ function BreakdownGroupTable({
 }) {
   const hasHealing = (healingRows ?? []).some(row => row.healing > 0)
   return (
-    <section className="panel breakdown-panel">
-      <div className="panel-heading">
+    <Panel className="breakdown-panel">
+      <PanelHeading>
         <div>
           <h2>{title}</h2>
         </div>
-      </div>
+      </PanelHeading>
       {hasHealing ? <h3 className="breakdown-channel-heading">{t("ui.app.damage")}</h3> : null}
       <div className="breakdown-table breakdown-group-table">
         <div className="breakdown-table-header">
@@ -2275,7 +2276,7 @@ function BreakdownGroupTable({
           </div>
         </>
       ) : null}
-    </section>
+    </Panel>
   )
 }
 
@@ -2310,12 +2311,12 @@ function EffectCoveragePanel({
   showTimeCoverage?: boolean
 }) {
   return (
-    <section className="panel breakdown-panel">
-      <div className="panel-heading">
+    <Panel className="breakdown-panel">
+      <PanelHeading>
         <div>
           <h2>{title}</h2>
         </div>
-      </div>
+      </PanelHeading>
       <div className={`breakdown-table breakdown-coverage-table${showTimeCoverage ? " with-time-coverage" : ""}`}>
         <div className="breakdown-table-header">
           <span>{t("ui.app.effect")}</span>
@@ -2332,7 +2333,7 @@ function EffectCoveragePanel({
           </div>
         ))}
       </div>
-    </section>
+    </Panel>
   )
 }
 
@@ -2397,10 +2398,10 @@ function SkillBreakdownRows({
 function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: PathId }) {
   if (!metrics)
     return (
-      <section className="panel breakdown-empty">
+      <Panel className="breakdown-empty">
         <h2>{t("ui.app.dpsBreakdown", { dps: t("system.dps") })}</h2>
         <p>{t("ui.app.openTheRotationEditorToCalculateTheActive")}</p>
-      </section>
+      </Panel>
     )
   const { breakdown } = metrics
   const hasHealing = metrics.totalHealing > 0
@@ -2418,8 +2419,8 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
     : breakdown.casts
   return (
     <div className="breakdown-page">
-      <section className="panel breakdown-panel breakdown-skill-panel">
-        <div className="panel-heading">
+      <Panel className="breakdown-panel breakdown-skill-panel">
+        <PanelHeading>
           <div>
             <h2>{t("ui.app.perSkillBreakdown")}</h2>
           </div>
@@ -2442,7 +2443,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
               </>
             ) : null}
           </div>
-        </div>
+        </PanelHeading>
         {hasHealing ? <h3 className="breakdown-channel-heading">{t("ui.app.damage")}</h3> : null}
         <div className="breakdown-table breakdown-skill-table">
           <div className="breakdown-table-header">
@@ -2483,13 +2484,13 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             </div>
           </>
         ) : null}
-      </section>
-      <section className="panel breakdown-panel">
-        <div className="panel-heading">
+      </Panel>
+      <Panel className="breakdown-panel">
+        <PanelHeading>
           <div>
             <h2>{t("ui.app.perCastBreakdown")}</h2>
           </div>
-        </div>
+        </PanelHeading>
         {hasHealing ? <h3 className="breakdown-channel-heading">{t("ui.app.damage")}</h3> : null}
         <div className={`breakdown-table breakdown-cast-table${showDamagePerVitality ? " with-vitality" : ""}`}>
           <div className="breakdown-table-header breakdown-cast-table-header">
@@ -2583,7 +2584,7 @@ function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; pathId: 
             </div>
           </>
         ) : null}
-      </section>
+      </Panel>
       <div className="breakdown-coverage-grid">
         <EffectCoveragePanel title={t("ui.app.buffCoverage")} rows={breakdown.buffCoverage} />
         <EffectCoveragePanel title={t("ui.app.debuffCoverage")} rows={breakdown.debuffCoverage} showTimeCoverage />
@@ -3026,8 +3027,8 @@ function StatsTab({
     definitions: Record<string, GearSetDefinition>,
     entries: Array<[string, GearSetDefinition]>,
   ) => (
-    <section className="panel setup-placeholder-panel">
-      <div className="panel-heading">
+    <Panel className="setup-placeholder-panel">
+      <PanelHeading>
         <div>
           <h2>{title}</h2>
           <CalculationStatus category={key} />
@@ -3043,7 +3044,7 @@ function StatsTab({
             <UiIcon name="reset" />
           </button>
         )}
-      </div>
+      </PanelHeading>
       <div className="gear-set-list">
         {entries.map(([setName, definition]) => {
           const selectedTier = buildSetup[key][setName] ?? 0
@@ -3071,7 +3072,7 @@ function StatsTab({
           )
         })}
       </div>
-    </section>
+    </Panel>
   )
   const globalDebuffOption = (key: (typeof globalDebuffRows)[number]["key"], value: boolean, label: string) => {
     const active = globalDebuffs[key] === value
@@ -3103,7 +3104,7 @@ function StatsTab({
     <>
       <div className="app-layout">
         <div className="character-stats-column">
-          <section className="panel stats-panel">
+          <Panel className="stats-panel">
             <div className="panel-heading character-stats-heading">
               <div>
                 <h2>{t("ui.app.characterStats")}</h2>
@@ -3464,15 +3465,15 @@ function StatsTab({
                 />
               </div>
             </div>
-          </section>
+          </Panel>
           <div className="character-secondary-stats">
-            <section className="panel attunement-panel">
-              <div className="panel-heading">
+            <Panel className="attunement-panel">
+              <PanelHeading>
                 <div>
                   <h2>{t("ui.app.attunementStats")}</h2>
                   <CalculationStatus category="attunementPriority" />
                 </div>
-              </div>
+              </PanelHeading>
               <div className="attunement-list">
                 {attunementFields.map(([key, label, unit], index) => (
                   <label
@@ -3517,14 +3518,14 @@ function StatsTab({
                   </label>
                 ))}
               </div>
-            </section>
-            <section className="panel global-debuff-panel">
-              <div className="panel-heading">
+            </Panel>
+            <Panel className="global-debuff-panel">
+              <PanelHeading>
                 <div>
                   <h2>{t("ui.app.globalBuffsDebuffs")}</h2>
                   <CalculationStatus category="globalDebuffs" />
                 </div>
-              </div>
+              </PanelHeading>
               <div className="global-debuff-list">
                 {globalDebuffRows.map(({ key, name, path }) => (
                   <div className="global-debuff-row" key={key}>
@@ -3603,11 +3604,11 @@ function StatsTab({
                   </div>
                 </div>
               </div>
-            </section>
+            </Panel>
           </div>
         </div>
         <section className="middle-stats-column">
-          <section className="panel breakthrough-panel">
+          <Panel className="breakthrough-panel">
             <div className="panel-heading breakthrough-heading">
               <div className="breakthrough-title">
                 <h2>{t("ui.app.breakthrough")}</h2>
@@ -3656,9 +3657,9 @@ function StatsTab({
                 </select>
               </label>
             </div>
-          </section>
-          <section className="panel inner-way-panel">
-            <div className="panel-heading">
+          </Panel>
+          <Panel className="inner-way-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.innerWays")}</h2>
               </div>
@@ -3673,7 +3674,7 @@ function StatsTab({
                   <UiIcon name="reset" />
                 </button>
               )}
-            </div>
+            </PanelHeading>
             <div className="inner-way-list">
               {innerWays.map((row, index) => (
                 <div className="inner-way-row" key={index}>
@@ -3719,12 +3720,12 @@ function StatsTab({
                 </div>
               ))}
             </div>
-          </section>
+          </Panel>
           {setPanel(t("ui.app.weaponSet"), "weaponSets", typedWeaponSetDefinitions, availableWeaponSets)}
           {availableArmorSets.length > 0 &&
             setPanel(t("ui.app.armorSet"), "armorSets", typedArmorSetDefinitions, availableArmorSets)}
-          <section className="panel setup-placeholder-panel bow-ring-panel">
-            <div className="panel-heading">
+          <Panel className="setup-placeholder-panel bow-ring-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.bowRingSet")}</h2>
                 <CalculationStatus category="bowRingSet" />
@@ -3740,7 +3741,7 @@ function StatsTab({
                   <UiIcon name="reset" />
                 </button>
               )}
-            </div>
+            </PanelHeading>
             <div className="setup-option-list setup-option-list-wide bow-ring-option-list">
               {Object.entries(typedBowRingSetDefinitions).map(([value, definition]) => (
                 <button
@@ -3754,9 +3755,9 @@ function StatsTab({
                 </button>
               ))}
             </div>
-          </section>
-          <section className="panel setup-placeholder-panel">
-            <div className="panel-heading">
+          </Panel>
+          <Panel className="setup-placeholder-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.arsenal")}</h2>
                 <CalculationStatus category="arsenal" />
@@ -3772,7 +3773,7 @@ function StatsTab({
                   <UiIcon name="reset" />
                 </button>
               )}
-            </div>
+            </PanelHeading>
             <div className="setup-option-list setup-option-list-arsenal">
               {Object.entries(typedArsenalDefinitions).map(([value, definition]) => (
                 <button
@@ -3786,14 +3787,14 @@ function StatsTab({
                 </button>
               ))}
             </div>
-          </section>
-          <section className="panel setup-placeholder-panel">
-            <div className="panel-heading">
+          </Panel>
+          <Panel className="setup-placeholder-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.food")}</h2>
                 <CalculationStatus category="food" />
               </div>
-            </div>
+            </PanelHeading>
             <div className="setup-option-list setup-option-list-food">
               {Object.entries(typedFoodDefinitions).map(([value, definition]) => (
                 <button
@@ -3807,14 +3808,14 @@ function StatsTab({
                 </button>
               ))}
             </div>
-          </section>
-          <section className="panel setup-placeholder-panel">
-            <div className="panel-heading">
+          </Panel>
+          <Panel className="setup-placeholder-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.script")}</h2>
                 <CalculationStatus category="script" />
               </div>
-            </div>
+            </PanelHeading>
             <div className="script-option-list">
               {scriptDisplayOrder.map(value => {
                 const definition = typedScriptDefinitions[value]
@@ -3840,14 +3841,14 @@ function StatsTab({
                 )
               })}
             </div>
-          </section>
-          <section className="panel setup-placeholder-panel divinecraft-panel">
-            <div className="panel-heading">
+          </Panel>
+          <Panel className="setup-placeholder-panel divinecraft-panel">
+            <PanelHeading>
               <div>
                 <h2>{t("ui.app.divinecraft")}</h2>
                 <CalculationStatus category="divinecraft" />
               </div>
-            </div>
+            </PanelHeading>
             <div className="divinecraft-option-list">
               {divinecraftDisplayOrder.map(value => {
                 if (value === null)
@@ -3883,13 +3884,13 @@ function StatsTab({
                 )
               })}
             </div>
-          </section>
+          </Panel>
         </section>
         <aside
           className={`results-column ${rotationMetrics && rotationMetrics.hps > 0 ? "results-column-with-healing" : ""}`}
         >
-          <section className="panel dps-panel">
-            <div className="panel-heading">
+          <Panel className="dps-panel">
+            <PanelHeading>
               <div>
                 <h2>
                   {t("system.dps")}
@@ -3922,7 +3923,7 @@ function StatsTab({
                   </span>
                 </span>
               </div>
-            </div>
+            </PanelHeading>
             <div className="dps-value">
               {rotationMetrics ? (
                 <>
@@ -3955,7 +3956,7 @@ function StatsTab({
                 <strong title={activeRotationName}>{activeRotationName}</strong>
               </div>
             </div>
-          </section>
+          </Panel>
           <PriorityPanel
             title={t("ui.app.statsPriority")}
             rows={rotationMetrics?.statPriority ?? emptyPriorityRows}
@@ -5457,7 +5458,7 @@ function SkillEditorTab({
 
   return (
     <>
-      <section className="panel skill-editor-panel">
+      <Panel className="skill-editor-panel">
         <div className="skill-editor-toolbar">
           <div className="skill-category-tabs" role="tablist" aria-label={t("ui.app.skillCategories")}>
             {visibleCategories.map(item => {
@@ -5705,7 +5706,7 @@ function SkillEditorTab({
             </div>
           </div>
         </div>
-      </section>
+      </Panel>
     </>
   )
 }
@@ -5728,7 +5729,7 @@ function SettingsTab({
   const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons)
 
   return (
-    <section className="panel settings-panel">
+    <Panel className="settings-panel">
       <div className="settings-fields">
         <div className="settings-weapon-row">
           {settings.weapons.map((weapon, index) => (
@@ -5784,7 +5785,7 @@ function SettingsTab({
           </label>
         </div>
       </div>
-    </section>
+    </Panel>
   )
 }
 
@@ -7650,7 +7651,7 @@ function RotationEditorTab({
     settings.weapons,
   ])
   return (
-    <section className="panel rotation-editor-panel">
+    <Panel className="rotation-editor-panel">
       <div className="rotation-editor-layout">
         <aside className="rotation-list">
           <div className="rotation-list-heading">
@@ -8914,7 +8915,7 @@ function RotationEditorTab({
           </Button>
         </div>
       </dialog>
-    </section>
+    </Panel>
   )
 }
 

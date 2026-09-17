@@ -15,6 +15,7 @@ import {
 import type { GearOcrResult } from "../gearOcr"
 import { gameText, t } from "../i18n"
 import { Button } from "../ui/Button"
+import { Panel, PanelHeading } from "../ui/Panel"
 import { GearOcrModal } from "./GearOcrModal"
 
 export type GearValueDraft = { key: string; value: string }
@@ -277,8 +278,8 @@ export function GearEditor({
       }
     })
   return (
-    <section className="panel gear-editor-panel" data-testid="gear-editor">
-      <div className="panel-heading">
+    <Panel className="gear-editor-panel" data-testid="gear-editor">
+      <PanelHeading>
         <div>
           <h2>
             {editingExisting ? t("ui.buildTab.edit") : t("ui.buildTab.add")} {definitionName}
@@ -290,7 +291,7 @@ export function GearEditor({
             {t("ui.buildTab.importFromImage")}
           </Button>
         )}
-      </div>
+      </PanelHeading>
       <div className="gear-editor-meta">
         <label className="editor-field">
           <span>{t("ui.buildTab.level")}</span>
@@ -393,6 +394,6 @@ export function GearEditor({
         onClose={() => setOcrOpen(false)}
         onImport={importOcrResult}
       />
-    </section>
+    </Panel>
   )
 }
