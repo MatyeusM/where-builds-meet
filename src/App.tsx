@@ -33,6 +33,7 @@ import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
 import { Button } from "./ui/Button"
+import { Chip } from "./ui/Chip"
 import { Panel, PanelHeading } from "./ui/Panel"
 import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
@@ -8003,7 +8004,7 @@ function RotationEditorTab({
                                 break
                             }
                             return (
-                              <span className={`effect-plate${plateKind}`} key={`${effect.name}-${effect.stack ?? 1}`}>
+                              <Chip className={`effect-plate${plateKind}`} key={`${effect.name}-${effect.stack ?? 1}`}>
                                 {label}
                                 <span className="effect-plate-tooltip" role="tooltip">
                                   {effect.averageStackOnly ? (
@@ -8036,7 +8037,7 @@ function RotationEditorTab({
                                     </>
                                   )}
                                 </span>
-                              </span>
+                              </Chip>
                             )
                           })}
                         </span>
@@ -9333,7 +9334,7 @@ export default function App() {
               {definition.icon && <img src={`${import.meta.env.BASE_URL}paths/${definition.icon}`} alt="" />}
               <span>{gameText(definition.name)}</span>
               {definition.status !== "available" && (
-                <small className="path-status-badge">{pathStatusLabel(definition)}</small>
+                <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
               )}
             </button>
           ))}
