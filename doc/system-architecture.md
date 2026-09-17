@@ -174,6 +174,10 @@ nested oxlint config with `extends`; `src/ui/.stylelintrc.json` tracks
 upstream `stylelint-config-standard` with no local rule overrides so upstream
 updates produce minimal diffs.
 
+Icons never get a primitive: there is no `ui/Icon`, and the hand-drawn
+`src/UiIcon.tsx` is removed once the author picks a treeshakable icon pack.
+Call sites import pack icons directly so bundling stays per-glyph.
+
 ## Localization boundary
 
 `locales/translations.csv` is the canonical translation source. The extraction
