@@ -76,7 +76,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.distance === "number" &&
     Number.isFinite(step.distance)
   ) {
-    return { type: "event", event: "Move", before, distance: Math.max(1, Math.floor(step.distance)) }
+    return { type: "event", event: "Move", before, distance: Math.max(0, Math.floor(step.distance)) }
   }
   if (
     step.type === "event" &&
@@ -210,7 +210,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
     typeof step.distance === "number" &&
     Number.isFinite(step.distance)
   ) {
-    return { type: "event", event: "Move", startTime: step.startTime, distance: Math.max(1, Math.floor(step.distance)) }
+    return { type: "event", event: "Move", startTime: step.startTime, distance: Math.max(0, Math.floor(step.distance)) }
   }
   return undefined
 }

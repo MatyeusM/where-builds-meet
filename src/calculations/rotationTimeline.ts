@@ -2730,7 +2730,7 @@ export function buildRotationTimeline(
       continue
     }
     if (action.type === "move" && typeof action.distance === "number" && Number.isFinite(action.distance)) {
-      distance = Math.max(1, Math.floor(action.distance))
+      distance = Math.max(0, Math.floor(action.distance))
       continue
     }
     if (action.type === "setHP") {

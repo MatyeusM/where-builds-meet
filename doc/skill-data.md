@@ -1700,7 +1700,7 @@ The Rotation Editor skill selector offers skills from the currently selected
 weapon categories plus Mystic and General. Triggered skills remain excluded.
 An existing step from another martial art is preserved and marked unavailable
 until the user replaces it or restores a compatible weapon selection.
-Distance starts at 1m. An attached `Move` event changes it to its integer
+Distance starts at 1m. An attached `Move` event changes it to its nonnegative integer (including zero)
 `distance` immediately before the selected action. An attached Exhausted event
 applies at the same timestamp immediately after the selected action. Timeline rows store
 cast-start distance, while every action stores its own distance snapshot.
@@ -1733,7 +1733,7 @@ Burning Heart sections reset to 1m after their final cast.
 For each threshold `param2[n]`, a parameter strictly less than that threshold
 uses `param3[n]`. A parameter equal to or greater than the last threshold uses the final
 `param3` entry, so `param3` must contain one more value than `param2`. Flute
-uses `[2, 3, 4, 5, 6, 7, 8, 9]` for its distance-based `dmgBonus`: 2% below 2m, 3% from 2m to below 3m, and so on.
+uses thresholds [1, 2, 3, 4, 5, 6, 7, 8, 9, 20] with damage bonus ratios [0.01, 0.02, 0.03, 0.04, 0.05, 0.08, 0.11, 0.14, 0.17, 0.2, 0]. Lower bounds are inclusive: 1% at 0m to below 1m, 20% at 9m to below 20m, and 0% at 20m or farther.
 
 Stat and effective-stat effects use the same function with character-stat
 parameters and explicit thresholds:

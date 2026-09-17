@@ -6320,7 +6320,7 @@ function RotationEditorTab({
     const draft = eventDistanceDrafts[rowId]
     if (draft === undefined) return
     const distance = Number(draft)
-    if (Number.isFinite(distance)) updateStep(stepIndex, { distance: Math.max(1, Math.floor(distance)) })
+    if (Number.isFinite(distance)) updateStep(stepIndex, { distance: Math.max(0, Math.floor(distance)) })
     setEventDistanceDrafts(current => {
       const next = { ...current }
       delete next[rowId]
@@ -8243,7 +8243,7 @@ function RotationEditorTab({
                                         className="rotation-event-time"
                                         aria-label={t("ui.app.distanceAfterMove")}
                                         type="number"
-                                        min="1"
+                                        min="0"
                                         step="1"
                                         value={eventDistanceDrafts[row.id] ?? String(step.distance)}
                                         onChange={event =>

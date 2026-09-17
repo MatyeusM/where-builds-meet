@@ -30,7 +30,7 @@ describe("rotation-transfer", () => {
         groupSize: 5,
         infiniteVitality: true,
         steps: [
-          { type: "event", event: "Move", before: { trigger: 0, action: 1 }, distance: 6 },
+          { type: "event", event: "Move", before: { trigger: 0, action: 1 }, distance: 0 },
           { type: "event", event: "SelfHP", before: { action: 0 }, currentHPRatio: 0.555 },
           { type: "event", event: "TakeDamage", startTime: 0.75, damage: 1234 },
           { type: "event", event: "HP", before: { action: 0 }, targetHPRatio: 0.75 },
@@ -104,7 +104,7 @@ describe("rotation-transfer", () => {
       imported?.rotation.steps[0].event === "Move" &&
         imported.rotation.steps[0].before.trigger === 0 &&
         imported.rotation.steps[0].before.action === 1 &&
-        imported.rotation.steps[0].distance === 6,
+        imported.rotation.steps[0].distance === 0,
       "Attached event targets must survive export and import.",
     ).toBeTruthy()
     expect(

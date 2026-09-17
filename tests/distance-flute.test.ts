@@ -19,7 +19,7 @@ describe("distance-flute", () => {
         eventTimeReference: "battleStart",
         steps: [
           { type: "skill", skill: "Probe" },
-          { type: "event", event: "Move", startTime: 1, distance: 5 },
+          { type: "event", event: "Move", startTime: 1, distance: 0 },
           { type: "skill", skill: "Probe" },
         ],
       },
@@ -50,10 +50,10 @@ describe("distance-flute", () => {
     assert(firstSkill?.distance === 1, "Distance must start at 1m.")
     assert(firstSkill?.actionStates[0]?.distance === 1, "Damage before Move must use 1m.")
     assert(
-      firstSkill?.actionStates[1]?.distance === 5,
+      firstSkill?.actionStates[1]?.distance === 0,
       "Damage after Move must use the new distance even within an earlier cast.",
     )
-    assert(secondSkill?.distance === 5, "Skills after Move must display the new distance.")
+    assert(secondSkill?.distance === 0, "Skills after Move must display the new distance.")
 
     const equalTimestampTimeline = buildRotationTimeline({
       rotation: {
@@ -172,10 +172,30 @@ describe("distance-flute", () => {
     assert(closeTo(damageAt(1) / baseline, 1.02), "Flute must grant 2% at 1m.")
     assert(closeTo(damageAt(5) / baseline, 1.08), "Flute must grant 8% at 5m.")
     assert(closeTo(damageAt(9) / baseline, 1.2), "Flute must grant 20% at 9m.")
-    assert(closeTo(damageAt(99) / baseline, 1.2), "Flute must cap at the final distance value.")
+    assert(closeTo(damageAt(99) / baseline, 1), "Flute must grant no bonus beyond 20m.")
 
     assert(closeTo(damageAt(1.999) / baseline, 1.02), "Flute remains at 2% below 2m.")
     assert(closeTo(damageAt(2) / baseline, 1.03), "Flute advances to 3% at exactly 2m.")
+    for (const [lower, upper, bonus] of [
+      [0, 1, 0.01],
+      [1, 2, 0.02],
+      [2, 3, 0.03],
+      [3, 4, 0.04],
+      [4, 5, 0.05],
+      [5, 6, 0.08],
+      [6, 7, 0.11],
+      [7, 8, 0.14],
+      [8, 9, 0.17],
+      [9, 20, 0.2],
+      [20, 100, 0],
+    ]) {
+      for (const distance of [lower, upper - 0.001]) {
+        assert(
+          closeTo(damageAt(distance) / baseline, 1 + bonus),
+          "Flute damage at " + distance + "m must match its band.",
+        )
+      }
+    }
     const coefficient = { function: "segment", param1: "distance", param2: [5, 12], param3: [0.63, 0.57, 0.6] }
     const coefficientStats = { ...stats, minBamboocut: 80, maxBamboocut: 80 }
     for (const [distance, expected] of [

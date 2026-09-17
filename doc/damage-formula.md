@@ -535,10 +535,11 @@ removes Shield and conditionally applies Hardened Foe at T6; Hardened Foe
 contributes 10% `dmgBonus` for 12 seconds. Casting Predator's Shield consumes
 Hardened Foe before applying and extending a fresh Shield.
 
-Flute supplies `dmgBonus` from the damage action's distance snapshot: 2%, 3%,
-4%, 5%, 8%, 11%, 14%, 17%, and 20% at 1m through 9m respectively. Distances
-beyond 9m retain the 20% value. A Move event changes distance for subsequent
-timeline actions; the initial distance is 1m.
+Flute supplies damage bonus from the damage action's distance snapshot: 1%, 2%, 3%,
+4%, 5%, 8%, 11%, 14%, 17%, and 20% in the bands starting at 0m through 9m
+respectively. Each lower bound is inclusive; the next bound is exclusive.
+The 20% band ends at 20m, where the bonus becomes 0%. A Move event changes
+distance for subsequent timeline actions; the initial distance remains 1m.
 
 Dragon Head - Tide receives an always-active conditional `dmgBonus` rule from
 its `global: true` definition in `data/buff/mystic.json`. At each hit it
