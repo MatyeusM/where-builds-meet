@@ -22,7 +22,12 @@ import type { WeaponId } from "./types"
 
 type UnknownRecord = Record<string, unknown>
 type OfficialAffixRow = { statId: string; value: number }
-type OfficialGearPiece = { slot: GearSlot; detail: UnknownRecord; exVo: UnknownRecord; rows: OfficialAffixRow[] }
+type OfficialGearPiece = {
+  slot: GearSlot
+  detail: UnknownRecord
+  exVo: UnknownRecord
+  rows: Array<OfficialAffixRow | undefined>
+}
 
 const officialAffixMap = officialAffixMapJson as Record<string, string>
 const officialProfileMap = officialProfileMapJson as {
@@ -203,8 +208,8 @@ function importedSetTiers(
   )
 }
 
-function weaponFromImportedAffixes(rows: OfficialAffixRow[], selectedWeapons: [WeaponId, WeaponId]) {
-  const keys = new Set(rows.map(row => officialAffixMap[row.statId]))
+function weaponFromImportedAffixes(rows: Array<OfficialAffixRow | undefined>, selectedWeapons: [WeaponId, WeaponId]) {
+  const keys = new Set(rows.map(row => row && officialAffixMap[row.statId]))
   if (keys.has("hengBladeDmgBoost")) return "snowparting" as const
   if (keys.has("moBladeDmgBoost")) return "phalanxbane" as const
   if (keys.has("umbrellaDmgBoost")) return "everspring" as const
@@ -236,27 +241,31 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
   const detailed = asRecord(role.wearEquipsDetailed)
   if (!detailed) throw new Error("The pasted data does not contain wearEquipsDetailed gear data.")
 
+  const warnings: string[] = []
   const rawPieces: OfficialGearPiece[] = []
   for (const [officialSlot, rawDetail] of Object.entries(detailed)) {
     const slot = officialSlotMap[officialSlot]
     if (!slot) continue
     const detail = asRecord(rawDetail)
     const exVo = asRecord(detail?.exVo)
-    const rows = Array.isArray(exVo?.baseAffixes)
-      ? exVo.baseAffixes.map(parseAffixRow).filter((row): row is OfficialAffixRow => Boolean(row))
-      : []
-    if (!detail || !exVo || rows.length < 1)
-      throw new Error(`${gearData.slots[slot]} is missing its base affix row in the dashboard export.`)
+    const rows = Array.isArray(exVo?.baseAffixes) ? exVo.baseAffixes.map(parseAffixRow) : []
+    if (!detail || !exVo) {
+      warnings.push(`${gearData.slots[slot]} was skipped because its gear details are missing.`)
+      continue
+    }
     rawPieces.push({ slot, detail, exVo, rows })
   }
-  if (!rawPieces.length) throw new Error("No supported equipped gear was found in the dashboard export.")
+  if (!rawPieces.length) warnings.push("No supported equipped gear was found; only the supported setup was imported.")
 
   const martialArtIds = [role.kongfuMain, role.kongfuSub].map(value =>
     typeof value === "number" || typeof value === "string" ? String(value) : "",
   )
   const mappedMartialArts = martialArtIds.map(id => officialProfileMap.martialArts[id])
   const unsupportedMartialArt = mappedMartialArts.find(entry => entry && !entry.weapon)
-  if (unsupportedMartialArt) throw new Error(`${unsupportedMartialArt.name} is not supported by Where Builds Meet yet.`)
+  if (unsupportedMartialArt)
+    warnings.push(
+      `${unsupportedMartialArt.name} is not supported; weapon selection was inferred from gear or kept from the current setup.`,
+    )
   const mappedWeaponPair =
     mappedMartialArts.length === 2 && mappedMartialArts.every(entry => entry?.weapon)
       ? (mappedMartialArts.map(entry => entry.weapon) as [WeaponId, WeaponId])
@@ -307,16 +316,22 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
       .map(piece => piece.signature?.level)
       .find((level): level is GearLevel => level === 91 || level === 96) ??
     ([91, 96].includes(Number(role.level)) ? (Number(role.level) as GearLevel) : 96)
-  const warnings: string[] = []
-  const gearItems = parsedPieces.map((piece): GearItem => {
+  const parsedGearItems = parsedPieces.map((piece): GearItem | undefined => {
     const definition = gearData.gear[piece.definitionId]
-    if (!definition) throw new Error(`${gearData.slots[piece.slot]} is not supported by the selected weapons.`)
+    if (!definition) {
+      warnings.push(`${gearData.slots[piece.slot]} was skipped because its gear type is unsupported.`)
+      return undefined
+    }
     const level = (namedScalar(piece.exVo, /^(?:gear)?(?:tier|level)$/i) ??
       namedScalar(piece.detail, /^(?:gear)?(?:tier|level)$/i)) as GearLevel | undefined
+    if (level !== undefined && level !== 91 && level !== 96) {
+      warnings.push(`${gearData.slots[piece.slot]} was skipped because gear level ${level} is unsupported.`)
+      return undefined
+    }
     const resolvedLevel = level === 91 || level === 96 ? level : (piece.signature?.level ?? commonLevel)
     const rarity = explicitRarity(piece.exVo, piece.detail) ?? piece.signature?.rarity
     const resolvedRarity = rarity ?? "Gold"
-    const mappedRows = piece.rows.map(row => ({ row, key: officialAffixMap[row.statId] }))
+    const mappedRows = piece.rows.map(row => ({ row, key: row ? officialAffixMap[row.statId] : undefined }))
     const relayedAffixKeys = new Set([
       ...(definition.baseAffixes[`${resolvedLevel}Relayed`] ?? []),
       ...(definition.additionalAffixes[`${resolvedLevel}Relayed`] ?? []),
@@ -324,7 +339,6 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
     const relayed =
       isRelayed(piece.exVo, piece.detail) ||
       mappedRows.some(({ key }) => typeof key === "string" && relayedAffixKeys.has(key))
-    if (!rarity) warnings.push(`${gearData.slots[piece.slot]} rarity was not exposed; Gold was used.`)
 
     const allowedAttunements = attunementsForGearDefinition(definition)
     const attunementEntry =
@@ -332,10 +346,13 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
     const affixRows = attunementEntry ? mappedRows.slice(0, -1) : mappedRows
     const baseEntry = affixRows[0]
     const allowedBaseAffixes = affixOptionsForGearDefinition(definition, "baseAffixes", resolvedLevel, relayed)
-    if (!baseEntry?.key || !allowedBaseAffixes.includes(baseEntry.key))
-      throw new Error(
-        `${gearData.slots[piece.slot]} has an unsupported base affix ID ${baseEntry?.row.statId ?? "unknown"}${baseEntry?.key ? ` (${baseEntry.key})` : ""}.`,
+    if (!baseEntry?.row || !baseEntry.key || !allowedBaseAffixes.includes(baseEntry.key) || baseEntry.row.value < 0) {
+      warnings.push(
+        `${gearData.slots[piece.slot]} was skipped because its base affix is missing, invalid, or unsupported (ID ${baseEntry?.row?.statId ?? "unknown"}).`,
       )
+      return undefined
+    }
+    if (!rarity) warnings.push(`${gearData.slots[piece.slot]} rarity was not exposed; Gold was used.`)
     const baseAffix = {
       key: baseEntry.key,
       value: normalizedStoredValue(baseEntry.key, baseEntry.row.value, gearData.affixes),
@@ -346,23 +363,30 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
       resolvedLevel,
       relayed,
     )
+    const additionalKeys = new Set<string>()
     const additionalAffixes = affixRows.slice(1).flatMap(({ row, key }) => {
-      if (!key || !allowedAdditionalAffixes.includes(key)) {
+      if (!row || row.value < 0 || !key || !allowedAdditionalAffixes.includes(key)) {
         warnings.push(
-          `${gearData.slots[piece.slot]} skipped unsupported affix ID ${row.statId}${key ? ` (${key})` : ""}.`,
+          `${gearData.slots[piece.slot]} skipped unsupported affix ID ${row?.statId ?? "unknown"}${key ? ` (${key})` : ""}.`,
         )
         return []
       }
+      if (additionalKeys.has(key) || additionalKeys.size >= 4) {
+        warnings.push(`${gearData.slots[piece.slot]} skipped duplicate or excess additional affix ID ${row.statId}.`)
+        return []
+      }
+      additionalKeys.add(key)
       return [{ key, value: normalizedStoredValue(key, row.value, gearData.affixes) }]
     })
-    if (additionalAffixes.length > 4)
-      throw new Error(`${gearData.slots[piece.slot]} has more than four supported additional affixes.`)
-    const attunement = attunementEntry
-      ? {
-          key: attunementEntry.key as string,
-          value: normalizedStoredValue(attunementEntry.key as string, attunementEntry.row.value, attunementData),
-        }
-      : undefined
+    if (attunementEntry?.row && attunementEntry.row.value < 0)
+      warnings.push(`${gearData.slots[piece.slot]} skipped an invalid attunement value.`)
+    const attunement =
+      attunementEntry?.row && attunementEntry.row.value >= 0
+        ? {
+            key: attunementEntry.key as string,
+            value: normalizedStoredValue(attunementEntry.key as string, attunementEntry.row.value, attunementData),
+          }
+        : undefined
 
     return {
       id: createId(`official-${piece.slot}`),
@@ -410,7 +434,13 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
     ...(bowRingSet ? { bowRingSet } : {}),
   })
   const buildId = createId("official-build")
-  const equipped = Object.fromEntries(parsedPieces.map((piece, index) => [piece.equippedSlot, gearItems[index].id]))
+  const gearItems = parsedGearItems.filter((item): item is GearItem => item !== undefined)
+  const equipped = Object.fromEntries(
+    parsedPieces.flatMap((piece, index) => {
+      const item = parsedGearItems[index]
+      return item ? [[piece.equippedSlot, item.id]] : []
+    }),
+  )
   return {
     roleName,
     gearCount: gearItems.length,

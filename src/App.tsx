@@ -6053,9 +6053,13 @@ function RotationEditorTab({
     if (activeRotationId && selectedRotationId !== activeRotationId) onActiveRotationChange(activeRotationId)
   }, [activeRotationId, onActiveRotationChange, selectedRotationId])
 
-  if (startAnchor.actionIndex !== undefined) {
+  const expansionAnchor = `${editingRotationId}:${startAnchor.rowId}:${startAnchor.actionIndex ?? "start"}`
+  const [previousExpansionAnchor, setPreviousExpansionAnchor] = useState<string>()
+  if (previousExpansionAnchor !== expansionAnchor) {
+    setPreviousExpansionAnchor(expansionAnchor)
+    // Reveal newly selected action anchors without overriding a later manual collapse.
     const anchorKey = `${editingRotationId}:${startAnchor.rowId}`
-    if (!expandedSkillRows.has(anchorKey)) {
+    if (startAnchor.actionIndex !== undefined && !expandedSkillRows.has(anchorKey)) {
       const nextExpandedSkillRows = new Set(expandedSkillRows)
       nextExpandedSkillRows.add(anchorKey)
       setExpandedSkillRows(nextExpandedSkillRows)

@@ -269,6 +269,7 @@ export default function BuildTab({
   const [editingName, setEditingName] = useState(false)
   const [officialImportText, setOfficialImportText] = useState("")
   const officialImportDialogRef = useRef<HTMLDialogElement>(null)
+  const officialBookmarkletRef = useRef<HTMLAnchorElement>(null)
   const buildNameInputRef = useRef<HTMLInputElement>(null)
   const officialGearBookmarklet = createOfficialGearBookmarklet({
     noGearData: t("ui.buildTab.bookmarkletNoGearData"),
@@ -281,6 +282,10 @@ export default function BuildTab({
   useEffect(() => {
     if (editingName) buildNameInputRef.current?.focus()
   }, [editingName])
+  useEffect(() => {
+    // React sanitizes javascript: href props; this trusted, generated bookmarklet must be assigned to the DOM.
+    officialBookmarkletRef.current?.setAttribute("href", officialGearBookmarklet)
+  }, [officialGearBookmarklet])
   const listedEntries = buildState.entries.filter(
     entry =>
       (devMode || !buildEntryIsTestPreset(entry)) &&
@@ -637,7 +642,8 @@ export default function BuildTab({
         <ol className="official-import-steps">
           <li>
             {t("ui.buildTab.drag")}{" "}
-            <a className="button button-primary official-bookmarklet" href={officialGearBookmarklet}>
+            {/* oxlint-disable-next-line jsx-a11y/anchor-is-valid -- The effect assigns the trusted bookmarklet href. */}
+            <a className="button button-primary official-bookmarklet" ref={officialBookmarkletRef}>
               {t("ui.buildTab.exportWwmGear")}
             </a>{" "}
             {t("ui.buildTab.toYourBrowserBookmarksBar")}
