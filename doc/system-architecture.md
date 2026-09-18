@@ -165,8 +165,9 @@ A primitive is behavior plus structure, not a theme.
 no `var(--primary)`, `var(--surface)`, `var(--border)`, or other `tokens.css`
 variables inside `src/ui/`. Structural defaults use literal fallbacks
 (`var(--modal-bg, oklch(...))`), and the application/theme layers assign
-token values to the primitive variables. Icon choice is deferred until the
-author picks an icon pack; until then no new hand-drawn SVGs are added.
+token values to the primitive variables. The icon pack is
+`@tabler/icons-react`, imported per-glyph at call sites; no new hand-drawn
+SVGs are added.
 
 Lint hardening is scoped to the folder: `src/ui/.oxlintrc.json` enables the
 `suspicious` and `pedantic` categories on top of the root baseline through a
@@ -174,9 +175,10 @@ nested oxlint config with `extends`; `src/ui/.stylelintrc.json` tracks
 upstream `stylelint-config-standard` with no local rule overrides so upstream
 updates produce minimal diffs.
 
-Icons never get a primitive: there is no `ui/Icon`, and the hand-drawn
-`src/UiIcon.tsx` is removed once the author picks a treeshakable icon pack.
-Call sites import pack icons directly so bundling stays per-glyph.
+Icons never get a primitive: there is no `ui/Icon`. Call sites import
+`@tabler/icons-react` icons directly so bundling stays per-glyph; the
+`.tabler-icon` class in `styles/base.css` keeps them at `1em`. No new
+hand-drawn SVGs are added.
 
 ## Localization boundary
 

@@ -1,3 +1,4 @@
+import { IconTrash, IconX } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
 
 import type { RotationSimulationBundle } from "./calculations/rotationCalculator"
@@ -13,7 +14,6 @@ import { getPersistentItem, setPersistentItem } from "./persistentStorage"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
 import { Panel } from "./ui/Panel"
-import { UiIcon } from "./UiIcon"
 
 type SimulationTabProps = {
   bundle?: RotationSimulationBundle
@@ -114,7 +114,7 @@ function SimulationResultCard({
           aria-label={t("ui.simulationTab.deleteResult")}
           onClick={() => onDelete(record.id)}
         >
-          <UiIcon name="trash" />
+          <IconTrash size="1em" aria-hidden />
         </button>
       </header>
       <div className="simulation-results">
@@ -304,7 +304,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
                   disabled={running}
                   onClick={() => setCustomPercentiles(current => current.filter(value => value !== percentile))}
                 >
-                  <UiIcon name="close" />
+                  <IconX size="1em" aria-hidden />
                 </button>
               </Chip>
             ))}

@@ -1,3 +1,14 @@
+import {
+  IconArrowUp,
+  IconChevronDown,
+  IconChevronRight,
+  IconChevronUp,
+  IconEdit,
+  IconPlus,
+  IconPointFilled,
+  IconRotate,
+  IconX,
+} from "@tabler/icons-react"
 import { nanoid } from "nanoid"
 import {
   Fragment,
@@ -37,7 +48,6 @@ import { NumberInput } from "./ui/NumberInput"
 import { Panel, PanelHeading } from "./ui/Panel"
 import { Tab } from "./ui/Tab"
 import { Tooltip } from "./ui/Tooltip"
-import { UiIcon } from "./UiIcon"
 const loadBuildTab = () => import("./BuildTab")
 const loadSimulationTab = () => import("./SimulationTab")
 const BuildTab = lazy(loadBuildTab)
@@ -2056,7 +2066,7 @@ function StatField({
               onReset?.()
             }}
           >
-            <UiIcon name="reset" />
+            <IconRotate size="1em" aria-hidden />
           </button>
         )}
       </span>
@@ -2184,7 +2194,7 @@ function PriorityPanel({
                 {gameText(row.label)}
                 {isStatPriority && statMode === "both" && row.rollKind === "relayed" && (
                   <span className="priority-relayed-indicator" title={t("ui.buildTab.relayedOptionLabel")}>
-                    <UiIcon name="arrowUp" />
+                    <IconArrowUp size="1em" aria-hidden />
                     <span className="visually-hidden">{t("ui.buildTab.relayedOptionLabel")}</span>
                   </span>
                 )}
@@ -3054,7 +3064,7 @@ function StatsTab({
             title={t("ui.app.resetToBuildValue")}
             onClick={() => onBuildSetupReset(key)}
           >
-            <UiIcon name="reset" />
+            <IconRotate size="1em" aria-hidden />
           </button>
         )}
       </PanelHeading>
@@ -3506,7 +3516,7 @@ function StatsTab({
                             resetAttunement(key)
                           }}
                         >
-                          <UiIcon name="reset" />
+                          <IconRotate size="1em" aria-hidden />
                         </button>
                       )}
                     </span>
@@ -3684,7 +3694,7 @@ function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("innerWays")}
                 >
-                  <UiIcon name="reset" />
+                  <IconRotate size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
@@ -3751,7 +3761,7 @@ function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("bowRingSet")}
                 >
-                  <UiIcon name="reset" />
+                  <IconRotate size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
@@ -3783,7 +3793,7 @@ function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("arsenal")}
                 >
-                  <UiIcon name="reset" />
+                  <IconRotate size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
@@ -4005,7 +4015,7 @@ function StatsTab({
             aria-label={t("ui.app.closeCharacterProfiles")}
             onClick={() => profileDialogRef.current?.close()}
           >
-            <UiIcon name="close" />
+            <IconX size="1em" aria-hidden />
           </button>
         </div>
         <div className="character-profile-create">
@@ -4378,7 +4388,7 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                           aria-label={t("ui.app.removeAlternative")}
                           onClick={() => removeOrOperand(index, operandIndex, nestedIndex)}
                         >
-                          <UiIcon name="close" />
+                          <IconX size="1em" aria-hidden />
                         </button>
                       </div>
                     ))}
@@ -4403,7 +4413,7 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
                       aria-label={t("ui.app.removeAlternative")}
                       onClick={() => removeOrOperand(index, operandIndex)}
                     >
-                      <UiIcon name="close" />
+                      <IconX size="1em" aria-hidden />
                     </button>
                   </div>
                 ),
@@ -4430,7 +4440,7 @@ function RequirementEditor({ value, onChange }: { value: unknown; onChange: (val
               onChange={event => updateLeaf(index, "value", event.target.value)}
             />
             <button type="button" aria-label={t("ui.app.removeCondition")} onClick={() => remove(index)}>
-              <UiIcon name="close" />
+              <IconX size="1em" aria-hidden />
             </button>
           </div>
         )
@@ -4750,7 +4760,7 @@ function ModifierDetails({ item, onChange }: { item: EditableObject; onChange: (
           </select>
           <EffectValueEditor value={value} onChange={nextValue => updateEffect(field, nextValue)} />
           <button type="button" aria-label={t("ui.app.removeEffect")} onClick={() => removeEffect(field)}>
-            <UiIcon name="close" />
+            <IconX size="1em" aria-hidden />
           </button>
         </div>
       ))}
@@ -4894,7 +4904,7 @@ function DynamicSegmentValueEditor({
                 })
               }}
             >
-              <UiIcon name="close" />
+              <IconX size="1em" aria-hidden />
             </button>
           </div>
         ))}
@@ -5057,7 +5067,7 @@ function EffectRuleDetails({ item, onChange }: { item: EditableObject; onChange:
             aria-label={t("ui.app.removeNamedEffect", { name: field })}
             onClick={() => removeEffect(field)}
           >
-            <UiIcon name="close" />
+            <IconX size="1em" aria-hidden />
           </button>
         </div>
       ))}
@@ -5139,7 +5149,7 @@ function ArrayItemEditor({
                     disabled={index === 0}
                     onClick={() => moveItem(index, -1)}
                   >
-                    <UiIcon name="up" />
+                    <IconChevronUp size="1em" aria-hidden />
                   </button>
                   <button
                     type="button"
@@ -5147,10 +5157,10 @@ function ArrayItemEditor({
                     disabled={index === items.length - 1}
                     onClick={() => moveItem(index, 1)}
                   >
-                    <UiIcon name="down" />
+                    <IconChevronDown size="1em" aria-hidden />
                   </button>
                   <button type="button" aria-label={t("ui.app.delete")} onClick={() => deleteItem(index)}>
-                    <UiIcon name="close" />
+                    <IconX size="1em" aria-hidden />
                   </button>
                 </div>
               </div>
@@ -5227,7 +5237,7 @@ function StackEffectsEditor({
                   disabled={index === 0}
                   onClick={() => moveGroup(index, -1)}
                 >
-                  <UiIcon name="up" />
+                  <IconChevronUp size="1em" aria-hidden />
                 </button>
                 <button
                   type="button"
@@ -5235,7 +5245,7 @@ function StackEffectsEditor({
                   disabled={index === groups.length - 1}
                   onClick={() => moveGroup(index, 1)}
                 >
-                  <UiIcon name="down" />
+                  <IconChevronDown size="1em" aria-hidden />
                 </button>
                 <button
                   type="button"
@@ -5245,7 +5255,7 @@ function StackEffectsEditor({
                     setExpanded(null)
                   }}
                 >
-                  <UiIcon name="close" />
+                  <IconX size="1em" aria-hidden />
                 </button>
               </div>
             </div>
@@ -7696,7 +7706,7 @@ function RotationEditorTab({
                     <strong>
                       {entry.id === activeRotationId && (
                         <span className="active-rotation-icon" title={t("ui.app.activeRotation")}>
-                          <UiIcon name="active" />
+                          <IconPointFilled size="1em" aria-hidden />
                         </span>
                       )}
                       {rotationEntryDisplayName(entry)}
@@ -7717,7 +7727,7 @@ function RotationEditorTab({
                           removeRotation(entry.id)
                         }}
                       >
-                        <UiIcon name="close" />
+                        <IconX size="1em" aria-hidden />
                       </button>
                     </span>
                   )}
@@ -7767,7 +7777,7 @@ function RotationEditorTab({
                         aria-label={t("ui.app.editRotationName")}
                         onClick={() => setEditingName(true)}
                       >
-                        <UiIcon name="edit" />
+                        <IconEdit size="1em" aria-hidden />
                       </button>
                     )}
                   </h3>
@@ -8715,7 +8725,7 @@ function RotationEditorTab({
                                       moveAttachedEvent(row.rotationIndex ?? 0, -1, event.currentTarget)
                                     }
                                   >
-                                    <UiIcon name="up" />
+                                    <IconChevronUp size="1em" aria-hidden />
                                   </button>
                                   <button
                                     type="button"
@@ -8728,7 +8738,7 @@ function RotationEditorTab({
                                     }
                                     onClick={event => moveAttachedEvent(row.rotationIndex ?? 0, 1, event.currentTarget)}
                                   >
-                                    <UiIcon name="down" />
+                                    <IconChevronDown size="1em" aria-hidden />
                                   </button>
                                 </>
                               )}
@@ -8743,7 +8753,11 @@ function RotationEditorTab({
                                   aria-expanded={actionsExpanded}
                                   onClick={() => toggleSkillActions(row.id)}
                                 >
-                                  <UiIcon name={actionsExpanded ? "chevronDown" : "chevronRight"} />
+                                  {actionsExpanded ? (
+                                    <IconChevronDown size="1em" aria-hidden />
+                                  ) : (
+                                    <IconChevronRight size="1em" aria-hidden />
+                                  )}
                                 </button>
                               )}
                               {row.kind === "rotation" && (!isManualEvent || isDelayEvent) && !isProtectedDelay && (
@@ -8754,7 +8768,7 @@ function RotationEditorTab({
                                     disabled={rowReadOnly || (row.rotationIndex ?? 0) === 0}
                                     onClick={() => moveStep(row.rotationIndex ?? 0, -1)}
                                   >
-                                    <UiIcon name="up" />
+                                    <IconChevronUp size="1em" aria-hidden />
                                   </button>
                                   <button
                                     type="button"
@@ -8762,7 +8776,7 @@ function RotationEditorTab({
                                     disabled={rowReadOnly || (row.rotationIndex ?? 0) === rotation.steps.length - 1}
                                     onClick={() => moveStep(row.rotationIndex ?? 0, 1)}
                                   >
-                                    <UiIcon name="down" />
+                                    <IconChevronDown size="1em" aria-hidden />
                                   </button>
                                 </>
                               )}{" "}
@@ -8774,7 +8788,7 @@ function RotationEditorTab({
                                     disabled={rowReadOnly || (!isManualEvent && rotationSkillCount <= 1)}
                                     onClick={() => removeStep(row.rotationIndex ?? 0)}
                                   >
-                                    <UiIcon name="close" />
+                                    <IconX size="1em" aria-hidden />
                                   </button>
                                   {(!isManualEvent || isDelayEvent) && (
                                     <button
@@ -8783,7 +8797,7 @@ function RotationEditorTab({
                                       disabled={rowReadOnly}
                                       onClick={() => addStepBelow(row.rotationIndex ?? 0)}
                                     >
-                                      <UiIcon name="plus" />
+                                      <IconPlus size="1em" aria-hidden />
                                     </button>
                                   )}
                                 </>
@@ -8920,7 +8934,7 @@ function RotationEditorTab({
             aria-label={t("ui.app.closeReadableRotation")}
             onClick={() => readableDialogRef.current?.close()}
           >
-            <UiIcon name="close" />
+            <IconX size="1em" aria-hidden />
           </button>
         </div>
         <p>{t("ui.app.skillsBeforeTheStartUseARoundedPre")}</p>

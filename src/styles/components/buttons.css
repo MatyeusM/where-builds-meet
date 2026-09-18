@@ -122,9 +122,8 @@
     line-height: 1;
   }
 
-  .icon-button .ui-icon,
-  .stat-reset-button .ui-icon,
-  .start-marker .ui-icon {
+  .icon-button .tabler-icon,
+  .stat-reset-button .tabler-icon {
     display: block;
   }
 
