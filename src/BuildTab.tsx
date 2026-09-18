@@ -1,3 +1,4 @@
+import { IconArrowUp, IconEdit, IconPlus, IconPointFilled, IconX } from "@tabler/icons-react"
 import { nanoid } from "nanoid"
 import {
   useEffect,
@@ -67,7 +68,6 @@ import type { WeaponId } from "./types"
 import { Button } from "./ui/Button"
 import { Dialog } from "./ui/Dialog"
 import { Panel, PanelHeading } from "./ui/Panel"
-import { UiIcon } from "./UiIcon"
 
 function gearSlotLabel(slot: GearSlot) {
   return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
@@ -250,7 +250,7 @@ function RelayedIndicator({ item }: { item?: GearItem }) {
       aria-label={t("ui.buildTab.relayedGear")}
       title={t("ui.buildTab.relayedGear")}
     >
-      <UiIcon name="arrowUp" />
+      <IconArrowUp size="1em" aria-hidden />
     </span>
   ) : null
 }
@@ -511,7 +511,7 @@ export default function BuildTab({
                       <strong>
                         {entry.id === buildState.activeBuildId && (
                           <i className="active-build-icon" title={t("ui.buildTab.activeBuild")}>
-                            <UiIcon name="active" />
+                            <IconPointFilled size="1em" aria-hidden />
                           </i>
                         )}
                         {buildEntryDisplayName(entry)}
@@ -535,7 +535,7 @@ export default function BuildTab({
                         removeBuild(entry.id)
                       }}
                     >
-                      <UiIcon name="close" />
+                      <IconX size="1em" aria-hidden />
                     </button>
                   )}
                 </div>
@@ -590,7 +590,7 @@ export default function BuildTab({
                       aria-label={t("ui.buildTab.editBuildName")}
                       onClick={() => setEditingName(true)}
                     >
-                      <UiIcon name="edit" />
+                      <IconEdit size="1em" aria-hidden />
                     </button>
                   ) : null}
                 </h3>
@@ -638,7 +638,7 @@ export default function BuildTab({
             aria-label={t("ui.buildTab.closeOfficialImport")}
             onClick={() => officialImportDialogRef.current?.close()}
           >
-            <UiIcon name="close" />
+            <IconX size="1em" aria-hidden />
           </button>
         </div>
         <ol className="official-import-steps">
@@ -1191,7 +1191,7 @@ function BuildManagement({
                   data-testid="add-gear"
                 >
                   <span>
-                    <UiIcon name="plus" />
+                    <IconPlus size="1em" aria-hidden />
                   </span>
                   <strong>{t("ui.buildTab.addGear")}</strong>
                 </button>

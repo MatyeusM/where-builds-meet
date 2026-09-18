@@ -1,8 +1,8 @@
+import { IconRotate } from "@tabler/icons-react"
 import { useState } from "react"
 
 import { t } from "../i18n"
 import { NumberInput } from "../ui/NumberInput"
-import { UiIcon } from "../UiIcon"
 
 type RotationPingFieldProps = {
   value: number | undefined
@@ -52,7 +52,7 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
               onCommit(undefined)
             }}
           >
-            <UiIcon name="reset" />
+            <IconRotate size="1em" aria-hidden />
           </button>
         )}
       </span>

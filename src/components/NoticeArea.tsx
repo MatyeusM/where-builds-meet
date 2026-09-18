@@ -1,10 +1,10 @@
+import { IconX } from "@tabler/icons-react"
 import { Component, useSyncExternalStore, type ReactNode } from "react"
 
 import { isDeploymentImportError } from "../deploymentUpdates"
 import { t } from "../i18n"
 import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../notices"
 import { Button } from "../ui/Button"
-import { UiIcon } from "../UiIcon"
 
 function noticeText(message: NoticeMessage) {
   return typeof message === "string" ? message : message()
@@ -35,7 +35,7 @@ export function NoticeArea() {
                   aria-label={t("ui.notices.dismiss")}
                   onClick={() => dismissNotice(notice.id)}
                 >
-                  <UiIcon name="close" />
+                  <IconX size="1em" aria-hidden />
                 </button>
               </li>
             ))}
