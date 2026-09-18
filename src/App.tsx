@@ -3128,7 +3128,7 @@ function StatsTab({
       <div className="app-layout">
         <div className="character-stats-column">
           <Panel className="stats-panel">
-            <div className="panel-heading character-stats-heading">
+            <PanelHeading className="character-stats-heading">
               <div>
                 <h2>{t("ui.app.characterStats")}</h2>
               </div>
@@ -3167,7 +3167,7 @@ function StatsTab({
                   {t("ui.app.reset")}
                 </Button>
               </div>
-            </div>
+            </PanelHeading>
             <div className="stats-grid">
               {physicalRows.map(([left, right], index) => (
                 <div className="stat-row" key={left.key}>
@@ -3632,7 +3632,7 @@ function StatsTab({
         </div>
         <section className="middle-stats-column">
           <Panel className="breakthrough-panel">
-            <div className="panel-heading breakthrough-heading">
+            <PanelHeading className="breakthrough-heading">
               <div className="breakthrough-title">
                 <h2>{t("ui.app.breakthrough")}</h2>
                 <span className="breakthrough-detail-trigger">
@@ -3679,7 +3679,7 @@ function StatsTab({
                   ))}
                 </select>
               </label>
-            </div>
+            </PanelHeading>
           </Panel>
           <Panel className="inner-way-panel">
             <PanelHeading>
