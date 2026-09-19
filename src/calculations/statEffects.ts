@@ -1,6 +1,6 @@
 import { emptyStats } from "../data/statDefinitions"
 import type { CharacterStats, WeaponId } from "../types"
-import { resolveSegmentValue } from "./dynamicValues"
+import { resolveSegmentValue, type SegmentMode } from "./dynamicValues"
 import { calculateDerivedStats, type DerivedStats } from "./effectiveStats"
 import { calculationStatMaximum } from "./statCaps"
 
@@ -14,7 +14,13 @@ export type StatFormula = {
 }
 
 export type FormulaStatValue = { formula: StatFormula }
-export type SegmentStatValue = { function: "segment"; param1: string | number; param2: number[]; param3: number[] }
+export type SegmentStatValue = {
+  function: "segment"
+  mode?: SegmentMode
+  param1: string | number
+  param2: number[]
+  param3: number[]
+}
 export type StatEffectValues = Partial<Record<keyof CharacterStats, number | FormulaStatValue | SegmentStatValue>>
 export type StatEffectContainer = { rawStat?: StatEffectValues; stat?: StatEffectValues; statStage?: "talent" | "food" }
 export type EffectiveStatEffectContainer = { effectiveStat?: StatEffectValues }

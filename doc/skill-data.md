@@ -146,7 +146,7 @@ including nested AND arrays. `operator: "not"` takes exactly one operand.
 `skillTag` checks the action's tags. Tracked-effect `stack` means at least that
 many stacks; `"max"` means its resolved maximum.
 
-Numeric targets include `resource`, `distance`, `selfHPPercentage`,
+Numeric targets include `resource`, `distance`, `enemyCount`, `selfHPPercentage`,
 `targetHPPercentage`, and `targetQiPercentage`. Comparisons support `>=`, `>`,
 `<=`, `<`, `==`, and `!=`. Use `amount` for a constant or `compareTo` for another
 numeric runtime state. HP/Qi percentage parameters use percentage points,
@@ -180,21 +180,21 @@ use `resolveAt: "skillStart"`.
 
 ### Actions
 
-| Type                                            | Important semantics                                                                                                                                                |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute.                                            |
-| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. `HOT` identifies healing over time.                                         |
-| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration. |
-| `consume`                                       | Removes one stack by default, or all with `stack: "all"`. `value: { operator: "first", operand: [...] }` selects the first available effect.                       |
-| `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                       |
-| `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies.                                        |
-| `clearCD`                                       | Resets the named skill/application cooldown. Optional positive integer `charges` restores only that many spent skill uses; it is not a partial time reduction.     |
-| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`.                                                                                  |
-| `setHP`, `takeDamage`                           | Set absolute Self HP or subtract absolute incoming damage.                                                                                                         |
-| `setTargetHP`, `setQi`                          | Set target ratios. Qi reaching zero applies Exhausted; its expiry restores Qi through data.                                                                        |
-| `emitEvent`                                     | Dispatches a named targeted accumulator check, not a general combat-event broadcast.                                                                               |
-| `replay`                                        | Multiplies recorded final damage by `coef`, bypassing the formula and damage events. Requires a `Replayed` skill.                                                  |
-| `resolveRecording`                              | Effect expiry action that settles the matching recording activation.                                                                                               |
+| Type                                            | Important semantics                                                                                                                                                                                                                                                     |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute.                                                                                                                                                 |
+| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. `HOT` identifies healing over time.                                                                                                                                              |
+| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration.                                                                                                      |
+| `consume`                                       | Removes one stack by default, or all with `stack: "all"`. `value: { operator: "first", operand: [...] }` selects the first available effect.                                                                                                                            |
+| `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                                                                                                                            |
+| `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies.                                                                                                                                             |
+| `clearCD`                                       | Resets the named skill/application cooldown. Optional positive integer `charges` restores only that many spent skill uses; `seconds` instead reduces pending recovery timestamps by that duration, clamped to the current time. Do not combine `seconds` and `charges`. |
+| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`.                                                                                                                                                                                       |
+| `setHP`, `takeDamage`                           | Set absolute Self HP or subtract absolute incoming damage.                                                                                                                                                                                                              |
+| `setTargetHP`, `setQi`                          | Set target ratios. Qi reaching zero applies Exhausted; its expiry restores Qi through data.                                                                                                                                                                             |
+| `emitEvent`                                     | Dispatches a named targeted accumulator check, not a general combat-event broadcast.                                                                                                                                                                                    |
+| `replay`                                        | Multiplies recorded final damage by `coef`, bypassing the formula and damage events. Requires a `Replayed` skill.                                                                                                                                                       |
+| `resolveRecording`                              | Effect expiry action that settles the matching recording activation.                                                                                                                                                                                                    |
 
 `reapply: false` leaves an active effect untouched. Otherwise applications add
 stacks; definition `refresh` decides whether expiry resets. An application
@@ -235,6 +235,9 @@ forcing the same blocking cast duration. Full alignment rules are in the
 [event-loop reference](rotation-event-loop.md#incoming-attack-readiness-and-success).
 
 ## Effects and Inner Ways
+
+`badgeColor: "red"` selects the red timeline effect badge independently of the
+definition's source file. Omit it for the default badge; DOT styling takes precedence.
 
 `duration`, `maxStack`, `cooldown`, and `refresh` control tracked-effect lifetime
 and application. `effect` supplies action-time rules. `stackEffects[n - 1]`
@@ -399,12 +402,12 @@ below keeps cross-cutting blockers and outstanding skill evidence.
 
 - Qi damage bonuses are data-only. Endurance percentage/loss is not simulated,
   leaving dependent talent conditions and Battle Anthem T6 inactive.
-- Damage-based HP drain/leech remains unmodeled, including Insightful Strike,
-  Song of Tang, and Wind attacks.
+- Damage-based HP drain/leech remains unmodeled, including Insightful Strike
+  and Wind attacks. Song of Tang HP drain is intentionally ignored by user instruction.
 - Blade Momentum and Battle Will retain confirmed starting values but no
   generation, spending, or caps. Do not treat their current fixed state as a
   completed resource model.
-- Enemy-count, enemy-healing reduction, movement slow, control immunity,
+- Enemy-healing reduction, movement slow, control immunity,
   breath-hold, and some talent-specific dodge-window changes remain unsupported.
   Existing incoming-attack response windows do not resolve all those mechanics.
 - Draught Inner Ways currently provide stat tiers only; other mechanics await
@@ -435,42 +438,36 @@ without Flamelash remains an invalid state to investigate.
 
 ### Bamboocut Dust WIP definitions
 
-Dust is WIP. Its interpreted signature-skill records lack resolved hit timing;
-the user authorized empty skills for unclear cases. The following mapping
-records what is needed to replace those placeholders, not their future values:
+Dust implements only the skills required by its authored draft rotation.
+See [Dust draft and timing refill register](dust-draft.md) for source IDs,
+per-skill timing fallbacks, rotation interpretation, and remaining mechanics.
+The user explicitly authorized unresolved hit timestamps at zero and unresolved
+buff application timestamps at cast end; these are not measured hit schedules.
 
-| Runtime ID            | Source skill ID     | Missing evidence                                            |
-| --------------------- | ------------------- | ----------------------------------------------------------- |
-| `EverspringLight`     | 20601001            | Shared umbrella route and combo mapping                     |
-| `EverspringHeavy`     | 20603005            | Charge/release route and hit mapping                        |
-| `CycloneWaltz`        | 20603102 / 20603103 | Repeated-hit schedule and stop behavior                     |
-| `DreamwroughtBubbles` | 20603201            | Charge and outbound/return timing                           |
-| `ScarletSpin`         | 20603202–20603205   | Returning-hit timing, throw/catch lifecycle, resource units |
-| `UnfetteredLight`     | 20700001            | Shared rope-dart combo mapping                              |
-| `SoulSweep`           | 20702001            | Three hit times, cooldown, Soulbound lifetime               |
-| `BurnAndBury`         | 20702002            | Finger-snap timing and target-state damage branch           |
-| `PiercingDart`        | 20702101–20702104   | Charge/combo route, sweep hit times, token units            |
+Phantom Rally summons/resonance and Piercing Dart damage mapping remain unresolved.
+Charged Combo reduces Soul Sweep remaining cooldown by 0.5 seconds per Piercing Dart damage hit,
+with a shared 0.5-second trigger cooldown. It awaits the missing damage events;
+simultaneous placeholder hits can trigger only once. Soul-state stacking, conversion, lifetimes,
+and cast-start consumption are implemented. Fading Crimson and Tokens of
+Gratitude are intentionally ignored by user instruction. Individual
+Piercing Dart sweeps must carry only their corresponding `PiercingDartSweepN`
+tag. Mode-specific exclusions from Soulbreak recorded damage are intentionally ignored by user instruction. Fragrant Song's 30% faster flight and accelerated-flight
+guaranteed-catch behavior are intentionally ignored by user instruction;
+its damage bonus, guaranteed crit, and one-use consumption remain implemented.
 
-- Phantom Rally needs summons, umbrella counts, natural resonance timing,
-  Fading Crimson, and T6 summon frequency. Source 20390 provides a resonance
-  baseline, not its schedule. Future damage must use `PhantomResonance`.
-- Perfect Catch detection is pending. Only an explicitly successful event with
-  both `EverspringUmbrella` and `PerfectCatch` may invoke the talent hook;
-  ordinary Scarlet Spin must not be treated as a catch. Fragrant Song's next-throw
-  consumption, guaranteed crit, non-player damage bonus, and accelerated flight,
-  plus Delicate's charge skip, await the flight/charge lifecycle. The state buffs
-  must not become permanent damage bonuses while these are missing.
-- Towline Sweep T0 needs token units and Soulbound/Soul Loss lifecycle data.
-  Future sweep hits use exactly their corresponding `PiercingDartSweep1` through
-  `PiercingDartSweep7` tag, never all seven tags on a composite. Mode-specific
-  non-class damage exclusions are not represented in Soulbreak recording.
-- Unfettered's combo talent mixes two Tokens with ten-Token refunds in its text.
-  Resolve units before implementing counts/costs. Its partial cooldown reduction
-  cannot be approximated by a full `clearCD` reset.
-- Light Anew automatic application and Song of Tang T4 need enemy count;
-  party `groupSize` is a healing-recipient count and must not substitute for it.
-  Candlelight remains manually applicable. Song of Tang HP drain is pending;
-  its two-applications-per-second tier currently uses a half-second cooldown.
-- Dust has no non-empty bundled rotation or accepted DPS baseline. The focused
-  [Dust tests](../tests/dust.test.ts) exercise synthetic events, not confirmed
-  real-skill sequences.
+Rotation `enemyCount` is a positive whole number, defaulting to one. It models
+the number of enemies hit for Light Anew and Song of Tang; it does not multiply
+damage or replace healing-recipient `groupSize`. Light Anew applies Candlelight
+on damage at three or more enemies, reduced to two at T4. Song of Tang T4
+grants one extra Tang Melody stack per eligible Martial Arts hit at two or
+more enemies, through the existing half-second application cooldown. Song of
+Tang HP drain is intentionally ignored.
+The draft has no accepted DPS snapshot and must not be treated as a validated
+build or rotation recommendation.
+
+Burn and Bury includes `dmgBonus: 0.3`, additive in the same category as vs Boss.
+Light Anew T3 immobilization/lockouts, Candlelight slow, Phantom Rally pull,
+and Burn and Bury slow/Breath-hold are intentionally ignored by user instruction.
+
+Towline T6 refreshes/settles target Soulbreak only at distance <= 15m.
+Its self Soul Return refresh and Burn and Bury damage bonus are not range-gated.

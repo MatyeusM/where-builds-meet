@@ -19,7 +19,7 @@ import {
 
 import resourceEventDefinitions from "../data/event.json"
 import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats"
-import { DEFAULT_PING_MS, normalizePing, resolvePing } from "./calculations/combatDefaults"
+import { DEFAULT_PING_MS, normalizeEnemyCount, normalizePing, resolvePing } from "./calculations/combatDefaults"
 import { type AttunementStats, type DamageBreakdown } from "./calculations/damage"
 import { resolveSwitchValue } from "./calculations/dynamicValues"
 import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./calculations/rotationMetrics"
@@ -27,6 +27,7 @@ import type { TrackedEffect } from "./calculations/rotationTimeline"
 import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories"
 import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea"
 import { PingInput } from "./components/PingInput"
+import { RotationEnemyCountField } from "./components/RotationEnemyCountField"
 import { RotationPingField } from "./components/RotationPingField"
 import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
@@ -40,6 +41,7 @@ import arsenalDefinitions from "../data/arsenal.json"
 import bowRingSetDefinitions from "../data/bow-ring-set.json"
 import breakthroughProfiles from "../data/breakthrough.json"
 import bamboocutDraughtBuffs from "../data/buff/bamboocut-draught.json"
+import bamboocutDustBuffs from "../data/buff/bamboocut-dust.json"
 import bamboocutKiteBuffs from "../data/buff/bamboocut-kite.json"
 import bamboocutWindBuffs from "../data/buff/bamboocut-wind.json"
 import bellstrikeUmbraBuffs from "../data/buff/bellstrike-umbra.json"
@@ -85,6 +87,7 @@ import unfetteredMartialArt from "../data/martial-art/unfettered-rope-dart.json"
 import vernalUmbrellaMartialArt from "../data/martial-art/vernal-umbrella.json"
 import pathDefinitions from "../data/path.json"
 import scriptDefinitions from "../data/script.json"
+import everspringSkills from "../data/skill/everspring-umbrella.json"
 import generalSkills from "../data/skill/general.json"
 import heavenwillSkills from "../data/skill/heavenwill-gauntlets.json"
 import infernalSkills from "../data/skill/infernal-twinblades.json"
@@ -97,6 +100,7 @@ import snowpartingSkills from "../data/skill/snowparting-blade.json"
 import soulshadeSkills from "../data/skill/soulshade-umbrella.json"
 import stormbreakerSkills from "../data/skill/stormbreaker-spear.json"
 import thundercrySkills from "../data/skill/thundercry-blade.json"
+import unfetteredSkills from "../data/skill/unfettered-rope-dart.json"
 import systemStats from "../data/system.json"
 import type { EditorTimelineResult } from "./calculations/editorTimeline"
 import type { DerivedStats } from "./calculations/effectiveStats"
@@ -386,6 +390,8 @@ const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Soulshade: soulshadeSkills as SkillMap,
   Infernal: infernalSkills as SkillMap,
   Mortal: mortalSkills as SkillMap,
+  Everspring: everspringSkills as SkillMap,
+  Unfettered: unfetteredSkills as SkillMap,
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
 }
@@ -399,6 +405,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
       ...stonesplitMightBuffs,
       ...bamboocutWindBuffs,
       ...bamboocutDraughtBuffs,
+      ...bamboocutDustBuffs,
       ...bamboocutKiteBuffs,
       ...silkbindDelugeBuffs,
       ...bellstrikeUmbraBuffs,
@@ -428,6 +435,8 @@ const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   soulshadeUmbrella: "Soulshade",
   infernalTwinblades: "Infernal",
   mortalRopeDart: "Mortal",
+  everspring: "Everspring",
+  unfettered: "Unfettered",
 }
 const rotationEventDefinitions: Record<string, SkillRecord> = {
   ...resourceEventDefinitions,
@@ -559,6 +568,8 @@ const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Soulshade: "soulshadeUmbrella",
   Infernal: "infernalTwinblades",
   Mortal: "mortalRopeDart",
+  Everspring: "everspringUmbrella",
+  Unfettered: "unfetteredRopeDart",
   Mystic: "mystic",
   General: "general",
 }
@@ -578,6 +589,8 @@ const martialArtBySkillId = new Map<string, WeaponId>([
   ...Object.keys(stormbreakerSkills).map(id => [id, "stormbreaker"] as const),
   ...Object.keys(heavenwillSkills).map(id => [id, "heavenwill"] as const),
   ...Object.keys(skygraspSkills).map(id => [id, "skygrasp"] as const),
+  ...Object.keys(everspringSkills).map(id => [id, "everspring"] as const),
+  ...Object.keys(unfetteredSkills).map(id => [id, "unfettered"] as const),
   ...Object.keys(panaceaSkills).map(id => [id, "panaceaFan"] as const),
   ...Object.keys(soulshadeSkills).map(id => [id, "soulshadeUmbrella"] as const),
 ])
@@ -597,9 +610,9 @@ const rotationEventOptionIds = [
   "__event:MartialArt",
 ]
 const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>
-const generalDebuffIds = new Set(Object.keys(generalDebuffs))
 const dotEffectIds = new Set(Object.keys(dotDefinitions))
 const effectDefinitions = {
+  ...bamboocutDustBuffs,
   ...mysticBuffs,
   ...generalBuffs,
   ...stonesplitStrengthBuffs,
@@ -821,6 +834,7 @@ function normalizeRotation(rotation: RotationRecord): RotationRecord {
     ...(typeof rotation.targetHP === "number" && rotation.targetHP > 0 ? { targetHP: rotation.targetHP } : {}),
     ...(rotation.dummyAttack === true ? { dummyAttack: true } : {}),
     ...(normalizePing(rotation.ping) !== undefined ? { ping: normalizePing(rotation.ping) } : {}),
+    enemyCount: normalizeEnemyCount(rotation.enemyCount),
     groupSize: rotation.groupSize === 5 || rotation.groupSize === 10 ? rotation.groupSize : 1,
     infiniteVitality:
       typeof rotation.infiniteVitality === "boolean"
@@ -5399,6 +5413,10 @@ function SkillEditorTab({
         return "Phalanxbane Blade"
       case "Infernal":
         return "Infernal Twinblades"
+      case "Everspring":
+        return "Everspring Umbrella"
+      case "Unfettered":
+        return "Unfettered Rope Dart"
       case "Mortal":
         return "Mortal Rope Dart"
       case "Soulshade":
@@ -6626,6 +6644,7 @@ function RotationEditorTab({
       name: t("ui.app.newRotation"),
       steps: [{ type: "skill", skill: rotationSkillIds[0] }],
       groupSize: 1,
+      enemyCount: 1,
       eventTimeReference: "battleStart",
     }
     const nextEntries = [
@@ -7732,6 +7751,12 @@ function RotationEditorTab({
                       <option value={10}>{t("ui.app.group")}</option>
                     </select>
                   </label>
+                  <RotationEnemyCountField
+                    key={`enemy-count-${editingRotationId}`}
+                    value={normalizeEnemyCount(rotation.enemyCount)}
+                    disabled={rotationLocked}
+                    onCommit={enemyCount => updateRotationCalculationSetting(current => ({ ...current, enemyCount }))}
+                  />
                   <RotationPingField
                     key={editingRotationId}
                     value={rotation.ping}
@@ -7901,11 +7926,15 @@ function RotationEditorTab({
                               typeof triggerSkillId === "string"
                                 ? gameText(calculationDefinitions.skills[triggerSkillId]?.name ?? triggerSkillId)
                                 : ""
-                            const plateKind = dotEffectIds.has(effect.name)
-                              ? " effect-plate-dot"
-                              : generalDebuffIds.has(effect.name)
-                                ? " effect-plate-general-debuff"
-                                : ""
+                            let plateKind = ""
+                            switch (true) {
+                              case dotEffectIds.has(effect.name):
+                                plateKind = " effect-plate-dot"
+                                break
+                              case definition?.badgeColor === "red":
+                                plateKind = " effect-plate-general-debuff"
+                                break
+                            }
                             return (
                               <span className={`effect-plate${plateKind}`} key={`${effect.name}-${effect.stack ?? 1}`}>
                                 {label}

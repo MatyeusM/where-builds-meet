@@ -17,7 +17,19 @@
     [],
     [],
     [
-      { "name": "Charged Combo Enhancement", "effect": [] },
+      {
+        "name": "Charged Combo Enhancement",
+        "effect": [
+          {
+            "trigger": {
+              "event": "damage",
+              "requirement": [{ "target": "skillTag", "value": "PiercingDart" }],
+              "cooldown": 0.5,
+              "action": { "type": "clearCD", "value": "SoulSweep", "seconds": 0.5 }
+            }
+          }
+        ]
+      },
       {
         "name": "Critical Rate Up",
         "effect": [

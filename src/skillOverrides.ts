@@ -12,6 +12,8 @@ export type SkillCategory =
   | "Soulshade"
   | "Infernal"
   | "Mortal"
+  | "Everspring"
+  | "Unfettered"
   | "Mystic"
   | "General"
 export type EditorCategory = SkillCategory | "Buff" | "Debuff" | "DOT"

@@ -17,7 +17,21 @@
     [],
     [],
     [
-      { "name": "Perfect Catch Enhancement", "effect": [] },
+      {
+        "name": "Perfect Catch Enhancement",
+        "effect": [
+          {
+            "trigger": {
+              "event": "skillStart",
+              "requirement": [
+                { "target": "skillTag", "value": "EverspringUmbrella" },
+                { "target": "skillTag", "value": "PerfectCatch" }
+              ],
+              "action": { "type": "apply", "target": "self", "value": "FallingBlossoms", "stack": 1, "reapply": true }
+            }
+          }
+        ]
+      },
       {
         "name": "Physical Attack Up",
         "effect": [{ "stat": { "minPhys": { "formula": { "source": "agility", "multiplier": 0.264, "max": 73.92 } } } }]

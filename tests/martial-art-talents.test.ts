@@ -241,8 +241,8 @@ describe("martial-art-talents", () => {
         stats: { crit: 0.6 },
         timeline: { initialDebuffs: [{ name: "Soulbreak", stack: 1 }] },
       }).damage.physical,
-      1162,
-      "Soulbreak conditional critical damage",
+      1162 * 1.05,
+      "Soulbreak conditional critical damage and applier damage amplification",
     )
     close(
       run("phalanxbane", "Iron Guards Penetration Up", [], {

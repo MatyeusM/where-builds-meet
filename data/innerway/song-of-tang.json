@@ -3,8 +3,31 @@
   "altersTimeline": true,
   "tags": ["BamboocutDust"],
   "effect": {
-    "SongOfTangT0": {},
-    "SongOfTangT1": {},
+    "SongOfTangT0": {
+      "trigger": [
+        {
+          "target": "self",
+          "requirement": [{ "target": "skillTag", "value": "MartialArts" }],
+          "action": [
+            {
+              "type": "apply",
+              "target": "self",
+              "value": "TangMelody",
+              "stack": 1,
+              "reapply": true,
+              "additionalStack": {
+                "requirement": [
+                  { "target": "self", "value": "SongOfTangT4" },
+                  { "target": "enemyCount", "comparison": ">=", "amount": 2 }
+                ],
+                "stack": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "SongOfTangT1": { "effect": [{ "target": "TangMelody", "modify": { "duration": 7 } }] },
     "SongOfTangT2": {
       "effect": [
         {
@@ -39,7 +62,7 @@
         }
       ]
     },
-    "SongOfTangT3": {},
+    "SongOfTangT3": { "effect": [{ "target": "TangMelody", "modify": { "cooldown": 0.5 } }] },
     "SongOfTangT4": {},
     "SongOfTangT5": { "effect": [{ "rawStat": { "critDmgBonus": 0.04 } }] },
     "SongOfTangT6": {}

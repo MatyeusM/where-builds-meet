@@ -1,0 +1,179 @@
+{
+  "TangMelody": {
+    "name": "Tang Melody",
+    "duration": 4,
+    "cooldown": 1,
+    "maxStack": 5,
+    "refresh": true,
+    "showCoverage": true,
+    "stackEffects": [
+      [
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.02 }
+        },
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            { "target": "self", "value": "SongOfTangT3" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.01 }
+        }
+      ],
+      [
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.04 }
+        },
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            { "target": "self", "value": "SongOfTangT3" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.02 }
+        }
+      ],
+      [
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.06 }
+        },
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            { "target": "self", "value": "SongOfTangT3" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.03 }
+        }
+      ],
+      [
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.08 }
+        },
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            { "target": "self", "value": "SongOfTangT3" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.04 }
+        }
+      ],
+      [
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.1 }
+        },
+        {
+          "requirement": [
+            { "target": "skillTag", "value": "MartialArts" },
+            { "target": "self", "value": "SongOfTangT3" },
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "selfHPPercentage", "comparison": ">", "amount": 50 },
+                { "target": "self", "value": "SongOfTangT6" }
+              ]
+            }
+          ],
+          "effect": { "critDmgBonus": 0.05 }
+        }
+      ]
+    ]
+  },
+  "FallingBlossoms": {
+    "name": "Falling Blossoms",
+    "duration": 5,
+    "maxStack": 3,
+    "refresh": true,
+    "onMaxStack": { "consume": "all", "trigger": "FragrantSongGrant" }
+  },
+  "FragrantSong": { "name": "Fragrant Song", "maxStack": 1 },
+  "FragrantSongDelicate": { "name": "Fragrant Song - Delicate", "maxStack": 4 },
+  "SoulReturn": { "name": "Soul Return", "maxStack": 1, "refresh": true, "duration": 12 },
+  "FlowerBurial": { "name": "Flower Burial", "duration": 12, "maxStack": 1, "refresh": false },
+  "DreamwroughtPhantomUmbrella": {
+    "name": "Dreamwrought Phantom Umbrella",
+    "duration": 5,
+    "maxStack": 1,
+    "refresh": true
+  },
+  "Soulbound": {
+    "name": "Soulbound",
+    "maxStack": 1,
+    "description": "Lasts until Piercing Dart is cast. Charging does not consume it."
+  }
+}

@@ -1,3 +1,5 @@
+export type SegmentMode = "LowerBoundInclusive" | "UpperBoundInclusive"
+
 export type DynamicParameters = Record<string, number | undefined>
 export type DynamicSwitchParameters = Record<string, unknown>
 
@@ -41,6 +43,18 @@ export function resolveSegmentValue(value: unknown, parameters: DynamicParameter
         ? parameters[definition.param1]
         : undefined
   if (typeof parameter !== "number" || !Number.isFinite(parameter)) return undefined
+  let upperBoundInclusive: boolean
+  switch (definition.mode) {
+    case undefined:
+    case "LowerBoundInclusive":
+      upperBoundInclusive = false
+      break
+    case "UpperBoundInclusive":
+      upperBoundInclusive = true
+      break
+    default:
+      return undefined
+  }
   const thresholds = definition.param2
   const results = definition.param3
   if (results.length < thresholds.length + 1) return undefined
@@ -54,7 +68,7 @@ export function resolveSegmentValue(value: unknown, parameters: DynamicParameter
       !Number.isFinite(result)
     )
       return undefined
-    if (parameter < threshold) return result
+    if (upperBoundInclusive ? parameter <= threshold : parameter < threshold) return result
   }
   const overflowResult = results[thresholds.length]
   return typeof overflowResult === "number" && Number.isFinite(overflowResult) ? overflowResult : undefined

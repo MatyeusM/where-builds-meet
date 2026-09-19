@@ -1,0 +1,141 @@
+{
+  "DreamwroughtBubbles": {
+    "name": "Dreamwrought Bubbles",
+    "shortName": "Umbrella Heavy Charged",
+    "castTime": 0,
+    "action": [
+      { "type": "damage", "time": 0, "phyCoef": 1.00728, "attrCoef": 1.00728, "phyBonus": 279, "attrBonus": 151.8 },
+      { "type": "damage", "time": 0, "phyCoef": 0.67152, "attrCoef": 0.67152, "phyBonus": 186, "attrBonus": 101.2 },
+      { "type": "consume", "target": "self", "value": "FragrantSongDelicate", "time": 0 },
+      { "type": "apply", "target": "self", "value": "DreamwroughtPhantomUmbrella", "time": 0 }
+    ],
+    "modifier": [
+      { "effect": { "hpDMGBonus": 0.2 } },
+      { "requirement": [{ "target": "self", "value": "FragrantSongDelicate" }], "effect": { "castTimeMultiplier": 0 } }
+    ],
+    "tags": [
+      "MartialArts",
+      "DirectDamage",
+      "Umbrella",
+      "EverspringUmbrella",
+      "Charged",
+      "DreamwroughtBubbles",
+      "ReturningUmbrella"
+    ],
+    "martialArt": "everspring",
+    "weapon": "Umbrella",
+    "description": "Draft: charge/cast and outbound/return hit times are unresolved and use 0. Set cast duration when measured. Delicate skips that duration and consumes one stack. Phantom Umbrella application is at cast end."
+  },
+  "ScarletSpin": {
+    "name": "Scarlet Spin",
+    "shortName": "Umbrella Q",
+    "castTime": 1.48,
+    "action": [
+      { "type": "damage", "time": 0, "phyCoef": 1.08504, "attrCoef": 1.08504, "phyBonus": 300.6, "attrBonus": 163.8 },
+      { "type": "damage", "time": 0, "phyCoef": 0.72336, "attrCoef": 0.72336, "phyBonus": 200.4, "attrBonus": 109.2 },
+      { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
+      { "type": "apply", "target": "self", "value": "FlowerBurial", "time": 1.48, "reapply": false }
+    ],
+    "modifier": [
+      {
+        "requirement": [{ "target": "self", "value": "FragrantSong" }],
+        "effect": { "SteadfastGuaranteedCrit": true, "hpDMGBonus": 0.2 }
+      }
+    ],
+    "tags": [
+      "MartialArts",
+      "DirectDamage",
+      "Umbrella",
+      "EverspringUmbrella",
+      "MartialArt",
+      "ScarletSpin",
+      "ReturningUmbrella"
+    ],
+    "martialArt": "everspring",
+    "weapon": "Umbrella",
+    "description": "Draft: Level 100 damage; both hit times are 0 pending measurement. Uses source 20603202 interrupt time. Flight and alternate animation routes remain unresolved. Fading Crimson is intentionally ignored."
+  },
+  "FragrantSongGrant": {
+    "name": "Fragrant Song",
+    "castTime": 0,
+    "action": [
+      { "type": "apply", "target": "self", "value": "FragrantSong", "stack": 1, "reapply": true, "time": 0 },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "FragrantSongDelicate",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [{ "target": "self", "value": "PhantomRallyT1" }]
+      }
+    ],
+    "modifier": [],
+    "tags": ["Triggered"]
+  },
+  "ScarletSpinPerfectCatch": {
+    "name": "Scarlet Spin [Perfect Catch]",
+    "shortName": "Umbrella Q [Perfect Catch]",
+    "castTime": 1.48,
+    "action": [
+      { "type": "damage", "time": 0, "phyCoef": 1.08504, "attrCoef": 1.08504, "phyBonus": 300.6, "attrBonus": 163.8 },
+      { "type": "damage", "time": 0, "phyCoef": 0.72336, "attrCoef": 0.72336, "phyBonus": 200.4, "attrBonus": 109.2 },
+      { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
+      { "type": "apply", "target": "self", "value": "FlowerBurial", "time": 1.48, "reapply": false },
+      { "type": "trigger", "value": "EverspringPerfectCatch", "time": 1.48 }
+    ],
+    "modifier": [
+      {
+        "requirement": [{ "target": "self", "value": "FragrantSong" }],
+        "effect": { "SteadfastGuaranteedCrit": true, "hpDMGBonus": 0.2 }
+      }
+    ],
+    "tags": [
+      "MartialArts",
+      "DirectDamage",
+      "Umbrella",
+      "EverspringUmbrella",
+      "MartialArt",
+      "ScarletSpin",
+      "ReturningUmbrella"
+    ],
+    "martialArt": "everspring",
+    "weapon": "Umbrella",
+    "description": "Draft: explicitly successful catch at cast end; hit times are 0. Does not infer catch success from an input window."
+  },
+  "ScarletSpinEnd": {
+    "name": "Scarlet Spin [End]",
+    "shortName": "Umbrella Q [End]",
+    "castTime": 1.48,
+    "action": [
+      { "type": "damage", "time": 0, "phyCoef": 1.08504, "attrCoef": 1.08504, "phyBonus": 300.6, "attrBonus": 163.8 },
+      { "type": "damage", "time": 0, "phyCoef": 0.72336, "attrCoef": 0.72336, "phyBonus": 200.4, "attrBonus": 109.2 },
+      { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
+      { "type": "consume", "target": "self", "value": "FlowerBurial", "time": 1.48 }
+    ],
+    "modifier": [
+      {
+        "requirement": [{ "target": "self", "value": "FragrantSong" }],
+        "effect": { "SteadfastGuaranteedCrit": true, "hpDMGBonus": 0.2 }
+      }
+    ],
+    "tags": [
+      "MartialArts",
+      "DirectDamage",
+      "Umbrella",
+      "EverspringUmbrella",
+      "MartialArt",
+      "ScarletSpin",
+      "ReturningUmbrella"
+    ],
+    "martialArt": "everspring",
+    "weapon": "Umbrella",
+    "description": "Draft: final ordinary throw, then explicitly end Flower Burial. Hit times are 0; ending the state follows the authored rotation rather than resource simulation."
+  },
+  "EverspringPerfectCatch": {
+    "name": "Perfect Catch",
+    "castTime": 0,
+    "action": [],
+    "tags": ["Triggered", "EverspringUmbrella", "PerfectCatch"]
+  }
+}

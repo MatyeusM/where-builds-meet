@@ -100,7 +100,7 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
   expect(presetPing.querySelector("input")?.disabled).toBe(true)
   expect(presetPing.querySelector("input")?.value).toBe("40")
   expect(presetPing.querySelector(".stat-reset-button")).toBeNull()
-  expect(presetPing.previousElementSibling?.textContent).toContain("Group Type")
+  expect(presetPing.previousElementSibling?.textContent).toContain("Enemy Count")
   await click("Duplicate")
   let customPing = container.querySelector(
     'input[title="Leave blank to use the ping from Settings."]',
@@ -140,4 +140,30 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
   await commit(customPing, "enter")
   expect(customPing.closest("label")?.querySelector(".stat-reset-button")).not.toBeNull()
   expect(container.textContent).not.toContain("Calculating timeline")
+})
+
+it("defaults Enemy Count to one before Ping and persists edits into worker requests", async () => {
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  const getInput = () => container.querySelector<HTMLInputElement>(".rotation-enemy-count input")!
+  expect(getInput().value).toBe("1")
+  expect(getInput().disabled).toBe(true)
+  expect(container.querySelector(".rotation-ping-field")?.previousElementSibling?.textContent).toContain("Enemy Count")
+  await click("Duplicate")
+  expect(getInput().disabled).toBe(false)
+  await fill(getInput(), "3.8")
+  await commit(getInput(), "enter")
+  expect(getInput().value).toBe("3")
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(300)
+  })
+  expect(
+    vi.mocked(requestEditorTimeline).mock.calls.some(([bundle]) => bundle.timeline.rotation.enemyCount === 3),
+  ).toBe(true)
+  await click("Save")
+  const saved = JSON.parse(localStorage.getItem("wwm-rotation-list-session-v1")!)
+  expect(saved.some((entry: { rotation: { enemyCount?: number } }) => entry.rotation.enemyCount === 3)).toBe(true)
+  await fill(getInput(), "")
+  await commit(getInput())
+  expect(getInput().value).toBe("1")
 })

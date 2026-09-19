@@ -80,7 +80,7 @@
     "name": "Dust",
     "icon": "dust.png",
     "tag": "BamboocutDust",
-    "status": "plannerOnly",
+    "status": "wip",
     "buildGroup": "bamboocut-dust",
     "defaultBuild": "empty",
     "graduated": "empty",

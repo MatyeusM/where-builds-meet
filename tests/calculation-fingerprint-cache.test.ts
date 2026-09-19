@@ -43,6 +43,7 @@ describe("calculation-fingerprint-cache", () => {
       ["target HP", { targetHP: 100000 }],
       ["dummy attacks", { dummyAttack: true }],
       ["group size", { groupSize: 5 }],
+      ["enemy count", { enemyCount: 3 }],
       ["infinite Vitality", { infiniteVitality: true }],
       ["battle-start event timing", { eventTimeReference: "battleStart" }],
       ["battle start anchor", { start: { step: 0, action: 0 } }],

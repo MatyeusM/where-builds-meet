@@ -566,7 +566,7 @@ Take Damage events subtract an absolute amount. Damage effects continue to read
 the derived percentage at hit time.
 
 Dynamic stat and effective-stat values may use `function: "segment"` with
-`param1: "maxHp"`. Its explicit exclusive thresholds are stored in `param2`
+`param1: "maxHp"`. Its thresholds are stored in `param2`
 and corresponding results in `param3`; values beyond the final threshold use
 the final result. Thundercry Blade uses this for its Charged/Varied Combo Max
 Physical Attack and Effective Critical Rate talents. The
@@ -574,9 +574,12 @@ talents carry skill-tag requirements, so the worker applies them only to their
 matching damage actions rather than adding them to the displayed global stats.
 
 Numeric damage-effect values may also use the data-defined `segment` function.
+The optional `mode` selects `LowerBoundInclusive` (default, `<` upper-bound
+comparison) or `UpperBoundInclusive` (`<=` upper-bound comparison). Existing
+definitions retain their boundary behavior when the mode is omitted.
 When `param1` is `distance`, the action's distance snapshot is compared against
-the exclusive upper bounds in `param2`; the matching value comes from the same
-index in `param3`, and values equal to or above every bound use its extra final entry. Damage-action
+the upper bounds in `param2` using the selected mode; the matching value comes from the same
+index in `param3`, and values beyond every matching bound use its extra final entry. Damage-action
 `phyCoef` and `attrCoef` use the same resolver and the action's distance snapshot,
 including in sampled damage calculations.
 

@@ -235,7 +235,7 @@ fingerprint may replace the editor preview. The previous completed preview stays
 visible while newer work runs. Editor previews never request comparison variants;
 active-rotation comparisons remain tied to save, activation, or setup changes.
 The rotation portion of the fingerprint includes its resolved ping, steps, target HP,
-Dummy Attack, group size, Infinite Vitality, battle-start anchor, and event-time
+Dummy Attack, group size, enemy count, Infinite Vitality, battle-start anchor, and event-time
 reference. Its display name is intentionally excluded because renaming cannot
 change a calculation.
 
@@ -269,6 +269,12 @@ Damage events use the ordinary Self HP and take-damage trigger pipeline. The opt
 Vitality as an infinite timeline resource: its displayed value is `∞`, and its
 normal gains, regeneration, and consumption are skipped while ordinary resource
 requirements continue to use the character's capped maximum.
+
+Every normalized rotation stores `enemyCount`, a positive whole number defaulting
+to one for new and legacy records. The Rotation Editor places Enemy Count before
+Ping; edits commit on blur or Enter, persist with the rotation, and participate
+in worker fingerprints. The timeline exposes it as a numeric requirement for
+Light Anew and Song of Tang; it does not multiply total damage.
 
 Every normalized rotation also stores `groupSize` as `1`, `5`, or `10`, exposed
 in the editor as Solo, Team, or Group. Missing and invalid legacy values migrate
@@ -1311,8 +1317,9 @@ unrestricted test combinations. Planner-only paths indicate that their
 martial-art pair and build-planner surfaces are registered but their combat mechanics
 are not implemented. Planner-only
 paths remain visible, carry a Planner Only badge, and are disabled until Dev mode
-is enabled. Bellstrike Splendor and Umbra, Silkbind Jade and Deluge, and Bamboocut
-Dust and Draught currently use this state. Their fixed martial-art pairs and physical weapon
+is enabled. Bellstrike Splendor and Umbra, Silkbind Jade, and Bamboocut
+Draught currently use this state. Dust is WIP: its editor catalogs and initial
+Inner Way rules are registered, with a rotation-scoped combat draft using explicit unresolved timing fallbacks (see `dust-draft.md`). Deluge is available. Their fixed martial-art pairs and physical weapon
 families are available to Settings and Build. Planner-only status does not imply
 that all supporting data is absent: talents and attunements may already be
 registered while combat skill definitions remain incomplete. See the martial-art
@@ -1350,7 +1357,9 @@ from data.
   stale baseline or comparison result.
   The existing storage key now contains a `{ version: 3, overrides }` envelope. Older segment thresholds migrate from
   inclusive to exclusive bounds using the next representable number, preserving
-  saved calculation behavior. New authored tables use exact exclusive breakpoints.
+  saved calculation behavior. Authored tables default to `LowerBoundInclusive` (exclusive upper bounds);
+  `mode: "UpperBoundInclusive"` selects inclusive upper bounds explicitly.
+  Version-3 overrides preserve either mode without threshold migration.
   Legacy unwrapped overrides copy `phyCoef` into missing damage `attrCoef` or
   healing `silkbindCoef` fields on load. Versions 2 and 3 preserve intentionally omitted
   coefficients as zero, including physical-only damage actions.

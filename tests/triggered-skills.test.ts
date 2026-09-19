@@ -33,6 +33,7 @@ describe("triggered-skills", () => {
             "Attack response duration reference must resolve",
           )
         if (typeof value.attackResponse?.onSuccess === "string") triggeredIds.add(value.attackResponse.onSuccess)
+        if (typeof value.onMaxStack?.trigger === "string") triggeredIds.add(value.onMaxStack.trigger)
         if (value.type !== "trigger") return
         if (typeof value.value === "string") {
           triggeredIds.add(value.value)

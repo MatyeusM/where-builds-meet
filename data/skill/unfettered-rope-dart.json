@@ -1,0 +1,624 @@
+{
+  "SoulSweep": {
+    "name": "Soul Sweep",
+    "shortName": "RD Q",
+    "castTime": 1.75,
+    "action": [
+      { "type": "apply", "target": "self", "value": "Soulbound", "time": 0 },
+      { "type": "damage", "time": 0, "phyCoef": 0.94284, "attrCoef": 0.94284, "phyBonus": 261, "attrBonus": 142.2 },
+      { "type": "apply", "target": "target", "value": "SoulLoss", "stack": 1, "reapply": true, "time": 0 },
+      { "type": "damage", "time": 0, "phyCoef": 1.09998, "attrCoef": 1.09998, "phyBonus": 304.5, "attrBonus": 165.9 },
+      { "type": "apply", "target": "target", "value": "SoulLoss", "stack": 1, "reapply": true, "time": 0 },
+      { "type": "damage", "time": 0, "phyCoef": 1.09998, "attrCoef": 1.09998, "phyBonus": 304.5, "attrBonus": 165.9 },
+      { "type": "apply", "target": "target", "value": "SoulLoss", "stack": 1, "reapply": true, "time": 0 }
+    ],
+    "modifier": [],
+    "tags": ["MartialArts", "DirectDamage", "RopeDart", "UnfetteredRopeDart", "MartialArt", "SoulSweep"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "Draft: three unmeasured hits at 0, each applying one Soul Loss afterward. Soulbound applies at 0 before hits. Cast uses the 1.75 s source interrupt. Shared cooldown: 10 seconds.",
+    "cooldown": 10,
+    "cooldownGroup": "SoulSweep"
+  },
+  "BurnAndBury": {
+    "name": "Burn and Bury",
+    "shortName": "RD Special",
+    "castTime": 0.65,
+    "action": [
+      {
+        "type": "damage",
+        "time": 0,
+        "phyCoef": 1.3792116,
+        "attrCoef": 1.3792116,
+        "phyBonus": 382.2,
+        "attrBonus": 208.26,
+        "requirement": [
+          { "target": "target", "value": "SoulLoss" },
+          { "operator": "not", "operand": [{ "target": "target", "value": "Soulbreak" }] }
+        ]
+      },
+      {
+        "type": "damage",
+        "time": 0,
+        "phyCoef": 2.298686,
+        "attrCoef": 2.298686,
+        "phyBonus": 637,
+        "attrBonus": 347.1,
+        "requirement": [{ "target": "target", "value": "Soulbreak" }]
+      }
+    ],
+    "modifier": [{ "effect": { "dmgBonus": 0.3 } }],
+    "tags": ["MartialArts", "DirectDamage", "RopeDart", "UnfetteredRopeDart", "Special", "BurnAndBury"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "Draft: finger-snap hit at 0; cast uses the 0.65 s source interrupt. Soul Loss/Soulbreak select the damage branch. Includes 30% general damage bonus in the vs Boss affix category. Slow and Breath-hold are intentionally ignored."
+  },
+  "PiercingDart": {
+    "name": "Piercing Dart",
+    "castTime": 0,
+    "action": [
+      { "type": "consume", "target": "self", "value": "Soulbound", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      }
+    ],
+    "modifier": [],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged", "PiercingDart"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "Draft seven-hit release: Soulbound is consumed at cast start. With Towline Sweep, each hit applies one Soul Loss, or two with cast-start Soulbound. Without Towline, Soulbound grants one per hit. Hit times are 0; damage mapping and cast duration remain unresolved. Tokens are ignored."
+  },
+  "SoulbreakDamage": {
+    "name": "Soulbreak",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "replay",
+        "time": 0,
+        "coef": 0.05,
+        "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT6" }] }]
+      },
+      { "type": "replay", "time": 0, "coef": 0.1, "requirement": [{ "target": "self", "value": "TowlineSweepT6" }] }
+    ],
+    "modifier": [],
+    "tags": ["Triggered", "Replayed"]
+  },
+  "SoulSweepCancel": {
+    "name": "Soul Sweep [Cancel]",
+    "shortName": "RD Q [Cancel]",
+    "castTime": 0,
+    "action": [{ "type": "apply", "target": "self", "value": "Soulbound", "time": 0 }],
+    "modifier": [],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "MartialArt", "SoulSweep"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "Cancel at 0 seconds, applying Soulbound without damage. Shares Soul Sweep\u2019s 10-second cooldown.",
+    "cooldown": 10,
+    "cooldownGroup": "SoulSweep"
+  },
+  "PiercingDartCharge": {
+    "name": "Piercing Dart [1.5s Charge]",
+    "shortName": "RD Heavy Charge",
+    "castTime": 1.5,
+    "action": [],
+    "modifier": [],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "User-specified 1.5-second preparatory charge. Preserves Soulbound. Tokens of Gratitude are intentionally ignored."
+  },
+  "SoulbreakGrant": {
+    "name": "Soulbreak Application",
+    "castTime": 0,
+    "action": [
+      { "type": "apply", "target": "target", "value": "Soulbreak", "time": 0, "reapply": true },
+      { "type": "apply", "target": "self", "value": "SoulReturn", "time": 0, "reapply": true }
+    ],
+    "tags": ["Triggered"]
+  },
+  "PiercingDart4Hits": {
+    "name": "Piercing Dart [4 Hits]",
+    "castTime": 0,
+    "action": [
+      { "type": "consume", "target": "self", "value": "Soulbound", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 2,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "target": "self", "value": "Soulbound" },
+            { "operator": "not", "operand": [{ "target": "self", "value": "TowlineSweepT0" }] }
+          ]
+        }
+      },
+      {
+        "type": "apply",
+        "target": "target",
+        "value": "SoulLoss",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": {
+          "resolveAt": "skillStart",
+          "operand": [
+            { "operator": "not", "operand": [{ "target": "self", "value": "Soulbound" }] },
+            { "target": "self", "value": "TowlineSweepT0" }
+          ]
+        }
+      }
+    ],
+    "modifier": [],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged", "PiercingDart"],
+    "martialArt": "unfettered",
+    "weapon": "RopeDart",
+    "description": "Draft four-hit release: Soulbound is consumed at cast start. With Towline Sweep, each hit applies one Soul Loss, or two with cast-start Soulbound. Without Towline, Soulbound grants one per hit. Hit times are 0; damage mapping and cast duration remain unresolved. Tokens are ignored.",
+    "shortName": "RD Heavy 4 Hits"
+  }
+}

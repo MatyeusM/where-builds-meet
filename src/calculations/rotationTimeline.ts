@@ -1,6 +1,6 @@
 import type { WeaponFamily, WeaponId } from "../types"
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark"
-import { DEFAULT_TARGET_HP_RATIO, normalizePing } from "./combatDefaults"
+import { DEFAULT_TARGET_HP_RATIO, normalizeEnemyCount, normalizePing } from "./combatDefaults"
 import { resolveSegmentValue, resolveSwitchValue, type SwitchValue } from "./dynamicValues"
 import {
   ExpectedPeriodicTracker,
@@ -113,6 +113,7 @@ export type RotationRecord = {
   targetHP?: number
   dummyAttack?: boolean
   groupSize?: 1 | 5 | 10
+  enemyCount?: number
   /** Optional per-rotation latency override, in milliseconds. */
   ping?: number
   infiniteVitality?: boolean
@@ -404,6 +405,7 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
 }
 
 export type EffectDefinition = {
+  badgeColor?: "red"
   damageGroup?: { id: string; name: string }
   onMaxStack?: MaxStackAction
   name?: string
@@ -510,6 +512,7 @@ export type ResourceEventRule = {
 }
 
 export type RequirementState = {
+  enemyCount?: number
   distance?: number
   selfHPPercentage?: number
   targetHPPercentage?: number
@@ -604,12 +607,16 @@ export function requirementsPass(
     if (
       item.target === "resource" ||
       item.target === "distance" ||
+      item.target === "enemyCount" ||
       item.target === "selfHPPercentage" ||
       item.target === "targetHPPercentage" ||
       item.target === "targetQiPercentage"
     ) {
       let current = 0
       switch (item.target) {
+        case "enemyCount":
+          current = normalizeEnemyCount(state.enemyCount)
+          break
         case "distance":
           current = state.distance ?? 1
           break
@@ -1455,6 +1462,7 @@ export function buildRotationTimeline(
   )
   let currentTimelineTime = 0
   const requirementState = (): RequirementState => ({
+    enemyCount: normalizeEnemyCount(rotation.enemyCount),
     distance,
     selfHPPercentage: currentHPRatio * 100,
     targetHPPercentage: targetHPRatio * 100,
@@ -1548,10 +1556,23 @@ export function buildRotationTimeline(
     }
     cooldowns[key] = skillCooldownReadyAt(key, time, uses)
   }
-  const clearSkillCooldown = (skillId: string, time: number, charges?: number) => {
+  const clearSkillCooldown = (skillId: string, time: number, charges?: number, seconds?: number) => {
     const key = skillCooldownKey(skillId)
     const state = skillCooldownStates[key]
-    if (charges === undefined) delete skillCooldownStates[key]
+    if (seconds !== undefined) {
+      if (!Number.isFinite(seconds) || seconds < 0)
+        throw new Error("Cooldown reduction seconds must be nonnegative and finite.")
+      if (state) {
+        switch (state.recovery) {
+          case "window":
+            state.expiresAt = Math.max(time, state.expiresAt - seconds)
+            break
+          case "independent":
+            state.readyTimes = state.readyTimes.map(readyAt => Math.max(time, readyAt - seconds))
+            break
+        }
+      }
+    } else if (charges === undefined) delete skillCooldownStates[key]
     else if (state) {
       const restored = Math.max(0, Math.floor(charges))
       switch (state.recovery) {
@@ -1568,18 +1589,18 @@ export function buildRotationTimeline(
     const readyAt = skillCooldownReadyAt(key, time, Math.max(1, Math.floor(skills[skillId]?.cooldownUses ?? 1)))
     cooldowns[key] = readyAt
     if (
-      compareTimelineTime(readyAt, time) <= 0 &&
       waitingCast &&
+      compareTimelineTime(readyAt, waitingCast.delay.until) < 0 &&
       waitingCast.delay.reason === "cooldown" &&
       waitingCast.row.step.type === "skill" &&
       skillCooldownKey(waitingCast.row.step.skill ?? "", waitingCast.row.skill) === key
     ) {
-      waitingCast.row.startTime = time
+      waitingCast.row.startTime = readyAt
       events.mutate(queued => {
-        if (queued.kind === "orderedReady" && queued.row === waitingCast!.row) queued.time = time
+        if (queued.kind === "orderedReady" && queued.row === waitingCast!.row) queued.time = readyAt
       })
-      waitingCast.row.cooldownWait = time - waitingCast.requestedAt
-      waitingCast.delay.until = time
+      waitingCast.row.cooldownWait = readyAt - waitingCast.requestedAt
+      waitingCast.delay.until = readyAt
     }
   }
   const prune = (effects: EffectState, time: number) =>
@@ -2725,8 +2746,13 @@ export function buildRotationTimeline(
       continue
     const resolvedAction = event.kind === "action" ? resolveAction?.(event.row, event.actionIndex ?? -1) : undefined
     if (action.type === "clearCD" && typeof action.value === "string") {
-      cooldowns[action.value] = event.time
-      clearSkillCooldown(action.value, event.time, typeof action.charges === "number" ? action.charges : undefined)
+      if (action.seconds === undefined) cooldowns[action.value] = event.time
+      clearSkillCooldown(
+        action.value,
+        event.time,
+        typeof action.charges === "number" ? action.charges : undefined,
+        typeof action.seconds === "number" ? action.seconds : undefined,
+      )
       continue
     }
     if (action.type === "move" && typeof action.distance === "number" && Number.isFinite(action.distance)) {
@@ -3051,11 +3077,12 @@ export function buildRotationTimeline(
         triggerAction = { ...triggerAction, amount: triggerAction.amount * hitProbability }
       if (applyResourceAction(triggerAction, event.row)) return
       if (triggerAction.type === "clearCD" && typeof triggerAction.value === "string") {
-        cooldowns[triggerAction.value] = event.time
+        if (triggerAction.seconds === undefined) cooldowns[triggerAction.value] = event.time
         clearSkillCooldown(
           triggerAction.value,
           event.time,
           typeof triggerAction.charges === "number" ? triggerAction.charges : undefined,
+          typeof triggerAction.seconds === "number" ? triggerAction.seconds : undefined,
         )
         return
       }

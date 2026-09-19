@@ -1,4 +1,4 @@
-import { normalizePing } from "./calculations/combatDefaults"
+import { normalizeEnemyCount, normalizePing } from "./calculations/combatDefaults"
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
 import { migrateVendettaTokenStep } from "./rotationEditing"
 import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing"
@@ -230,6 +230,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     targetHP?: unknown
     dummyAttack?: unknown
     groupSize?: unknown
+    enemyCount?: unknown
     ping?: unknown
     infiniteVitality?: unknown
     start?: unknown
@@ -270,6 +271,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           : {}),
         ...(candidate.dummyAttack === true ? { dummyAttack: true } : {}),
         ...(normalizePing(candidate.ping) !== undefined ? { ping: normalizePing(candidate.ping) } : {}),
+        enemyCount: normalizeEnemyCount(candidate.enemyCount),
         groupSize: candidate.groupSize === 5 || candidate.groupSize === 10 ? candidate.groupSize : 1,
         ...(typeof candidate.infiniteVitality === "boolean"
           ? { infiniteVitality: candidate.infiniteVitality }

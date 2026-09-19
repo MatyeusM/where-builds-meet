@@ -2,7 +2,7 @@ import attunementJson from "../../data/attunement.json"
 import { emptyStats } from "../data/statDefinitions"
 import type { CharacterStats, EnemyProfile, WeaponId } from "../types"
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark"
-import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults"
+import { DEFAULT_TARGET_HP_RATIO, normalizeEnemyCount } from "./combatDefaults"
 import {
   calculateDamageBreakdown,
   calculateSimulatedDamageBreakdown,
@@ -1646,6 +1646,7 @@ function createTimelineEntryBuilder(
     const skillTags = row.actionSkillTags?.[actionIndex] ?? row.skill?.tags ?? []
     const skillStaticEffects = skillStaticEffectsFor(skillTags)
     const requirementState = {
+      enemyCount: normalizeEnemyCount(input.rotation.enemyCount),
       distance: actionState.distance,
       selfHPPercentage: actionState.currentHPRatio * 100,
       targetHPPercentage: actionState.targetHPRatio * 100,
