@@ -5,7 +5,7 @@ import { calculateDerivedStats, type DerivedStats } from "./effectiveStats"
 import { calculationStatMaximum } from "./statCaps"
 
 export type StatFormula = {
-  source: string
+  source: string | { max: string[] }
   multiplier?: number
   offset?: number
   min?: number
@@ -71,7 +71,15 @@ export function applyStatConversions<T extends Record<string, number>>(
 }
 
 export function resolveFormulaValue(formula: StatFormula, sources: Record<string, unknown>) {
-  const source = sources[formula.source]
+  let source: unknown
+  if (typeof formula.source === "string") {
+    source = sources[formula.source]
+  } else {
+    const values = formula.source.max.map(key => sources[key])
+    if (values.length === 0 || !values.every(value => typeof value === "number" && Number.isFinite(value)))
+      return undefined
+    source = Math.max(...(values as number[]))
+  }
   if (typeof source !== "number" || !Number.isFinite(source)) return undefined
   let value = source * (formula.multiplier ?? 1) + (formula.offset ?? 0)
   if (typeof formula.min === "number") value = Math.max(formula.min, value)
@@ -129,7 +137,8 @@ export function applyDerivedStatEffects(
       if ("formula" in value) {
         const formula = (value as FormulaStatValue).formula
         // Formulas backed by character stats were already handled by applyStatEffects.
-        if (formula.source in baseStats) return
+        const sourceKeys = typeof formula.source === "string" ? [formula.source] : formula.source.max
+        if (sourceKeys.every(key => key in baseStats)) return
         const resolved = resolveFormulaValue(formula, derivedStats as unknown as Record<string, unknown>)
         if (resolved === undefined) return
         const statKey = key as keyof CharacterStats

@@ -274,7 +274,7 @@ derived contributions. Do not duplicate calculations in UI components.
 
 Talent formulas read immutable raw stats, including flat attribute talents but
 excluding later talent/food bonuses. Use raw source names for these conversions.
-Formula values compute `source × multiplier + offset`, with optional `min`,
+A formula source may be a stat name or `{ "max": ["body", "power"] }` to select the higher source value from the same stat snapshot. All named sources must be finite numbers. Formula values compute `source × multiplier + offset`, with optional `min`,
 `max`, and explicitly justified `round`. See the [stat pipeline](stat-pipeline.md)
 for effective-source resolution and final-value overrides.
 

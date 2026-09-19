@@ -107,6 +107,12 @@ with 4,075,868.36 total damage. This user-approved refresh replaces the initial
 bonus and updating Wind's weapon affixes. It includes the current Hellfire,
 Enhanced Rodent Rampage, delayed Rodent hits, and authored rotation adjustments.
 
+Might's latest approved refresh is 78,121.61 DPS, replacing 77,276.26 DPS
+(+1.09%). It includes Thundercry's restored Physical Attack Up talent and all
+four added HP/defense enhancement entries in system progression. The added HP
+also feeds Thundercry's charged/varied-combo talent scaling; the preset remains
+at 30 ms ping with the same combat duration.
+
 ## Updating reviewed rotations
 
 Run `npm run test:dps`, explain each affected rotation's old/new result and cause,

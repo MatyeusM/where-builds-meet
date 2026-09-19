@@ -28,7 +28,11 @@
     { "id": "enhancement-01", "rawStat": { "minPhys": 120, "maxPhys": 80 } },
     { "id": "enhancement-02", "rawStat": { "minPhys": 120, "maxPhys": 80 } },
     { "id": "enhancement-03", "rawStat": { "maxPhys": 160 } },
-    { "id": "enhancement-04", "rawStat": { "maxPhys": 160 } }
+    { "id": "enhancement-04", "rawStat": { "maxPhys": 160 } },
+    { "id": "enhancement-05", "rawStat": { "maxHp": 8936 } },
+    { "id": "enhancement-06", "rawStat": { "maxHp": 6169, "physicalDefense": 60 } },
+    { "id": "enhancement-06", "rawStat": { "maxHp": 6169, "physicalDefense": 60 } },
+    { "id": "enhancement-05", "rawStat": { "maxHp": 8936 } }
   ],
   "talentStats": [
     { "id": "talent-01", "rawStat": { "crit": 0.04 } },

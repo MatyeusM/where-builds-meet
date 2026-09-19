@@ -63,7 +63,16 @@
           }
         ]
       },
-      { "name": "Physical Attack Up", "effect": [] },
+      {
+        "name": "Physical Attack Up",
+        "effect": [
+          {
+            "stat": {
+              "maxPhys": { "formula": { "source": { "max": ["body", "power"] }, "multiplier": 0.264, "max": 73.92 } }
+            }
+          }
+        ]
+      },
       {
         "name": "Charge Critical Hit Enhancement",
         "effect": [
