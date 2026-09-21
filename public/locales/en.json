@@ -218,7 +218,7 @@
   "data.debuff.general.Controlled.description": "Marks a target as controlled for conditional effects.",
   "data.debuff.general.Controlled.name": "Controlled",
   "data.debuff.general.Controlled.shortName": "Ctl",
-  "data.debuff.general.Disarm.description": "Increases global damage taken by 100%.",
+  "data.debuff.general.Disarm.description": "Increases general damage bonus against the target by 200% for 11 seconds.",
   "data.debuff.general.Disarm.name": "Disarm",
   "data.debuff.general.Disarm.shortName": "Dis",
   "data.debuff.general.Exhausted.description": "Increases global damage taken by 10%.",

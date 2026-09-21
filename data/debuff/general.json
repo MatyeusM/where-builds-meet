@@ -27,10 +27,10 @@
     "name": "Disarm",
     "badgeColor": "red",
     "shortName": "Dis",
-    "description": "Increases global damage taken by 100%.",
-    "duration": 13,
+    "description": "Increases general damage bonus against the target by 200% for 11 seconds.",
+    "duration": 11,
     "maxStack": 1,
     "shared": true,
-    "effect": [{ "effect": { "globalDmgBonus": 1 } }]
+    "effect": [{ "effect": { "dmgBonus": 2 } }]
   }
 }
