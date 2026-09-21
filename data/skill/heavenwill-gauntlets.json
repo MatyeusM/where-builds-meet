@@ -433,7 +433,7 @@
       { "type": "replay", "coef": 0.133333, "time": 3 }
     ],
     "modifier": [],
-    "tags": ["Triggered", "DOT", "Replayed", "BamboocutKite"]
+    "tags": ["Triggered", "Replayed"]
   },
   "VileCondemnedEnd": {
     "silent": true,

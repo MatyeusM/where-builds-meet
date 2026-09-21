@@ -16,7 +16,10 @@ describe("global-debuff-controls", () => {
     const umbraDebuffs = (await import("../data/debuff/bellstrike-umbra.json")).default
     const dustDebuffs = (await import("../data/debuff/bamboocut-dust.json")).default
     const innerWayDebuffs = (await import("../data/debuff/innerway.json")).default
+    const draughtDebuffs = (await import("../data/debuff/bamboocut-draught.json")).default
+    const scripts = (await import("../data/script.json")).default
     const effectDefinitions = {
+      ...draughtDebuffs,
       ...delugeBuffs,
       ...generalDebuffs,
       ...strengthDebuffs,
@@ -54,7 +57,15 @@ describe("global-debuff-controls", () => {
       ],
       tags,
     })
-    const result = (initialDebuffs, tags = [], exhausted = false, appliesFearful = false, initialBuffs = []) => {
+    const result = (
+      initialDebuffs,
+      tags = [],
+      exhausted = false,
+      appliesFearful = false,
+      initialBuffs = [],
+      nextStats = stats,
+      setupEffects = [],
+    ) => {
       const steps = exhausted
         ? [
             { type: "event", event: "Exhausted", startTime: 0 },
@@ -71,16 +82,16 @@ describe("global-debuff-controls", () => {
           effectDefinitions,
           innerWayConditions: [],
           innerWayRules: [],
-          setupEffects: [],
+          setupEffects,
           weapons: [],
           initialDebuffs,
           initialBuffs,
         },
         startAnchor: { rowId: `rotation-${skillIndex}` },
-        stats,
+        stats: nextStats,
         attunement: {},
         enemy,
-        derivedStats: calculateDerivedStats(stats, 0),
+        derivedStats: calculateDerivedStats(nextStats, 0),
         weapons: [],
         statPriority: [],
         attunementPriority: [],
@@ -160,6 +171,47 @@ describe("global-debuff-controls", () => {
 
     const qiEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, qiImbalance: true })
     assert(closeTo(result(qiEffects) / baseline, 1), "Qi Imbalance's HP bonus must remain inactive outside Exhausted.")
+    const strayhunt = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, strayhuntDraught: true })
+    assert(
+      closeTo(result(strayhunt) / baseline, 1.02),
+      "Strayhunt increases physical damage through the global control.",
+    )
+    assert(
+      normalizeGlobalDebuffs({ qiImbalance: true }).strayhuntDraught === false,
+      "Legacy controls keep Strayhunt disabled.",
+    )
+    for (const channel of ["Bellstrike", "Stonesplit", "Silkbind", "Bamboocut"]) {
+      const channelStats = {
+        ...stats,
+        minPhys: 0,
+        maxPhys: 0,
+        ["min" + channel]: 1000,
+        ["max" + channel]: 1000,
+        [channel.toLowerCase() + "DmgBonus"]: 0.2,
+      }
+      const channelBaseline = result([], [], false, false, [], channelStats)
+      assert(
+        closeTo(result(strayhunt, [], false, false, [], channelStats) / channelBaseline, 1.22 / 1.2),
+        "Strayhunt adds to existing " + channel + " bonus.",
+      )
+      assert(
+        closeTo(
+          result(strayhunt, [], false, false, [], channelStats, [scripts.Convergence.effect]) / channelBaseline,
+          1.37 / 1.2,
+        ),
+        "Convergence and Strayhunt add in the " + channel + " category.",
+      )
+      if (channel === "Bellstrike") {
+        const exhaustedChannel = result([], [], true, false, [], channelStats)
+        assert(
+          closeTo(
+            result([...strayhunt, ...qiEffects], [], true, false, [], channelStats) / exhaustedChannel,
+            (1.3 / 1.2) * (1.18 / 1.1),
+          ),
+          "Qi Imbalance adds Bellstrike bonus separately from its global HP bonus.",
+        )
+      }
+    }
     const exhaustedBaseline = result([], [], true)
     const exhaustedQi = result(qiEffects, [], true)
     assert(

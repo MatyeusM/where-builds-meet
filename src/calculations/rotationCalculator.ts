@@ -230,7 +230,11 @@ function calculateRotationDamageEntry(
   let breakdown: RotationActionBreakdown
   if (entry.replay) {
     const sourceDamage = entry.replay.sourceEntryIds.reduce((total, id) => total + (resolved.get(id)?.total ?? 0), 0)
-    breakdown = replayBreakdown(sourceDamage * entry.replay.coef)
+    const replayDmgBonus = entry.context.effects.reduce(
+      (total, effect) => total + (typeof effect.replayDmgBonus === "number" ? effect.replayDmgBonus : 0),
+      0,
+    )
+    breakdown = replayBreakdown(sourceDamage * entry.replay.coef * (1 + replayDmgBonus))
   } else if (entry.action.type === "heal") {
     const healingContext = {
       ...entry.context,

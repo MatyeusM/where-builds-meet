@@ -23,7 +23,14 @@
     "image": "convergence-script.png",
     "effect": {
       "requirement": [{ "target": "targetQiPercentage", "comparison": ">", "amount": 60 }],
-      "effect": { "attributeDMGBonus": 0.15 }
+      "effect": {
+        "stat": {
+          "bellstrikeDmgBonus": 0.15,
+          "stonesplitDmgBonus": 0.15,
+          "silkbindDmgBonus": 0.15,
+          "bamboocutDmgBonus": 0.15
+        }
+      }
     }
   },
   "Opportunity": {

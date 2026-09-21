@@ -166,6 +166,63 @@ describe("damage-replay", () => {
       "A Charged hit without Heaven's Might must not spawn replay damage.",
     )
 
+    const draughtDebuffs = (await import("../data/debuff/bamboocut-draught.json")).default
+    const { defaultGlobalDebuffs, globalDebuffTimelineEffects } = await import("../src/globalDebuffs.ts")
+    for (const active of [[], ["WildstrideDraught"], ["StrayhuntDraught"], ["WildstrideDraught", "StrayhuntDraught"]]) {
+      const bundle = createBundle()
+      bundle.timeline.effectDefinitions = { ...bundle.timeline.effectDefinitions, ...draughtDebuffs }
+      bundle.timeline.skills = {
+        ...skills,
+        ApplyHeavensMight: {
+          ...skills.ApplyHeavensMight,
+          action: [
+            ...skills.ApplyHeavensMight.action,
+            ...active.map(value => ({ type: "apply", target: "target", value, stack: 2, time: 0 })),
+          ],
+        },
+      }
+      // A normal bonus restricted to the replay skill must never enter its payout.
+      bundle.timeline.setupEffects = [
+        { requirement: [{ target: "skillTag", value: "Replayed" }], effect: { dmgBonus: 9, globalDmgBonus: 9 } },
+      ]
+      const actual = calculateRotationBaseline(bundle)
+      for (const entry of actual.baseline.filter(entry => entry.replay)) {
+        const source = entry.replay.sourceEntryIds.reduce((sum, id) => sum + actual.actionBreakdowns[id].total, 0)
+        const enabled = active.length === 2 && entry.timelineTime < 20
+        assert(
+          closeTo(actual.actionBreakdowns[entry.id].total, source * entry.replay.coef * (enabled ? 1.2 : 1)),
+          "Wildstride requires both debuffs at replay time, caps at one stack, and ignores normal multipliers.",
+        )
+      }
+      const normal = actual.baseline.find(entry => !entry.replay)
+      assert(
+        closeTo(
+          actual.actionBreakdowns[normal.id].total,
+          firstSource * (active.includes("StrayhuntDraught") ? 1.02 : 1),
+        ),
+        "Wildstride must not amplify ordinary source damage.",
+      )
+      const sampled = simulateRotation(bundle, 2, () => 0.5)
+      assert(
+        sampled.runs.every(run => closeTo(run.totalDamage, actual.metrics.totalDamage)),
+        "Expected and sampled replay payouts must share Wildstride resolution.",
+      )
+    }
+    const globalBundle = createBundle()
+    globalBundle.timeline.effectDefinitions = { ...globalBundle.timeline.effectDefinitions, ...draughtDebuffs }
+    globalBundle.timeline.initialDebuffs = globalDebuffTimelineEffects({
+      ...defaultGlobalDebuffs,
+      wildstrideDraught: true,
+      strayhuntDraught: true,
+    })
+    const maintained = calculateRotationBaseline(globalBundle)
+    for (const entry of maintained.baseline.filter(entry => entry.replay)) {
+      const source = entry.replay.sourceEntryIds.reduce((sum, id) => sum + maintained.actionBreakdowns[id].total, 0)
+      assert(
+        closeTo(maintained.actionBreakdowns[entry.id].total, source * entry.replay.coef * 1.2),
+        "Global Wildstride and Strayhunt remain active beyond their manual durations.",
+      )
+    }
     const simulation = simulateRotation(createBundle(), 3, () => 0.5)
     assert(
       simulation.runs.every(run => run.normalPercentage === 100),

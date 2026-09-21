@@ -325,6 +325,11 @@ buff for counterfactual attribution; delayed applications use
 `boostDamageSource` to retain that cast's ownership. Neither changes persisted
 rotation steps or the damage formula.
 
+Replay-only effects use numeric replayDmgBonus, evaluated after source damage
+and the replay coefficient. Wildstride (Draught) is its sole authored source.
+Ordinary damage and healing ignore this field; normal damage bonuses are not
+reapplied to replays.
+
 ### Periodic and chance-applied effects
 
 `periodic` separates cadence from lifetime. `interval` must be positive;

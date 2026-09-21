@@ -1,4 +1,5 @@
 import floatingGraceDefinitions from "../data/buff/silkbind-deluge.json"
+import strayhuntDefinitions from "../data/debuff/bamboocut-draught.json"
 import phantomChimeDefinitions from "../data/debuff/bamboocut-dust.json"
 import qiImbalanceDefinitions from "../data/debuff/bellstrike-splendor.json"
 import soulShakenDefinitions from "../data/debuff/bellstrike-umbra.json"
@@ -11,6 +12,8 @@ import { getPersistentItem } from "./persistentStorage"
 export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
 
 export type GlobalDebuffState = {
+  wildstrideDraught: boolean
+  strayhuntDraught: boolean
   phantomChime: boolean
   qiImbalance: boolean
   soulShaken: boolean
@@ -21,6 +24,8 @@ export type GlobalDebuffState = {
 }
 
 export const defaultGlobalDebuffs: GlobalDebuffState = {
+  wildstrideDraught: false,
+  strayhuntDraught: false,
   phantomChime: false,
   qiImbalance: false,
   soulShaken: false,
@@ -36,6 +41,8 @@ export const globalDebuffRows = [
   { key: "soulShaken", name: "Soul-Shaken", path: "Umbra" },
   { key: "vulnerable", name: "Vulnerable", path: "Might" },
   { key: "fearfulBlade", name: "Fearful Blade", path: "Strength" },
+  { key: "strayhuntDraught", name: "Strayhunt (Draught)", path: null },
+  { key: "wildstrideDraught", name: "Wildstride (Draught)", path: null },
 ] as const
 
 export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
@@ -45,6 +52,8 @@ export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
   const floatingGrace =
     source.floatingGrace === "mixed" || source.floatingGrace === "deluge" ? source.floatingGrace : "none"
   return {
+    wildstrideDraught: source.wildstrideDraught === true,
+    strayhuntDraught: source.strayhuntDraught === true,
     phantomChime: source.phantomChime === true,
     qiImbalance: source.qiImbalance === true,
     soulShaken: source.soulShaken === true,
@@ -64,6 +73,8 @@ export function loadGlobalDebuffs(): GlobalDebuffState {
 }
 
 const definitions = {
+  WildstrideDraught: strayhuntDefinitions.WildstrideDraught,
+  StrayhuntDraught: strayhuntDefinitions.StrayhuntDraught,
   PhantomChime: phantomChimeDefinitions.PhantomChime,
   QiImbalance: qiImbalanceDefinitions.QiImbalance,
   SoulShaken: soulShakenDefinitions.SoulShaken,
@@ -92,6 +103,8 @@ export function globalBuffTimelineEffects(state: GlobalDebuffState): TrackedEffe
 
 export function globalDebuffTimelineEffects(state: GlobalDebuffState): TrackedEffect[] {
   const selectedDefinitions = [
+    state.wildstrideDraught ? (["WildstrideDraught", definitions.WildstrideDraught] as const) : undefined,
+    state.strayhuntDraught ? (["StrayhuntDraught", definitions.StrayhuntDraught] as const) : undefined,
     state.phantomChime ? (["PhantomChime", definitions.PhantomChime] as const) : undefined,
     state.qiImbalance ? (["QiImbalance", definitions.QiImbalance] as const) : undefined,
     state.soulShaken ? (["SoulShaken", definitions.SoulShaken] as const) : undefined,

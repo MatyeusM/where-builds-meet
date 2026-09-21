@@ -899,7 +899,7 @@ source entry rather than copying a deterministic value into the timeline.
 
 The average calculator and simulator resolve that link after calculating the
 source hit. Replay actions therefore follow randomized source damage during
-Monte Carlo runs while bypassing normal multipliers and outcomes. Generated
+Monte Carlo runs while bypassing normal multipliers and outcomes. The shared replay resolver additionally applies the dedicated numeric replayDmgBonus from requirement-filtered hit-time effects; Wildstride is its sole authored source. Generated
 replay rows participate in duration, target-HP progression, Battle End cutoff,
 timeline display, and breakdown attribution. They do not emit damage events,
 which makes the event graph acyclic.

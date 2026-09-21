@@ -10,7 +10,7 @@
       { "qiDMGBonus": 0.1 },
       {
         "requirement": [{ "target": "target", "value": "Exhausted" }],
-        "effect": { "globalHPDMGBonus": 0.08, "globalBellstrikeDMGBonus": 0.08 }
+        "effect": { "globalHPDMGBonus": 0.08, "stat": { "bellstrikeDmgBonus": 0.08 } }
       }
     ],
     "refresh": true

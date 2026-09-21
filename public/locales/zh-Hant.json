@@ -114,6 +114,8 @@
   "data.build.stonesplitStrength.mixedFullyRelayedMin.name": "小外雙切全承音配裝",
   "data.build.stonesplitStrength.pureFullyRelayedMax.name": "大外純唐全承音配裝",
   "data.build.stonesplitStrength.pureFullyRelayedMin.name": "小外純唐全承音配裝",
+  "data.debuff.bamboocutDraught.StrayhuntDraught.name": "離獵 (樽)",
+  "data.debuff.bamboocutDraught.WildstrideDraught.name": "步亂 (樽)",
   "data.debuff.bamboocutDust.PhantomChime.description": "每層降低 2 點外功抗性。",
   "data.debuff.bamboocutDust.PhantomChime.name": "幻鳴",
   "data.debuff.bamboocutDust.PhantomChime.shortName": "鳴",

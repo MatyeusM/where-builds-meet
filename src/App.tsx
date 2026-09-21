@@ -50,6 +50,7 @@ import mysticBuffs from "../data/buff/mystic.json"
 import silkbindDelugeBuffs from "../data/buff/silkbind-deluge.json"
 import stonesplitMightBuffs from "../data/buff/stonesplit-might.json"
 import stonesplitStrengthBuffs from "../data/buff/stonesplit-strength.json"
+import bamboocutDraughtDebuffs from "../data/debuff/bamboocut-draught.json"
 import bamboocutDustDebuffs from "../data/debuff/bamboocut-dust.json"
 import bamboocutKiteDebuffs from "../data/debuff/bamboocut-kite.json"
 import bamboocutWindDebuffs from "../data/debuff/bamboocut-wind.json"
@@ -417,6 +418,7 @@ const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...bellstrikeSplendorDebuffs,
     ...bellstrikeUmbraDebuffs,
     ...bamboocutDustDebuffs,
+    ...bamboocutDraughtDebuffs,
     ...bamboocutWindDebuffs,
     ...bamboocutKiteDebuffs,
     ...innerWayDebuffs,
@@ -628,6 +630,7 @@ const effectDefinitions = {
   ...bellstrikeSplendorDebuffs,
   ...bellstrikeUmbraDebuffs,
   ...bamboocutDustDebuffs,
+  ...bamboocutDraughtDebuffs,
   ...bamboocutWindDebuffs,
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
@@ -674,6 +677,7 @@ const manualDebuffDefinitions = {
   ...bellstrikeSplendorDebuffs,
   ...bellstrikeUmbraDebuffs,
   ...bamboocutDustDebuffs,
+  ...bamboocutDraughtDebuffs,
   ...bamboocutWindDebuffs,
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
@@ -3524,7 +3528,8 @@ function StatsTab({
                 {globalDebuffRows.map(({ key, name, path }) => (
                   <div className="global-debuff-row" key={key}>
                     <span>
-                      {gameText(name)} ({gameText(path)})
+                      {gameText(name)}
+                      {path && <> ({gameText(path)})</>}
                     </span>
                     <div className="setup-option-list global-debuff-options">
                       {globalDebuffOption(key, false, t("ui.app.off"))}
@@ -4157,6 +4162,7 @@ const effectFields = [
   "globalHPDMGBonus",
   "globalBellstrikeDMGBonus",
   "dotDamage",
+  "replayDmgBonus",
   "dmgBonus",
   "defenseBonus",
   "physicalPenetration",
