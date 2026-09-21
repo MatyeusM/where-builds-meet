@@ -170,6 +170,17 @@ catalog workflow and validation rules.
 - globally resolved stats and derived stats
 - the latest metrics published for the active rotation
 
+Food, Script, and Divinecraft are parent-owned React state, initialized from
+persistent storage. The Main selectors, character-stat preparation, and rotation
+bundles consume the same selection snapshot; storage is only persistence.
+Character-stat memoization depends explicitly on stat overrides, settings
+(including weapons and breakthrough), equipped gear effects, resolved build
+setup, these three selections, and combat path. Path controls Inner Way and set
+eligibility. Resolve this sheet before fingerprinting the worker bundle: a new
+fingerprint cannot repair stale prepared stats. Attunement has its own derived
+pipeline; global buffs/debuffs and conditional combat effects remain rotation
+inputs rather than unconditional character-sheet bonuses.
+
 It renders seven tabs:
 
 1. Main

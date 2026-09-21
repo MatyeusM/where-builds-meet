@@ -1369,10 +1369,6 @@ function loadFood() {
   return saved && typedFoodDefinitions[saved] ? saved : typedDefaultSetup.food
 }
 
-function selectedFoodEffect() {
-  return typedFoodDefinitions[loadFood()]?.effect ?? {}
-}
-
 function loadDivinecraft() {
   const saved = getPersistentItem(divinecraftStorageKey)
   return saved && typedDivinecraftDefinitions[saved]?.available !== false ? saved : typedDefaultSetup.divinecraft
@@ -1399,12 +1395,15 @@ function selectedMartialArtEffects(settings: CalculatorSettings) {
   )
 }
 
+type SetupSelections = { food: string; script: string; divinecraft: string }
+
 function selectedSetupEffects(
   settings: CalculatorSettings,
   gearStatEffect: StatEffectContainer,
   buildSetup: BuildSetup,
-  overrides: Partial<BuildSetup> & { food?: string; divinecraft?: string; script?: string } = {},
-  pathId = loadSelectedPath(),
+  selections: SetupSelections,
+  pathId: PathId,
+  overrides: Partial<BuildSetup & SetupSelections> = {},
 ) {
   const selectedBuildSetup = {
     ...buildSetup,
@@ -1412,9 +1411,9 @@ function selectedSetupEffects(
     weaponSets: overrides.weaponSets ?? buildSetup.weaponSets,
     armorSets: overrides.armorSets ?? buildSetup.armorSets,
   }
-  const foodEffect = overrides.food ? (typedFoodDefinitions[overrides.food]?.effect ?? {}) : selectedFoodEffect()
-  const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? loadDivinecraft())
-  const scriptEffect = scriptEffectFor(overrides.script ?? loadScript())
+  const foodEffect = typedFoodDefinitions[overrides.food ?? selections.food]?.effect ?? {}
+  const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? selections.divinecraft)
+  const scriptEffect = scriptEffectFor(overrides.script ?? selections.script)
   return [
     ...globalEffectDefinitions.flatMap(definition =>
       definition.global === true ||
@@ -1684,6 +1683,7 @@ type CharacterState = {
   enemy: EnemyProfile
   derivedStats: DerivedStats
   innerWayRevision: number
+  setupSelections: SetupSelections
   gearStatEffect: StatEffectContainer
   buildSetup: BuildSetup
 }
@@ -1807,8 +1807,18 @@ function rotationEntryDisplayName(entry: RotationEntry) {
   return entry.isDefault ? gameText(name) : name
 }
 
-function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEffectContainer, buildSetup: BuildSetup) {
-  const innerWayStatEffects = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel)
+function globalStatEffects(
+  settings: CalculatorSettings,
+  gearStatEffect: StatEffectContainer,
+  buildSetup: BuildSetup,
+  selections: SetupSelections,
+  pathId: PathId,
+) {
+  const innerWayStatEffects = innerWayEffectRulesFor(
+    buildSetup.innerWays,
+    breakthroughProfile(settings).soloLevel,
+    pathId,
+  )
     .filter(
       rule =>
         requirementIsUnconditional(rule.requirement) &&
@@ -1818,9 +1828,13 @@ function globalStatEffects(settings: CalculatorSettings, gearStatEffect: StatEff
   // A setup effect with requirements is a per-action rule. It is resolved by
   // the rotation calculator against the current skill and timeline state and
   // must not leak into the always-visible character-stat baseline.
-  const unconditionalSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup).filter(
-    effect => !("requirement" in effect) || requirementIsUnconditional(effect.requirement),
-  )
+  const unconditionalSetupEffects = selectedSetupEffects(
+    settings,
+    gearStatEffect,
+    buildSetup,
+    selections,
+    pathId,
+  ).filter(effect => !("requirement" in effect) || requirementIsUnconditional(effect.requirement))
   return [...unconditionalSetupEffects, ...innerWayStatEffects]
 }
 
@@ -1829,12 +1843,14 @@ function calculateGlobalStatState(
   settings: CalculatorSettings,
   gearStatEffect: StatEffectContainer,
   buildSetup: BuildSetup,
+  selections: SetupSelections,
+  pathId: PathId,
 ) {
   const breakthrough = breakthroughProfile(settings)
   const enemy: EnemyProfile = breakthrough
   return calculateStatsWithOverrides(
     emptyStats,
-    globalStatEffects(settings, gearStatEffect, buildSetup),
+    globalStatEffects(settings, gearStatEffect, buildSetup, selections, pathId),
     enemy.judgementResistance,
     overrides,
     settings.weapons,
@@ -2733,6 +2749,7 @@ function StatsTab({
   activeBuildName,
   activeRotationName,
   onInnerWayChange,
+  onSetupSelectionChange,
 }: {
   character: CharacterState
   pathId: PathId
@@ -2754,13 +2771,12 @@ function StatsTab({
   activeBuildName: string
   activeRotationName: string
   onInnerWayChange: () => void
+  onSetupSelectionChange: (key: keyof SetupSelections, value: string) => void
 }) {
   const { stats, derivedStats, displayedAttunementStats: attunementStats, buildSetup, settings } = character
   const showHealingStats = pathId === "silkbindDeluge"
   const breakthrough = breakthroughProfile(settings)
-  const [food, setFood] = useState(loadFood)
-  const [script, setScript] = useState(loadScript)
-  const [divinecraft, setDivinecraft] = useState(loadDivinecraft)
+  const { food, script, divinecraft } = character.setupSelections
   const [globalDebuffs, setGlobalDebuffs] = useState(loadGlobalDebuffs)
   const [attunementDrafts, setAttunementDrafts] = useState<Partial<Record<keyof AttunementStats, string>>>({})
   const [newProfileName, setNewProfileName] = useState("")
@@ -2768,9 +2784,6 @@ function StatsTab({
   const graduationRate =
     rotationMetrics && graduationDps && graduationDps > 0 ? (rotationMetrics.dps / graduationDps) * 100 : undefined
 
-  useEffect(() => setPersistentItem(foodStorageKey, food), [food])
-  useEffect(() => setPersistentItem(scriptStorageKey, script), [script])
-  useEffect(() => setPersistentItem(divinecraftStorageKey, divinecraft), [divinecraft])
   useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs])
 
   const { arsenal, bowRingSet, innerWays } = buildSetup
@@ -3757,11 +3770,7 @@ function StatsTab({
                   className={food === value ? "selected" : ""}
                   type="button"
                   key={value}
-                  onClick={() => {
-                    setFood(value)
-                    setPersistentItem(foodStorageKey, value)
-                    onInnerWayChange()
-                  }}
+                  onClick={() => onSetupSelectionChange("food", value)}
                 >
                   {gameText(definition.name)}
                   <span>{setupStatus("food", value, food === value)}</span>
@@ -3786,11 +3795,7 @@ function StatsTab({
                     type="button"
                     key={value}
                     title={`${gameText(definition.name)}: ${gameText(definition.description)}`}
-                    onClick={() => {
-                      setScript(value)
-                      setPersistentItem(scriptStorageKey, value)
-                      onInnerWayChange()
-                    }}
+                    onClick={() => onSetupSelectionChange("script", value)}
                   >
                     <span className="script-image-frame">
                       {definition.image ? (
@@ -3827,11 +3832,7 @@ function StatsTab({
                     key={value}
                     disabled={!available}
                     title={`${gameText(definition.name)}: ${gameText(definition.description)}${available ? "" : t("ui.app.notAvailableYet")}`}
-                    onClick={() => {
-                      setDivinecraft(value)
-                      setPersistentItem(divinecraftStorageKey, value)
-                      onInnerWayChange()
-                    }}
+                    onClick={() => onSetupSelectionChange("divinecraft", value)}
                   >
                     <span className="divinecraft-image-frame">
                       {definition.image ? (
@@ -5974,15 +5975,19 @@ function RotationEditorTab({
     settings,
     enemy,
     innerWayRevision: _innerWayRevision,
+    setupSelections,
     gearStatEffect,
     buildSetup,
   } = character
   const rotationSkillIds = useMemo(() => selectableRotationSkillIds(settings.weapons), [settings.weapons])
-  const innerWayConditions = useMemo(() => innerWayConditionsFor(buildSetup.innerWays), [buildSetup.innerWays])
+  const innerWayConditions = useMemo(
+    () => innerWayConditionsFor(buildSetup.innerWays, undefined, pathId),
+    [buildSetup.innerWays, pathId],
+  )
   const soloLevel = breakthroughProfile(settings).soloLevel
   const innerWayEffectRules = useMemo(
-    () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel),
-    [buildSetup.innerWays, soloLevel],
+    () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel, pathId),
+    [buildSetup.innerWays, soloLevel, pathId],
   )
   const calculationDefinitions = useMemo(
     () => resolveSkillCalculationDefinitions(defaultSkillMaps, effectDefinitions, dotDefinitions, skillOverrides),
@@ -6080,9 +6085,7 @@ function RotationEditorTab({
   const rotationLocked = editingEntry?.isDefault === true
   const editingRotationDisplayName = (rotationLocked ? gameText(rotation.name) : rotation.name) || "Unnamed Rotation"
   const currentGlobalDebuffs = loadGlobalDebuffs()
-  const currentFood = loadFood()
-  const currentScript = loadScript()
-  const currentDivinecraft = loadDivinecraft()
+  const { food: currentFood, script: currentScript, divinecraft: currentDivinecraft } = setupSelections
   const calculationContextKey = useMemo(
     () =>
       calculationFingerprint({
@@ -6962,12 +6965,14 @@ function RotationEditorTab({
     ),
   ) as Partial<Record<keyof CharacterStats, number>>
   const priorityAttunement = Object.keys(attunementData)
-    .filter(key => attunementAvailableForSettings(key, loadSelectedPath(), settings))
+    .filter(key => attunementAvailableForSettings(key, pathId, settings))
     .flatMap(key => {
       const amount = maxGearRoll(key, "attunement", false, enemy.level)
       return typeof amount === "number" ? [[key, amount] as const] : []
     })
-  const selectedInnerWays = buildSetup.innerWays.filter(row => row.innerWay && innerWayAvailableForPath(row.innerWay))
+  const selectedInnerWays = buildSetup.innerWays.filter(
+    row => row.innerWay && innerWayAvailableForPath(row.innerWay, pathId),
+  )
   const priorityStats: RotationPriority[] = []
   const priorityAttunementRows: RotationPriority[] = []
   const priorityInnerWays: RotationPriority[] = []
@@ -6995,7 +7000,7 @@ function RotationEditorTab({
     rotationRecord: RotationRecord,
     conditions = innerWayConditions,
     rules = innerWayEffectRules,
-    setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup),
+    setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId),
     globalDebuffs = currentGlobalDebuffs,
   ): TimelineBuildInput {
     return {
@@ -7025,7 +7030,7 @@ function RotationEditorTab({
       const rotationAnchor = rotationRecord.start
         ? { rowId: `rotation-${rotationRecord.start.step}`, actionIndex: rotationRecord.start.action }
         : { rowId: "rotation-0" }
-      const baselineSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup)
+      const baselineSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId)
       const setComparisonGroups = includeDiffs
         ? Object.fromEntries(
             (
@@ -7035,16 +7040,21 @@ function RotationEditorTab({
               ] as const
             ).flatMap(([key, definitions]) =>
               Object.entries(definitions)
-                .filter(([, definition]) => setAvailableForSettings(definition, settings))
+                .filter(([, definition]) => setAvailableForSettings(definition, settings, pathId))
                 .map(([setName]) => [
                   `${key}:${setName}`,
                   [0, 2, 4]
                     .filter(tier => tier !== buildSetup[key][setName])
                     .map(tier => {
                       const selections = selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions)
-                      const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
-                        [key]: selections,
-                      })
+                      const setupEffects = selectedSetupEffects(
+                        settings,
+                        gearStatEffect,
+                        buildSetup,
+                        setupSelections,
+                        pathId,
+                        { [key]: selections },
+                      )
                       const rebuildTimeline = setSelectionChangesTimeline(buildSetup[key], selections, definitions)
                       return Object.assign(
                         { label: String(tier), setupEffects },
@@ -7104,7 +7114,7 @@ function RotationEditorTab({
           ? selectedInnerWays.map(selected => {
               const definition = innerWayDefinitions[selected.innerWay as keyof typeof innerWayDefinitions]
               const variantRules = innerWayEffectRules.filter(rule => rule.source !== selected.innerWay)
-              const variantConditions = innerWayConditionsFor(buildSetup.innerWays, selected.innerWay)
+              const variantConditions = innerWayConditionsFor(buildSetup.innerWays, selected.innerWay, pathId)
               const setupEffects = baselineSetupEffects
               return Object.assign(
                 { label: definition?.name ?? selected.innerWay },
@@ -7124,24 +7134,37 @@ function RotationEditorTab({
                 .filter(value => value !== buildSetup.arsenal)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { arsenal: value }),
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
+                    arsenal: value,
+                  }),
                 })),
               bowRingSet: Object.keys(typedBowRingSetDefinitions)
                 .filter(value => value !== buildSetup.bowRingSet)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { bowRingSet: value }),
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
+                    bowRingSet: value,
+                  }),
                 })),
               food: Object.keys(typedFoodDefinitions)
                 .filter(value => value !== selectedFood)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, { food: value }),
+                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
+                    food: value,
+                  }),
                 })),
               script: Object.entries(typedScriptDefinitions)
                 .filter(([value]) => value !== selectedScript)
                 .map(([value]) => {
-                  const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, { script: value })
+                  const setupEffects = selectedSetupEffects(
+                    settings,
+                    gearStatEffect,
+                    buildSetup,
+                    setupSelections,
+                    pathId,
+                    { script: value },
+                  )
                   const rebuildTimeline = setupSelectionChangesTimeline(selectedScript, value, typedScriptDefinitions)
                   return Object.assign(
                     { label: value, setupEffects },
@@ -7160,9 +7183,14 @@ function RotationEditorTab({
               divinecraft: Object.entries(typedDivinecraftDefinitions)
                 .filter(([value, definition]) => definition.available !== false && value !== selectedDivinecraft)
                 .map(([value]) => {
-                  const setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, {
-                    divinecraft: value,
-                  })
+                  const setupEffects = selectedSetupEffects(
+                    settings,
+                    gearStatEffect,
+                    buildSetup,
+                    setupSelections,
+                    pathId,
+                    { divinecraft: value },
+                  )
                   const rebuildTimeline = setupSelectionChangesTimeline(
                     selectedDivinecraft,
                     value,
@@ -8886,6 +8914,14 @@ export default function App() {
   }>()
   const rotationMetrics = useSyncExternalStore(subscribeToRotationMetrics, getRotationMetrics, getRotationMetrics)
   const [innerWayRevision, setInnerWayRevision] = useState(0)
+  const [setupSelections, setSetupSelections] = useState<SetupSelections>(() => ({
+    food: loadFood(),
+    script: loadScript(),
+    divinecraft: loadDivinecraft(),
+  }))
+  useEffect(() => setPersistentItem(foodStorageKey, setupSelections.food), [setupSelections.food])
+  useEffect(() => setPersistentItem(scriptStorageKey, setupSelections.script), [setupSelections.script])
+  useEffect(() => setPersistentItem(divinecraftStorageKey, setupSelections.divinecraft), [setupSelections.divinecraft])
   const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
   const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
@@ -8955,8 +8991,8 @@ export default function App() {
     [equippedGearEffects],
   )
   const globalStatState = useMemo(
-    () => calculateGlobalStatState(statOverrides, settings, gearStatEffect, buildSetup),
-    [statOverrides, settings, gearStatEffect, buildSetup],
+    () => calculateGlobalStatState(statOverrides, settings, gearStatEffect, buildSetup, setupSelections, pathId),
+    [statOverrides, settings, gearStatEffect, buildSetup, setupSelections, pathId],
   )
   const displayedStats = globalStatState.stats
   const derivedStats = globalStatState.derivedStats
@@ -8984,6 +9020,7 @@ export default function App() {
       enemy,
       derivedStats,
       innerWayRevision,
+      setupSelections,
       gearStatEffect,
       buildSetup,
     }),
@@ -8996,6 +9033,7 @@ export default function App() {
       enemy,
       derivedStats,
       innerWayRevision,
+      setupSelections,
       gearStatEffect,
       buildSetup,
     ],
@@ -9333,6 +9371,7 @@ export default function App() {
           activeBuildName={activeBuildDisplayName}
           activeRotationName={activeRotationDisplayName}
           onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
+          onSetupSelectionChange={(key, value) => setSetupSelections(current => ({ ...current, [key]: value }))}
         />
       ) : activeTab === "build" ? (
         <FeatureLoadBoundary>
