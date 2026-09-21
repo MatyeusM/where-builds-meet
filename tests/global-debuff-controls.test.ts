@@ -104,6 +104,20 @@ describe("global-debuff-controls", () => {
       JSON.stringify(normalizeGlobalDebuffs(null)) === JSON.stringify(defaultGlobalDebuffs),
       "Missing stored controls must migrate to the all-off default.",
     )
+    for (const [saved, names] of [
+      [{}, []],
+      [{ strayhuntDraught: true }, ["StrayhuntDraught"]],
+      [{ wildstrideDraught: true }, ["StrayhuntDraught", "WildstrideDraught"]],
+      [{ draught: "none", wildstrideDraught: true }, []],
+      [{ draught: "strayhunt" }, ["StrayhuntDraught"]],
+      [{ draught: "both" }, ["StrayhuntDraught", "WildstrideDraught"]],
+    ]) {
+      assert.deepEqual(
+        globalDebuffTimelineEffects(normalizeGlobalDebuffs(saved)).map(effect => effect.name),
+        names,
+        "Saved stages and legacy toggles must activate exactly their intended debuffs.",
+      )
+    }
     const phantomEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, phantomChime: true })
     assert(
       phantomEffects[0]?.name === "PhantomChime" && phantomEffects[0]?.stack === 5 && phantomEffects[0]?.persistent,
@@ -171,15 +185,12 @@ describe("global-debuff-controls", () => {
 
     const qiEffects = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, qiImbalance: true })
     assert(closeTo(result(qiEffects) / baseline, 1), "Qi Imbalance's HP bonus must remain inactive outside Exhausted.")
-    const strayhunt = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, strayhuntDraught: true })
+    const strayhunt = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, draught: "strayhunt" })
     assert(
       closeTo(result(strayhunt) / baseline, 1.02),
       "Strayhunt increases physical damage through the global control.",
     )
-    assert(
-      normalizeGlobalDebuffs({ qiImbalance: true }).strayhuntDraught === false,
-      "Legacy controls keep Strayhunt disabled.",
-    )
+    assert(normalizeGlobalDebuffs({ qiImbalance: true }).draught === "none", "Legacy controls keep Strayhunt disabled.")
     for (const channel of ["Bellstrike", "Stonesplit", "Silkbind", "Bamboocut"]) {
       const channelStats = {
         ...stats,

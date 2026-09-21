@@ -3538,6 +3538,30 @@ function StatsTab({
                   </div>
                 ))}
                 <div className="global-debuff-row">
+                  <span>{t("ui.app.draughtDebuffs")}</span>
+                  <div className="setup-option-list global-debuff-options qingyi-options">
+                    {(["none", "strayhunt", "both"] as const).map(value => {
+                      const active = globalDebuffs.draught === value
+                      const labels = {
+                        none: t("ui.app.none"),
+                        strayhunt: t("ui.app.strayhunt"),
+                        both: t("ui.app.both"),
+                      }
+                      return (
+                        <button
+                          className={active ? "selected" : ""}
+                          type="button"
+                          key={value}
+                          onClick={() => updateGlobalDebuff("draught", value)}
+                        >
+                          {labels[value]}
+                          <span>{setupStatus("debuff:draught", value, active)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="global-debuff-row">
                   <span>
                     {gameText("Floating Grace")} ({t("system.path.deluge")})
                   </span>
@@ -7236,6 +7260,18 @@ function RotationEditorTab({
                     }),
                 ]),
               ),
+              "debuff:draught": (["none", "strayhunt", "both"] as const)
+                .filter(value => value !== currentGlobalDebuffs.draught)
+                .map(value => ({
+                  label: value,
+                  timeline: makeTimelineInput(
+                    rotationRecord,
+                    innerWayConditions,
+                    innerWayEffectRules,
+                    baselineSetupEffects,
+                    { ...currentGlobalDebuffs, draught: value },
+                  ),
+                })),
               "debuff:qingyisCharm": (["none", "T1", "T6"] as const)
                 .filter(value => value !== currentGlobalDebuffs.qingyisCharm)
                 .map(value => {

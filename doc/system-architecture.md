@@ -1569,3 +1569,9 @@ not calculate defensive rewards or hold timing independently.
 Stat-only comparisons that reuse a baseline timeline retain its resolved action
 IDs. Conditional or cooldown-blocked actions remain absent; only a rebuilt
 combat timeline can introduce a newly eligible action.
+
+The global Strayhunt + Wildstride control stores a single draught stage:
+none, strayhunt, or both. Each comparison rebuilds with the corresponding
+permanent debuffs. Legacy independent toggles migrate to both when Wildstride
+was selected, otherwise strayhunt when Strayhunt was selected, otherwise none.
+An explicitly stored stage takes precedence over legacy fields.

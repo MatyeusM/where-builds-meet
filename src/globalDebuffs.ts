@@ -12,8 +12,7 @@ import { getPersistentItem } from "./persistentStorage"
 export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
 
 export type GlobalDebuffState = {
-  wildstrideDraught: boolean
-  strayhuntDraught: boolean
+  draught: "none" | "strayhunt" | "both"
   phantomChime: boolean
   qiImbalance: boolean
   soulShaken: boolean
@@ -24,8 +23,7 @@ export type GlobalDebuffState = {
 }
 
 export const defaultGlobalDebuffs: GlobalDebuffState = {
-  wildstrideDraught: false,
-  strayhuntDraught: false,
+  draught: "none",
   phantomChime: false,
   qiImbalance: false,
   soulShaken: false,
@@ -41,10 +39,34 @@ export const globalDebuffRows = [
   { key: "soulShaken", name: "Soul-Shaken", path: "Umbra" },
   { key: "vulnerable", name: "Vulnerable", path: "Might" },
   { key: "fearfulBlade", name: "Fearful Blade", path: "Strength" },
-  { key: "strayhuntDraught", name: "Strayhunt (Draught)", path: null },
-  { key: "wildstrideDraught", name: "Wildstride (Draught)", path: null },
 ] as const
 
+function normalizeDraught(source: Record<string, unknown>): GlobalDebuffState["draught"] {
+  switch (source.draught) {
+    case "none":
+    case "strayhunt":
+    case "both":
+      return source.draught
+    default:
+      if (source.wildstrideDraught === true) return "both"
+      if (source.strayhuntDraught === true) return "strayhunt"
+      return "none"
+  }
+}
+
+function draughtTimelineEffects(stage: GlobalDebuffState["draught"]): TrackedEffect[] {
+  switch (stage) {
+    case "none":
+      return []
+    case "strayhunt":
+      return [permanentEffect("StrayhuntDraught", definitions.StrayhuntDraught)]
+    case "both":
+      return [
+        permanentEffect("StrayhuntDraught", definitions.StrayhuntDraught),
+        permanentEffect("WildstrideDraught", definitions.WildstrideDraught),
+      ]
+  }
+}
 export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { ...defaultGlobalDebuffs }
   const source = value as Record<string, unknown>
@@ -52,8 +74,7 @@ export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
   const floatingGrace =
     source.floatingGrace === "mixed" || source.floatingGrace === "deluge" ? source.floatingGrace : "none"
   return {
-    wildstrideDraught: source.wildstrideDraught === true,
-    strayhuntDraught: source.strayhuntDraught === true,
+    draught: normalizeDraught(source),
     phantomChime: source.phantomChime === true,
     qiImbalance: source.qiImbalance === true,
     soulShaken: source.soulShaken === true,
@@ -103,8 +124,6 @@ export function globalBuffTimelineEffects(state: GlobalDebuffState): TrackedEffe
 
 export function globalDebuffTimelineEffects(state: GlobalDebuffState): TrackedEffect[] {
   const selectedDefinitions = [
-    state.wildstrideDraught ? (["WildstrideDraught", definitions.WildstrideDraught] as const) : undefined,
-    state.strayhuntDraught ? (["StrayhuntDraught", definitions.StrayhuntDraught] as const) : undefined,
     state.phantomChime ? (["PhantomChime", definitions.PhantomChime] as const) : undefined,
     state.qiImbalance ? (["QiImbalance", definitions.QiImbalance] as const) : undefined,
     state.soulShaken ? (["SoulShaken", definitions.SoulShaken] as const) : undefined,
@@ -116,5 +135,8 @@ export function globalDebuffTimelineEffects(state: GlobalDebuffState): TrackedEf
         ? (["QingyisCharmT6", definitions.QingyisCharmT6] as const)
         : undefined,
   ]
-  return selectedDefinitions.flatMap(entry => (entry ? [permanentEffect(entry[0], entry[1])] : []))
+  return [
+    ...draughtTimelineEffects(normalizeDraught(state)),
+    ...selectedDefinitions.flatMap(entry => (entry ? [permanentEffect(entry[0], entry[1])] : [])),
+  ]
 }

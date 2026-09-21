@@ -210,11 +210,7 @@ describe("damage-replay", () => {
     }
     const globalBundle = createBundle()
     globalBundle.timeline.effectDefinitions = { ...globalBundle.timeline.effectDefinitions, ...draughtDebuffs }
-    globalBundle.timeline.initialDebuffs = globalDebuffTimelineEffects({
-      ...defaultGlobalDebuffs,
-      wildstrideDraught: true,
-      strayhuntDraught: true,
-    })
+    globalBundle.timeline.initialDebuffs = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, draught: "both" })
     const maintained = calculateRotationBaseline(globalBundle)
     for (const entry of maintained.baseline.filter(entry => entry.replay)) {
       const source = entry.replay.sourceEntryIds.reduce((sum, id) => sum + maintained.actionBreakdowns[id].total, 0)
