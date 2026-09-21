@@ -59,11 +59,11 @@ function draughtTimelineEffects(stage: GlobalDebuffState["draught"]): TrackedEff
     case "none":
       return []
     case "strayhunt":
-      return [permanentEffect("StrayhuntDraught", definitions.StrayhuntDraught)]
+      return [permanentEffect("Strayhunt", definitions.Strayhunt)]
     case "both":
       return [
-        permanentEffect("StrayhuntDraught", definitions.StrayhuntDraught),
-        permanentEffect("WildstrideDraught", definitions.WildstrideDraught),
+        permanentEffect("Strayhunt", definitions.Strayhunt),
+        permanentEffect("Wildstride", definitions.Wildstride),
       ]
   }
 }
@@ -94,8 +94,8 @@ export function loadGlobalDebuffs(): GlobalDebuffState {
 }
 
 const definitions = {
-  WildstrideDraught: strayhuntDefinitions.WildstrideDraught,
-  StrayhuntDraught: strayhuntDefinitions.StrayhuntDraught,
+  Wildstride: strayhuntDefinitions.Wildstride,
+  Strayhunt: strayhuntDefinitions.Strayhunt,
   PhantomChime: phantomChimeDefinitions.PhantomChime,
   QiImbalance: qiImbalanceDefinitions.QiImbalance,
   SoulShaken: soulShakenDefinitions.SoulShaken,

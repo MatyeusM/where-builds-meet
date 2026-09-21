@@ -168,7 +168,7 @@ describe("damage-replay", () => {
 
     const draughtDebuffs = (await import("../data/debuff/bamboocut-draught.json")).default
     const { defaultGlobalDebuffs, globalDebuffTimelineEffects } = await import("../src/globalDebuffs.ts")
-    for (const active of [[], ["WildstrideDraught"], ["StrayhuntDraught"], ["WildstrideDraught", "StrayhuntDraught"]]) {
+    for (const active of [[], ["Wildstride"], ["Strayhunt"], ["Wildstride", "Strayhunt"]]) {
       const bundle = createBundle()
       bundle.timeline.effectDefinitions = { ...bundle.timeline.effectDefinitions, ...draughtDebuffs }
       bundle.timeline.skills = {
@@ -196,10 +196,7 @@ describe("damage-replay", () => {
       }
       const normal = actual.baseline.find(entry => !entry.replay)
       assert(
-        closeTo(
-          actual.actionBreakdowns[normal.id].total,
-          firstSource * (active.includes("StrayhuntDraught") ? 1.02 : 1),
-        ),
+        closeTo(actual.actionBreakdowns[normal.id].total, firstSource * (active.includes("Strayhunt") ? 1.02 : 1)),
         "Wildstride must not amplify ordinary source damage.",
       )
       const sampled = simulateRotation(bundle, 2, () => 0.5)

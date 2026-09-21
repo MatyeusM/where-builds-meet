@@ -106,11 +106,11 @@ describe("global-debuff-controls", () => {
     )
     for (const [saved, names] of [
       [{}, []],
-      [{ strayhuntDraught: true }, ["StrayhuntDraught"]],
-      [{ wildstrideDraught: true }, ["StrayhuntDraught", "WildstrideDraught"]],
+      [{ strayhuntDraught: true }, ["Strayhunt"]],
+      [{ wildstrideDraught: true }, ["Strayhunt", "Wildstride"]],
       [{ draught: "none", wildstrideDraught: true }, []],
-      [{ draught: "strayhunt" }, ["StrayhuntDraught"]],
-      [{ draught: "both" }, ["StrayhuntDraught", "WildstrideDraught"]],
+      [{ draught: "strayhunt" }, ["Strayhunt"]],
+      [{ draught: "both" }, ["Strayhunt", "Wildstride"]],
     ]) {
       assert.deepEqual(
         globalDebuffTimelineEffects(normalizeGlobalDebuffs(saved)).map(effect => effect.name),
