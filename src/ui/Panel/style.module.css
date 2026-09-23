@@ -33,18 +33,18 @@
     color: var(--text-muted);
   }
 
-  :global(.layout-mobile) .panel {
+  [data-layout="mobile"] .panel {
     margin-block-end: 0.65rem;
     padding: var(--space-sm);
     border-radius: var(--radius-xl);
   }
 
-  :global(.layout-mobile) .panel > *,
-  :global(.layout-mobile) .heading > * {
+  [data-layout="mobile"] .panel > *,
+  [data-layout="mobile"] .heading > * {
     min-inline-size: 0;
   }
 
-  :global(.layout-mobile) .heading {
+  [data-layout="mobile"] .heading {
     gap: 0.55rem;
     margin-block-end: var(--space-sm);
   }

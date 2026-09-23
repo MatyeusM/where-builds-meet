@@ -173,8 +173,7 @@ per-glyph at call sites; no new hand-drawn SVGs are added.
 Lint hardening is scoped to the folder: `src/ui/.oxlintrc.json` enables the
 `suspicious` and `pedantic` categories on top of the root baseline through a
 nested oxlint config with `extends`; `src/ui/.stylelintrc.json` extends upstream
-`stylelint-config-standard` and teaches the unknown-pseudo-class rule about the
-CSS Modules `:global()` selector.
+`stylelint-config-standard` without local rule overrides.
 
 Icons never get a primitive: there is no `ui/Icon`. Call sites import
 `@tabler/icons-react` icons directly so bundling stays per-glyph; the
