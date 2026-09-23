@@ -11,9 +11,8 @@ type DialogProps = {
   children: ReactNode
 }
 
-// Self-contained primitive: behavior plus structure. Presentation is a scoped
-// variable API (`--modal-*`); visual variants live one level up and assign
-// those variables or add classes. Never reference project design tokens here.
+// Reusable dialog behavior and base presentation. Content-specific layout
+// lives in application classes and uses the shared design tokens directly.
 export function Dialog({ open, onClose, onCancel, className, label, children }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 

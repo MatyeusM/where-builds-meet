@@ -1,15 +1,13 @@
 @layer ui {
-  .button {
-    --btn-padding: 10px 15px;
-    --btn-radius: 0.5rem;
-
+  .button,
+  :global(.button) {
     max-inline-size: 100%;
     min-inline-size: 0;
-    border: 1px solid var(--btn-border-color, transparent);
-    border-radius: var(--btn-radius);
-    padding: var(--btn-padding);
-    background: var(--btn-bg, transparent);
-    color: var(--btn-fg, inherit);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: 10px 15px;
+    background: transparent;
+    color: inherit;
     cursor: pointer;
     font: inherit;
     font-weight: 650;
@@ -18,12 +16,13 @@
     text-align: center;
     white-space: normal;
     transition:
-      background-color 180ms ease,
-      border-color 180ms ease,
-      color 180ms ease;
+      background-color var(--transition-normal),
+      border-color var(--transition-normal),
+      color var(--transition-normal);
   }
 
-  .button:disabled {
+  .button:disabled,
+  :global(.button):disabled {
     cursor: not-allowed;
     opacity: 0.45;
   }

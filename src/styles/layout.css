@@ -141,10 +141,9 @@
   }
 
   .path-status-badge {
-    --chip-padding: 1px 6px;
-    --chip-fg: var(--primary);
-    --chip-border-color: oklch(from var(--primary) l c h / 0.55);
-
+    padding: 1px 6px;
+    border-color: oklch(from var(--primary) l c h / 0.55);
+    color: var(--primary);
     font-size: 0.75rem;
     line-height: 1.35;
     letter-spacing: 0.05em;

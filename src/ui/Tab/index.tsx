@@ -5,9 +5,8 @@ import styles from "./style.module.css"
 type TabProps = ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean; modified?: boolean }
 
 // Selectable option button with a shared active/dirty contract. The `active`
-// and `modified` state classes are part of the primitive API and are styled
-// one level up (main-tabs, category-tab, skill-list-item). Never reference
-// project design tokens here.
+// and `modified` state classes are part of the primitive API and are styled by
+// application classes (main-tabs, category-tab, skill-list-item).
 export function Tab({ type = "button", active = false, modified = false, className, ...rest }: TabProps) {
   const state = `${active ? " active" : ""}${modified ? " modified" : ""}`
   const combined = `${styles.tab}${state}${className ? ` ${className}` : ""}`

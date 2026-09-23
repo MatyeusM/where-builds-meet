@@ -10,10 +10,9 @@ type TooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, "content"> & {
 
 // Hover tooltip with a layout-neutral wrapper: the anchor takes no box
 // (`display: contents`), so it can wrap triggers inside flex and grid
-// parents without changing layout. Reveal on hover and focus-within lives
-// here; the trigger keeps its own relative positioning one level up, and
-// tones assign the scoped `--tooltip-*` variables. The floating box chrome
-// uses literal fallbacks. Never reference project design tokens here.
+// parents without changing layout. Reveal on hover and focus-within and the
+// shared floating-box chrome live here; content-specific layout and colors
+// live in application classes.
 export function Tooltip({ content, align = "start", className, children, ...rest }: TooltipProps) {
   return (
     <span {...rest} className={styles.anchor}>

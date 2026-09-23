@@ -1,90 +1,57 @@
 @layer components {
-  /* Application-level theme for buttons: the ui/Button primitive owns
-     structure through the scoped `--btn-*` variables below, and the variant
-     classes assign those variables from design tokens. The ui layer provides
-     literal fallbacks, so this bridge only carries theme values. Raw
-     `<button class="button ...">` elements keep working through the same
-     seam while migration to `<Button>` is in progress. */
-  .button {
-    --btn-padding: 10px 15px;
-    --btn-radius: var(--radius-lg);
-
-    max-inline-size: 100%;
-    min-inline-size: 0;
-    border: 1px solid var(--btn-border-color, transparent);
-    border-radius: var(--btn-radius);
-    padding: var(--btn-padding);
-    background: var(--btn-bg, transparent);
-    color: var(--btn-fg, inherit);
-    cursor: pointer;
-    font: inherit;
-    font-weight: 650;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-    text-align: center;
-    white-space: normal;
-    transition:
-      background-color var(--transition-normal),
-      border-color var(--transition-normal),
-      color var(--transition-normal);
-  }
-
-  .button:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-
+  /* Button variants use the shared design tokens directly. The ui/Button CSS
+     module owns reusable button chrome, including the global fallback needed
+     by button-like labels and links. */
   .button-primary {
-    --btn-bg: var(--primary);
-    --btn-fg: var(--primary-contrast);
+    background: var(--primary);
+    color: var(--primary-contrast);
   }
 
   .button-primary:hover:not(:disabled) {
-    --btn-bg: var(--primary-hover);
+    background: var(--primary-hover);
   }
 
   .button-secondary {
-    --btn-border-color: var(--border);
-    --btn-bg: var(--surface);
-    --btn-fg: var(--text);
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
   }
 
   .button-secondary:hover:not(:disabled) {
-    --btn-border-color: var(--primary);
+    border-color: var(--primary);
   }
 
   .dev-mode-button[aria-pressed="true"] {
-    --btn-border-color: var(--primary);
-    --btn-bg: var(--primary);
-    --btn-fg: var(--primary-contrast);
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-contrast);
   }
 
   .dev-mode-button[aria-pressed="true"]:hover:not(:disabled) {
-    --btn-bg: var(--primary-hover);
+    background: var(--primary-hover);
   }
 
   .button-danger {
-    --btn-border-color: var(--error-border);
-    --btn-bg: var(--error-soft);
-    --btn-fg: var(--error);
+    border-color: var(--error-border);
+    background: var(--error-soft);
+    color: var(--error);
   }
 
   .button-danger:hover:not(:disabled) {
-    --btn-border-color: var(--error);
-    --btn-bg: oklch(from var(--error) l c h / 0.22);
+    border-color: var(--error);
+    background: oklch(from var(--error) l c h / 0.22);
   }
 
   .button-small {
-    --btn-padding: 5px 9px;
-    --btn-border-color: var(--border);
-    --btn-bg: var(--surface-alt);
-    --btn-fg: var(--text);
-
+    padding: 5px 9px;
+    border-color: var(--border);
+    background: var(--surface-alt);
+    color: var(--text);
     font-size: inherit;
   }
 
   .button-small:hover:not(:disabled) {
-    --btn-border-color: var(--primary);
+    border-color: var(--primary);
   }
 
   .icon-button {

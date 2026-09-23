@@ -5,10 +5,9 @@ import styles from "./style.module.css"
 type PanelProps = HTMLAttributes<HTMLElement>
 type PanelHeadingProps = HTMLAttributes<HTMLDivElement>
 
-// Self-contained primitives: behavior plus structure. Presentation is a
-// scoped variable API (`--panel-*`); visual variants and theme values live
-// one level up in application CSS. Never reference project design tokens
-// here.
+// Reusable panel behavior and base presentation. Domain-specific layout and
+// visual overrides live in application CSS and use the shared design tokens
+// directly.
 export function Panel({ className, ...rest }: PanelProps) {
   return <section className={className ? `${styles.panel} ${className}` : styles.panel} {...rest} />
 }

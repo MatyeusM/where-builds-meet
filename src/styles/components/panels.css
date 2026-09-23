@@ -78,17 +78,6 @@
     }
   }
 
-  /* Application-level theme bridge for the ui/Panel primitive: design tokens
-     flow into the primitive only through its scoped `--panel-*` variables.
-     Structural defaults (padding, radius, gaps) stay in the ui layer below
-     with literal fallbacks. */
-  :root {
-    --panel-bg: oklch(from var(--surface) l c h / 0.92);
-    --panel-border-color: var(--border);
-    --panel-shadow: 0 12px 30px var(--shadow-color);
-    --panel-muted-fg: var(--text-muted);
-  }
-
   .setup-placeholder-panel {
     min-block-size: 92px;
   }
