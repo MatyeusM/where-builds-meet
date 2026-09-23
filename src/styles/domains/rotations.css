@@ -47,7 +47,7 @@
     min-inline-size: 0;
   }
 
-  .rotation-list-heading .button {
+  .rotation-list-heading [data-button] {
     inline-size: auto;
     min-inline-size: 0;
     padding-inline: 6px;
@@ -93,11 +93,6 @@
   .rotation-list-item.incompatible:hover,
   .rotation-list-item.incompatible.editing {
     opacity: 0.78;
-  }
-
-  .rotation-list-item .button {
-    flex: 0 0 auto;
-    padding: 5px 7px;
   }
 
   .rotation-list-item > .rotation-select-button {
@@ -190,12 +185,8 @@
     gap: 7px;
   }
 
-  .rotation-transfer-actions .button {
+  .rotation-transfer-actions [data-button] {
     text-align: center;
-  }
-
-  .rotation-import-button input {
-    display: none;
   }
 
   .rotation-transfer-actions p {
@@ -291,7 +282,7 @@
     gap: 10px;
   }
 
-  .rotation-heading-actions .button {
+  .rotation-heading-actions [data-button] {
     flex: 0 0 auto;
     white-space: nowrap;
   }

@@ -1,6 +1,5 @@
 @layer ui {
-  .button,
-  :global(.button) {
+  .button {
     max-inline-size: 100%;
     min-inline-size: 0;
     border: 1px solid transparent;
@@ -21,9 +20,50 @@
       color var(--transition-normal);
   }
 
-  .button:disabled,
-  :global(.button):disabled {
+  .button:disabled {
     cursor: not-allowed;
     opacity: 0.45;
+  }
+
+  .primary {
+    background: var(--primary);
+    color: var(--primary-contrast);
+  }
+
+  .primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .secondary {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .secondary:hover:not(:disabled) {
+    border-color: var(--primary);
+  }
+
+  .danger {
+    border-color: var(--error-border);
+    background: var(--error-soft);
+    color: var(--error);
+  }
+
+  .danger:hover:not(:disabled) {
+    border-color: var(--error);
+    background: oklch(from var(--error) l c h / 22%);
+  }
+
+  .small {
+    padding: 5px 9px;
+    border-color: var(--border);
+    background: var(--surface-alt);
+    color: var(--text);
+    font-size: inherit;
+  }
+
+  .small:hover:not(:disabled) {
+    border-color: var(--primary);
   }
 }

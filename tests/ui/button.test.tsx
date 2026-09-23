@@ -46,11 +46,17 @@ describe("Button", () => {
     expect(button.getAttribute("type")).toBe("submit")
   })
 
-  it("keeps application variant classes alongside its own structure class", async () => {
-    const button = await renderButton({ children: "Confirm", className: "button-primary button-small" })
-    expect(button.getAttribute("class")).toContain("button-primary")
-    expect(button.getAttribute("class")).toContain("button-small")
-    expect(button.getAttribute("class")).not.toBe("button-primary button-small")
+  it("exposes a primitive marker and keeps application layout classes", async () => {
+    const button = await renderButton({
+      children: "Confirm",
+      variant: "primary",
+      size: "small",
+      className: "dialog-action",
+    })
+    expect(button.hasAttribute("data-button")).toBe(true)
+    expect(button.hasAttribute("variant")).toBe(false)
+    expect(button.hasAttribute("size")).toBe(false)
+    expect(button.getAttribute("class")).toContain("dialog-action")
   })
 
   it("forwards interaction props and honors disabled", async () => {

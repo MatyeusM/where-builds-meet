@@ -1,26 +1,4 @@
 @layer components {
-  /* Button variants use the shared design tokens directly. The ui/Button CSS
-     module owns reusable button chrome, including the global fallback needed
-     by button-like labels and links. */
-  .button-primary {
-    background: var(--primary);
-    color: var(--primary-contrast);
-  }
-
-  .button-primary:hover:not(:disabled) {
-    background: var(--primary-hover);
-  }
-
-  .button-secondary {
-    border-color: var(--border);
-    background: var(--surface);
-    color: var(--text);
-  }
-
-  .button-secondary:hover:not(:disabled) {
-    border-color: var(--primary);
-  }
-
   .dev-mode-button[aria-pressed="true"] {
     border-color: var(--primary);
     background: var(--primary);
@@ -29,29 +7,6 @@
 
   .dev-mode-button[aria-pressed="true"]:hover:not(:disabled) {
     background: var(--primary-hover);
-  }
-
-  .button-danger {
-    border-color: var(--error-border);
-    background: var(--error-soft);
-    color: var(--error);
-  }
-
-  .button-danger:hover:not(:disabled) {
-    border-color: var(--error);
-    background: oklch(from var(--error) l c h / 0.22);
-  }
-
-  .button-small {
-    padding: 5px 9px;
-    border-color: var(--border);
-    background: var(--surface-alt);
-    color: var(--text);
-    font-size: inherit;
-  }
-
-  .button-small:hover:not(:disabled) {
-    border-color: var(--primary);
   }
 
   .icon-button {

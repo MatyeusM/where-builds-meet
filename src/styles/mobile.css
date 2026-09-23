@@ -370,7 +370,7 @@
     justify-content: start;
   }
 
-  .layout-mobile .rotation-heading-actions .button {
+  .layout-mobile .rotation-heading-actions [data-button] {
     flex: 1 1 7.5rem;
   }
 
@@ -560,7 +560,7 @@
     max-inline-size: none;
   }
 
-  .layout-mobile .simulation-controls .button {
+  .layout-mobile .simulation-controls [data-button] {
     inline-size: 100%;
   }
 

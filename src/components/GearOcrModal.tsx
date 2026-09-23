@@ -152,7 +152,7 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
             </h2>
             <p>{t("ui.buildTab.useAClearUncroppedGearDetailsScreenshotRecognition")}</p>
           </div>
-          <Button className="button-secondary button-small" type="button" disabled={ocrBusy} onClick={closeOcr}>
+          <Button variant="secondary" size="small" type="button" disabled={ocrBusy} onClick={closeOcr}>
             {t("ui.buildTab.close")}
           </Button>
         </div>
@@ -184,12 +184,7 @@ export function GearOcrModal({ open, definitionId, definitionName, onClose, onIm
               onChange={selectOcrFile}
               hidden
             />
-            <Button
-              className="button-primary"
-              type="button"
-              disabled={ocrBusy}
-              onClick={() => ocrInputRef.current?.click()}
-            >
+            <Button variant="primary" type="button" disabled={ocrBusy} onClick={() => ocrInputRef.current?.click()}>
               {ocrPreview ? t("ui.buildTab.chooseAnotherImage") : t("ui.buildTab.chooseImage")}
             </Button>
           </div>

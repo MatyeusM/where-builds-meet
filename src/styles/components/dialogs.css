@@ -157,10 +157,6 @@
     color: var(--error);
   }
 
-  .character-profile-import input {
-    display: none;
-  }
-
   .rotation-readable-dialog textarea {
     display: block;
     inline-size: 100%;
@@ -236,7 +232,7 @@
     padding-inline-start: 5px;
   }
 
-  .official-import-steps a:not(.button) {
+  .official-import-steps a {
     color: var(--primary);
   }
 
@@ -244,7 +240,8 @@
     display: inline-block;
     margin: 0 4px;
     cursor: grab;
-    text-decoration: none;
+    font-weight: 650;
+    text-underline-offset: 0.15em;
   }
 
   .official-import-dialog textarea {

@@ -50,7 +50,7 @@
       min-inline-size: 2.75rem;
     }
 
-    .button {
+    [data-button] {
       margin-block-start: 0.5rem;
     }
   }

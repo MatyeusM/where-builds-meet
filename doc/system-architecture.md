@@ -153,11 +153,17 @@ owns no game or application state, and imports nothing from `src/components/`
 or other application/domain code.
 
 The CSS module owns the same small, reusable set of rules as any other UI
-component and references `src/styles/tokens.css` directly. Domain-specific
-variants remain ordinary application classes one layer above the primitive;
-they override properties directly with the same design tokens. Primitives do
-not expose a second custom-property theming API, duplicate token values as
-literal fallbacks, or require global token bridges.
+component and references `src/styles/tokens.css` directly. Reusable appearance
+options are explicit primitive props and local module classes rather than
+recreated global classes. For example, `Button` owns primary, secondary, and
+danger variants, their hover states, and the small size. Its `data-button`
+marker exists only so domain layout rules can target primitive instances; it
+does not provide a global button-style fallback.
+
+Domain-specific classes one layer above a primitive may still adjust layout
+or context-specific appearance with the same design tokens. Primitives do not
+expose a second custom-property theming API, duplicate token values as literal
+fallbacks, or require global token bridges.
 
 `src/ui/` is the bottom-most CSS `@layer` (`ui`, declared first in
 `src/styles/index.css`), so application classes can refine primitive defaults

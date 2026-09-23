@@ -269,7 +269,7 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
           />
         </label>
         <Button
-          className={`${running ? "button-secondary" : "button-primary"}`}
+          variant={running ? "secondary" : "primary"}
           type="button"
           disabled={!bundle && !running}
           onClick={simulate}
@@ -281,7 +281,8 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
         <div className="simulation-percentile-heading">
           <strong>{t("ui.simulationTab.customPercentiles")}</strong>
           <Button
-            className="button-secondary button-small"
+            variant="secondary"
+            size="small"
             type="button"
             disabled={running || addingPercentile}
             onClick={() => {
@@ -328,11 +329,12 @@ export default function SimulationTab({ bundle, bundleKey, rotationName, buildNa
                 }}
               />
             </label>
-            <Button className="button-primary button-small" type="button" onClick={addPercentile}>
+            <Button variant="primary" size="small" type="button" onClick={addPercentile}>
               {t("ui.simulationTab.add")}
             </Button>
             <Button
-              className="button-secondary button-small"
+              variant="secondary"
+              size="small"
               type="button"
               onClick={() => {
                 setAddingPercentile(false)

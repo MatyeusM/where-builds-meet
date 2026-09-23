@@ -24,7 +24,7 @@ export function NoticeArea() {
                   {notice.error && <strong>{t("ui.notices.error")}</strong>}
                   <p>{noticeText(notice.message)}</p>
                   {notice.action && (
-                    <Button type="button" className="button-primary" onClick={notice.action.run}>
+                    <Button type="button" variant="primary" onClick={notice.action.run}>
                       {noticeText(notice.action.label)}
                     </Button>
                   )}

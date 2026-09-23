@@ -37,7 +37,7 @@
     text-transform: uppercase;
   }
 
-  .build-list-heading .button {
+  .build-list-heading [data-button] {
     inline-size: auto;
     min-inline-size: 0;
     line-height: 1.15;
@@ -152,17 +152,13 @@
     gap: 7px;
   }
 
-  .build-transfer-actions .button {
+  .build-transfer-actions [data-button] {
     text-align: center;
   }
 
   .build-official-import-button {
     inline-size: 100%;
     margin-block-start: 7px;
-  }
-
-  .build-import-button input {
-    display: none;
   }
 
   .build-transfer-actions p {
@@ -207,7 +203,7 @@
     gap: 10px;
   }
 
-  .detail-active-actions .button {
+  .detail-active-actions [data-button] {
     white-space: nowrap;
   }
 
@@ -520,7 +516,7 @@
     padding-block-start: 14px;
   }
 
-  .gear-card-actions .button {
+  .gear-card-actions [data-button] {
     min-inline-size: min(100%, 5rem);
     flex: 1 1 5rem;
     padding-inline: 6px;

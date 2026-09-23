@@ -2,11 +2,16 @@ import type { ButtonHTMLAttributes } from "react"
 
 import styles from "./style.module.css"
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "danger"
+  size?: "small"
+}
 
-// Reusable button behavior and base presentation. Visual variants
-// (button-primary, button-secondary, button-danger, button-small, ...) live
-// in application CSS and use the shared design tokens directly.
-export function Button({ type = "button", className, ...rest }: ButtonProps) {
-  return <button type={type} className={className ? `${styles.button} ${className}` : styles.button} {...rest} />
+export function Button({ type = "button", variant, size, className, ...rest }: ButtonProps) {
+  const classes = [styles.button]
+  if (variant) classes.push(styles[variant])
+  if (size) classes.push(styles[size])
+  if (className) classes.push(className)
+
+  return <button type={type} data-button="" className={classes.join(" ")} {...rest} />
 }

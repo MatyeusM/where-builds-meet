@@ -288,7 +288,7 @@ export function GearEditor({
           <p>{t("ui.buildTab.percentageValuesAreEnteredAsPercentagePoints")}</p>
         </div>
         {!editingExisting && (
-          <Button className="button-secondary button-small" type="button" onClick={() => setOcrOpen(true)}>
+          <Button variant="secondary" size="small" type="button" onClick={() => setOcrOpen(true)}>
             {t("ui.buildTab.importFromImage")}
           </Button>
         )}
@@ -316,7 +316,7 @@ export function GearEditor({
             <Checkbox checked={draft.relayed} onChange={event => onRelayedChange(event.target.checked)} />
             <span>{t("ui.buildTab.relayedOptionLabel")}</span>
           </label>
-          <Button className="button-secondary button-small" type="button" onClick={applyMax}>
+          <Button variant="secondary" size="small" type="button" onClick={applyMax}>
             {t("ui.buildTab.max")}
           </Button>
         </div>
@@ -381,10 +381,10 @@ export function GearEditor({
         </p>
       )}
       <div className="editor-actions">
-        <Button className="button-secondary" type="button" onClick={onCancel}>
+        <Button variant="secondary" type="button" onClick={onCancel}>
           {t("ui.buildTab.cancel")}
         </Button>
-        <Button className="button-primary" type="button" onClick={onSave}>
+        <Button variant="primary" type="button" onClick={onSave}>
           {editingExisting ? t("ui.buildTab.saveChanges") : t("ui.buildTab.save")}
         </Button>
       </div>
