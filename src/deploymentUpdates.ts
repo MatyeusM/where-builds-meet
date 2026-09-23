@@ -1,6 +1,9 @@
 import { t } from "./i18n"
 import { publishNotice } from "./notices"
 
+// Injected by the deployment-version definition in vite.config.ts.
+declare const __APP_VERSION__: string
+
 type UpdateState = "current" | "available" | "load-error"
 
 let state: UpdateState = "current"
