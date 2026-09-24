@@ -36,7 +36,10 @@ npm run preview       # Serve the production build locally
 ```text
 data/                 Game definitions: skills, effects, gear, enemies, rotations
 doc/                  Architecture, formula, and combat-data documentation
-src/App.tsx           Application state, UI composition, and simulation inputs
+src/App.tsx           Application composition shell and cross-feature state
+src/application/      Cross-feature contracts, game data, persistence, and services
+src/features/         Feature UI and feature-local behavior
+src/schemas/          Runtime trust-boundary validation
 src/calculations/     Stat resolution, timeline simulation, damage, and Web Worker
 src/data/             UI-facing stat definitions
 src/types.ts          Shared character and enemy types

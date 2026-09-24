@@ -104,8 +104,21 @@ doc/
   system-architecture.md
 
 src/
-  App.tsx                         UI, data composition, and current orchestration
-  BuildTab.tsx                    build orchestration, equipped slots, and inventory
+  App.tsx                         application composition shell and cross-feature state
+  application/                    cross-feature contracts, game data, persistence, and services
+    gameData/                     path, skill, setup, and martial-art registries
+    persistence/                  storage keys, migrations, and application loaders
+    results/                      shared calculation result presentation
+    shell/                        eager notice and feature-boundary components
+  features/                       feature UI and feature-local behavior
+    analysis/                     breakdown presentation
+    build/                        build, gear, OCR, and setup UI
+    character/                    character statistics and profile UI
+    rotations/                    rotation editor and timeline presentation
+    settings/                     settings UI
+    simulation/                   simulation UI and lifecycle
+    skills/                       skill editor UI
+  schemas/                        runtime trust-boundary validation
   ui/                             generic, reusable, domain-agnostic UI primitives
     Button/                       reusable button variants and sizes
     Checkbox/                     native checkbox shell
@@ -116,9 +129,6 @@ src/
     Select/                       native select shell
     Tab/                          selectable button state shell
     Tooltip/                      layout-neutral hover/focus tooltip
-  components/                     application/domain-level components built on ui/
-    GearEditor.tsx                gear add/edit presentation and local draft state
-    GearOcrModal.tsx              gear screenshot import dialog
   i18n.ts                         locale resolution, message loading, and UI translation
   gear.ts                         persisted gear model and equipped effects
   readableRotation.ts             pure readable-sequence formatter
@@ -148,11 +158,15 @@ public/
 
 `src/ui/` contains only generic, reusable UI primitives. A primitive stays
 domain-agnostic: it renders arbitrary children, owns no game or application
-state, and imports nothing from `src/components/` or other application/domain
-code. `src/components/` contains structural, application-level components that
-may know about game mechanics and compose primitives from `src/ui/`. The
-dependency direction is one-way: application code and domain components may
-import from `src/ui/`; `src/ui/` must never import from `src/components/`.
+state, and imports nothing from application, feature, or domain modules.
+Feature components own their local UI and compose primitives from `src/ui/`.
+Application services own cross-feature behavior and may import UI primitives,
+but feature modules must not import one another. `src/App.tsx` is the eager
+composition shell: it coordinates shared state and renders features, while
+reusable domain services live under `src/application/`. The dependency
+direction is one-way: features may use application services and primitives;
+application services must not import feature UI; UI must not import any of
+those layers.
 
 ### Primitive contract (`src/ui/<Name>/{index.tsx, style.module.css}`)
 
@@ -161,8 +175,8 @@ When `index.tsx` grows too large to stay readable, the folder has room for
 additional files (for example `types.ts`, `helpers.ts`, or subcomponents) —
 splitting a primitive across files inside its own folder is expected and
 preferred over growing a single file. A primitive renders arbitrary children,
-owns no game or application state, and imports nothing from `src/components/`
-or other application/domain code.
+owns no game or application state, and imports nothing from application,
+feature, or domain modules.
 
 The CSS module owns the same small, reusable set of rules as any other UI
 component and consumes shared custom properties from the globally loaded
@@ -1317,7 +1331,7 @@ definition.
 
 Add the record to an imported `data/skill/*.json` map and reference its ID from
 rotation or trigger actions. A new editor category also requires an import and a
-`defaultSkillMaps` entry in `App.tsx`.
+`defaultSkillMaps` entry in `src/application/gameData/skills.ts`.
 
 ### Buff, debuff, or DOT
 
@@ -1416,9 +1430,9 @@ from data.
 
 ## Known architectural limitations
 
-- `App.tsx` is still a large composition and UI module. The calculation engine
-  is pure and worker-safe, but bundle construction remains inside
-  `RotationEditorTab` rather than a top-level application service.
+- `App.tsx` is now the composition shell. The calculation engine and the
+  `buildPresetRotationBundle` service remain pure and worker-safe; the cohesive
+  Rotation Editor owns the editor-specific state and timeline interactions.
 - Skill Editor skill, buff, debuff, and DOT overrides are saved for the session
   and composed over the default combat maps used by the calculator and
   simulator. Buff/debuff effect arrays and cumulative stack tiers use the same
@@ -1549,7 +1563,7 @@ configuration are required for GitHub Pages hosting.
 
 ### Preset DPS regression gate
 
-The exported `buildPresetRotationBundle` in `App.tsx` builds a selected preset
+The exported `buildPresetRotationBundle` in `src/application/graduation.ts` builds a selected preset
 using the same setup, gear, stats, definitions, and timeline inputs as the
 Graduation comparison. Graduation supplies the path's graduated build ID;
 the headless DPS snapshot runner supplies its default build ID and explicit

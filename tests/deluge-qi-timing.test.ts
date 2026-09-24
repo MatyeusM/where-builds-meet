@@ -5,7 +5,7 @@ import regularFire from "../data/rotation/silkbind-deluge/dummy-1-min-regular-fi
 import smolder from "../data/rotation/silkbind-deluge/dummy-1-min-smolder.json"
 import wtsTeam from "../data/rotation/silkbind-deluge/dummy-1-min-wts-team.json"
 import wts from "../data/rotation/silkbind-deluge/dummy-1-min-wts.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { compareTimelineTime, type RotationRecord } from "../src/calculations/rotationTimeline"
 

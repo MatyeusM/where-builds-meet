@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import morale from "../data/innerway/morale-chant.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"

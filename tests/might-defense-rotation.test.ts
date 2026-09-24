@@ -2,7 +2,7 @@ import { assert, expect, it } from "vitest"
 
 import paths from "../data/path.json"
 import preset from "../data/rotation/stonesplit-might/dummy-1-min.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { type RotationRecord } from "../src/calculations/rotationTimeline"
 import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"

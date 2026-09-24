@@ -25,9 +25,10 @@ Current calculations use breakthrough 17, each rotation's saved ping (40 ms
 by default; 30 ms for Might), Simmering Fish Slices,
 Fire Divinecraft, no Script, and no global or skill overrides. The rotation
 supplies its martial arts and encounter flags; the build supplies its gear,
-Inner Ways, and sets. Fixtures are passed to `buildPresetRotationBundle` and
-`calculateRotationBaseline`, the production calculation pipeline. No browser
-preferences or duplicate damage formulas enter the check.
+Inner Ways, and sets. Fixtures are passed to `src/application/graduation.ts`'s
+`buildPresetRotationBundle` and `calculateRotationBaseline`, the production
+calculation pipeline. No browser preferences or duplicate damage formulas enter
+the check.
 
 ## Accepted values and review gate
 

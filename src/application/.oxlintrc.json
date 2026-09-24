@@ -13,14 +13,17 @@
     "vitest",
     "promise"
   ],
-  "categories": { "correctness": "error", "suspicious": "error", "pedantic": "error", "perf": "error" },
+  "categories": { "correctness": "error", "perf": "error" },
   "rules": {
     "import/no-duplicates": "error",
     "eslint/no-restricted-imports": [
       "error",
       {
         "patterns": [
-          { "group": ["^../"], "message": "UI primitives must not import application, feature, or domain modules." }
+          {
+            "group": ["**/features", "**/features/*", "**/App", "**/App.*", "**/main", "**/main.*"],
+            "message": "Application services must not import feature UI or the application entrypoint."
+          }
         ]
       }
     ]

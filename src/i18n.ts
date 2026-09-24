@@ -1,8 +1,9 @@
 import type * as v from "valibot"
 
 import { developmentModeStorageKey, localeStorageKey } from "./application/persistence/keys"
+import { getPersistentItem, setPersistentItem } from "./persistentStorage"
 import { localeManifestSchema, localeMessagesSchema, type LocaleManifest, type LocaleMessages } from "./schemas/http"
-import { parseJson } from "./schemas/json"
+import { validateUnknown } from "./schemas/json"
 
 type Messages = LocaleMessages
 
@@ -24,7 +25,7 @@ function localeAsset(name: string) {
 async function loadJson<T>(name: string, schema: v.GenericSchema<T>): Promise<T> {
   const response = await fetch(localeAsset(name), { cache: "no-cache" })
   if (!response.ok) throw new Error(`Unable to load locale asset ${name}.`)
-  const result = parseJson(schema, await response.text())
+  const result = validateUnknown(schema, (await response.json()) as unknown)
   if (!result.success) throw new Error(`Unable to load locale asset ${name}.`)
   return result.output
 }
@@ -40,7 +41,7 @@ export function isLocaleWip(locale: string) {
 }
 
 function localeAvailable(locale: string) {
-  return !isLocaleWip(locale) || localStorage.getItem(developmentModeStorageKey) === "true"
+  return !isLocaleWip(locale) || getPersistentItem(developmentModeStorageKey) === "true"
 }
 
 function availableLocale(candidate: string | null | undefined) {
@@ -59,7 +60,7 @@ function browserLocale() {
   return undefined
 }
 
-export function resolveLocale(savedLocale = localStorage.getItem(localeStorageKey)) {
+export function resolveLocale(savedLocale = getPersistentItem(localeStorageKey)) {
   return availableLocale(savedLocale) ?? browserLocale() ?? manifest.default
 }
 
@@ -114,7 +115,7 @@ export async function selectLocale(locale: string) {
   if (!supported) return false
   try {
     await loadLocale(supported)
-    localStorage.setItem(localeStorageKey, supported)
+    setPersistentItem(localeStorageKey, supported)
     return true
   } catch {
     return false

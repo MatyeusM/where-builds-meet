@@ -1,6 +1,6 @@
 import { assert, afterEach, describe, expect, it, vi } from "vitest"
 
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { resolveActionStatContext } from "../src/calculations/actionStats"
 import {
   calculateRotationBaseline,

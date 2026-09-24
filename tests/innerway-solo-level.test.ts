@@ -90,7 +90,7 @@ describe("innerway-solo-level", () => {
       }
     }
 
-    const { buildPresetRotationBundle } = await import("../src/App.tsx")
+    const { buildPresetRotationBundle } = await import("../src/application/graduation")
     const path = (await import("../data/path.json")).default.bamboocutKite
     const build = breakthrough =>
       buildPresetRotationBundle(

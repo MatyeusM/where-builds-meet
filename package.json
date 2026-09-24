@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate:presets && npm run test:innerways && npm run test:wts && npm run test:sets && npm run i18n:check && npm run test && tsc -b && vite build",
+    "build": "npm run i18n:check && npm run test && tsc -b && vite build",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint && oxlint -c src/ui/.oxlintrc.json src/ui && stylelint \"src/**/*.css\"",

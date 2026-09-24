@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises"
 
-import type { buildPresetRotationBundle } from "../../src/App"
+import type { buildPresetRotationBundle } from "../../src/application/graduation"
 import { resolvePing } from "../../src/calculations/combatDefaults"
 import type { RotationRecord } from "../../src/calculations/rotationTimeline"
 type Environment = Parameters<typeof buildPresetRotationBundle>[0]

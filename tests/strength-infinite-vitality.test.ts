@@ -1,6 +1,6 @@
 import { expect, it } from "vitest"
 
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 

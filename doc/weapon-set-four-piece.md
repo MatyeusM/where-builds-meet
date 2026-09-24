@@ -33,7 +33,8 @@ two-piece stats once; zero- and two-piece selections do not activate these rules
 
 ## Verification
 
-`npm run test:sets` runs in `npm run build`. The probe exercises the real
+`npm run test:sets` is available as a focused local check and is also included
+in the ordinary Vitest suite run by `npm run build`. The probe exercises the real
 calculation pipeline: Swaying Heights HP boundaries and cap, Swallowcall damage
 channels/Qi boundaries/status alternatives and mid-cast state changes, Rain
 Whisper critical versus normal healing, Cleftpeak Deflect selection and expiry,

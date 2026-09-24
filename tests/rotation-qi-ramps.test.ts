@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import paths from "../data/path.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
 import { probeLoad } from "./helpers/probe-loader"
 

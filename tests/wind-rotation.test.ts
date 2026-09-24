@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import windBuffs from "../data/buff/bamboocut-wind.json"
 import rotation from "../data/rotation/bamboocut-wind/wind-dummy-1-min-infinite-vitality.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import type { RotationRecord } from "../src/calculations/rotationTimeline"
