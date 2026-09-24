@@ -55,15 +55,15 @@ describe("persistent storage migration", () => {
     expect(firstTabStorage.getItem("legacy")).toBeNull()
   })
 
-  it("eagerly migrates every remaining session value at startup", () => {
+  it("eagerly migrates only application-owned session values at startup", () => {
+    firstTabStorage.setItem("wwm-locale", "zh-Hant")
     firstTabStorage.setItem("eager-a", "a")
-    firstTabStorage.setItem("eager-b", "b")
 
     migrateSessionStorage()
 
-    expect(localStorage.getItem("eager-a")).toBe("a")
-    expect(localStorage.getItem("eager-b")).toBe("b")
-    expect(firstTabStorage.length).toBe(0)
+    expect(localStorage.getItem("wwm-locale")).toBe("zh-Hant")
+    expect(localStorage.getItem("eager-a")).toBeNull()
+    expect(firstTabStorage.getItem("eager-a")).toBe("a")
   })
 
   it("prefers durable data over a stale session copy", () => {

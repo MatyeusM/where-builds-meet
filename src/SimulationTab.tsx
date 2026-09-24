@@ -1,6 +1,7 @@
 import { IconTrash, IconX } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
 
+import { customPercentileStorageKey } from "./application/persistence/keys"
 import type { RotationSimulationBundle } from "./calculations/rotationCalculator"
 import {
   selectSimulationPercentile,
@@ -11,6 +12,8 @@ import { startSimulation, type SimulationTask } from "./calculations/simulationW
 import { t } from "./i18n"
 import { publishNotice, dismissNotice } from "./notices"
 import { getPersistentItem, setPersistentItem } from "./persistentStorage"
+import { parseJson } from "./schemas/json"
+import { simulationPercentilesSchema } from "./schemas/storage"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
 import { Panel } from "./ui/Panel"
@@ -30,28 +33,14 @@ type SimulationRecord = {
   buildName: string
 }
 
-const customPercentileStorageKey = "wwm-simulation-percentiles-v1"
 const presetPercentiles = new Set([99, 95, 90, 75, 50])
 
 function loadCustomPercentiles() {
-  try {
-    const saved = JSON.parse(getPersistentItem(customPercentileStorageKey) ?? "[]") as unknown
-    if (!Array.isArray(saved)) return []
-    return [
-      ...new Set(
-        saved.filter(
-          (value): value is number =>
-            typeof value === "number" &&
-            Number.isFinite(value) &&
-            value >= 0 &&
-            value < 100 &&
-            !presetPercentiles.has(value),
-        ),
-      ),
-    ].sort((left, right) => right - left)
-  } catch {
-    return []
-  }
+  const result = parseJson(simulationPercentilesSchema, getPersistentItem(customPercentileStorageKey) ?? "[]")
+  if (!result.success) return []
+  return [...new Set(result.output.filter(value => value < 100 && !presetPercentiles.has(value)))].sort(
+    (left, right) => right - left,
+  )
 }
 
 const formatNumber = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })

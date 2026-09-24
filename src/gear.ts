@@ -6,14 +6,29 @@ import defaultSetupJson from "../data/default-setup.json"
 import gearSetJson from "../data/gear-set.json"
 import gearJson from "../data/gear.json"
 import statJson from "../data/stat.json"
+import {
+  activeBuildStorageKey,
+  arsenalStorageKey,
+  bowRingSetStorageKey,
+  buildListStorageKey,
+  gearSetStorageKey,
+  legacyGearStorageKey,
+  legacyInnerWayStorageKey,
+} from "./application/persistence/keys"
 import type { AttunementTagFilter } from "./calculations/attunementStats"
 import type { AttunementStats } from "./calculations/damage"
 import { getPersistentItem } from "./persistentStorage"
+import {
+  buildExportInputSchema,
+  gearInventoryInputSchema,
+  gearItemInputSchema,
+  storedBuildStateSchema,
+} from "./schemas/build"
+import { buildSetupInputSchema, buildSetupOverridesInputSchema } from "./schemas/buildSetup"
+import { validateUnknown } from "./schemas/json"
 import { normalizeStoredWeaponIds, weaponIds, type CharacterStats, type WeaponId } from "./types"
 
-export const legacyGearStorageKey = "wwm-gear-inventory-v1"
-export const buildListStorageKey = "wwm-build-list-v1"
-export const activeBuildStorageKey = "wwm-active-build-v1"
+export { activeBuildStorageKey, buildListStorageKey, legacyGearStorageKey }
 export const buildExportFormat = "where-builds-meet-builds"
 
 export const gearSlots = [
@@ -187,10 +202,9 @@ export const armorSetDefinitions = armorSetJson as Record<string, SetDefinition>
 const bowRingSetDefinitions = bowRingSetJson as Record<string, unknown>
 const arsenalDefinitions = arsenalJson as Record<string, unknown>
 const configuredDefaultSetup = defaultSetupJson as BuildSetup
-const legacyArsenalStorageKey = "wwm-arsenal-session-v1"
-const legacyBowRingSetStorageKey = "wwm-bow-ring-set-session-v1"
-const legacyGearSetStorageKey = "wwm-gear-set-session-v1"
-const legacyInnerWayStorageKey = "wwm-inner-way-session-v1"
+const legacyArsenalStorageKey = arsenalStorageKey
+const legacyBowRingSetStorageKey = bowRingSetStorageKey
+const legacyGearSetStorageKey = gearSetStorageKey
 
 const cloneBuildSetup = (setup: BuildSetup): BuildSetup => ({
   innerWays: setup.innerWays.map(row => ({ ...row })),
@@ -293,8 +307,9 @@ function normalizeInnerWays(value: unknown, fallback: InnerWaySelection[]) {
 export const defaultBuildSetup = cloneBuildSetup(configuredDefaultSetup)
 
 export function normalizeBuildSetup(value: unknown, fallback: BuildSetup = defaultBuildSetup): BuildSetup {
+  const validated = validateUnknown(buildSetupInputSchema, value)
   const candidate =
-    value && typeof value === "object" && !Array.isArray(value)
+    validated.success && value && typeof value === "object" && !Array.isArray(value)
       ? (value as Partial<BuildSetup> & { gearSets?: unknown })
       : {}
   const weaponSets = candidate.weaponSets ?? candidate.gearSets
@@ -314,7 +329,8 @@ export function normalizeBuildSetup(value: unknown, fallback: BuildSetup = defau
 }
 
 export function normalizeBuildSetupOverrides(value: unknown): BuildSetupOverrides {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+  const validated = validateUnknown(buildSetupOverridesInputSchema, value)
+  if (!validated.success) return {}
   const candidate = value as Partial<BuildSetup> & { gearSets?: unknown }
   const result: BuildSetupOverrides = {}
   const innerWays = parseInnerWays(candidate.innerWays, defaultBuildSetup.innerWays.length)
@@ -479,8 +495,9 @@ function validGearValue(
 }
 
 function parseGearItem(value: unknown): GearItem | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
-  const candidate = value as Partial<GearItem>
+  const validated = validateUnknown(gearItemInputSchema, value)
+  if (!validated.success) return undefined
+  const candidate = validated.output as Partial<GearItem>
   if (typeof candidate.id !== "string" || !candidate.id) return undefined
   if (typeof candidate.definitionId !== "string") return undefined
   const definition = gearData.gear[candidate.definitionId]
@@ -558,7 +575,8 @@ function parseEquipped(value: unknown, items: GearItem[]) {
 }
 
 export function parseGearInventory(value: unknown): GearInventory {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return { items: [], equipped: {} }
+  const validated = validateUnknown(gearInventoryInputSchema, value)
+  if (!validated.success) return { items: [], equipped: {} }
   const saved = value as { items?: unknown; equipped?: unknown }
   const items = parseGearItems(saved.items)
   return { items, equipped: parseEquipped(saved.equipped, items) }
@@ -845,8 +863,8 @@ export function mergeImportedBuildState(
   value: unknown,
   options: { reuseIdenticalGear?: boolean } = {},
 ) {
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new Error("This is not a Where Builds Meet export file.")
+  const validated = validateUnknown(buildExportInputSchema, value)
+  if (!validated.success) throw new Error("This is not a Where Builds Meet export file.")
   const source = value as { format?: unknown; version?: unknown; gearItems?: unknown; builds?: unknown }
   if (
     source.format !== buildExportFormat ||
@@ -939,12 +957,13 @@ export function mergeImportedBuildState(
 
 export function loadBuildState(): BuildState {
   try {
-    const savedValue = localStorage.getItem(buildListStorageKey)
+    const savedValue = getPersistentItem(buildListStorageKey)
     const saved = JSON.parse(savedValue ?? "null") as unknown
-    const savedRecord =
+    const validatedRecord =
       saved && typeof saved === "object" && !Array.isArray(saved)
-        ? (saved as { entries?: unknown; gearItems?: unknown })
+        ? validateUnknown(storedBuildStateSchema, saved)
         : undefined
+    const savedRecord = validatedRecord?.success ? (saved as { entries?: unknown; gearItems?: unknown }) : undefined
     const savedEntries = Array.isArray(saved) ? saved : Array.isArray(savedRecord?.entries) ? savedRecord.entries : []
     const sharedItems = savedRecord ? parseGearItems(savedRecord.gearItems) : []
     const legacySetup = loadLegacyBuildSetup()
@@ -1008,7 +1027,7 @@ export function loadBuildState(): BuildState {
         })
       }
     }
-    const requestedActiveId = localStorage.getItem(activeBuildStorageKey)
+    const requestedActiveId = getPersistentItem(activeBuildStorageKey)
     const fallbackActiveId =
       savedValue === null && entries.some(entry => entry.id === "migrated-build") ? "migrated-build" : defaults[0]?.id
     const activeBuildId =

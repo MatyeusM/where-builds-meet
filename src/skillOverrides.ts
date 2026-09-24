@@ -1,4 +1,6 @@
 import type { EffectDefinition, SkillRecord } from "./calculations/rotationTimeline"
+import { validateUnknown } from "./schemas/json"
+import { skillOverridesInputSchema } from "./schemas/skillOverrides"
 
 export type SkillMap = Record<string, SkillRecord>
 export type SkillCategory =
@@ -20,7 +22,8 @@ export type EditorCategory = SkillCategory | "Buff" | "Debuff" | "DOT"
 export type SkillOverrides = Partial<Record<EditorCategory, SkillMap>>
 
 export function deserializeSkillOverrides(value: unknown): SkillOverrides {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+  const validated = validateUnknown(skillOverridesInputSchema, value)
+  if (!validated.success) return {}
   const stored = value as Record<string, unknown>
   const currentCoefficients = stored.version === 2 || stored.version === 3
   const exclusiveSegments = stored.version === 3

@@ -41,6 +41,8 @@ import { RotationEnemyCountField } from "./components/RotationEnemyCountField"
 import { RotationPingField } from "./components/RotationPingField"
 import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
+import { parseJson } from "./schemas/json"
+import { skillOverridesInputSchema } from "./schemas/skillOverrides"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "./statPriorityDisplay"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
@@ -118,6 +120,31 @@ import stormbreakerSkills from "../data/skill/stormbreaker-spear.json"
 import thundercrySkills from "../data/skill/thundercry-blade.json"
 import unfetteredSkills from "../data/skill/unfettered-rope-dart.json"
 import systemStats from "../data/system.json"
+import {
+  activeBuildByPathStorageKey,
+  activeRotationByPathStorageKey,
+  activeRotationStorageKey,
+  arsenalStorageKey,
+  attunementOverrideStorageKey,
+  attunementStorageKey,
+  bowRingSetStorageKey,
+  buildSetupOverrideStorageKey,
+  characterStatsStorageKey as storageKey,
+  divinecraftStorageKey,
+  foodStorageKey,
+  gearSetStorageKey,
+  layoutPreviewStorageKey,
+  legacyAttunementStorageKey,
+  legacyCharacterStatsStorageKey as legacyStorageKey,
+  legacyInnerWayStorageKey,
+  pathStorageKey,
+  rotationListStorageKey,
+  rotationStorageKey,
+  scriptStorageKey,
+  settingsStorageKey,
+  skillStorageKey,
+  statOverrideStorageKey,
+} from "./application/persistence/keys"
 import type { EditorTimelineResult } from "./calculations/editorTimeline"
 import type { DerivedStats } from "./calculations/effectiveStats"
 import {
@@ -297,24 +324,6 @@ import {
   type WeaponId,
 } from "./types"
 
-const storageKey = "wwm-character-stats-v3"
-const legacyStorageKey = "wwm-character-stats-v2"
-const statOverrideStorageKey = "wwm-stat-overrides-v1"
-const skillStorageKey = "wwm-skill-editor-session-v1"
-const layoutPreviewStorageKey = "wwm-layout-preview-session-v1"
-const legacyInnerWayStorageKey = "wwm-inner-way-session-v1"
-const attunementStorageKey = "wwm-attunement-session-v2"
-const legacyAttunementStorageKey = "wwm-attunement-session-v1"
-const attunementOverrideStorageKey = "wwm-attunement-overrides-v1"
-const settingsStorageKey = "wwm-settings-session-v1"
-const arsenalStorageKey = "wwm-arsenal-session-v1"
-const bowRingSetStorageKey = "wwm-bow-ring-set-session-v1"
-const gearSetStorageKey = "wwm-gear-set-session-v1"
-const foodStorageKey = "wwm-food-session-v1"
-const divinecraftStorageKey = "wwm-divinecraft-session-v1"
-const scriptStorageKey = "wwm-script-session-v1"
-const pathStorageKey = "wwm-path-session-v1"
-const buildSetupOverrideStorageKey = "wwm-build-setup-overrides-v1"
 const percentageStatKeys = new Set<keyof CharacterStats>(
   allStatDefinitions.filter(({ unit }) => unit === "%").map(({ key }) => key),
 )
@@ -537,12 +546,6 @@ function rotationEventDisplayName(eventId: string) {
   const key = `${eventId.charAt(0).toLowerCase()}${eventId.slice(1)}`
   return dataText(`game.event.${key}`, rotationEventDefinitions[eventId]?.name ?? eventId)
 }
-
-const rotationStorageKey = "wwm-rotation-editor-session-v2"
-const rotationListStorageKey = "wwm-rotation-list-session-v1"
-const activeRotationStorageKey = "wwm-active-rotation-session-v1"
-const activeRotationByPathStorageKey = "wwm-active-rotation-by-path-v1"
-const activeBuildByPathStorageKey = "wwm-active-build-by-path-v1"
 
 type PathSelectionIds = Partial<Record<PathId, string>>
 
@@ -1673,11 +1676,8 @@ function loadSettings(): CalculatorSettings {
 }
 
 function loadSkillOverrides(): SkillOverrides {
-  try {
-    return deserializeSkillOverrides(JSON.parse(getPersistentItem(skillStorageKey) ?? "{}"))
-  } catch {
-    return {}
-  }
+  const result = parseJson(skillOverridesInputSchema, getPersistentItem(skillStorageKey) ?? "{}")
+  return result.success ? deserializeSkillOverrides(result.output) : {}
 }
 
 function hasSkillOverrides(overrides: SkillOverrides) {
