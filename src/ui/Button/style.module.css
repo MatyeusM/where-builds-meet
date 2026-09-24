@@ -25,6 +25,18 @@
     opacity: 0.45;
   }
 
+  .small {
+    padding: 5px 9px;
+    border-color: var(--border);
+    background: var(--surface-alt);
+    color: var(--text);
+    font-size: inherit;
+  }
+
+  .small:hover:not(:disabled) {
+    border-color: var(--primary);
+  }
+
   .primary {
     background: var(--primary);
     color: var(--primary-contrast);
@@ -53,17 +65,5 @@
   .danger:hover:not(:disabled) {
     border-color: var(--error);
     background: oklch(from var(--error) l c h / 22%);
-  }
-
-  .small {
-    padding: 5px 9px;
-    border-color: var(--border);
-    background: var(--surface-alt);
-    color: var(--text);
-    font-size: inherit;
-  }
-
-  .small:hover:not(:disabled) {
-    border-color: var(--primary);
   }
 }

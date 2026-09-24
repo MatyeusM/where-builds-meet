@@ -93,6 +93,8 @@ Except where otherwise noted, Where Builds Meet is free software licensed under 
 
 The bundled Noto Sans font is licensed under the [SIL Open Font License 1.1](public/licenses/Noto-Sans-OFL.txt).
 
+The bundled Tabler Icons React package is licensed under the [MIT License](public/licenses/Tabler-Icons-MIT.txt).
+
 ## Acknowledgements
 
 - **yoka**, creator of the original spreadsheet that inspired this work

@@ -21,16 +21,19 @@ does not contain CJK glyphs.
 Layouts must remain usable when the web font is unavailable or overridden.
 Text-bearing controls wrap instead of relying on English-label pixel widths,
 flex and grid children use zero minimum sizes, longer content may grow row
-height, and dense data tables scroll horizontally rather than compressing or
-clipping their columns. Fixed square dimensions are reserved for icons and
-other non-text controls. UI icons are SVG components so their geometry does
-not depend on the active font. Noto Sans is therefore a repeatable visual
-baseline, not a layout requirement.
+height, and dense data tables keep one logical row while their cell contents
+wrap within flexible columns. Buff and debuff cells may grow vertically when
+their effect lists need additional lines. Fixed square dimensions are reserved
+for icons and other non-text controls. UI icons are SVG components so their
+geometry does not depend on the active font. Noto Sans is therefore a repeatable
+visual baseline, not a layout requirement.
 
 PC and mobile are explicit presentation modes over the same React state and
 calculation components. PC retains the established wide grids and viewport-bound
 Build and Rotation workspaces. Mobile uses normal document scrolling, compact
-single-column panels, horizontal item choosers, and card-style rotation rows.
+single-column panels, and horizontal item choosers. Rotation rows remain a
+single CSS grid row in both modes; their flexible columns wrap long cell content
+instead of switching the whole row to a card layout.
 The production mode follows a `48em` viewport query. Settings always shows the
 currently resolved PC/Mobile layout below the weapon selectors. The selector remains disabled
 and dimmed until Dev mode is enabled, at which point it overrides the viewport
@@ -104,7 +107,15 @@ src/
   App.tsx                         UI, data composition, and current orchestration
   BuildTab.tsx                    build orchestration, equipped slots, and inventory
   ui/                             generic, reusable, domain-agnostic UI primitives
-    Dialog/                       controlled native-dialog wrapper (index + CSS module)
+    Button/                       reusable button variants and sizes
+    Checkbox/                     native checkbox shell
+    Chip/                         native inline-chip shell
+    Dialog/                       controlled native-dialog wrapper
+    NumberInput/                  bounded number input and commit helpers
+    Panel/                        panel and panel-heading shells
+    Select/                       native select shell
+    Tab/                          selectable button state shell
+    Tooltip/                      layout-neutral hover/focus tooltip
   components/                     application/domain-level components built on ui/
     GearEditor.tsx                gear add/edit presentation and local draft state
     GearOcrModal.tsx              gear screenshot import dialog
@@ -128,6 +139,7 @@ src/
 
 public/
   divinecraft/                   static selector images copied into the build
+  licenses/                      third-party notices copied into the build
   locales/                       generated per-locale runtime message JSON
   paths/                         static combat-path icons copied into the build
 ```
@@ -153,27 +165,35 @@ owns no game or application state, and imports nothing from `src/components/`
 or other application/domain code.
 
 The CSS module owns the same small, reusable set of rules as any other UI
-component and references `src/styles/tokens.css` directly. Reusable appearance
-options are explicit primitive props and local module classes rather than
-recreated global classes. For example, `Button` owns primary, secondary, and
-danger variants, their hover states, and the small size. Its `data-button`
-marker exists only so domain layout rules can target primitive instances; it
-does not provide a global button-style fallback.
+component and consumes shared custom properties from the globally loaded
+`src/styles/tokens.css`. Reusable appearance options are explicit primitive
+props and local module classes rather than recreated global classes. For
+example, `Button` owns primary, secondary, and danger variants, their hover
+states, and the small size. Its `data-button` marker exists only so domain
+layout rules can target primitive instances; it does not provide a global
+button-style fallback. `Panel` and `PanelHeading` expose the corresponding
+`data-panel` and `data-panel-heading` hooks for stable application selectors
+while their generated module classes remain private.
 
 Domain-specific classes one layer above a primitive may still adjust layout
 or context-specific appearance with the same design tokens. Primitives do not
 expose a second custom-property theming API, duplicate token values as literal
 fallbacks, or require global token bridges.
 
-`src/ui/` is the bottom-most CSS `@layer` (`ui`, declared first in
-`src/styles/index.css`), so application classes can refine primitive defaults
-without specificity battles. The icon pack is `@tabler/icons-react`, imported
-per-glyph at call sites; no new hand-drawn SVGs are added.
+`src/ui/` sits above base normalization and below application layers in the
+CSS cascade (`tokens, base, ui, layout, components, utilities`). `main.tsx`
+must import `styles/index.css` before `App` so this declaration establishes
+layer order before component CSS Modules are evaluated. Primitive defaults
+therefore win over element normalization while application classes can still
+refine them without specificity battles. The icon pack is
+`@tabler/icons-react`, imported per-glyph at call sites; no new hand-drawn SVGs
+are added.
 
-Lint hardening is scoped to the folder: `src/ui/.oxlintrc.json` enables the
-`suspicious` and `pedantic` categories on top of the root baseline through a
-nested oxlint config with `extends`; `src/ui/.stylelintrc.json` extends upstream
-`stylelint-config-standard` without local rule overrides.
+Lint hardening is scoped to the folder and explicitly invoked after the root
+lint pass: `src/ui/.oxlintrc.json` enables the `suspicious` and `pedantic`
+categories on top of the root baseline through `extends`;
+`src/ui/.stylelintrc.json` extends upstream `stylelint-config-standard` without
+local rule overrides.
 
 Icons never get a primitive: there is no `ui/Icon`. Call sites import
 `@tabler/icons-react` icons directly so bundling stays per-glyph; the
@@ -237,8 +257,10 @@ than calculating independently.
 
 In PC mode, Build or Rotation Editor constrains the page shell to the visible
 viewport. The header, tabs, and footer remain visible while the build manager
-and rotation table use the remaining height and scroll internally. Mobile mode
-and the other tabs retain normal document scrolling.
+and rotation table use the remaining height and scroll internally. The
+Rotation Editor keeps its header and one-row grid while cell content wraps, so
+it does not introduce a horizontal scrollbar. Mobile mode and the other tabs
+retain normal document scrolling.
 
 The currently viewed build and active build are separate concepts. Only the
 active build contributes gear stats, attunement, weapon and armor sets, bow/ring set, and
@@ -1607,9 +1629,3 @@ not calculate defensive rewards or hold timing independently.
 Stat-only comparisons that reuse a baseline timeline retain its resolved action
 IDs. Conditional or cooldown-blocked actions remain absent; only a rebuilt
 combat timeline can introduce a newly eligible action.
-
-The global Strayhunt + Wildstride control stores a single draught stage:
-none, strayhunt, or both. Each comparison rebuilds with the corresponding
-permanent debuffs. Legacy independent toggles migrate to both when Wildstride
-was selected, otherwise strayhunt when Strayhunt was selected, otherwise none.
-An explicitly stored stage takes precedence over legacy fields.

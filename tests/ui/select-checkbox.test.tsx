@@ -18,8 +18,8 @@ describe("Select", () => {
     root = createRoot(container)
   })
 
-  afterEach(() => {
-    root.unmount()
+  afterEach(async () => {
+    await act(async () => root.unmount())
     container.remove()
   })
 
@@ -57,8 +57,8 @@ describe("Checkbox", () => {
     root = createRoot(container)
   })
 
-  afterEach(() => {
-    root.unmount()
+  afterEach(async () => {
+    await act(async () => root.unmount())
     container.remove()
   })
 

@@ -18,7 +18,7 @@
     }
   }
 
-  .breakdown-panel .panel-heading {
+  .breakdown-panel [data-panel-heading] {
     margin-block-end: 12px;
   }
 

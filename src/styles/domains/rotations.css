@@ -304,7 +304,8 @@
 
   /* Rotation Timeline Table */
   .rotation-table {
-    min-inline-size: 67.5rem;
+    min-inline-size: 0;
+    inline-size: 100%;
     border: 1px solid var(--border);
     border-block-start: 0;
     border-radius: var(--radius-md);
@@ -315,11 +316,8 @@
   .rotation-action-row {
     display: grid;
     grid-template-columns:
-      26px 2.5rem 7rem 6.25rem minmax(10rem, 1.6fr) var(--rotation-state-columns,) minmax(10.3125rem, 0.9fr) minmax(
-        6.875rem,
-        1fr
-      )
-      minmax(6.875rem, 1fr) 11rem;
+      26px 2rem 4.5rem 4.5rem minmax(0, 1.5fr) var(--rotation-state-columns,) minmax(0, 0.9fr) minmax(0, 1.25fr)
+      minmax(0, 1.25fr) minmax(0, 0.8fr);
     gap: 0.625rem;
     align-items: center;
     inline-size: 100%;
@@ -335,15 +333,47 @@
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     background: var(--surface-header);
     box-shadow: 0 1px 0 var(--border-muted);
+    padding-inline: 0.25rem;
     color: var(--text-muted);
+    font-size: 0.72rem;
     font-weight: 750;
+    line-height: 1.15;
     text-transform: uppercase;
-    white-space: nowrap;
+    white-space: normal;
+  }
+
+  .rotation-table-header > *,
+  .rotation-table-row > *,
+  .rotation-action-row > * {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
 
   .rotation-table-header > * {
-    overflow-wrap: normal;
-    hyphens: none;
+    hyphens: auto;
+  }
+
+  .rotation-table-row :is(input, select),
+  .rotation-action-row :is(input, select) {
+    max-inline-size: 100%;
+  }
+
+  .rotation-table-row .rotation-event-time,
+  .rotation-action-row .rotation-event-time {
+    inline-size: 100%;
+  }
+
+  .rotation-buff-cell,
+  .rotation-debuff-cell {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .rotation-buff-cell > *,
+  .rotation-debuff-cell > * {
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .rotation-table-row {
@@ -420,6 +450,14 @@
     text-align: start;
   }
 
+  .rotation-damage-value,
+  .rotation-action-damage,
+  .rotation-action-result,
+  .damage-breakdown-wrap {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
   .rotation-martial-art-select {
     min-inline-size: 0;
     max-inline-size: 100%;
@@ -428,7 +466,20 @@
   .damage-breakdown-wrap {
     position: relative;
     display: inline-block;
+    min-inline-size: 0;
+    max-inline-size: 100%;
     cursor: help;
+  }
+
+  .damage-breakdown-tooltip {
+    display: none;
+    gap: var(--space-sm);
+    color: inherit;
+  }
+
+  .damage-breakdown-wrap:hover .damage-breakdown-tooltip,
+  .damage-breakdown-wrap:focus-within .damage-breakdown-tooltip {
+    display: flex;
   }
 
   .rotation-action-result {
@@ -441,12 +492,6 @@
   .healing-physical,
   .healing-silkbind {
     color: var(--success);
-  }
-
-  .damage-breakdown-tooltip {
-    display: flex;
-    gap: var(--space-sm);
-    color: inherit;
   }
 
   .damage-breakdown-part {
@@ -556,12 +601,14 @@
 
   .rotation-distance-input-wrap {
     display: flex;
+    min-inline-size: 0;
     align-items: center;
     gap: 4px;
   }
 
   .rotation-distance-input-wrap .rotation-event-time {
-    inline-size: 52px;
+    flex: 1 1 auto;
+    inline-size: auto;
     padding-inline: 5px;
   }
 
@@ -578,7 +625,7 @@
 
   .rotation-effect-event-control {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 52px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr);
     gap: 5px;
     align-items: center;
   }
@@ -601,14 +648,20 @@
 
   .rotation-controls {
     display: grid;
-    grid-template-columns: repeat(5, 30px);
-    justify-content: end;
+    inline-size: 100%;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
     gap: 2px;
   }
 
   .rotation-controls button {
-    inline-size: 30px;
+    display: grid;
+    inline-size: 100%;
+    min-inline-size: 0;
     block-size: 30px;
+    place-items: center;
+    overflow: hidden;
+    padding: 0;
     border: 0;
     border-radius: var(--radius-2xs);
     background: transparent;
@@ -617,12 +670,17 @@
     line-height: 1;
   }
 
+  .rotation-controls button > svg {
+    max-inline-size: 100%;
+  }
+
   .rotation-controls button[aria-label="Delete step"] {
     grid-column: 4;
   }
 
   .rotation-control-placeholder {
-    inline-size: 30px;
+    inline-size: 100%;
+    min-inline-size: 0;
     block-size: 30px;
   }
 
@@ -680,6 +738,8 @@
 
   .effect-plates {
     display: flex;
+    min-inline-size: 0;
+    max-inline-size: 100%;
     flex-wrap: wrap;
     gap: 4px;
   }
@@ -687,6 +747,7 @@
   .effect-plate {
     position: relative;
     display: inline-block;
+    min-inline-size: 0;
     max-inline-size: 100%;
     border-color: oklch(from var(--primary) l c h / 0.42);
     background: oklch(from var(--primary) l c h / 0.12);
@@ -710,8 +771,14 @@
   }
 
   .effect-plate-tooltip {
+    display: none;
     font-weight: 500;
     line-height: 1.35;
+  }
+
+  .effect-plate:hover .effect-plate-tooltip,
+  .effect-plate:focus-within .effect-plate-tooltip {
+    display: block;
   }
 
   .effect-plate-tooltip strong,
@@ -721,7 +788,8 @@
 
   .effect-plate-tooltip strong {
     margin-block-end: 4px;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .rotation-step-list {
@@ -773,57 +841,6 @@
   }
 
   /* Rotation Responsive Breakpoints */
-  @media (max-width: 93.75em) {
-    .rotation-table {
-      min-inline-size: 920px;
-    }
-
-    .rotation-table.show-distance,
-    .rotation-table.show-hp {
-      min-inline-size: 982px;
-    }
-
-    .rotation-table.show-distance.show-hp {
-      min-inline-size: 1055px;
-    }
-
-    .rotation-table-header,
-    .rotation-table-row,
-    .rotation-action-row {
-      grid-template-columns:
-        26px 36px 92px 82px minmax(110px, 1.5fr) minmax(140px, 0.9fr) minmax(80px, 1fr) minmax(80px, 1fr)
-        170px;
-      gap: 8px;
-    }
-
-    .rotation-table.show-distance .rotation-table-header,
-    .rotation-table.show-distance .rotation-table-row,
-    .rotation-table.show-distance .rotation-action-row,
-    .rotation-table.show-hp .rotation-table-header,
-    .rotation-table.show-hp .rotation-table-row,
-    .rotation-table.show-hp .rotation-action-row {
-      grid-template-columns:
-        26px 36px 92px 82px minmax(110px, 1.5fr) 66px minmax(140px, 0.9fr) minmax(80px, 1fr) minmax(80px, 1fr)
-        170px;
-    }
-
-    .rotation-table.show-distance.show-hp .rotation-table-header,
-    .rotation-table.show-distance.show-hp .rotation-table-row,
-    .rotation-table.show-distance.show-hp .rotation-action-row {
-      grid-template-columns:
-        26px 36px 92px 82px minmax(110px, 1.5fr) 66px 66px minmax(140px, 0.9fr) minmax(80px, 1fr)
-        minmax(80px, 1fr) 170px;
-    }
-
-    .rotation-event-time {
-      inline-size: 82px;
-    }
-
-    .rotation-distance-input-wrap .rotation-event-time {
-      inline-size: 45px;
-    }
-  }
-
   @media (max-width: 43.75em) {
     .rotation-editor-layout {
       block-size: auto;

@@ -114,6 +114,7 @@ function GearValueEditor({
   category,
   relayed,
   level,
+  optional = false,
   disabledKeys,
   onChange,
 }: {
@@ -124,6 +125,7 @@ function GearValueEditor({
   category: "affix" | "attunement"
   relayed: boolean
   level: GearLevel
+  optional?: boolean
   disabledKeys?: Set<string>
   onChange: (next: GearValueDraft) => void
 }) {
@@ -154,6 +156,7 @@ function GearValueEditor({
           <NumberInput
             aria-label={t("ui.buildTab.namedValue", { name: label })}
             commitMode="immediate"
+            allowEmpty={optional}
             min={0}
             max={maximum}
             step="0.01"
@@ -348,6 +351,7 @@ export function GearEditor({
                 category="affix"
                 relayed={draft.relayed}
                 level={draft.level}
+                optional
                 disabledKeys={selectedAdditionalKeys}
                 onChange={nextAffix =>
                   onDraftChange(current => ({
@@ -371,6 +375,7 @@ export function GearEditor({
             category="attunement"
             relayed={draft.relayed}
             level={draft.level}
+            optional
             onChange={attunement => onDraftChange(current => ({ ...current, attunement }))}
           />
         </div>

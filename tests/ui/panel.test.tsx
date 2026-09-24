@@ -17,8 +17,8 @@ describe("Panel", () => {
     root = createRoot(container)
   })
 
-  afterEach(() => {
-    root.unmount()
+  afterEach(async () => {
+    await act(async () => root.unmount())
     container.remove()
   })
 
@@ -32,6 +32,7 @@ describe("Panel", () => {
     })
     const panel = container.querySelector("section")
     expect(panel?.textContent).toBe("body")
+    expect(panel?.hasAttribute("data-panel")).toBe(true)
     expect(panel?.getAttribute("class")).toContain("settings-panel")
     expect(panel?.getAttribute("class")).not.toBe("settings-panel")
   })
@@ -60,6 +61,7 @@ describe("Panel", () => {
       )
     })
     const heading = container.querySelector("section > div")
+    expect(heading?.hasAttribute("data-panel-heading")).toBe(true)
     expect(heading?.querySelector("h2")?.textContent).toBe("title")
   })
 })

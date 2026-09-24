@@ -9,9 +9,11 @@ type PanelHeadingProps = HTMLAttributes<HTMLDivElement>
 // visual overrides live in application CSS and use the shared design tokens
 // directly.
 export function Panel({ className, ...rest }: PanelProps) {
-  return <section className={className ? `${styles.panel} ${className}` : styles.panel} {...rest} />
+  return <section data-panel="" className={className ? `${styles.panel} ${className}` : styles.panel} {...rest} />
 }
 
 export function PanelHeading({ className, ...rest }: PanelHeadingProps) {
-  return <div className={className ? `${styles.heading} ${className}` : styles.heading} {...rest} />
+  return (
+    <div data-panel-heading="" className={className ? `${styles.heading} ${className}` : styles.heading} {...rest} />
+  )
 }

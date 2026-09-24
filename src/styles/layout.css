@@ -189,7 +189,7 @@
   }
 
   .page-header > *,
-  .panel-heading > *,
+  [data-panel-heading] > *,
   .path-selector > * {
     min-inline-size: 0;
   }

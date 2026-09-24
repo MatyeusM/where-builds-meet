@@ -24,8 +24,8 @@ describe("NumberInput", () => {
     root = createRoot(container)
   })
 
-  afterEach(() => {
-    root.unmount()
+  afterEach(async () => {
+    await act(async () => root.unmount())
     container.remove()
   })
 
@@ -63,6 +63,20 @@ describe("NumberInput", () => {
     expect(input.getAttribute("max")).toBe("999")
     expect(input.getAttribute("step")).toBe("1")
     expect(input.getAttribute("type")).toBe("number")
+  })
+
+  it("keeps primitive-only props off the native input", async () => {
+    const input = await renderInput({
+      value: 40,
+      commitMode: "immediate",
+      allowEmpty: true,
+      onCommit: vi.fn<(value: number | undefined) => void>(),
+      onEditingChange: vi.fn<(editing: boolean) => void>(),
+      onValidityChange: vi.fn<(valid: boolean) => void>(),
+    })
+    for (const attribute of ["commitmode", "allowempty", "oncommit", "oneditingchange", "onvaliditychange"]) {
+      expect(input.hasAttribute(attribute)).toBe(false)
+    }
   })
 
   it("clamps above the upper bound and below the lower bound on commit", async () => {
@@ -109,6 +123,11 @@ describe("NumberInput", () => {
     await type(input, "42")
     expect(input.getAttribute("aria-invalid")).toBeNull()
     expect(onValidityChange).toHaveBeenLastCalledWith(true)
+  })
+
+  it("treats an allowed empty immediate value as valid", async () => {
+    const input = await renderInput({ value: "", commitMode: "immediate", allowEmpty: true })
+    expect(input.getAttribute("aria-invalid")).toBeNull()
   })
 
   it("reports every keystroke raw in immediate mode without drafting", async () => {

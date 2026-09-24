@@ -15,7 +15,7 @@
     min-inline-size: 0;
   }
 
-  .character-secondary-stats > .panel {
+  .character-secondary-stats > [data-panel] {
     min-inline-size: 0;
     margin-block-end: 0;
   }
@@ -164,7 +164,7 @@
     text-align: center;
   }
 
-  .dps-panel .panel-heading {
+  .dps-panel [data-panel-heading] {
     text-align: start;
   }
 
@@ -243,14 +243,14 @@
     letter-spacing: 0.02em;
   }
 
-  .panel-heading > div:has(> .calculation-status) {
+  [data-panel-heading] > div:has(> .calculation-status) {
     display: flex;
     min-inline-size: 0;
     align-items: baseline;
     gap: var(--space-xs);
   }
 
-  .panel-heading > div > .calculation-status {
+  [data-panel-heading] > div > .calculation-status {
     min-block-size: 0;
     margin-block-start: 0;
     flex: 0 0 auto;
@@ -307,7 +307,7 @@
     text-align: start;
   }
 
-  .priority-panel .panel-heading {
+  .priority-panel [data-panel-heading] {
     margin-block-end: 10px;
     flex-wrap: nowrap;
   }

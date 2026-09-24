@@ -214,7 +214,7 @@
   }
 
   /* Divinecraft Panel */
-  .divinecraft-panel .panel-heading {
+  .divinecraft-panel [data-panel-heading] {
     align-items: flex-start;
   }
 
@@ -385,7 +385,7 @@
     padding: 12px;
   }
 
-  .global-debuff-panel .panel-heading {
+  .global-debuff-panel [data-panel-heading] {
     margin-block-end: 12px;
   }
 

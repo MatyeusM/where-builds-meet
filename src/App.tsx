@@ -6999,17 +6999,16 @@ function RotationEditorTab({
     () =>
       ({
         "--rotation-state-columns": [
-          showDistanceColumn ? "10ch" : "",
-          showSelfHPColumn ? "8ch" : "",
-          showTargetHPColumn ? "8ch" : "",
-          showQiColumn ? "8ch" : "",
-          showHellfireColumn ? "10ch" : "",
-          showHeavensWillColumn ? "13ch" : "",
-          showVitalityColumn ? "10ch" : "",
+          showDistanceColumn ? "minmax(0, 0.7fr)" : "",
+          showSelfHPColumn ? "minmax(0, 0.65fr)" : "",
+          showTargetHPColumn ? "minmax(0, 0.65fr)" : "",
+          showQiColumn ? "minmax(0, 0.65fr)" : "",
+          showHellfireColumn ? "minmax(0, 0.7fr)" : "",
+          showHeavensWillColumn ? "minmax(0, 0.9fr)" : "",
+          showVitalityColumn ? "minmax(0, 0.7fr)" : "",
         ]
           .filter(Boolean)
           .join(" "),
-        minInlineSize: `${67.5 + (Number(showDistanceColumn) + Number(showSelfHPColumn) + Number(showTargetHPColumn) + Number(showQiColumn)) * 5.3125 + Number(showHellfireColumn) * 5.3125 + Number(showHeavensWillColumn) * 6.875 + Number(showVitalityColumn) * 5.3125}rem`,
       }) as CSSProperties,
     [
       showDistanceColumn,
@@ -8618,7 +8617,7 @@ function RotationEditorTab({
                                 ""
                               )}
                             </span>
-                            <span data-mobile-label={t("ui.app.buff")}>
+                            <span className="rotation-buff-cell" data-mobile-label={t("ui.app.buff")}>
                               {isManualEvent && step.event === "Buff" ? (
                                 rotationLocked ? (
                                   <span>
@@ -8676,7 +8675,7 @@ function RotationEditorTab({
                                 effectNames(displayedSkillBuffs, startTime)
                               )}
                             </span>
-                            <span data-mobile-label={t("ui.app.debuff")}>
+                            <span className="rotation-debuff-cell" data-mobile-label={t("ui.app.debuff")}>
                               {isManualEvent && step.event === "Debuff" ? (
                                 rotationLocked ? (
                                   <span>
@@ -8922,10 +8921,10 @@ function RotationEditorTab({
                                     />
                                   ) : null}
                                 </span>
-                                <span data-mobile-label={t("ui.app.buff")}>
+                                <span className="rotation-buff-cell" data-mobile-label={t("ui.app.buff")}>
                                   {effectNames(displayedActionBuffs, actionTime)}
                                 </span>
-                                <span data-mobile-label={t("ui.app.debuff")}>
+                                <span className="rotation-debuff-cell" data-mobile-label={t("ui.app.debuff")}>
                                   {effectNames(actionDebuffs, actionTime)}
                                 </span>
                                 <span aria-hidden="true" />
