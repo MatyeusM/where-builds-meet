@@ -12,11 +12,11 @@ run in their own disposable worker.
 ## Typography and resilient layout
 
 The UI self-hosts the variable Noto Sans family through Fontsource as its
-cross-platform Latin, Greek, Cyrillic, and Devanagari baseline. System sans
-fonts remain the loading, accessibility-override, and unsupported-script
-fallback. Script-specific Noto families should be added alongside a locale
-when translations for that script are introduced; the base Noto Sans package
-does not contain CJK glyphs.
+cross-platform Latin, Greek, Cyrillic, and Devanagari baseline. The active
+locale selects the matching self-hosted Noto Sans TC Variable or Noto Sans KR
+Variable stack for Traditional Chinese or Korean, while Latin still resolves
+through Noto Sans Variable first. System sans fonts remain the loading,
+accessibility-override, and unsupported-script fallback.
 
 Layouts must remain usable when the web font is unavailable or overridden.
 Text-bearing controls wrap instead of relying on English-label pixel widths,

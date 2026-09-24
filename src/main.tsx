@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client"
 
 import "./styles/index.css"
 import "@fontsource-variable/noto-sans/wght.css"
+import "@fontsource-variable/noto-sans-tc/wght.css"
+import "@fontsource-variable/noto-sans-kr/wght.css"
 import App from "./App"
 import { startDeploymentUpdates } from "./deploymentUpdates"
 import { initializeI18n } from "./i18n"

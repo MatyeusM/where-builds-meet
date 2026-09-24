@@ -7,7 +7,8 @@
      ========================================================================== */
 
     /* Typography */
-    --font-sans: "Noto Sans Variable", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-latin: "Noto Sans Variable", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: var(--font-latin);
     --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
     --font-display: var(--font-sans);
 
@@ -88,6 +89,14 @@
     --backdrop: oklch(0.1 0.015 265 / 0.78);
     --shadow-color: oklch(0 0 0 / 0.25);
     --shadow-strong: oklch(0 0 0 / 0.62);
+  }
+
+  :root:lang(zh-Hant) {
+    --font-sans: var(--font-latin), "Noto Sans TC Variable", sans-serif;
+  }
+
+  :root:lang(ko) {
+    --font-sans: var(--font-latin), "Noto Sans KR Variable", sans-serif;
   }
 
   @media (prefers-contrast: more) {
