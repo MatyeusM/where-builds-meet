@@ -1,0 +1,72 @@
+name: Sync release commits to Discord
+
+on:
+  push:
+    branches:
+      - release
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send commit summary
+        uses: actions/github-script@v8
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        with:
+          script: |
+            const webhook = process.env.DISCORD_WEBHOOK_URL;
+
+            if (!webhook) {
+              core.setFailed("Missing DISCORD_WEBHOOK_URL repository secret.");
+              return;
+            }
+
+            const commits = context.payload.commits?.length
+              ? context.payload.commits
+              : context.payload.head_commit
+                ? [context.payload.head_commit]
+                : [];
+
+            if (commits.length === 0) return;
+
+            const branch = context.ref.replace("refs/heads/", "");
+            const maxCommits = 8;
+            const selected = commits.slice(-maxCommits).reverse();
+            const lines = selected.map((commit) => {
+              const firstLine = commit.message.split(/\r?\n/)[0].replace(/`/g, "\\`");
+              const summary = firstLine.length > 180 ? `${firstLine.slice(0, 177)}…` : firstLine;
+              return `• [\`${commit.id.slice(0, 7)}\`](${commit.url}) ${summary}`;
+            });
+            const remaining = commits.length - selected.length;
+
+            if (remaining > 0) {
+              lines.push(`…and ${remaining} more commit${remaining === 1 ? "" : "s"}`);
+            }
+
+            const response = await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                username: "WWM GitHub",
+                allowed_mentions: { parse: [] },
+                embeds: [
+                  {
+                    title: `New commits on ${branch}`,
+                    url: context.payload.compare ?? commits[commits.length - 1].url,
+                    color: 0xc9a86a,
+                    description: lines.join("\n").slice(0, 4000),
+                    footer: { text: `${context.repo.owner}/${context.repo.repo}` },
+                    timestamp: new Date().toISOString(),
+                  },
+                ],
+              }),
+            });
+
+            if (!response.ok) {
+              core.setFailed(`Discord webhook returned ${response.status}: ${await response.text()}`);
+            }
