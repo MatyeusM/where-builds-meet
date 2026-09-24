@@ -616,7 +616,10 @@
       { "type": "damage", "phyCoef": 0.5, "phyBonus": 0, "attrBonus": 0, "time": 0.45, "attrCoef": 0.5 },
       {
         "type": "apply",
-        "requirement": [{ "target": "self", "value": "InnerPassion" }],
+        "requirement": [
+          { "target": "self", "value": "InnerPassion" },
+          { "target": "self", "value": "SteadfastDevotionT3" }
+        ],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0.45
@@ -642,7 +645,10 @@
       { "type": "damage", "phyCoef": 0.9, "phyBonus": 0, "attrBonus": 0, "time": 0.45, "attrCoef": 0.9 },
       {
         "type": "apply",
-        "requirement": [{ "target": "self", "value": "InnerPassion" }],
+        "requirement": [
+          { "target": "self", "value": "InnerPassion" },
+          { "target": "self", "value": "SteadfastDevotionT3" }
+        ],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0.45
@@ -669,7 +675,10 @@
       { "type": "damage", "phyCoef": 0.5, "phyBonus": 0, "attrBonus": 0, "time": 0, "attrCoef": 0.5 },
       {
         "type": "apply",
-        "requirement": [{ "target": "self", "value": "InnerPassion" }],
+        "requirement": [
+          { "target": "self", "value": "InnerPassion" },
+          { "target": "self", "value": "SteadfastDevotionT3" }
+        ],
         "target": "self",
         "value": "MountainSplitter",
         "time": 0
