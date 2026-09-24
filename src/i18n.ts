@@ -1,9 +1,13 @@
-export type LocaleManifest = { default: string; locales: string[]; completion?: Record<string, number> }
+import type * as v from "valibot"
 
-type Messages = Record<string, string>
+import { developmentModeStorageKey, localeStorageKey } from "./application/persistence/keys"
+import { getPersistentItem, setPersistentItem } from "./persistentStorage"
+import { localeManifestSchema, localeMessagesSchema, type LocaleManifest, type LocaleMessages } from "./schemas/http"
+import { validateUnknown } from "./schemas/json"
 
-const localeStorageKey = "wwm-locale"
-export const developmentModeStorageKey = "wwm-dev-mode-v1"
+type Messages = LocaleMessages
+
+export { developmentModeStorageKey }
 const fallbackManifest: LocaleManifest = { default: "en", locales: ["en"] }
 const wipLocales = new Set<string>()
 const localeDisplayNames: Record<string, string> = { en: "English", "zh-Hant": "繁體中文", ko: "한국어" }
@@ -18,10 +22,12 @@ function localeAsset(name: string) {
   return `${import.meta.env.BASE_URL}locales/${name}`
 }
 
-async function loadJson<T>(name: string): Promise<T> {
+async function loadJson<T>(name: string, schema: v.GenericSchema<T>): Promise<T> {
   const response = await fetch(localeAsset(name), { cache: "no-cache" })
   if (!response.ok) throw new Error(`Unable to load locale asset ${name}.`)
-  return response.json() as Promise<T>
+  const result = validateUnknown(schema, (await response.json()) as unknown)
+  if (!result.success) throw new Error(`Unable to load locale asset ${name}.`)
+  return result.output
 }
 
 function supportedLocale(candidate: string | null | undefined) {
@@ -35,7 +41,7 @@ export function isLocaleWip(locale: string) {
 }
 
 function localeAvailable(locale: string) {
-  return !isLocaleWip(locale) || localStorage.getItem(developmentModeStorageKey) === "true"
+  return !isLocaleWip(locale) || getPersistentItem(developmentModeStorageKey) === "true"
 }
 
 function availableLocale(candidate: string | null | undefined) {
@@ -54,14 +60,16 @@ function browserLocale() {
   return undefined
 }
 
-export function resolveLocale(savedLocale = localStorage.getItem(localeStorageKey)) {
+export function resolveLocale(savedLocale = getPersistentItem(localeStorageKey)) {
   return availableLocale(savedLocale) ?? browserLocale() ?? manifest.default
 }
 
 async function loadLocale(locale: string) {
   const [selected, fallback] = await Promise.all([
-    loadJson<Messages>(`${locale}.json`),
-    locale === manifest.default ? Promise.resolve(undefined) : loadJson<Messages>(`${manifest.default}.json`),
+    loadJson(`${locale}.json`, localeMessagesSchema),
+    locale === manifest.default
+      ? Promise.resolve(undefined)
+      : loadJson(`${manifest.default}.json`, localeMessagesSchema),
   ])
   activeLocale = locale
   activeMessages = selected
@@ -82,7 +90,7 @@ async function loadLocale(locale: string) {
 
 export async function initializeI18n() {
   try {
-    manifest = await loadJson<LocaleManifest>("manifest.json")
+    manifest = await loadJson("manifest.json", localeManifestSchema)
   } catch {
     manifest = fallbackManifest
   }
@@ -107,7 +115,7 @@ export async function selectLocale(locale: string) {
   if (!supported) return false
   try {
     await loadLocale(supported)
-    localStorage.setItem(localeStorageKey, supported)
+    setPersistentItem(localeStorageKey, supported)
     return true
   } catch {
     return false

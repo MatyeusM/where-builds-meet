@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises"
+import { readFile, readdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 
 // The build typechecks with TypeScript 7, whose package no longer exposes the
@@ -9,7 +9,21 @@ import { readCatalog, writeCatalog } from "./catalog.mjs"
 
 const root = process.cwd()
 const catalogFile = path.join(root, "locales", "translations.csv")
-const files = ["src/App.tsx", "src/BuildTab.tsx", "src/SimulationTab.tsx"]
+async function filesUnder(directory, predicate) {
+  const entries = await readdir(directory, { withFileTypes: true })
+  const nested = await Promise.all(
+    entries.map(async entry => {
+      const fullPath = path.join(directory, entry.name)
+      if (entry.isDirectory()) return filesUnder(fullPath, predicate)
+      return predicate(fullPath) ? [fullPath] : []
+    }),
+  )
+  return nested.flat()
+}
+
+const files = (await filesUnder(path.join(root, "src"), file => /\\.(?:ts|tsx)$/.test(file)))
+  .map(file => path.relative(root, file).replaceAll(path.sep, "/"))
+  .sort()
 const translatedAttributes = new Set(["aria-label", "title", "placeholder", "alt", "label"])
 const catalog = await readCatalog(catalogFile)
 const headers = catalog.headers.length >= 2 ? catalog.headers : ["key", "en"]
@@ -98,9 +112,17 @@ const migrateFile = async relativeFile => {
     ts.forEachChild(node, visit)
   }
   visit(sourceFile)
-  if (!source.includes('from "./i18n"')) {
+  if (!replacements.length) return
+  const hasI18nImport = sourceFile.statements.some(
+    statement => ts.isImportDeclaration(statement) && /(?:^|\/)i18n$/.test(statement.moduleSpecifier.text),
+  )
+  if (!hasI18nImport) {
     const lastImport = [...sourceFile.statements].reverse().find(ts.isImportDeclaration)
-    if (lastImport) addReplacement(lastImport.end, lastImport.end, '\nimport { t } from "./i18n";')
+    if (lastImport) {
+      let specifier = path.relative(path.dirname(file), path.join(root, "src", "i18n")).replaceAll(path.sep, "/")
+      if (!specifier.startsWith(".")) specifier = `./${specifier}`
+      addReplacement(lastImport.end, lastImport.end, `\nimport { t } from "${specifier}";`)
+    }
   }
   const migrated = replacements
     .sort((left, right) => right.start - left.start)

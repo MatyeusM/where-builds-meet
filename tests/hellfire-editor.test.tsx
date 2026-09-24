@@ -203,12 +203,12 @@ it.each([0, 1, 3])("preserves the neighboring row's viewport position when delet
   const rowIndexes = rows.map(row => Number(row.dataset.rotationStepIndex))
   const deletedIndex = rowIndexes[deletePosition]
   let layoutShift = 0
-  const bounds = vi
-    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
-    .mockImplementation(function (this: HTMLElement) {
-      const index = this.classList.contains("rotation-table-row") ? Number(this.dataset.rotationStepIndex) : undefined
-      return { top: 100 + (index === undefined ? 0 : index * 40 + layoutShift) } as DOMRect
-    })
+  const bounds = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const index = this.classList.contains("rotation-table-row") ? Number(this.dataset.rotationStepIndex) : undefined
+    return { top: 100 + (index === undefined ? 0 : index * 40 + layoutShift) } as DOMRect
+  })
   try {
     scroll.scrollTop = 300
     await act(async () => {

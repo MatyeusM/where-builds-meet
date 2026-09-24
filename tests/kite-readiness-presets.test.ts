@@ -2,7 +2,7 @@ import { assert, describe, expect, it } from "vitest"
 
 import regular from "../data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json"
 import bp from "../data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json"
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import type { RotationRecord } from "../src/calculations/rotationTimeline"
 

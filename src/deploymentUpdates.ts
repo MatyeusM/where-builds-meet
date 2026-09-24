@@ -1,5 +1,7 @@
 import { t } from "./i18n"
 import { publishNotice } from "./notices"
+import { deploymentVersionSchema } from "./schemas/http"
+import { validateUnknown } from "./schemas/json"
 
 // Injected by the deployment-version definition in vite.config.ts.
 declare const __APP_VERSION__: string
@@ -52,16 +54,8 @@ export function startDeploymentUpdates() {
       url.searchParams.set("check", String(Date.now()))
       const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10000) })
       if (!response.ok) return
-      const result: unknown = await response.json()
-      if (
-        !stopped &&
-        result &&
-        typeof result === "object" &&
-        "version" in result &&
-        typeof result.version === "string" &&
-        result.version !== __APP_VERSION__
-      )
-        publish("available")
+      const result = validateUnknown(deploymentVersionSchema, (await response.json()) as unknown)
+      if (!stopped && result.success && result.output.version !== __APP_VERSION__) publish("available")
     } catch {
       // Offline checks must not interrupt editing or claim a new release exists.
     } finally {

@@ -18,6 +18,8 @@ import {
   type GearRarity,
   type GearSlot,
 } from "./gear"
+import { validateUnknown } from "./schemas/json"
+import { officialGearRoleSchema } from "./schemas/officialGear"
 import type { WeaponId } from "./types"
 
 type UnknownRecord = Record<string, unknown>
@@ -238,6 +240,8 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
   const role = asRecord(outer?.roleInfo) ?? asRecord(outer?.data) ?? outer
   if (!role || (outer?.source !== undefined && outer.source !== "wwm-dashboard"))
     throw new Error("This is not a recognized official dashboard export.")
+  const validated = validateUnknown(officialGearRoleSchema, role)
+  if (!validated.success) throw new Error("The pasted data does not contain wearEquipsDetailed gear data.")
   const detailed = asRecord(role.wearEquipsDetailed)
   if (!detailed) throw new Error("The pasted data does not contain wearEquipsDetailed gear data.")
 

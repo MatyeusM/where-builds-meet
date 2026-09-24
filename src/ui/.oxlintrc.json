@@ -15,9 +15,15 @@
   ],
   "categories": { "correctness": "error", "suspicious": "error", "pedantic": "error", "perf": "error" },
   "rules": {
-    // react-in-jsx-scope must stay disabled.
-    // oxlint does not respect React 19's automatic JSX scope insertion, unlike eslint.
-    "react/react-in-jsx-scope": "off"
+    "import/no-duplicates": "error",
+    "eslint/no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          { "group": ["^../"], "message": "UI primitives must not import application, feature, or domain modules." }
+        ]
+      }
+    ]
   },
   "env": { "builtin": true, "browser": true }
 }

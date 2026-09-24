@@ -1,10 +1,9 @@
 import { IconX } from "@tabler/icons-react"
-import { Component, useSyncExternalStore, type ReactNode } from "react"
+import { useSyncExternalStore } from "react"
 
-import { isDeploymentImportError } from "../deploymentUpdates"
-import { t } from "../i18n"
-import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../notices"
-import { Button } from "../ui/Button"
+import { t } from "../../i18n"
+import { dismissNotice, getNotices, subscribeToNotices, type NoticeMessage } from "../../notices"
+import { Button } from "../../ui/Button"
 
 function noticeText(message: NoticeMessage) {
   return typeof message === "string" ? message : message()
@@ -44,18 +43,4 @@ export function NoticeArea() {
       )}
     </aside>
   )
-}
-
-export class FeatureLoadBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
-  state = { error: undefined as unknown }
-  static getDerivedStateFromError(error: unknown) {
-    return { error }
-  }
-  render() {
-    if (this.state.error) {
-      if (!isDeploymentImportError(this.state.error)) throw this.state.error
-      return <p role="alert">{t("ui.deployment.featureUnavailable")}</p>
-    }
-    return this.props.children
-  }
 }

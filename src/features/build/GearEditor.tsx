@@ -11,14 +11,14 @@ import {
   type GearLevel,
   type GearRarity,
   type GearValueDefinition,
-} from "../gear"
-import type { GearOcrResult } from "../gearOcr"
-import { gameText, t } from "../i18n"
-import { Button } from "../ui/Button"
-import { Checkbox } from "../ui/Checkbox"
-import { NumberInput } from "../ui/NumberInput"
-import { Panel, PanelHeading } from "../ui/Panel"
-import { Select } from "../ui/Select"
+} from "../../gear"
+import type { GearOcrResult } from "../../gearOcr"
+import { gameText, t } from "../../i18n"
+import { Button } from "../../ui/Button"
+import { Checkbox } from "../../ui/Checkbox"
+import { NumberInput } from "../../ui/NumberInput"
+import { Panel, PanelHeading } from "../../ui/Panel"
+import { Select } from "../../ui/Select"
 import { GearOcrModal } from "./GearOcrModal"
 
 export type GearValueDraft = { key: string; value: string }

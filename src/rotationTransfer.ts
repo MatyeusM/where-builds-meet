@@ -2,6 +2,8 @@ import { normalizeEnemyCount, normalizePing } from "./calculations/combatDefault
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
 import { migrateVendettaTokenStep } from "./rotationEditing"
 import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing"
+import { validateUnknown } from "./schemas/json"
+import { rotationExportInputSchema, rotationInputSchema, rotationStepInputSchema } from "./schemas/rotation"
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types"
 
 export const rotationExportFormat = "where-builds-meet-rotations"
@@ -29,7 +31,8 @@ export function serializeRotationEntries(entries: RotationEntry[]) {
 }
 
 function parseRotationStep(value: unknown): RotationStep | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const validated = validateUnknown(rotationStepInputSchema, value)
+  if (!validated.success) return undefined
   const step = value as Record<string, unknown>
   if (step.type === "skill" && typeof step.skill === "string" && step.skill) {
     return {
@@ -223,7 +226,8 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
 }
 
 function parseRotation(value: unknown): RotationRecord | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const validated = validateUnknown(rotationInputSchema, value)
+  if (!validated.success) return undefined
   const candidate = value as {
     name?: unknown
     steps?: unknown
@@ -314,8 +318,8 @@ export function exportRotationEntries(entries: RotationEntry[]) {
 }
 
 export function mergeImportedRotationEntries(current: RotationEntry[], value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new Error("This is not a Where Builds Meet rotation export file.")
+  const validated = validateUnknown(rotationExportInputSchema, value)
+  if (!validated.success) throw new Error("This is not a Where Builds Meet rotation export file.")
   const source = value as { format?: unknown; version?: unknown; rotations?: unknown }
   if (
     source.format !== rotationExportFormat ||

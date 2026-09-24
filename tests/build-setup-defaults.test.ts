@@ -24,7 +24,7 @@ describe("build-setup-defaults", () => {
     globalThis.sessionStorage = sessionStorage
 
     try {
-      const { loadBuildSetupOverrides } = await import("../src/App.tsx")
+      const { loadBuildSetupOverrides } = await import("../src/application/persistence/setupOverrides")
       const { defaultBuildSetup } = await import("../src/gear.ts")
       const legacyInnerWays = [
         { innerWay: "BreakingPoint", tier: "T3" },

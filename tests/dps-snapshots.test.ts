@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url"
 
 import { assert, describe, it } from "vitest"
 
-import { buildPresetRotationBundle } from "../src/App"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { loadDpsSnapshotFixtures, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures"
 import { compareDpsSnapshots, dpsSnapshotTolerance } from "./helpers/dps-snapshot-guard.mjs"

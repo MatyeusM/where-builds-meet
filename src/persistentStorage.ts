@@ -1,3 +1,5 @@
+import { isApplicationStorageKey } from "./application/persistence/keys"
+
 function availableStorage(name: "localStorage" | "sessionStorage") {
   if (typeof window === "undefined") return undefined
   try {
@@ -58,8 +60,19 @@ export function removePersistentItem(key: string) {
 export function migrateSessionStorage() {
   const legacySession = availableStorage("sessionStorage")
   if (!legacySession) return
-  const keys = Array.from({ length: legacySession.length }, (_, index) => legacySession.key(index)).filter(
-    (key): key is string => key !== null,
-  )
-  keys.forEach(getPersistentItem)
+  let length: number
+  try {
+    length = legacySession.length
+  } catch {
+    return
+  }
+  for (let index = 0; index < length; index += 1) {
+    let key: string | null
+    try {
+      key = legacySession.key(index)
+    } catch {
+      continue
+    }
+    if (key !== null && isApplicationStorageKey(key)) getPersistentItem(key)
+  }
 }

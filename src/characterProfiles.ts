@@ -1,10 +1,16 @@
+import * as v from "valibot"
+
 import defaultSetupJson from "../data/default-setup.json"
+import { characterProfileStorageKey } from "./application/persistence/keys"
 import type { AttunementStats } from "./calculations/damage"
 import type { CharacterStatOverrides } from "./calculations/statEffects"
 import { allStatDefinitions } from "./data/statDefinitions"
 import { attunementData, defaultBuildSetup, normalizeBuildSetup, type BuildSetup } from "./gear"
+import { getPersistentItem } from "./persistentStorage"
+import { characterProfileExportInputSchema, characterProfileInputSchema } from "./schemas/characterProfiles"
+import { parseJson, validateUnknown } from "./schemas/json"
 
-export const characterProfileStorageKey = "wwm-character-profiles-v1"
+export { characterProfileStorageKey }
 export const characterProfileExportFormat = "where-builds-meet-character-profiles"
 export type CharacterProfile = {
   id: string
@@ -42,7 +48,8 @@ function finiteValues(value: unknown, keys: Set<string>) {
 }
 
 function parseProfile(value: unknown): CharacterProfile | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const validated = validateUnknown(characterProfileInputSchema, value)
+  if (!validated.success) return undefined
   const source = value as Record<string, unknown>
   if (typeof source.id !== "string" || !source.id.trim() || typeof source.name !== "string" || !source.name.trim())
     return undefined
@@ -70,12 +77,8 @@ export function parseCharacterProfiles(value: unknown): CharacterProfile[] {
 }
 
 export function loadCharacterProfiles(): CharacterProfile[] {
-  if (typeof localStorage === "undefined") return []
-  try {
-    return parseCharacterProfiles(JSON.parse(localStorage.getItem(characterProfileStorageKey) ?? "[]"))
-  } catch {
-    return []
-  }
+  const result = parseJson(v.array(v.unknown()), getPersistentItem(characterProfileStorageKey) ?? "[]")
+  return result.success ? parseCharacterProfiles(result.output) : []
 }
 
 export function serializeCharacterProfiles(profiles: CharacterProfile[]) {
@@ -105,8 +108,8 @@ function importedId(originalId: string, usedIds: Set<string>) {
 }
 
 export function mergeImportedCharacterProfiles(current: CharacterProfile[], value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new Error("This is not a Where Builds Meet character profile file.")
+  const validated = validateUnknown(characterProfileExportInputSchema, value)
+  if (!validated.success) throw new Error("This is not a Where Builds Meet character profile file.")
   const source = value as Record<string, unknown>
   if (source.format !== characterProfileExportFormat || !supportedProfileVersions.has(source.version as number))
     throw new Error("This file uses an unsupported character profile format.")

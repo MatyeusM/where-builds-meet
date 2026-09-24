@@ -6,10 +6,11 @@ import soulShakenDefinitions from "../data/debuff/bellstrike-umbra.json"
 import qingyisCharmDefinitions from "../data/debuff/innerway.json"
 import vulnerableDefinitions from "../data/debuff/stonesplit-might.json"
 import fearfulBladeDefinitions from "../data/debuff/stonesplit-strength.json"
+import { globalDebuffStorageKey } from "./application/persistence/keys"
 import type { TrackedEffect } from "./calculations/rotationTimeline"
 import { getPersistentItem } from "./persistentStorage"
 
-export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
+export { globalDebuffStorageKey }
 
 export type GlobalDebuffState = {
   draught: "none" | "strayhunt" | "both"
