@@ -173,6 +173,28 @@
       gap: 12px;
     }
 
+    .page-header-links {
+      display: flex;
+      flex: 0 0 100%;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      min-block-size: 44px;
+    }
+
+    .page-header-links a {
+      display: inline-flex;
+      min-block-size: 44px;
+      align-items: center;
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .page-header-links a:hover {
+      text-decoration: underline;
+    }
+
     .locale-selector {
       display: grid;
       gap: 4px;
@@ -247,7 +269,8 @@
   }
 
   .page-footer-accuracy {
-    text-align: center;
+    margin-inline-start: auto;
+    text-align: end;
   }
 
   .page-footer a {

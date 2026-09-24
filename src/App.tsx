@@ -9381,6 +9381,14 @@ export default function App() {
           >
             {t("ui.app.dev")}
           </Button>
+          <div className="page-header-links">
+            <a href="https://discord.gg/UtqAw8HaXA" target="_blank" rel="noreferrer">
+              {t("ui.app.discord")}
+            </a>
+            <a href="https://github.com/greydust/where-builds-meet" target="_blank" rel="noreferrer">
+              {t("ui.app.github")}
+            </a>
+          </div>
         </div>
       </header>
       <section className="path-selector" aria-label={t("ui.app.combatPath")}>
@@ -9535,9 +9543,6 @@ export default function App() {
             {t("ui.app.reportAnyDamageDiscrepancy")}
           </a>
         </span>
-        <a href="https://github.com/greydust/where-builds-meet" target="_blank" rel="noreferrer">
-          {t("ui.app.github")}
-        </a>
       </footer>
     </main>
   )
