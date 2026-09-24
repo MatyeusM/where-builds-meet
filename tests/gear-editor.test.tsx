@@ -3,7 +3,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { GearEditor, newDraft } from "../src/components/GearEditor"
+import { GearEditor, newDraft } from "../src/features/build/GearEditor"
 import { affixOptionsForGearDefinition, attunementsForGearDefinition, gearData } from "../src/gear"
 
 describe("GearEditor", () => {

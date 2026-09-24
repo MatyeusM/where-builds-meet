@@ -1,7 +1,7 @@
 import { useState } from "react"
 
-import { normalizeEnemyCount } from "../calculations/combatDefaults"
-import { t } from "../i18n"
+import { normalizeEnemyCount } from "../../calculations/combatDefaults"
+import { t } from "../../i18n"
 
 type Props = { value: number; disabled: boolean; onCommit: (value: number) => void }
 

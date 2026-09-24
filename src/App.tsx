@@ -29,6 +29,8 @@ import {
 } from "react"
 
 import resourceEventDefinitions from "../data/event.json"
+import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
+import { NoticeArea } from "./application/shell/NoticeArea"
 import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats"
 import { DEFAULT_PING_MS, normalizeEnemyCount, normalizePing, resolvePing } from "./calculations/combatDefaults"
 import { type AttunementStats, type DamageBreakdown } from "./calculations/damage"
@@ -36,9 +38,8 @@ import { resolveSwitchValue } from "./calculations/dynamicValues"
 import type { RotationSkillBreakdown, RotationHealingSkillBreakdown } from "./calculations/rotationMetrics"
 import type { TrackedEffect } from "./calculations/rotationTimeline"
 import type { SkillBreakdownGroup } from "./calculations/skillBreakdownCategories"
-import { NoticeArea, FeatureLoadBoundary } from "./components/NoticeArea"
-import { RotationEnemyCountField } from "./components/RotationEnemyCountField"
-import { RotationPingField } from "./components/RotationPingField"
+import { RotationEnemyCountField } from "./features/rotations/RotationEnemyCountField"
+import { RotationPingField } from "./features/rotations/RotationPingField"
 import { publishNotice, dismissNotice } from "./notices"
 import { buildTimelineDisplayEntries } from "./rotationDisplay"
 import { parseJson } from "./schemas/json"
@@ -50,8 +51,8 @@ import { NumberInput } from "./ui/NumberInput"
 import { Panel, PanelHeading } from "./ui/Panel"
 import { Tab } from "./ui/Tab"
 import { Tooltip } from "./ui/Tooltip"
-const loadBuildTab = () => import("./BuildTab")
-const loadSimulationTab = () => import("./SimulationTab")
+const loadBuildTab = () => import("./features/build/BuildTab")
+const loadSimulationTab = () => import("./features/simulation/SimulationTab")
 const BuildTab = lazy(loadBuildTab)
 const SimulationTab = lazy(loadSimulationTab)
 import arsenalDefinitions from "../data/arsenal.json"

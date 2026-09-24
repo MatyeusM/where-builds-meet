@@ -12,20 +12,9 @@ import {
   type SetStateAction,
 } from "react"
 
-import arsenalDefinitions from "../data/arsenal.json"
-import bowRingSetDefinitions from "../data/bow-ring-set.json"
-import {
-  GearEditor,
-  capAndFilterGearDraft,
-  createGearId,
-  formatNumber,
-  gearRarityLabel,
-  itemToDraft,
-  newDraft,
-  normalizeDraftValue,
-  type GearDraft,
-} from "./components/GearEditor"
-import { innerWayEntriesForTag } from "./data/innerWayDefinitions"
+import arsenalDefinitions from "../../../data/arsenal.json"
+import bowRingSetDefinitions from "../../../data/bow-ring-set.json"
+import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
 import {
   defaultBuildSetup,
   duplicateBuildState,
@@ -60,14 +49,25 @@ import {
   type GearItem,
   type GearLevel,
   type GearSlot,
-} from "./gear"
-import { dataText, gameText, t } from "./i18n"
-import { publishNotice, dismissNotice } from "./notices"
-import { createOfficialGearBookmarklet } from "./officialGearBookmarklet"
-import type { WeaponId } from "./types"
-import { Button } from "./ui/Button"
-import { Dialog } from "./ui/Dialog"
-import { Panel, PanelHeading } from "./ui/Panel"
+} from "../../gear"
+import { dataText, gameText, t } from "../../i18n"
+import { publishNotice, dismissNotice } from "../../notices"
+import { createOfficialGearBookmarklet } from "../../officialGearBookmarklet"
+import type { WeaponId } from "../../types"
+import { Button } from "../../ui/Button"
+import { Dialog } from "../../ui/Dialog"
+import { Panel, PanelHeading } from "../../ui/Panel"
+import {
+  GearEditor,
+  capAndFilterGearDraft,
+  createGearId,
+  formatNumber,
+  gearRarityLabel,
+  itemToDraft,
+  newDraft,
+  normalizeDraftValue,
+  type GearDraft,
+} from "./GearEditor"
 
 function gearSlotLabel(slot: GearSlot) {
   return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
@@ -456,7 +456,7 @@ export default function BuildTab({
   async function importFromOfficial() {
     dismissNotice("official-import")
     try {
-      const { parseOfficialGearExport } = await import("./officialGearImport")
+      const { parseOfficialGearExport } = await import("../../officialGearImport")
       const official = parseOfficialGearExport(JSON.parse(officialImportText), weapons)
       const result = mergeImportedBuildState(buildState, official.exportValue, { reuseIdenticalGear: true })
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)

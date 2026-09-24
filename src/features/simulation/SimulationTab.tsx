@@ -1,22 +1,22 @@
 import { IconTrash, IconX } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
 
-import { customPercentileStorageKey } from "./application/persistence/keys"
-import type { RotationSimulationBundle } from "./calculations/rotationCalculator"
+import { customPercentileStorageKey } from "../../application/persistence/keys"
+import type { RotationSimulationBundle } from "../../calculations/rotationCalculator"
 import {
   selectSimulationPercentile,
   type SimulationRunResult,
   type SimulationSummary,
-} from "./calculations/simulationCalculator"
-import { startSimulation, type SimulationTask } from "./calculations/simulationWorkerClient"
-import { t } from "./i18n"
-import { publishNotice, dismissNotice } from "./notices"
-import { getPersistentItem, setPersistentItem } from "./persistentStorage"
-import { parseJson } from "./schemas/json"
-import { simulationPercentilesSchema } from "./schemas/storage"
-import { Button } from "./ui/Button"
-import { Chip } from "./ui/Chip"
-import { Panel } from "./ui/Panel"
+} from "../../calculations/simulationCalculator"
+import { startSimulation, type SimulationTask } from "../../calculations/simulationWorkerClient"
+import { t } from "../../i18n"
+import { publishNotice, dismissNotice } from "../../notices"
+import { getPersistentItem, setPersistentItem } from "../../persistentStorage"
+import { parseJson } from "../../schemas/json"
+import { simulationPercentilesSchema } from "../../schemas/storage"
+import { Button } from "../../ui/Button"
+import { Chip } from "../../ui/Chip"
+import { Panel } from "../../ui/Panel"
 
 type SimulationTabProps = {
   bundle?: RotationSimulationBundle

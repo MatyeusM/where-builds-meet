@@ -1,8 +1,8 @@
 import { IconRotate } from "@tabler/icons-react"
 import { useState } from "react"
 
-import { t } from "../i18n"
-import { NumberInput } from "../ui/NumberInput"
+import { t } from "../../i18n"
+import { NumberInput } from "../../ui/NumberInput"
 
 type RotationPingFieldProps = {
   value: number | undefined
