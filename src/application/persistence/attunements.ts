@@ -4,7 +4,8 @@ import { attunementData } from "../../gear"
 import { getPersistentItem } from "../../persistentStorage"
 import { parseJson } from "../../schemas/json"
 import { attunementMapSchema } from "../../schemas/storage"
-import { attunementOverrideStorageKey, attunementStorageKey, legacyAttunementStorageKey } from "./keys"
+import { attunementOverrideStorageKey, attunementStorageKey } from "./keys"
+import { readLegacyAttunementStats } from "./legacy"
 
 export const defaultAttunementStats = Object.fromEntries(
   Object.keys(attunementData).map(key => [key, 0]),
@@ -18,13 +19,18 @@ export const percentageAttunementKeys = new Set<keyof AttunementStats>(
 export function loadAttunementStats() {
   const currentSaved = getPersistentItem(attunementStorageKey)
   const isLegacy = currentSaved === null
-  const parsed = parseJson(attunementMapSchema, currentSaved ?? getPersistentItem(legacyAttunementStorageKey) ?? "null")
-  if (!parsed.success) return { ...defaultAttunementStats }
+  let saved: Record<string, unknown> | undefined
+  if (isLegacy) {
+    saved = readLegacyAttunementStats()
+  } else {
+    const parsed = parseJson(attunementMapSchema, currentSaved)
+    saved = parsed.success ? (parsed.output as Record<string, unknown>) : undefined
+  }
+  if (!saved) return { ...defaultAttunementStats }
   return Object.fromEntries(
     Object.keys(defaultAttunementStats).map(key => {
       const statKey = key as keyof AttunementStats
-      const value =
-        typeof parsed.output[key] === "number" && Number.isFinite(parsed.output[key]) ? parsed.output[key] : 0
+      const value = typeof saved[key] === "number" && Number.isFinite(saved[key]) ? saved[key] : 0
       return [key, isLegacy && percentageAttunementKeys.has(statKey) ? value / 100 : value]
     }),
   ) as typeof defaultAttunementStats

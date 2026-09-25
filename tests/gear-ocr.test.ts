@@ -13,7 +13,8 @@ const screenshotsPresent = existsSync(moBladeImage) && existsSync(helmetImage)
 
 describe("gear-ocr", () => {
   it.skipIf(!screenshotsPresent)("recognizes gear screenshots", async () => {
-    const worker = await createWorker("eng", OEM.LSTM_ONLY, { langPath: "public/ocr" })
+    // Tesseract's Node adapter writes its decompressed model to cachePath; keep that cache in ignored local/.
+    const worker = await createWorker("eng", OEM.LSTM_ONLY, { langPath: "public/ocr", cachePath: "local" })
     try {
       const recognize = async (path, width, height) => {
         await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, preserve_interword_spaces: "1" })

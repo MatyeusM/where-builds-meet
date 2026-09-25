@@ -528,7 +528,8 @@ reloads, tabs, and browser sessions. `getPersistentItem()` migrates a value from
 the former same-named `sessionStorage` key when no durable value exists, then
 removes the session copy. Existing durable data takes precedence over a stale
 session copy. App startup eagerly applies this migration to every remaining
-same-origin session key before React state is initialized.
+application-owned session key before React state is initialized; unrelated
+same-origin session keys are left untouched.
 
 | State                                           | Storage                                          |
 | ----------------------------------------------- | ------------------------------------------------ |
@@ -569,6 +570,13 @@ Standalone Inner Way, legacy gear-set, bow/ring, and arsenal selections migrate
 only when the unified build-setup override has never been saved. Once that
 override exists—even as an empty object—the active build supplies every
 non-overridden setup default and legacy keys are ignored.
+
+Superseded browser formats are read through the typed adapters in
+`src/application/persistence/legacy/`. Each adapter owns its historical key and
+schema and returns a typed value for the current loader; current loaders retain
+domain normalization and migration policy. Legacy payloads are never passed
+through a current-format schema, so format-specific migrations remain
+independent and regression-tested.
 
 Build export produces a versioned JSON snapshot of shared gear and custom build
 loadouts, including each build's Inner Ways, weapon and armor sets, bow/ring set, and arsenal.

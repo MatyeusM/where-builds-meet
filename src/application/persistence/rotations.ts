@@ -4,7 +4,6 @@ import type { RotationRecord } from "../../calculations/rotationTimeline"
 import { getPersistentItem } from "../../persistentStorage"
 import type { RotationEntry } from "../../rotationTransfer"
 import { parseJson } from "../../schemas/json"
-import { storedRotationInputSchema } from "../../schemas/rotation"
 import type { WeaponId } from "../../types"
 import {
   defaultRotationEntries,
@@ -15,7 +14,8 @@ import {
   rotationAvailableForWeapons,
   rotationMartialArts,
 } from "../rotationCatalog"
-import { rotationListStorageKey, rotationStorageKey } from "./keys"
+import { rotationListStorageKey } from "./keys"
+import { readLegacyRotation } from "./legacy"
 
 export function loadRotationEntries(): RotationEntry[] {
   const bundledDefaults = (): RotationEntry[] =>
@@ -68,8 +68,8 @@ export function loadRotationEntries(): RotationEntry[] {
       })
       return [...bundledDefaults(), ...customEntries]
     }
-    const legacy = parseJson(storedRotationInputSchema, getPersistentItem(rotationStorageKey) ?? "null")
-    if (legacy.success) preserveFormerDefault(legacy.output as RotationRecord)
+    const legacy = readLegacyRotation()
+    if (legacy) preserveFormerDefault(legacy as RotationRecord)
     return [...bundledDefaults(), ...customEntries]
   } catch {
     return bundledDefaults()

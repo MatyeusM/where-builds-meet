@@ -5,7 +5,8 @@ import { allStatDefinitions, emptyStats } from "../../data/statDefinitions"
 import { getPersistentItem } from "../../persistentStorage"
 import { parseJson } from "../../schemas/json"
 import type { CharacterStats } from "../../types"
-import { characterStatsStorageKey, legacyCharacterStatsStorageKey, statOverrideStorageKey } from "./keys"
+import { characterStatsStorageKey, statOverrideStorageKey } from "./keys"
+import { readLegacyCharacterStats } from "./legacy"
 
 const percentageStatKeys = new Set<keyof CharacterStats>(
   allStatDefinitions.filter(({ unit }) => unit === "%").map(({ key }) => key),
@@ -21,12 +22,15 @@ export function statDefinition(key: keyof CharacterStats) {
 export function loadStats(): CharacterStats {
   const currentSaved = getPersistentItem(characterStatsStorageKey)
   const isLegacy = currentSaved === null
-  const saved = parseJson(
-    v.looseObject({}),
-    currentSaved ?? getPersistentItem(legacyCharacterStatsStorageKey) ?? "null",
-  )
-  if (!saved.success) return { ...emptyStats }
-  const values = saved.output as Partial<CharacterStats> & Record<string, unknown> & { attributeDmgBonus?: unknown }
+  let saved: Record<string, unknown> | undefined
+  if (isLegacy) {
+    saved = readLegacyCharacterStats()
+  } else {
+    const parsed = parseJson(v.looseObject({}), currentSaved)
+    saved = parsed.success ? (parsed.output as Record<string, unknown>) : undefined
+  }
+  if (!saved) return { ...emptyStats }
+  const values = saved as Partial<CharacterStats> & Record<string, unknown> & { attributeDmgBonus?: unknown }
   const legacyAttributeBonus =
     typeof values.attributeDmgBonus === "number" && Number.isFinite(values.attributeDmgBonus)
       ? values.attributeDmgBonus / (isLegacy ? 100 : 1)

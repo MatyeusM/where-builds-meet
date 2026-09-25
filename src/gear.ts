@@ -6,15 +6,8 @@ import defaultSetupJson from "../data/default-setup.json"
 import gearSetJson from "../data/gear-set.json"
 import gearJson from "../data/gear.json"
 import statJson from "../data/stat.json"
-import {
-  activeBuildStorageKey,
-  arsenalStorageKey,
-  bowRingSetStorageKey,
-  buildListStorageKey,
-  gearSetStorageKey,
-  legacyGearStorageKey,
-  legacyInnerWayStorageKey,
-} from "./application/persistence/keys"
+import { activeBuildStorageKey, buildListStorageKey, legacyGearStorageKey } from "./application/persistence/keys"
+import { readLegacyBuildSetup, readLegacyGearInventory } from "./application/persistence/legacy"
 import type { AttunementTagFilter } from "./calculations/attunementStats"
 import type { AttunementStats } from "./calculations/damage"
 import { getPersistentItem } from "./persistentStorage"
@@ -202,9 +195,6 @@ export const armorSetDefinitions = armorSetJson as Record<string, SetDefinition>
 const bowRingSetDefinitions = bowRingSetJson as Record<string, unknown>
 const arsenalDefinitions = arsenalJson as Record<string, unknown>
 const configuredDefaultSetup = defaultSetupJson as BuildSetup
-const legacyArsenalStorageKey = arsenalStorageKey
-const legacyBowRingSetStorageKey = bowRingSetStorageKey
-const legacyGearSetStorageKey = gearSetStorageKey
 
 const cloneBuildSetup = (setup: BuildSetup): BuildSetup => ({
   innerWays: setup.innerWays.map(row => ({ ...row })),
@@ -347,26 +337,6 @@ export function normalizeBuildSetupOverrides(value: unknown): BuildSetupOverride
   return result
 }
 
-function loadLegacyBuildSetup() {
-  let gearSets: unknown
-  let innerWays: unknown
-  try {
-    gearSets = JSON.parse(getPersistentItem(legacyGearSetStorageKey) ?? "null")
-  } catch {
-    gearSets = undefined
-  }
-  try {
-    innerWays = JSON.parse(getPersistentItem(legacyInnerWayStorageKey) ?? "null")
-  } catch {
-    innerWays = undefined
-  }
-  return normalizeBuildSetup({
-    innerWays,
-    weaponSets: gearSets,
-    bowRingSet: getPersistentItem(legacyBowRingSetStorageKey),
-    arsenal: getPersistentItem(legacyArsenalStorageKey),
-  })
-}
 const buildPresetModules = import.meta.glob("../data/build/**/*.json", { eager: true, import: "default" }) as Record<
   string,
   BuildPreset
@@ -584,7 +554,8 @@ export function parseGearInventory(value: unknown): GearInventory {
 
 export function loadGearInventory(): GearInventory {
   try {
-    return parseGearInventory(JSON.parse(localStorage.getItem(legacyGearStorageKey) ?? "null"))
+    const legacy = readLegacyGearInventory(localStorage)
+    return legacy === undefined ? { items: [], equipped: {} } : parseGearInventory(legacy)
   } catch {
     return { items: [], equipped: {} }
   }
@@ -966,7 +937,7 @@ export function loadBuildState(): BuildState {
     const savedRecord = validatedRecord?.success ? (saved as { entries?: unknown; gearItems?: unknown }) : undefined
     const savedEntries = Array.isArray(saved) ? saved : Array.isArray(savedRecord?.entries) ? savedRecord.entries : []
     const sharedItems = savedRecord ? parseGearItems(savedRecord.gearItems) : []
-    const legacySetup = loadLegacyBuildSetup()
+    const legacySetup = normalizeBuildSetup(readLegacyBuildSetup())
     const defaultIds = new Set(defaultBuildPresets.map(preset => preset.id))
     const defaults: BuildEntry[] = defaultBuildPresets.map(preset => {
       const savedDefault = savedEntries.find(

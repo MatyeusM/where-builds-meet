@@ -3,6 +3,7 @@ import { parseJson } from "../../schemas/json"
 import { pathSelectionSchema } from "../../schemas/storage"
 import type { PathId } from "../contracts"
 import { typedPathDefinitions } from "../gameData/paths"
+import { readLegacyPathSelection } from "./legacy"
 
 export type PathSelectionIds = Partial<Record<PathId, string>>
 
@@ -16,7 +17,7 @@ export function loadPathSelectionIds(storageKey: string, legacyStorageKey: strin
       ) as PathSelectionIds)
     : {}
   if (!selections[currentPathId]) {
-    const legacyId = getPersistentItem(legacyStorageKey)
+    const legacyId = readLegacyPathSelection(legacyStorageKey)
     if (legacyId) {
       selections = { ...selections, [currentPathId]: legacyId }
       setPersistentItem(storageKey, JSON.stringify(selections))

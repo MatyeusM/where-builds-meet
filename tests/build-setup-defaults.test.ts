@@ -32,9 +32,11 @@ describe("build-setup-defaults", () => {
         { innerWay: "SteadfastDevotion", tier: "T6" },
         { innerWay: "ThroatPiercingArt", tier: "T6" },
       ]
+      const legacyGearSets = { Cleftpeak: 2, RainWhisper: 2 }
 
       sessionStorage.setItem("wwm-build-setup-overrides-v1", "{}")
       sessionStorage.setItem("wwm-inner-way-session-v1", JSON.stringify(legacyInnerWays))
+      sessionStorage.setItem("wwm-gear-set-session-v1", JSON.stringify(legacyGearSets))
       const current = loadBuildSetupOverrides(defaultBuildSetup)
       assert(
         Object.keys(current).length === 0,
@@ -46,6 +48,10 @@ describe("build-setup-defaults", () => {
       assert(
         migrated.innerWays?.[0]?.innerWay === "BreakingPoint",
         "The standalone Inner Way session must migrate only when the unified override has never been saved.",
+      )
+      assert(
+        migrated.weaponSets?.Cleftpeak === 2 && migrated.weaponSets?.RainWhisper === 2,
+        "The standalone gear-set session must migrate to weaponSets when the unified override has never been saved.",
       )
     } finally {
       delete globalThis.window
