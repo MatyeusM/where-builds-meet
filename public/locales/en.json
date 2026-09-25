@@ -484,6 +484,7 @@
   "data.skill.general.Deflect.name": "Deflect",
   "data.skill.general.DeflectSuccess.name": "Deflect (Successful)",
   "data.skill.general.DeflectSuccessful.name": "Deflect (Successful)",
+  "data.skill.general.Dodge.name": "Dodge",
   "data.skill.general.MoraleChant.damageGroup.name": "Morale Chant",
   "data.skill.general.MoraleChant.name": "Morale Chant",
   "data.skill.general.PerfectDodge.name": "Perfect Dodge",

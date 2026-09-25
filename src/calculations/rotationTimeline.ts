@@ -56,7 +56,14 @@ export type SkillRecord = {
   ignorePing?: boolean
   /** An inert charging component: no actions, cooldown, or skill-start notifications. */
   silent?: boolean
-  attackResponse?: { endMargin?: number; durationFrom?: string; onSuccess: string; perAttack?: boolean }
+  attackResponse?: {
+    endMargin?: number
+    durationFrom?: string
+    onSuccess: string
+    perAttack?: boolean
+    /** Resolve success at cast start only when no incoming attack is selected. */
+    fallback?: boolean
+  }
   editableCastTime?: boolean
   /**
    * A duration-controlled skill uses the step duration as its held cast duration and
@@ -1176,11 +1183,20 @@ export function buildRotationTimeline(
     | undefined
   const silentChargeStarts = new Map<TimelineRow, number>()
   const alignedAttacks = new Map<TimelineRow, number>()
+  const fallbackResponseRows = new WeakSet<TimelineRow>()
   const reservedAttacks = new Set<number>()
   const responseWindows: Array<{ row: TimelineRow; endTime: number; succeeded: boolean }> = []
   type ResponseContext = Pick<TimelineRow, "currentMartialArt" | "currentWeapon">
   const responseContexts = new Map<TimelineRow, ResponseContext>()
   let responseContext: ResponseContext | undefined
+  const queueAttackResponse = (row: TimelineRow, time: number, sortOrder: number[]) => {
+    const response = responseWindows.find(candidate => candidate.row === row)
+    if (!response || (response.succeeded && !row.skill?.attackResponse?.perAttack)) return false
+    response.succeeded = true
+    responseContexts.set(row, { currentMartialArt: row.currentMartialArt, currentWeapon: row.currentWeapon })
+    events.push({ kind: "attackResponse", row, time, sortOrder: [...sortOrder, 0] })
+    return true
+  }
 
   type ResolvedAttachment = { eventRow: TimelineRow; target: AttachedEventTarget; placement: "before" | "after" }
   const directAttachments = new Map<string, ResolvedAttachment[]>()
@@ -1218,6 +1234,10 @@ export function buildRotationTimeline(
     entries.push({ step, index })
     attachmentInputs.set(anchor, entries)
   })
+  const hasAttachedTakeDamage = (row: TimelineRow) =>
+    (attachmentInputs.get(row.rotationIndex ?? -1) ?? []).some(
+      entry => entry.step.type === "event" && entry.step.event === "TakeDamage",
+    )
   const expandRow = (targetRow: TimelineRow) => {
     queueRow(targetRow)
     for (const entry of attachmentInputs.get(targetRow.rotationIndex ?? -1) ?? []) {
@@ -2342,18 +2362,18 @@ export function buildRotationTimeline(
   }
   const attackReserved = (time: number) =>
     [...reservedAttacks].some(reserved => compareTimelineTime(reserved, time) === 0)
-  const nextAttackAt = (time: number, pendingRow?: TimelineRow) => {
+  const nextAttackAt = (time: number, pendingRow?: TimelineRow, includeReserved = false) => {
     let next =
       timed.find(
         entry =>
           entry.step.event === "TakeDamage" &&
           compareTimelineTime(entry.time, time) >= 0 &&
-          !attackReserved(entry.time),
+          (includeReserved || !attackReserved(entry.time)),
       )?.time ?? Infinity
     if (rotation.dummyAttack && Number.isFinite(firstDummyAttack)) {
       const occurrence = Math.max(0, Math.ceil((time - firstDummyAttack) / dummyAttackInterval))
       let dummyTime = firstDummyAttack + occurrence * dummyAttackInterval
-      while (attackReserved(dummyTime)) dummyTime += dummyAttackInterval
+      while (!includeReserved && attackReserved(dummyTime)) dummyTime += dummyAttackInterval
       next = Math.min(next, dummyTime)
     }
     return compareTimelineTime(next, battleEndTime(pendingRow)) < 0 ? next : undefined
@@ -2518,6 +2538,8 @@ export function buildRotationTimeline(
             waitForOrdered(event, alignedStart, "attack")
             continue
           }
+        } else if (row.skill.attackResponse.fallback && !hasAttachedTakeDamage(row)) {
+          fallbackResponseRows.add(row)
         }
       }
       if (validateSilentCharge(row)) silentChargeStarts.set(row, event.time + skillPing(row.skill))
@@ -2790,6 +2812,8 @@ export function buildRotationTimeline(
               : event.row.effectiveCastTime),
           succeeded: false,
         })
+        if (event.row.skill.attackResponse.fallback && fallbackResponseRows.has(event.row))
+          queueAttackResponse(event.row, event.time, event.sortOrder)
       }
       if (
         resolveAction?.onCastEnd &&
@@ -2960,6 +2984,7 @@ export function buildRotationTimeline(
       expectedBranch?: TimelineRow["expectedBranch"],
       triggerTags?: string[],
       replaySourceEntryIds?: string[],
+      suppressFallback = false,
     ) => {
       const definition = skills[skillId]
       const triggeredSkill =
@@ -3010,6 +3035,12 @@ export function buildRotationTimeline(
         modifierEffects: [],
         actionStates: {},
       }
+      if (
+        triggeredSkill.attackResponse?.fallback &&
+        !suppressFallback &&
+        nextAttackAt(event.time, undefined, true) === undefined
+      )
+        fallbackResponseRows.add(row)
       rows.push(row)
       if (responseContext) responseContexts.set(row, responseContext)
       events.push({ time: event.time, sortOrder: [...derivedSortOrder, 0], kind: "start", row })
@@ -3533,7 +3564,17 @@ export function buildRotationTimeline(
     }
     if (event.kind === "attackResponse") {
       runSetupTriggers("attackResponse")
-      enqueueTriggeredSkill(event.row.skill!.attackResponse!.onSuccess, event.row.sourceRowId ?? event.row.id)
+      enqueueTriggeredSkill(
+        event.row.skill!.attackResponse!.onSuccess,
+        event.row.sourceRowId ?? event.row.id,
+        undefined,
+        "skill",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      )
       continue
     }
     if (action.type === "takeDamage" && typeof action.damage === "number" && Number.isFinite(action.damage)) {
@@ -3541,17 +3582,19 @@ export function buildRotationTimeline(
         ({ row, endTime }) =>
           compareTimelineTime(event.time, row.startTime) >= 0 && compareTimelineTime(event.time, endTime) <= 0,
       )
-      if (action.damage > 0)
-        for (const response of activeResponses) {
-          if (response.succeeded && !response.row.skill?.attackResponse?.perAttack) continue
-          response.succeeded = true
-          const row = response.row
-          responseContexts.set(row, { currentMartialArt: row.currentMartialArt, currentWeapon: row.currentWeapon })
-          events.push({ kind: "attackResponse", row, time: event.time, sortOrder: [...event.sortOrder, 0] })
-        }
-      const resolvedDamage = activeResponses.length ? 0 : Math.max(0, action.damage)
+      // A Take Damage action is an incoming attack even when its resolved HP loss is zero.
+      // This lets zero-damage manual events activate responses.
+      activeResponses.forEach(response => queueAttackResponse(response.row, event.time, event.sortOrder))
+      const incomingDamage = Math.max(0, action.damage)
+      const resolvedDamage = activeResponses.length ? 0 : incomingDamage
       action.damage = resolvedDamage
-      if (resolvedDamage === 0) continue
+      // A manually authored zero-damage event is still a Take Damage event. A
+      // positive attack that a defense avoids remains excluded from damage-taken
+      // effects; its response rewards are delivered by the attackResponse event.
+      const applyTakeDamageEffects =
+        resolvedDamage > 0 ||
+        (incomingDamage === 0 && event.row.step.type === "event" && event.row.step.event === "TakeDamage")
+      if (!applyTakeDamageEffects) continue
       const previousHP = currentHP
       setCurrentHP(currentHP - resolvedDamage)
       applyResourceEvent("takeDamage", event.time, previousHP - currentHP)

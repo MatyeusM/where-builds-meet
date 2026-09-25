@@ -40,7 +40,9 @@ const input = (steps: RotationStep[]): TimelineBuildInput => ({
 const rowsFor = (rows: ReturnType<typeof buildRotationTimeline>, skill: string) =>
   rows.filter(row => row.step.type === "skill" && row.step.skill === skill)
 const incoming = (rows: ReturnType<typeof buildRotationTimeline>) =>
-  rows.flatMap(row => row.actions.filter(action => action.type === "takeDamage").map(action => action.damage))
+  rows
+    .filter(row => row.step.type === "event" && row.step.event === "TakeDamage")
+    .flatMap(row => row.actions.filter(action => action.type === "takeDamage").map(action => action.damage))
 
 describe("attack response windows", () => {
   it("keeps the canceled dodge window across the next cast and grants buffs exactly on the attack", () => {
@@ -71,23 +73,34 @@ describe("attack response windows", () => {
     expect(rowsFor(rows, "BreakingPointT6Dodge")).toHaveLength(1)
   })
 
-  it.each(["PerfectDodge", "DeflectSuccessful"])(
-    "%s blocks for its cast duration and grants success at the attack",
+  it.each(["PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"])(
+    "%s triggers its defensive rewards from its no-attack fallback",
     skill => {
-      const rows = buildRotationTimeline(input([cast(skill), cast("Follow"), attack(5), end(7)]))
+      const rows = buildRotationTimeline(input([cast(skill), cast("Follow"), end(3)]))
       const defense = rowsFor(rows, skill)[0]
-      expect(defense.startTime + defense.effectiveCastTime).toBeCloseTo(5.1)
-      expect(rowsFor(rows, "Follow")[0].startTime).toBeCloseTo(5.14)
-      expect(rowsFor(rows, skill === "PerfectDodge" ? "PerfectDodgeSuccess" : "DeflectSuccess")[0].startTime).toBe(5)
-      expect(incoming(rows)).toEqual([0])
+      const successSkill = skill === "DeflectSuccessful" ? "DeflectSuccess" : "PerfectDodgeSuccess"
+      expect(defense.startTime).toBeCloseTo(skill === "DeflectSuccessful" ? 0 : 0.04)
+      expect(defense.actions).toHaveLength(0)
+      expect(rowsFor(rows, successSkill)[0].startTime).toBeCloseTo(defense.startTime)
+      expect(rowsFor(rows, "Follow")[0].resources.Vitality).toBe(3)
+      expect(incoming(rows)).toEqual([])
     },
   )
 
-  it("reserves paired attacks once so consecutive canceled dodges align to distinct attacks", () => {
-    const data = input([cast("PerfectDodgeCancel"), cast("PerfectDodgeCancel"), cast("Follow"), attack(5.5), end(13)])
+  it.each(["Dodge", "DeflectSuccessful"])("%s blocks for its cast duration and grants success at the attack", skill => {
+    const rows = buildRotationTimeline(input([cast(skill), cast("Follow"), attack(5), end(7)]))
+    const defense = rowsFor(rows, skill)[0]
+    expect(defense.startTime + defense.effectiveCastTime).toBeCloseTo(5.1)
+    expect(rowsFor(rows, "Follow")[0].startTime).toBeCloseTo(5.14)
+    expect(rowsFor(rows, skill === "Dodge" ? "PerfectDodgeSuccess" : "DeflectSuccess")[0].startTime).toBe(5)
+    expect(incoming(rows)).toEqual([0])
+  })
+
+  it("reserves paired attacks once so consecutive attack-gated dodges align to distinct attacks", () => {
+    const data = input([cast("Dodge"), cast("Dodge"), cast("Follow"), attack(5.5), end(13)])
     data.rotation.dummyAttack = true
     const rows = buildRotationTimeline(data)
-    expect(rowsFor(rows, "PerfectDodgeCancel").map(row => row.startTime)).toEqual([5.1, 11.1])
+    expect(rowsFor(rows, "Dodge").map(row => row.startTime)).toEqual([5.1, 11.1])
     expect(rowsFor(rows, "PerfectDodgeSuccess").map(row => row.startTime)).toEqual([5.5, 11.5])
     expect(incoming(rows)).toEqual([0, 0, 0, 0, 0])
   })
@@ -160,7 +173,7 @@ describe("attack response windows", () => {
       expect(rowsFor(rows, "GhostlyStepsUmbraDodgeRopeDart")).toHaveLength(0)
       expect(rowsFor(rows, "Observe")[0].currentWeapon).toBe("RopeDart")
       data.rotation.steps = [cast(skill), cast("Follow"), end(7)]
-      expect(rowsFor(buildRotationTimeline(data), "GhostlyStepsUmbraDodgeDualBlades")).toHaveLength(0)
+      expect(rowsFor(buildRotationTimeline(data), "GhostlyStepsUmbraDodgeDualBlades")).toHaveLength(1)
     },
   )
 
@@ -173,20 +186,34 @@ describe("attack response windows", () => {
     expect(rowsFor(rows, "Charged").map(row => row.startTime)).toEqual([0, 5])
   })
 
-  it.each(["PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"])(
-    "%s grants no success without an incoming attack",
-    skill => {
-      const rows = buildRotationTimeline(input([cast(skill), cast("Follow"), end(3)]))
-      expect(rowsFor(rows, skill)[0].startTime).toBeCloseTo(skill === "DeflectSuccessful" ? 0 : 0.04)
-      expect(rowsFor(rows, "PerfectDodgeSuccess")).toHaveLength(0)
-      expect(rowsFor(rows, "DeflectSuccess")).toHaveLength(0)
-      expect(rowsFor(rows, "Follow")[0].resources.Vitality).toBe(0)
-    },
-  )
-
-  it("does not fabricate success for zero damage or an attack at Battle End", () => {
-    const rows = buildRotationTimeline(input([cast("PerfectDodge"), cast("Follow"), attack(1, 0), attack(2), end(2)]))
+  it("keeps Dodge attack-gated without an incoming attack", () => {
+    const rows = buildRotationTimeline(input([cast("Dodge"), cast("Follow"), end(3)]))
+    expect(rowsFor(rows, "Dodge")[0].startTime).toBeCloseTo(0.04)
     expect(rowsFor(rows, "PerfectDodgeSuccess")).toHaveLength(0)
+    expect(rowsFor(rows, "DeflectSuccess")).toHaveLength(0)
+    expect(rowsFor(rows, "Follow")[0].resources.Vitality).toBe(0)
+  })
+
+  it.each([
+    ["Dodge", "PerfectDodgeSuccess"],
+    ["DeflectSuccessful", "DeflectSuccess"],
+  ])("treats a zero-damage Take Damage event as an incoming hit for %s", (skill, successSkill) => {
+    const rows = buildRotationTimeline(input([cast(skill), cast("Follow"), attack(1, 0), attack(2), end(2)]))
+    expect(rowsFor(rows, successSkill)).toHaveLength(1)
+    expect(rowsFor(rows, successSkill)[0].startTime).toBe(1)
+  })
+
+  it("runs Take Damage effects for a zero-damage event", () => {
+    const data = input([cast("Follow"), cast("Observe"), attack(1, 0), end(3)])
+    data.skills.Observe = { castTime: 0, action: [] }
+    data.effectDefinitions.DamageSeen = { name: "Damage Seen", duration: 10 }
+    data.setupEffects = [
+      { trigger: { event: "takeDamage", action: { type: "addResource", value: "Vitality", amount: 2 } } },
+      { trigger: { event: "takeDamage", action: { type: "apply", target: "self", value: "DamageSeen" } } },
+    ]
+    const observe = rowsFor(buildRotationTimeline(data), "Observe")[0]
+    expect(observe.buffs.has("DamageSeen")).toBe(true)
+    expect(observe.resources.Vitality).toBe(2)
   })
 })
 

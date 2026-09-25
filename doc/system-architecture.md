@@ -363,8 +363,10 @@ read-only 200-damage Take Damage events at the same timestamp every six seconds,
 starting 5.5 seconds after fight start and stopping before Battle End. A Take
 Damage event overlapping a skill tagged `AvoidsTakeDamage` resolves to zero and
 does not fire take-damage triggers; the cast interval includes both boundaries,
-so a zero-cast-time avoidance skill protects its exact timestamp. Other Take
-Damage events use the ordinary Self HP and take-damage trigger pipeline. The optional `infiniteVitality` flag marks
+so a zero-cast-time avoidance skill protects its exact timestamp. A manually
+authored zero-damage Take Damage event still fires defensive responses and the
+ordinary take-damage lifecycle. Other Take Damage events use the ordinary Self
+HP and take-damage trigger pipeline. The optional `infiniteVitality` flag marks
 Vitality as an infinite timeline resource: its displayed value is `∞`, and its
 normal gains, regeneration, and consumption are skipped while ordinary resource
 requirements continue to use the character's capped maximum.

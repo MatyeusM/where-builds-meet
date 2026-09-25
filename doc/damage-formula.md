@@ -112,7 +112,10 @@ A manually edited Main-tab stat is stored as a final-value override. The calcula
 
 Physical DMG Reduction is retained as a raw character-sheet ratio. Explicit
 Take Damage events already specify resolved HP loss; they do not apply this
-stat, Physical Defense, or Physical Resistance again.
+stat, Physical Defense, or Physical Resistance again. A manually authored
+zero-damage Take Damage event still dispatches defensive responses and the
+Take Damage lifecycle; a positive attack reduced to zero by avoidance is not
+treated as damage taken.
 
 Formless Penetration from raw character stats adds to matching attunement
 penetration on the equipped primary attribute only. Its displayed Attunement

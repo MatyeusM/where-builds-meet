@@ -288,7 +288,12 @@ Ordinary Inner Way triggers default to `damage`; supported event-specific setup
 rules include `heal`, `takeDamage`, `skillStart`, and `attackResponse`.
 Skill-start triggers run after cast acceptance but before timed actions, including
 empty and triggered skills, excluding silent components and periodic rows.
-Use `attackResponse` for successful defense rewards, not attempted cast start.
+Use `attackResponse` for successful defense rewards, not attempted cast start. The
+`PerfectDodge` variants and `DeflectSuccessful` set `attackResponse.fallback`, so
+their response rewards resolve at cast start when no incoming attack is selected.
+`Dodge` keeps the same response window but has no fallback, so it requires an
+incoming attack. When a following attack is available, the normal attack-aligned
+response is preserved.
 
 A trigger's `cooldown` is independent of the cooldown of its actions.
 `hitWindow: { count, seconds }` counts eligible damage timestamps, includes the
@@ -400,10 +405,12 @@ Battle End, damage at its timestamp is excluded. Generated effects never extend
 combat on their own; see [combat cutoff](rotation-event-loop.md#combat-cutoff).
 
 Self HP events store absolute HP; the UI percentage is only an input boundary.
-Take Damage is an independent timed event. Target HP is depleted only when the
-rotation supplies maximum `targetHP`; otherwise it stays at the implicit state
-unless explicitly set. Qi depletion is authored rather than calculated.
-Move events use nonnegative whole-meter distances, including zero meters. Initial distance is one meter.
+Take Damage is an independent timed event. A manually authored event with zero
+damage still dispatches defensive responses and Take Damage effects even though
+it removes no HP. Target HP is depleted only when the rotation supplies maximum
+`targetHP`; otherwise it stays at the implicit state unless explicitly set. Qi
+depletion is authored rather than calculated. Move events use nonnegative
+whole-meter distances, including zero meters. Initial distance is one meter.
 
 Preset `martialArts` controls eligibility. Presets remain immutable; editor
 changes and imports produce custom records. Skill overrides replace records in

@@ -7,7 +7,9 @@ import type { SkillRecord } from "../../src/calculations/rotationTimeline"
 export function withImmediateAttacks(skills: Record<string, SkillRecord>): Record<string, SkillRecord> {
   return Object.fromEntries(
     Object.entries({ ...general, ...skills }).map(([id, skill]) => {
-      if (!skill.attackResponse && !skill.tags?.includes("PerfectDodge")) return [id, skill]
+      if (!skill.attackResponse && !skill.tags?.some(tag => tag === "PerfectDodge" || tag === "Dodge")) {
+        return [id, skill]
+      }
       if (skill.tags?.includes("Triggered")) return [id, skill]
       return [
         id,

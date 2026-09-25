@@ -97,7 +97,7 @@
     "action": [],
     "modifier": [],
     "tags": ["Deflect"],
-    "attackResponse": { "endMargin": 0.1, "onSuccess": "DeflectSuccess" }
+    "attackResponse": { "endMargin": 0.1, "onSuccess": "DeflectSuccess", "fallback": true }
   },
   "MoraleChant": {
     "name": "Morale Chant",
@@ -134,7 +134,12 @@
     "action": [],
     "modifier": [],
     "tags": ["General", "PerfectDodge"],
-    "attackResponse": { "endMargin": 0.1, "durationFrom": "PerfectDodge", "onSuccess": "PerfectDodgeSuccess" }
+    "attackResponse": {
+      "endMargin": 0.1,
+      "durationFrom": "PerfectDodge",
+      "onSuccess": "PerfectDodgeSuccess",
+      "fallback": true
+    }
   },
   "PerfectDodge": {
     "name": "Perfect Dodge",
@@ -157,6 +162,29 @@
     "action": [],
     "modifier": [],
     "tags": ["General", "PerfectDodge"],
+    "attackResponse": { "endMargin": 0.1, "onSuccess": "PerfectDodgeSuccess", "fallback": true }
+  },
+  "Dodge": {
+    "name": "Dodge",
+    "castTime": {
+      "function": "switch",
+      "param1": "currentWeapon",
+      "param2": {
+        "HengBlade": 0.5,
+        "MoBlade": 0.5,
+        "Spear": 0.5,
+        "Umbrella": 0.5,
+        "RopeDart": 0.5,
+        "Gauntlet": 0.5,
+        "Sword": 0.5,
+        "Fan": 0.5,
+        "DualBlades": 0.125
+      },
+      "fallback": 0.5
+    },
+    "action": [],
+    "modifier": [],
+    "tags": ["General", "Dodge", "PerfectDodge"],
     "attackResponse": { "endMargin": 0.1, "onSuccess": "PerfectDodgeSuccess" }
   },
   "PerfectDodgeSuccess": {

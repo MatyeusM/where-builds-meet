@@ -210,9 +210,17 @@ rotation, and dummy attacks remain part of that same event loop.
 
 Accepted casts register response windows. An incoming hit inside a window is
 avoided and queues one causal `attackResponse` event per defensive cast, ahead
-of later outgoing events at that timestamp. Additional incoming hits remain
-avoided without duplicate success events. Setup talent hooks run on success;
-the configured success skill uses the existing triggered-action executor.
+of later outgoing events at that timestamp. A Take Damage action with zero
+resolved damage still counts as an incoming hit for this response path. A
+manually authored zero-damage Take Damage event also runs the Take Damage
+lifecycle; a positive attack reduced to zero by a defense does not count as
+damage taken. When no attack is selected, a defensive skill with
+`attackResponse.fallback` resolves its success at the skill start. The
+`PerfectDodge` variants and `DeflectSuccessful` use this fallback; `Dodge` does
+not. A defensive skill's fallback response is disabled when response alignment
+selected a following attack, so that attack remains the sole success trigger.
+Additional incoming hits remain avoided without duplicate success events. Setup talent hooks run on success; the configured success skill uses
+the existing triggered-action executor.
 A per-row response context preserves originating weapon and attribution through
 success descendants without mutating the active weapon. Cancel windows remain
 active while subsequent skills execute. Forecast replays use the same mechanism

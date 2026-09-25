@@ -22,7 +22,7 @@ export function migrateGeneralsBaneSlides(rotation: RotationRecord): RotationRec
 export function migrateDefenseActionAnchors(rotation: RotationRecord): RotationRecord {
   const isDefense = (step: RotationStep | undefined) =>
     step?.type === "skill" &&
-    ["Defense", "PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"].includes(step.skill ?? "")
+    ["Defense", "Dodge", "PerfectDodge", "PerfectDodgeCancel", "DeflectSuccessful"].includes(step.skill ?? "")
   let changed = false
   const steps = rotation.steps.map((step, index) => {
     if (step.type !== "event") return step
