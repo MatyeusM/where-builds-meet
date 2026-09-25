@@ -1,3 +1,4 @@
+import { IconBrandDiscord, IconBrandGithub } from "@tabler/icons-react"
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 import { settingsForPath } from "./application/characterComposition"
@@ -534,10 +535,12 @@ export default function App() {
           </div>
           <div className="project-links">
             <a href="https://discord.gg/UtqAw8HaXA" target="_blank" rel="noreferrer">
-              {t("ui.app.discord")}
+              <IconBrandDiscord size="1em" aria-hidden />
+              <span>{t("ui.app.discord")}</span>
             </a>
             <a href="https://github.com/greydust/where-builds-meet" target="_blank" rel="noreferrer">
-              {t("ui.app.github")}
+              <IconBrandGithub size="1em" aria-hidden />
+              <span>{t("ui.app.github")}</span>
             </a>
           </div>
         </div>
@@ -609,6 +612,7 @@ export default function App() {
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildIds={typedPathDefinitions[pathId].graduated}
                 devMode={devMode}
+                activeBuildDps={rotationMetrics?.dps}
                 buildState={effectiveBuildState}
                 onBuildStateChange={setBuildState}
                 onActiveBuildChange={activateBuildForPath}

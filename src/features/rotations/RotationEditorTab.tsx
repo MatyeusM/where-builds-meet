@@ -338,9 +338,12 @@ export function RotationEditorTab({
   )
   const listedRotationEntries = useMemo(
     () =>
-      rotationEntries.filter(
-        entry => (devMode || !entry.test) && (!entry.isDefault || rotationAvailableForWeapons(entry, settings.weapons)),
-      ),
+      rotationEntries
+        .filter(
+          entry =>
+            (devMode || !entry.test) && (!entry.isDefault || rotationAvailableForWeapons(entry, settings.weapons)),
+        )
+        .sort((left, right) => Number(left.isDefault === true) - Number(right.isDefault === true)),
     [devMode, rotationEntries, settings.weapons],
   )
   const compatibleRotationEntries = useMemo(

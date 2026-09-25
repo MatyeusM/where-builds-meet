@@ -189,6 +189,27 @@
     font-size: 1.35rem;
   }
 
+  .build-detail-title {
+    display: flex;
+    min-inline-size: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .build-detail-dps {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .build-duplicate-button {
+    display: inline-grid;
+    inline-size: 2.25rem;
+    place-items: center;
+  }
+
   .detail-active-button {
     min-inline-size: 6rem;
   }
