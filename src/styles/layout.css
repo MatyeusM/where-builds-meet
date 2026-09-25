@@ -18,10 +18,6 @@
     margin-block-end: 16px;
   }
 
-  .viewport-page-shell .path-selector {
-    flex: 0 0 auto;
-  }
-
   .viewport-page-shell .main-tabs {
     flex: 0 0 auto;
     margin-block-end: 12px;
@@ -87,11 +83,9 @@
     color: var(--primary);
   }
 
+  /* The path switcher follows the title block; its buttons wrap within the column. */
   .path-selector {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-block-end: 10px;
+    margin-block-start: 10px;
   }
 
   .path-selector-options {
@@ -156,6 +150,20 @@
     gap: 24px;
     margin-block-end: 16px;
 
+    /* Title block owns the remaining width so the path switcher wraps, not the controls. */
+    .page-header-start {
+      flex: 1 1 0;
+    }
+
+    /* Controls stack above the project links, each sized by its own content. */
+    .page-header-end {
+      display: flex;
+      flex: 0 1 auto;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
     .dev-mode-button {
       min-block-size: 44px;
       min-inline-size: 4.5rem;
@@ -165,7 +173,6 @@
     .page-header-controls {
       position: relative;
       display: flex;
-      flex: 0 1 auto;
       max-inline-size: 100%;
       align-items: end;
       flex-wrap: wrap;
@@ -173,16 +180,15 @@
       gap: 12px;
     }
 
-    .page-header-links {
+    .project-links {
       display: flex;
-      flex: 0 0 100%;
       align-items: center;
       justify-content: flex-end;
       gap: 16px;
       min-block-size: 44px;
     }
 
-    .page-header-links a {
+    .project-links a {
       display: inline-flex;
       min-block-size: 44px;
       align-items: center;
@@ -191,7 +197,7 @@
       text-decoration: none;
     }
 
-    .page-header-links a:hover {
+    .project-links a:hover {
       text-decoration: underline;
     }
 

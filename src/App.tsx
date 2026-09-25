@@ -481,36 +481,58 @@ export default function App() {
       data-layout={layoutMode}
     >
       <header className="page-header">
-        <div>
+        <div className="page-header-start">
           <h1>{t("ui.app.whereBuildsMeet")}</h1>
           <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
-        </div>
-        <div className="page-header-controls">
-          <NoticeArea />
-          <label className="locale-selector">
-            <span>{t("ui.app.language")}</span>
-            <select value={locale} onChange={event => void changeLocale(event.target.value)}>
-              {getSupportedLocales().map(supportedLocale => (
-                <option
-                  value={supportedLocale}
-                  key={supportedLocale}
-                  disabled={!devMode && isLocaleWip(supportedLocale)}
+          <section className="path-selector" aria-label={t("ui.app.combatPath")}>
+            <div className="path-selector-options">
+              {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(([value, definition]) => (
+                <button
+                  className={pathId === value ? "selected" : ""}
+                  type="button"
+                  key={value}
+                  aria-pressed={pathId === value}
+                  disabled={pathRequiresDev(definition) && !devMode}
+                  onClick={() => selectPath(value)}
                 >
-                  {getLocaleDisplayName(supportedLocale)}
-                </option>
+                  {definition.icon && <img src={`${import.meta.env.BASE_URL}paths/${definition.icon}`} alt="" />}
+                  <span>{gameText(definition.name)}</span>
+                  {definition.status !== "available" && (
+                    <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
+                  )}
+                </button>
               ))}
-            </select>
-          </label>
-          <Button
-            className="dev-mode-button"
-            variant="secondary"
-            type="button"
-            aria-pressed={devMode}
-            onClick={toggleDevMode}
-          >
-            {t("ui.app.dev")}
-          </Button>
-          <div className="page-header-links">
+            </div>
+          </section>
+        </div>
+        <div className="page-header-end">
+          <div className="page-header-controls">
+            <NoticeArea />
+            <label className="locale-selector">
+              <span>{t("ui.app.language")}</span>
+              <select value={locale} onChange={event => void changeLocale(event.target.value)}>
+                {getSupportedLocales().map(supportedLocale => (
+                  <option
+                    value={supportedLocale}
+                    key={supportedLocale}
+                    disabled={!devMode && isLocaleWip(supportedLocale)}
+                  >
+                    {getLocaleDisplayName(supportedLocale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button
+              className="dev-mode-button"
+              variant="secondary"
+              type="button"
+              aria-pressed={devMode}
+              onClick={toggleDevMode}
+            >
+              {t("ui.app.dev")}
+            </Button>
+          </div>
+          <div className="project-links">
             <a href="https://discord.gg/UtqAw8HaXA" target="_blank" rel="noreferrer">
               {t("ui.app.discord")}
             </a>
@@ -520,26 +542,6 @@ export default function App() {
           </div>
         </div>
       </header>
-      <section className="path-selector" aria-label={t("ui.app.combatPath")}>
-        <div className="path-selector-options">
-          {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(([value, definition]) => (
-            <button
-              className={pathId === value ? "selected" : ""}
-              type="button"
-              key={value}
-              aria-pressed={pathId === value}
-              disabled={pathRequiresDev(definition) && !devMode}
-              onClick={() => selectPath(value)}
-            >
-              {definition.icon && <img src={`${import.meta.env.BASE_URL}paths/${definition.icon}`} alt="" />}
-              <span>{gameText(definition.name)}</span>
-              {definition.status !== "available" && (
-                <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
       <nav className="main-tabs" aria-label={t("ui.app.mainSections")}>
         <Tab active={activeTab === "main"} onClick={() => setActiveTab("main")}>
           {t("ui.app.main")}
