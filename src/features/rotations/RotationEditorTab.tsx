@@ -2071,11 +2071,18 @@ export function RotationEditorTab({
         <aside className="rotation-list">
           <div className="rotation-list-heading">
             <span>{t("ui.app.rotations")}</span>
-            <Button variant="secondary" size="small" type="button" onClick={addRotation}>
-              {t("ui.app.newRotation")}
-            </Button>
           </div>
           <div className="rotation-list-entries">
+            <Button
+              className="rotation-list-create"
+              variant="secondary"
+              size="small"
+              type="button"
+              onClick={addRotation}
+            >
+              <IconPlus size="1em" aria-hidden />
+              <span>{t("ui.app.newRotation")}</span>
+            </Button>
             {listedRotationEntries.map(entry => {
               const incompatible = !rotationAvailableForWeapons(entry, settings.weapons)
               return (

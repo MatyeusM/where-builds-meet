@@ -496,11 +496,12 @@ export default function BuildTab({
         <aside className="build-list">
           <div className="build-list-heading">
             <span>{t("ui.buildTab.builds")}</span>
-            <Button variant="secondary" size="small" type="button" onClick={addBuild}>
-              {t("ui.buildTab.newBuild")}
-            </Button>
           </div>
           <div className="build-list-entries">
+            <Button className="build-list-create" variant="secondary" size="small" type="button" onClick={addBuild}>
+              <IconPlus size="1em" aria-hidden />
+              <span>{t("ui.buildTab.newBuild")}</span>
+            </Button>
             {listedEntries.map(entry => {
               const incompatible = !buildEntryAvailableForMartialArts(entry, weapons)
               return (
