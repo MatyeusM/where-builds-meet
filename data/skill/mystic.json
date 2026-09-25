@@ -1457,5 +1457,47 @@
     ],
     "modifier": [],
     "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "WorldToSword", "QiBlade", "Triggered"]
+  },
+  "YakshaRush": {
+    "name": "Yaksha Rush",
+    "castTime": 1.8883333333333334,
+    "cooldown": 2,
+    "action": [
+      { "type": "consumeResource", "value": "Vitality", "amount": 15, "time": 0 },
+      {
+        "type": "addResource",
+        "value": "Vitality",
+        "amount": 4.5,
+        "time": 0,
+        "requirement": [{ "target": "self", "value": "Turnaround" }]
+      },
+      {
+        "type": "damage",
+        "phyCoef": 0.738637049856,
+        "phyBonus": 110.748,
+        "attrBonus": 0,
+        "time": 0.45096195999999994,
+        "attrCoef": 0.738637049856
+      },
+      {
+        "type": "damage",
+        "phyCoef": 2.95454819942,
+        "phyBonus": 442.992,
+        "attrBonus": 0,
+        "time": 1.3603838499999998,
+        "attrCoef": 2.95454819942
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "Turnaround",
+        "stack": 1,
+        "reapply": true,
+        "time": 1.8883333333333334,
+        "requirement": [{ "target": "self", "value": "FuryHarvestT6" }]
+      }
+    ],
+    "modifier": [],
+    "tags": ["DirectDamage", "Mystic", "SingleTargetMystic", "YakshaRush"]
   }
 }

@@ -90,6 +90,14 @@ not a second catalog of current values:
   The raw export-distance to editor-meter mapping is still unverified.
 - Attr. Attack DMG Up is already represented by attribute channels and the
   primary-path multiplier. Its empty talent effect must not add that bonus again.
+- Yaksha Rush authors only the two base-animation hits, `230006101` at 0.2x and
+  `230006102` at 0.8x. The base route also lists a simultaneous `230006105` at
+  0.8x for its defense-break reward, which matches neither that reward's 0.5x
+  skill text nor an unambiguous layer rule; the text value is left unimplemented
+  rather than guessed. Its Vitality cost and cooldown come from the community
+  wiki, not the export, which carries no resource-cost or cooldown fields. It
+  uses a plain `cooldown` because it is currently the only Mystic carrying the
+  Break Defense tag; add a `cooldownGroup` when a second one appears.
 
 ## Authoring rules
 
@@ -439,6 +447,9 @@ below keeps cross-cutting blockers and outstanding skill evidence.
 - Eonpour, Skyspeak, and Volutefit currently provide stat tiers only; other
   mechanics await combat-skill and state wiring. See their JSON and the talent
   audit. Mistwing is fully wired and is offered on Draught and Wind.
+- Yaksha Rush's defense-break rewards are unresolved: breaking the target's
+  defense is not a modeled timeline state, so its extra damage, 10 Qi damage, and
+  Tenacity grant have no representation. Do not attach them to the base hits.
 
 ### Timing and source validation
 
