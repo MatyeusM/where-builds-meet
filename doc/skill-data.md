@@ -436,8 +436,9 @@ below keeps cross-cutting blockers and outstanding skill evidence.
 - Enemy-healing reduction, movement slow, control immunity,
   breath-hold, and some talent-specific dodge-window changes remain unsupported.
   Existing incoming-attack response windows do not resolve all those mechanics.
-- Draught Inner Ways currently provide stat tiers only; other mechanics await
-  combat-skill and state wiring. See their JSON and the talent audit.
+- Eonpour, Skyspeak, and Volutefit currently provide stat tiers only; other
+  mechanics await combat-skill and state wiring. See their JSON and the talent
+  audit. Mistwing is fully wired and is offered on Draught and Wind.
 
 ### Timing and source validation
 

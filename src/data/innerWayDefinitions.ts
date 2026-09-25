@@ -127,8 +127,11 @@ export function innerWayAvailableForTag(innerWay: string, requiredTag?: string) 
   return definition?.tags?.includes(requiredTag) === true
 }
 
+/** Eligible entries for the path selectors, ordered by the data name rather than registry order. */
 export function innerWayEntriesForTag(requiredTag?: string) {
-  return Object.entries(innerWayDefinitions).filter(([innerWay]) => innerWayAvailableForTag(innerWay, requiredTag))
+  return Object.entries(innerWayDefinitions)
+    .filter(([innerWay]) => innerWayAvailableForTag(innerWay, requiredTag))
+    .toSorted(([, left], [, right]) => left.name.localeCompare(right.name))
 }
 
 /** Resolve authored Solo Level tables before effects enter the shared stat pipeline. */

@@ -692,6 +692,16 @@ and active `physicalPenetration` effects.
 
 Each attribute starts with its corresponding character penetration stat. Stonesplit additionally receives active `stonesplitPenetration` effects. Formless Penetration is added to the primary attribute.
 
+Penetration effect values may be a `segment` over `missingTargetHPPercentage`,
+so they resolve per hit from the same target-HP snapshot the damage categories
+use. Mistwing is the current case: its T0 base step is one Physical Penetration
+per completed 20% of missing target HP (capped at four), and T6 replaces that step
+with one per 10% instead of adding a second step. T3 adds a separate Physical
+Penetration step of two per 10% (capped at eight) while a Martial Art Special
+Enhancement is active, and T4 supplies six of every penetration type. These are
+ordinary calculation-time effects: they read the action's target-HP snapshot,
+apply to healing on the same channels, and are not character-sheet stats.
+
 Effects may adjust resistance directly with `bellstrikeResistance`, `stonesplitResistance`, `silkbindResistance`, or `bamboocutResistance`. These values are added to enemy resistance. For example, Fearful Blade contributes `-16` to each attribute resistance.
 
 Echoes of Oblivion applies `bamboocutResistance: -10` only to Infernal

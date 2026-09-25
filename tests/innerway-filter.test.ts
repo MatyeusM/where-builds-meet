@@ -25,5 +25,14 @@ describe("innerway-filter", () => {
     }
 
     assert(innerWayEntriesForTag("__unknown_path_tag__").length === 0, "An unknown tag must return no Inner Ways.")
+
+    for (const tag of allTags) {
+      const names = innerWayEntriesForTag(tag).map(([, definition]) => definition.name)
+      assert.deepEqual(
+        names,
+        names.toSorted((left, right) => left.localeCompare(right)),
+        `The ${tag} selector must list Inner Ways in display-name order.`,
+      )
+    }
   })
 })

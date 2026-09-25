@@ -1,10 +1,25 @@
 {
   "name": "Mistwing",
   "altersTimeline": true,
-  "tags": ["BamboocutDraught"],
+  "tags": ["BamboocutDraught", "BamboocutWind"],
   "effect": {
-    "MistwingT0": {},
-    "MistwingT1": {},
+    "MistwingT0": {
+      "effect": [
+        {
+          "requirement": [{ "operator": "not", "operand": [{ "target": "self", "value": "MistwingT6" }] }],
+          "effect": {
+            "physicalPenetration": {
+              "function": "segment",
+              "param1": "missingTargetHPPercentage",
+              "mode": "UpperBoundInclusive",
+              "param2": [20, 40, 60, 80],
+              "param3": [1, 2, 3, 4, 4]
+            }
+          }
+        }
+      ]
+    },
+    "MistwingT1": { "effect": [{ "effect": { "physicalPenetration": 3 } }] },
     "MistwingT2": {
       "effect": [
         {
@@ -65,9 +80,69 @@
         }
       ]
     },
-    "MistwingT3": {},
-    "MistwingT4": {},
+    "MistwingT3": {
+      "effect": [
+        {
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "self", "value": "Inebriate" },
+                { "target": "self", "value": "Flamelash" },
+                { "target": "self", "value": "FlowerBurial" }
+              ]
+            }
+          ],
+          "effect": {
+            "physicalPenetration": {
+              "function": "segment",
+              "param1": "missingTargetHPPercentage",
+              "mode": "UpperBoundInclusive",
+              "param2": [10, 20, 30, 40, 50, 60, 70, 80],
+              "param3": [2, 4, 6, 8, 8, 8, 8, 8, 8]
+            }
+          }
+        }
+      ]
+    },
+    "MistwingT4": {
+      "effect": [
+        {
+          "effect": {
+            "physicalPenetration": 6,
+            "bellstrikePenetration": 6,
+            "stonesplitPenetration": 6,
+            "silkbindPenetration": 6,
+            "bamboocutPenetration": 6
+          }
+        }
+      ]
+    },
     "MistwingT5": { "effect": [{ "rawStat": { "physDmgBonus": 0.025 } }] },
-    "MistwingT6": {}
+    "MistwingT6": {
+      "effect": [
+        {
+          "effect": {
+            "physicalPenetration": {
+              "function": "segment",
+              "param1": "missingTargetHPPercentage",
+              "mode": "UpperBoundInclusive",
+              "param2": [10, 20, 30, 40],
+              "param3": [1, 2, 3, 4, 4]
+            }
+          }
+        },
+        {
+          "requirement": [{ "target": "self", "value": "Inebriate" }],
+          "effect": {
+            "physicalPenetration": 6,
+            "bellstrikePenetration": 6,
+            "stonesplitPenetration": 6,
+            "silkbindPenetration": 6,
+            "bamboocutPenetration": 6
+          }
+        }
+      ]
+    }
   }
 }
