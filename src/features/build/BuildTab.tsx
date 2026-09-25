@@ -86,7 +86,7 @@ type BuildTabProps = {
   martialArtTags: string[]
   pathTag?: string
   buildGroup: string
-  graduatedBuildId: string
+  graduatedBuildIds: string[]
   devMode: boolean
   buildState: BuildState
   onBuildStateChange: Dispatch<SetStateAction<BuildState>>
@@ -260,7 +260,7 @@ export default function BuildTab({
   martialArtTags,
   pathTag,
   buildGroup,
-  graduatedBuildId,
+  graduatedBuildIds,
   devMode,
   buildState,
   onBuildStateChange,
@@ -519,7 +519,7 @@ export default function BuildTab({
                       </strong>
                       {entry.isDefault && (
                         <small>
-                          {entry.presetId === graduatedBuildId
+                          {graduatedBuildIds.includes(entry.presetId ?? "")
                             ? t("ui.buildTab.graduatePreset")
                             : t("ui.buildTab.defaultPreset")}
                         </small>

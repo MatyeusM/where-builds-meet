@@ -38,7 +38,12 @@ export type GraduationEnvironment = {
   skillOverrides: SkillOverrides
 }
 
-export function graduationEnvironmentFingerprint(environment: GraduationEnvironment) {
+export type GraduationPresetEnvironment = GraduationEnvironment & { graduatedBuildIds: string[] }
+
+export function graduationEnvironmentFingerprint(
+  environment: GraduationEnvironment,
+  graduatedBuildIds: readonly string[] = [],
+) {
   const { name: _displayName, ...rotation } = environment.rotation
   return calculationFingerprint({
     pathId: environment.pathId,
@@ -49,8 +54,17 @@ export function graduationEnvironmentFingerprint(environment: GraduationEnvironm
     food: environment.food,
     script: environment.script,
     divinecraft: environment.divinecraft,
+    graduatedBuildIds,
     skillOverrides: environment.skillOverrides,
   })
+}
+
+export function selectHighestGraduationResult<T extends { metrics: { dps: number } }>(results: readonly T[]) {
+  let highest: T | undefined
+  for (const result of results) {
+    if (!highest || result.metrics.dps > highest.metrics.dps) highest = result
+  }
+  return highest
 }
 
 export function buildPresetRotationBundle(
@@ -145,4 +159,15 @@ export function buildPresetRotationBundle(
     innerWayPriority: [],
     setupComparisons: {},
   }
+}
+
+export function buildGraduationBundleSet(environment: GraduationPresetEnvironment) {
+  const fingerprint = `graduation:${graduationEnvironmentFingerprint(environment, environment.graduatedBuildIds)}`
+  const candidates: Array<{ buildId: string; bundle: RotationSimulationBundle; fingerprint: string }> = []
+  for (const buildId of environment.graduatedBuildIds) {
+    const bundle = buildPresetRotationBundle(environment, buildId)
+    if (!bundle) return undefined
+    candidates.push({ buildId, bundle, fingerprint: `${fingerprint}:${buildId}` })
+  }
+  return candidates.length > 0 ? { fingerprint, candidates } : undefined
 }

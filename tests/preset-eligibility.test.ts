@@ -90,29 +90,45 @@ describe("preset-eligibility", () => {
 
     for (const [pathId, definition] of Object.entries(paths)) {
       assert(typeof definition.defaultBuild === "string", `Path ${pathId} must declare a default build.`)
-      assert(typeof definition.graduated === "string", `Path ${pathId} must declare a graduate build.`)
+      assert(
+        Array.isArray(definition.graduated) && definition.graduated.length > 0,
+        `Path ${pathId} must declare at least one graduate build.`,
+      )
+      assert(
+        definition.graduated.every(buildId => typeof buildId === "string"),
+        `Path ${pathId} must declare only string graduate build IDs.`,
+      )
+      assert(
+        new Set(definition.graduated).size === definition.graduated.length,
+        `Path ${pathId} must not repeat graduate build IDs.`,
+      )
       assert(typeof definition.defaultRotation === "string", `Path ${pathId} must declare a default rotation.`)
       const defaultBuildId = definition.defaultBuild
-      const graduateBuildId = definition.graduated
       const defaultRotationId = definition.defaultRotation
       const build = buildsById.get(defaultBuildId)
-      const graduateBuild = buildsById.get(graduateBuildId)
+      const graduateBuilds = definition.graduated.map(graduateBuildId => {
+        const graduateBuild = buildsById.get(graduateBuildId)
+        assert(graduateBuild, `Path ${pathId} references missing graduate build ${graduateBuildId}.`)
+        return graduateBuild
+      })
       const rotation = rotationsById.get(defaultRotationId)
       assert(build, `Path ${pathId} references missing default build ${defaultBuildId}.`)
-      assert(graduateBuild, `Path ${pathId} references missing graduate build ${graduateBuildId}.`)
       assert(rotation, `Path ${pathId} references missing default rotation ${defaultRotationId}.`)
       if (definition.defaultBuild !== "empty")
         assert(
           build.buildGroup === definition.buildGroup,
           `Path ${pathId}'s default build must belong to its build group.`,
         )
-      if (definition.graduated !== "empty")
+      for (const graduateBuild of graduateBuilds) {
+        if (graduateBuild.definition.id === "empty") continue
         assert(
           graduateBuild.buildGroup === definition.buildGroup,
-          `Path ${pathId}'s graduate build must belong to its build group.`,
+          `Path ${pathId}'s graduate build ${graduateBuild.definition.id} must belong to its build group.`,
         )
-      if (definition.graduated !== "empty") {
-        assert(graduateBuild.definition.relayed !== true, `Path ${pathId}'s graduate build cannot be relayed.`)
+        assert(
+          graduateBuild.definition.relayed !== true,
+          `Path ${pathId}'s graduate build ${graduateBuild.definition.id} cannot be relayed.`,
+        )
         for (const [slot, gear] of Object.entries(graduateBuild.definition.gear ?? {})) {
           assert(gear.relayed !== true, `Path ${pathId}'s graduate ${slot} cannot be relayed.`)
           const affixCaps = statCaps[String(gear.level)]?.affix
@@ -161,10 +177,11 @@ describe("preset-eligibility", () => {
         )
       if (definition.status === "available") {
         assert(build.definition.test !== true, `Available path ${pathId} cannot use a test-only default build.`)
-        assert(
-          graduateBuild.definition.test !== true,
-          `Available path ${pathId} cannot use a test-only graduate build.`,
-        )
+        for (const graduateBuild of graduateBuilds)
+          assert(
+            graduateBuild.definition.test !== true,
+            `Available path ${pathId} cannot use test-only graduate build ${graduateBuild.definition.id}.`,
+          )
         assert(rotation.definition.test !== true, `Available path ${pathId} cannot use a test-only default rotation.`)
       }
     }

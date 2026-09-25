@@ -182,6 +182,7 @@
   "data.build.stonesplitStrength.mixedFullyRelayedDoubleMin.name": "Mixed Fully Relayed Double Min Build",
   "data.build.stonesplitStrength.mixedFullyRelayedMax.name": "Mixed Fully Relayed Max Build",
   "data.build.stonesplitStrength.mixedFullyRelayedMin.name": "Mixed Fully Relayed Min Build",
+  "data.build.stonesplitStrength.pureFullMin.name": "Pure Full Min Build",
   "data.build.stonesplitStrength.pureFullyRelayedMax.name": "Pure Fully Relayed Max Build",
   "data.build.stonesplitStrength.pureFullyRelayedMin.name": "Pure Fully Relayed Min Build",
   "data.debuff.bamboocutDraught.Strayhunt.description": "Increases Physical DMG Bonus and all four attribute DMG Bonuses by 2%.",

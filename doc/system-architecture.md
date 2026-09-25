@@ -1259,14 +1259,17 @@ application and expiration timestamps are clipped to the resolved fight window
 and overlapping refresh intervals are counted once.
 
 The Main-tab DPS panel derives Graduation Rate from the current DPS divided by
-the path's `graduated` build DPS under the same rotation, breakthrough, food,
-Divinecraft, Script, and global buff/debuff state. A fingerprint of that
-environment, the path, and active skill overrides keys the existing bounded
-baseline cache. A new environment schedules one ordinary deterministic
-baseline calculation; build-only changes reuse the cached denominator. No
-Monte Carlo simulation is involved. `data/path.json` declares `defaultBuild`
-and `graduated` separately so the build loaded by default does not have to be
-the build used as the graduation denominator.
+the highest DPS among the path's `graduated` build presets under the same
+rotation, breakthrough, food, Divinecraft, Script, and global buff/debuff
+state. Every configured preset is calculated through the ordinary deterministic
+worker pipeline, and the maximum completed baseline becomes the denominator. A
+fingerprint of that environment, the path, the graduate preset IDs, and active
+skill overrides keys the existing bounded baseline cache. A new environment
+schedules the required baseline calculations; build-only changes reuse the
+cached denominators. No Monte Carlo simulation is involved.
+`data/path.json` declares `defaultBuild` and a `graduated` preset array
+separately so the build loaded by default does not have to be one of the builds
+used as graduation denominators.
 
 The Rotation Editor retains its complete last-built timeline, including generated
 rows and calculated values, while a new draft is pending. `editorTimelinePreview.ts`
@@ -1589,9 +1592,11 @@ configuration are required for GitHub Pages hosting.
 
 The exported `buildPresetRotationBundle` in `src/application/graduation.ts` builds a selected preset
 using the same setup, gear, stats, definitions, and timeline inputs as the
-Graduation comparison. Graduation supplies the path's graduated build ID;
-the headless DPS snapshot runner supplies its default build ID and explicit
-environment settings. Both use the centralized rotation calculator. The Pages
+Graduation comparison. `buildGraduationBundleSet` resolves every preset in the
+path's `graduated` array, and `selectHighestGraduationResult` chooses the
+highest DPS result as the denominator. The headless DPS snapshot runner instead
+supplies its default build ID and explicit environment settings. Both use the
+centralized rotation calculator. The Pages
 workflow runs `npm run test:dps` before deployment; ordinary build, test, and
 watch commands exclude that release comparison.
 See [DPS snapshots](dps-snapshots.md) for coverage and the review/update workflow.

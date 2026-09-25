@@ -73,9 +73,9 @@ import {
   withExpectedOutcomeBuffPlates,
 } from "../../application/gameData/skills"
 import {
-  buildPresetRotationBundle,
-  graduationEnvironmentFingerprint,
-  type GraduationEnvironment,
+  buildGraduationBundleSet,
+  selectHighestGraduationResult,
+  type GraduationPresetEnvironment,
 } from "../../application/graduation"
 import { percentageAttunementKeys } from "../../application/persistence/attunements"
 import { rotationListStorageKey } from "../../application/persistence/keys"
@@ -1656,7 +1656,7 @@ export function RotationEditorTab({
     return { bundle, fingerprint: rotationBundleFingerprint(bundle) }
   })
   const prepareGraduationCalculation = useEffectEvent((rotationRecord: RotationRecord) => {
-    const environment: GraduationEnvironment = {
+    const environment: GraduationPresetEnvironment = {
       pathId,
       martialArts: [...settings.weapons],
       rotation: { ...rotationRecord, ping: resolvePing(rotationRecord.ping, settings.ping) },
@@ -1665,10 +1665,10 @@ export function RotationEditorTab({
       food: currentFood,
       script: currentScript,
       divinecraft: currentDivinecraft,
+      graduatedBuildIds: typedPathDefinitions[pathId].graduated,
       skillOverrides,
     }
-    const bundle = buildPresetRotationBundle(environment, typedPathDefinitions[environment.pathId].graduated)
-    return bundle ? { bundle, fingerprint: `graduation:${graduationEnvironmentFingerprint(environment)}` } : undefined
+    return buildGraduationBundleSet(environment)
   })
   // Publishes the active rotation's simulation bundle. Declared after
   // prepareGraduationCalculation so the effect only references initialized bindings.
@@ -1680,9 +1680,15 @@ export function RotationEditorTab({
     if (activeRotation) {
       const graduation = prepareGraduationCalculation(activeRotation)
       graduationFingerprintRef.current = graduation?.fingerprint ?? null
-      const cachedGraduation = graduation
-        ? calculationCacheRef.current.baseline(graduation.fingerprint)?.metrics.dps
-        : undefined
+      let cachedGraduation: number | undefined
+      if (graduation) {
+        const cachedBaselines = graduation.candidates.flatMap(candidate => {
+          const baseline = calculationCacheRef.current.baseline(candidate.fingerprint)
+          return baseline ? [baseline] : []
+        })
+        if (cachedBaselines.length === graduation.candidates.length)
+          cachedGraduation = selectHighestGraduationResult(cachedBaselines)?.metrics.dps
+      }
       onActiveSimulationBundleChange(
         calculationBundleFor(activeRotation, false),
         activeRotation.name || "Active rotation",
@@ -1760,16 +1766,21 @@ export function RotationEditorTab({
   async function calculateGraduationDps(rotationRecord: RotationRecord) {
     const prepared = prepareGraduationCalculation(rotationRecord)
     if (!prepared) return
-    let baseline = calculationCacheRef.current.baseline(prepared.fingerprint)
-    if (!baseline) {
-      baseline = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(prepared.fingerprint), {
-        key: "graduation",
-        priority: 390,
-      })
-      calculationCacheRef.current.storeBaseline(prepared.fingerprint, baseline)
-    }
-    if (graduationFingerprintRef.current === prepared.fingerprint)
-      onGraduationDpsChange(prepared.fingerprint, baseline.metrics.dps)
+    const baselines = await Promise.all(
+      prepared.candidates.map(async candidate => {
+        const cachedBaseline = calculationCacheRef.current.baseline(candidate.fingerprint)
+        if (cachedBaseline) return cachedBaseline
+        const baseline = await requestRotationBaseline(candidate.bundle, workerCacheKeyFor(candidate.fingerprint), {
+          key: `graduation:${candidate.fingerprint}`,
+          priority: 390,
+        })
+        calculationCacheRef.current.storeBaseline(candidate.fingerprint, baseline)
+        return baseline
+      }),
+    )
+    const highest = selectHighestGraduationResult(baselines)
+    if (highest && graduationFingerprintRef.current === prepared.fingerprint)
+      onGraduationDpsChange(prepared.fingerprint, highest.metrics.dps)
   }
 
   const calculateDiffsForRotation = useEffectEvent(

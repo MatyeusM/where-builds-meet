@@ -6,7 +6,7 @@
     "status": "plannerOnly",
     "buildGroup": "bellstrike-splendor",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty",
     "lockedWeapons": ["namelessSword", "namelessSpear"]
   },
@@ -17,7 +17,7 @@
     "status": "plannerOnly",
     "buildGroup": "bellstrike-umbra",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty",
     "lockedWeapons": ["strategicSword", "heavenquakerSpear"]
   },
@@ -28,7 +28,7 @@
     "status": "available",
     "buildGroup": "stonesplit-might",
     "defaultBuild": "might-fully-relayed-max",
-    "graduated": "might-full-max",
+    "graduated": ["might-full-max"],
     "defaultRotation": "dummy-1-min",
     "lockedWeapons": ["thundercry", "stormbreaker"]
   },
@@ -39,7 +39,7 @@
     "status": "available",
     "buildGroup": "stonesplit-strength",
     "defaultBuild": "mixed-fully-relayed-min",
-    "graduated": "mixed-full-min",
+    "graduated": ["mixed-full-min", "pure-full-min"],
     "defaultRotation": "mixed-dummy-infinite-vitality-1-min",
     "lockedWeapons": ["snowparting", "phalanxbane"]
   },
@@ -50,7 +50,7 @@
     "status": "plannerOnly",
     "buildGroup": "silkbind-jade",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty",
     "lockedWeapons": ["vernalUmbrella", "inkwellFan"]
   },
@@ -61,7 +61,7 @@
     "status": "available",
     "buildGroup": "silkbind-deluge",
     "defaultBuild": "deluge-fully-relayed-min-ew",
-    "graduated": "deluge-full-min-ew",
+    "graduated": ["deluge-full-min-ew"],
     "defaultRotation": "dummy-1-min-wts-team",
     "lockedWeapons": ["panaceaFan", "soulshadeUmbrella"]
   },
@@ -72,7 +72,7 @@
     "status": "available",
     "buildGroup": "bamboocut-wind",
     "defaultBuild": "wind-fully-relayed-min",
-    "graduated": "wind-full-min",
+    "graduated": ["wind-full-min"],
     "defaultRotation": "wind-dummy-1-min-infinite-vitality",
     "lockedWeapons": ["infernalTwinblades", "mortalRopeDart"]
   },
@@ -83,7 +83,7 @@
     "status": "wip",
     "buildGroup": "bamboocut-dust",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty",
     "lockedWeapons": ["everspring", "unfettered"]
   },
@@ -94,7 +94,7 @@
     "status": "available",
     "buildGroup": "bamboocut-kite",
     "defaultBuild": "kite-fully-relayed-min-bp",
-    "graduated": "kite-full-min-bp",
+    "graduated": ["kite-full-min-bp"],
     "defaultRotation": "dummy-1-min-iv-bp",
     "lockedWeapons": ["heavenwill", "skygrasp"]
   },
@@ -105,7 +105,7 @@
     "status": "plannerOnly",
     "buildGroup": "bamboocut-draught",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty",
     "lockedWeapons": ["skystrikeGauntlets", "rivenTwinblades"]
   },
@@ -114,7 +114,7 @@
     "status": "devOnly",
     "buildGroup": "mixed",
     "defaultBuild": "empty",
-    "graduated": "empty",
+    "graduated": ["empty"],
     "defaultRotation": "empty"
   }
 }

@@ -605,7 +605,7 @@ export default function App() {
                 martialArtTags={buildTabMartialArtTags}
                 pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
-                graduatedBuildId={typedPathDefinitions[pathId].graduated}
+                graduatedBuildIds={typedPathDefinitions[pathId].graduated}
                 devMode={devMode}
                 buildState={effectiveBuildState}
                 onBuildStateChange={setBuildState}

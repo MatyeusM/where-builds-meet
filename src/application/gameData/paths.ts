@@ -10,7 +10,7 @@ export type PathDefinition = {
   status: "available" | "wip" | "devOnly" | "plannerOnly"
   buildGroup: string
   defaultBuild: string
-  graduated: string
+  graduated: string[]
   defaultRotation: string
   lockedWeapons?: [WeaponId, WeaponId]
 }
