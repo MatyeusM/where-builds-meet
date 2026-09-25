@@ -7,6 +7,7 @@ import english from "../public/locales/en.json"
 import App from "../src/App"
 import { calculateEditorTimeline, type EditorTimelineResult } from "../src/calculations/editorTimeline"
 import type { RotationSimulationBundle } from "../src/calculations/rotationCalculator"
+import { requestEditorTimeline } from "../src/calculations/rotationWorkerClient"
 import { initializeI18n } from "../src/i18n"
 
 vi.mock("../src/calculations/rotationWorkerClient", () => ({
@@ -108,4 +109,53 @@ it("opens action anchors on selection but allows their rows to remain collapsed"
   expect(expandButton().getAttribute("aria-expanded")).toBe("false")
   await click("Anchor a")
   expect(expandButton().getAttribute("aria-expanded")).toBe("true")
+})
+
+it("moves an after-start Qi event to the adjacent action instead of the first damage target", async () => {
+  localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
+  localStorage.setItem("wwm-active-rotation-by-path-v1", JSON.stringify({ silkbindDeluge: "after-start" }))
+  localStorage.setItem(
+    "wwm-rotation-list-session-v1",
+    JSON.stringify([
+      {
+        id: "after-start",
+        martialArts: ["panaceaFan", "soulshadeUmbrella"],
+        rotation: {
+          name: "After start",
+          eventTimeReference: "battleStart",
+          start: { step: 1 },
+          steps: [
+            { type: "event", event: "Qi", after: { action: "start" }, targetQiRatio: 0 },
+            { type: "skill", skill: "Defense" },
+            { type: "skill", skill: "SereneBreeze" },
+          ],
+        },
+      },
+    ]),
+  )
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  await act(async () => vi.advanceTimersByTimeAsync(200))
+  const eventRow = container.querySelector<HTMLElement>('[data-rotation-step-index="0"]')!
+  const timeInput = eventRow.querySelector<HTMLInputElement>('input[aria-label="Start Time"]')!
+  expect(timeInput).not.toBeNull()
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(timeInput, "3.25")
+    timeInput.dispatchEvent(new Event("input", { bubbles: true }))
+    timeInput.dispatchEvent(new FocusEvent("focusout", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(200)
+  })
+  const fixedRow = container.querySelector<HTMLElement>('[data-rotation-step-index="0"]')!
+  expect(fixedRow.classList.contains("rotation-fixed-time-event")).toBe(true)
+  expect(fixedRow.querySelector('[data-fixed-time="true"]')).not.toBeNull()
+  const nextButton = fixedRow.querySelector<HTMLButtonElement>('button[aria-label="Move event to next action"]')!
+  expect(nextButton.disabled).toBe(false)
+  await act(async () => {
+    nextButton.click()
+    await vi.advanceTimersByTimeAsync(200)
+  })
+  const latestBundle = vi.mocked(requestEditorTimeline).mock.calls.at(-1)![0]
+  const movedQi = latestBundle.timeline.rotation.steps.find(step => step.type === "event" && step.event === "Qi")
+  expect(movedQi).toMatchObject({ after: { action: "start" } })
+  expect(movedQi).not.toHaveProperty("startTime")
 })

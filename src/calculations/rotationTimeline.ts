@@ -40,6 +40,12 @@ export type SubActionReference = {
   /** Delay the ordered cast until this component is ready after its action-free prefix. */
   waitForRequirement?: boolean
 }
+export type SkillDurationInput = {
+  /** The tracked effect whose duration follows the user-entered rotation duration. */
+  effect?: string
+  /** Hard upper bound for the authored duration. */
+  max?: number
+}
 export type SkillRecord = {
   [key: string]: unknown
   name?: string
@@ -52,6 +58,11 @@ export type SkillRecord = {
   silent?: boolean
   attackResponse?: { endMargin?: number; durationFrom?: string; onSuccess: string; perAttack?: boolean }
   editableCastTime?: boolean
+  /**
+   * A duration-controlled skill uses the step duration as its held cast duration and
+   * can mirror that value onto an internal tracked effect.
+   */
+  durationInput?: SkillDurationInput | boolean
   castTime?: number | SwitchValue
   cooldown?: number
   cooldownGroup?: string
@@ -70,21 +81,40 @@ export type SkillRecord = {
 export type AttachedEventTarget = { action: number | "start"; trigger?: number }
 export type RotationStep =
   | { type: "skill"; skill?: string; duration?: number; causesBreak?: boolean; condition?: string }
-  | { type: "event"; event: "Exhausted"; after: AttachedEventTarget; duration?: number }
-  | { type: "event"; event: "Exhausted"; before: AttachedEventTarget; duration?: number }
-  | { type: "event"; event: "Move"; before: AttachedEventTarget; distance: number }
-  | { type: "event"; event: "SelfHP"; before: AttachedEventTarget; currentHP: number; currentHPRatio?: number }
-  | { type: "event"; event: "SelfHP"; before: AttachedEventTarget; currentHPRatio: number; currentHP?: number }
+  | { type: "event"; event: "Exhausted"; after: AttachedEventTarget; duration?: number; startTime?: number }
+  | { type: "event"; event: "Exhausted"; before: AttachedEventTarget; duration?: number; startTime?: number }
+  | { type: "event"; event: "Move"; before: AttachedEventTarget; distance: number; startTime?: number }
+  | {
+      type: "event"
+      event: "SelfHP"
+      before: AttachedEventTarget
+      currentHP: number
+      currentHPRatio?: number
+      startTime?: number
+    }
+  | {
+      type: "event"
+      event: "SelfHP"
+      before: AttachedEventTarget
+      currentHPRatio: number
+      currentHP?: number
+      startTime?: number
+    }
+  | { type: "event"; event: "SelfHP"; startTime: number; currentHP: number; currentHPRatio?: number }
+  | { type: "event"; event: "SelfHP"; startTime: number; currentHPRatio: number; currentHP?: number }
   | { type: "event"; event: "TakeDamage"; startTime: number; damage: number; automatic?: "dummyAttack" }
   | { type: "event"; event: "Hellfire"; startTime: number; amount: number }
   // Accepted only at persistence/import boundaries and migrated to startTime.
-  | { type: "event"; event: "TakeDamage"; before: AttachedEventTarget; damage: number }
-  | { type: "event"; event: "HP"; before: AttachedEventTarget; targetHPRatio: number }
-  | { type: "event"; event: "HP"; startTime: number; targetHPRatio: number; automatic: true }
-  | { type: "event"; event: "Qi"; before: AttachedEventTarget; targetQiRatio: number }
-  | { type: "event"; event: "Qi"; after: AttachedEventTarget; targetQiRatio: number }
-  | { type: "event"; event: "Buff"; before: AttachedEventTarget; buff: string; stack?: number }
-  | { type: "event"; event: "Debuff"; before: AttachedEventTarget; debuff: string; stack?: number }
+  | { type: "event"; event: "TakeDamage"; before: AttachedEventTarget; damage: number; startTime?: number }
+  | { type: "event"; event: "HP"; before: AttachedEventTarget; targetHPRatio: number; startTime?: number }
+  | { type: "event"; event: "HP"; startTime: number; targetHPRatio: number; automatic?: true }
+  | { type: "event"; event: "Qi"; before: AttachedEventTarget; targetQiRatio: number; startTime?: number }
+  | { type: "event"; event: "Qi"; after: AttachedEventTarget; targetQiRatio: number; startTime?: number }
+  | { type: "event"; event: "Qi"; startTime: number; targetQiRatio: number }
+  | { type: "event"; event: "Buff"; before: AttachedEventTarget; buff: string; stack?: number; startTime?: number }
+  | { type: "event"; event: "Buff"; startTime: number; buff: string; stack?: number }
+  | { type: "event"; event: "Debuff"; before: AttachedEventTarget; debuff: string; stack?: number; startTime?: number }
+  | { type: "event"; event: "Debuff"; startTime: number; debuff: string; stack?: number }
   | {
       type: "event"
       event: "MartialArt"
@@ -92,20 +122,43 @@ export type RotationStep =
       martialArt: WeaponId
     }
   | { type: "event"; event: "Delay"; duration: number; automatic?: "cooldown" | "attack" | "requirement" }
+  | { type: "event"; event: "Controlled"; before: AttachedEventTarget; duration?: number; startTime?: number }
+  | { type: "event"; event: "ShieldBroken"; before: AttachedEventTarget; startTime?: number }
+  | { type: "event"; event: "BattleEnd"; before: AttachedEventTarget; startTime?: number }
   | { type: "event"; event: "Controlled" | "BattleEnd" | "ShieldBroken"; startTime: number; duration?: number }
   | { type: "event"; event: "Exhausted"; startTime: number; duration?: number }
   | { type: "event"; event: "Move"; startTime: number; distance: number }
+  | { type: "event"; event: "Hellfire"; before: AttachedEventTarget; amount: number; startTime?: number }
+
+export function isFixedTimeEvent(
+  step: RotationStep | undefined,
+): step is Extract<RotationStep, { type: "event" }> & { startTime: number } {
+  return (
+    step?.type === "event" &&
+    step.event !== "Delay" &&
+    step.event !== "MartialArt" &&
+    "startTime" in step &&
+    typeof step.startTime === "number" &&
+    Number.isFinite(step.startTime)
+  )
+}
 
 export function isAttachmentAnchorStep(step: RotationStep | undefined): boolean {
   return Boolean(
-    step && (step.type === "skill" || (step.type === "event" && step.event === "TakeDamage" && "startTime" in step)),
+    step && (step.type === "skill" || (step.type === "event" && step.event === "TakeDamage" && isFixedTimeEvent(step))),
   )
 }
 
 export function canAnchorAttachedEvent(step: RotationStep | undefined, target: AttachedEventTarget): boolean {
   if (!step) return false
   if (step.type === "skill") return true
-  return step.event === "TakeDamage" && "startTime" in step && target.trigger === undefined && target.action === 0
+  return (
+    step.type === "event" &&
+    step.event === "TakeDamage" &&
+    isFixedTimeEvent(step) &&
+    target.trigger === undefined &&
+    target.action === 0
+  )
 }
 export type RotationRecord = {
   name: string
@@ -531,6 +584,33 @@ function resolveSkillCastTime(skill: SkillRecord | undefined, state: Requirement
   return typeof resolved === "number" && Number.isFinite(resolved) ? resolved : 0
 }
 
+function durationInputDefinition(skill: SkillRecord | undefined) {
+  const input = skill?.durationInput
+  return input && typeof input === "object" ? input : undefined
+}
+
+export function durationInputMaximum(skill: SkillRecord | undefined) {
+  const maximum = durationInputDefinition(skill)?.max
+  return typeof maximum === "number" && Number.isFinite(maximum) && maximum >= 0 ? maximum : undefined
+}
+
+function durationInputEffect(skill: SkillRecord | undefined) {
+  return durationInputDefinition(skill)?.effect
+}
+
+/** Resolve a step-authored duration, including the data-defined hard cap. */
+export function resolveSkillStepDuration(
+  step: RotationStep | undefined,
+  skill: SkillRecord | undefined,
+): number | undefined {
+  if (step?.type !== "skill" || !skill || typeof step.duration !== "number" || !Number.isFinite(step.duration)) {
+    return undefined
+  }
+  if (skill.durationInput === undefined && skill.editableCastTime !== true) return undefined
+  const maximum = durationInputMaximum(skill)
+  return Math.max(0, maximum === undefined ? step.duration : Math.min(step.duration, maximum))
+}
+
 export const TIMELINE_TIME_EPSILON = 1e-4
 
 export function compareTimelineTime(left: number, right: number): number {
@@ -898,12 +978,13 @@ export function buildRotationTimeline(
     append(skillId, new Set())
     return { skill: root, actions, segments, castTime, isMultiAction: Boolean(root?.subAction?.length) }
   }
-  const sequentialCastTime = (step: RotationStep) =>
-    step.type === "skill"
-      ? expandSkill(step.skill ?? "").castTime
-      : step.event === "Delay"
-        ? Math.max(0, step.duration)
-        : 0
+  const sequentialCastTime = (step: RotationStep) => {
+    if (step.type === "skill") {
+      const skill = skills[step.skill ?? ""]
+      return resolveSkillStepDuration(step, skill) ?? expandSkill(step.skill ?? "").castTime
+    }
+    return step.event === "Delay" ? Math.max(0, step.duration) : 0
+  }
   const innerWayConditions = new Set(input.innerWayConditions)
   const conditionParameters = Object.fromEntries(input.innerWayConditions.map(condition => [condition, true]))
   const subActionChoices = new Map<string, boolean>()
@@ -912,27 +993,40 @@ export function buildRotationTimeline(
     (left, right) => compareTimelineTime(left.time, right.time) || compareSortOrder(left.sortOrder, right.sortOrder),
   )
   const attachedEvent = (step: RotationStep) => {
-    if (step.type !== "event") return undefined
-    if (
-      (step.event === "Move" ||
-        step.event === "SelfHP" ||
-        step.event === "TakeDamage" ||
-        step.event === "HP" ||
-        step.event === "Qi" ||
-        step.event === "Buff" ||
-        step.event === "Debuff" ||
-        step.event === "MartialArt") &&
-      "before" in step
-    )
-      return { target: step.before, placement: "before" as const }
-    if (step.event === "Qi" && "after" in step) return { target: step.after, placement: "after" as const }
+    if (step.type !== "event" || step.event === "Delay" || isFixedTimeEvent(step)) return undefined
     if (step.event === "Exhausted") {
-      if ("after" in step) return { target: step.after, placement: "after" as const }
-      if ("before" in step) return { target: step.before, placement: "after" as const }
+      if ("after" in step && step.after)
+        return { target: step.after as AttachedEventTarget, placement: "after" as const }
+      if ("before" in step && step.before)
+        return { target: step.before as AttachedEventTarget, placement: "after" as const }
     }
+    if ("before" in step && step.before)
+      return { target: step.before as AttachedEventTarget, placement: "before" as const }
+    if ("after" in step && step.event === "Qi" && step.after)
+      return { target: step.after as AttachedEventTarget, placement: "after" as const }
     return undefined
   }
-  const startStepIndex = rotation.start?.step ?? 0
+  const authoredStart = rotation.start
+  const authoredStartStep = authoredStart ? rotation.steps[authoredStart.step] : undefined
+  const startStepCanAnchor =
+    authoredStartStep?.type === "skill" ||
+    (authoredStartStep?.type === "event" &&
+      (authoredStartStep.event === "Delay" ||
+        (!isFixedTimeEvent(authoredStartStep) && ("before" in authoredStartStep || "after" in authoredStartStep))))
+  const authoredStartActions =
+    authoredStartStep?.type === "skill" ? skills[authoredStartStep.skill ?? ""]?.action : undefined
+  const startAction =
+    authoredStart?.action !== undefined &&
+    Number.isInteger(authoredStart.action) &&
+    authoredStart.action >= 0 &&
+    authoredStartStep?.type === "skill" &&
+    (!Array.isArray(authoredStartActions) || authoredStart.action < authoredStartActions.length)
+      ? authoredStart.action
+      : undefined
+  const hasUsableStart = Boolean(
+    authoredStart && startStepCanAnchor && (authoredStart.action === undefined || startAction !== undefined),
+  )
+  const startStepIndex = hasUsableStart ? authoredStart!.step : 0
   let battleStartTime = -1
   const multiActionSegments = new Map<
     string,
@@ -941,7 +1035,9 @@ export function buildRotationTimeline(
   const createRow = (rowIndex: number, step: RotationStep, startTime: number) => {
     const expandedSkill = step.type === "skill" ? expandSkill(step.skill ?? "") : undefined
     const skill = expandedSkill?.skill ?? (step.type === "event" ? eventDefinitions[step.event] : undefined)
-    const castTime = expandedSkill?.castTime ?? sequentialCastTime(step)
+    const requestedDuration = resolveSkillStepDuration(step, skill)
+    const castTime = requestedDuration ?? expandedSkill?.castTime ?? sequentialCastTime(step)
+    const durationEffect = durationInputEffect(skill)
     const sourceActions = expandedSkill?.isMultiAction
       ? expandedSkill.actions
       : Array.isArray(skill?.action)
@@ -983,6 +1079,12 @@ export function buildRotationTimeline(
           : {},
         step.type === "event" && step.event === "MartialArt" && action.type === "switchMartialArt"
           ? { martialArt: step.martialArt }
+          : {},
+        requestedDuration !== undefined &&
+          durationEffect !== undefined &&
+          action.type === "apply" &&
+          action.value === durationEffect
+          ? { duration: requestedDuration }
           : {},
       ),
     )
@@ -1047,13 +1149,15 @@ export function buildRotationTimeline(
     )
   }
   const ordered = rotation.steps.flatMap((step, index) => (isSequentialStep(step) ? [{ step, index }] : []))
-  const timed = rotation.steps
-    .flatMap((step, index) =>
-      step.type === "event" && "startTime" in step
-        ? [{ step, index, time: step.startTime + (rotation.eventTimeReference === "battleStart" ? Infinity : 0) }]
-        : [],
-    )
-    .sort((left, right) => compareTimelineTime(left.step.startTime, right.step.startTime) || left.index - right.index)
+  type TimedStep = Extract<RotationStep, { type: "event" }> & { startTime: number }
+  const timed: Array<{ step: TimedStep; index: number; time: number }> = rotation.steps.flatMap((step, index) =>
+    isFixedTimeEvent(step)
+      ? [{ step, index, time: step.startTime + (rotation.eventTimeReference === "battleStart" ? Infinity : 0) }]
+      : [],
+  )
+  timed.sort(
+    (left, right) => compareTimelineTime(left.step.startTime, right.step.startTime) || left.index - right.index,
+  )
   let orderedCursor = 0
   let timedCursor = 0
   let nextOrderedEvent: TimelineEvent | undefined
@@ -2117,7 +2221,7 @@ export function buildRotationTimeline(
           step: { type: "event", event: "Delay", duration: 0, automatic: reason },
           startTime: event.time,
           effectiveCastTime: 0,
-          skill: { name: "Event: Delay", castTime: 0, action: [], tags: ["Event"] },
+          skill: { name: "Action: Delay", castTime: 0, action: [], tags: ["Event"] },
           actions: [],
           actionStates: {},
           modifierEffects: [],
@@ -2207,7 +2311,29 @@ export function buildRotationTimeline(
   }
   let firstDummyAttack = Infinity
   const dummyAttackInterval = 6
-  const battleEndTime = () => timed.find(entry => entry.step.event === "BattleEnd")?.time ?? Infinity
+  const battleEndTime = (pendingRow?: TimelineRow) => {
+    const timedEnd = timed.find(entry => entry.step.event === "BattleEnd")?.time ?? Infinity
+    const resolvedEnd = rows
+      .filter(
+        row =>
+          row.kind === "rotation" && row.sourceRowId && row.step.type === "event" && row.step.event === "BattleEnd",
+      )
+      .reduce((earliest, row) => Math.min(earliest, row.startTime), Infinity)
+    // The current ordered row has not expanded its attachments yet, so include direct Battle End anchors here.
+    const pendingEnd =
+      pendingRow && pendingRow.step.type === "skill"
+        ? (attachmentInputs.get(pendingRow.rotationIndex ?? -1) ?? []).reduce((earliest, entry) => {
+            if (entry.step.type !== "event" || entry.step.event !== "BattleEnd" || !("before" in entry.step))
+              return earliest
+            if (entry.step.before.trigger !== undefined) return earliest
+            const action = entry.step.before.action
+            if (action !== "start" && !pendingRow.actions[action]) return earliest
+            const time = pendingRow.startTime + (action === "start" ? 0 : Number(pendingRow.actions[action]?.time ?? 0))
+            return Math.min(earliest, time)
+          }, Infinity)
+        : Infinity
+    return Math.min(timedEnd, resolvedEnd, pendingEnd)
+  }
   const responseDuration = (skill: SkillRecord, time: number) => {
     const durationSkill = skill.attackResponse?.durationFrom ? skills[skill.attackResponse.durationFrom] : skill
     return castTimingAdjuster(modifiersFor(durationSkill, time))(
@@ -2216,7 +2342,7 @@ export function buildRotationTimeline(
   }
   const attackReserved = (time: number) =>
     [...reservedAttacks].some(reserved => compareTimelineTime(reserved, time) === 0)
-  const nextAttackAt = (time: number) => {
+  const nextAttackAt = (time: number, pendingRow?: TimelineRow) => {
     let next =
       timed.find(
         entry =>
@@ -2230,7 +2356,7 @@ export function buildRotationTimeline(
       while (attackReserved(dummyTime)) dummyTime += dummyAttackInterval
       next = Math.min(next, dummyTime)
     }
-    return compareTimelineTime(next, battleEndTime()) < 0 ? next : undefined
+    return compareTimelineTime(next, battleEndTime(pendingRow)) < 0 ? next : undefined
   }
 
   if (!startNextOrdered(0) && !hasBattleEnd) return []
@@ -2244,7 +2370,8 @@ export function buildRotationTimeline(
     battleStartTime = time
     lastResourceRegenerationTime = time
     if (rotation.eventTimeReference === "battleStart")
-      for (const entry of timed) entry.time = time + entry.step.startTime
+      for (const entry of timed)
+        entry.time = time + (typeof entry.step.startTime === "number" ? entry.step.startTime : 0)
     if (initialTimedRow) initialTimedRow.startTime = timed[0].time
     firstDummyAttack = time + 5.5
     if (rotation.dummyAttack && rows[0])
@@ -2258,7 +2385,7 @@ export function buildRotationTimeline(
       } else schedulePeriodicActions(name, active, time, [-1], 0)
     }
   }
-  if (!rotation.start || !ordered.length) startBattle(0)
+  if (!hasUsableStart || !ordered.length) startBattle(0)
   const nextTimedEvent = () =>
     rotation.eventTimeReference === "battleStart" && battleStartTime < 0 ? undefined : timed[timedCursor]
   while ((events.length || timedCursor < timed.length || pendingCharge) && processedEvents < 5000) {
@@ -2266,10 +2393,11 @@ export function buildRotationTimeline(
     const anchorEvent = events.peek()
     if (
       battleStartTime < 0 &&
+      hasUsableStart &&
       anchorEvent?.row.rotationIndex === startStepIndex &&
-      (rotation.start?.action === undefined
+      (startAction === undefined
         ? anchorEvent.kind === "start"
-        : anchorEvent.kind === "action" && anchorEvent.actionIndex === rotation.start.action) &&
+        : anchorEvent.kind === "action" && anchorEvent.actionIndex === startAction) &&
       anchorEvent.time <= (nextTimedEvent()?.time ?? Infinity)
     ) {
       startBattle(anchorEvent.time)
@@ -2380,7 +2508,7 @@ export function buildRotationTimeline(
       }
       if (waitingCast?.delay.reason === "cooldown") finishOrderedWait(event.time)
       if (row.step.type === "skill" && row.skill?.attackResponse?.endMargin !== undefined) {
-        const attackTime = alignedAttacks.get(row) ?? nextAttackAt(event.time + skillPing(row.skill))
+        const attackTime = alignedAttacks.get(row) ?? nextAttackAt(event.time + skillPing(row.skill), row)
         if (attackTime !== undefined) {
           alignedAttacks.set(row, attackTime)
           reservedAttacks.add(attackTime)
@@ -2647,13 +2775,8 @@ export function buildRotationTimeline(
           event.row.step.type === "event" && event.row.step.event === "Delay"
             ? Math.max(0, event.row.step.duration)
             : resolveSkillCastTime(event.row.skill, requirementState())
-        if (
-          event.row.step.type === "skill" &&
-          event.row.skill?.editableCastTime &&
-          typeof event.row.step.duration === "number" &&
-          Number.isFinite(event.row.step.duration)
-        )
-          baseCastTime = Math.max(0, event.row.step.duration)
+        const requestedDuration = resolveSkillStepDuration(event.row.step, event.row.skill)
+        if (requestedDuration !== undefined) baseCastTime = requestedDuration
         applyCastTimingModifiers(event.row, baseCastTime)
         if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row)
       }
@@ -2740,6 +2863,12 @@ export function buildRotationTimeline(
         )
     if (!requirementPasses) continue
     const skillKey = event.row.step.type === "skill" ? (event.row.step.skill ?? "") : event.row.step.event
+    if (
+      action.type === "trigger" &&
+      typeof action.sourceEffect === "string" &&
+      buffs.get(action.sourceEffect)?.sourceRowId !== (event.row.sourceRowId ?? event.row.id)
+    )
+      continue
     const actionCooldownKey = `action:${skillKey}:${event.actionIndex ?? -1}`
     if (typeof action.cooldown === "number" && (cooldowns[actionCooldownKey] ?? 0) > event.time) continue
     if (action.type === "apply" && typeof action.value === "string" && (cooldowns[action.value] ?? 0) > event.time)

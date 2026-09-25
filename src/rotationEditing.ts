@@ -1,6 +1,7 @@
 import {
   canAnchorAttachedEvent,
   isAttachmentAnchorStep,
+  isFixedTimeEvent,
   type AttachedEventTarget,
   type RotationRecord,
   type RotationStep,
@@ -194,11 +195,20 @@ export function attachedTargetForStep(step: RotationStep | undefined): AttachedE
   }
 }
 
+export type RotationAttachmentTarget = {
+  sourceRowId: string
+  sourceStepIndex: number
+  target: AttachedEventTarget
+  time: number
+  order: number
+}
+
 function targetsMatch(left: AttachedEventTarget, right: AttachedEventTarget) {
   return left.action === right.action && left.trigger === right.trigger
 }
 
-function attachedEventAnchorIndex(steps: RotationStep[], stepIndex: number) {
+/** Return the authored anchor step that an attachment will expand with. */
+export function attachedEventAnchorStepIndex(steps: RotationStep[], stepIndex: number) {
   const target = attachedTargetForStep(steps[stepIndex])
   if (!target) return -1
   for (let index = stepIndex + 1; index < steps.length; index += 1) {
@@ -207,22 +217,142 @@ function attachedEventAnchorIndex(steps: RotationStep[], stepIndex: number) {
   return -1
 }
 
+/** Delay and Switch Martial Art keep their existing action-oriented behavior. */
+export function isActionEvent(step: RotationStep | undefined): boolean {
+  return step?.type === "event" && (step.event === "Delay" || step.event === "MartialArt")
+}
+
+export function supportsEventStartTime(step: RotationStep | undefined): boolean {
+  return step?.type === "event" && !isActionEvent(step)
+}
+
+/** True only for metadata that the runtime still expands through an action anchor. */
+export function isRuntimeAttachedEvent(step: RotationStep | undefined): boolean {
+  return Boolean(
+    step?.type === "event" && step.event !== "Delay" && !isFixedTimeEvent(step) && attachedTargetForStep(step),
+  )
+}
+
+/** Ordered steps and live attachments can establish battle start; fixed rows cannot. */
+export function canUseRotationStart(step: RotationStep | undefined): boolean {
+  if (step?.type === "skill") return true
+  return step?.type === "event" && (step.event === "Delay" || isRuntimeAttachedEvent(step))
+}
+
+export function canUseRotationStartAt(steps: RotationStep[], stepIndex: number): boolean {
+  const step = steps[stepIndex]
+  if (!canUseRotationStart(step)) return false
+  return step?.type !== "event" || step.event === "Delay" || attachedEventAnchorStepIndex(steps, stepIndex) >= 0
+}
+
+export function canUseRotationStartAction(step: RotationStep | undefined, action: number): boolean {
+  return step?.type === "skill" && Number.isInteger(action) && action >= 0
+}
+
+/** Keep a supplied start usable after a migration or an editor replacement. */
+export function normalizeRotationStart(start: RotationRecord["start"], steps: RotationStep[]): RotationRecord["start"] {
+  if (!start) return undefined
+  const current = steps[start.step]
+  if (canUseRotationStartAt(steps, start.step) && (start.action === undefined || current?.type === "skill"))
+    return start
+  const replacement = steps.findIndex(
+    step => step.type === "skill" || (step.type === "event" && step.event === "Delay"),
+  )
+  if (replacement >= 0) return { step: replacement }
+  const attached = steps.findIndex((_, index) => canUseRotationStartAt(steps, index))
+  return attached >= 0 ? { step: attached } : undefined
+}
+
+/**
+ * Resolve the target currently governing an event. Explicit authored anchors
+ * win; a fixed-time event without one falls back to the nearest prior action so
+ * its arrow buttons still have a stable place in the ordered target list.
+ */
+export function resolveAttachmentTargetIndex(
+  steps: RotationStep[],
+  stepIndex: number,
+  targets: readonly RotationAttachmentTarget[],
+  fallbackTime?: number,
+): number {
+  const step = steps[stepIndex]
+  const target = attachedTargetForStep(step)
+  const anchorStepIndex = attachedEventAnchorStepIndex(steps, stepIndex)
+  if (target && anchorStepIndex >= 0) {
+    const anchoredIndex = targets.findIndex(
+      candidate => candidate.sourceStepIndex === anchorStepIndex && targetsMatch(candidate.target, target),
+    )
+    if (anchoredIndex >= 0) return anchoredIndex
+    const anchorStart = targets.findIndex(candidate => candidate.sourceStepIndex === anchorStepIndex)
+    if (anchorStart >= 0) return anchorStart
+  }
+  if (fallbackTime !== undefined && Number.isFinite(fallbackTime)) {
+    const exactIndex = targets.findIndex(
+      candidate => candidate.time !== undefined && Math.abs(candidate.time - fallbackTime) <= 1e-4,
+    )
+    if (exactIndex >= 0) return exactIndex
+    let previousIndex = -1
+    targets.forEach((candidate, index) => {
+      if (candidate.time !== undefined && candidate.time <= fallbackTime) previousIndex = index
+    })
+    if (previousIndex >= 0) return previousIndex
+  }
+  return targets.length ? 0 : -1
+}
+
+/** Convert a fixed-time event back into an action attachment at a new target. */
+export function reattachEventStep(
+  step: RotationStep,
+  target: AttachedEventTarget,
+  phase: AttachedEventPhase = attachedEventPhase(step) ?? "before",
+): RotationStep {
+  if (step.type !== "event" || step.event === "Delay") return step
+  const next = { ...step } as Extract<RotationStep, { type: "event" }> & {
+    startTime?: number
+    before?: AttachedEventTarget
+    after?: AttachedEventTarget
+  }
+  delete next.startTime
+  delete next.before
+  delete next.after
+  const nextPhase = phase === "after" && step.event !== "Qi" && step.event !== "Exhausted" ? "before" : phase
+  return { ...next, [nextPhase]: target } as RotationStep
+}
+
+/** Move an event to an attachment target and return its new authored position. */
+export function moveEventToAttachmentTarget(
+  steps: RotationStep[],
+  stepIndex: number,
+  target: RotationAttachmentTarget,
+  phase?: AttachedEventPhase,
+): { steps: RotationStep[]; movedIndex: number } | undefined {
+  const step = steps[stepIndex]
+  const targetStep = steps[target.sourceStepIndex]
+  if (step?.type !== "event" || !targetStep) return undefined
+  const withoutEvent = steps.filter((_candidate, index) => index !== stepIndex)
+  const targetIndex = withoutEvent.indexOf(targetStep)
+  if (targetIndex < 0) return undefined
+  const movedEvent = reattachEventStep(step, target.target, phase)
+  const next = [...withoutEvent.slice(0, targetIndex), movedEvent, ...withoutEvent.slice(targetIndex)]
+  return { steps: next, movedIndex: targetIndex }
+}
+
 function sameAttachedEventTarget(steps: RotationStep[], leftIndex: number, rightIndex: number) {
   const left = steps[leftIndex]
   const right = steps[rightIndex]
-  const leftTarget = attachedTargetForStep(left)
-  const rightTarget = attachedTargetForStep(right)
+  const leftTarget = isRuntimeAttachedEvent(left) ? attachedTargetForStep(left) : undefined
+  const rightTarget = isRuntimeAttachedEvent(right) ? attachedTargetForStep(right) : undefined
   return Boolean(
     leftTarget &&
     rightTarget &&
     attachedEventPhase(left) === attachedEventPhase(right) &&
-    attachedEventAnchorIndex(steps, leftIndex) === attachedEventAnchorIndex(steps, rightIndex) &&
+    attachedEventAnchorStepIndex(steps, leftIndex) === attachedEventAnchorStepIndex(steps, rightIndex) &&
     targetsMatch(leftTarget, rightTarget),
   )
 }
 
 export function attachedEventSiblingIndex(steps: RotationStep[], stepIndex: number, direction: -1 | 1) {
   const step = steps[stepIndex]
+  if (!isRuntimeAttachedEvent(step)) return -1
   const target = attachedTargetForStep(step)
   if (!target) return -1
   for (let index = stepIndex + direction; index >= 0 && index < steps.length; index += direction) {

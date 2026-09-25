@@ -63,15 +63,18 @@ export function settingsForPath(settings: CalculatorSettings, pathId: PathId): C
   return lockedWeapons ? { ...settings, weapons: [...lockedWeapons] } : settings
 }
 
-export function selectableRotationSkillIds(weapons: [WeaponId, WeaponId]) {
+export function selectableRotationSkillGroups(weapons: [WeaponId, WeaponId]) {
   const martialCategories = weapons.flatMap(weapon => {
     const category = skillCategoryByWeapon[weapon]
     return category ? [category] : []
   })
   const categories = [...new Set<SkillCategory>([...martialCategories, "Mystic", "General"])] as SkillCategory[]
-  return categories
-    .flatMap(category => Object.keys(defaultSkillMaps[category]))
-    .filter(skillId => !allSkillDefinitions[skillId]?.tags?.some(tag => tag === "Triggered" || tag === "SubAction"))
+  return categories.map(category => ({
+    category,
+    skillIds: Object.keys(defaultSkillMaps[category]).filter(
+      skillId => !allSkillDefinitions[skillId]?.tags?.some(tag => tag === "Triggered" || tag === "SubAction"),
+    ),
+  }))
 }
 
 export function innerWayConditionsFor(

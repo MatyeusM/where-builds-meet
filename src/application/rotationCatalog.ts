@@ -4,6 +4,8 @@ import { normalizeEnemyCount, normalizePing } from "../calculations/combatDefaul
 import { resolveSwitchValue } from "../calculations/dynamicValues"
 import {
   buildRotationTimeline,
+  isFixedTimeEvent,
+  resolveSkillStepDuration,
   type AttachedEventTarget,
   type EditableObject,
   type RotationRecord,
@@ -17,11 +19,22 @@ import {
   migrateDrunkenPoetSequences,
   migrateGeneralsBaneSlides,
   migrateVendettaTokenStep,
+  normalizeRotationStart,
 } from "../rotationEditing"
 import type { RotationEntry } from "../rotationTransfer"
 import { normalizeStoredWeaponIds, weaponIds as allWeaponIds, type WeaponId } from "../types"
 import { rotationEventDefinitions } from "./gameData/rotationEffects"
 import { allSkillDefinitions, dotDefinitions, effectDefinitions, martialArtBySkillId } from "./gameData/skills"
+
+function normalizeStartAction(start: RotationRecord["start"], steps: RotationStep[]): RotationRecord["start"] {
+  if (!start || start.action === undefined) return start
+  const step = steps[start.step]
+  if (step?.type !== "skill") return { step: start.step }
+  const actions = allSkillDefinitions[step.skill ?? ""]?.action
+  if (!Array.isArray(actions)) return start
+  if (start.action < 0 || start.action >= actions.length) return { step: start.step }
+  return start
+}
 
 export function normalizeRotation(rotation: RotationRecord): RotationRecord {
   // Reconstruct supported fields: discard legacy autoHP, preserving manual HP events and anchors.
@@ -36,6 +49,7 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
       })) as RotationStep[]
     },
   )
+  const start = normalizeStartAction(normalizeRotationStart(rotation.start, steps), steps)
   return {
     name: rotation.name,
     steps,
@@ -48,7 +62,7 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
       typeof rotation.infiniteVitality === "boolean"
         ? rotation.infiniteVitality
         : /\bIV\b|infinite vitality/i.test(rotation.name),
-    start: rotation.start,
+    start,
     ...(rotation.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
   }
 }
@@ -61,6 +75,12 @@ export function baseSkillCastTime(skill: SkillRecord | undefined) {
   if (typeof skill?.castTime === "number" && Number.isFinite(skill.castTime)) return skill.castTime
   const fallback = resolveSwitchValue(skill?.castTime, {})
   return typeof fallback === "number" && Number.isFinite(fallback) ? fallback : 0
+}
+
+function baseStepCastTime(step: RotationStep) {
+  if (step.type !== "skill") return 0
+  const skill = allSkillDefinitions[step.skill ?? ""]
+  return resolveSkillStepDuration(step, skill) ?? baseSkillCastTime(skill)
 }
 
 export function baseRotationAnchorTime(rotation: RotationRecord) {
@@ -77,7 +97,7 @@ export function baseRotationAnchorTime(rotation: RotationRecord) {
           : Number((skill.action[rotation.start.action] as EditableObject | undefined)?.time ?? 0))
       )
     }
-    if (step.type === "skill") time += baseSkillCastTime(allSkillDefinitions[step.skill ?? ""])
+    if (step.type === "skill") time += baseStepCastTime(step)
     else if (step.event === "Delay") time += Math.max(0, step.duration)
   }
   return 0
@@ -100,7 +120,7 @@ export function baseAttachedEventTime(rotation: RotationRecord, eventStepIndex: 
           : []
         return elapsed + Number(triggerAction.time ?? 0) + Number(triggeredActions[target.action]?.time ?? 0)
       }
-      elapsed += baseSkillCastTime(skill)
+      elapsed += baseStepCastTime(step)
     } else if (step.event === "Delay") {
       elapsed += Math.max(0, step.duration)
     }
@@ -120,9 +140,17 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
   const migrated = migrateDefenseActionAnchors(
     migrateAutomaticDelays(migrateDrunkenPoetSequences(migrateGeneralsBaneSlides(normalizeRotation(rotation)))),
   )
-  const attachedDamageIndexes = migrated.steps.flatMap((step, index) =>
-    step.type === "event" && step.event === "TakeDamage" && "before" in step ? [index] : [],
-  )
+  // Attached Take Damage from pre-battle-start records is a legacy fixed-time form.
+  // Once a rotation has the explicit reference, preserve an attached event so it can
+  // round-trip through the editor after a user reattaches it.
+  const migrateAttachedDamage = migrated.eventTimeReference !== "battleStart"
+  const attachedDamageIndexes = migrateAttachedDamage
+    ? migrated.steps.flatMap((step, index) =>
+        step.type === "event" && step.event === "TakeDamage" && "before" in step && !isFixedTimeEvent(step)
+          ? [index]
+          : [],
+      )
+    : []
   const migrationTimeline = attachedDamageIndexes.length
     ? buildRotationTimeline({
         rotation: migrated,
@@ -145,7 +173,7 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
   migrated.steps = migrated.steps.map((step, stepIndex) => {
     const legacyStep = step as unknown as Record<string, unknown>
     if (step.type !== "event") return step
-    if (step.event === "TakeDamage" && "before" in step) {
+    if (migrateAttachedDamage && step.event === "TakeDamage" && "before" in step && !isFixedTimeEvent(step)) {
       const targetTime =
         migrationTimeline.find(row => row.id === `rotation-${stepIndex}`)?.startTime ??
         baseAttachedEventTime(migrated, stepIndex, step.before)
@@ -156,16 +184,24 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
         damage: step.damage,
       }
     }
-    if (step.event === "HP" && typeof legacyStep.currentHPRatio === "number")
+    if (step.event === "HP" && !isFixedTimeEvent(step) && typeof legacyStep.currentHPRatio === "number")
       return {
         type: "event",
         event: "SelfHP",
         before: legacyStep.before as AttachedEventTarget,
         currentHPRatio: legacyStep.currentHPRatio,
       }
-    if (step.event === "Debuff" && step.debuff === "Exhausted")
+    if (step.event === "Debuff" && step.debuff === "Exhausted" && "before" in step && !isFixedTimeEvent(step))
       return { type: "event", event: "Qi", before: step.before, targetQiRatio: 0 }
-    if (legacyStep.event === "Exhausted" && (legacyStep.after || legacyStep.before))
+    if (
+      step.event === "Debuff" &&
+      step.debuff === "Exhausted" &&
+      "startTime" in step &&
+      typeof step.startTime === "number" &&
+      Number.isFinite(step.startTime)
+    )
+      return { type: "event", event: "Qi", startTime: step.startTime, targetQiRatio: 0 }
+    if (legacyStep.event === "Exhausted" && (legacyStep.after || legacyStep.before) && !isFixedTimeEvent(step))
       return {
         type: "event",
         event: "Qi",
@@ -177,14 +213,18 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
   if (migrated.eventTimeReference !== "battleStart") {
     const previousAnchorTime = baseRotationAnchorTime(migrated)
     migrated.steps = migrated.steps.map(step =>
-      step.type === "event" && "startTime" in step ? { ...step, startTime: step.startTime - previousAnchorTime } : step,
+      step.type === "event" && "startTime" in step && typeof step.startTime === "number"
+        ? { ...step, startTime: step.startTime - previousAnchorTime }
+        : step,
     )
     migrated.eventTimeReference = "battleStart"
   }
   const legacyEvents = migrated.steps.flatMap((step, index) =>
     step.type === "event" &&
     (step.event === "Move" || (step as unknown as { event: string }).event === "Exhausted") &&
-    "startTime" in step
+    isFixedTimeEvent(step) &&
+    !("before" in step) &&
+    !("after" in step)
       ? [{ step, index }]
       : [],
   )
@@ -195,7 +235,7 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
       if (step.type !== "skill") return []
       const skill = allSkillDefinitions[step.skill ?? ""]
       const castStart = elapsed
-      elapsed += baseSkillCastTime(skill)
+      elapsed += baseStepCastTime(step)
       const actions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : []
       return [{ index, time: castStart - anchor, before: { action: "start" } as AttachedEventTarget }].concat(
         actions.flatMap((action, actionIndex) => {
@@ -217,7 +257,9 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
       )
     })
     const attachments = new Map<number, RotationStep[]>()
-    legacyEvents.forEach(({ step }) => {
+    const legacyStartTargets = new Map<number, number>()
+    const convertedLegacyIndexes = new Set<number>()
+    legacyEvents.forEach(({ step, index }) => {
       if (!candidates.length) return
       const target = candidates.reduce(
         (best, candidate) =>
@@ -230,20 +272,45 @@ export function migrateRotation(rotation: RotationRecord): RotationRecord {
           ? ({ type: "event", event: "Move", before: target.before, distance: step.distance } as RotationStep)
           : ({ type: "event", event: "Qi", after: target.before, targetQiRatio: 0 } as RotationStep)
       attachments.set(target.index, [...(attachments.get(target.index) ?? []), attached])
+      convertedLegacyIndexes.add(index)
+      legacyStartTargets.set(index, target.index)
     })
-    const startSkill = migrated.steps[migrated.start?.step ?? -1]
-    migrated.steps = migrated.steps.flatMap((step, index) =>
-      step.type === "event" &&
-      (step.event === "Move" || (step as unknown as { event: string }).event === "Exhausted") &&
-      "startTime" in step
-        ? []
-        : step.type === "skill"
-          ? [...(attachments.get(index) ?? []), step]
-          : [step],
-    )
-    const startStep = migrated.steps.indexOf(startSkill)
-    if (startStep >= 0 && migrated.start) migrated.start = { ...migrated.start, step: startStep }
+    const originalStart = migrated.start ? { ...migrated.start } : undefined
+    const originalStartStep = originalStart ? migrated.steps[originalStart.step] : undefined
+    const originalStartWasConverted = originalStart ? convertedLegacyIndexes.has(originalStart.step) : false
+    const flattened: Array<{ oldIndex: number; step: RotationStep }> = []
+    migrated.steps.forEach((step, index) => {
+      if (convertedLegacyIndexes.has(index)) return
+      if (step.type === "skill") {
+        for (const attached of attachments.get(index) ?? []) flattened.push({ oldIndex: -1, step: attached })
+        flattened.push({ oldIndex: index, step })
+      } else flattened.push({ oldIndex: index, step })
+    })
+    migrated.steps = flattened.map(entry => entry.step)
+    const newIndexByOldIndex = new Map<number, number>()
+    flattened.forEach((entry, index) => {
+      if (entry.oldIndex >= 0) newIndexByOldIndex.set(entry.oldIndex, index)
+    })
+    for (const [oldIndex, targetIndex] of legacyStartTargets)
+      newIndexByOldIndex.set(oldIndex, newIndexByOldIndex.get(targetIndex) ?? -1)
+    if (originalStart) {
+      const nextStartStep = newIndexByOldIndex.get(originalStart.step) ?? -1
+      if (nextStartStep >= 0)
+        migrated.start = {
+          step: nextStartStep,
+          ...(!originalStartWasConverted && originalStartStep?.type === "skill" && originalStart.action !== undefined
+            ? { action: originalStart.action }
+            : {}),
+        }
+      else {
+        const fallback = migrated.steps.findIndex(
+          step => step.type === "skill" || (step.type === "event" && step.event === "Delay"),
+        )
+        migrated.start = fallback >= 0 ? { step: fallback } : undefined
+      }
+    }
   }
+  migrated.start = normalizeStartAction(normalizeRotationStart(migrated.start, migrated.steps), migrated.steps)
   return migrated
 }
 

@@ -3,7 +3,14 @@ import { assert, describe, it } from "vitest"
 // Ported from script/probe/check-rotation-event-order.mjs.
 describe("rotation-event-order", () => {
   it("Rotation event ordering checks passed", async () => {
-    const { attachedEventSiblingIndex, reorderAttachedEventWithinTarget } = await import("../src/rotationEditing.ts")
+    const {
+      attachedEventSiblingIndex,
+      isRuntimeAttachedEvent,
+      moveEventToAttachmentTarget,
+      normalizeRotationStart,
+      reorderAttachedEventWithinTarget,
+      resolveAttachmentTargetIndex,
+    } = await import("../src/rotationEditing.ts")
     const target = { action: 0 }
     const steps = [
       { type: "event", event: "Move", before: target, distance: 3 },
@@ -52,5 +59,65 @@ describe("rotation-event-order", () => {
       attachedEventSiblingIndex(dragonEventsAcrossTakeDamage, 0, 1) === 1,
       "Take Damage must not split events targeting an action that only the following skill provides.",
     )
+
+    const afterStartSteps = [
+      { type: "event", event: "Qi", after: { action: "start" }, targetQiRatio: 0 },
+      { type: "skill", skill: "NoActionAnchor" },
+    ]
+    const afterStartTargets = [
+      { sourceRowId: "rotation-1", sourceStepIndex: 1, target: { action: "start" }, time: 4, order: 1000 },
+      { sourceRowId: "rotation-2", sourceStepIndex: 2, target: { action: 0 }, time: 5, order: 2000 },
+    ]
+    assert.equal(
+      resolveAttachmentTargetIndex(afterStartSteps, 0, afterStartTargets),
+      0,
+      "An after-start attachment must resolve to the start target instead of jumping to the first damage action.",
+    )
+
+    const fixedQi = {
+      type: "event" as const,
+      event: "Qi" as const,
+      before: { action: 0 },
+      startTime: 3,
+      targetQiRatio: 0,
+    }
+    assert.equal(isRuntimeAttachedEvent(fixedQi), false, "Fixed metadata must not own runtime attachment behavior.")
+    assert.deepEqual(
+      normalizeRotationStart({ step: 0 }, [fixedQi, { type: "skill", skill: "Probe" }]),
+      { step: 1 },
+      "A fixed event must not be selected as battle start.",
+    )
+    assert.equal(
+      attachedEventSiblingIndex(
+        [fixedQi, { type: "event", event: "Buff", before: { action: 0 }, buff: "Cadence" }],
+        0,
+        1,
+      ),
+      -1,
+      "A fixed-time event must use its arrow to reattach instead of reordering with a sibling.",
+    )
+    assert.equal(
+      attachedEventSiblingIndex(
+        [
+          fixedQi,
+          { type: "event", event: "Buff", before: { action: 0 }, buff: "Cadence" },
+          { type: "skill", skill: "Probe" },
+        ],
+        1,
+        -1,
+      ),
+      -1,
+      "An attached event must not reorder across an independently timed sibling.",
+    )
+    const movedFixedQi = moveEventToAttachmentTarget(
+      [fixedQi, { type: "skill", skill: "First" }, { type: "skill", skill: "Second" }],
+      0,
+      afterStartTargets[0],
+      "before",
+    )
+    assert.equal(movedFixedQi?.movedIndex, 0)
+    assert.equal(movedFixedQi?.steps[0].event, "Qi")
+    assert.deepEqual(movedFixedQi?.steps[0].before, { action: "start" })
+    assert(!Object.hasOwn(movedFixedQi!.steps[0], "startTime"))
   })
 })

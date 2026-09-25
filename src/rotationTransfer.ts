@@ -1,7 +1,12 @@
 import { normalizeEnemyCount, normalizePing } from "./calculations/combatDefaults"
 import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
 import { migrateVendettaTokenStep } from "./rotationEditing"
-import { migrateAutomaticDelays, migrateDefenseActionAnchors, migrateGeneralsBaneSlides } from "./rotationEditing"
+import {
+  migrateAutomaticDelays,
+  migrateDefenseActionAnchors,
+  migrateGeneralsBaneSlides,
+  normalizeRotationStart,
+} from "./rotationEditing"
 import { validateUnknown } from "./schemas/json"
 import { rotationExportInputSchema, rotationInputSchema, rotationStepInputSchema } from "./schemas/rotation"
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types"
@@ -60,167 +65,189 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
   }
   const before = parseAttachment(step.before)
   const after = parseAttachment(step.after)
+  const startTime = typeof step.startTime === "number" && Number.isFinite(step.startTime) ? step.startTime : undefined
+  const optionalStartTime = startTime === undefined ? {} : { startTime }
+  const duration =
+    typeof step.duration === "number" && Number.isFinite(step.duration) ? Math.max(0, step.duration) : undefined
+  const optionalDuration = duration === undefined ? {} : { duration }
+  const event = (fields: Record<string, unknown>) => ({ type: "event", ...fields }) as RotationStep
+  const stackValue =
+    typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
+  const optionalStack = stackValue === undefined ? {} : { stack: stackValue }
+
   if (
     step.type === "event" &&
     step.event === "Hellfire" &&
-    typeof step.startTime === "number" &&
-    Number.isFinite(step.startTime) &&
     typeof step.amount === "number" &&
-    Number.isFinite(step.amount)
+    Number.isFinite(step.amount) &&
+    (before || startTime !== undefined)
   ) {
-    return { type: "event", event: "Hellfire", startTime: step.startTime, amount: step.amount }
+    return event({
+      event: "Hellfire",
+      ...(before ? { before } : { startTime: startTime! }),
+      amount: step.amount,
+      ...(before ? optionalStartTime : {}),
+    })
   }
   if (step.type === "event" && step.event === "Exhausted" && (after || before)) {
-    return { type: "event", event: "Qi", after: after ?? before!, targetQiRatio: 0 }
+    if (startTime !== undefined) {
+      return event({ event: "Exhausted", ...(after ? { after } : { before: before! }), startTime, ...optionalDuration })
+    }
+    return event({ event: "Qi", after: after ?? before!, targetQiRatio: 0 })
   }
   if (
     step.type === "event" &&
     step.event === "Move" &&
-    before &&
     typeof step.distance === "number" &&
-    Number.isFinite(step.distance)
+    Number.isFinite(step.distance) &&
+    (before || startTime !== undefined)
   ) {
-    return { type: "event", event: "Move", before, distance: Math.max(0, Math.floor(step.distance)) }
+    return event({
+      event: "Move",
+      ...(before ? { before } : { startTime: startTime! }),
+      distance: Math.max(0, Math.floor(step.distance)),
+      ...(before ? optionalStartTime : {}),
+    })
   }
   if (
     step.type === "event" &&
     step.event === "SelfHP" &&
-    before &&
     ((typeof step.currentHP === "number" && Number.isFinite(step.currentHP)) ||
-      (typeof step.currentHPRatio === "number" && Number.isFinite(step.currentHPRatio)))
+      (typeof step.currentHPRatio === "number" && Number.isFinite(step.currentHPRatio))) &&
+    (before || startTime !== undefined)
   ) {
-    return typeof step.currentHP === "number"
-      ? { type: "event", event: "SelfHP", before, currentHP: Math.max(0, step.currentHP) }
-      : {
-          type: "event",
-          event: "SelfHP",
-          before,
-          currentHPRatio: Math.min(1, Math.max(0, step.currentHPRatio as number)),
-        }
+    return event({
+      event: "SelfHP",
+      ...(before ? { before } : { startTime: startTime! }),
+      ...(typeof step.currentHP === "number"
+        ? { currentHP: Math.max(0, step.currentHP) }
+        : { currentHPRatio: Math.min(1, Math.max(0, step.currentHPRatio as number)) }),
+      ...(before ? optionalStartTime : {}),
+    })
   }
   if (
     step.type === "event" &&
     step.event === "TakeDamage" &&
-    typeof step.startTime === "number" &&
-    Number.isFinite(step.startTime) &&
     typeof step.damage === "number" &&
-    Number.isFinite(step.damage)
+    Number.isFinite(step.damage) &&
+    (before || startTime !== undefined)
   ) {
-    return { type: "event", event: "TakeDamage", startTime: step.startTime, damage: Math.max(0, step.damage) }
-  }
-  if (
-    step.type === "event" &&
-    step.event === "TakeDamage" &&
-    before &&
-    typeof step.damage === "number" &&
-    Number.isFinite(step.damage)
-  ) {
-    return { type: "event", event: "TakeDamage", before, damage: Math.max(0, step.damage) }
+    return event({
+      event: "TakeDamage",
+      ...(before ? { before } : { startTime: startTime! }),
+      damage: Math.max(0, step.damage),
+      ...(before ? optionalStartTime : {}),
+    })
   }
   if (
     step.type === "event" &&
     step.event === "HP" &&
-    before &&
     typeof step.targetHPRatio === "number" &&
-    Number.isFinite(step.targetHPRatio)
+    Number.isFinite(step.targetHPRatio) &&
+    (before || startTime !== undefined)
   ) {
-    return { type: "event", event: "HP", before, targetHPRatio: Math.min(1, Math.max(0, step.targetHPRatio)) }
+    return event({
+      event: "HP",
+      ...(before ? { before } : { startTime: startTime! }),
+      targetHPRatio: Math.min(1, Math.max(0, step.targetHPRatio)),
+      ...(before ? optionalStartTime : {}),
+      ...(!before && step.automatic === true ? { automatic: true } : {}),
+    })
   }
   if (
     step.type === "event" &&
     step.event === "Qi" &&
-    (before || after) &&
     typeof step.targetQiRatio === "number" &&
-    Number.isFinite(step.targetQiRatio)
+    Number.isFinite(step.targetQiRatio) &&
+    (before || after || startTime !== undefined)
   ) {
-    return {
-      type: "event",
+    return event({
       event: "Qi",
-      ...(before ? { before } : { after: after! }),
+      ...(before ? { before } : after ? { after } : { startTime: startTime! }),
       targetQiRatio: Math.min(1, Math.max(0, step.targetQiRatio)),
-    }
-  }
-  if (step.type === "event" && step.event === "Buff" && before && typeof step.buff === "string" && step.buff) {
-    const stack =
-      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
-    return migrateVendettaTokenStep({
-      type: "event",
-      event: "Buff",
-      before,
-      buff: step.buff,
-      ...(stack === undefined ? {} : { stack }),
+      ...(before || after ? optionalStartTime : {}),
     })
   }
-  if (step.type === "event" && step.event === "Debuff" && before && typeof step.debuff === "string" && step.debuff) {
-    if (step.debuff === "Exhausted") return { type: "event", event: "Qi", before, targetQiRatio: 0 }
-    const stack =
-      typeof step.stack === "number" && Number.isFinite(step.stack) ? Math.max(1, Math.floor(step.stack)) : undefined
-    return { type: "event", event: "Debuff", before, debuff: step.debuff, ...(stack === undefined ? {} : { stack }) }
+  if (
+    step.type === "event" &&
+    step.event === "Buff" &&
+    typeof step.buff === "string" &&
+    step.buff &&
+    (before || startTime !== undefined)
+  ) {
+    return migrateVendettaTokenStep(
+      event({
+        event: "Buff",
+        ...(before ? { before } : { startTime: startTime! }),
+        buff: step.buff,
+        ...optionalStack,
+        ...(before ? optionalStartTime : {}),
+      }),
+    )
+  }
+  if (
+    step.type === "event" &&
+    step.event === "Debuff" &&
+    typeof step.debuff === "string" &&
+    step.debuff &&
+    (before || startTime !== undefined)
+  ) {
+    if (step.debuff === "Exhausted") {
+      return event({
+        event: "Qi",
+        ...(before ? { before } : { startTime: startTime! }),
+        targetQiRatio: 0,
+        ...(before ? optionalStartTime : {}),
+      })
+    }
+    return event({
+      event: "Debuff",
+      ...(before ? { before } : { startTime: startTime! }),
+      debuff: step.debuff,
+      ...optionalStack,
+      ...(before ? optionalStartTime : {}),
+    })
   }
   if (
     step.type === "event" &&
     step.event === "MartialArt" &&
     before?.action === "start" &&
     before.trigger === undefined &&
+    startTime === undefined &&
     typeof step.martialArt === "string" &&
     weaponIdSet.has(step.martialArt as WeaponId)
   ) {
-    return { type: "event", event: "MartialArt", before: { action: "start" }, martialArt: step.martialArt as WeaponId }
+    return event({ event: "MartialArt", before: { action: "start" }, martialArt: step.martialArt as WeaponId })
   }
   if (
     step.type === "event" &&
     step.event === "Delay" &&
+    startTime === undefined &&
     typeof step.duration === "number" &&
     Number.isFinite(step.duration)
   ) {
-    return {
-      type: "event",
+    return event({
       event: "Delay",
       duration: Math.max(0, step.duration),
       ...(step.automatic === "cooldown" || step.automatic === "attack" || step.automatic === "requirement"
         ? { automatic: step.automatic }
         : {}),
-    }
+    })
+  }
+  if (step.type === "event" && step.event === "Exhausted" && startTime !== undefined) {
+    return event({ event: "Exhausted", startTime, ...optionalDuration })
   }
   if (
     step.type === "event" &&
-    step.event === "Exhausted" &&
-    typeof step.startTime === "number" &&
-    Number.isFinite(step.startTime)
+    (step.event === "Controlled" || step.event === "BattleEnd" || step.event === "ShieldBroken") &&
+    (before || startTime !== undefined)
   ) {
-    return {
-      type: "event",
-      event: "Exhausted",
-      startTime: step.startTime,
-      ...(typeof step.duration === "number" && Number.isFinite(step.duration)
-        ? { duration: Math.max(0, step.duration) }
-        : {}),
-    }
-  }
-  if (
-    step.type === "event" &&
-    (step.event === "Controlled" || step.event === "BattleEnd") &&
-    typeof step.startTime === "number" &&
-    Number.isFinite(step.startTime)
-  ) {
-    return {
-      type: "event",
+    return event({
       event: step.event,
-      startTime: step.startTime,
-      ...(typeof step.duration === "number" && Number.isFinite(step.duration)
-        ? { duration: Math.max(0, step.duration) }
-        : {}),
-    }
-  }
-  if (
-    step.type === "event" &&
-    step.event === "Move" &&
-    typeof step.startTime === "number" &&
-    Number.isFinite(step.startTime) &&
-    typeof step.distance === "number" &&
-    Number.isFinite(step.distance)
-  ) {
-    return { type: "event", event: "Move", startTime: step.startTime, distance: Math.max(0, Math.floor(step.distance)) }
+      ...(before ? { before } : { startTime: startTime! }),
+      ...optionalDuration,
+      ...(before ? optionalStartTime : {}),
+    })
   }
   return undefined
 }
@@ -265,6 +292,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           ...(typeof startValue.action === "number" ? { action: startValue.action } : {}),
         }
       : undefined
+  const normalizedStart = normalizeRotationStart(start, parsedSteps)
   return migrateGeneralsBaneSlides(
     migrateDefenseActionAnchors(
       migrateAutomaticDelays({
@@ -282,7 +310,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           : /\bIV\b|infinite vitality/i.test(candidate.name)
             ? { infiniteVitality: true }
             : {}),
-        ...(start ? { start } : {}),
+        ...(normalizedStart ? { start: normalizedStart } : {}),
         ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
       }),
     ),

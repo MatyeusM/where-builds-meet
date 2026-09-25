@@ -8,7 +8,6 @@ import {
   compareTimelineTime,
   isAttachmentAnchorStep,
   mergeCalculatedTimelineState,
-  type AttachedEventTarget,
   type RotationRecord,
   type RotationStep,
   type TimelineRow,
@@ -16,6 +15,7 @@ import {
 import { pendingEditorTimeline, withUnresolvedEditorSteps, type EditorRevision } from "../../editorTimelinePreview"
 import { readableRotationText } from "../../readableRotation"
 import { buildTimelineDisplayEntries } from "../../rotationDisplay"
+import type { RotationAttachmentTarget } from "../../rotationEditing"
 import { type SkillMap } from "../../skillOverrides"
 
 export function useRotationTimelineDisplay({
@@ -114,18 +114,18 @@ export function useRotationTimelineDisplay({
         row =>
           row.kind === "rotation" &&
           row.rotationIndex !== undefined &&
+          !row.skipped &&
           isAttachmentAnchorStep(row.step) &&
-          !row.skipped,
+          !(
+            row.step.type === "event" &&
+            row.step.event === "TakeDamage" &&
+            "automatic" in row.step &&
+            row.step.automatic === "dummyAttack"
+          ),
       )
       .flatMap(sourceRow => {
         const sourceStepIndex = sourceRow.rotationIndex ?? -1
-        const targets: Array<{
-          sourceRowId: string
-          sourceStepIndex: number
-          target: AttachedEventTarget
-          time: number
-          order: number
-        }> = []
+        const targets: RotationAttachmentTarget[] = []
         if (sourceRow.step.type === "skill")
           targets.push({
             sourceRowId: sourceRow.id,
@@ -135,14 +135,14 @@ export function useRotationTimelineDisplay({
             order: sourceRow.order,
           })
         sourceRow.actions.forEach((action, actionIndex) => {
-          if (action.type === "damage" || action.type === "takeDamage")
-            targets.push({
-              sourceRowId: sourceRow.id,
-              sourceStepIndex,
-              target: { action: actionIndex },
-              time: sourceRow.startTime + Number(action.time ?? 0),
-              order: sourceRow.order + 10 + actionIndex,
-            })
+          if (action.type === "inactive") return
+          targets.push({
+            sourceRowId: sourceRow.id,
+            sourceStepIndex,
+            target: { action: actionIndex },
+            time: sourceRow.startTime + Number(action.time ?? 0),
+            order: sourceRow.order + 10 + actionIndex,
+          })
         })
         if (sourceRow.step.type !== "skill") return targets
         const nextTriggeredRowBySkill = new Map<string, number>()
@@ -155,14 +155,14 @@ export function useRotationTimelineDisplay({
           nextTriggeredRowBySkill.set(action.value, matchIndex + 1)
           if (triggeredRow) {
             triggeredRow.actions.forEach((triggeredAction, actionIndex) => {
-              if (triggeredAction.type === "damage")
-                targets.push({
-                  sourceRowId: sourceRow.id,
-                  sourceStepIndex,
-                  target: { trigger: triggerOrdinal, action: actionIndex },
-                  time: triggeredRow.startTime + Number(triggeredAction.time ?? 0),
-                  order: triggeredRow.order + 10 + actionIndex,
-                })
+              if (triggeredAction.type === "inactive") return
+              targets.push({
+                sourceRowId: sourceRow.id,
+                sourceStepIndex,
+                target: { trigger: triggerOrdinal, action: actionIndex },
+                time: triggeredRow.startTime + Number(triggeredAction.time ?? 0),
+                order: triggeredRow.order + 10 + actionIndex,
+              })
             })
           }
           triggerOrdinal += 1

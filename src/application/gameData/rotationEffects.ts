@@ -12,7 +12,7 @@ export const rotationEventDefinitions: Record<string, SkillRecord> = {
     tags: ["Event"],
   },
   MartialArt: {
-    name: "Event: Switch Martial Art",
+    name: "Action: Switch Martial Art",
     castTime: 0,
     action: [{ type: "switchMartialArt", time: 0 }],
     modifier: [],
@@ -36,7 +36,7 @@ export const rotationEventDefinitions: Record<string, SkillRecord> = {
     tags: ["Event"],
   },
   BattleEnd: { name: "Event: Battle End", castTime: 0, action: [], modifier: [], tags: ["Event"] },
-  Delay: { name: "Event: Delay", castTime: 0, action: [], modifier: [], tags: ["Event"] },
+  Delay: { name: "Action: Delay", castTime: 0, action: [], modifier: [], tags: ["Event"] },
   Move: { name: "Event: Move", castTime: 0, action: [{ type: "move", time: 0 }], modifier: [], tags: ["Event"] },
   SelfHP: { name: "Event: Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], modifier: [], tags: ["Event"] },
   TakeDamage: {

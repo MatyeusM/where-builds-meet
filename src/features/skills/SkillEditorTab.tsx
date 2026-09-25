@@ -1,7 +1,7 @@
 import { IconChevronDown, IconChevronUp, IconX } from "@tabler/icons-react"
 import { useEffect, useMemo, useState } from "react"
 
-import { skillDisplayName } from "../../application/formatting"
+import { skillCategoryLabel, skillDisplayName } from "../../application/formatting"
 import { defaultEditorMaps, editorSkillIds, skillCategoryByWeapon } from "../../application/gameData/skills"
 import { hasSkillOverrides } from "../../application/persistence/skillOverrides"
 import { baseSkillCastTime } from "../../application/rotationCatalog"
@@ -1325,28 +1325,6 @@ export function SkillEditorTab({
   }
 
   const isDefinitionCategory = category === "Buff" || category === "Debuff"
-  const categoryLabel = (item: EditorCategory) => {
-    switch (item) {
-      case "Snowparting":
-        return "Snowparting Blade"
-      case "Phalanxbane":
-        return "Phalanxbane Blade"
-      case "Infernal":
-        return "Infernal Twinblades"
-      case "Everspring":
-        return "Everspring Umbrella"
-      case "Unfettered":
-        return "Unfettered Rope Dart"
-      case "Mortal":
-        return "Mortal Rope Dart"
-      case "Soulshade":
-        return "Soulshade Umbrella"
-      case "Panacea":
-        return "Panacea Fan"
-      default:
-        return item
-    }
-  }
 
   return (
     <>
@@ -1363,7 +1341,7 @@ export function SkillEditorTab({
                   modified={categoryModified}
                   onClick={() => setCategory(item)}
                 >
-                  {categoryLabel(item)}
+                  {skillCategoryLabel(item)}
                 </Tab>
               )
             })}

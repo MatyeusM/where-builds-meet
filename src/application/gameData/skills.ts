@@ -137,8 +137,8 @@ export const martialArtBySkillId = new Map<string, WeaponId>([
   ...Object.keys(panaceaSkills).map(id => [id, "panaceaFan"] as const),
   ...Object.keys(soulshadeSkills).map(id => [id, "soulshadeUmbrella"] as const),
 ])
+export const rotationActionOptionIds = ["__event:Delay", "__event:MartialArt"]
 export const rotationEventOptionIds = [
-  "__event:Delay",
   "__event:Controlled",
   "__event:ShieldBroken",
   "__event:BattleEnd",
@@ -150,7 +150,6 @@ export const rotationEventOptionIds = [
   "__event:Qi",
   "__event:Buff",
   "__event:Debuff",
-  "__event:MartialArt",
 ]
 export const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>
 export const dotEffectIds = new Set(Object.keys(dotDefinitions))

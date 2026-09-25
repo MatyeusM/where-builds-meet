@@ -319,9 +319,23 @@ work. Results enter the cache when completed, but only the latest requested
 fingerprint may replace the editor preview. The previous completed preview stays
 visible while newer work runs. Editor previews never request comparison variants;
 active-rotation comparisons remain tied to save, activation, or setup changes.
-The rotation portion of the fingerprint includes its resolved ping, steps, target HP,
+Manual event rows expose their authored start time as an input. Entering a time
+switches the event to explicit battle-relative timing while retaining its old
+anchor only for editor navigation; the previous/next event controls remove that
+explicit time and reattach the event to the selected action. Switch Martial Art
+and Delay are presented as Action options, named "Action: Switch Martial Art"
+and "Action: Delay" to match that group, and keep their existing start-only and
+sequential semantics. The step picker groups options by skill category, listing
+each equipped martial-art category, then Mystic and General, ahead of the Events
+and Action groups. Battle-start markers and persisted starts are limited to ordered
+or live-attached rows; fixed-time rows cannot establish the fight-start anchor. The
+rotation portion of the fingerprint includes its resolved ping, steps, target HP,
 Dummy Attack, group size, enemy count, Infinite Vitality, battle-start anchor, and event-time
-reference. Its display name is intentionally excluded because renaming cannot
+reference. Duration-controlled skill steps use the same authored input for
+editor display, anchor timing, sequential scheduling, and any named tracked
+effect; their data-defined cap is applied before those consumers. Triggered
+skills may name a source effect to keep a delayed chain bound to its original
+application. Its display name is intentionally excluded because renaming cannot
 change a calculation.
 
 Rotations may optionally store a target maximum HP. Without one, the target HP
@@ -598,7 +612,9 @@ are migrated to fight-relative timestamps using their stored start anchor.
 Legacy fixed-time Move and Exhausted events are then attached to the nearest
 skill start, direct action, or directly declared triggered-skill action and moved
 immediately before that target skill. Legacy Exhausted `before` attachments are
-migrated to post-action `after` attachments.
+migrated to post-action `after` attachments. Legacy attached Take Damage records
+without an explicit battle-start reference are converted to fixed time; modern
+battle-start records preserve explicit attachments when the editor reattaches them.
 
 Character Profile export produces a versioned JSON snapshot containing only
 custom profiles. Each profile contains character and attunement override maps,

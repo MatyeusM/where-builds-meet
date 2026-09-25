@@ -1,4 +1,4 @@
-import { assert, describe, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
 
 // Ported from script/probe/check-battle-end.mjs.
 describe("battle-end", () => {
@@ -97,5 +97,43 @@ describe("battle-end", () => {
       "Damage at the same timestamp as Battle End must not be calculated.",
     )
     assert(!result.actionBreakdowns["rotation-4:0"], "Damage after Battle End must not be calculated.")
+  })
+
+  it("applies an attached Battle End before attack alignment", async () => {
+    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
+    const rows = buildRotationTimeline({
+      rotation: {
+        name: "Attached Battle End",
+        eventTimeReference: "battleStart",
+        start: { step: 1 },
+        steps: [
+          { type: "event", event: "BattleEnd", before: { action: "start" } },
+          { type: "skill", skill: "Lead" },
+          { type: "event", event: "TakeDamage", startTime: 5, damage: 200 },
+        ],
+      },
+      skills: {
+        Lead: {
+          name: "Lead",
+          castTime: 1,
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 0, time: 0.5 }],
+          attackResponse: { endMargin: 0, durationFrom: "Lead", onSuccess: "Lead" },
+          tags: ["DirectDamage"],
+        },
+      },
+      eventDefinitions: {
+        BattleEnd: { name: "Battle End", castTime: 0, action: [] },
+        TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }] },
+      },
+      dots: {},
+      effectDefinitions: {},
+      innerWayConditions: [],
+      innerWayRules: [],
+      setupEffects: [],
+      weapons: [],
+    })
+    const battleEnd = rows.find(row => row.step.type === "event" && row.step.event === "BattleEnd")
+    expect(battleEnd?.startTime).toBe(0)
+    expect(battleEnd?.timelineEndTime).toBe(0)
   })
 })

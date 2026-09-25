@@ -1,6 +1,30 @@
 import type { SkillRecord } from "../calculations/rotationTimeline"
 import { dataText } from "../i18n"
+import type { EditorCategory } from "../skillOverrides"
 import { allSkillDefinitions, skillDataNamespaceById } from "./gameData/skills"
+
+export function skillCategoryLabel(category: EditorCategory) {
+  switch (category) {
+    case "Snowparting":
+      return "Snowparting Blade"
+    case "Phalanxbane":
+      return "Phalanxbane Blade"
+    case "Infernal":
+      return "Infernal Twinblades"
+    case "Everspring":
+      return "Everspring Umbrella"
+    case "Unfettered":
+      return "Unfettered Rope Dart"
+    case "Mortal":
+      return "Mortal Rope Dart"
+    case "Soulshade":
+      return "Soulshade Umbrella"
+    case "Panacea":
+      return "Panacea Fan"
+    default:
+      return category
+  }
+}
 
 export function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")

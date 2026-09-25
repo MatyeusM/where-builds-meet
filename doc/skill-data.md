@@ -180,21 +180,21 @@ use `resolveAt: "skillStart"`.
 
 ### Actions
 
-| Type                                            | Important semantics                                                                                                                                                                                                                                                     |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute.                                                                                                                                                 |
-| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. `HOT` identifies healing over time.                                                                                                                                              |
-| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration.                                                                                                      |
-| `consume`                                       | Removes one stack by default, or all with `stack: "all"`. `value: { operator: "first", operand: [...] }` selects the first available effect.                                                                                                                            |
-| `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                                                                                                                            |
-| `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies.                                                                                                                                             |
-| `clearCD`                                       | Resets the named skill/application cooldown. Optional positive integer `charges` restores only that many spent skill uses; `seconds` instead reduces pending recovery timestamps by that duration, clamped to the current time. Do not combine `seconds` and `charges`. |
-| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`.                                                                                                                                                                                       |
-| `setHP`, `takeDamage`                           | Set absolute Self HP or subtract absolute incoming damage.                                                                                                                                                                                                              |
-| `setTargetHP`, `setQi`                          | Set target ratios. Qi reaching zero applies Exhausted; its expiry restores Qi through data.                                                                                                                                                                             |
-| `emitEvent`                                     | Dispatches a named targeted accumulator check, not a general combat-event broadcast.                                                                                                                                                                                    |
-| `replay`                                        | Multiplies recorded final damage by `coef`, bypassing the formula and damage events. Requires a `Replayed` skill.                                                                                                                                                       |
-| `resolveRecording`                              | Effect expiry action that settles the matching recording activation.                                                                                                                                                                                                    |
+| Type                                            | Important semantics                                                                                                                                                                                                                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute.                                                                                                                                                                    |
+| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. `HOT` identifies healing over time.                                                                                                                                                                 |
+| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration.                                                                                                                         |
+| `consume`                                       | Removes one stack by default, or all with `stack: "all"`. `value: { operator: "first", operand: [...] }` selects the first available effect.                                                                                                                                               |
+| `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                                                                                                                                               |
+| `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies. `sourceEffect` names a self effect whose application source must match the trigger row's source, preventing a delayed chain from attaching to a later refresh. |
+| `clearCD`                                       | Resets the named skill/application cooldown. Optional positive integer `charges` restores only that many spent skill uses; `seconds` instead reduces pending recovery timestamps by that duration, clamped to the current time. Do not combine `seconds` and `charges`.                    |
+| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`.                                                                                                                                                                                                          |
+| `setHP`, `takeDamage`                           | Set absolute Self HP or subtract absolute incoming damage.                                                                                                                                                                                                                                 |
+| `setTargetHP`, `setQi`                          | Set target ratios. Qi reaching zero applies Exhausted; its expiry restores Qi through data.                                                                                                                                                                                                |
+| `emitEvent`                                     | Dispatches a named targeted accumulator check, not a general combat-event broadcast.                                                                                                                                                                                                       |
+| `replay`                                        | Multiplies recorded final damage by `coef`, bypassing the formula and damage events. Requires a `Replayed` skill.                                                                                                                                                                          |
+| `resolveRecording`                              | Effect expiry action that settles the matching recording activation.                                                                                                                                                                                                                       |
 
 `reapply: false` leaves an active effect untouched. Otherwise applications add
 stacks; definition `refresh` decides whether expiry resets. An application
@@ -373,11 +373,25 @@ Skill steps and explicit Delays are sequential. Attached events are stored
 immediately before their anchor and reference zero-based action indexes or
 `"start"`; optional `trigger` selects the declared trigger-action ordinal.
 A Martial Art event is start-only. Timed encounter events consume no cast time;
-`eventTimeReference: "battleStart"` makes their times fight-relative.
+`eventTimeReference: "battleStart"` makes their times fight-relative. In the
+editor, entering a start time on an event makes that event explicitly
+battle-time-anchored; the editor retains its prior action target only as
+navigation metadata and the runtime gives `startTime` precedence. Moving a
+fixed-time event with the previous/next controls removes the explicit time and
+reattaches it to the selected action. `Switch Martial Art` and explicit `Delay`
+remain in the editor's Action category and retain their existing action/sequential
+semantics. Legacy attached Take Damage records without an explicit battle-start
+reference are converted to fixed time during migration; battle-start records
+preserve explicit attachments so reattachment round-trips through the editor.
 `editableCastTime` permits a step duration override before timing modifiers.
+`durationInput: { effect, max }` makes a step duration the authoritative held
+cast duration and mirrors it onto the named self effect. The cap is applied
+before anchor timing, editor display, and the sequential scheduler.
 
 `start: { step, action? }` chooses battle start; omitted action means cast start.
-Preserve attachment indexes and fight-start anchors when editing/migrating data.
+Only ordered or live-attached rows can be selected as a fight-start anchor; fixed-time
+rows are not valid starts. Preserve attachment indexes and fight-start anchors when
+editing/migrating data.
 Generated waits and periodic rows are never authored rotation steps.
 
 Without Battle End, the final ordered item determines cutoff, including its

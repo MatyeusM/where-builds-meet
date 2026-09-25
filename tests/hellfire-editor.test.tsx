@@ -67,6 +67,16 @@ it("adds a timed Hellfire event, edits signed amounts, and saves it", async () =
   const selects = [...container.querySelectorAll<HTMLSelectElement>('select[aria-label="Skill or event"]')]
   expect(selects.length).toBeGreaterThan(1)
   const select = selects[1]
+  const groups = [...select.querySelectorAll("optgroup")]
+  const groupLabels = groups.map(group => group.label)
+  expect(groupLabels.slice(-2)).toEqual(["Events", "Action"])
+  expect(groupLabels).toContain("Mystic")
+  expect(groupLabels).toContain("General")
+  for (const skillGroup of groups.slice(0, -2)) expect(skillGroup.querySelectorAll("option").length).toBeGreaterThan(0)
+  expect([...groups[groups.length - 1].querySelectorAll("option")].map(option => option.textContent)).toEqual([
+    "Action: Delay",
+    "Action: Switch Martial Art",
+  ])
   await act(async () => {
     select.value = "__event:Hellfire"
     select.dispatchEvent(new Event("change", { bubbles: true }))
@@ -103,6 +113,42 @@ it("adds a timed Hellfire event, edits signed amounts, and saves it", async () =
         ),
       ),
   ).toBe(true)
+})
+
+it("allows a Delay action in a one-skill rotation", async () => {
+  localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
+  localStorage.setItem("wwm-active-rotation-by-path-v1", JSON.stringify({ silkbindDeluge: "one-skill" }))
+  localStorage.setItem(
+    "wwm-rotation-list-session-v1",
+    JSON.stringify([
+      {
+        id: "one-skill",
+        martialArts: ["panaceaFan", "soulshadeUmbrella"],
+        rotation: {
+          name: "One skill",
+          eventTimeReference: "battleStart",
+          start: { step: 0 },
+          steps: [{ type: "skill", skill: "Defense" }],
+        },
+      },
+    ]),
+  )
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  await act(async () => vi.advanceTimersByTimeAsync(200))
+  const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
+  expect(select).not.toBeNull()
+  await act(async () => {
+    select.value = "__event:Delay"
+    select.dispatchEvent(new Event("change", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(200)
+  })
+  const bundle = vi
+    .mocked(requestEditorTimeline)
+    .mock.calls.map(([value]) => value)
+    .reverse()
+    .find(value => value?.timeline?.rotation?.name === "One skill")
+  expect(bundle?.timeline.rotation.steps[0]).toMatchObject({ type: "event", event: "Delay" })
 })
 
 it("retains generated rows until the latest complete editor revision arrives", async () => {

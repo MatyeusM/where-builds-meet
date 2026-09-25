@@ -386,6 +386,10 @@
     background: var(--primary-active);
   }
 
+  .rotation-fixed-time-event {
+    box-shadow: inset 3px 0 var(--primary);
+  }
+
   .rotation-move-event-row {
     background: var(--event-move);
   }
@@ -555,8 +559,13 @@
     font: inherit;
   }
 
-  .rotation-skill-select option {
+  .rotation-skill-select option,
+  .rotation-skill-select optgroup {
     color: var(--text);
+  }
+
+  .rotation-skill-select optgroup {
+    font-weight: 700;
   }
 
   .rotation-skill-select:focus {
@@ -572,6 +581,32 @@
     color: oklch(from var(--text-muted) l c h / 0.55);
     cursor: not-allowed;
     opacity: 0.78;
+  }
+
+  .rotation-event-time-control {
+    display: inline-flex;
+    min-inline-size: 0;
+    inline-size: 100%;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rotation-event-time-control .rotation-event-time {
+    flex: 1 1 auto;
+    inline-size: auto;
+  }
+
+  .rotation-event-time-control.fixed {
+    color: var(--primary);
+  }
+
+  .rotation-event-time-control.fixed .rotation-event-time {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  .rotation-event-time-control.fixed > svg {
+    flex: 0 0 auto;
   }
 
   .rotation-event-time {
