@@ -111,6 +111,7 @@ src/
     persistence/                  storage keys, migrations, and application loaders
     results/                      shared calculation result presentation
     shell/                        eager notice and feature-boundary components
+  assets/                         source path icons transformed at build time
   features/                       feature UI and feature-local behavior
     analysis/                     breakdown presentation
     build/                        build, gear, OCR, and setup UI
@@ -152,8 +153,11 @@ public/
   divinecraft/                   static selector images copied into the build
   licenses/                      third-party notices copied into the build
   locales/                       generated per-locale runtime message JSON
-  paths/                         static combat-path icons copied into the build
 ```
+
+Combat-path icons live under `src/assets/path-icons/` and are imported with
+`vite-imagetools` using `?w=56&h=56&format=webp`; production builds emit
+optimized 56px WebP assets instead of copying the 512px PNG sources.
 
 ## UI layering
 
