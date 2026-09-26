@@ -87,10 +87,18 @@ import {
   createRotationId,
   eventDefaultDuration,
   migrateRotation,
+  normalizeStartAction,
   rotationAvailableForWeapons,
   rotationRecordForEntry,
 } from "../../application/rotationCatalog"
-import { normalizeEnemyCount, resolvePing } from "../../calculations/combatDefaults"
+import {
+  bossDefinitionFor,
+  bossDefinitions,
+  normalizeEnemyCount,
+  resolvePing,
+  resolveTargetType,
+  type TargetType,
+} from "../../calculations/combatDefaults"
 import { type AttunementStats } from "../../calculations/damage"
 import type { EditorTimelineResult } from "../../calculations/editorTimeline"
 import {
@@ -117,6 +125,7 @@ import {
 } from "../../calculations/rotationMetrics"
 import {
   durationInputMaximum,
+  durationInputRequired,
   isFixedTimeEvent,
   mergeEffectDefinition,
   type RotationRecord,
@@ -145,6 +154,7 @@ import {
 import { gameText, t } from "../../i18n"
 import { publishNotice, dismissNotice } from "../../notices"
 import { setPersistentItem } from "../../persistentStorage"
+import { displayEntryKey, visibleTimelineEffects } from "../../rotationDisplay"
 import {
   attachedEventPhase,
   attachedEventSiblingIndex,
@@ -181,6 +191,20 @@ import { Tooltip } from "../../ui/Tooltip"
 import { RotationEnemyCountField } from "./RotationEnemyCountField"
 import { RotationPingField } from "./RotationPingField"
 import { useRotationTimelineDisplay } from "./useRotationTimelineDisplay"
+import { useVirtualRowWindow } from "./useVirtualRowWindow"
+
+/**
+ * Finds a currently rendered row by its window key, without building a CSS selector.
+ * The windowing wrapper carries the key, but the inner row is what scroll anchoring
+ * measures, so that is what is returned.
+ */
+function renderedRowFor(container: HTMLElement, key: string): HTMLElement | null {
+  for (const node of container.querySelectorAll<HTMLElement>("[data-window-key]")) {
+    if (node.dataset.windowKey !== key) continue
+    return node.querySelector<HTMLElement>(".rotation-table-row") ?? node
+  }
+  return null
+}
 
 export function RotationEditorTab({
   character,
@@ -295,6 +319,7 @@ export function RotationEditorTab({
   const readableTextRef = useRef<HTMLTextAreaElement>(null)
   const rotationImportInputRef = useRef<HTMLInputElement>(null)
   const rotationScrollRef = useRef<HTMLDivElement>(null)
+  const rotationStepListRef = useRef<HTMLDivElement>(null)
   const pendingEventScrollRef = useRef<{
     stepIndex: number
     top: number
@@ -410,6 +435,16 @@ export function RotationEditorTab({
   useEffect(() => {
     if (editingName) rotationNameInputRef.current?.focus()
   }, [editingName])
+
+  function createEditorSkillStep(skillId: string): RotationStep {
+    const skill = calculationDefinitions.skills[skillId]
+    const maximum = durationInputMaximum(skill)
+    return {
+      type: "skill",
+      skill: skillId,
+      ...(durationInputRequired(skill) ? { duration: maximum ?? baseSkillCastTime(skill) } : {}),
+    }
+  }
 
   function updateStep(index: number, changes: Record<string, unknown>) {
     if (rotationLocked) return
@@ -546,9 +581,20 @@ export function RotationEditorTab({
           case "__event:MartialArt":
             return { type: "event", event: "MartialArt", before: { action: "start" }, martialArt: settings.weapons[0] }
           default:
-            return { type: "skill", skill: value }
+            return createEditorSkillStep(value)
         }
       }) as RotationStep[]
+      const hasOrderedStep = steps.some(
+        step => step.type === "skill" || (step.type === "event" && step.event === "Delay"),
+      )
+      const hasBattleEnd = steps.some(step => step.type === "event" && step.event === "BattleEnd")
+      if (
+        current.steps[index]?.type === "skill" &&
+        current.steps.filter(step => step.type === "skill").length <= 1 &&
+        !hasOrderedStep &&
+        !hasBattleEnd
+      )
+        return current
       const attached = [
         "__event:Move",
         "__event:SelfHP",
@@ -559,8 +605,8 @@ export function RotationEditorTab({
         "__event:MartialArt",
       ].includes(value)
       if (attached && !steps.slice(index + 1).some(step => step.type === "skill"))
-        steps.push({ type: "skill", skill: rotationSkillIds[0] })
-      const start = normalizeRotationStart(current.start, steps)
+        steps.push(createEditorSkillStep(rotationSkillIds[0]))
+      const start = normalizeStartAction(normalizeRotationStart(current.start, steps), steps)
       return { ...current, steps, ...(start ? { start } : current.start ? { start: undefined } : {}) }
     })()
     if (nextRotation !== current) {
@@ -760,7 +806,7 @@ export function RotationEditorTab({
       ...current,
       steps: [
         ...current.steps.slice(0, index + 1),
-        { type: "skill", skill: rotationSkillIds[0] },
+        createEditorSkillStep(rotationSkillIds[0]),
         ...current.steps.slice(index + 1),
       ],
     }))
@@ -982,7 +1028,7 @@ export function RotationEditorTab({
     const id = createRotationId()
     const nextRotation: RotationRecord = {
       name: t("ui.app.newRotation"),
-      steps: [{ type: "skill", skill: rotationSkillIds[0] }],
+      steps: [createEditorSkillStep(rotationSkillIds[0])],
       groupSize: 1,
       enemyCount: 1,
       eventTimeReference: "battleStart",
@@ -1167,39 +1213,6 @@ export function RotationEditorTab({
     () => rotation.steps.filter(step => step.type === "skill").length,
     [rotation.steps],
   )
-  useLayoutEffect(() => {
-    if (!editorTimelineReady) return
-    const scrollContainer = rotationScrollRef.current
-    const pendingScroll = pendingEventScrollRef.current
-    if (scrollContainer && pendingScroll) {
-      let stepIndex = pendingScroll.stepIndex
-      if (pendingScroll.step) {
-        let step = pendingScroll.step
-        while (editorStepReplacements.has(step)) step = editorStepReplacements.get(step)!
-        stepIndex = rotation.steps.indexOf(step)
-      }
-      const sameRotation = pendingScroll.rotationId === undefined || pendingScroll.rotationId === editingRotationId
-      const row = sameRotation
-        ? scrollContainer.querySelector<HTMLElement>(`[data-rotation-step-index="${stepIndex}"]`)
-        : null
-      if (row) {
-        const currentTop = row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top
-        scrollContainer.scrollTop += currentTop - pendingScroll.top
-      }
-      pendingEventScrollRef.current = null
-    }
-    const pendingFocus = pendingSkillFocusRef.current
-    if (scrollContainer && pendingFocus !== null) {
-      const select = scrollContainer.querySelector<HTMLSelectElement>(
-        `select[data-rotation-step-index="${pendingFocus}"]`,
-      )
-      if (select) {
-        select.focus({ preventScroll: true })
-        select.scrollIntoView({ block: "nearest" })
-        pendingSkillFocusRef.current = null
-      }
-    }
-  }, [timeline, editorTimelineReady, rotation.steps, editorStepReplacements, editingRotationId])
   const workerActionBreakdowns = displayedCalculation?.actionBreakdowns ?? {}
   const displayTime = (time: number) => time - anchorTime
   const calculateTimelineActionBreakdown = (row: TimelineRow, actionIndex: number): RotationActionBreakdown =>
@@ -1230,15 +1243,19 @@ export function RotationEditorTab({
       ),
     [calculationDefinitions, rotation.steps],
   )
+  const practiceTarget = resolveTargetType(rotation)
+  // A target whose declared attack pattern deals Self HP damage, so that target needs
+  // the column. Reading the pattern keeps this a property of `data/boss.json` instead of
+  // a target-ID special case, and it resolves without touching the timeline.
   const showSelfHPColumn = useMemo(
     () =>
-      rotation.dummyAttack === true ||
+      bossDefinitionFor(practiceTarget).attackPattern.length > 0 ||
       rotation.steps.some(
         step =>
           (step.type === "event" && (step.event === "SelfHP" || step.event === "TakeDamage")) ||
           (step.type === "skill" && calculationDefinitions.skills[step.skill ?? ""]?.tags?.includes("HP")),
       ),
-    [calculationDefinitions, rotation.dummyAttack, rotation.steps],
+    [calculationDefinitions, practiceTarget, rotation.steps],
   )
   const showTargetHPColumn = useMemo(
     () => rotation.targetHP !== undefined || rotation.steps.some(step => step.type === "event" && step.event === "HP"),
@@ -1261,21 +1278,19 @@ export function RotationEditorTab({
       }),
     [calculationDefinitions, rotation.steps],
   )
-  const rotationTableStyle = useMemo(
+  const stateColumns = useMemo(
     () =>
-      ({
-        "--rotation-state-columns": [
-          showDistanceColumn ? "minmax(0, 0.7fr)" : "",
-          showSelfHPColumn ? "minmax(0, 0.65fr)" : "",
-          showTargetHPColumn ? "minmax(0, 0.65fr)" : "",
-          showQiColumn ? "minmax(0, 0.65fr)" : "",
-          showHellfireColumn ? "minmax(0, 0.7fr)" : "",
-          showHeavensWillColumn ? "minmax(0, 0.9fr)" : "",
-          showVitalityColumn ? "minmax(0, 0.7fr)" : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-      }) as CSSProperties,
+      [
+        showDistanceColumn ? "minmax(0, 0.7fr)" : "",
+        showSelfHPColumn ? "minmax(0, 0.65fr)" : "",
+        showTargetHPColumn ? "minmax(0, 0.65fr)" : "",
+        showQiColumn ? "minmax(0, 0.65fr)" : "",
+        showHellfireColumn ? "minmax(0, 0.7fr)" : "",
+        showHeavensWillColumn ? "minmax(0, 0.9fr)" : "",
+        showVitalityColumn ? "minmax(0, 0.7fr)" : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
     [
       showDistanceColumn,
       showSelfHPColumn,
@@ -1286,6 +1301,83 @@ export function RotationEditorTab({
       showVitalityColumn,
     ],
   )
+  const rotationTableStyle = useMemo(
+    () => ({ "--rotation-state-columns": stateColumns }) as CSSProperties,
+    [stateColumns],
+  )
+  // Only the rows near the viewport are rendered, and only once every row has been
+  // measured; see useVirtualRowWindow. The rest are represented by padding on the list,
+  // which keeps every row's scroll position and the total height intact.
+  const displayEntryKeys = useMemo(() => displayEntries.map(displayEntryKey), [displayEntries])
+  const rowWindow = useVirtualRowWindow({
+    keys: displayEntryKeys,
+    containerRef: rotationScrollRef,
+    listRef: rotationStepListRef,
+    layoutKey: stateColumns,
+  })
+  const { start: windowStart, end: windowEnd, scrollToKey: scrollToRow } = rowWindow
+  const visibleEntries = useMemo(
+    () => displayEntries.slice(windowStart, windowEnd),
+    [displayEntries, windowStart, windowEnd],
+  )
+  const stepListStyle = useMemo(
+    () => ({ paddingBlockStart: rowWindow.paddingTop, paddingBlockEnd: rowWindow.paddingBottom }),
+    [rowWindow.paddingTop, rowWindow.paddingBottom],
+  )
+  // Scroll targets are recorded as authored step indexes, so resolve them to display keys.
+  const displayKeyByStepIndex = useMemo(() => {
+    const byStepIndex = new Map<number, string>()
+    for (const [index, entry] of displayEntries.entries()) {
+      const stepIndex = entry.row.rotationIndex
+      if (stepIndex === undefined || byStepIndex.has(stepIndex)) continue
+      byStepIndex.set(stepIndex, displayEntryKeys[index])
+    }
+    return byStepIndex
+  }, [displayEntries, displayEntryKeys])
+  useLayoutEffect(() => {
+    if (!editorTimelineReady) return
+    const scrollContainer = rotationScrollRef.current
+    const pendingScroll = pendingEventScrollRef.current
+    if (scrollContainer && pendingScroll) {
+      let stepIndex = pendingScroll.stepIndex
+      if (pendingScroll.step) {
+        let step = pendingScroll.step
+        while (editorStepReplacements.has(step)) step = editorStepReplacements.get(step)!
+        stepIndex = rotation.steps.indexOf(step)
+      }
+      const sameRotation = pendingScroll.rotationId === undefined || pendingScroll.rotationId === editingRotationId
+      const key = sameRotation ? displayKeyByStepIndex.get(stepIndex) : undefined
+      // The target row may sit outside the rendered window, so bring it into view first.
+      if (key) scrollToRow(key)
+      const row = key ? renderedRowFor(scrollContainer, key) : null
+      if (row) {
+        const currentTop = row.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top
+        scrollContainer.scrollTop += currentTop - pendingScroll.top
+      }
+      pendingEventScrollRef.current = null
+    }
+    const pendingFocus = pendingSkillFocusRef.current
+    if (scrollContainer && pendingFocus !== null) {
+      const focusKey = displayKeyByStepIndex.get(pendingFocus)
+      if (focusKey) scrollToRow(focusKey)
+      const select = scrollContainer.querySelector<HTMLSelectElement>(
+        `select[data-rotation-step-index="${pendingFocus}"]`,
+      )
+      if (select) {
+        select.focus({ preventScroll: true })
+        select.scrollIntoView({ block: "nearest" })
+        pendingSkillFocusRef.current = null
+      }
+    }
+  }, [
+    timeline,
+    editorTimelineReady,
+    rotation.steps,
+    editorStepReplacements,
+    editingRotationId,
+    scrollToRow,
+    displayKeyByStepIndex,
+  ])
   const totalRotationTime = currentCachedResult?.duration ?? 0
   const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0
   const rotationDps = currentCachedResult?.metrics.dps ?? 0
@@ -2104,6 +2196,25 @@ export function RotationEditorTab({
                       }}
                     />
                   </label>
+                  <label className="rotation-target-select">
+                    <span>{t("ui.app.target")}</span>
+                    <select
+                      disabled={rotationLocked}
+                      value={practiceTarget}
+                      onChange={event =>
+                        updateRotationCalculationSetting(current => ({
+                          ...current,
+                          targetType: event.target.value as TargetType,
+                        }))
+                      }
+                    >
+                      {bossDefinitions.map(definition => (
+                        <option key={definition.id} value={definition.id}>
+                          {gameText(definition.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <label className="rotation-option-toggle">
                     <input
                       type="checkbox"
@@ -2117,17 +2228,6 @@ export function RotationEditorTab({
                       }
                     />
                     <span>{t("ui.app.infiniteVitality")}</span>
-                  </label>
-                  <label className="rotation-option-toggle">
-                    <input
-                      type="checkbox"
-                      disabled={rotationLocked}
-                      checked={rotation.dummyAttack === true}
-                      onChange={event =>
-                        updateRotationCalculationSetting(current => ({ ...current, dummyAttack: event.target.checked }))
-                      }
-                    />
-                    <span>{t("ui.app.dummyAttack")}</span>
                   </label>
                   <label className="rotation-group-size">
                     <span>{t("ui.app.groupType")}</span>
@@ -2244,8 +2344,8 @@ export function RotationEditorTab({
                   <span>{t("ui.app.debuff")}</span>
                   <span>{t("ui.app.actions")}</span>
                 </div>
-                <div className="rotation-step-list">
-                  {displayEntries.map(entry => {
+                <div className="rotation-step-list" ref={rotationStepListRef} style={stepListStyle}>
+                  {visibleEntries.map((entry, visibleIndex) => {
                     const row = entry.row
                     if (row.kind === "damageGroup") {
                       const groupSkillId = row.step.type === "skill" ? row.step.skill : undefined
@@ -2253,7 +2353,12 @@ export function RotationEditorTab({
                         currentCachedResult?.metrics.breakdown.casts.find(cast => cast.skillId === groupSkillId)
                           ?.damage ?? 0
                       return (
-                        <div className="rotation-row-group" key={`${row.id}-summary`}>
+                        <div
+                          className="rotation-row-group"
+                          key={`${row.id}-summary`}
+                          data-window-key={`${row.id}-summary`}
+                          ref={rowWindow.measure(`${row.id}-summary`)}
+                        >
                           <div className="rotation-table-row">
                             <span aria-hidden="true" />
                             <span aria-hidden="true" />
@@ -2302,12 +2407,13 @@ export function RotationEditorTab({
                         averageStackOnly?: boolean
                       }>,
                       atTime: number,
-                    ) =>
-                      effects.length === 0 ? (
+                    ) => {
+                      const shown = visibleTimelineEffects(effects, calculationDefinitions.effectDefinitions)
+                      return shown.length === 0 ? (
                         ""
                       ) : (
                         <span className="effect-plates">
-                          {effects.map(effect => {
+                          {shown.map(effect => {
                             const definition = calculationDefinitions.effectDefinitions[effect.name]
                             const description = gameText(definition?.description?.trim())
                             const name = gameText(definition?.name ?? effect.name)
@@ -2386,6 +2492,7 @@ export function RotationEditorTab({
                           })}
                         </span>
                       )
+                    }
                     const actionIndex = entry.actionIndex
                     const actionTime = entry.time
                     const isManualEvent = step.type === "event"
@@ -2402,7 +2509,7 @@ export function RotationEditorTab({
                       step.type === "event" &&
                       step.event === "TakeDamage" &&
                       "automatic" in step &&
-                      step.automatic === "dummyAttack"
+                      step.automatic === "targetAttack"
                     const rowReadOnly = rotationLocked || isGeneratedEvent || row.rotationIndex === undefined
                     const resolvedTakeDamage =
                       step.type === "event" && step.event === "TakeDamage"
@@ -2471,7 +2578,7 @@ export function RotationEditorTab({
                     switch (step.type) {
                       case "skill":
                         durationValue = Math.min(
-                          step.duration ?? baseSkillCastTime(row.skill),
+                          step.duration ?? durationMaximum ?? baseSkillCastTime(row.skill),
                           durationMaximum ?? Number.POSITIVE_INFINITY,
                         )
                         break
@@ -2547,7 +2654,13 @@ export function RotationEditorTab({
                       } as RotationActionBreakdown,
                     )
                     return (
-                      <div className="rotation-row-group" key={`${row.id}-${entry.kind}-${actionIndex ?? "skill"}`}>
+                      <div
+                        className="rotation-row-group"
+                        key={displayEntryKey(entry)}
+                        data-window-key={displayEntryKey(entry)}
+                        data-window-last={windowStart + visibleIndex === displayEntries.length - 1 ? "" : undefined}
+                        ref={rowWindow.measure(displayEntryKey(entry))}
+                      >
                         {!isAction && (
                           <div
                             className={`rotation-table-row ${isManualEvent ? "rotation-event-row" : ""} ${isManualEvent && step.event === "Move" ? "rotation-move-event-row" : ""} ${isManualEvent && step.event === "TakeDamage" ? "rotation-take-damage-event-row" : ""} ${isFixedTime ? "rotation-fixed-time-event" : ""}`}
@@ -3259,6 +3372,7 @@ export function RotationEditorTab({
                 </div>
               </div>
             </div>
+
             {error && <p className="editor-error">{error}</p>}
           </div>
         ) : (

@@ -17,6 +17,7 @@ short explanation only when it prevents a likely misinterpretation.
 | Complete talent selection at each rank                | `data/martial-art/`              |
 | Resource defaults, caps, and universal event gains    | `data/system.json`               |
 | Preset sequences, attachments, and encounter settings | `data/rotation/`                 |
+| Practice target names, types, and attack patterns     | `data/boss.json`                 |
 | Martial-art numeric IDs and persisted weapon IDs      | `data/official/profile-map.json` |
 | Solo Level and talent rank selection                  | `data/breakthrough.json`         |
 
@@ -37,7 +38,8 @@ Use them instead of maintaining a second TypeScript schema in this document.
 ## Datamine interpretation
 
 Local references are under `local/datamine/`: `wwm-skills-normal-all.json`,
-`wwm-skills-mystic-skills-offensive.json`, `wwm-inner-way-normal.json`, and
+`wwm-skills-mystic-skills-offensive.json`, `wwm-skills-mechanism-all.json`,
+`wwm-inner-way-normal.json`, and
 `wwm-martial-arts-normal.json`. Prefer interpreted normal-variant fields;
 ignore `versions` subtrees. Do not infer missing timing, route selection,
 resource units, or mode-specific behavior from a damage baseline alone.
@@ -90,6 +92,10 @@ not a second catalog of current values:
   The raw export-distance to editor-meter mapping is still unverified.
 - Attr. Attack DMG Up is already represented by attribute channels and the
   primary-path multiplier. Its empty talent effect must not add that bonus again.
+- Rising Momentum is buff `1055004`: a successful deflection adds 2% HP damage
+  for `buff_maxtime` 5 seconds, capped at `buff_sameadd_max` 10 stacks. It is a
+  general buff with no weapon lock, and its application is gated on a boss
+  target through the `targetType` requirement rather than a skill condition.
 - Yaksha Rush authors only the two base-animation hits, `230006101` at 0.2x and
   `230006102` at 0.8x. The base route also lists a simultaneous `230006105` at
   0.8x for its defense-break reward, which matches neither that reward's 0.5x
@@ -98,6 +104,13 @@ not a second catalog of current values:
   wiki, not the export, which carries no resource-cost or cooldown fields. It
   uses a plain `cooldown` because it is currently the only Mystic carrying the
   Break Defense tag; add a `cooldownGroup` when a second one appears.
+- Summon Lightning (`75120051`) applies Thunder Summoning at 0.403 seconds and
+  ends at 1.591 seconds. Both values come from the export route rather than a
+  measured schedule, and the export carries no cooldown or resource cost. Its
+  30% is the source's independent DMG Bonus (`calc_cause_change` cause 50), so
+  it belongs to the Mechanism damage category and not to DMG Bonus Category 1.
+  The export's `buffremove_add_buff` grant of `1500232` is a client-side usage
+  lock with no combat effect.
 
 ## Authoring rules
 
@@ -122,9 +135,19 @@ cast completion. Effect actions may use `time: "expire"`; refresh invalidates
 old expiry actions, and consumption does not count as natural expiration.
 
 Cast time excludes ping. `ignorePing: true` suppresses latency for that skill.
-Composite parents and components must declare exemptions deliberately to avoid
-charging latency twice. Component selection happens before its ping gap;
-modifiers and start-bound requirements resolve at the actual delayed start.
+`triggerPing: true` opts a triggered skill into paying the rotation ping when
+it is dispatched; ordinary triggered effects remain latency-free unless they
+declare it. Composite parents and components must declare exemptions
+deliberately to avoid charging latency twice. Component selection happens
+before its ping gap; modifiers and start-bound requirements resolve at the
+actual delayed start.
+
+A trigger action with `queueTime` is accepted at that earlier local time and
+executes at its normal `time`. `queueSourceEffect` and `queueRequirement` are
+checked when the input is accepted, so a queued execution may occur after the
+tracked source state expires. A queued trigger extends the owning ordered
+row's effective cast through the queued skill's delayed start and completion;
+its `time` is the execution marker, not the queue-acceptance marker.
 
 ### Tags and martial-art context
 
@@ -151,8 +174,12 @@ matching actions. Use the shared matcher for damage and healing.
 Requirement arrays are AND groups. `operator: "or"` supplies alternatives,
 including nested AND arrays. `operator: "not"` takes exactly one operand.
 `self` checks buffs or active tier/setup conditions; `target` checks debuffs.
-`skillTag` checks the action's tags. Tracked-effect `stack` means at least that
-many stacks; `"max"` means its resolved maximum.
+`skillTag` checks the action's tags. `targetType` matches the rotation's
+`targetType` practice target. Both dummies count as a boss, so the boss role is
+implicit: do not gate a mechanic on `targetType: "Boss"` when its source says it
+works against a boss, because that would exclude `Dummy` and `DummyAttack`.
+Express those unconditionally, as `vsBossDmg` is. Tracked-effect `stack` means at
+least that many stacks; `"max"` means its resolved maximum.
 
 Numeric targets include `resource`, `distance`, `enemyCount`, `selfHPPercentage`,
 `targetHPPercentage`, and `targetQiPercentage`. Comparisons support `>=`, `>`,
@@ -244,6 +271,12 @@ forcing the same blocking cast duration. Full alignment rules are in the
 
 ## Effects and Inner Ways
 
+Skills carry no `description`. Source record ids and the reasoning behind a skill
+belong in this document and the per-path draft notes, not in the data the app
+loads. Buff and debuff definitions do keep a `description`, because the timeline
+shows it as a tooltip, and those describe how the effect behaves rather than
+citing a source id.
+
 `badgeColor: "red"` selects the red timeline effect badge independently of the
 definition's source file. Omit it for the default badge; DOT styling takes precedence.
 
@@ -254,6 +287,11 @@ not an increment. Provide entries for every reachable stack count.
 
 `global: true` contributes always-active setup rules without a tracked buff.
 `shared` identifies party-shared debuffs; `showCoverage` requests coverage output.
+`hidden: true` marks an internal bookkeeping effect that drives the simulation but
+has no counterpart the player reads, so the timeline omits it. Use it for counters
+such as the Stonesplit Strength `Cadence` and the Dust Phantom Umbrella summon
+cadence, which would otherwise appear as meaningless buff plates. The effect still
+resolves normally; only its display is suppressed.
 Permanent seeded effects are not consumed and merge with later applications.
 Canonical conditional rules use `{ requirement: [...], effect: {...} }`.
 
@@ -286,9 +324,9 @@ A formula source may be a stat name or `{ "max": ["body", "power"] }` to select 
 `max`, and explicitly justified `round`. See the [stat pipeline](stat-pipeline.md)
 for effective-source resolution and final-value overrides.
 
-Damage categories such as `dmgBonus`, `baseDMGBonus`, `globalDmgBonus`,
-`dotDamage`, and per-channel bonuses are not interchangeable; use
-[damage-formula.md](damage-formula.md) for their order and scope.
+Damage categories such as `dmgBonus`, `baseDMGBonus`, the Mechanism category's
+`globalDmgBonus`, `dotDamage`, and per-channel bonuses are not interchangeable;
+use [damage-formula.md](damage-formula.md) for their order and scope.
 
 ### Triggers, accumulators, and recording
 
@@ -397,9 +435,11 @@ semantics. Legacy attached Take Damage records without an explicit battle-start
 reference are converted to fixed time during migration; battle-start records
 preserve explicit attachments so reattachment round-trips through the editor.
 `editableCastTime` permits a step duration override before timing modifiers.
-`durationInput: { effect, max }` makes a step duration the authoritative held
+`durationInput: { effect, max, required? }` makes a step duration the authoritative held
 cast duration and mirrors it onto the named self effect. The cap is applied
-before anchor timing, editor display, and the sequential scheduler.
+before anchor timing, editor display, and the sequential scheduler. An omitted
+duration uses the configured maximum; `required: true` additionally prevents
+an authored/imported step from omitting that duration.
 
 `start: { step, action? }` chooses battle start; omitted action means cast start.
 Only ordered or live-attached rows can be selected as a fight-start anchor; fixed-time
@@ -479,19 +519,60 @@ without Flamelash remains an invalid state to investigate.
 Dust implements only the skills required by its authored draft rotation.
 See [Dust draft and timing refill register](dust-draft.md) for source IDs,
 per-skill timing fallbacks, rotation interpretation, and remaining mechanics.
-The user explicitly authorized unresolved hit timestamps at zero and unresolved
-buff application timestamps at cast end; these are not measured hit schedules.
 
-Phantom Rally summons/resonance and Piercing Dart damage mapping remain unresolved.
-Charged Combo reduces Soul Sweep remaining cooldown by 0.5 seconds per Piercing Dart damage hit,
-with a shared 0.5-second trigger cooldown. It awaits the missing damage events;
-simultaneous placeholder hits can trigger only once. Soul-state stacking, conversion, lifetimes,
-and cast-start consumption are implemented. Fading Crimson and Tokens of
-Gratitude are intentionally ignored by user instruction. Individual
-Piercing Dart sweeps must carry only their corresponding `PiercingDartSweepN`
-tag. Mode-specific exclusions from Soulbreak recorded damage are intentionally ignored by user instruction. Fragrant Song's 30% faster flight and accelerated-flight
-guaranteed-catch behavior are intentionally ignored by user instruction;
-its damage bonus, guaranteed crit, and one-use consumption remain implemented.
+Piercing Dart's seven hits are modelled as `PiercingDartSweep1`–`7` triggered
+damage skills rather than seven `damage` actions on one skill. This is deliberate:
+Towline Sweep Tier 3 gives each hit a different bonus (0.05, 0.05, 0.05, 0.10,
+0.10, 0.15, 0.15) through `skillTag` requirements, and a `damage` action cannot
+carry its own tag — tags resolve per skill. Keeping the hits in one skill would
+need a per-action tag mechanism, which is not worth introducing for a single skill.
+Revisit this if a second skill needs per-action tags. The four-hit release reuses
+sweeps 1–4, matching the shared marker series.
+
+The source routes for Piercing Dart are cumulative prefixes of one seven-hit series
+measured from the side-button press: `20702101` is the charging stance and reports
+no hits, `20702102` is the three-hit release, `20702103` the five-hit release, and
+`20702104` the seven-hit release. Each variant is therefore the leading markers of
+`[0.233, 0.483, 0.7, 1.017, 1.217, 1.4, 1.967]`, and the cast time is the last
+marker it lands: 1.967 s for the full release and 1.017 s for the four-hit release,
+which ends at the interrupt. Soul Loss is applied on the same markers as the hit it
+belongs to, and its requirement resolves at skill start because Soulbound is
+consumed there.
+
+Dreamwrought Bubbles is split into a charge and a release sub-action. Actions
+scheduled past a skill's cast time are inactive, and action times are absolute from
+the skill's start, so a charge that Fragrant Song - Delicate skips cannot be
+expressed inside the release skill. As sub-actions the 0.743 s charge delays the
+release, and skipping it slides the two collider markers back to their raw
+`0.400` and `0.830` second offsets. The release ends at the 1.2 s source interrupt,
+so the skill takes 1.943 s with the charge and 1.2 s without it. This matches the
+Drunken Poet charge pattern, and matches how Soul Sweep and Burn and Bury take their
+source interrupt as the cast time.
+
+Delicate skips the charge through a conditional sub-action rather than a
+`castTimeMultiplier` modifier on it. A sub-action that fails its requirement becomes
+an inactive segment contributing no cast time, so the release simply starts at once.
+Prefer this over a modifier: modifier requirements are evaluated against live state
+when the segment resolves, so a Delicate stack consumed on the parent at time 0 is
+already gone by then, and a lone remaining stack cancels nothing. Delicate is
+consumed by the release, on the cast the buff paid for.
+
+Both Dreamwrought Bubbles sub-actions set `ignorePing: true`. Input latency is paid
+once when the parent is dispatched, and every sub-action past the first would
+otherwise pay it again, stretching the skill by 2 × ping. Set it on a sub-action
+when that component is not a separate button press.
+
+Charged Combo reduces Soul Sweep remaining cooldown by 0.5 seconds per Piercing Dart
+damage hit, with a shared 0.5-second trigger cooldown. Soul-state stacking,
+conversion, lifetimes, and cast-start consumption are implemented. Fading Crimson
+and Tokens of Gratitude are intentionally ignored by user instruction.
+Mode-specific exclusions from Soulbreak recorded damage are intentionally ignored
+by user instruction. Fragrant Song's source text describes a 30% faster flight
+and accelerated-flight catch; Scarlet Spin applies the source `1 / 1.3` timing
+ratio to the next throw, with acceleration on Stage 4. Its damage bonus,
+guaranteed crit, and one-use consumption remain implemented. `FragrantSong` and
+`FragrantSongDelicate` both last 10 seconds, so a grant made more than 10 seconds
+before a throw does not accelerate it.
 
 Rotation `enemyCount` is a positive whole number, defaulting to one. It models
 the number of enemies hit for Light Anew and Song of Tang; it does not multiply
@@ -500,6 +581,25 @@ on damage at three or more enemies, reduced to two at T4. Song of Tang T4
 grants one extra Tang Melody stack per eligible Martial Arts hit at two or
 more enemies, through the existing half-second application cooldown. Song of
 Tang HP drain is intentionally ignored.
+Scarlet Spin is represented by the castable `ScarletSpin` parent and the
+source-tagged `ScarletSpinStage1`–`4` components. The parent applies
+`FlowerBurial` for the authored duration and triggers the stage cycle
+`1 → 2 → 3 → 4 → 2 → …`; each stage uses the source next-start marker and
+level-100 weighted damage values. The entry and catch triggers use
+`sourceEffect: "FlowerBurial"` to bind each chain to its original application.
+Each delayed stage trigger declares an earlier `queueTime`; its queue-time
+source check reserves the next throw before the current throw finishes, while
+execution still waits for the source next-start marker. A queued throw can
+therefore start after `FlowerBurial` expires, and the parent effective cast
+extends through that throw's returned hit. Fragrant Song accelerates the next
+throw using the source `1 / 1.3` ratio, so Stage 4 is the accelerated stage.
+At zero ping, the rank-13 route starts 14 throws; positive ping shifts each
+throw's execution and can move the final queue acceptance beyond the 12-second
+state. The initial stage inherits the parent input's ping; later queued stages
+opt into `triggerPing`. The parent clears accumulated catch stacks at the start
+of a new segment. Local hit markers from every started stage remain two separate
+outgoing/returning damage actions.
+
 The draft has no accepted DPS snapshot and must not be treated as a validated
 build or rotation recommendation.
 

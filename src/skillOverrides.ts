@@ -18,6 +18,7 @@ export type SkillCategory =
   | "Unfettered"
   | "Mystic"
   | "General"
+  | "Mechanism"
 export type EditorCategory = SkillCategory | "Buff" | "Debuff" | "DOT"
 export type SkillOverrides = Partial<Record<EditorCategory, SkillMap>>
 

@@ -8,6 +8,8 @@ export const rotationInputSchema = v.looseObject({
   enemyCount: v.optional(v.any()),
   groupSize: v.optional(v.any()),
   targetHP: v.optional(v.any()),
+  targetType: v.optional(v.any()),
+  dummyAttack: v.optional(v.any()),
   start: v.optional(v.unknown()),
 })
 export const rotationEntryInputSchema = v.looseObject({

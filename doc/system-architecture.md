@@ -84,6 +84,7 @@ data/
   rotation/       bundled default rotations
   build/          bundled default build presets
   gear.json       gear slots, item bases, affix choices, and attunement source tags
+  boss.json       practice target display names, Dummy/Boss types, and attack patterns
   system.json     innate stats, non-level progression rewards, resources, and base-attribute conversions
   attunement.json attunement names, source tags, stat targets, and skill-match tags
   default-setup.json  first-load Inner Ways/food/Divinecraft and legacy build-setup fallback
@@ -280,6 +281,44 @@ Rotation Editor keeps its header and one-row grid while cell content wraps, so
 it does not introduce a horizontal scrollbar. Mobile mode and the other tabs
 retain normal document scrolling.
 
+### Rotation row windowing
+
+The rotation step list is windowed, but only after it has been measured. Row
+heights vary because cell contents wrap, and a windowed list only knows the
+height of rows it has actually rendered. Reserving space for the rest from an
+average is not stable: every newly measured row replaces an estimate and moves
+the total by (real − average), so the scroll extent swings, the browser clamps
+`scrollTop`, and the list appears to bounce back with its last row unreachable.
+So the list first renders in full, measures every row, and only then starts
+windowing; from then on the total height is exact and stops moving.
+
+Heights are collected during the commit, once per mounted row, and again when a
+row resizes through a `ResizeObserver`. Both paths coalesce into one state update
+per frame. The `ROW_GAP` in the windowing hook must match the list's CSS `gap`,
+or spacer padding stops reproducing the real rhythm.
+
+A changed column set re-wraps every cell, so `layoutKey` carries the resolved
+grid template and invalidates the measurements when it changes. That costs one
+full measuring pass per column change — which is what switching between an
+attacking and a non-attacking target does — and is unavoidable, because every
+row genuinely has a different height afterwards. Measurements are tagged with the
+layout they were taken in, so a stale layout is ignored rather than cleared by an
+effect.
+
+Each display entry has a stable `displayEntryKey`, carried as `data-window-key`
+on the rendered row. The final row is marked `data-window-last`, because
+`:last-child` is now whichever row the window happens to end on. Scroll anchoring
+and post-edit focus resolve authored step indexes to that key and call
+`scrollToKey` first, so a target outside the current window is pulled into view
+before its position is measured. Deleting a row still anchors to a neighbouring
+_rendered_ row, which is correct because an anchor is only needed when the
+deleted row was visible, and a visible row's neighbours fall inside the overscan.
+
+When heights cannot be obtained at all — hidden, or a test environment without
+layout — the full list stays rendered, so no row can disappear where layout
+metrics do not exist. This is why the existing editor tests still exercise the
+full list under jsdom.
+
 The currently viewed build and active build are separate concepts. Only the
 active build contributes gear stats, attunement, weapon and armor sets, bow/ring set, and
 arsenal to calculations. The same
@@ -330,14 +369,16 @@ explicit time and reattach the event to the selected action. Switch Martial Art
 and Delay are presented as Action options, named "Action: Switch Martial Art"
 and "Action: Delay" to match that group, and keep their existing start-only and
 sequential semantics. The step picker groups options by skill category, listing
-each equipped martial-art category, then Mystic and General, ahead of the Events
+each equipped martial-art category, then Mystic, General, and Mechanism, ahead of the Events
 and Action groups. Battle-start markers and persisted starts are limited to ordered
 or live-attached rows; fixed-time rows cannot establish the fight-start anchor. The
 rotation portion of the fingerprint includes its resolved ping, steps, target HP,
-Dummy Attack, group size, enemy count, Infinite Vitality, battle-start anchor, and event-time
+practice target, group size, enemy count, Infinite Vitality, battle-start anchor, and event-time
 reference. Duration-controlled skill steps use the same authored input for
 editor display, anchor timing, sequential scheduling, and any named tracked
-effect; their data-defined cap is applied before those consumers. Triggered
+effect; an omitted bounded input uses its configured maximum, and required
+inputs reject duration-less authored/imported steps. Their data-defined cap is
+applied before those consumers. Triggered
 skills may name a source effect to keep a delayed chain bound to its original
 application. Its display name is intentionally excluded because renaming cannot
 change a calculation.
@@ -362,9 +403,30 @@ fight-start anchor. The simulator does not infer HP changes from future rotation
 duration. Target HP follows explicit HP events or damage against a supplied
 maximum HP; otherwise it stays at the ordinary 99% default.
 
-The optional `dummyAttack` flag compiles two
-read-only 200-damage Take Damage events at the same timestamp every six seconds,
-starting 5.5 seconds after fight start and stopping before Battle End. A Take
+Each rotation stores a `targetType` practice target selected from `data/boss.json`.
+That file is the single source for a target's display name, its `Dummy` or `Boss`
+type, and its attack patterns. The removed `dummyAttack` flag is the former
+two-value form of this setting; a stored `true` migrates to `DummyAttack` and any
+other value to `Dummy`, so previously saved rotations keep their exact timeline.
+The timeline exposes the resolved target to data as the `targetType` requirement
+target, letting a definition gate itself on the encounter rather than on a
+skill ID. `vsBossDmg` applies for every practice target.
+
+Both `Dummy` and `DummyAttack` count as a boss, so the boss role is implicit
+rather than a property to test. A mechanic whose source says it works "against a
+boss" must therefore not gate itself on `targetType`, because matching `Boss`
+would exclude both dummies. Write such a mechanic unconditionally, exactly as
+`vsBossDmg` is applied. Reserve `targetType` for conditions that genuinely
+distinguish one practice target from another, such as a target that attacks or a
+target with a different resistance profile.
+
+A target's `attackPattern` array declares its generated Take Damage events. Each
+entry is `{ firstDelay, interval, count, damage }`: the first occurrence lands
+`firstDelay` seconds after battle start, repeats every `interval` seconds, and
+lands `count` simultaneous hits of `damage` each. Several entries repeat
+independently, so a future boss can mix cadences. An empty array never attacks.
+The current `DummyAttack` entry uses `5.5 / 6 / 2 / 200`. These rows carry
+`automatic: "targetAttack"` and stop before Battle End. A Take
 Damage event overlapping a skill tagged `AvoidsTakeDamage` resolves to zero and
 does not fire take-damage triggers; the cast interval includes both boundaries,
 so a zero-cast-time avoidance skill protects its exact timestamp. A manually
@@ -508,7 +570,8 @@ Recurring effects use the same event-loop endpoint as ordinary actions. Battle
 End excludes damage at its timestamp. Without Battle End, completing the last
 ordered item ends combat, after same-time final actions and causal follow-ups.
 A trailing explicit Delay extends this window; DOTs, triggered skills, replays,
-and Dummy Attacks cannot extend it. No feedback-suppressed cutoff pass is needed.
+and generated target attacks cannot extend it. No feedback-suppressed cutoff pass
+is needed.
 
 ## Runtime Inner Way damage ownership
 
@@ -800,9 +863,11 @@ It produces four row kinds:
 
 Each accepted base cast or explicit Delay schedules a next-item marker at its
 resolved completion time. Cast-time changes update that marker and current-cast
-actions; future ordered rows do not yet exist. A Delay consumes its configured
-duration without producing actions or effects and extends combat when it is the
-last item. Move rows run before a
+actions; future ordered rows do not yet exist. A trigger with `queueTime`
+reserves its input at the earlier marker and can extend the owning row's
+completion through the queued skill's delayed start and returned actions. A
+Delay consumes its configured duration without producing actions or effects and
+extends combat when it is the last item. Move rows run before a
 following skill's cast start, direct action, or triggered-skill action. Exhausted
 rows run after their attached direct or triggered action. Both are rescheduled
 with that target. Take Damage and other timed manual-event `startTime`
@@ -865,13 +930,26 @@ and an independent cast's cooldown modifier affects only its newly spent charge.
 
 Setup `skillStart` triggers reuse the action trigger executor once per accepted
 cast, before its timed actions, without inserting a visible action. Their
-per-setup cooldown state is shared across matching skills. Buff duration setup
+per-setup cooldown state is shared across matching skills. A `skillStart` trigger
+matches the started skill's own definition tags, never the merged tag set, so a
+raised skill that inherited its parent's tags cannot satisfy the parent's own
+start-of-cast effects. Buff duration setup
 rules resolve in both ordinary and trigger-driven applications. Triggered skill
 rows carry the originating cast's `buffSourceSkillTags` separately from damage
 ownership and damage tags, allowing duration bonuses to follow nested triggers
 even when a triggered skill changes its damage group. These rules execute within
 the shared worker timeline; comparisons that change them require a rebuilt
 timeline rather than reusing baseline effect snapshots.
+
+A `trigger` action marked `inheritTags: true` appends the raising skill's tags to
+the raised skill's own, so an attack summoned by one skill is matched by that
+skill's damage boosts. The merge composes down a chain: each link passes on its
+merged tags, so a skill raised by a raised skill inherits from both. It is opt-in
+per trigger because propagating every tag lets a raised skill satisfy its parent's
+tag-gated damage effects and fire extra procs. Tag _category_ markers such as
+`MartialArt`, `Heavy` and `ReturningUmbrella` are meant to cross; a skill's own
+identity marker such as `PerfectCatch` is what start-of-cast triggers key on, and
+those triggers read own tags to keep the two apart.
 
 Main-tab global-effect controls seed permanent tracked player buffs or target
 debuffs into this initial state at their configured stack count. They therefore
@@ -914,8 +992,8 @@ sequence with Hellfire ticks and automatic Enhanced Rodent Rampage attacks.
 
 Setup and Inner Way triggers are indexed by event name once for each timeline
 pass. A damage, healing, or incoming-damage action evaluates only the rules for
-that event while retaining their original data order. Dummy Attack queues its
-next pair of hits dynamically and needs no preliminary duration pass.
+that event while retaining their original data order. A practice target queues
+its next generated hits dynamically and needs no preliminary duration pass.
 Fight-start detection activates its dependent clocks in the same traversal.
 
 ### Input latency (ping)
@@ -1363,8 +1441,11 @@ definition.
 ### Skill or triggered skill
 
 Add the record to an imported `data/skill/*.json` map and reference its ID from
-rotation or trigger actions. A new editor category also requires an import and a
-`defaultSkillMaps` entry in `src/application/gameData/skills.ts`.
+rotation or trigger actions. A new editor category also requires an import, a
+`defaultSkillMaps` and `skillDataNamespaceByCategory` entry in
+`src/application/gameData/skills.ts`, and a `selectableRotationSkillGroups`
+entry in `src/application/characterComposition.ts` so it reaches the rotation
+step picker.
 
 ### Buff, debuff, or DOT
 

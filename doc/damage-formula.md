@@ -608,23 +608,29 @@ which covers Fan Q/QQ (including cancels) and Umbrella Q only.
 Physical and Formless Penetration target their corresponding penetration
 channels and have no skill-match restriction.
 
-The shared result is then multiplied by a channel-specific global multiplier:
+The shared result is then multiplied by the Mechanism multiplier, a
+channel-specific final multiplier that is separate from the shared multiplier and
+from DMG Bonus Category 1. It models the source's independent DMG Bonus, whose
+`calc_cause_change` cause 50 multiplies the whole resolved hit instead of
+joining the additive Category 1 pool:
 
 ```text
-Physical, Stonesplit, Silkbind, Bamboocut Global Multiplier =
+Physical, Stonesplit, Silkbind, Bamboocut Mechanism Multiplier =
   1 + globalDmgBonus + globalHPDMGBonus
 
-Bellstrike Global Multiplier =
+Bellstrike Mechanism Multiplier =
   1 + globalDmgBonus + globalHPDMGBonus + globalBellstrikeDMGBonus
 ```
 
-All effects in this global category add together before forming the multiplier.
-With Soulshade Umbrella's Buff Enhancement talent, active Floating Grace adds
-another `dmgBonus: 0.05` only against an Exhausted target. This is part of Floating
-Grace's damage bonus (including its Deluge variant), with no separate buff or
-five-second timer.
+All effects in this Mechanism category add together before forming the
+multiplier. With Soulshade Umbrella's Buff Enhancement talent, active Floating
+Grace adds another `dmgBonus: 0.05` only against an Exhausted target. This is
+part of Floating Grace's damage bonus (including its Deluge variant), with no
+separate buff or five-second timer.
 
-`Exhausted` supplies `globalDmgBonus: 0.1`. Qi Imbalance conditionally supplies
+`Exhausted` supplies `globalDmgBonus: 0.1`. Thunder Summoning supplies
+`globalDmgBonus: 0.3` for 15 seconds, matching its source cause-50 value.
+Qi Imbalance conditionally supplies
 `globalHPDMGBonus: 0.08` for every HP-damage channel and an additional
 `stat.bellstrikeDmgBonus: 0.08` for Bellstrike only. The latter adds in the earlier attribute-specific multiplier.
 
@@ -770,10 +776,12 @@ Abrasion Rate = (1 − Effective Precision) × (1 − Final Affinity)
 Normal Rate   = max(0, 1 − Abrasion Rate − Affinity Rate − Critical Rate)
 ```
 
-`SteadfastGuaranteedCrit` is a skill-specific rate override and only applies to skills tagged `BurningHeart` or `AnxiSoldier`:
+`GuaranteedCrit` is an unconditional rate override: Critical Rate becomes 100% and every other outcome rate becomes zero.
+
+`SteadfastGuaranteedCrit` is a separate conditional rate override and only applies to skills tagged `BurningHeart` or `AnxiSoldier`:
 
 - If the normal Final Critical is at least 75%, Critical Rate becomes 100% and every other outcome rate becomes zero.
-- Otherwise, 15% Direct Critical is added and the rates are recalculated.
+- Otherwise, 15% Direct Critical is added and the rates are recalculated; this fallback does not guarantee a critical hit.
 
 The associated 10% Critical DMG effects are represented separately as `critDmgBonus: 0.1` in effect data; they are not part of the rate function.
 

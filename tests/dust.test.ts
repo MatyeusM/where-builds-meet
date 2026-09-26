@@ -3,25 +3,52 @@ import { describe, expect, it } from "vitest"
 import buffs from "../data/buff/bamboocut-dust.json"
 import mysticBuffs from "../data/buff/mystic.json"
 import debuffs from "../data/debuff/bamboocut-dust.json"
+import gearSets from "../data/gear-set.json"
 import light from "../data/innerway/light-anew.json"
 import phantom from "../data/innerway/phantom-rally.json"
 import song from "../data/innerway/song-of-tang.json"
 import towline from "../data/innerway/towline-sweep.json"
 import umbrellaArt from "../data/martial-art/everspring-umbrella.json"
 import ropeArt from "../data/martial-art/unfettered-rope-dart.json"
+import pathData from "../data/path.json"
+import defaultDustRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min.json"
 import umbrella from "../data/skill/everspring-umbrella.json"
 import general from "../data/skill/general.json"
 import mystic from "../data/skill/mystic.json"
 import rope from "../data/skill/unfettered-rope-dart.json"
 import draft from "../doc/drafts/dust-1-min.json"
+import { innerWayConditionsFor, innerWayEffectRulesFor } from "../src/application/characterComposition"
 import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
 import { type InnerWayEffectRule, type EditableObject } from "../src/calculations/rotationTimeline"
+import type { RotationRecord, RotationStep, TimelineRow } from "../src/calculations/rotationTimeline"
 import { martialArtEffectsForRank } from "../src/data/martialArtTalents"
 import { emptyStats } from "../src/data/statDefinitions"
 import { mergeImportedRotationEntries } from "../src/rotationTransfer"
 
 const cast = (skill: string) => ({ type: "skill" as const, skill })
 const delay = (duration: number) => ({ type: "event" as const, event: "Delay", duration })
+// Select Scarlet Spin chain rows by id, not by tag. A throw inherits its parent's tags
+// and a catch hands the PerfectCatch tag to the Resonance it raises, so neither tag
+// identifies these rows on its own any more.
+const isThrow = (row: TimelineRow) => /^ScarletSpinStage\d$/.test(row.step.skill ?? "")
+const isCatch = (row: TimelineRow) => row.step.skill === "EverspringPerfectCatch"
+// Resolve the action state that observes an effect by name, so adding actions does
+// not shift assertions. Row.actionStates holds pre-action snapshots, so the state
+// that sees the effect applied is the one after its action.
+const stateAfterEffect = (
+  row: {
+    actions: readonly { type?: string; value?: string }[]
+    actionStates?: Record<number, { buffs: Map<string, { expiresAt?: number }> }>
+  },
+  skill: string,
+  effect: string,
+) => {
+  const index = umbrella[skill as keyof typeof umbrella].action.findIndex(
+    action => action.value === effect && action.type !== "consume",
+  )
+  expect(index).toBeGreaterThanOrEqual(0)
+  return row.actionStates?.[index + 1]
+}
 const catalogs = { SongOfTang: song, PhantomRally: phantom, TowlineSweep: towline, LightAnew: light }
 function bundle(selected: Partial<Record<keyof typeof catalogs, number>> = {}): RotationSimulationBundle {
   const rules: InnerWayEffectRule[] = []
@@ -166,7 +193,15 @@ describe("Dust WIP mechanics", () => {
       row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill !== "Hit",
     )!
     const hit = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "Hit")!
-    expect(release.actionStates[10].debuffs.get("SoulLoss")?.stack).toBe(soulbound ? 6 : 3)
+    // One Soul Loss per hit, so the three hits before the last leave three stacks, or
+    // six when cast-start Soulbound doubles each one. The last hit then reaches the
+    // seven-stack cap and breaks Soul Loss away.
+    const soulLoss = release.actions
+      .map((action, index) => ({ action, index }))
+      .filter(({ action }) => action.type === "apply" && action.value === "SoulLoss")
+      .map(({ index }) => index)
+    expect(soulLoss).toHaveLength(12)
+    expect(release.actionStates[soulLoss[9]].debuffs.get("SoulLoss")?.stack).toBe(soulbound ? 6 : 3)
     expect(hit.actionStates[0].debuffs.get("SoulLoss")?.stack ?? 0).toBe(soulbound ? 0 : 4)
     expect(hit.actionStates[0].debuffs.has("Soulbreak")).toBe(soulbound)
     expect(hit.actionStates[0].buffs.has("Soulbound")).toBe(false)
@@ -198,6 +233,33 @@ describe("Dust WIP mechanics", () => {
     expect(hits[1].actionStates[0].debuffs.has("SoulLoss")).toBe(false)
     expect(hits[1].actionStates[0].debuffs.has("Soulbreak")).toBe(soulbound)
     expect(hits[1].actionStates[0].buffs.has("SoulReturn")).toBe(soulbound)
+  })
+  it("maps four- and seven-hit Piercing Dart releases to source-tagged sweep damage", () => {
+    const input = bundle()
+    input.timeline.rotation.steps = [cast("PiercingDart4Hits"), cast("PiercingDart")]
+    const result = calculateRotationBaseline(input)
+    const releases = result.timeline.filter(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill?.startsWith("PiercingDart"),
+    )
+    expect(releases).toHaveLength(2)
+    for (const [releaseIndex, expectedCount] of [
+      [0, 4],
+      [1, 7],
+    ] as const) {
+      const release = releases[releaseIndex]
+      const sweeps = result.timeline.filter(
+        row =>
+          row.kind === "trigger" &&
+          row.sourceRowId === release.id &&
+          row.step.type === "skill" &&
+          row.skill?.tags?.some(tag => tag.startsWith("PiercingDartSweep")),
+      )
+      expect(sweeps).toHaveLength(expectedCount)
+      expect(sweeps.map(row => row.step.skill)).toEqual(
+        Array.from({ length: expectedCount }, (_, index) => `PiercingDartSweep${index + 1}`),
+      )
+      expect(sweeps.every((row, index) => row.skill?.tags?.includes(`PiercingDartSweep${index + 1}`))).toBe(true)
+    }
   })
   it("lets Towline Sweep apply Soul Loss even on an unbound release", () => {
     const input = bundle({ TowlineSweep: 0 })
@@ -280,15 +342,58 @@ describe("Dust WIP mechanics", () => {
     const input = bundle()
     input.timeline.skills = { ...input.timeline.skills, ...general, ...mystic }
     input.timeline.effectDefinitions = { ...input.timeline.effectDefinitions, ...mysticBuffs }
+    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
     input.timeline.rotation = rotation
     input.startAnchor = { rowId: `rotation-${rotation.start!.step}`, actionIndex: rotation.start!.action }
     for (const step of rotation.steps.filter(step => step.type === "skill")) {
       expect(input.timeline.skills[step.skill!]).toBeDefined()
     }
+    expect(rotation.start).toEqual({ step: 5, action: 0 })
+    expect(rotation.steps.filter(step => step.type === "skill").map(step => step.skill)).toEqual([
+      "SoulSweepCancel",
+      "Deflect",
+      "PiercingDartCharge",
+      "FluteOfTheTidesCancel",
+      "Deflect",
+      "PiercingDart4Hits",
+      "Dodge",
+      "BurnAndBury",
+      "ScarletSpin",
+      "DreamwroughtBubbles",
+      "DreamwroughtBubbles",
+      "DreamwroughtBubbles",
+      "SoaringSpin2",
+      "BurnAndBury",
+      "Dodge",
+      "ScarletSpin",
+      "DreamwroughtBubbles",
+      "SoaringSpin2",
+      "FluteOfTheTides",
+      "BurnAndBury",
+      "ScarletSpin",
+      "SoaringSpin2",
+      "BurnAndBury",
+    ])
+    const scarletSteps = rotation.steps.filter(step => step.type === "skill" && step.skill === "ScarletSpin")
+    expect(scarletSteps.map(step => step.duration)).toEqual([12, 12, 12])
+    expect(scarletSteps.filter(step => step.causesBreak)).toHaveLength(1)
+    expect(scarletSteps.findIndex(step => step.causesBreak)).toBe(1)
     const result = calculateRotationBaseline(input)
     expect(result.duration).toBe(60)
     expect(result.metrics.totalDamage).toBeGreaterThan(0)
+    const battleEnd = result.timeline.find(
+      row => row.kind === "rotation" && row.step.type === "event" && row.step.event === "BattleEnd",
+    )!
+    expect(result.baseline.every(entry => entry.timelineTime < battleEnd.startTime)).toBe(true)
     expect(result.baseline.every(entry => entry.timelineTime - result.anchorTime < 60)).toBe(true)
+    // The rotation ends on Burn and Bury: the closing Soul Sweep and seven-hit
+    // Piercing Dart were dropped, so the four-hit opener is the only Dart cast.
+    expect(rotation.steps.some(step => step.type === "skill" && step.skill === "PiercingDart")).toBe(false)
+    expect(rotation.steps.some(step => step.type === "skill" && step.skill === "SoulSweep")).toBe(false)
+    expect(
+      rotation.steps.some(step => step.type === "event" && step.event === "BattleEnd" && step.startTime === 60),
+    ).toBe(true)
+    expect(result.timeline.find(row => row.step.type === "skill" && row.step.skill === "BurnAndBury")!.distance).toBe(9)
     const fullFlute = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "FluteOfTheTides")!
     expect(fullFlute.actionStates[2].distance).toBe(1)
     expect(fullFlute.actionStates[3].distance).toBe(9)
@@ -297,6 +402,136 @@ describe("Dust WIP mechanics", () => {
     )) {
       expect(row.actionStates[3].distance).toBe(1)
     }
+  })
+  it("registers the Dust Dummy 1 Min rotation as the path default", () => {
+    expect(pathData.bamboocutDust.defaultRotation).toBe("dust-dummy-1-min")
+    expect(defaultDustRotation.name).toBe("Dummy 1 min")
+    expect(defaultDustRotation.martialArts).toEqual(["everspring", "unfettered"])
+    expect(defaultDustRotation.targetType).toBeUndefined()
+    expect(defaultDustRotation.steps.filter(step => step.type === "skill" && step.skill === "Dodge")).toHaveLength(2)
+    expect(defaultDustRotation.steps.some(step => step.type === "skill" && step.skill === "PerfectDodge")).toBe(false)
+    expect(defaultDustRotation.steps.at(-1)).toEqual({ type: "event", event: "BattleEnd", startTime: 60 })
+  })
+
+  it("limits Starweave to two stacks per second, caps at five, and drops one when hit", () => {
+    const run = (tier: string, steps: RotationStep[]) => {
+      const input = bundle()
+      input.timeline.skills.MartialProbe = {
+        name: "Martial Probe",
+        castTime: 0.5,
+        tags: ["MartialArts", "MartialArt"],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
+      }
+      input.timeline.skills.Reader = {
+        name: "Reader",
+        castTime: 0,
+        tags: ["MartialArts"],
+        action: [{ type: "heal", phyCoef: 0, attrCoef: 0, time: 0 }],
+      }
+      input.timeline.skills.FastProbe = {
+        name: "Fast Probe",
+        castTime: 0.1,
+        tags: ["MartialArts", "MartialArt"],
+        action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.1 }],
+      }
+      input.timeline.eventDefinitions = {
+        ...input.timeline.eventDefinitions,
+        TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }] },
+      }
+      const effect = gearSets.Starweave.options[tier].effect
+      const setupEffects = Array.isArray(effect) ? effect : [effect]
+      input.timeline.setupEffects = setupEffects
+      input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
+        typeof entry.condition === "string" ? [entry.condition] : [],
+      )
+      input.timeline.rotation.steps = steps
+      return calculateRotationBaseline(input)
+    }
+    const hits = (count: number, skill = "MartialProbe") => Array.from({ length: count }, () => cast(skill))
+    const stacks = (tier: string, steps: RotationStep[]) => {
+      const result = run(tier, steps)
+      const reader = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "Reader")!
+      return reader.actionStates[0].buffs.get("Starweave")?.stack ?? 0
+    }
+    // Twenty half-second casts land twenty gains across ten seconds, so the
+    // two-per-second limit is not binding and the five-stack cap is reached.
+    expect(stacks("4", [...hits(20), cast("Reader")])).toBe(5)
+    // Twenty tenth-second casts all land inside two seconds, where the gain
+    // limit allows only four stacks and the fifth is still out of reach.
+    expect(stacks("4", [...hits(20, "FastProbe"), cast("Reader")])).toBe(4)
+    // Two pieces grant the flat attack bonus but never a stack.
+    expect(stacks("2", [...hits(20), cast("Reader")])).toBe(0)
+    // Taking damage removes exactly one stack.
+    expect(
+      stacks("4", [
+        ...hits(20),
+        { type: "event", event: "TakeDamage", startTime: 10.5, damage: 200 },
+        delay(0.5),
+        cast("Reader"),
+      ]),
+    ).toBe(4)
+  })
+  it("restricts the Starweave damage bonus to Martial Art skills", () => {
+    const totalFor = (tier: string, skill: string) => {
+      const input = bundle()
+      input.timeline.skills = {
+        ...input.timeline.skills,
+        MartialProbe: {
+          name: "Martial Probe",
+          castTime: 0.5,
+          tags: ["MartialArts", "MartialArt"],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
+        },
+        OtherProbe: {
+          name: "Other Probe",
+          castTime: 0.5,
+          tags: ["MartialArts", "Special"],
+          action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
+        },
+      }
+      const effect = gearSets.Starweave.options[tier].effect
+      const setupEffects = Array.isArray(effect) ? effect : [effect]
+      input.timeline.setupEffects = setupEffects
+      input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
+        typeof entry.condition === "string" ? [entry.condition] : [],
+      )
+      input.timeline.rotation.steps = Array.from({ length: 20 }, () => cast(skill))
+      const result = calculateRotationBaseline(input)
+      return Object.values(result.actionBreakdowns).reduce((sum, entry) => sum + entry.total, 0)
+    }
+    expect(totalFor("4", "MartialProbe")).toBeGreaterThan(totalFor("2", "MartialProbe"))
+    expect(totalFor("4", "OtherProbe")).toBeCloseTo(totalFor("2", "OtherProbe"), 6)
+  })
+  it("scales the Starweave distance bonus using the authored movement anchors", () => {
+    const gainOverTwoPiece = (rotation: RotationRecord) => {
+      const input = bundle()
+      input.timeline.skills = { ...input.timeline.skills, ...general, ...mystic, ...umbrella, ...rope }
+      input.timeline.effectDefinitions = { ...input.timeline.effectDefinitions, ...mysticBuffs }
+      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      const measure = (tier: string) => {
+        const effect = gearSets.Starweave.options[tier].effect
+        const setupEffects = Array.isArray(effect) ? effect : [effect]
+        input.timeline.setupEffects = [
+          ...martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13),
+          ...setupEffects,
+        ]
+        input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
+          typeof entry.condition === "string" ? [entry.condition] : [],
+        )
+        input.timeline.rotation = rotation
+        input.startAnchor = { rowId: `rotation-${rotation.start!.step}`, actionIndex: rotation.start!.action }
+        return calculateRotationBaseline(input).metrics.dps
+      }
+      return measure("4") / measure("2")
+    }
+    const rotation = mergeImportedRotationEntries([], draft).entries[0].rotation
+    const collapsed = {
+      ...rotation,
+      steps: rotation.steps.map(step =>
+        step.type === "event" && step.event === "Move" ? { ...step, distance: 1 } : step,
+      ),
+    } as RotationRecord
+    expect(gainOverTwoPiece(rotation)).toBeGreaterThan(gainOverTwoPiece(collapsed))
   })
   it("applies Soulbound at zero before the unmeasured Soul Sweep hits", () => {
     const input = bundle()
@@ -323,28 +558,156 @@ describe("Dust WIP mechanics", () => {
     expect(followup.actionStates[0].buffs.get("Soulbound")?.appliedAt).toBeCloseTo(cancel.startTime)
     expect(result.baseline.filter(entry => entry.context.skillTags.includes("SoulSweep"))).toHaveLength(0)
   })
-  it("uses explicit catches to grant one-use Fragrant Song and consumes Delicate on charged umbrella attacks", () => {
-    const input = bundle({ PhantomRally: 1 })
+  it("uses the configured maximum for Flower Burial while queued throws extend the cast", () => {
+    const input = bundle()
+    input.timeline.rotation.steps = [cast("ScarletSpin"), cast("Hit")]
+    const result = calculateRotationBaseline(input)
+    const parent = result.timeline.find(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin",
+    )!
+    expect(parent.effectiveCastTime).toBeGreaterThan(12)
+    expect(stateAfterEffect(parent, "ScarletSpin", "FlowerBurial")?.buffs.get("FlowerBurial")?.expiresAt).toBe(
+      parent.startTime + 12,
+    )
+  })
+
+  it("chains source-faithful Scarlet Spin stages through the queued final throw", () => {
+    const input = bundle()
     input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
     input.timeline.rotation.steps = [
-      cast("ScarletSpin"),
-      cast("ScarletSpinPerfectCatch"),
-      cast("ScarletSpinPerfectCatch"),
-      cast("ScarletSpinPerfectCatch"),
-      cast("ScarletSpinEnd"),
-      cast("DreamwroughtBubbles"),
-      cast("Hit"),
+      { type: "skill", skill: "ScarletSpin", duration: 12 },
+      { type: "skill", skill: "ScarletSpin", duration: 12 },
+      { type: "skill", skill: "ScarletSpin", duration: 12 },
     ]
     const result = calculateRotationBaseline(input)
-    const throws = result.timeline.filter(row => row.kind === "rotation" && row.step.type === "skill")
-    expect(throws[1].actionStates[0].buffs.has("FallingBlossoms")).toBe(false)
-    expect(throws[4].actionStates[0].buffs.get("FragrantSong")?.stack).toBe(1)
-    expect(throws[4].modifierEffects.some(effect => effect.SteadfastGuaranteedCrit === true)).toBe(true)
-    expect(throws[5].actionStates[0].buffs.has("FragrantSong")).toBe(false)
-    expect(throws[5].actionStates[0].buffs.get("FragrantSongDelicate")?.stack).toBe(1)
-    expect(throws[6].actionStates[0].buffs.has("FragrantSongDelicate")).toBe(false)
-    expect(throws[6].actionStates[0].buffs.has("FlowerBurial")).toBe(false)
+    const parents = result.timeline.filter(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin",
+    )
+    const expectedOrder = [
+      "ScarletSpinStage1",
+      "ScarletSpinStage2",
+      "ScarletSpinStage3",
+      "ScarletSpinStage4",
+      "ScarletSpinStage2",
+      "ScarletSpinStage3",
+      "ScarletSpinStage4",
+      "ScarletSpinStage2",
+      "ScarletSpinStage3",
+      "ScarletSpinStage4",
+      "ScarletSpinStage2",
+      "ScarletSpinStage3",
+      "ScarletSpinStage4",
+      "ScarletSpinStage2",
+    ]
+    expect(parents).toHaveLength(3)
+    // Every throw past the first is seeded by a catch, so a cast resolves at least one
+    // fewer catch than throw. A cast may also catch its final throw, which has nothing
+    // left to queue, so the count is one of those two totals.
+    for (const [index, parent] of parents.entries()) {
+      const end = parents[index + 1]?.startTime ?? Infinity
+      const throws = result.timeline.filter(
+        row => row.kind === "trigger" && row.sourceRowId === parent.id && isThrow(row),
+      ).length
+      const catches = result.timeline.filter(
+        row => isCatch(row) && row.startTime >= parent.startTime && row.startTime < end,
+      ).length
+      expect([throws - 1, throws]).toContain(catches)
+    }
+    const throwRows = result.timeline.filter(row => row.kind === "trigger" && isThrow(row))
+    const throwRowIds = new Set(throwRows.map(row => row.id))
+    expect(result.baseline.filter(entry => entry.id && throwRowIds.has(entry.id.split(":")[0]))).toHaveLength(84)
+    for (const parent of parents) {
+      const stages = result.timeline.filter(
+        row => row.kind === "trigger" && row.step.type === "skill" && row.sourceRowId === parent.id && isThrow(row),
+      )
+      expect(stages.map(row => row.step.skill)).toEqual(expectedOrder)
+      expect(stages).toHaveLength(14)
+      expect(stages.every(row => !row.skill?.tags?.includes("PerfectCatch"))).toBe(true)
+      expect(stages.every(row => row.actions.filter(action => action.type === "damage").length === 2)).toBe(true)
+      expect(stages[0].startTime - parent.startTime).toBeCloseTo(0, 8)
+      expect(stages[1].startTime - stages[0].startTime).toBeCloseTo(1.0769230769230769, 8)
+      expect(stages[2].startTime - stages[1].startTime).toBeCloseTo(0.9583333333333333, 8)
+      expect(stages[3].startTime - stages[2].startTime).toBeCloseTo(1.0909090909090908, 8)
+      expect(stages[4].startTime - stages[3].startTime).toBeCloseTo(0.7692307692307692, 8)
+      for (let index = 1; index < stages.length; index++)
+        expect(stages[index].startTime).toBeLessThan(stages[index - 1].startTime + stages[index - 1].effectiveCastTime)
+      expect(stages[3].modifierEffects).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ castTimeMultiplier: 0.7692307692307692, GuaranteedCrit: true }),
+        ]),
+      )
+      expect(stages[3].modifierEffects).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ SteadfastGuaranteedCrit: true })]),
+      )
+      expect(stages[2].modifierEffects).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ castTimeMultiplier: expect.any(Number) })]),
+      )
+      expect(stages.at(-1)!.startTime - parent.startTime).toBeCloseTo(12.350815850815852, 8)
+      expect(parent.effectiveCastTime).toBeGreaterThan(12)
+      expect(stages.at(-1)!.actions.filter(action => action.type === "damage")).toHaveLength(2)
+    }
   })
+  it("applies ping to each queued Scarlet Spin throw", () => {
+    const input = bundle()
+    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.rotation.ping = 40
+    input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
+    const result = calculateRotationBaseline(input)
+    const parent = result.timeline.find(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin",
+    )!
+    const stages = result.timeline.filter(
+      row => row.kind === "trigger" && row.sourceRowId === parent.id && isThrow(row),
+    )
+    expect(stages).toHaveLength(13)
+    expect(stages[0].startTime).toBeCloseTo(0.04, 8)
+    expect(stages.every(row => row.actions.filter(action => action.type === "damage").length === 2)).toBe(true)
+    const intervals = [
+      1.0769230769230769, 0.9583333333333333, 1.0909090909090908, 0.7692307692307692, 0.9583333333333333,
+      1.0909090909090908, 0.7692307692307692, 0.9583333333333333, 1.0909090909090908, 0.7692307692307692,
+      0.9583333333333333, 1.0909090909090908,
+    ]
+    for (let index = 1; index < stages.length; index++)
+      expect(stages[index].startTime - stages[index - 1].startTime).toBeCloseTo(intervals[index - 1] + 0.04, 8)
+  })
+  it("caps Flower Burial at twelve seconds while queued throws extend Scarlet Spin", () => {
+    const input = bundle()
+    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 99 }, cast("Hit")]
+    const result = calculateRotationBaseline(input)
+    const parent = result.timeline.find(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin",
+    )!
+    const stages = result.timeline.filter(
+      row => row.kind === "trigger" && row.step.type === "skill" && row.sourceRowId === parent.id && isThrow(row),
+    )
+    expect(stateAfterEffect(parent, "ScarletSpin", "FlowerBurial")?.buffs.get("FlowerBurial")?.expiresAt).toBe(
+      parent.startTime + 12,
+    )
+    expect(parent.effectiveCastTime).toBeGreaterThan(12)
+    expect(stages).toHaveLength(14)
+    expect(stages.at(-1)!.startTime).toBeGreaterThan(parent.startTime + 12)
+    expect(stages.every(row => row.actions.filter(action => action.type === "damage").length === 2)).toBe(true)
+    expect(
+      result.timeline
+        .find(row => row.step.type === "skill" && row.step.skill === "Hit")!
+        .actionStates[0].buffs.has("FlowerBurial"),
+    ).toBe(false)
+  })
+  it("does not start a new Scarlet Spin chain over an existing Flower Burial", () => {
+    const input = bundle()
+    input.timeline.initialBuffs = [{ name: "FlowerBurial", stack: 1, expiresAt: 12 }]
+    input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
+    const result = calculateRotationBaseline(input)
+    const parent = result.timeline.find(
+      row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin",
+    )!
+    const stages = result.timeline.filter(
+      row => row.kind === "trigger" && row.sourceRowId === parent.id && isThrow(row),
+    )
+    expect(stages).toHaveLength(0)
+  })
+
   it("selects Burn and Bury damage by target state without damaging an unmarked target", () => {
     const run = (state?: string) => {
       const input = bundle()
@@ -448,6 +811,22 @@ describe("Dust WIP mechanics", () => {
     expect(run(0).get("FragrantSong")).toBeUndefined()
     expect(run(13, 5).get("FragrantSong")).toBeUndefined()
   })
+  it("expires Falling Blossoms after five seconds and both Fragrant Song buffs after ten", () => {
+    const input = bundle({ PhantomRally: 1 })
+    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.rotation.steps = [cast("Catch"), cast("Hit"), cast("Catch"), cast("Catch"), cast("Hit")]
+    const result = calculateRotationBaseline(input)
+    const hits = result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "Hit")
+    const blossoms = hits[0].actionStates[0].buffs.get("FallingBlossoms")!
+    expect(blossoms.stack).toBe(1)
+    expect(blossoms.expiresAt! - blossoms.appliedAt!).toBe(5)
+    const granted = hits[1].actionStates[0].buffs
+    expect(granted.has("FallingBlossoms")).toBe(false)
+    for (const id of ["FragrantSong", "FragrantSongDelicate"]) {
+      const state = granted.get(id)!
+      expect(state.expiresAt! - state.appliedAt!).toBe(10)
+    }
+  })
 })
 
 describe("Dust confirmed damage and cooldown rules", () => {
@@ -494,10 +873,231 @@ it.each([15, 16])("Towline T6 refreshes target Soulbreak within 15m: distance %s
     cast("Hit"),
     delay(22),
   ]
+  // The finger snap lands mid-cast, so the refresh it causes is offset by its hit
+  // time. Out of range nothing is refreshed and the original expiry stands.
+  const snap = rope.BurnAndBury.action.find(action => action.type === "damage")!.time as number
+  const inRange = distance === 15
   const result = calculateRotationBaseline(input)
   const payouts = result.baseline.filter(entry => entry.replay)
-  expect(payouts).toHaveLength(distance === 15 ? 2 : 1)
-  expect(payouts.at(-1)!.timelineTime).toBe(distance === 15 ? 22 : 21)
+  expect(payouts).toHaveLength(inRange ? 2 : 1)
+  expect(payouts.at(-1)!.timelineTime).toBeCloseTo(inRange ? 22 + snap : 21, 6)
   const lastHit = result.timeline.findLast(row => row.step.type === "skill" && row.step.skill === "Hit")!
-  expect(lastHit.actionStates[0].buffs.get("SoulReturn")?.expiresAt).toBe(22)
+  expect(lastHit.actionStates[0].buffs.get("SoulReturn")?.expiresAt).toBeCloseTo(22 + snap, 6)
+})
+
+describe("Phantom Umbrella summons and Resonance", () => {
+  const run = (tier: number, steps: RotationStep[]) => {
+    const selection = [{ innerWay: "PhantomRally", tier: `T${tier}` as const }]
+    const input = bundle()
+    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.innerWayRules = innerWayEffectRulesFor(selection, 19, "bamboocutDust")
+    input.timeline.innerWayConditions = [...innerWayConditionsFor(selection, undefined, "bamboocutDust")]
+    input.timeline.rotation.steps = steps
+    return calculateRotationBaseline(input)
+  }
+  const resonances = (result: ReturnType<typeof run>) =>
+    result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "Resonance")
+  const summons = (result: ReturnType<typeof run>) =>
+    result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "PhantomUmbrellaSummon")
+  // Resonance is a triggered attack published under its own row, so total only the
+  // rows that are actually Resonance rather than every triggered row in the cast.
+  const resonanceDamage = (result: ReturnType<typeof run>) => {
+    const ids = resonances(result).map(row => row.id)
+    return Object.entries(result.actionBreakdowns)
+      .filter(([key]) => ids.some(id => key === id || key.startsWith(`${id}:`)))
+      .reduce((sum, [, breakdown]) => sum + breakdown.total, 0)
+  }
+  // The cadence is anchored to a Scarlet Spin cast, so measure it on the real chain
+  // and report which throw index, counting from one, each summon came from. Nested
+  // triggers all report the rotation row as their source, so a returning throw is
+  // matched by time: it lands partway through its stage, so a summon belongs to
+  // the last stage of that cast that had already started.
+  const throwIndexAt = (rows: ReturnType<typeof run>["timeline"], times: number[], from: number) => {
+    const throws = rows.filter(row => row.kind === "trigger" && isThrow(row) && row.startTime >= from)
+    return times.map(time => throws.filter(throwRow => throwRow.startTime <= time).length)
+  }
+  const cadence = (tier: number, duration = 12) => {
+    const result = run(tier, [{ type: "skill", skill: "ScarletSpin", duration }])
+    const stages = result.timeline.filter(row => row.kind === "trigger" && isThrow(row))
+    return {
+      throws: stages.length,
+      onThrow: throwIndexAt(
+        result.timeline,
+        summons(result).map(row => row.startTime),
+        0,
+      ),
+    }
+  }
+
+  it("seeds every throw after the first with a Perfect Catch, at any ping", () => {
+    // A throw is scheduled by the catch that precedes it, so a cast can never resolve
+    // a throw without its catch. The catch is queued with the throw it seeds, so both
+    // clear the Flower Burial window at the same moment and a higher ping cannot drop
+    // one without the other.
+    const spin = (ping: number) => {
+      const input = bundle()
+      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      input.timeline.innerWayConditions = ["PhantomRallyT3"]
+      input.timeline.innerWayRules = []
+      input.timeline.rotation.ping = ping
+      input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
+      return calculateRotationBaseline(input).timeline
+    }
+    for (const ping of [0, 40]) {
+      const rows = spin(ping)
+      const parent = rows.find(row => row.kind === "rotation" && row.step.skill === "ScarletSpin")!
+      const throws = rows.filter(row => row.kind === "trigger" && row.sourceRowId === parent.id && isThrow(row))
+      const catches = rows.filter(isCatch)
+      expect(throws.length).toBeGreaterThan(1)
+      expect(catches).toHaveLength(throws.length - 1)
+    }
+  })
+  it("does not let a raised skill satisfy its parent's start-of-cast trigger", () => {
+    // Inheritance passes the raising skill's tags to the raised skill so the child is
+    // matched by the parent's damage boosts. It must not also let the child impersonate
+    // the parent for the parent's own start-of-cast trigger, or that trigger fires twice.
+    const input = bundle()
+    input.timeline.setupEffects = [
+      {
+        name: "Perfect Catch Enhancement",
+        effect: [],
+        trigger: {
+          event: "skillStart",
+          requirement: [{ target: "skillTag", value: "PerfectCatch" }],
+          action: { type: "trigger", value: "Mark" },
+        },
+      },
+    ]
+    input.timeline.innerWayConditions = ["PhantomRallyT3"]
+    input.timeline.innerWayRules = []
+    input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
+    const result = calculateRotationBaseline(input)
+    // The tag really does reach the Resonances a catch raises, so the trigger would
+    // fire for those too if a start-of-cast trigger read inherited tags.
+    const inherited = result.timeline.filter(
+      row => row.step.skill === "Resonance" && (row.skill?.tags ?? []).includes("PerfectCatch"),
+    )
+    expect(inherited.length).toBeGreaterThan(0)
+    // Each catch raises exactly one Mark, and nothing else does.
+    expect(result.timeline.filter(row => row.step.skill === "Mark")).toHaveLength(
+      result.timeline.filter(isCatch).length,
+    )
+  })
+  it("summons on the first returning throw and every third throw after it", () => {
+    const { throws: count, onThrow } = cadence(3)
+    expect(count).toBe(14)
+    // Throws one, four, seven, ten and thirteen of that cast.
+    expect(onThrow).toEqual([1, 4, 7, 10, 13])
+  })
+  it("restarts the cadence on each cast so the first throw always summons", () => {
+    const result = run(3, [
+      { type: "skill", skill: "ScarletSpin", duration: 12 },
+      { type: "skill", skill: "ScarletSpin", duration: 12 },
+    ])
+    const starts = result.timeline
+      .filter(row => row.kind === "rotation" && row.step.type === "skill" && row.step.skill === "ScarletSpin")
+      .map(row => row.startTime)
+    expect(starts).toHaveLength(2)
+    const times = summons(result).map(row => row.startTime)
+    for (const [index, start] of starts.entries()) {
+      const end = starts[index + 1] ?? Infinity
+      const withinCast = times.filter(time => time >= start && time < end)
+      expect(withinCast).toHaveLength(5)
+      expect(throwIndexAt(result.timeline, withinCast, start)).toEqual([1, 4, 7, 10, 13])
+    }
+  })
+  it("keeps one phantom per player because a summon replaces rather than stacks", () => {
+    const phantomStacks = run(3, [{ type: "skill", skill: "ScarletSpin", duration: 12 }])
+      .timeline.flatMap(row => Object.values(row.actionStates ?? {}))
+      .map(state => state.buffs.get("PhantomUmbrella")?.stack ?? 0)
+    expect(Math.max(...phantomStacks)).toBe(1)
+  })
+  it("summons on every returning throw at Tier 6 without doubling the first", () => {
+    const { throws: count, onThrow } = cadence(6)
+    expect(onThrow).toEqual(Array.from({ length: count }, (_, index) => index + 1))
+  })
+  it("resonates on a Perfect Catch without replacing the phantom", () => {
+    const result = run(3, [
+      { type: "skill", skill: "ScarletSpin", duration: 2 },
+      cast("EverspringPerfectCatch"),
+      cast("EverspringPerfectCatch"),
+    ])
+    // Every catch resonates while the phantom is alive, and none of them replace it,
+    // so the catch count and the summon count together account for every resonance.
+    const caught = result.timeline.filter(
+      row => row.step.type === "skill" && row.step.skill === "EverspringPerfectCatch",
+    )
+    expect(caught.length).toBeGreaterThan(2)
+    expect(resonances(result)).toHaveLength(summons(result).length + caught.length)
+    const phantomStacks = result.timeline
+      .flatMap(row => Object.values(row.actionStates ?? {}))
+      .map(state => state.buffs.get("PhantomUmbrella")?.stack ?? 0)
+    expect(Math.max(...phantomStacks)).toBe(1)
+  })
+  it("resonates on a Perfect Catch only while a phantom is alive", () => {
+    expect(resonances(run(3, [cast("EverspringPerfectCatch")]))).toHaveLength(0)
+  })
+  it("applies Phantom Chime at Tier 3 and raises Resonance damage 20% at Tier 4", () => {
+    const spin = [{ type: "skill", skill: "ScarletSpin", duration: 12 }] as RotationStep[]
+    const chime = (tier: number) =>
+      run(tier, spin)
+        .timeline.flatMap(row => Object.values(row.actionStates ?? {}))
+        .map(state => state.debuffs.get("PhantomChime")?.stack ?? 0)
+        .reduce((highest, value) => Math.max(highest, value), 0)
+    // Every resonance adds a stack, so a full cast reaches the five-stack cap.
+    expect(chime(3)).toBe(debuffs.PhantomChime.maxStack)
+    expect(chime(2)).toBe(0)
+    // Tiers are cumulative, so Tier 4 is compared against Tier 3 to isolate the
+    // damage bonus from the Tier 3 resistance shred that both share.
+    const base = resonanceDamage(run(3, spin))
+    const upgraded = resonanceDamage(run(4, spin))
+    expect(base).toBeGreaterThan(0)
+    expect(upgraded / base).toBeCloseTo(1.2, 6)
+  })
+  it("resonates Dreamwrought Bubbles on return at Tier 6 only", () => {
+    const steps = [cast("DreamwroughtBubbles")] as RotationStep[]
+    expect(summons(run(3, steps))).toHaveLength(0)
+    expect(summons(run(6, steps))).toHaveLength(1)
+  })
+  it("charges Dreamwrought Bubbles for 0.743s and Delicate removes the charge", () => {
+    const release = umbrella.DreamwroughtBubblesRelease
+    const markers = release.action.filter(action => action.type === "damage").map(action => action.time)
+    // Both collider markers must land inside the release, which ends at the source
+    // interrupt, or the actions would be scheduled as inactive.
+    expect(release.castTime).toBe(1.2)
+    expect(markers.every(time => time < release.castTime)).toBe(true)
+    const bubbles = (stacks: number, ping = 0) => {
+      const input = bundle()
+      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      input.timeline.innerWayConditions = ["PhantomRallyT3"]
+      input.timeline.innerWayRules = []
+      input.timeline.rotation.ping = ping
+      if (stacks) input.timeline.initialBuffs = [{ name: "FragrantSongDelicate", stack: stacks }]
+      input.timeline.rotation.steps = [cast("DreamwroughtBubbles"), cast("Hit")]
+      return calculateRotationBaseline(input).timeline.find(
+        row => row.step.type === "skill" && row.step.skill === "DreamwroughtBubbles",
+      )!
+    }
+    const charged = bubbles(0)
+    const cancelled = bubbles(4)
+    // The charge delays the release, and Delicate slides the markers back to their
+    // raw offsets without dropping either hit.
+    expect(charged.effectiveCastTime).toBeCloseTo(1.943, 6)
+    expect(cancelled.effectiveCastTime).toBeCloseTo(1.2, 6)
+    for (const row of [charged, cancelled]) {
+      expect(row.actions.some(action => action.type === "inactive")).toBe(false)
+      expect(row.actions.filter(action => action.type === "damage").map(action => action.time)).toHaveLength(2)
+    }
+    expect(charged.actions.filter(action => action.type === "damage").map(action => action.time)).toEqual(
+      markers.map(time => time + 0.743),
+    )
+    expect(cancelled.actions.filter(action => action.type === "damage").map(action => action.time)).toEqual(markers)
+    // Delicate is spent by the release, so a single remaining stack still cancels the
+    // charge. Consuming it before the charge resolved left the last cast at 1.943 s.
+    expect(bubbles(1).effectiveCastTime).toBeCloseTo(1.2, 6)
+    // One button press pays input latency once, at dispatch. Each sub-action would
+    // otherwise pay it again and stretch the skill by 2 x ping.
+    expect(bubbles(0, 40).effectiveCastTime).toBeCloseTo(1.943, 6)
+    expect(bubbles(4, 40).effectiveCastTime).toBeCloseTo(1.2, 6)
+  })
 })

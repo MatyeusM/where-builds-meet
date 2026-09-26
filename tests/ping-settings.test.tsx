@@ -5,6 +5,7 @@ import { assert, afterEach, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import App from "../src/App"
+import { bossDefinitions } from "../src/calculations/combatDefaults"
 import { requestRotationBaseline, requestEditorTimeline } from "../src/calculations/rotationWorkerClient"
 import { initializeI18n } from "../src/i18n"
 
@@ -166,4 +167,40 @@ it("defaults Enemy Count to one before Ping and persists edits into worker reque
   await fill(getInput(), "")
   await commit(getInput())
   expect(getInput().value).toBe("1")
+})
+
+it("selects the practice target, orders it before Infinite Vitality, and persists it", async () => {
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  const select = () => container.querySelector<HTMLSelectElement>(".rotation-target-select select")!
+  expect([...select().options].map(option => option.value)).toEqual(bossDefinitions.map(definition => definition.id))
+  expect([...select().options].map(option => option.textContent)).toEqual(["Dummy", "Dummy (Attack)", "Boss"])
+  expect(select().disabled).toBe(true)
+  expect(container.querySelector(".rotation-target-select")?.nextElementSibling?.textContent).toContain(
+    "Infinite Vitality",
+  )
+  await click("Duplicate")
+  expect(select().disabled).toBe(false)
+  await act(async () => {
+    select().value = "Boss"
+    select().dispatchEvent(new Event("change", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(300)
+  })
+  expect(select().value).toBe("Boss")
+  expect(
+    vi.mocked(requestEditorTimeline).mock.calls.some(([bundle]) => bundle.timeline.rotation.targetType === "Boss"),
+  ).toBe(true)
+  await click("Save")
+  const saved = JSON.parse(localStorage.getItem("wwm-rotation-list-session-v1")!)
+  expect(saved.some((entry: { rotation: { targetType?: string } }) => entry.rotation.targetType === "Boss")).toBe(true)
+  await act(async () => {
+    select().value = "DummyAttack"
+    select().dispatchEvent(new Event("change", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(300)
+  })
+  await click("Save")
+  const resaved = JSON.parse(localStorage.getItem("wwm-rotation-list-session-v1")!)
+  expect(
+    resaved.some((entry: { rotation: { targetType?: string } }) => entry.rotation.targetType === "DummyAttack"),
+  ).toBe(true)
 })

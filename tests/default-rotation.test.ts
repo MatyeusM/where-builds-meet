@@ -34,7 +34,7 @@ describe("default-rotation", () => {
     }
     const result = calculateRotationBaseline({
       timeline: {
-        rotation: { ...rotation, dummyAttack: false },
+        rotation: { ...rotation, targetType: "Dummy" },
         skills: { ...snowparting, ...phalanxbane, ...mystic, ...general },
         eventDefinitions: {
           Qi: {

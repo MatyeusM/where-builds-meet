@@ -89,6 +89,26 @@
     "maxStack": 1,
     "refresh": false
   },
+  "RisingMomentum": {
+    "name": "Rising Momentum",
+    "shortName": "Rising",
+    "description": "A successful deflection increases HP damage by 2% per stack for 5 seconds, up to 10 stacks. Only available against a boss.",
+    "duration": 5,
+    "maxStack": 10,
+    "stackEffects": [
+      [{ "effect": { "dmgBonus": 0.02 } }],
+      [{ "effect": { "dmgBonus": 0.04 } }],
+      [{ "effect": { "dmgBonus": 0.06 } }],
+      [{ "effect": { "dmgBonus": 0.08 } }],
+      [{ "effect": { "dmgBonus": 0.1 } }],
+      [{ "effect": { "dmgBonus": 0.12 } }],
+      [{ "effect": { "dmgBonus": 0.14 } }],
+      [{ "effect": { "dmgBonus": 0.16 } }],
+      [{ "effect": { "dmgBonus": 0.18 } }],
+      [{ "effect": { "dmgBonus": 0.2 } }]
+    ],
+    "refresh": true
+  },
   "YiRiver": {
     "name": "Yi River",
     "shortName": "Yi",

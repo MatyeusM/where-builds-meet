@@ -1,5 +1,11 @@
-import { normalizeEnemyCount, normalizePing } from "./calculations/combatDefaults"
-import type { RotationRecord, RotationStep } from "./calculations/rotationTimeline"
+import { allSkillDefinitions } from "./application/gameData/skills"
+import { normalizeEnemyCount, normalizePing, resolveTargetType } from "./calculations/combatDefaults"
+import {
+  durationInputRequired,
+  expandedSkillActionCount,
+  type RotationRecord,
+  type RotationStep,
+} from "./calculations/rotationTimeline"
 import { migrateVendettaTokenStep } from "./rotationEditing"
 import {
   migrateAutomaticDelays,
@@ -12,6 +18,7 @@ import { rotationExportInputSchema, rotationInputSchema, rotationStepInputSchema
 import { normalizeStoredWeaponIds, weaponIds, type WeaponId } from "./types"
 
 export const rotationExportFormat = "where-builds-meet-rotations"
+export const rotationExportVersion = 10
 
 export type RotationEntry = {
   id: string
@@ -40,12 +47,12 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
   if (!validated.success) return undefined
   const step = value as Record<string, unknown>
   if (step.type === "skill" && typeof step.skill === "string" && step.skill) {
+    const duration = typeof step.duration === "number" && Number.isFinite(step.duration) ? step.duration : undefined
+    if (durationInputRequired(allSkillDefinitions[step.skill]) && duration === undefined) return undefined
     return {
       type: "skill",
       skill: step.skill,
-      ...(typeof step.duration === "number" && Number.isFinite(step.duration)
-        ? { duration: Math.max(0, step.duration) }
-        : {}),
+      ...(duration === undefined ? {} : { duration: Math.max(0, duration) }),
       ...(typeof step.causesBreak === "boolean" ? { causesBreak: step.causesBreak } : {}),
       ...(typeof step.condition === "string" ? { condition: step.condition } : {}),
     }
@@ -259,6 +266,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     name?: unknown
     steps?: unknown
     targetHP?: unknown
+    targetType?: unknown
     dummyAttack?: unknown
     groupSize?: unknown
     enemyCount?: unknown
@@ -293,6 +301,15 @@ function parseRotation(value: unknown): RotationRecord | undefined {
         }
       : undefined
   const normalizedStart = normalizeRotationStart(start, parsedSteps)
+  const startStep = normalizedStart ? parsedSteps[normalizedStart.step] : undefined
+  const actionCount =
+    normalizedStart?.action !== undefined && startStep?.type === "skill"
+      ? expandedSkillActionCount(startStep.skill ?? "", allSkillDefinitions)
+      : 0
+  const boundedStart =
+    normalizedStart?.action !== undefined && normalizedStart.action >= actionCount
+      ? { step: normalizedStart.step }
+      : normalizedStart
   return migrateGeneralsBaneSlides(
     migrateDefenseActionAnchors(
       migrateAutomaticDelays({
@@ -301,7 +318,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
         ...(typeof candidate.targetHP === "number" && Number.isFinite(candidate.targetHP) && candidate.targetHP > 0
           ? { targetHP: candidate.targetHP }
           : {}),
-        ...(candidate.dummyAttack === true ? { dummyAttack: true } : {}),
+        targetType: resolveTargetType(candidate),
         ...(normalizePing(candidate.ping) !== undefined ? { ping: normalizePing(candidate.ping) } : {}),
         enemyCount: normalizeEnemyCount(candidate.enemyCount),
         groupSize: candidate.groupSize === 5 || candidate.groupSize === 10 ? candidate.groupSize : 1,
@@ -310,7 +327,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           : /\bIV\b|infinite vitality/i.test(candidate.name)
             ? { infiniteVitality: true }
             : {}),
-        ...(normalizedStart ? { start: normalizedStart } : {}),
+        ...(boundedStart ? { start: boundedStart } : {}),
         ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
       }),
     ),
@@ -334,7 +351,7 @@ export function exportRotationEntries(entries: RotationEntry[]) {
   return JSON.stringify(
     {
       format: rotationExportFormat,
-      version: 9,
+      version: rotationExportVersion,
       exportedAt: new Date().toISOString(),
       rotations: entries
         .filter(entry => !entry.isDefault)
@@ -351,15 +368,10 @@ export function mergeImportedRotationEntries(current: RotationEntry[], value: un
   const source = value as { format?: unknown; version?: unknown; rotations?: unknown }
   if (
     source.format !== rotationExportFormat ||
-    (source.version !== 1 &&
-      source.version !== 2 &&
-      source.version !== 3 &&
-      source.version !== 4 &&
-      source.version !== 5 &&
-      source.version !== 6 &&
-      source.version !== 7 &&
-      source.version !== 8 &&
-      source.version !== 9) ||
+    typeof source.version !== "number" ||
+    !Number.isInteger(source.version) ||
+    source.version < 1 ||
+    source.version > rotationExportVersion ||
     !Array.isArray(source.rotations)
   ) {
     throw new Error("This file uses an unsupported rotation export format.")

@@ -57,7 +57,12 @@ describe("Successful Deflect attack alignment", () => {
   })
   it("uses the earlier of manual and paired dummy attacks, on the battle-relative clock", () => {
     const data = input([cast("Lead"), cast("DeflectSuccessful"), cast("DeflectSuccessful"), attack(3), end(9)])
-    data.rotation = { ...data.rotation, dummyAttack: true, eventTimeReference: "battleStart", start: { step: 0 } }
+    data.rotation = {
+      ...data.rotation,
+      targetType: "DummyAttack",
+      eventTimeReference: "battleStart",
+      start: { step: 0 },
+    }
     const rows = buildRotationTimeline(data)
     const deflects = successful(rows)
     expect(deflects[0].startTime + deflects[0].effectiveCastTime).toBeCloseTo(3.1)
@@ -139,7 +144,12 @@ describe("Successful Deflect attack alignment", () => {
   })
   it("ends at the aligned response when no Battle End is specified", () => {
     const data = input([cast("Lead"), cast("DeflectSuccessful")])
-    data.rotation = { ...data.rotation, dummyAttack: true, eventTimeReference: "battleStart", start: { step: 0 } }
+    data.rotation = {
+      ...data.rotation,
+      targetType: "DummyAttack",
+      eventTimeReference: "battleStart",
+      start: { step: 0 },
+    }
     const rows = buildRotationTimeline(data)
     expect(rows[0].timelineEndTime).toBeCloseTo(5.6)
     const attacks = rows.filter(row => row.step.type === "event" && row.step.event === "TakeDamage")

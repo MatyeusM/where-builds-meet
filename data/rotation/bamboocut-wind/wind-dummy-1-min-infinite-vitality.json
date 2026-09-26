@@ -2,7 +2,7 @@
   "name": "Dummy 1 Min Infinite Vitality",
   "martialArts": ["infernalTwinblades", "mortalRopeDart"],
   "ping": 40,
-  "dummyAttack": true,
+  "targetType": "DummyAttack",
   "infiniteVitality": true,
   "eventTimeReference": "battleStart",
   "start": { "step": 6, "action": 0 },

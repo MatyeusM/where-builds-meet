@@ -120,7 +120,7 @@ export function useRotationTimelineDisplay({
             row.step.type === "event" &&
             row.step.event === "TakeDamage" &&
             "automatic" in row.step &&
-            row.step.automatic === "dummyAttack"
+            row.step.automatic === "targetAttack"
           ),
       )
       .flatMap(sourceRow => {

@@ -2,6 +2,27 @@ import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-final-rate-caps.mjs.
 describe("final-rate-caps", () => {
+  it("supports unconditional and conditional guaranteed criticals", async () => {
+    const { calculateRates } = await import("../src/calculations/effectiveStats.ts")
+    const guaranteed = calculateRates(
+      { effectivePrecision: 1, effectiveCrit: 0, effectiveAffinity: 0, directCrit: 0, directAffinity: 0 },
+      { GuaranteedCrit: true },
+    )
+    assert(guaranteed.critRate === 1 && guaranteed.normalRate === 0 && guaranteed.abrasionRate === 0)
+
+    const conditionalLow = calculateRates(
+      { effectivePrecision: 1, effectiveCrit: 0.5, effectiveAffinity: 0, directCrit: 0, directAffinity: 0 },
+      { SteadfastGuaranteedCrit: true },
+    )
+    assert(conditionalLow.critRate === 0.65 && conditionalLow.critRate < 1)
+
+    const conditionalHigh = calculateRates(
+      { effectivePrecision: 1, effectiveCrit: 0.75, effectiveAffinity: 0, directCrit: 0, directAffinity: 0 },
+      { SteadfastGuaranteedCrit: true },
+    )
+    assert(conditionalHigh.critRate === 1 && conditionalHigh.normalRate === 0)
+  })
+
   it("Final Critical and Affinity rate cap checks passed", async () => {
     const { calculateRates } = await import("../src/calculations/effectiveStats.ts")
 

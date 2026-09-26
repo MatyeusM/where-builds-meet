@@ -2,7 +2,6 @@
   "RodentsResilienceCharge": {
     "name": "Rodent's Resilience [1.5s Charge]",
     "shortName": "RD Charge",
-    "description": "Charge for 1.5 seconds to gain two stacks of Rodent Rampage Enhancement.",
     "castTime": 1.5,
     "action": [{ "type": "apply", "target": "self", "value": "RodentRampageEnhancement", "stack": 2, "time": 1.5 }],
     "martialArt": "mortalRopeDart",

@@ -1,7 +1,7 @@
 {
   "name": "Dummy 1 Min Smolder",
   "martialArts": ["panaceaFan", "soulshadeUmbrella"],
-  "dummyAttack": true,
+  "targetType": "DummyAttack",
   "eventTimeReference": "battleStart",
   "start": { "step": 0 },
   "steps": [

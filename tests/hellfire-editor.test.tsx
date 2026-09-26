@@ -151,6 +151,77 @@ it("allows a Delay action in a one-skill rotation", async () => {
   expect(bundle?.timeline.rotation.steps[0]).toMatchObject({ type: "event", event: "Delay" })
 })
 
+it("keeps a sole ordered skill when replacing it with a fixed-time event", async () => {
+  localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
+  localStorage.setItem("wwm-active-rotation-by-path-v1", JSON.stringify({ silkbindDeluge: "one-skill-fixed" }))
+  localStorage.setItem(
+    "wwm-rotation-list-session-v1",
+    JSON.stringify([
+      {
+        id: "one-skill-fixed",
+        martialArts: ["panaceaFan", "soulshadeUmbrella"],
+        rotation: {
+          name: "One skill fixed replacement",
+          eventTimeReference: "battleStart",
+          start: { step: 0 },
+          steps: [{ type: "skill", skill: "Defense" }],
+        },
+      },
+    ]),
+  )
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  await act(async () => vi.advanceTimersByTimeAsync(200))
+  const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
+  await act(async () => {
+    select.value = "__event:Hellfire"
+    select.dispatchEvent(new Event("change", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(200)
+  })
+  const bundle = vi
+    .mocked(requestEditorTimeline)
+    .mock.calls.map(([value]) => value)
+    .reverse()
+    .find(value => value?.timeline?.rotation?.name === "One skill fixed replacement")
+  expect(bundle?.timeline.rotation.steps).toEqual([{ type: "skill", skill: "Defense" }])
+})
+
+it("clears an action start anchor when replacing its skill with an actionless skill", async () => {
+  localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
+  localStorage.setItem("wwm-active-rotation-by-path-v1", JSON.stringify({ silkbindDeluge: "action-anchor" }))
+  localStorage.setItem(
+    "wwm-rotation-list-session-v1",
+    JSON.stringify([
+      {
+        id: "action-anchor",
+        martialArts: ["panaceaFan", "soulshadeUmbrella"],
+        rotation: {
+          name: "Action anchor replacement",
+          eventTimeReference: "battleStart",
+          start: { step: 0, action: 0 },
+          steps: [{ type: "skill", skill: "SereneBreeze" }],
+        },
+      },
+    ]),
+  )
+  await act(async () => root.render(<App />))
+  await click("Rotation Editor")
+  await act(async () => vi.advanceTimersByTimeAsync(200))
+  const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
+  await act(async () => {
+    select.value = "Dodge"
+    select.dispatchEvent(new Event("change", { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(200)
+  })
+  const bundle = vi
+    .mocked(requestEditorTimeline)
+    .mock.calls.map(([value]) => value)
+    .reverse()
+    .find(value => value?.timeline?.rotation?.name === "Action anchor replacement")
+  expect(bundle?.timeline.rotation.start).toEqual({ step: 0 })
+  expect(bundle?.timeline.rotation.steps).toEqual([{ type: "skill", skill: "Dodge" }])
+})
+
 it("retains generated rows until the latest complete editor revision arrives", async () => {
   const { pendingEditorTimeline } = await import("../src/editorTimelinePreview")
   type Result = Awaited<ReturnType<typeof requestEditorTimeline>>

@@ -1,7 +1,7 @@
 {
   "name": "Dummy 1 Min WTS Team",
   "martialArts": ["panaceaFan", "soulshadeUmbrella"],
-  "dummyAttack": true,
+  "targetType": "DummyAttack",
   "groupSize": 5,
   "eventTimeReference": "battleStart",
   "start": { "step": 0 },

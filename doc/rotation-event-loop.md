@@ -17,12 +17,15 @@ the load/import boundary with fight-start indexes remapped.
 Compare the heads of timed input and expanded events. Resolve the earliest event;
 causal ordering breaks equal-time ties, with Battle End preceding damage. Starting
 an ordered item expands only that item and schedules its successor marker at its
-resolved cast end. Subaction timing can adjust that marker, not future casts.
-Cooldown availability is checked against live state. A cooldown reset wakes a
-waiting ordered skill immediately; obsolete retry events must not start it twice.
-The readiness check precedes attachment expansion so before-start effects do not
-run during a cooldown wait. Once accepted, cast-start modifiers determine the
-new cooldown window and cast duration.
+resolved cast end. A queued trigger is the exception: accepting its earlier
+`queueTime` reservation moves that successor marker when the queued skill starts,
+so the owning row remains active through the queued skill's completion.
+Subaction timing can adjust that marker, not future casts. Cooldown availability
+is checked against live state. A cooldown reset wakes a waiting ordered skill
+immediately; obsolete retry events must not start it twice. The readiness check
+precedes attachment expansion so before-start effects do not run during a
+cooldown wait. Once accepted, cast-start modifiers determine the new cooldown
+window and cast duration.
 
 Indefinite periodic effects keep only one upcoming tick in the event queue.
 Each tick schedules its successor using the original application cadence;
@@ -81,8 +84,8 @@ variants may reuse stored action snapshots. Probability trackers remain effect-l
 
 The internal clock begins at the first ordered item. Battle start is recorded once
 as `battleStartTime` (`-1` until detected). Detection activates battle-relative
-encounter events, passive regeneration, Dummy Attack, and shared expected DOT
-ticks. Precombat DOT applications remain in their trackers until clock activation.
+encounter events, passive regeneration, the practice target's declared attack
+patterns, and shared expected DOT ticks. Precombat DOT applications remain in their trackers until clock activation.
 The worker publishes internal timestamps and battle start; the UI subtracts the
 recorded start for display. There is no anchor-convergence or duration-discovery
 pass. Auto HP is removed, so HP never depends on future rotation duration.

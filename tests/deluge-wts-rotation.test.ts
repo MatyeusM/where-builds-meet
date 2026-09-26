@@ -67,12 +67,12 @@ describe("deluge-wts-rotation", () => {
       row =>
         row.step.type === "event" &&
         row.step.event === "TakeDamage" &&
-        row.step.automatic !== "dummyAttack" &&
+        row.step.automatic !== "targetAttack" &&
         row.startTime - anchorTime < 60,
     )
     assert(manualAttackRows.length === 0, "The preset must not invent manual Take Damage events.")
     const automaticAttackRows = timeline.filter(
-      row => row.step.type === "event" && row.step.event === "TakeDamage" && row.step.automatic === "dummyAttack",
+      row => row.step.type === "event" && row.step.event === "TakeDamage" && row.step.automatic === "targetAttack",
     )
     assert(
       automaticAttackRows.length === 20 &&

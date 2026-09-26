@@ -285,6 +285,15 @@
         "reapply": true,
         "time": 0,
         "requirement": [{ "target": "self", "value": "Cleftpeak4P" }]
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "RisingMomentum",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": [{ "target": "targetType", "value": "Boss" }]
       }
     ],
     "tags": ["Triggered", "Deflect"]

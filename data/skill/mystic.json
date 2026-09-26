@@ -807,7 +807,8 @@
       }
     ],
     "modifier": [],
-    "tags": ["DirectDamage", "Mystic", "AreaMystic", "Distance", "FluteOfTheTides"]
+    "tags": ["DirectDamage", "Mystic", "AreaMystic", "Distance", "FluteOfTheTides"],
+    "skillBreakdownCategory": "Flute of the Tides"
   },
   "FluteOfTheTides": {
     "name": "Flute of the Tides Full",
@@ -854,7 +855,8 @@
       }
     ],
     "modifier": [],
-    "tags": ["DirectDamage", "Mystic", "AreaMystic", "Distance", "FluteOfTheTides"]
+    "tags": ["DirectDamage", "Mystic", "AreaMystic", "Distance", "FluteOfTheTides"],
+    "skillBreakdownCategory": "Flute of the Tides"
   },
   "FluteRipple": {
     "name": "Flute Chanting a thousand Waves",
@@ -902,7 +904,8 @@
       }
     ],
     "modifier": [],
-    "tags": ["DirectDamage", "Mystic", "AreaMystic", "FluteOfTheTides", "Triggered"]
+    "tags": ["DirectDamage", "Mystic", "AreaMystic", "FluteOfTheTides", "Triggered"],
+    "skillBreakdownCategory": "Flute of the Tides"
   },
   "GhostlySteps": {
     "name": "Ghostly Step",

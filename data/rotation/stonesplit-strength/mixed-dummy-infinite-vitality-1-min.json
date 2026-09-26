@@ -108,5 +108,5 @@
     { "type": "event", "event": "BattleEnd", "startTime": 60 }
   ],
   "ping": 40,
-  "dummyAttack": true
+  "targetType": "DummyAttack"
 }

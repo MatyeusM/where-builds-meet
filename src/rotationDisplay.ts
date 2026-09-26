@@ -1,4 +1,4 @@
-import { compareTimelineTime, type TimelineRow } from "./calculations/rotationTimeline"
+import { compareTimelineTime, type EffectDefinition, type TimelineRow } from "./calculations/rotationTimeline"
 
 export type TimelineDisplayEntry = {
   row: TimelineRow
@@ -6,6 +6,25 @@ export type TimelineDisplayEntry = {
   time: number
   order: number
   actionIndex?: number
+}
+
+/**
+ * Drop internal bookkeeping effects, such as cadence counters, from the timeline.
+ * They drive the simulation but have no counterpart the player reads, so a plate
+ * for one is noise rather than information.
+ */
+export function visibleTimelineEffects<T extends { name: string }>(
+  effects: readonly T[],
+  effectDefinitions: Record<string, EffectDefinition | undefined>,
+): T[] {
+  return effects.filter(effect => effectDefinitions[effect.name]?.hidden !== true)
+}
+
+/** Stable identity for one display entry, shared by the windowing keys and the rendered React key. */
+export function displayEntryKey(entry: TimelineDisplayEntry): string {
+  const { row, kind, actionIndex } = entry
+  if (row.kind === "damageGroup") return `${row.id}-summary`
+  return `${row.id}-${kind}-${actionIndex ?? "skill"}`
 }
 
 /** Inner Way totals are non-expandable footers; their internal actions never enter the display list. */

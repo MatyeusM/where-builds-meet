@@ -116,11 +116,11 @@ describe("fivefold-bleed-loops", () => {
       { type: "skill", skill: "Hits" },
       { type: "event", event: "Delay", duration: 50 },
     ]
-    dummy.rotation.dummyAttack = true
+    dummy.rotation.targetType = "DummyAttack"
     dummy.eventDefinitions.Delay = { name: "Delay", action: [], tags: ["Event"] }
     const dummyRows = buildRotationTimeline(dummy)
     assert.deepEqual(
-      dummyRows.filter(row => row.step.automatic === "dummyAttack").map(row => row.startTime),
+      dummyRows.filter(row => row.step.automatic === "targetAttack").map(row => row.startTime),
       Array.from({ length: 13 }, (_, i) => 5.5 + i * 6).flatMap(time => [time, time]),
       "Dummy attacks continue through the explicit trailing Delay, stopping at ordered completion",
     )

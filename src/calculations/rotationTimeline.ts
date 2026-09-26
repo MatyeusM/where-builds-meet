@@ -1,6 +1,14 @@
 import type { WeaponFamily, WeaponId } from "../types"
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark"
-import { DEFAULT_TARGET_HP_RATIO, normalizeEnemyCount, normalizePing } from "./combatDefaults"
+import {
+  bossDefinitionFor,
+  DEFAULT_TARGET_HP_RATIO,
+  normalizeEnemyCount,
+  normalizePing,
+  resolveTargetType,
+  type TargetAttackPattern,
+  type TargetType,
+} from "./combatDefaults"
 import { resolveSegmentValue, resolveSwitchValue, type SwitchValue } from "./dynamicValues"
 import {
   ExpectedPeriodicTracker,
@@ -45,6 +53,8 @@ export type SkillDurationInput = {
   effect?: string
   /** Hard upper bound for the authored duration. */
   max?: number
+  /** Reject persisted/imported steps that omit an explicit duration. */
+  required?: boolean
 }
 export type SkillRecord = {
   [key: string]: unknown
@@ -54,6 +64,8 @@ export type SkillRecord = {
   skillBreakdownCategory?: string
   group?: boolean
   ignorePing?: boolean
+  /** Opt in to paying the rotation ping when this skill is started by a trigger. */
+  triggerPing?: boolean
   /** An inert charging component: no actions, cooldown, or skill-start notifications. */
   silent?: boolean
   attackResponse?: {
@@ -109,7 +121,7 @@ export type RotationStep =
     }
   | { type: "event"; event: "SelfHP"; startTime: number; currentHP: number; currentHPRatio?: number }
   | { type: "event"; event: "SelfHP"; startTime: number; currentHPRatio: number; currentHP?: number }
-  | { type: "event"; event: "TakeDamage"; startTime: number; damage: number; automatic?: "dummyAttack" }
+  | { type: "event"; event: "TakeDamage"; startTime: number; damage: number; automatic?: "targetAttack" }
   | { type: "event"; event: "Hellfire"; startTime: number; amount: number }
   // Accepted only at persistence/import boundaries and migrated to startTime.
   | { type: "event"; event: "TakeDamage"; before: AttachedEventTarget; damage: number; startTime?: number }
@@ -171,7 +183,8 @@ export type RotationRecord = {
   name: string
   steps: RotationStep[]
   targetHP?: number
-  dummyAttack?: boolean
+  /** Practice target for the encounter; omitted records resolve to `DEFAULT_TARGET_TYPE`. */
+  targetType?: TargetType
   groupSize?: 1 | 5 | 10
   enemyCount?: number
   /** Optional per-rotation latency override, in milliseconds. */
@@ -230,6 +243,8 @@ export type TimelineRow = {
   id: string
   kind: TimelineRowKind
   sourceRowId?: string
+  /** Ordered row whose queued trigger started this generated row. */
+  queuedFrom?: string
   /** Recipient of a periodic player-target effect. Zero is self. */
   playerRecipientIndex?: number
   triggerSource?: "skill" | "setup" | "innerWay"
@@ -474,6 +489,8 @@ export type EffectDefinition = {
   global?: boolean | { equippedMartialArt: WeaponId }
   shared?: boolean
   showCoverage?: boolean
+  /** Internal bookkeeping effect, such as a cadence counter. Never shown in the timeline. */
+  hidden?: boolean
   refresh?: boolean
   duration?: number
   cooldown?: number
@@ -582,6 +599,7 @@ export type RequirementState = {
   currentTime?: number
   currentMartialArt?: WeaponId
   currentWeapon?: WeaponFamily
+  targetType?: TargetType
 }
 
 function resolveSkillCastTime(skill: SkillRecord | undefined, state: RequirementState = {}): number {
@@ -601,21 +619,66 @@ export function durationInputMaximum(skill: SkillRecord | undefined) {
   return typeof maximum === "number" && Number.isFinite(maximum) && maximum >= 0 ? maximum : undefined
 }
 
+export function durationInputRequired(skill: SkillRecord | undefined) {
+  return durationInputDefinition(skill)?.required === true
+}
+
 function durationInputEffect(skill: SkillRecord | undefined) {
   return durationInputDefinition(skill)?.effect
 }
 
-/** Resolve a step-authored duration, including the data-defined hard cap. */
+/** Resolve the held duration, defaulting a bounded duration input to its maximum. */
 export function resolveSkillStepDuration(
   step: RotationStep | undefined,
   skill: SkillRecord | undefined,
 ): number | undefined {
-  if (step?.type !== "skill" || !skill || typeof step.duration !== "number" || !Number.isFinite(step.duration)) {
-    return undefined
-  }
+  if (step?.type !== "skill" || !skill) return undefined
   if (skill.durationInput === undefined && skill.editableCastTime !== true) return undefined
   const maximum = durationInputMaximum(skill)
+  if (typeof step.duration !== "number" || !Number.isFinite(step.duration)) return maximum
   return Math.max(0, maximum === undefined ? step.duration : Math.min(step.duration, maximum))
+}
+
+/** Resolve the reserved action slots and local times produced by a composite skill. */
+export function expandedSkillActionLayout(skillId: string, skills: Record<string, SkillRecord>) {
+  const actionTimes: number[] = []
+  let castTime = 0
+  const append = (currentSkillId: string, fallbackSkillId: string | undefined, ancestry: Set<string>): void => {
+    if (!currentSkillId || ancestry.has(currentSkillId)) return
+    const skill = skills[currentSkillId]
+    if (!skill) return
+    const fallback = fallbackSkillId ? skills[fallbackSkillId] : undefined
+    const baseCastTime = resolveSkillCastTime(skill)
+    const baseActions = Array.isArray(skill.action) ? (skill.action as EditableObject[]) : []
+    const fallbackActions = Array.isArray(fallback?.action) ? (fallback.action as EditableObject[]) : []
+    const actionCount = Math.max(baseActions.length, fallbackActions.length)
+    for (let index = 0; index < actionCount; index += 1) {
+      const action = baseActions[index] ?? fallbackActions[index]
+      actionTimes.push(castTime + (action && typeof action.time === "number" ? action.time : baseCastTime))
+    }
+    castTime += baseCastTime
+    const nextAncestry = new Set(ancestry).add(currentSkillId)
+    for (const entry of skill.subAction ?? []) {
+      const reference = typeof entry === "string" ? { value: entry } : entry
+      const primary = Array.isArray(reference.value) ? reference.value : [reference.value]
+      const fallbackValues = Array.isArray(reference.fallback)
+        ? reference.fallback
+        : reference.fallback
+          ? [reference.fallback]
+          : []
+      if (Array.isArray(reference.value) || Array.isArray(reference.fallback)) {
+        for (let index = 0; index < Math.max(primary.length, fallbackValues.length); index += 1)
+          append(primary[index] ?? fallbackValues[index] ?? "", undefined, nextAncestry)
+      } else append(primary[0], reference.fallback, nextAncestry)
+    }
+  }
+  append(skillId, undefined, new Set())
+  return { actionTimes, castTime }
+}
+
+/** Count the reserved action slots produced by a composite skill and all fallback branches. */
+export function expandedSkillActionCount(skillId: string, skills: Record<string, SkillRecord>) {
+  return expandedSkillActionLayout(skillId, skills).actionTimes.length
 }
 
 export const TIMELINE_TIME_EPSILON = 1e-4
@@ -655,9 +718,10 @@ export function requirementsPass(
   weapons: WeaponId[] = [],
   resources: ResourceState = {},
   state: RequirementState = {},
+  startEffects?: { buffs: EffectState; debuffs: EffectState },
 ): boolean {
   if (!Array.isArray(requirement)) return true
-  const hasEffect = (target: unknown, value: unknown, requiredStack?: unknown) => {
+  const hasEffect = (target: unknown, value: unknown, requiredStack?: unknown, atStart = false) => {
     if (typeof value !== "string") return false
     switch (target) {
       case "skillTag":
@@ -669,10 +733,16 @@ export function requirementsPass(
         return state.currentMartialArt === value
       case "currentWeapon":
         return state.currentWeapon === value
+      case "targetType":
+        return state.targetType === value
       default:
         break
     }
-    const trackedEffect = target === "target" ? debuffs.get(value) : buffs.get(value)
+    // An element marked resolveAt: "skillStart" reads the state captured when the
+    // skill started, so a rule can test whether an effect was up before a windup
+    // let it lapse, and still apply it when the hit lands.
+    const source = atStart && startEffects ? startEffects : { buffs, debuffs }
+    const trackedEffect = target === "target" ? source.debuffs.get(value) : source.buffs.get(value)
     if (requiredStack === "max")
       return Boolean(trackedEffect?.maxStack !== undefined && (trackedEffect.stack ?? 0) >= trackedEffect.maxStack)
     if (typeof requiredStack === "number") return Boolean(trackedEffect && (trackedEffect.stack ?? 0) >= requiredStack)
@@ -753,7 +823,7 @@ export function requirementsPass(
           return false
       }
     }
-    return hasEffect(item.target, item.value, item.stack)
+    return hasEffect(item.target, item.value, item.stack, item.resolveAt === "skillStart")
   }
   return requirement.every(evaluate)
 }
@@ -844,15 +914,17 @@ export function buildRotationTimeline(
       | "castEnd"
       | "attackResponse"
       | "subActionStart"
+      | "queueTrigger"
       | "action"
       | "periodicTick"
       | "expectedTick"
       | "expectedExpire"
       | "nextOrdered"
       | "orderedReady"
-      | "dummyTick"
+      | "targetAttack"
     row: TimelineRow
     actionIndex?: number
+    pattern?: TargetAttackPattern
     subActionIndex?: number
     selectedSubAction?: { skillId: string | undefined }
     expiresEffect?: { target: "self" | "target" | "player"; name: string; expiresAt: number; scheduleId: number }
@@ -1021,13 +1093,13 @@ export function buildRotationTimeline(
       (authoredStartStep.event === "Delay" ||
         (!isFixedTimeEvent(authoredStartStep) && ("before" in authoredStartStep || "after" in authoredStartStep))))
   const authoredStartActions =
-    authoredStartStep?.type === "skill" ? skills[authoredStartStep.skill ?? ""]?.action : undefined
+    authoredStartStep?.type === "skill" ? expandSkill(authoredStartStep.skill ?? "").actions : undefined
   const startAction =
     authoredStart?.action !== undefined &&
     Number.isInteger(authoredStart.action) &&
     authoredStart.action >= 0 &&
     authoredStartStep?.type === "skill" &&
-    (!Array.isArray(authoredStartActions) || authoredStart.action < authoredStartActions.length)
+    authoredStart.action < (authoredStartActions?.length ?? 0)
       ? authoredStart.action
       : undefined
   const hasUsableStart = Boolean(
@@ -1145,15 +1217,28 @@ export function buildRotationTimeline(
           subActionIndex,
         }),
       )
-    actions.forEach((action, actionIndex) =>
+    actions.forEach((action, actionIndex) => {
       events.push({
         time: startTime + (typeof action.time === "number" ? action.time : 0),
         sortOrder: [...sortPrefix, 1, actionIndex, 0],
         kind: "action",
         row,
         actionIndex,
-      }),
-    )
+      })
+      if (
+        action.type === "trigger" &&
+        typeof action.queueTime === "number" &&
+        Number.isFinite(action.queueTime) &&
+        action.queueTime >= 0
+      )
+        events.push({
+          time: startTime + action.queueTime,
+          sortOrder: [...sortPrefix, 1, actionIndex, -1],
+          kind: "queueTrigger",
+          row,
+          actionIndex,
+        })
+    })
   }
   const ordered = rotation.steps.flatMap((step, index) => (isSequentialStep(step) ? [{ step, index }] : []))
   type TimedStep = Extract<RotationStep, { type: "event" }> & { startTime: number }
@@ -1284,6 +1369,16 @@ export function buildRotationTimeline(
     })
   }
 
+  const extendQueuedCast = (sourceRowId: string, endTime: number) => {
+    const source = rows.find(row => row.id === sourceRowId && row.kind === "rotation")
+    if (!source || source.step.type !== "skill" || endTime <= source.startTime + source.effectiveCastTime) return
+    source.effectiveCastTime = endTime - source.startTime
+    events.mutate(event => {
+      if (event.row === source && (event.kind === "nextOrdered" || event.kind === "castEnd")) event.time = endTime
+    })
+    if (nextOrderedEvent?.row === source) nextOrderedEvent.time = endTime
+  }
+
   const shiftSkillSegments = (row: TimelineRow, fromIndex: number, shift: number) => {
     if (!shift) return
     const shiftedSegments = multiActionSegments.get(row.id)!.slice(fromIndex)
@@ -1297,7 +1392,11 @@ export function buildRotationTimeline(
     events.mutate(queued => {
       if (queued.row !== row) return
       if (queued.kind === "subActionStart" && (queued.subActionIndex ?? -1) >= fromIndex) queued.time += shift
-      if (queued.kind === "action" && shiftedActionIndexes.has(queued.actionIndex ?? -1)) queued.time += shift
+      if (
+        (queued.kind === "action" || queued.kind === "queueTrigger") &&
+        shiftedActionIndexes.has(queued.actionIndex ?? -1)
+      )
+        queued.time += shift
     })
     updateNextOrdered(row)
   }
@@ -1596,6 +1695,7 @@ export function buildRotationTimeline(
     currentTime: currentTimelineTime,
     currentMartialArt,
     currentWeapon,
+    targetType: resolveTargetType(rotation),
     ...responseContext,
   })
   const applicationDuration = (
@@ -2112,6 +2212,7 @@ export function buildRotationTimeline(
   const validatedExpirationSchedules = new Set<number>()
   const startResolvedActionValues = new Map<string, unknown>()
   const startResolvedActionRequirements = new Map<string, boolean>()
+  const queuedTriggerKeys = new Set<string>()
   const actionResolutionKey = (row: TimelineRow, actionIndex: number) => `${row.id}:${actionIndex}`
   const resolveStartBoundActionValues = (row: TimelineRow, actionIndexes: number[]) => {
     actionIndexes.forEach(actionIndex => {
@@ -2185,13 +2286,18 @@ export function buildRotationTimeline(
       Object.assign({}, action, typeof action.time === "number" ? { time: adjust(action.time) } : {}),
     )
     events.mutate(queued => {
-      if (queued.row === row && queued.kind === "action")
+      if (queued.row !== row) return
+      if (queued.kind === "action")
         queued.time =
           queued.expiresEffect?.expiresAt ??
           row.startTime +
             (typeof row.actions[queued.actionIndex ?? -1]?.time === "number"
               ? (row.actions[queued.actionIndex ?? -1].time as number)
               : 0)
+      if (queued.kind === "queueTrigger") {
+        const queueTime = row.actions[queued.actionIndex ?? -1]?.queueTime
+        if (typeof queueTime === "number" && Number.isFinite(queueTime)) queued.time = row.startTime + adjust(queueTime)
+      }
     })
     syncDirectAttachments(row)
     return row.effectiveCastTime
@@ -2329,8 +2435,9 @@ export function buildRotationTimeline(
     }
     return true
   }
-  let firstDummyAttack = Infinity
-  const dummyAttackInterval = 6
+  let firstTargetAttack = Infinity
+  // A target may declare several patterns; each repeats independently on its own cadence.
+  const targetAttackPatterns = bossDefinitionFor(resolveTargetType(rotation)).attackPattern
   const battleEndTime = (pendingRow?: TimelineRow) => {
     const timedEnd = timed.find(entry => entry.step.event === "BattleEnd")?.time ?? Infinity
     const resolvedEnd = rows
@@ -2362,6 +2469,13 @@ export function buildRotationTimeline(
   }
   const attackReserved = (time: number) =>
     [...reservedAttacks].some(reserved => compareTimelineTime(reserved, time) === 0)
+  const nextTargetAttackAt = (time: number, pattern: TargetAttackPattern, includeReserved: boolean) => {
+    if (!Number.isFinite(firstTargetAttack)) return Infinity
+    const occurrence = Math.max(0, Math.ceil((time - firstTargetAttack) / pattern.interval))
+    let attackTime = firstTargetAttack + occurrence * pattern.interval
+    while (!includeReserved && attackReserved(attackTime)) attackTime += pattern.interval
+    return attackTime
+  }
   const nextAttackAt = (time: number, pendingRow?: TimelineRow, includeReserved = false) => {
     let next =
       timed.find(
@@ -2370,20 +2484,16 @@ export function buildRotationTimeline(
           compareTimelineTime(entry.time, time) >= 0 &&
           (includeReserved || !attackReserved(entry.time)),
       )?.time ?? Infinity
-    if (rotation.dummyAttack && Number.isFinite(firstDummyAttack)) {
-      const occurrence = Math.max(0, Math.ceil((time - firstDummyAttack) / dummyAttackInterval))
-      let dummyTime = firstDummyAttack + occurrence * dummyAttackInterval
-      while (!includeReserved && attackReserved(dummyTime)) dummyTime += dummyAttackInterval
-      next = Math.min(next, dummyTime)
-    }
+    for (const pattern of targetAttackPatterns)
+      next = Math.min(next, nextTargetAttackAt(time, pattern, includeReserved))
     return compareTimelineTime(next, battleEndTime(pendingRow)) < 0 ? next : undefined
   }
 
   if (!startNextOrdered(0) && !hasBattleEnd) return []
-  let dummyOccurrence = 0
+  let targetAttackOccurrence = 0
   // A timed-only encounter still has a clock even without an ordered cast.
   const initialTimedRow =
-    rotation.dummyAttack && !rows.length && timed[0]
+    targetAttackPatterns.length > 0 && !rows.length && timed[0]
       ? createRow(timed[0].index, timed[0].step, timed[0].time)
       : undefined
   const startBattle = (time: number) => {
@@ -2393,9 +2503,17 @@ export function buildRotationTimeline(
       for (const entry of timed)
         entry.time = time + (typeof entry.step.startTime === "number" ? entry.step.startTime : 0)
     if (initialTimedRow) initialTimedRow.startTime = timed[0].time
-    firstDummyAttack = time + 5.5
-    if (rotation.dummyAttack && rows[0])
-      events.push({ kind: "dummyTick", time: firstDummyAttack, sortOrder: [-1, rotation.steps.length], row: rows[0] })
+    for (const pattern of targetAttackPatterns) {
+      firstTargetAttack = time + pattern.firstDelay
+      if (rows[0])
+        events.push({
+          kind: "targetAttack",
+          time: firstTargetAttack,
+          sortOrder: [-1, rotation.steps.length],
+          row: rows[0],
+          pattern,
+        })
+    }
     for (const [key, active] of Object.entries(activePeriodicEffects)) {
       if (active.definition.periodic?.expectedTickAlignment !== "battle" || procRoll) continue
       const name = key.split(":")[1]
@@ -2478,18 +2596,25 @@ export function buildRotationTimeline(
       resolveAction?.onCastEnd?.(event.row)
       continue
     }
-    if (event.kind === "dummyTick") {
-      for (let hit = 0; hit < 2; hit++) {
-        const index = rotation.steps.length + dummyOccurrence++
+    if (event.kind === "targetAttack") {
+      const pattern = event.pattern!
+      for (let hit = 0; hit < pattern.count; hit++) {
+        const index = rotation.steps.length + targetAttackOccurrence++
         expandRow(
           createRow(
             index,
-            { type: "event", event: "TakeDamage", startTime: event.time, damage: 200, automatic: "dummyAttack" },
+            {
+              type: "event",
+              event: "TakeDamage",
+              startTime: event.time,
+              damage: pattern.damage,
+              automatic: "targetAttack",
+            },
             event.time,
           ),
         )
       }
-      events.push({ ...event, time: event.time + dummyAttackInterval })
+      events.push({ ...event, time: event.time + pattern.interval })
       continue
     }
     if (event.kind === "nextOrdered") {
@@ -2628,6 +2753,52 @@ export function buildRotationTimeline(
     const activeDebuffs = prune(debuffs, event.time)
     if (activeBuffs !== buffs) setBuffs(activeBuffs)
     if (activeDebuffs !== debuffs) setDebuffs(activeDebuffs)
+    if (event.kind === "queueTrigger") {
+      const action = event.row.actions[event.actionIndex ?? -1]
+      if (action?.type === "trigger") {
+        const sourceEffect = action.queueSourceEffect ?? action.sourceEffect
+        const sourceMatches =
+          typeof sourceEffect !== "string" ||
+          buffs.get(sourceEffect)?.sourceRowId === (event.row.sourceRowId ?? event.row.id)
+        const queueRequirement = action.queueRequirement ?? action.requirement
+        const queuePasses = requirementsPass(
+          queueRequirement,
+          buffs,
+          debuffs,
+          event.row.actionSkillTags?.[event.actionIndex ?? -1] ?? event.row.skill?.tags ?? [],
+          innerWayConditions,
+          weapons,
+          resources,
+          requirementState(),
+        )
+        if (sourceMatches && queuePasses) {
+          queuedTriggerKeys.add(actionResolutionKey(event.row, event.actionIndex ?? -1))
+          const target = typeof action.value === "string" ? skills[action.value] : undefined
+          if (target) {
+            const targetPing = target.triggerPing ? skillPing(target) : 0
+            const targetModifiers = modifiersFor(target, event.time)
+            const adjustTarget = castTimingAdjuster(targetModifiers)
+            const targetCastTime = adjustTarget(
+              resolveSkillCastTime(target, { ...requirementState(), currentTime: event.time }),
+            )
+            const targetActionEnd = Math.max(
+              0,
+              ...(Array.isArray(target.action)
+                ? (target.action as EditableObject[]).map(item =>
+                    typeof item.time === "number" ? adjustTarget(item.time) : 0,
+                  )
+                : []),
+            )
+            const targetStart = event.row.startTime + Number(action.time ?? 0) + targetPing
+            extendQueuedCast(
+              event.row.sourceRowId ?? event.row.id,
+              targetStart + Math.max(targetCastTime, targetActionEnd),
+            )
+          }
+        }
+      }
+      continue
+    }
     if (event.kind === "subActionStart") {
       const segments = multiActionSegments.get(event.row.id)
       const segment = segments?.[event.subActionIndex ?? -1]
@@ -2738,14 +2909,29 @@ export function buildRotationTimeline(
         event.row.actions[actionIndex] = { ...event.row.actions[actionIndex], time: actionTime }
         event.row.actionModifierEffects![actionIndex] = modifiers
         events.mutate(queued => {
-          if (queued.row === event.row && queued.kind === "action" && queued.actionIndex === actionIndex)
-            queued.time = event.row.startTime + actionTime
+          if (queued.row !== event.row || queued.actionIndex !== actionIndex) return
+          if (queued.kind === "action") queued.time = event.row.startTime + actionTime
+          if (queued.kind === "queueTrigger") {
+            const queueTime = event.row.actions[actionIndex]?.queueTime
+            if (typeof queueTime === "number" && Number.isFinite(queueTime))
+              queued.time = event.row.startTime + adjust(queueTime)
+          }
         })
       })
       const adjustedCastTime = adjust(segment.baseCastTime)
       const shift = adjustedCastTime - segment.effectiveCastTime
       segment.effectiveCastTime = adjustedCastTime
       shiftSkillSegments(event.row, (event.subActionIndex ?? -1) + 1, shift)
+      if (event.row.queuedFrom) {
+        const lastActionTime = Math.max(
+          0,
+          ...event.row.actions.map(action => (typeof action.time === "number" ? action.time : 0)),
+        )
+        extendQueuedCast(
+          event.row.queuedFrom,
+          event.row.startTime + Math.max(event.row.effectiveCastTime, lastActionTime),
+        )
+      }
       syncDirectAttachments(event.row)
       continue
     }
@@ -2801,6 +2987,16 @@ export function buildRotationTimeline(
         if (requestedDuration !== undefined) baseCastTime = requestedDuration
         applyCastTimingModifiers(event.row, baseCastTime)
         if (event.row.kind === "rotation" && isSequentialStep(event.row.step)) scheduleNextOrdered(event.row)
+      }
+      if (event.row.queuedFrom) {
+        const lastActionTime = Math.max(
+          0,
+          ...event.row.actions.map(action => (typeof action.time === "number" ? action.time : 0)),
+        )
+        extendQueuedCast(
+          event.row.queuedFrom,
+          event.row.startTime + Math.max(event.row.effectiveCastTime, lastActionTime),
+        )
       }
       if (event.row.skill?.attackResponse) {
         responseWindows.push({
@@ -2887,7 +3083,10 @@ export function buildRotationTimeline(
         )
     if (!requirementPasses) continue
     const skillKey = event.row.step.type === "skill" ? (event.row.step.skill ?? "") : event.row.step.event
-    if (
+    const queuedTrigger = action.type === "trigger" && typeof action.queueTime === "number"
+    if (action.type === "trigger" && queuedTrigger) {
+      if (!queuedTriggerKeys.has(resolutionKey)) continue
+    } else if (
       action.type === "trigger" &&
       typeof action.sourceEffect === "string" &&
       buffs.get(action.sourceEffect)?.sourceRowId !== (event.row.sourceRowId ?? event.row.id)
@@ -2985,6 +3184,7 @@ export function buildRotationTimeline(
       triggerTags?: string[],
       replaySourceEntryIds?: string[],
       suppressFallback = false,
+      queuedFrom?: string,
     ) => {
       const definition = skills[skillId]
       const triggeredSkill =
@@ -2997,6 +3197,7 @@ export function buildRotationTimeline(
       const uses = Math.max(1, Math.floor(triggeredSkill.cooldownUses ?? 1))
       if (compareTimelineTime(skillCooldownReadyAt(key, event.time, uses), event.time) > 0) return false
       const actions = Array.isArray(triggeredSkill.action) ? (triggeredSkill.action as EditableObject[]) : []
+      const triggeredStartTime = event.time + (triggeredSkill.triggerPing ? skillPing(triggeredSkill) : 0)
       const derivedId = nextDerivedOrder++
       const derivedSortOrder = [...event.sortOrder, derivedId]
       const rowOrder = event.row.order + 10 + (event.actionIndex ?? 0) + 0.5
@@ -3005,11 +3206,12 @@ export function buildRotationTimeline(
         kind: "trigger",
         ...(expectedBranch ? { expectedBranch } : {}),
         sourceRowId,
+        ...(queuedFrom ? { queuedFrom } : {}),
         triggerSource,
         buffSourceSkillTags: event.row.buffSourceSkillTags ?? skillTags,
         order: rowOrder,
         step: { type: "skill", skill: skillId },
-        startTime: event.time,
+        startTime: triggeredStartTime,
         distance,
         currentHP,
         currentHPRatio,
@@ -3043,16 +3245,29 @@ export function buildRotationTimeline(
         fallbackResponseRows.add(row)
       rows.push(row)
       if (responseContext) responseContexts.set(row, responseContext)
-      events.push({ time: event.time, sortOrder: [...derivedSortOrder, 0], kind: "start", row })
-      actions.forEach((item, index) =>
+      events.push({ time: triggeredStartTime, sortOrder: [...derivedSortOrder, 0], kind: "start", row })
+      actions.forEach((item, index) => {
         events.push({
-          time: event.time + (typeof item.time === "number" ? item.time : 0),
+          time: triggeredStartTime + (typeof item.time === "number" ? item.time : 0),
           sortOrder: [...derivedSortOrder, 1, index],
           kind: "action",
           row,
           actionIndex: index,
-        }),
-      )
+        })
+        if (
+          item.type === "trigger" &&
+          typeof item.queueTime === "number" &&
+          Number.isFinite(item.queueTime) &&
+          item.queueTime >= 0
+        )
+          events.push({
+            time: triggeredStartTime + item.queueTime,
+            sortOrder: [...derivedSortOrder, 1, index, -1],
+            kind: "queueTrigger",
+            row,
+            actionIndex: index,
+          })
+      })
       if (sourceRowId && attachedTriggerOrdinal !== undefined) {
         ;(triggeredAttachments.get(sourceRowId) ?? [])
           .filter(attachment => attachment.target.trigger === attachedTriggerOrdinal)
@@ -3072,7 +3287,7 @@ export function buildRotationTimeline(
           })
       }
       if (typeof triggeredSkill.cooldown === "number")
-        recordSkillCooldownCast(key, event.time, triggeredSkill.cooldown, uses, triggeredSkill.cooldownRecovery)
+        recordSkillCooldownCast(key, triggeredStartTime, triggeredSkill.cooldown, uses, triggeredSkill.cooldownRecovery)
       return true
     }
     const resolveMaxStackApplication = (
@@ -3476,6 +3691,13 @@ export function buildRotationTimeline(
       }
     }
     const runSetupTriggers = (triggerEvent: string) => {
+      // A skillStart trigger belongs to the skill being started, so it matches that
+      // skill's own tags. A raised skill that inherited its parent's tags must not
+      // satisfy the parent's own start-of-cast effects, only its damage boosts.
+      const triggerTags =
+        triggerEvent === "skillStart" && event.row.step.type === "skill"
+          ? (skills[event.row.step.skill ?? ""]?.tags ?? [])
+          : skillTags
       ;(setupTriggersByEvent.get(triggerEvent) ?? []).forEach(({ setupIndex, trigger }) => {
         if (
           (setupTriggerCooldowns.get(setupIndex) ?? 0) > event.time ||
@@ -3483,7 +3705,7 @@ export function buildRotationTimeline(
             trigger.requirement,
             buffs,
             debuffs,
-            skillTags,
+            triggerTags,
             innerWayConditions,
             weapons,
             resources,
@@ -3498,7 +3720,7 @@ export function buildRotationTimeline(
         }
       })
     }
-    const runInnerWayTriggers = (triggerEvent: "damage" | "heal" | "takeDamage") => {
+    const runInnerWayTriggers = (triggerEvent: "damage" | "heal" | "takeDamage", row?: TimelineRow) => {
       ;(innerWayTriggersByEvent.get(triggerEvent) ?? []).forEach(rule => {
         const requirement = rule.requirement ?? rule.trigger?.requirement
         if (
@@ -3511,6 +3733,9 @@ export function buildRotationTimeline(
             weapons,
             resources,
             requirementState(),
+            // Rows carry the effect state as it was when the skill started, which is
+            // what a resolveAt: "skillStart" element reads.
+            row ? { buffs: row.buffs, debuffs: row.debuffs } : undefined,
           )
         )
           return
@@ -3600,7 +3825,7 @@ export function buildRotationTimeline(
       applyResourceEvent("takeDamage", event.time, previousHP - currentHP)
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
       runSetupTriggers("takeDamage")
-      runInnerWayTriggers("takeDamage")
+      runInnerWayTriggers("takeDamage", event.row)
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt)
       continue
     }
@@ -3677,7 +3902,7 @@ export function buildRotationTimeline(
       }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
       runSetupTriggers("damage")
-      runInnerWayTriggers("damage")
+      runInnerWayTriggers("damage", event.row)
       if (procRoll || action.hitProbability === undefined) accumulateEventValue("damage", 1)
       if (event.row.expectedBranch) {
         const branch = event.row.expectedBranch
@@ -3707,7 +3932,7 @@ export function buildRotationTimeline(
       }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
       runSetupTriggers("heal")
-      runInnerWayTriggers("heal")
+      runInnerWayTriggers("heal", event.row)
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt)
     }
     if (action.type === "trigger" && typeof action.value === "string") {
@@ -3746,6 +3971,14 @@ export function buildRotationTimeline(
         "skill",
         probability === 1 ? undefined : probability,
         expectedBranch,
+        // inheritTags passes the raising skill's tags to the raised skill, so an attack
+        // summoned by one skill is matched by the boosts of that skill. It is opt-in
+        // because inheriting everywhere lets a raised skill satisfy its parent's
+        // tag-gated effects and fire extra procs.
+        action.inheritTags === true ? skillTags : undefined,
+        undefined,
+        false,
+        queuedTrigger ? (event.row.sourceRowId ?? event.row.id) : undefined,
       )
     }
     if (action.type === "emitEvent" && typeof action.value === "string") emitCustomEvent(action.value)

@@ -82,9 +82,9 @@
     "tag": "BamboocutDust",
     "status": "wip",
     "buildGroup": "bamboocut-dust",
-    "defaultBuild": "empty",
-    "graduated": ["empty"],
-    "defaultRotation": "empty",
+    "defaultBuild": "dust-fully-relayed-min",
+    "graduated": ["dust-full-min"],
+    "defaultRotation": "dust-dummy-1-min",
     "lockedWeapons": ["everspring", "unfettered"]
   },
   "bamboocutKite": {

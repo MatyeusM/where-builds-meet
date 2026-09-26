@@ -87,7 +87,7 @@
           "target": "target",
           "requirement": [
             { "target": "skillTag", "value": "BurnAndBury" },
-            { "target": "target", "value": "Soulbreak" },
+            { "target": "target", "value": "Soulbreak", "resolveAt": "skillStart" },
             { "target": "distance", "comparison": "<=", "amount": 15 }
           ],
           "action": [{ "type": "apply", "target": "target", "value": "Soulbreak", "stack": 1, "reapply": true }]

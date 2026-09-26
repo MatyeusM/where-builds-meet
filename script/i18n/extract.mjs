@@ -32,11 +32,18 @@ async function filesUnder(directory, predicate) {
   return nested.flat()
 }
 
-function collectDataStrings(value, keyPrefix, entries, canonicalKeysByEnglish, objectPath = []) {
+function collectDataStrings(value, keyPrefix, entries, canonicalKeysByEnglish, objectPath = [], keyedById = false) {
   if (!value || typeof value !== "object") return
   if (Array.isArray(value)) {
     value.forEach((item, index) =>
-      collectDataStrings(item, keyPrefix, entries, canonicalKeysByEnglish, [...objectPath, String(index)]),
+      collectDataStrings(
+        item,
+        keyPrefix,
+        entries,
+        canonicalKeysByEnglish,
+        keyedById && typeof item?.id === "string" ? [item.id] : [...objectPath, String(index)],
+        keyedById,
+      ),
     )
     return
   }
@@ -45,7 +52,7 @@ function collectDataStrings(value, keyPrefix, entries, canonicalKeysByEnglish, o
     if (translatableDataFields.has(key) && typeof child === "string" && child.trim()) {
       const canonicalKey = keyPrefix.startsWith("data.skill.") ? undefined : canonicalKeysByEnglish.get(child)
       entries.set(canonicalKey ?? `${keyPrefix}.${nextPath.map(normalizeSegment).join(".")}`, child)
-    } else collectDataStrings(child, keyPrefix, entries, canonicalKeysByEnglish, nextPath)
+    } else collectDataStrings(child, keyPrefix, entries, canonicalKeysByEnglish, nextPath, keyedById)
   })
 }
 
@@ -137,6 +144,13 @@ for (const [file, source] of dataSources) {
       canonicalKeysByEnglish.set(definition.name, key)
     }
   }
+  // An id-keyed record owns `data.boss.<Id>.name`; array position is not a stable key.
+  if (relative === "boss" && Array.isArray(data)) {
+    for (const definition of data) {
+      if (typeof definition?.name !== "string" || !definition.name.trim()) continue
+      expectedEnglish.set(`data.boss.${normalizeSegment(definition.id)}.name`, definition.name)
+    }
+  }
   if (relative === "gear" && data?.slots && typeof data.slots === "object") {
     for (const [id, name] of Object.entries(data.slots)) {
       if (typeof name !== "string" || !name.trim()) continue
@@ -145,7 +159,7 @@ for (const [file, source] of dataSources) {
       canonicalKeysByEnglish.set(name, key)
     }
   }
-  collectDataStrings(data, `data.${relative}`, expectedEnglish, canonicalKeysByEnglish)
+  collectDataStrings(data, `data.${relative}`, expectedEnglish, canonicalKeysByEnglish, undefined, relative === "boss")
 }
 
 const sourceKeys = new Set()

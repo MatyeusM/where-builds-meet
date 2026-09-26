@@ -79,6 +79,6 @@
     { "type": "skill", "skill": "SoaringSpin1" },
     { "type": "event", "event": "BattleEnd", "startTime": 60 }
   ],
-  "dummyAttack": true,
+  "targetType": "DummyAttack",
   "ping": 40
 }

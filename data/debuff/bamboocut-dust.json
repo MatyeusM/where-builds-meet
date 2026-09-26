@@ -17,6 +17,7 @@
   },
   "Soulbreak": {
     "name": "Soulbreak",
+    "shortName": "SB",
     "maxStack": 1,
     "showCoverage": true,
     "refresh": true,
@@ -41,6 +42,7 @@
   },
   "SoulLoss": {
     "name": "Soul Loss",
+    "shortName": "SL",
     "duration": 5,
     "maxStack": 7,
     "refresh": true,

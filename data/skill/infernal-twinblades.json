@@ -2,7 +2,6 @@
   "Flamelash": {
     "name": "Flamelash",
     "shortName": "Flamelash",
-    "description": "Enter Flamelash, gaining 10% Critical Rate and 20% Critical DMG Bonus while Hellfire drains. Requires 80 Hellfire in preset rotations; the editor permits activation at any amount.",
     "castTime": 0.85,
     "action": [{ "type": "apply", "target": "self", "value": "Flamelash", "time": 0 }],
     "martialArt": "infernalTwinblades",
@@ -12,7 +11,6 @@
   "AddledMind": {
     "name": "Addled Mind",
     "shortName": "DB Q",
-    "description": "Three charges, each recovering in 15 seconds. Level 100 hit data outside PvP, from files and unverified in play. Flamelash advances cast and hit times by 0.144 seconds.",
     "castTime": 0.744,
     "cooldown": 15,
     "cooldownUses": 3,

@@ -277,12 +277,32 @@
   },
   "Starweave": {
     "name": "Starweave",
-    "altersTimeline": false,
+    "altersTimeline": true,
     "tags": ["BamboocutDust", "EverspringUmbrella", "UnfetteredRopeDart"],
     "options": {
       "0": { "name": "0", "effect": {} },
       "2": { "name": "2", "effect": { "rawStat": { "minPhys": 77.8 } } },
-      "4": { "name": "4", "effect": { "rawStat": { "minPhys": 77.8 } } }
+      "4": {
+        "name": "4",
+        "effect": [
+          { "rawStat": { "minPhys": 77.8 }, "condition": "Starweave4P" },
+          {
+            "condition": "Starweave4P",
+            "trigger": {
+              "event": "damage",
+              "cooldown": 0.5,
+              "action": { "type": "apply", "target": "self", "value": "Starweave", "stack": 1, "reapply": true }
+            }
+          },
+          {
+            "condition": "Starweave4P",
+            "trigger": {
+              "event": "takeDamage",
+              "action": { "type": "consume", "target": "self", "value": "Starweave", "stack": 1 }
+            }
+          }
+        ]
+      }
     }
   },
   "Tiltrim": {

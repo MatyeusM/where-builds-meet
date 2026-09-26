@@ -98,7 +98,7 @@ describe("attack response windows", () => {
 
   it("reserves paired attacks once so consecutive attack-gated dodges align to distinct attacks", () => {
     const data = input([cast("Dodge"), cast("Dodge"), cast("Follow"), attack(5.5), end(13)])
-    data.rotation.dummyAttack = true
+    data.rotation.targetType = "DummyAttack"
     const rows = buildRotationTimeline(data)
     expect(rowsFor(rows, "Dodge").map(row => row.startTime)).toEqual([5.1, 11.1])
     expect(rowsFor(rows, "PerfectDodgeSuccess").map(row => row.startTime)).toEqual([5.5, 11.5])

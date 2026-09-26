@@ -102,10 +102,14 @@ Formatting, localization extraction, and the production build remain the gates.
 Dust's rotation-scoped draft uses explicitly successful catch variants. The
 rank-13 Perfect Catch Enhancement accumulates five-second Falling Blossoms;
 three stacks grant one-use Fragrant Song, with Delicate from Phantom Rally T1.
-The next throw snapshots Fragrant Song damage and guaranteed crit, then consumes
-it. Charged umbrella consumes Delicate. Input-window detection, Tenacity damage,
-remain deferred. Charged Combo partial cooldown reduction is implemented but awaits Piercing Dart damage events. Fragrant Song's 30% faster
-flight and accelerated-flight guaranteed catch are intentionally ignored by
-user instruction.
-The draft explicitly uses seven sweeps; Tokens of Gratitude and Fading Crimson
-are intentionally ignored by user instruction. See [the draft timing register](dust-draft.md).
+The next throw snapshots Fragrant Song damage and an unconditional guaranteed crit,
+then consumes it. Charged umbrella consumes Delicate. Input-window detection,
+Tenacity damage, remain deferred. Charged Combo partial cooldown reduction is
+implemented but awaits Piercing Dart damage events. Fragrant Song's 30% faster
+flight and accelerated-flight guaranteed catch are represented in the
+source-faithful Scarlet Spin chain; the acceleration is applied to the next
+throw's Stage 4 cadence. Each queued throw pays its own ping, and both the
+outgoing and returning hit remain in the timeline.
+The draft only casts the four-hit opener, so sweeps five through seven are
+modelled but unused; Tokens of Gratitude and Fading Crimson are intentionally
+ignored by user instruction. See [the draft timing register](dust-draft.md).

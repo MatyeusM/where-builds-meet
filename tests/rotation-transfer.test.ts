@@ -26,7 +26,7 @@ describe("rotation-transfer", () => {
       rotation: {
         name: "Custom",
         targetHP: 123456,
-        dummyAttack: true,
+        targetType: "DummyAttack",
         groupSize: 5,
         infiniteVitality: true,
         steps: [
@@ -53,7 +53,7 @@ describe("rotation-transfer", () => {
     const exported = JSON.parse(transfer.exportRotationEntries(current))
     expect(
       exported.format === transfer.rotationExportFormat &&
-        exported.version === 9 &&
+        exported.version === transfer.rotationExportVersion &&
         exported.rotations.length === 1 &&
         exported.rotations[0].id === customEntry.id,
       "Rotation export must omit the bundled default.",
@@ -73,7 +73,7 @@ describe("rotation-transfer", () => {
     expect(
       imported?.rotation.steps.length === 10 &&
         imported.rotation.targetHP === 123456 &&
-        imported.rotation.dummyAttack === true &&
+        imported.rotation.targetType === "DummyAttack" &&
         imported.rotation.groupSize === 5 &&
         imported.rotation.infiniteVitality === true &&
         imported.rotation.start.step === 8 &&
@@ -95,6 +95,40 @@ describe("rotation-transfer", () => {
       legacyGroupSizeImport.entries.find(entry => entry.id === legacyGroupSizeImport.importedIds[0])?.rotation
         .groupSize === 1,
       "A rotation without group metadata must migrate to Solo.",
+    ).toBeTruthy()
+    const legacyTargetImport = transfer.mergeImportedRotationEntries(current, {
+      ...exported,
+      rotations: [
+        {
+          id: "legacy-dummy-attack",
+          rotation: {
+            name: "Legacy Dummy Attack",
+            dummyAttack: true,
+            steps: [{ type: "skill", skill: "SnowpartingQStab" }],
+          },
+        },
+        { id: "no-target", rotation: { name: "No Target", steps: [{ type: "skill", skill: "SnowpartingQStab" }] } },
+        {
+          id: "invalid-target",
+          rotation: {
+            name: "Invalid Target",
+            targetType: "Dragon",
+            steps: [{ type: "skill", skill: "SnowpartingQStab" }],
+          },
+        },
+      ],
+    })
+    const importedTargetTypes = Object.fromEntries(
+      legacyTargetImport.importedIds.map(id => [
+        id.replace(/:imported$/, ""),
+        legacyTargetImport.entries.find(entry => entry.id === id)?.rotation.targetType,
+      ]),
+    )
+    expect(
+      importedTargetTypes["legacy-dummy-attack"] === "DummyAttack" &&
+        importedTargetTypes["no-target"] === "Dummy" &&
+        importedTargetTypes["invalid-target"] === "Dummy",
+      "The removed dummyAttack flag must migrate to the attacking dummy, and missing or unknown targets must fall back to the inert dummy.",
     ).toBeTruthy()
     expect(
       imported?.martialArts.join(",") === "snowparting,phalanxbane",
@@ -158,6 +192,43 @@ describe("rotation-transfer", () => {
       skillStartRotation?.start?.step === 0 && skillStartRotation.start.action === undefined,
       "A skill-level start anchor must survive import without becoming hit 1.",
     ).toBeTruthy()
+
+    const scarletSpinWithoutDuration = transfer.mergeImportedRotationEntries(current, {
+      ...exported,
+      version: 9,
+      rotations: [
+        {
+          id: "scarlet-spin-without-duration",
+          rotation: { name: "Legacy Scarlet Spin", steps: [{ type: "skill", skill: "ScarletSpin" }] },
+        },
+      ],
+    })
+    expect(
+      scarletSpinWithoutDuration.importedCount === 0,
+      "Duration-less Scarlet Spin records must not cross the rotation import boundary.",
+    ).toBeTruthy()
+
+    const { migrateRotation } = await import("../src/application/rotationCatalog.ts")
+    expect(
+      migrateRotation({ name: "Duration-less Scarlet Spin", steps: [{ type: "skill", skill: "ScarletSpin" }] }).steps,
+    ).toEqual([])
+
+    const scarletSpinWithDuration = transfer.mergeImportedRotationEntries(current, {
+      ...exported,
+      rotations: [
+        {
+          id: "scarlet-spin-with-duration",
+          rotation: {
+            name: "Duration-controlled Scarlet Spin",
+            steps: [{ type: "skill", skill: "ScarletSpin", duration: 12 }],
+          },
+        },
+      ],
+    })
+    expect(scarletSpinWithDuration.entries.at(-1)?.rotation.steps[0]).toMatchObject({
+      skill: "ScarletSpin",
+      duration: 12,
+    })
 
     const automaticHPImport = transfer.mergeImportedRotationEntries(current, {
       ...exported,

@@ -1,9 +1,12 @@
 import { nanoid } from "nanoid"
 
-import { normalizeEnemyCount, normalizePing } from "../calculations/combatDefaults"
+import { normalizeEnemyCount, normalizePing, resolveTargetType } from "../calculations/combatDefaults"
 import { resolveSwitchValue } from "../calculations/dynamicValues"
 import {
   buildRotationTimeline,
+  durationInputRequired,
+  expandedSkillActionCount,
+  expandedSkillActionLayout,
   isFixedTimeEvent,
   resolveSkillStepDuration,
   type AttachedEventTarget,
@@ -26,13 +29,12 @@ import { normalizeStoredWeaponIds, weaponIds as allWeaponIds, type WeaponId } fr
 import { rotationEventDefinitions } from "./gameData/rotationEffects"
 import { allSkillDefinitions, dotDefinitions, effectDefinitions, martialArtBySkillId } from "./gameData/skills"
 
-function normalizeStartAction(start: RotationRecord["start"], steps: RotationStep[]): RotationRecord["start"] {
+export function normalizeStartAction(start: RotationRecord["start"], steps: RotationStep[]): RotationRecord["start"] {
   if (!start || start.action === undefined) return start
   const step = steps[start.step]
   if (step?.type !== "skill") return { step: start.step }
-  const actions = allSkillDefinitions[step.skill ?? ""]?.action
-  if (!Array.isArray(actions)) return start
-  if (start.action < 0 || start.action >= actions.length) return { step: start.step }
+  const actionCount = expandedSkillActionCount(step.skill ?? "", allSkillDefinitions)
+  if (start.action < 0 || start.action >= actionCount) return { step: start.step }
   return start
 }
 
@@ -41,6 +43,11 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
   const steps: RotationStep[] = (rotation.steps as Array<RotationStep & { repeat?: number }>).flatMap(
     (step): RotationStep[] => {
       if (step.type === "event") return [migrateVendettaTokenStep(step)]
+      if (
+        durationInputRequired(allSkillDefinitions[step.skill ?? ""]) &&
+        (typeof step.duration !== "number" || !Number.isFinite(step.duration))
+      )
+        return []
       const repeat = Math.max(1, step.repeat ?? 1)
       const { repeat: _repeat, ...stepWithoutRepeat } = step
       return Array.from({ length: repeat }, (_, index) => ({
@@ -54,8 +61,8 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
     name: rotation.name,
     steps,
     ...(typeof rotation.targetHP === "number" && rotation.targetHP > 0 ? { targetHP: rotation.targetHP } : {}),
-    ...(rotation.dummyAttack === true ? { dummyAttack: true } : {}),
     ...(normalizePing(rotation.ping) !== undefined ? { ping: normalizePing(rotation.ping) } : {}),
+    targetType: resolveTargetType(rotation),
     enemyCount: normalizeEnemyCount(rotation.enemyCount),
     groupSize: rotation.groupSize === 5 || rotation.groupSize === 10 ? rotation.groupSize : 1,
     infiniteVitality:
@@ -89,13 +96,8 @@ export function baseRotationAnchorTime(rotation: RotationRecord) {
   for (const [stepIndex, step] of rotation.steps.entries()) {
     if (stepIndex === rotation.start.step) {
       if (step.type !== "skill") return time
-      const skill = allSkillDefinitions[step.skill ?? ""]
-      return (
-        time +
-        (rotation.start.action === undefined || !Array.isArray(skill?.action)
-          ? 0
-          : Number((skill.action[rotation.start.action] as EditableObject | undefined)?.time ?? 0))
-      )
+      const actionTimes = expandedSkillActionLayout(step.skill ?? "", allSkillDefinitions).actionTimes
+      return time + (rotation.start.action === undefined ? 0 : Number(actionTimes[rotation.start.action] ?? 0))
     }
     if (step.type === "skill") time += baseStepCastTime(step)
     else if (step.event === "Delay") time += Math.max(0, step.duration)

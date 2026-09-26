@@ -4,6 +4,7 @@ import bamboocutKiteBuffs from "../../../data/buff/bamboocut-kite.json"
 import bamboocutWindBuffs from "../../../data/buff/bamboocut-wind.json"
 import bellstrikeUmbraBuffs from "../../../data/buff/bellstrike-umbra.json"
 import generalBuffs from "../../../data/buff/general.json"
+import mechanismBuffs from "../../../data/buff/mechanism.json"
 import mysticBuffs from "../../../data/buff/mystic.json"
 import silkbindDelugeBuffs from "../../../data/buff/silkbind-deluge.json"
 import stonesplitMightBuffs from "../../../data/buff/stonesplit-might.json"
@@ -25,6 +26,7 @@ import everspringSkills from "../../../data/skill/everspring-umbrella.json"
 import generalSkills from "../../../data/skill/general.json"
 import heavenwillSkills from "../../../data/skill/heavenwill-gauntlets.json"
 import infernalSkills from "../../../data/skill/infernal-twinblades.json"
+import mechanismSkills from "../../../data/skill/mechanism.json"
 import mortalSkills from "../../../data/skill/mortal-rope-dart.json"
 import mysticSkills from "../../../data/skill/mystic.json"
 import panaceaSkills from "../../../data/skill/panacea-fan.json"
@@ -54,6 +56,7 @@ export const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Unfettered: unfetteredSkills as SkillMap,
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
+  Mechanism: mechanismSkills as SkillMap,
 }
 export const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
   ...defaultSkillMaps,
@@ -69,6 +72,7 @@ export const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
       ...bamboocutKiteBuffs,
       ...silkbindDelugeBuffs,
       ...bellstrikeUmbraBuffs,
+      ...mechanismBuffs,
     } as Record<string, EffectDefinition>).filter(([, definition]) => !definition.global),
   ) as SkillMap,
   Debuff: {
@@ -115,6 +119,7 @@ export const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Unfettered: "unfetteredRopeDart",
   Mystic: "mystic",
   General: "general",
+  Mechanism: "mechanism",
 }
 export const skillDataNamespaceById = new Map<string, string>(
   (Object.entries(defaultSkillMaps) as Array<[SkillCategory, SkillMap]>).flatMap(([category, definitions]) =>
@@ -175,6 +180,7 @@ export const effectDefinitions = {
   ...bamboocutKiteDebuffs,
   ...innerWayDebuffs,
   ...generalDebuffs,
+  ...mechanismBuffs,
   ...dotDefinitions,
 } as Record<string, EffectDefinition>
 export const expectedOutcomeBuffPlateDefinitions = [

@@ -2,6 +2,7 @@
   "Cadence": {
     "name": "Cadence",
     "shortName": "Cad",
+    "hidden": true,
     "description": "Stores successful defenses for later Riposte conversions.",
     "duration": 20,
     "maxStack": 2,

@@ -150,9 +150,13 @@ describe("incremental-timeline", () => {
     const timedOnly = buildRotationTimeline({
       ...base,
       skills,
-      rotation: { name: "Timed only", dummyAttack: true, steps: [{ type: "event", event: "BattleEnd", startTime: 7 }] },
+      rotation: {
+        name: "Timed only",
+        targetType: "DummyAttack",
+        steps: [{ type: "event", event: "BattleEnd", startTime: 7 }],
+      },
     })
-    assert.equal(timedOnly.filter(row => row.step.automatic === "dummyAttack").length, 2)
+    assert.equal(timedOnly.filter(row => row.step.automatic === "targetAttack").length, 2)
     const legacy = {
       name: "Legacy",
       steps: [

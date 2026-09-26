@@ -425,12 +425,16 @@ function calculateDamageBreakdownInternal(
   )
   const convertedRateStats =
     conversionEffects.length > 0 ? applyStatConversions(rateStats, conversionEffects) : rateStats
+  const GuaranteedCrit = effects.some(effect => effect.GuaranteedCrit === true)
   const SteadfastGuaranteedCrit =
     effects.some(effect => effect.SteadfastGuaranteedCrit === true) &&
     (skillTags.includes("BurningHeart") || skillTags.includes("AnxiSoldier"))
-  const calculatedRates = calculateRates(convertedRateStats, { SteadfastGuaranteedCrit })
-  const rates =
+  const calculatedRates = calculateRates(convertedRateStats, { GuaranteedCrit, SteadfastGuaranteedCrit })
+  const convertedRates =
     conversionEffects.length > 0 ? applyStatConversions(calculatedRates, conversionEffects) : calculatedRates
+  const rates = GuaranteedCrit
+    ? { ...convertedRates, finalCrit: 1, critRate: 1, abrasionRate: 0, normalRate: 0, affinityRate: 0 }
+    : convertedRates
   if (import.meta.env.DEV) finishCalculationPhase("damageRateResolution", rateResolutionStartedAt)
   if (random) {
     const outcomeSelectionStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0

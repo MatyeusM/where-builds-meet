@@ -21,15 +21,36 @@ The simulator currently treats its encounter as a boss. This pass does not add
 PvP or multiple-target hit tracking. Four-piece selections still include their
 two-piece stats once; zero- and two-piece selections do not activate these rules.
 
+## Target role and the Starweave gain condition
+
+Starweave's source gain condition is a disjunction: hit at least two enemies
+simultaneously, **or** hit a boss or a player. Both halves are expressible, and
+both resolve to "always" for a different reason than a missing capability.
+
+The `enemyCount` half is an existing requirement target. The boss half is
+implicit rather than tested: both `Dummy` and `DummyAttack` count as a boss, so a
+mechanic whose source says it works against a boss must not gate on
+`targetType`, and matching `Boss` would exclude both dummies. `vsBossDmg` sets
+the precedent by being added to the damage multiplier with no target check.
+
+The trigger is therefore written unconditionally, which is the same expression
+the boss half alone would produce. The `or` collapses, so the `enemyCount` branch
+is redundant under this model. It is recorded here because the collapse is a
+consequence of the target-role policy rather than of the source text: if the
+implicit boss role ever stops holding, Starweave would need its `enemyCount`
+branch restored to stay correct on single-target dummies, and the Dust
+weapon-set choice would need revisiting, since Etherwrath's four-piece would
+then be the stronger set.
+
 ## Deferred
 
-| Set        | Why its four-piece effect remains unimplemented                                                                                                                                                                                                                                                                                                                                     |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Jadeware   | The player's Qi percentage is not modeled, so the target-Qi-versus-self-Qi condition cannot be evaluated. The wording also does not clearly establish whether the target condition gates only Direct Affinity or both bonuses. Skill-start triggers, a ten-second buff, and a twelve-second cooldown already exist, but are insufficient to implement the complete rule faithfully. |
-| Swift Gale | There is no implemented Airborne Heavy Attack classification or knockdown lifecycle with a confirmed duration. Existing target Airborne/Controlled markers do not establish the attack category or the knockdown's behavior. The ten-second trigger cooldown alone is supported.                                                                                                    |
-| Mistwillow | The upgraded Mistwillow description omits its damage percentage and does not settle whether the two-second refresh restriction is shared or per effect. Reciprocal buff merging and subsequent refresh ownership are also unclear. No replacement values or timer behavior are guessed.                                                                                             |
-| Starweave  | Existing trigger cooldowns cannot express a two-stack-per-second allowance that can accept two simultaneous hits. A 0.5-second cooldown would change that behavior. The source also does not specify the distance interpolation; multiple-target hits are not represented. These constraints prevent faithful stack generation and damage scaling.                                  |
-| Tiltrim    | The source mentions a bonus at five stacks but does not specify a maximum stack count. Flower Burial and its applicable skill mapping are absent, and the Inebriate-enhanced attack scope is not complete. The cap and missing enhancement semantics are not inferred.                                                                                                              |
+| Set        | Why its four-piece effect remains unimplemented                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jadeware   | The player's Qi percentage is not modeled, so the target-Qi-versus-self-Qi condition cannot be evaluated. The wording also does not clearly establish whether the target condition gates only Direct Affinity or both bonuses. Skill-start triggers, a ten-second buff, and a twelve-second cooldown already exist, but are insufficient to implement the complete rule faithfully.                                                                                                                                                                                                                                               |
+| Swift Gale | There is no implemented Airborne Heavy Attack classification or knockdown lifecycle with a confirmed duration. Existing target Airborne/Controlled markers do not establish the attack category or the knockdown's behavior. The ten-second trigger cooldown alone is supported.                                                                                                                                                                                                                                                                                                                                                  |
+| Mistwillow | The upgraded Mistwillow description omits its damage percentage and does not settle whether the two-second refresh restriction is shared or per effect. Reciprocal buff merging and subsequent refresh ownership are also unclear. No replacement values or timer behavior are guessed.                                                                                                                                                                                                                                                                                                                                           |
+| Starweave  | Implemented for the Dust path. Adds one five-second stack per damage event, up to five, granting Martial Art Skills 3% increased damage per stack plus a distance-scaled bonus beyond 4 meters reaching 1% per stack at 8 meters. Gains are limited to two per second via the setup-trigger cooldown, and taking damage consumes one stack. The distance ramp uses a `segment` on `distance` at one-meter granularity, because the source states a linear ramp without specifying interpolation. The gain condition is an `or` of two branches, and the boss half is treated as always satisfied; see the target-role note below. |
+| Tiltrim    | The source mentions a bonus at five stacks but does not specify a maximum stack count. Flower Burial and its applicable skill mapping are absent, and the Inebriate-enhanced attack scope is not complete. The cap and missing enhancement semantics are not inferred.                                                                                                                                                                                                                                                                                                                                                            |
 
 ## Verification
 

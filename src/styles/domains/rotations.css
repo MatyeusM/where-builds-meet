@@ -233,6 +233,7 @@
   }
 
   .rotation-target-hp,
+  .rotation-target-select,
   .rotation-option-toggle,
   .rotation-group-size {
     display: inline-flex;
@@ -249,6 +250,10 @@
     inline-size: 10rem;
   }
 
+  .rotation-enemy-count input {
+    inline-size: calc(4ch + 1.5rem);
+  }
+
   .rotation-ping-field input {
     padding: 5px 7px;
   }
@@ -259,7 +264,8 @@
     opacity: 1;
   }
 
-  .rotation-group-size select {
+  .rotation-group-size select,
+  .rotation-target-select select {
     inline-size: auto;
     min-inline-size: 7rem;
   }
@@ -402,7 +408,9 @@
     background: var(--event-dot);
   }
 
-  .rotation-row-group:last-child .rotation-table-row {
+  /* Keyed on the real final row: with windowing, :last-child is whichever row the
+     window happens to end on, which would move the border as the list scrolls. */
+  .rotation-row-group[data-window-last] .rotation-table-row {
     border-block-end: 0;
   }
 

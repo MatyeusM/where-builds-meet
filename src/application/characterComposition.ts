@@ -68,7 +68,9 @@ export function selectableRotationSkillGroups(weapons: [WeaponId, WeaponId]) {
     const category = skillCategoryByWeapon[weapon]
     return category ? [category] : []
   })
-  const categories = [...new Set<SkillCategory>([...martialCategories, "Mystic", "General"])] as SkillCategory[]
+  const categories = [
+    ...new Set<SkillCategory>([...martialCategories, "Mystic", "General", "Mechanism"]),
+  ] as SkillCategory[]
   return categories.map(category => ({
     category,
     skillIds: Object.keys(defaultSkillMaps[category]).filter(

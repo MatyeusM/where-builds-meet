@@ -74,5 +74,5 @@
   "start": { "step": 4, "action": 1 },
   "eventTimeReference": "battleStart",
   "ping": 30,
-  "dummyAttack": true
+  "targetType": "DummyAttack"
 }

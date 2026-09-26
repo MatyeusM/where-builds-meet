@@ -2,7 +2,7 @@ import attunementJson from "../../data/attunement.json"
 import { emptyStats } from "../data/statDefinitions"
 import type { CharacterStats, EnemyProfile, WeaponId } from "../types"
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark"
-import { DEFAULT_TARGET_HP_RATIO, normalizeEnemyCount } from "./combatDefaults"
+import { DEFAULT_TARGET_HP_RATIO, normalizeEnemyCount, resolveTargetType } from "./combatDefaults"
 import {
   calculateDamageBreakdown,
   calculateSimulatedDamageBreakdown,
@@ -1655,6 +1655,7 @@ function createTimelineEntryBuilder(
       selfHPPercentage: actionState.currentHPRatio * 100,
       targetHPPercentage: actionState.targetHPRatio * 100,
       targetQiPercentage: actionState.targetQiRatio * 100,
+      targetType: resolveTargetType(input.rotation),
     }
     const effectsForState = (
       currentBuffs: typeof buffs,

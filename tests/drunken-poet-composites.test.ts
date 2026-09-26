@@ -11,6 +11,7 @@ describe("drunken-poet-composites", () => {
     const buffs = (await import("../data/buff/mystic.json")).default
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
     const { migrateDrunkenPoetSequences } = await import("../src/rotationEditing.ts")
+    const { normalizeStartAction } = await import("../src/application/rotationCatalog.ts")
     const closeTo = (actual, expected) => Math.abs((actual ?? Number.NaN) - expected) < 1e-9
     const componentTimes = [0.58, 0.436, 0.55, 0.6, 0.5382]
     const compositeIds = [
@@ -115,6 +116,9 @@ describe("drunken-poet-composites", () => {
       migrated.steps[1]?.causesBreak === true,
       "A break marker on legacy Poet 5 must move to the composite.",
     ).toBeTruthy()
+
+    expect(normalizeStartAction({ step: 1, action: 10_000 }, migrated.steps)).toEqual({ step: 1 })
+    expect(normalizeStartAction(migrated.start, migrated.steps)).toEqual(migrated.start)
   })
 })
 

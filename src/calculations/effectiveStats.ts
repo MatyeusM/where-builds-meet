@@ -83,7 +83,7 @@ export function calculateRates(
     directAffinity: number
     finalAffinity?: number
   },
-  options: { SteadfastGuaranteedCrit?: boolean } = {},
+  options: { GuaranteedCrit?: boolean; SteadfastGuaranteedCrit?: boolean } = {},
 ): RateCalculation {
   const clampRate = (value: number) => Math.min(1, Math.max(0, value))
   const baseDirectCrit = Math.min(DIRECT_CRIT_RATE_CAP, Math.max(0, input.directCrit))
@@ -92,6 +92,19 @@ export function calculateRates(
     finalAffinity + baseDirectCrit + input.effectiveCrit <= 1
       ? (input.effectiveCrit + baseDirectCrit) * input.effectivePrecision
       : (1 - finalAffinity) * input.effectivePrecision
+  if (options.GuaranteedCrit === true) {
+    return {
+      effectivePrecision: input.effectivePrecision,
+      effectiveCrit: input.effectiveCrit,
+      effectiveAffinity: input.effectiveAffinity,
+      finalAffinity,
+      finalCrit: 1,
+      abrasionRate: 0,
+      normalRate: 0,
+      critRate: 1,
+      affinityRate: 0,
+    }
+  }
   const SteadfastGuaranteedCrit = options.SteadfastGuaranteedCrit === true
   if (SteadfastGuaranteedCrit && baseFinalCrit >= 0.75) {
     return {

@@ -41,7 +41,7 @@ describe("calculation-fingerprint-cache", () => {
 
     const rotationSettings = [
       ["target HP", { targetHP: 100000 }],
-      ["dummy attacks", { dummyAttack: true }],
+      ["practice target", { targetType: "Boss" }],
       ["group size", { groupSize: 5 }],
       ["enemy count", { enemyCount: 3 }],
       ["infinite Vitality", { infiniteVitality: true }],
