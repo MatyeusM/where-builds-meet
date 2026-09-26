@@ -16,7 +16,6 @@ import umbrella from "../data/skill/everspring-umbrella.json"
 import general from "../data/skill/general.json"
 import mystic from "../data/skill/mystic.json"
 import rope from "../data/skill/unfettered-rope-dart.json"
-import draft from "../doc/drafts/dust-1-min.json"
 import { innerWayConditionsFor, innerWayEffectRulesFor } from "../src/application/characterComposition"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
@@ -29,7 +28,6 @@ import {
 import type { RotationRecord, RotationStep, TimelineRow } from "../src/calculations/rotationTimeline"
 import { martialArtEffectsForRank } from "../src/data/martialArtTalents"
 import { emptyStats } from "../src/data/statDefinitions"
-import { mergeImportedRotationEntries } from "../src/rotationTransfer"
 
 const cast = (skill: string) => ({ type: "skill" as const, skill })
 const delay = (duration: number) => ({ type: "event" as const, event: "Delay", duration })
@@ -191,8 +189,7 @@ describe("Dust WIP mechanics", () => {
   it.each([false, true])("applies Towline stacks per hit in the four-hit opener, Soulbound=%s", soulbound => {
     const input = bundle({ TowlineSweep: 0 })
     input.timeline.initialBuffs = soulbound ? [{ name: "Soulbound", stack: 1 }] : []
-    const imported = mergeImportedRotationEntries([], draft).entries[0].rotation
-    const opener = imported.steps[imported.start!.step]
+    const opener = defaultDustRotation.steps[defaultDustRotation.start.step]
     input.timeline.rotation.steps = [opener, cast("Hit")]
     const result = calculateRotationBaseline(input)
     const release = result.timeline.find(
@@ -341,16 +338,14 @@ describe("Dust WIP mechanics", () => {
     expect(hit.actionStates[0].debuffs.has("SoulLoss")).toBe(false)
     expect(hit.actionStates[0].debuffs.has("Soulbreak")).toBe(false)
   })
-  it("imports the draft and resolves its movement attachments and 60-second cutoff", () => {
-    const imported = mergeImportedRotationEntries([], draft)
-    expect(imported.importedCount).toBe(1)
-    const rotation = imported.entries[0].rotation
+  it("resolves the registered rotation's movement attachments and 60-second cutoff", () => {
+    const rotation = defaultDustRotation as RotationRecord
     const input = bundle()
     input.timeline.skills = { ...input.timeline.skills, ...general, ...mystic }
     input.timeline.effectDefinitions = { ...input.timeline.effectDefinitions, ...mysticBuffs }
     input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
     input.timeline.rotation = rotation
-    input.startAnchor = { rowId: `rotation-${rotation.start!.step}`, actionIndex: rotation.start!.action }
+    input.startAnchor = { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action }
     for (const step of rotation.steps.filter(step => step.type === "skill")) {
       expect(input.timeline.skills[step.skill!]).toBeDefined()
     }
@@ -591,7 +586,7 @@ describe("Dust WIP mechanics", () => {
       }
       return measure("4") / measure("2")
     }
-    const rotation = mergeImportedRotationEntries([], draft).entries[0].rotation
+    const rotation = defaultDustRotation as RotationRecord
     const collapsed = {
       ...rotation,
       steps: rotation.steps.map(step =>

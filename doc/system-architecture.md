@@ -1523,8 +1523,8 @@ martial-art pair and build-planner surfaces are registered but their combat mech
 are not implemented. Planner-only
 paths remain visible, carry a Planner Only badge, and are disabled until Dev mode
 is enabled. Bellstrike Splendor and Umbra, Silkbind Jade, and Bamboocut
-Draught currently use this state. Dust is WIP: its editor catalogs and initial
-Inner Way rules are registered, with a rotation-scoped combat draft using explicit unresolved timing fallbacks (see `dust-draft.md`). Deluge is available. Their fixed martial-art pairs and physical weapon
+Draught currently use this state. Dust is WIP: its editor catalogs and Inner Way
+rules are registered, and its default rotation uses explicit unresolved timing fallbacks. Deluge is available. Their fixed martial-art pairs and physical weapon
 families are available to Settings and Build. Planner-only status does not imply
 that all supporting data is absent: talents and attunements may already be
 registered while combat skill definitions remain incomplete. See the martial-art

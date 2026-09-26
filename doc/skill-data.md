@@ -531,11 +531,38 @@ continue with the actual buff state. Do not restore Flamelash or extend its
 duration to cover those hits. A new Blade of Heaven's Wrath cast starting
 without Flamelash remains an invalid state to investigate.
 
-### Bamboocut Dust WIP definitions
+### Bamboocut Dust definitions
 
-Dust implements only the skills required by its authored draft rotation.
-See [Dust draft and timing refill register](dust-draft.md) for source IDs,
-per-skill timing fallbacks, rotation interpretation, and remaining mechanics.
+Dust implements only the skills its default rotation casts. The rotation itself
+lives at `data/rotation/bamboocut-dust/dust-dummy-1-min.json` and is the subject
+of the DPS snapshot, so it is the reference rather than a separate draft.
+
+Unmeasured damage hits use **0 seconds**, as requested. Unmeasured buff
+applications use **cast end**, except user-confirmed applications at 0 and Soul
+Loss, which is applied immediately after its corresponding hit.
+
+| Skill                | Temporary values                                                | Existing cast duration                                      |
+| -------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
+| Soul Sweep           | Three damage timestamps at 0                                    | 1.75 s, source interrupt                                    |
+| Piercing Dart        | Measured seven-hit marker series; four-hit release truncates it | 1.967 s full, 1.017 s interrupted release                   |
+| Burn and Bury        | Finger snap at 0.53 s, inside the 0.65 s cast                   | 0.65 s, source interrupt                                    |
+| Scarlet Spin         | Four source stage markers; duration input controls the chain    | User-entered, capped at 12 s                                |
+| Dreamwrought Bubbles | Charge and release split into sub-actions                       | 0.743 s charge + 1.2 s release; Delicate removes the charge |
+
+The 0.743 s Bubbles charge is a user-supplied value, not a measurement: the
+datamine explicitly excludes charge timing. Soul Sweep Cancel at 0 and Piercing
+Dart Charge at 1.5 s are user-confirmed rather than timing gaps.
+
+Qi is authored as absolute-time `Qi` steps on the rotation. A rotation cannot
+attach one beyond a Scarlet Spin throw's first, because an attachment's `trigger`
+ordinal indexes the anchoring step's own trigger actions and later throws are
+raised by the stage rows. The exhaust therefore sits on the sixth throw's
+forward hit of the second Scarlet Spin, and a second proportional ramp follows
+the first Exhausted window without reaching a second exhaust.
+
+Out of scope by user instruction: Fading Crimson, Tokens of Gratitude, Song of
+Tang HP drain, and Tenacity damage. These are exclusions rather than gaps, so
+they are not tracked as outstanding work.
 
 Piercing Dart's seven hits are modelled as `PiercingDartSweep1`–`7` triggered
 damage skills rather than seven `damage` actions on one skill. This is deliberate:

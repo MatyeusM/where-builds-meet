@@ -112,4 +112,5 @@ throw's Stage 4 cadence. Each queued throw pays its own ping, and both the
 outgoing and returning hit remain in the timeline.
 The draft only casts the four-hit opener, so sweeps five through seven are
 modelled but unused; Tokens of Gratitude and Fading Crimson are intentionally
-ignored by user instruction. See [the draft timing register](dust-draft.md).
+ignored by user instruction. Per-skill timing fallbacks are listed in
+[skill-data](skill-data.md#bamboocut-dust-definitions).
