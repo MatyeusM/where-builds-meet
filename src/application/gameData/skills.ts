@@ -199,11 +199,30 @@ export function withExpectedOutcomeBuffPlates(
   buffs: TrackedEffect[],
   expectedBuffStacks: Record<string, number> | undefined,
 ): DisplayedTimelineEffect[] {
-  if (!expectedBuffStacks) return buffs
+  return withExpectedStackPlates(buffs, expectedBuffStacks, expectedOutcomeBuffPlateDefinitions)
+}
+export function withExpectedDebuffPlates(
+  debuffs: TrackedEffect[],
+  expectedDebuffStacks: Record<string, number> | undefined,
+  definitions: Record<string, EffectDefinition> = effectDefinitions,
+): DisplayedTimelineEffect[] {
+  const plates = Object.keys(expectedDebuffStacks ?? {}).map(name => ({
+    name,
+    maxStack: definitions[name]?.maxStack ?? 1,
+  }))
+  return withExpectedStackPlates(debuffs, expectedDebuffStacks, plates)
+}
+function withExpectedStackPlates(
+  effects: TrackedEffect[],
+  expectedStacks: Record<string, number> | undefined,
+  plates: readonly { name: string; maxStack: number }[],
+): DisplayedTimelineEffect[] {
+  if (!expectedStacks) return effects
+  const names = new Set(plates.map(({ name }) => name))
   return [
-    ...buffs.filter(effect => !expectedOutcomeBuffPlateNames.has(effect.name)),
-    ...expectedOutcomeBuffPlateDefinitions.flatMap(({ name, maxStack }) => {
-      const stack = expectedBuffStacks[name]
+    ...effects.filter(effect => !names.has(effect.name)),
+    ...plates.flatMap(({ name, maxStack }) => {
+      const stack = expectedStacks[name]
       return stack !== undefined && stack > 0
         ? [{ name, stack, maxStack, hideRemainingTime: true, averageStackOnly: true }]
         : []

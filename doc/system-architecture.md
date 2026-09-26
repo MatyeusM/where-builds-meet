@@ -1353,10 +1353,16 @@ Coverage for effect definitions marked `showCoverage`. Average stacks are
 action-weighted: their denominator contains only resolved, non-replay damage and
 healing actions with non-zero output. Delays, movement, resource changes,
 applications, replay damage, and other actions that cannot be affected by
-tracked effects do not affect that average. A debuff additionally reports
-elapsed-time coverage when its definition has `shared: true`; tracked
-application and expiration timestamps are clipped to the resolved fight window
-and overlapping refresh intervals are counted once.
+tracked effects do not affect that average. Debuffs marked both `showCoverage` and `shared: true`
+also report Max Stack Coverage: the percentage of combat time at their maximum
+stack count, including shared one-stack debuffs. The timeline integrates
+maximum-stack intervals across applications, consumption, refreshes and expiry,
+clipped to the fight window. Chance debuffs integrate the probability of being at
+maximum stacks. Lower-stack uptime does not contribute. Non-shared debuffs such as
+Soulbreak report average stacks only. The rotation editor preserves worker-computed
+expected debuff stacks when merging calculated action states and displays them as
+fractional-stack badges without a remaining-time countdown. Skill rows use the
+earliest damage action state, matching expected buff badges. These are transient worker-result fields, not stored user data.
 
 The Main-tab DPS panel derives Graduation Rate from the current DPS divided by
 the highest DPS among the path's `graduated` build presets under the same

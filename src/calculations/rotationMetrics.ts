@@ -61,7 +61,7 @@ export type RotationHealingCastBreakdown = {
 }
 export type RotationGroupBreakdown = { id: string; name: string; damage: number; percentage: number }
 export type RotationHealingGroupBreakdown = { id: string; name: string; healing: number; percentage: number }
-export type RotationEffectCoverage = { id: string; averageStacks: number; timeCoverage?: number }
+export type RotationEffectCoverage = { id: string; averageStacks: number; maxStackCoverage?: number }
 export type RotationBreakdown = {
   skills: RotationSkillBreakdown[]
   groupedSkills: SkillBreakdownGroup<RotationSkillBreakdown>[]

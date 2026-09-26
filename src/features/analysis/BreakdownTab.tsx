@@ -98,11 +98,11 @@ const stackedBuffAttributionTags = new Set(["FluteOfTheTides", "GhostlySteps"])
 function EffectCoveragePanel({
   title,
   rows,
-  showTimeCoverage = false,
+  showMaxStackCoverage = false,
 }: {
   title: string
   rows: RotationEffectCoverage[]
-  showTimeCoverage?: boolean
+  showMaxStackCoverage?: boolean
 }) {
   return (
     <Panel className="breakdown-panel">
@@ -111,18 +111,18 @@ function EffectCoveragePanel({
           <h2>{title}</h2>
         </div>
       </PanelHeading>
-      <div className={`breakdown-table breakdown-coverage-table${showTimeCoverage ? " with-time-coverage" : ""}`}>
+      <div className={`breakdown-table breakdown-coverage-table${showMaxStackCoverage ? " with-time-coverage" : ""}`}>
         <div className="breakdown-table-header">
           <span>{t("ui.app.effect")}</span>
           <span>{t("ui.app.averageStack")}</span>
-          {showTimeCoverage ? <span>{t("ui.app.timeCoverage")}</span> : null}
+          {showMaxStackCoverage ? <span>{t("ui.app.maxStackCoverage")}</span> : null}
         </div>
         {rows.map(row => (
           <div className="breakdown-table-row" key={row.id}>
             <span>{gameText(effectDefinitions[row.id]?.name ?? row.id)}</span>
             <strong>{formatNumber(row.averageStacks)}</strong>
-            {showTimeCoverage ? (
-              <strong>{row.timeCoverage === undefined ? "—" : `${formatNumber(row.timeCoverage)}%`}</strong>
+            {showMaxStackCoverage ? (
+              <strong>{row.maxStackCoverage === undefined ? "—" : `${formatNumber(row.maxStackCoverage)}%`}</strong>
             ) : null}
           </div>
         ))}
@@ -381,7 +381,7 @@ export function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; p
       </Panel>
       <div className="breakdown-coverage-grid">
         <EffectCoveragePanel title={t("ui.app.buffCoverage")} rows={breakdown.buffCoverage} />
-        <EffectCoveragePanel title={t("ui.app.debuffCoverage")} rows={breakdown.debuffCoverage} showTimeCoverage />
+        <EffectCoveragePanel title={t("ui.app.debuffCoverage")} rows={breakdown.debuffCoverage} showMaxStackCoverage />
       </div>
       <BreakdownGroupTable
         title={t("ui.app.skillTypeBreakdown")}

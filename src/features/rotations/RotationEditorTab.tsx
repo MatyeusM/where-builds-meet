@@ -71,6 +71,7 @@ import {
   rotationActionOptionIds,
   rotationEventOptionIds,
   withExpectedOutcomeBuffPlates,
+  withExpectedDebuffPlates,
 } from "../../application/gameData/skills"
 import {
   buildGraduationBundleSet,
@@ -2599,23 +2600,35 @@ export function RotationEditorTab({
                       ) ?? []
                     const skillDamageRows =
                       !isAction && row.kind === "rotation" ? (damageRowsByOwner.get(row.id) ?? [row]) : [row]
-                    const skillExpectedBuffStacks = skillDamageRows.reduce<
-                      { time: number; stacks: Record<string, number> } | undefined
+                    const skillExpectedStacks = skillDamageRows.reduce<
+                      { time: number; buffs?: Record<string, number>; debuffs?: Record<string, number> } | undefined
                     >((earliest, damageRow) => {
                       let next = earliest
                       damageRow.actions.forEach((action, damageIndex) => {
                         if (action.type !== "damage") return
                         const expectedBuffStacks =
                           workerActionBreakdowns[`${damageRow.id}:${damageIndex}`]?.expectedBuffStacks
-                        if (!expectedBuffStacks) return
+                        const expectedDebuffStacks = damageRow.actionStates[damageIndex]?.expectedDebuffStacks
+                        if (!expectedBuffStacks && !expectedDebuffStacks) return
                         const time = damageRow.startTime + Number(action.time ?? 0)
-                        if (!next || time < next.time) next = { time, stacks: expectedBuffStacks }
+                        if (!next || time < next.time)
+                          next = { time, buffs: expectedBuffStacks, debuffs: expectedDebuffStacks }
                       })
                       return next
                     }, undefined)
                     const displayedSkillBuffs = withExpectedOutcomeBuffPlates(
                       Array.from(row.buffs.values()),
-                      skillExpectedBuffStacks?.stacks,
+                      skillExpectedStacks?.buffs,
+                    )
+                    const displayedSkillDebuffs = withExpectedDebuffPlates(
+                      Array.from(row.debuffs.values()),
+                      skillExpectedStacks?.debuffs,
+                      calculationDefinitions.effectDefinitions,
+                    )
+                    const displayedActionDebuffs = withExpectedDebuffPlates(
+                      actionDebuffs,
+                      actionState?.expectedDebuffStacks,
+                      calculationDefinitions.effectDefinitions,
                     )
                     const skillBreakdown = skillDamageRows.reduce<RotationActionBreakdown>(
                       (skillTotal, damageRow) =>
@@ -3166,7 +3179,7 @@ export function RotationEditorTab({
                               ) : isManualEvent ? (
                                 ""
                               ) : (
-                                effectNames(Array.from(row.debuffs.values()), startTime)
+                                effectNames(displayedSkillDebuffs, startTime)
                               )}
                             </span>
                             <span className="rotation-controls">
@@ -3360,7 +3373,7 @@ export function RotationEditorTab({
                                   {effectNames(displayedActionBuffs, actionTime)}
                                 </span>
                                 <span className="rotation-debuff-cell" data-mobile-label={t("ui.app.debuff")}>
-                                  {effectNames(actionDebuffs, actionTime)}
+                                  {effectNames(displayedActionDebuffs, actionTime)}
                                 </span>
                                 <span aria-hidden="true" />
                               </div>

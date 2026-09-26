@@ -450,9 +450,10 @@ stacks without adding a second defense reduction to local Poison procs; a local
 T6 debuff can still supply its five-stack resistance reduction alongside global T1.
 Existing saved global-debuff IDs remain unchanged. Bitter Seasons tiers opt into
 `showCoverage`: reported average stacks use marginal expected stacks at output
-actions, and uptime integrates active probability between applications and expiry,
+actions, and Max Stack Coverage integrates the probability of being at maximum
+stacks between applications and expiry,
 clipped to the combat window. Coverage never fabricates a guaranteed tracked debuff
-or reuses Poison's shorter lifetime. Permanent global copies report full uptime.
+or reuses Poison's shorter lifetime. Permanent global copies at maximum stacks report 100% Max Stack Coverage.
 
 `expectedTickAlignment: "battle"` deliberately approximates expected DOT timing
 on shared battle-clock boundaries, with no partial ticks; an application waits

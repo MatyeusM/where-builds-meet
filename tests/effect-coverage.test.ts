@@ -1,8 +1,60 @@
-import { assert, describe, it } from "vitest"
+import { assert, describe, expect, it } from "vitest"
+
+import dustDebuffs from "../data/debuff/bamboocut-dust.json"
+import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 
 // Ported from script/probe/check-effect-coverage.mjs.
 describe("effect-coverage", () => {
-  it("Definition-filtered average stacks and shared-debuff time coverage verified", async () => {
+  it("counts only max-stack intervals across consumption, reapplication, and expiry", () => {
+    const timeline = buildRotationTimeline({
+      rotation: { name: "Stack transitions", steps: [{ type: "skill", skill: "Probe" }] },
+      skills: {
+        Probe: {
+          castTime: 8,
+          action: [
+            { type: "apply", target: "target", value: "Stacks", stack: 1, time: 0 },
+            { type: "apply", target: "target", value: "Stacks", stack: 2, time: 2 },
+            { type: "consume", target: "target", value: "Stacks", stack: 1, time: 4 },
+            { type: "apply", target: "target", value: "Stacks", stack: 1, time: 4.5 },
+            { type: "consume", target: "target", value: "Stacks", stack: "all", time: 6 },
+          ],
+        },
+      },
+      effectDefinitions: { Stacks: { maxStack: 3, duration: 3, refresh: true, showCoverage: true } },
+      dots: {},
+      eventDefinitions: {},
+      innerWayRules: [],
+      innerWayConditions: [],
+      setupEffects: [],
+      weapons: [],
+    })
+    expect(timeline[0].debuffMaxStackSeconds?.Stacks).toBe(3.5)
+  })
+
+  it("counts Soulbreak at its one-stack maximum and stops on consumption", () => {
+    const timeline = buildRotationTimeline({
+      rotation: { name: "Soulbreak coverage", steps: [{ type: "skill", skill: "Probe" }] },
+      skills: {
+        Probe: {
+          castTime: 20,
+          action: [
+            { type: "apply", target: "target", value: "Soulbreak", time: 2 },
+            { type: "consume", target: "target", value: "Soulbreak", stack: "all", time: 7 },
+          ],
+        },
+      },
+      effectDefinitions: dustDebuffs,
+      dots: {},
+      eventDefinitions: {},
+      innerWayRules: [],
+      innerWayConditions: [],
+      setupEffects: [],
+      weapons: [],
+    })
+    expect(timeline[0].debuffMaxStackSeconds?.Soulbreak).toBe(5)
+  })
+
+  it("Definition-filtered average stacks and maximum-stack coverage for all debuffs verified", async () => {
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
@@ -83,12 +135,12 @@ describe("effect-coverage", () => {
     const privateDebuff = result.metrics.breakdown.debuffCoverage.find(row => row.id === "PrivateDebuff")
     assert(buff?.averageStacks === 0.5, "Buff average stacks must include only damage and healing actions.")
     assert(
-      debuff?.averageStacks === 0.5 && debuff.timeCoverage === 75,
+      debuff?.averageStacks === 0.5 && debuff.maxStackCoverage === 75,
       "A shared debuff must report output-action average stacks and elapsed-time coverage.",
     )
     assert(
-      privateDebuff?.averageStacks === 0.5 && privateDebuff.timeCoverage === undefined,
-      "A non-shared debuff must report average stacks without elapsed-time coverage.",
+      privateDebuff?.averageStacks === 0.5 && privateDebuff.maxStackCoverage === undefined,
+      "A non-shared debuff must retain average stacks without maximum-stack coverage.",
     )
     assert(
       !result.metrics.breakdown.buffCoverage.some(row => row.id === "HiddenBuff"),

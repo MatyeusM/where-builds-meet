@@ -815,7 +815,6 @@ function calculateBreakdown(
   actionBreakdowns: Record<string, RotationActionBreakdown>,
   entries: RotationDamageEntry[],
   effectDefinitions: TimelineBuildInput["effectDefinitions"],
-  anchorTime: number,
   duration: number,
   totalDamage: number,
   totalHealing: number,
@@ -834,43 +833,8 @@ function calculateBreakdown(
       return [[entry.id, recipients.self + recipients.teammates] as const]
     }),
   )
-  const debuffTimeCoverage = (id: string) => {
-    if (duration <= 0) return 0
-    const expectedActiveSeconds = timeline[0]?.expectedDebuffUptime?.[id]
-    if (expectedActiveSeconds !== undefined) return Math.min(100, (expectedActiveSeconds / duration) * 100)
-    const windowEnd = anchorTime + duration
-    const intervals: Array<[number, number]> = []
-    const collect = (effects: EffectState) => {
-      const effect = effects.get(id)
-      if (!effect) return
-      const start = Math.max(anchorTime, effect.appliedAt ?? anchorTime)
-      const end = Math.min(windowEnd, effect.expiresAt ?? windowEnd)
-      if (end > start) intervals.push([start, end])
-    }
-    for (const row of timeline) {
-      collect(row.debuffs)
-      Object.values(row.actionStates).forEach(state => collect(state.debuffs))
-    }
-    intervals.sort((left, right) => left[0] - right[0] || left[1] - right[1])
-    let covered = 0
-    let currentStart = 0
-    let currentEnd = 0
-    intervals.forEach(([start, end], index) => {
-      if (index === 0) {
-        currentStart = start
-        currentEnd = end
-        return
-      }
-      if (start <= currentEnd) currentEnd = Math.max(currentEnd, end)
-      else {
-        covered += currentEnd - currentStart
-        currentStart = start
-        currentEnd = end
-      }
-    })
-    if (intervals.length) covered += currentEnd - currentStart
-    return (covered / duration) * 100
-  }
+  const debuffMaxStackCoverage = (id: string) =>
+    duration > 0 ? Math.min(100, ((timeline[0]?.debuffMaxStackSeconds?.[id] ?? 0) / duration) * 100) : 0
   const effectCoverage = (field: "activeBuffStacks" | "activeDebuffStacks") => {
     const isDebuff = field === "activeDebuffStacks"
     return Object.entries(effectDefinitions)
@@ -885,14 +849,14 @@ function calculateBreakdown(
         const averageStacks = outputEntries.length > 0 ? totalStacks / outputEntries.length : 0
         return Object.assign(
           { id, averageStacks },
-          isDebuff && definition.shared === true ? { timeCoverage: debuffTimeCoverage(id) } : {},
+          isDebuff && definition.shared === true ? { maxStackCoverage: debuffMaxStackCoverage(id) } : {},
         )
       })
-      .filter(row => row.averageStacks > 0 || (row.timeCoverage ?? 0) > 0)
+      .filter(row => row.averageStacks > 0 || (row.maxStackCoverage ?? 0) > 0)
       .sort(
         (left, right) =>
           right.averageStacks - left.averageStacks ||
-          (right.timeCoverage ?? 0) - (left.timeCoverage ?? 0) ||
+          (right.maxStackCoverage ?? 0) - (left.maxStackCoverage ?? 0) ||
           left.id.localeCompare(right.id),
       )
   }
@@ -2139,7 +2103,6 @@ export function calculateRotationBaseline(bundle: RotationSimulationBundle): Rot
     actionBreakdowns,
     resolvedSequence.map(({ entry }) => entry),
     bundle.timeline.effectDefinitions,
-    anchorTime,
     duration,
     rawBaselineDamage,
     baselineHealing,

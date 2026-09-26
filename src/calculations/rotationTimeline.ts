@@ -296,8 +296,8 @@ export type TimelineRow = {
   >
   /** Final ledger for the whole timeline. Present only on the first sorted row. */
   timelineResourceSummary?: TimelineResourceSummary
-  /** Expected active seconds during combat, for chance-applied debuffs. */
-  expectedDebuffUptime?: Record<string, number>
+  /** Seconds at maximum stacks during combat, probability-weighted for chance debuffs. */
+  debuffMaxStackSeconds?: Record<string, number>
   skipped?: boolean
   cooldownWait?: number
 }
@@ -426,6 +426,7 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
                 currentHPRatio: calculatedState.currentHPRatio,
                 targetHPRatio: calculatedState.targetHPRatio,
                 resourceRanges: calculatedState.resourceRanges,
+                expectedDebuffStacks: calculatedState.expectedDebuffStacks,
                 buffs: mergeEffectRuntimeState(state.buffs, calculatedState.buffs),
                 debuffs: mergeEffectRuntimeState(state.debuffs, calculatedState.debuffs),
               }
@@ -1485,8 +1486,23 @@ export function buildRotationTimeline(
     }
     refreshUnconditionalDamageEffects()
   }
+  const debuffMaxStackSeconds: Record<string, number> = {}
+  let debuffCoverageTime = 0
+  const advanceDebuffCoverage = (time: number) => {
+    if (battleStartTime >= 0) {
+      const start = Math.max(battleStartTime, debuffCoverageTime)
+      for (const effect of debuffs.values()) {
+        const definition = effectDefinitions[effect.name]
+        if (!definition?.showCoverage || (effect.stack ?? 1) !== (effect.maxStack ?? definition.maxStack ?? 1)) continue
+        const end = Math.min(time, effect.expiresAt ?? time)
+        debuffMaxStackSeconds[effect.name] = (debuffMaxStackSeconds[effect.name] ?? 0) + Math.max(0, end - start)
+      }
+    }
+    debuffCoverageTime = time
+  }
   const setDebuffs = (next: EffectState) => {
     if (next === debuffs) return
+    advanceDebuffCoverage(currentTimelineTime)
     debuffs = prepareTrackedEffects(next)
     trackedEffectMetadata(debuffs)
     refreshUnconditionalDamageEffects()
@@ -1918,7 +1934,7 @@ export function buildRotationTimeline(
       definition: EffectDefinition
       linkedDot?: string
       coverageTime: number
-      activeSeconds: number
+      maxStackSeconds: number
     }
   >()
   const expectedDebuffSnapshot = (time: number, dot?: string) => {
@@ -3627,15 +3643,16 @@ export function buildRotationTimeline(
                 definition,
                 linkedDot,
                 coverageTime: event.time,
-                activeSeconds: 0,
+                maxStackSeconds: 0,
               }
               expectedDebuffs.set(triggerAction.value, expected)
             }
             expected.definition = definition
             if (definition.showCoverage && battleStartTime >= 0)
-              expected.activeSeconds += expected.tracker.activeDuration(
+              expected.maxStackSeconds += expected.tracker.maxStackDuration(
                 Math.max(battleStartTime, expected.coverageTime),
                 event.time,
+                definition.maxStack ?? 1,
               )
             expected.coverageTime = event.time
             expected.tracker.apply(
@@ -4321,15 +4338,23 @@ export function buildRotationTimeline(
   if (sortedRows[0]) {
     sortedRows[0].battleStartTime = battleStartTime
     sortedRows[0].timelineEndTime = timelineEndTime
-    sortedRows[0].expectedDebuffUptime = Object.fromEntries(
-      Array.from(expectedDebuffs)
-        .filter(([, state]) => state.definition.showCoverage)
-        .map(([name, state]) => [
-          name,
-          state.activeSeconds +
-            state.tracker.activeDuration(Math.max(battleStartTime, state.coverageTime), timelineEndTime),
-        ]),
-    )
+    advanceDebuffCoverage(timelineEndTime)
+    sortedRows[0].debuffMaxStackSeconds = {
+      ...debuffMaxStackSeconds,
+      ...Object.fromEntries(
+        Array.from(expectedDebuffs)
+          .filter(([, state]) => state.definition.showCoverage)
+          .map(([name, state]) => [
+            name,
+            state.maxStackSeconds +
+              state.tracker.maxStackDuration(
+                Math.max(battleStartTime, state.coverageTime),
+                timelineEndTime,
+                state.definition.maxStack ?? 1,
+              ),
+          ]),
+      ),
+    }
     const resourceNames = new Set([
       ...Object.keys(initialResources),
       ...Object.keys(resources),

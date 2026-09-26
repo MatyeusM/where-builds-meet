@@ -108,12 +108,13 @@ export class ExpectedPeriodicTracker {
     return probabilities
   }
 
-  /** Expected active seconds until the next application, including intervening expirations. */
-  activeDuration(start: number, end: number) {
+  /** Expected seconds at maximum stacks before the next application or expiration. */
+  maxStackDuration(start: number, end: number, maxStack: number) {
     const from = outcomeBuffTick(start)
     const until = outcomeBuffTick(end)
     let activeTicks = 0
-    this.visitLists(list => {
+    this.visitLists((list, _source, stack) => {
+      if (stack !== maxStack) return
       for (let index = list.head; index >= 0; index = list.next(index))
         activeTicks += list.mass[index] * Math.max(0, Math.min(until, list.expires[index]) - from)
     })

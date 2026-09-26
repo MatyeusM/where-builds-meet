@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import debuffs from "../data/debuff/innerway.json"
 import dots from "../data/dot/innerway.json"
 import way from "../data/innerway/bitter-seasons.json"
+import { withExpectedDebuffPlates } from "../src/application/gameData/skills"
 import { calculateDamageBreakdown } from "../src/calculations/damage"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { ExpectedPeriodicTracker } from "../src/calculations/outcomeTriggeredBuffs"
@@ -10,6 +11,7 @@ import { calculateRotationBaseline, calculateSimulatedRotationRun } from "../src
 import {
   buildRotationTimeline,
   effectsForTrackedEffect,
+  mergeCalculatedTimelineState,
   type TimelineBuildInput,
 } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
@@ -71,11 +73,42 @@ const poisonRows = (input: TimelineBuildInput, roll?: () => number) =>
   buildRotationTimeline(input, roll).filter(row => row.kind === "dot")
 
 describe("Bitter Seasons", () => {
+  it.each([0, 1, 6])("preserves expected debuff badges through the editor timeline merge at tier %s", tier => {
+    const input = inputFor([0, 1, 12], tier)
+    const result = calculateRotationBaseline(bundleFor(input))
+    const structural = buildRotationTimeline(input)
+    for (const row of structural) {
+      for (const state of Object.values(row.actionStates)) delete state.expectedDebuffStacks
+    }
+    const displayed = mergeCalculatedTimelineState(structural, result.timeline)
+    const cast = displayed.find(row => row.id === "rotation-0")!
+    const name = ({ 0: "QingyisCharmT0", 1: "QingyisCharmT1", 6: "QingyisCharmT6" } as Record<number, string>)[tier]
+    const platesAt = (index: number) => {
+      const state = cast.actionStates[index]
+      return withExpectedDebuffPlates(Array.from(state.debuffs.values()), state.expectedDebuffStacks)
+    }
+    expect(platesAt(0).find(effect => effect.name === name)).toBeUndefined()
+    expect(platesAt(1).find(effect => effect.name === name)).toEqual({
+      name,
+      stack: tier === 6 ? 0.15 : 0.1,
+      maxStack: 5,
+      hideRemainingTime: true,
+      averageStackOnly: true,
+    })
+    expect(platesAt(2).find(effect => effect.name === name)).toBeUndefined()
+  })
+
+  it("keeps concrete debuff badges when no expected state replaces them", () => {
+    const effects = [{ name: "QingyisCharmT6", stack: 5, maxStack: 5, persistent: true }]
+    expect(withExpectedDebuffPlates(effects, {})).toEqual(effects)
+    expect(withExpectedDebuffPlates(effects, undefined)).toEqual(effects)
+  })
+
   it("reports expected debuff stacks and uptime, including expiration after the final damage tick", () => {
     const result = calculateRotationBaseline(bundleFor(inputFor([0])))
     const coverage = result.metrics.breakdown.debuffCoverage.find(row => row.id === "QingyisCharmT0")!
-    // One 10% application lasts ten seconds in this twelve-second fight.
-    expect(coverage.timeCoverage).toBeCloseTo((100 * 0.1 * 10) / 12, 10)
+    // One application cannot reach the five-stack maximum.
+    expect(coverage.maxStackCoverage).toBeCloseTo(0, 10)
     // Triggering hit precedes the proc; the five possible DOT output rows each see 0.1 expected stacks.
     expect(coverage.averageStacks).toBeCloseTo(0.5 / 6, 10)
   })
@@ -86,15 +119,35 @@ describe("Bitter Seasons", () => {
     const coverage = calculateRotationBaseline(bundleFor(input)).metrics.breakdown.debuffCoverage.find(
       row => row.id === "QingyisCharmT0",
     )!
-    // P(active): 0.1 for 0–5, 0.19 for 5–10, then 0.1 for 10–12.
-    expect(coverage.timeCoverage).toBeCloseTo((100 * (5 * 0.1 + 5 * 0.19 + 2 * 0.1)) / 12, 10)
+    // Two applications cannot reach maximum stacks, with or without the start anchor.
+    expect(coverage.maxStackCoverage).toBeCloseTo(0, 10)
     input.rotation.start = { step: 0, action: 1 }
     const bundle = bundleFor(input)
     bundle.startAnchor = { rowId: "rotation-0", actionIndex: 1 }
     const anchored = calculateRotationBaseline(bundle).metrics.breakdown.debuffCoverage.find(
       row => row.id === "QingyisCharmT0",
     )!
-    expect(anchored.timeCoverage).toBeCloseTo((100 * (5 * 0.19 + 2 * 0.1)) / 7, 10)
+    expect(anchored.maxStackCoverage).toBeCloseTo(0, 10)
+  })
+
+  it.each([5, 6])("integrates the probability of reaching five stacks from %i simultaneous hits", count => {
+    const input = inputFor(Array(count).fill(0))
+    const probabilityAtMax = count === 5 ? 0.1 ** 5 : 6 * 0.1 ** 5 * 0.9 + 0.1 ** 6
+    const coverage = calculateRotationBaseline(bundleFor(input)).metrics.breakdown.debuffCoverage.find(
+      row => row.id === "QingyisCharmT0",
+    )!
+    expect(coverage.maxStackCoverage).toBeCloseTo((100 * probabilityAtMax * 10) / 12, 12)
+  })
+
+  it("clips maximum-stack probability to the combat window after a partial-stack ramp", () => {
+    const input = inputFor([0, 1, 2, 3, 4])
+    input.skills.Hits.castTime = 6
+    input.rotation.start = { step: 0, action: 2 }
+    const bundle = { ...bundleFor(input), startAnchor: { rowId: "rotation-0", actionIndex: 2 } }
+    const coverage = calculateRotationBaseline(bundle).metrics.breakdown.debuffCoverage.find(
+      row => row.id === "QingyisCharmT0",
+    )!
+    expect(coverage.maxStackCoverage).toBeCloseTo((100 * 0.1 ** 5 * 2) / 4, 12)
   })
 
   it("reports permanent global Bitter Seasons as five stacks and full uptime", () => {
@@ -104,7 +157,7 @@ describe("Bitter Seasons", () => {
       row => row.id === "QingyisCharmT6",
     )!
     expect(coverage.averageStacks).toBe(5)
-    expect(coverage.timeCoverage).toBe(100)
+    expect(coverage.maxStackCoverage).toBe(100)
     input.initialDebuffs = []
     input.skills.Hits.tags = ["DOT"]
     expect(calculateRotationBaseline(bundleFor(input)).metrics.breakdown.debuffCoverage).toEqual([])
