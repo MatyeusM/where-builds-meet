@@ -169,6 +169,15 @@ and `currentWeapon` inspect active timeline state; these are distinct questions.
 Attunement `tags` are ANDed; a nested array is an OR group. `excludeTags` rejects
 matching actions. Use the shared matcher for damage and healing.
 
+A castable skill may hand its damage to `Triggered` component skills, and matching
+runs against the component that actually deals the hit. A component that continues
+its parent's hits must therefore repeat the parent's skill-category tags
+(`Charged`, `Special`, `MartialArt`, `Light`, `Heavy`, `VariedCombo`, `Pursuit`).
+Piercing Dart's seven `PiercingDartSweepN` hits are `Charged` for this reason.
+`MartialArtEffect` marks a separate summoned attack rather than a continuation, so
+it is deliberately exempt; `inheritTags` appends the parent's tags and is the
+alternative to restating them. `tests/attunement.test.ts` enforces both rules.
+
 ### Requirements and dynamic values
 
 Requirement arrays are AND groups. `operator: "or"` supplies alternatives,

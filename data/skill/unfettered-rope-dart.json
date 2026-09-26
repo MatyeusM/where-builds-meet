@@ -644,6 +644,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep1"
     ],
@@ -661,6 +662,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep2"
     ],
@@ -678,6 +680,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep3"
     ],
@@ -695,6 +698,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep4"
     ],
@@ -713,6 +717,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep5"
     ],
@@ -731,6 +736,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep6"
     ],
@@ -749,6 +755,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Charged",
       "PiercingDart",
       "PiercingDartSweep7"
     ],

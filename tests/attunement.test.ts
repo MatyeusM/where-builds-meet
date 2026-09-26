@@ -126,4 +126,88 @@ describe("attunement", () => {
       "Thundercry Charged attunement must exclude Stonebreaker Quake without removing its Charged tag.",
     )
   })
+
+  // A castable skill can hand its damage to triggered component skills. Every tag-gated
+  // boost must reach those components, so the boost follows the hit rather than the button.
+  it("attunement boosts reach triggered damage components", async () => {
+    const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const rope = (await import("../data/skill/unfettered-rope-dart.json")).default
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
+    const enemy = {
+      name: "Attunement probe",
+      level: 96,
+      defense: 0,
+      physicalResistance: 0,
+      bellstrikeResistance: 0,
+      stonesplitResistance: 0,
+      silkbindResistance: 0,
+      bamboocutResistance: 0,
+      judgementResistance: 0,
+    }
+    const bundle = attunement => ({
+      timeline: {
+        rotation: { name: "Unfettered attunement probe", steps: [{ type: "skill", skill: "PiercingDart4Hits" }] },
+        skills: rope,
+        eventDefinitions: {},
+        dots: {},
+        effectDefinitions: {},
+        innerWayConditions: [],
+        innerWayRules: [],
+        setupEffects: [],
+        weapons: ["unfettered"],
+      },
+      startAnchor: { rowId: "rotation-0" },
+      stats,
+      attunement,
+      enemy,
+      derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
+      weapons: ["unfettered"],
+      statPriority: [],
+      attunementPriority: [],
+      innerWayPriority: [],
+      setupComparisons: {},
+    })
+    const sweepIds = new Set(
+      Object.keys(rope).filter(id => (rope[id].action ?? []).some(action => action.type === "damage")),
+    )
+    const sweepTotal = attunement => {
+      const result = calculateRotationBaseline(bundle(attunement))
+      const sweeps = result.timeline.filter(row => row.kind === "trigger" && sweepIds.has(row.step.skill))
+      expect(sweeps).toHaveLength(4)
+      return sweeps.reduce((sum, row) => sum + (result.actionBreakdowns[`${row.id}:0`]?.total ?? 0), 0)
+    }
+    const base = sweepTotal({})
+    const boosted = sweepTotal({ unfetteredChargedBoost: 0.06 })
+    assert(base > 0, "Piercing Dart must deal damage through its triggered sweep components.")
+    expect(boosted / base).toBeCloseTo(1.06, 9)
+  })
+
+  it("triggered damage components inherit their parent's skill categories", async () => {
+    const { allSkillDefinitions } = await import("../src/application/gameData/skills.ts")
+    const skillCategories = ["Charged", "Special", "MartialArt", "Light", "Heavy", "VariedCombo", "Pursuit"]
+    const missing = []
+    for (const [id, skill] of Object.entries(allSkillDefinitions)) {
+      for (const action of skill.action ?? []) {
+        if (action.type !== "trigger" || typeof action.value !== "string") continue
+        const component = allSkillDefinitions[action.value]
+        if (!component) continue
+        const componentTags = component.tags ?? []
+        const dealsDamage = (component.action ?? []).some(entry => entry.type === "damage" || entry.type === "heal")
+        if (!dealsDamage) continue
+        // inheritTags appends the parent's tags, and MartialArtEffect marks a separate
+        // summoned attack that is deliberately not categorised by the skill that raised it.
+        if (action.inheritTags === true || componentTags.includes("MartialArtEffect")) continue
+        const absent = skillCategories.filter(
+          category => (skill.tags ?? []).includes(category) && !componentTags.includes(category),
+        )
+        if (absent.length > 0) missing.push(`${id} -> ${action.value} (${absent.join(", ")})`)
+      }
+    }
+    assert(
+      missing.length === 0,
+      `Triggered damage components must keep their parent's skill categories so tag-gated boosts reach them: ${missing.join("; ")}`,
+    )
+  })
 })
