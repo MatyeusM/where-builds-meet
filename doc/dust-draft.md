@@ -144,11 +144,9 @@ Tang Melody effects are crit-based rather than direct multipliers.
 
 ## Still missing
 
-- **Dreamwrought Bubbles:** the 0.743 s charge and both release markers are
-  measured; the phantom lifetime and summon behavior follow Phantom Rally.
-- **Phantom Rally:** the summon cadence, the single-phantom lifetime, and
-  Resonance are implemented; see [Phantom Umbrella](#phantom-umbrella-and-resonance)
-  scheduling remain unresolved.
+- **Dreamwrought Bubbles evidence:** the charge and release split is implemented,
+  but the 0.743 s charge is a user-supplied value. The datamine explicitly
+  excludes charge timing, so it is an assumption rather than a measurement.
 - **Scarlet Spin flight detail:** the source stage hit and next-start markers
   are recorded, but exact projectile flight and alternate animation routing
   are not independently measured. The implementation uses the source
@@ -188,7 +186,7 @@ Soul Loss, which is applied immediately after its corresponding hit.
 | -------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
 | Soul Sweep           | Three damage timestamps at 0                                    | 1.75 s, source interrupt                                    |
 | Piercing Dart        | Measured seven-hit marker series; four-hit release truncates it | 1.967 s full, 1.017 s interrupted release                   |
-| Burn and Bury        | Finger snap at 0                                                | 0.65 s, source interrupt                                    |
+| Burn and Bury        | Finger snap at 0.53 s, inside the 0.65 s cast                   | 0.65 s, source interrupt                                    |
 | Scarlet Spin         | Four source stage markers; duration input controls the chain    | User-entered, capped at 12 s                                |
 | Dreamwrought Bubbles | Charge and release split into sub-actions                       | 0.743 s charge + 1.2 s release; Delicate removes the charge |
 
