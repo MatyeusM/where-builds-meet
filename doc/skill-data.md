@@ -474,8 +474,12 @@ Take Damage is an independent timed event. A manually authored event with zero
 damage still dispatches defensive responses and Take Damage effects even though
 it removes no HP. Target HP is depleted only when the rotation supplies maximum
 `targetHP`; otherwise it stays at the implicit state unless explicitly set. Qi
-depletion is authored rather than calculated. Move events use nonnegative
-whole-meter distances, including zero meters. Initial distance is one meter.
+depletion is authored rather than calculated. A preset's Qi events read as repeating
+ramps of `0.5999`, `0.3999`, `0`; the `0` event applies Exhausted, and its expiry is
+the only thing that refills the meter, so a following ramp restarts one Exhausted
+duration after the previous `0`. A rotation may stop its last ramp early, but every
+authored event must fall inside the fight. Move events use nonnegative whole-meter
+distances, including zero meters. Initial distance is one meter.
 
 Preset `martialArts` controls eligibility. Presets remain immutable; editor
 changes and imports produce custom records. Skill overrides replace records in

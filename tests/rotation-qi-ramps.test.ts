@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import paths from "../data/path.json"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
+import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { probeLoad } from "./helpers/probe-loader"
 
 describe("preset Qi event attachments", () => {
@@ -107,6 +108,48 @@ describe("preset Qi event attachments", () => {
         qiRows.some(row => row.id === `rotation-${index}`),
         `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${attachment.action} must retain its Qi event`,
       ).toBe(true)
+    }
+  })
+})
+
+describe("preset Qi ramp coverage", () => {
+  // The meter only ever moves where the rotation says so, so a preset's events have
+  // to read as a repeating descent: 0.5999 then 0.3999 then the 0 that applies
+  // Exhausted, whose expiry is what refills the meter for the next ramp. Values off
+  // this cycle silently skew every target-Qi requirement that data gates on.
+  const RAMP = [0.5999, 0.3999, 0]
+
+  it("descends each preset's meter in 0.5999 / 0.3999 / 0 ramps that land inside the fight", async () => {
+    const cases = await loadDpsSnapshotFixtures()
+    expect(cases.length).toBeGreaterThan(0)
+    for (const { id, pathId, rotation, fixture } of cases) {
+      const bundle = buildPresetRotationBundle(
+        { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {} },
+        fixture.build,
+      )
+      expect(bundle, `${id}: failed to build the production calculation bundle.`).toBeDefined()
+      const timeline = buildRotationTimeline(bundle!.timeline)
+      const battleStart = timeline.find(row => row.battleStartTime !== undefined)?.battleStartTime ?? 0
+      const battleEnd = timeline.find(row => row.step.type === "event" && row.step.event === "BattleEnd")?.startTime
+      expect(battleEnd, `${id}: a measured preset needs a Battle End cutoff.`).toBeDefined()
+      const window = battleEnd! - battleStart
+      const rows = timeline
+        .filter(row => row.step.type === "event" && row.step.event === "Qi" && !row.skipped)
+        .sort((left, right) => left.startTime - right.startTime)
+        .map(row => ({ ratio: (row.step as { targetQiRatio: number }).targetQiRatio, at: row.startTime - battleStart }))
+      expect(rows.length, `${id}: the first ramp is ${RAMP.join(" / ")} and must be complete.`).toBeGreaterThanOrEqual(
+        RAMP.length,
+      )
+      expect(
+        rows.slice(0, RAMP.length).map(row => row.ratio),
+        `${id}: the first ramp is ${RAMP.join(" / ")}.`,
+      ).toEqual(RAMP)
+      rows.forEach((row, index) => {
+        const ratio = RAMP[index % RAMP.length]
+        expect(row.ratio, `${id}: Qi event ${index} must be ${ratio}.`).toBe(ratio)
+        // An event at or past the cutoff can never fire, so it is dead data.
+        expect(row.at, `${id}: Qi event ${index} falls outside the fight.`).toBeLessThan(window)
+      })
     }
   })
 })
