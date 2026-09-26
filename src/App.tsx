@@ -5,6 +5,7 @@ import { settingsForPath } from "./application/characterComposition"
 import { calculateGlobalStatState } from "./application/characterComposition"
 import type { CalculatorSettings, LayoutMode, PathId, SetupSelections } from "./application/contracts"
 import { martialArtDefinitions } from "./application/gameData/martialArts"
+import { pathIcons } from "./application/gameData/pathIcons"
 import {
   defaultBuildIdForPath,
   defaultRotationIdForPath,
@@ -23,16 +24,6 @@ import { loadStatOverrides } from "./application/persistence/stats"
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
-import delugeIcon from "./assets/path-icons/deluge.png?w=56&h=56&format=webp"
-import draughtIcon from "./assets/path-icons/draught.png?w=56&h=56&format=webp"
-import dustIcon from "./assets/path-icons/dust.png?w=56&h=56&format=webp"
-import jadeIcon from "./assets/path-icons/jade.png?w=56&h=56&format=webp"
-import kiteIcon from "./assets/path-icons/kite.png?w=56&h=56&format=webp"
-import mightIcon from "./assets/path-icons/might.png?w=56&h=56&format=webp"
-import splendorIcon from "./assets/path-icons/splendor.png?w=56&h=56&format=webp"
-import strengthIcon from "./assets/path-icons/strength.png?w=56&h=56&format=webp"
-import umbraIcon from "./assets/path-icons/umbra.png?w=56&h=56&format=webp"
-import windIcon from "./assets/path-icons/wind.png?w=56&h=56&format=webp"
 import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats"
 import { type AttunementStats } from "./calculations/damage"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
@@ -119,19 +110,6 @@ import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
-
-const pathIconSources: Record<string, string> = {
-  "deluge.png": delugeIcon,
-  "draught.png": draughtIcon,
-  "dust.png": dustIcon,
-  "jade.png": jadeIcon,
-  "kite.png": kiteIcon,
-  "might.png": mightIcon,
-  "splendor.png": splendorIcon,
-  "strength.png": strengthIcon,
-  "umbra.png": umbraIcon,
-  "wind.png": windIcon,
-}
 
 const tabSuspenseFallback = <div className="viewport-tab-content" />
 
@@ -510,22 +488,25 @@ export default function App() {
           <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
           <section className="path-selector" aria-label={t("ui.app.combatPath")}>
             <div className="path-selector-options">
-              {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(([value, definition]) => (
-                <button
-                  className={pathId === value ? "selected" : ""}
-                  type="button"
-                  key={value}
-                  aria-pressed={pathId === value}
-                  disabled={pathRequiresDev(definition) && !devMode}
-                  onClick={() => selectPath(value)}
-                >
-                  {definition.icon && <img src={pathIconSources[definition.icon]} alt="" />}
-                  <span>{gameText(definition.name)}</span>
-                  {definition.status !== "available" && (
-                    <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
-                  )}
-                </button>
-              ))}
+              {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(([value, definition]) => {
+                const icon = pathIcons[value]
+                return (
+                  <button
+                    className={pathId === value ? "selected" : ""}
+                    type="button"
+                    key={value}
+                    aria-pressed={pathId === value}
+                    disabled={pathRequiresDev(definition) && !devMode}
+                    onClick={() => selectPath(value)}
+                  >
+                    {icon && <img src={icon} alt="" />}
+                    <span>{gameText(definition.name)}</span>
+                    {definition.status !== "available" && (
+                      <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </section>
         </div>
