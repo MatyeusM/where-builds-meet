@@ -151,7 +151,6 @@ Tang Melody effects are crit-based rather than direct multipliers.
   are recorded, but exact projectile flight and alternate animation routing
   are not independently measured. The implementation uses the source
   `1 / 1.3` accelerated-flight ratio and its Stage 4 placement.
-- **Other effects:** Tenacity damage.
 - **Draft interpretation:** the middle “break” is now a real Qi event rather than
   a readable-rotation annotation. It anchors to the intended sixth throw of the
   second Scarlet Spin, which is where the target exhausts. The duration-controlled
@@ -160,8 +159,9 @@ Tang Melody effects are crit-based rather than direct multipliers.
 
 Fading Crimson and Tokens of Gratitude are **intentionally ignored** by user
 instruction. Do not add resource requirements, costs, refunds, or regeneration.
-They are not blockers for this draft. Song of Tang HP drain is also intentionally
-ignored.
+They are not blockers for this draft. Song of Tang HP drain and Tenacity damage
+are also intentionally ignored; Tenacity is an out-of-scope effect rather than a
+gap, so it is not tracked as missing work.
 
 Fragrant Song's source text says the next accelerated flight is 30% faster and
 that pressing the skill during that flight guarantees a Perfect Catch. The
