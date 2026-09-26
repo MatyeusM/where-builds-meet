@@ -18,8 +18,14 @@ import mystic from "../data/skill/mystic.json"
 import rope from "../data/skill/unfettered-rope-dart.json"
 import draft from "../doc/drafts/dust-1-min.json"
 import { innerWayConditionsFor, innerWayEffectRulesFor } from "../src/application/characterComposition"
+import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
-import { type InnerWayEffectRule, type EditableObject } from "../src/calculations/rotationTimeline"
+import {
+  buildRotationTimeline,
+  TIMELINE_TIME_EPSILON,
+  type InnerWayEffectRule,
+  type EditableObject,
+} from "../src/calculations/rotationTimeline"
 import type { RotationRecord, RotationStep, TimelineRow } from "../src/calculations/rotationTimeline"
 import { martialArtEffectsForRank } from "../src/data/martialArtTalents"
 import { emptyStats } from "../src/data/statDefinitions"
@@ -403,6 +409,67 @@ describe("Dust WIP mechanics", () => {
       expect(row.actionStates[3].distance).toBe(1)
     }
   })
+  it("exhausts on the sixth Scarlet Spin throw of the second cast, with a proportional second ramp", () => {
+    // Qi steps are authored at absolute times, so the engine honouring them proves
+    // nothing about the values. What has to hold is the moment they were authored
+    // for, which is only meaningful against the path's real build.
+    const [pathId, path] = Object.entries(pathData).find(([, entry]) => entry.buildGroup === "bamboocut-dust")!
+    const bundleFor = buildPresetRotationBundle(
+      {
+        pathId,
+        martialArts: path.lockedWeapons,
+        rotation: defaultDustRotation,
+        breakthrough: "17",
+        food: "SimmeringFishSlices",
+        divinecraft: "Fire",
+        script: "None",
+        skillOverrides: {},
+        globalDebuffs: {
+          phantomChime: false,
+          qiImbalance: false,
+          soulShaken: false,
+          vulnerable: false,
+          fearfulBlade: false,
+          qingyisCharm: "none",
+          floatingGrace: "none",
+        },
+      },
+      path.defaultBuild,
+    )
+    expect(bundleFor).toBeDefined()
+    const timeline = buildRotationTimeline(bundleFor!.timeline)
+    const battleStart = timeline.find(row => row.battleStartTime !== undefined)?.battleStartTime ?? 0
+    const spins = timeline.filter(row => row.kind === "rotation" && row.step.skill === "ScarletSpin")
+    const sixthOfSecondCast = timeline.filter(
+      row => row.kind === "trigger" && isThrow(row) && row.sourceRowId === spins[1].id,
+    )[5]
+    const forwardHit = sixthOfSecondCast.startTime + Number(sixthOfSecondCast.actions[1].time)
+    const qiRows = timeline
+      .filter(row => row.step.type === "event" && row.step.event === "Qi")
+      .sort((left, right) => left.startTime - right.startTime)
+
+    expect(qiRows.map(row => (row.step as { targetQiRatio: number }).targetQiRatio)).toEqual([
+      0.5999, 0.3999, 0, 0.5999, 0.3999,
+    ])
+    // The exhaust is the third step, and it must coincide with the forward hit.
+    const exhaust = qiRows[2]
+    expect(Math.abs(exhaust.startTime - forwardHit)).toBeLessThan(TIMELINE_TIME_EPSILON)
+    // That hit is therefore resolved against an exhausted target.
+    expect(sixthOfSecondCast.actionStates[1]?.debuffs.has("Exhausted")).toBe(true)
+    // The window closes one Exhausted duration later, and the second ramp restarts
+    // from there, reusing the first ramp's spacing.
+    const expiry = [...timeline]
+      .flatMap(row => Object.values(row.actionStates ?? {}))
+      .map(state => state.debuffs.get("Exhausted")?.expiresAt)
+      .find(value => value !== undefined)!
+    const firstRampOffsets = qiRows.slice(0, 3).map(row => row.startTime - battleStart)
+    const secondRampOffsets = qiRows.slice(3).map(row => row.startTime - expiry)
+    secondRampOffsets.forEach((offset, index) => expect(offset).toBeCloseTo(firstRampOffsets[index], 6))
+    // The second ramp deliberately stops short of a second exhaust: mirroring the
+    // full first span would place it past BattleEnd, where it could never fire.
+    expect(qiRows).toHaveLength(5)
+  })
+
   it("registers the Dust Dummy 1 Min rotation as the path default", () => {
     expect(pathData.bamboocutDust.defaultRotation).toBe("dust-dummy-1-min")
     expect(defaultDustRotation.name).toBe("Dummy 1 min")

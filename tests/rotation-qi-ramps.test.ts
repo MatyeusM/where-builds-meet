@@ -19,6 +19,7 @@ describe("preset Qi event attachments", () => {
     "/data/rotation/stonesplit-might/dummy-1-min.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json",
+    "/data/rotation/bamboocut-dust/dust-dummy-1-min.json",
   ]
   it.each(rotationPaths)("resolves authored Qi attachments using production inputs: %s", async rotationPath => {
     const rotation = (await probeLoad(rotationPath)).default
@@ -47,11 +48,23 @@ describe("preset Qi event attachments", () => {
     )
     expect(bundle).toBeDefined()
     const timeline = buildRotationTimeline(bundle!.timeline)
+    const battleStart = timeline.find(row => row.battleStartTime !== undefined)?.battleStartTime ?? 0
     const qiRows = timeline.filter(row => row.step.type === "event" && row.step.event === "Qi")
     expect(qiRows.length).toBeGreaterThan(0)
     for (const row of qiRows) {
-      const attachment = row.step.before ?? row.step.after
-      expect(attachment).toBeDefined()
+      const setIndex = row.actions.findIndex(action => action.type === "setQi")
+      expect(setIndex).toBeGreaterThanOrEqual(0)
+      const nextState = row.actionStates[setIndex + 1]
+      expect(nextState).toBeDefined()
+      expect(nextState.targetQiRatio).toBeCloseTo(row.step.targetQiRatio, 8)
+    }
+    // An attached Qi step must land on the action it names. A fixed-time Qi step
+    // carries no attachment and instead lands at its authored battle time, offset
+    // by when the battle actually started.
+    const attachedQiRows = qiRows.filter(row => (row.step.before ?? row.step.after) !== undefined)
+    const fixedTimeQiRows = qiRows.filter(row => (row.step.before ?? row.step.after) === undefined)
+    for (const row of attachedQiRows) {
+      const attachment = row.step.before ?? row.step.after!
       const source = timeline.find(candidate => candidate.id === row.sourceRowId)!
       expect(source).toBeDefined()
       const trigger =
@@ -72,16 +85,17 @@ describe("preset Qi event attachments", () => {
       const expectedTime =
         target!.startTime + (attachment.action === "start" ? 0 : Number(target!.actions[attachment.action].time ?? 0))
       expect(row.startTime).toBeCloseTo(expectedTime, 8)
-      const setIndex = row.actions.findIndex(action => action.type === "setQi")
-      expect(setIndex).toBeGreaterThanOrEqual(0)
-      const nextState = row.actionStates[setIndex + 1]
-      expect(nextState).toBeDefined()
-      expect(nextState.targetQiRatio).toBeCloseTo(row.step.targetQiRatio, 8)
+    }
+    for (const row of fixedTimeQiRows) {
+      expect(typeof row.step.startTime).toBe("number")
+      expect(row.startTime).toBeCloseTo(battleStart + Number(row.step.startTime), 8)
     }
     // Every attachment to an executed in-window action must resolve, irrespective of preset ramp counts.
     for (const [index, step] of rotation.steps.entries()) {
       if (step.type !== "event" || step.event !== "Qi") continue
       const attachment = step.before ?? step.after
+      // Fixed-time steps are positioned by their authored time, not by an anchor.
+      if (!attachment) continue
       const nextIndex = rotation.steps.findIndex(
         (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
       )
