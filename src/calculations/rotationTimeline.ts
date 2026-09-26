@@ -211,6 +211,7 @@ export type TrackedEffect = {
   unconditionalDamageEffects?: UnconditionalDamageEffects
   perHitEffectRules?: unknown[]
 }
+export type ExpectedEffectDistribution = Array<{ probability: number; effects: EditableObject[] }>
 export type ResourceState = Record<string, number>
 export type ResolvedHealingState = { self: number[]; teammateOverhealContributions: number[] }
 export type ResourceRangeState = Record<string, { minimum: number; maximum: number; expected?: number }>
@@ -289,10 +290,14 @@ export type TimelineRow = {
       currentMartialArt?: WeaponId
       currentWeapon?: WeaponFamily
       unconditionalDamageEffects?: UnconditionalDamageEffects
+      expectedEffects?: ExpectedEffectDistribution[]
+      expectedDebuffStacks?: Record<string, number>
     }
   >
   /** Final ledger for the whole timeline. Present only on the first sorted row. */
   timelineResourceSummary?: TimelineResourceSummary
+  /** Expected active seconds during combat, for chance-applied debuffs. */
+  expectedDebuffUptime?: Record<string, number>
   skipped?: boolean
   cooldownWait?: number
 }
@@ -1906,6 +1911,47 @@ export function buildRotationTimeline(
     expirationAfter?: number
   }
   const activePeriodicEffects: Record<string, ActivePeriodicEffect> = {}
+  const expectedDebuffs = new Map<
+    string,
+    {
+      tracker: ExpectedPeriodicTracker
+      definition: EffectDefinition
+      linkedDot?: string
+      coverageTime: number
+      activeSeconds: number
+    }
+  >()
+  const expectedDebuffSnapshot = (time: number, dot?: string) => {
+    const expectedEffects: ExpectedEffectDistribution[] = []
+    const expectedDebuffStacks: Record<string, number> = {}
+    for (const [name, { tracker, definition, linkedDot }] of expectedDebuffs) {
+      if (debuffs.get(name)?.persistent) continue
+      const probabilities =
+        dot && dot === linkedDot ? tracker.tickStackProbabilities(time) : tracker.stackProbabilities(time)
+      const distribution = probabilities.flatMap((probability, stack) =>
+        probability > 0
+          ? [
+              {
+                probability,
+                effects:
+                  stack === 0
+                    ? []
+                    : effectsForTrackedEffect(stack, definition).map(
+                        rule => (rule as { effect: EditableObject }).effect,
+                      ),
+              },
+            ]
+          : [],
+      )
+      if (distribution.length) expectedEffects.push(distribution)
+      if (definition.showCoverage)
+        expectedDebuffStacks[name] = tracker
+          .stackProbabilities(time)
+          .reduce((total, probability, stack) => total + probability * stack, 0)
+    }
+    return { expectedEffects, expectedDebuffStacks }
+  }
+
   const expirationScheduleIds = new Map<string, number>()
   const procOccurrences = new Map<string, number>()
   const periodicEffectKey = (target: "self" | "target" | "player", name: string, playerRecipientIndex?: number) =>
@@ -2514,6 +2560,9 @@ export function buildRotationTimeline(
           pattern,
         })
     }
+    for (const { tracker, linkedDot } of expectedDebuffs.values())
+      if (linkedDot && effectDefinitions[linkedDot]?.periodic?.expectedTickAlignment === "battle")
+        tracker.startBattle(time)
     for (const [key, active] of Object.entries(activePeriodicEffects)) {
       if (active.definition.periodic?.expectedTickAlignment !== "battle" || procRoll) continue
       const name = key.split(":")[1]
@@ -3066,6 +3115,10 @@ export function buildRotationTimeline(
         currentMartialArt: requirementState().currentMartialArt,
         currentWeapon: requirementState().currentWeapon,
         unconditionalDamageEffects,
+        ...expectedDebuffSnapshot(
+          event.time,
+          event.row.kind === "dot" && event.row.step.type === "skill" ? event.row.step.skill : undefined,
+        ),
       }
     const skillTags = event.row.actionSkillTags?.[event.actionIndex ?? -1] ?? event.row.skill?.tags ?? []
     const resolutionKey = actionResolutionKey(event.row, event.actionIndex ?? -1)
@@ -3446,7 +3499,34 @@ export function buildRotationTimeline(
         definition: definition.recording,
       })
     }
-    const applyTriggerAction = (triggerAction: EditableObject, triggerSource: "setup" | "innerWay") => {
+    const applyTriggerAction = (
+      triggerAction: EditableObject,
+      triggerSource: "setup" | "innerWay",
+      linkedDot?: string,
+    ) => {
+      // Multiple applications share one proc roll; expected mode retains each marginal distribution.
+      if (triggerAction.type === "apply" && Array.isArray(triggerAction.value)) {
+        const chance = resolveActionChance(triggerAction.chance)
+        if (chance <= 0) return
+        if (procRoll) {
+          const key = `group:${event.row.sourceRowId ?? event.row.id}:${event.actionIndex}:${triggerSource}:${triggerAction.value.join(",")}`
+          const occurrence = procOccurrences.get(key) ?? 0
+          procOccurrences.set(key, occurrence + 1)
+          if (procRoll(`${key}:${occurrence}`) >= chance) return
+        }
+        const groupDot = triggerAction.value.find(value => typeof value === "string" && dots[value]) as
+          | string
+          | undefined
+        for (const value of triggerAction.value) {
+          if (typeof value !== "string") throw new Error("Grouped applications require effect IDs.")
+          applyTriggerAction(
+            { ...triggerAction, value, chance: procRoll ? undefined : chance },
+            triggerSource,
+            groupDot,
+          )
+        }
+        return
+      }
       const hitProbability = typeof action.hitProbability === "number" ? action.hitProbability : 1
       if (triggerAction.type === "addResource" && typeof triggerAction.amount === "number" && hitProbability !== 1)
         triggerAction = { ...triggerAction, amount: triggerAction.amount * hitProbability }
@@ -3518,6 +3598,56 @@ export function buildRotationTimeline(
           if (procRoll(`${key}:${occurrence}`) >= chance) return
         } else {
           const periodic = definition.periodic
+          if (!periodic && triggerAction.target === "target" && duration && definition.refresh !== false) {
+            if (targetEffects.get(triggerAction.value)?.persistent) return
+            const stackRules = definition.stackEffects?.flat() ?? definition.effect ?? []
+            if (
+              definition.action?.length ||
+              stackRules.some(
+                rule => !rule || typeof rule !== "object" || Object.keys(rule).some(key => key !== "effect"),
+              )
+            )
+              throw new Error("Chance debuffs support unconditional damage effects only.")
+            let expected = expectedDebuffs.get(triggerAction.value)
+            if (!expected) {
+              const dot = linkedDot ? effectDefinitions[linkedDot] : undefined
+              const periodic = dot?.periodic
+              let tickOrigin: number | null | undefined = linkedDot ? undefined : null
+              if (periodic?.expectedTickAlignment === "battle")
+                tickOrigin = battleStartTime < 0 ? null : battleStartTime
+              expected = {
+                tracker: new ExpectedPeriodicTracker(
+                  periodic?.interval ?? 1,
+                  periodic?.firstTick ?? periodic?.interval ?? 1,
+                  tickOrigin,
+                  input.expectedPeriodicStorage,
+                  periodic?.tickOnExpire !== false,
+                  dot?.duration,
+                ),
+                definition,
+                linkedDot,
+                coverageTime: event.time,
+                activeSeconds: 0,
+              }
+              expectedDebuffs.set(triggerAction.value, expected)
+            }
+            expected.definition = definition
+            if (definition.showCoverage && battleStartTime >= 0)
+              expected.activeSeconds += expected.tracker.activeDuration(
+                Math.max(battleStartTime, expected.coverageTime),
+                event.time,
+              )
+            expected.coverageTime = event.time
+            expected.tracker.apply(
+              event.time,
+              chance * hitProbability,
+              duration,
+              definition.maxStack ?? 1,
+              baseStack,
+              triggerAction.value,
+            )
+            return
+          }
           if (
             event.row.kind === "dot" ||
             !dots[triggerAction.value] ||
@@ -3541,6 +3671,7 @@ export function buildRotationTimeline(
             periodic.firstTick ?? periodic.interval,
             periodic.expectedTickAlignment === "battle" ? (battleStartTime < 0 ? null : battleStartTime) : undefined,
             input.expectedPeriodicStorage,
+            periodic.tickOnExpire !== false,
           )
           const emittedBranch = `threshold-${nextDerivedOrder++}`
           const thresholdProbability = activeEffect.expected.apply(
@@ -4190,6 +4321,15 @@ export function buildRotationTimeline(
   if (sortedRows[0]) {
     sortedRows[0].battleStartTime = battleStartTime
     sortedRows[0].timelineEndTime = timelineEndTime
+    sortedRows[0].expectedDebuffUptime = Object.fromEntries(
+      Array.from(expectedDebuffs)
+        .filter(([, state]) => state.definition.showCoverage)
+        .map(([name, state]) => [
+          name,
+          state.activeSeconds +
+            state.tracker.activeDuration(Math.max(battleStartTime, state.coverageTime), timelineEndTime),
+        ]),
+    )
     const resourceNames = new Set([
       ...Object.keys(initialResources),
       ...Object.keys(resources),

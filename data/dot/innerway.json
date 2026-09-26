@@ -16,5 +16,20 @@
     },
     "modifier": [],
     "tags": ["DOT"]
+  },
+  "QingyisPoison": {
+    "name": "Qingyi's Poison",
+    "damageGroup": { "id": "BitterSeasons", "name": "Bitter Seasons" },
+    "duration": 5,
+    "maxStack": 5,
+    "refresh": true,
+    "periodic": {
+      "interval": 1,
+      "resetOnRefresh": false,
+      "action": [{ "type": "damage", "phyCoef": 0.02, "time": 0 }],
+      "expectedTickAlignment": "battle"
+    },
+    "modifier": [],
+    "tags": ["DOT"]
   }
 }

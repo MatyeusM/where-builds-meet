@@ -836,6 +836,8 @@ function calculateBreakdown(
   )
   const debuffTimeCoverage = (id: string) => {
     if (duration <= 0) return 0
+    const expectedActiveSeconds = timeline[0]?.expectedDebuffUptime?.[id]
+    if (expectedActiveSeconds !== undefined) return Math.min(100, (expectedActiveSeconds / duration) * 100)
     const windowEnd = anchorTime + duration
     const intervals: Array<[number, number]> = []
     const collect = (effects: EffectState) => {
@@ -1799,6 +1801,7 @@ function createTimelineEntryBuilder(
       currentHPRatio: actionState.currentHPRatio,
       targetHPRatio: actionState.targetHPRatio,
       isDot: row.kind === "dot",
+      expectedEffects: "expectedEffects" in actionState ? actionState.expectedEffects : undefined,
     }
     const attributionContexts =
       collectAttribution && action.type === "damage"
@@ -1832,7 +1835,10 @@ function createTimelineEntryBuilder(
         timelineOrder: actionOrder,
         sourceRowId: row.sourceRowId ?? row.id,
         activeBuffStacks: trackedEffectMetadata(buffs).stacks,
-        activeDebuffStacks: trackedEffectMetadata(debuffs).stacks,
+        activeDebuffStacks: {
+          ...trackedEffectMetadata(debuffs).stacks,
+          ...("expectedDebuffStacks" in actionState ? actionState.expectedDebuffStacks : {}),
+        },
         ...(hawkwing ? { hawkwing } : {}),
         ...(insightfulStrike ? { insightfulStrike } : {}),
         ...(seasonalEdge

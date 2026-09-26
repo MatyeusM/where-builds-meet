@@ -293,6 +293,7 @@ data.divinecraft.WaterFire.description,HP DMG +1.4%. Healing grants 1 Vitality w
 data.divinecraft.WaterFire.name,Water-Fire,水火,,,심연,,,,,,,
 data.divinecraft.WaterPoison.description,"HP DMG +1%, Qi DMG +4%, and healing grants 1 Vitality with a 3s cooldown.",氣血傷害 +1%，真氣傷害 +4%；治療時獲得 1 點耐力，冷卻 3 秒。,,,"기혈 피해 +1%, 진기 피해 +4%. 치유 시 원기 1 회복 (재사용 대기시간 3초).",,,,,,,
 data.divinecraft.WaterPoison.name,Water-Poison,水毒,,,창해,,,,,,,
+data.dot.innerway.QingyisPoison.name,Qingyi's Poison,,,,,,,,,,,
 data.dot.innerway.WeepingBlood.name,Weeping Blood,泣血,,,,,,,,,,
 data.dot.mystic.Combustion.name,Combustion,爆燃,,,폭연,,,,,,,
 data.dot.mystic.Combustion.shortName,Com,燃,,,폭연,,,,,,,

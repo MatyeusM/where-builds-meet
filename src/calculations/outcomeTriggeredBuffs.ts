@@ -44,6 +44,9 @@ export class ExpectedPeriodicTracker {
   private readonly createList: () => PeriodicStateList
   private readonly interval: number
   private readonly firstTick: number
+  private readonly tickOnExpire: boolean
+  private readonly periodicDuration?: number
+  private periodicExpiryOffset = 0
   private tickOrigin?: number | null
 
   constructor(
@@ -51,7 +54,11 @@ export class ExpectedPeriodicTracker {
     firstTick: number,
     tickOrigin?: number | null,
     storage: PeriodicStateStorage = "indexed",
+    tickOnExpire = false,
+    periodicDuration?: number,
   ) {
+    this.periodicDuration = periodicDuration
+    this.tickOnExpire = tickOnExpire
     this.interval = interval
     this.firstTick = firstTick
     this.tickOrigin = tickOrigin
@@ -84,6 +91,68 @@ export class ExpectedPeriodicTracker {
           const list = stacks[stack]
           if (list?.size) visit(list, source, stack)
         }
+  }
+
+  /** Marginal stack probabilities for a refreshing, finite-duration effect. */
+  stackProbabilities(time: number) {
+    const now = outcomeBuffTick(time)
+    const probabilities: number[] = [1]
+    this.visitLists((list, _source, stack) => {
+      for (let index = list.head; index >= 0; index = list.next(index)) {
+        if (list.expires[index] <= now) continue
+        probabilities[stack] = (probabilities[stack] ?? 0) + list.mass[index]
+        probabilities[0] -= list.mass[index]
+      }
+    })
+    probabilities[0] = Math.max(0, probabilities[0])
+    return probabilities
+  }
+
+  /** Expected active seconds until the next application, including intervening expirations. */
+  activeDuration(start: number, end: number) {
+    const from = outcomeBuffTick(start)
+    const until = outcomeBuffTick(end)
+    let activeTicks = 0
+    this.visitLists(list => {
+      for (let index = list.head; index >= 0; index = list.next(index))
+        activeTicks += list.mass[index] * Math.max(0, Math.min(until, list.expires[index]) - from)
+    })
+    return activeTicks / OUTCOME_BUFF_TICKS_PER_SECOND
+  }
+
+  /** Joint tick/stack weights, normalized to the condition that this linked DOT ticks. */
+  tickStackProbabilities(time: number) {
+    const tick = outcomeBuffTick(time)
+    const interval = outcomeBuffTick(this.interval)
+    const probabilities: number[] = []
+    let total = 0
+    if (this.tickOrigin === null) return probabilities
+    if (
+      this.tickOrigin !== undefined &&
+      (this.sharedTick === undefined ||
+        tick < this.sharedTick ||
+        (tick - outcomeBuffTick(this.tickOrigin)) % interval !== 0)
+    )
+      return probabilities
+    this.visitLists((list, _source, stack) => {
+      for (let index = list.head; index >= 0; index = list.next(index)) {
+        if (!this.tickBeforeExpiry(tick, list.expires[index] - this.periodicExpiryOffset)) continue
+        let mass = 0
+        if (this.tickOrigin !== undefined)
+          mass = list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0)
+        else
+          for (const [next, weight] of list.cadences[index] ?? []) {
+            if (tick >= next && (tick - next) % interval === 0) mass += weight
+          }
+        probabilities[stack] = (probabilities[stack] ?? 0) + mass
+        total += mass
+      }
+    })
+    return total > 0 ? probabilities.map(probability => probability / total) : []
+  }
+
+  private tickBeforeExpiry(tick: number, expiry: number) {
+    return this.tickOnExpire ? tick <= expiry : tick < expiry
   }
 
   get stateCount() {
@@ -129,6 +198,8 @@ export class ExpectedPeriodicTracker {
       this.advanceSharedTick(origin + Math.max(1, Math.ceil((now - origin) / interval)) * interval)
     }
     const expiry = now + outcomeBuffTick(duration)
+    this.periodicExpiryOffset =
+      this.periodicDuration === undefined ? 0 : outcomeBuffTick(duration - this.periodicDuration)
     const affected = onlyBranch === undefined ? [...this.branches.values()] : [this.branches.get(onlyBranch)]
     let thresholdProbability = 0
     for (const partition of affected) {
@@ -155,9 +226,17 @@ export class ExpectedPeriodicTracker {
           list.retain(index => {
             const mass = list.mass[index]
             gained += mass * chance
-            pending += list.pending[index] * chance
+            // A linked DOT can have expired while its longer debuff still has stacks.
+            // Reapplication at the unprocessed boundary must wait for the next tick.
+            const startsFreshTick = now === this.sharedTick && list.expires[index] - this.periodicExpiryOffset <= now
+            pending += (startsFreshTick ? mass : list.pending[index]) * chance
             const times = list.cadences[index]
-            if (cadence && times) this.accumulateCadences(cadence, times, chance, now)
+            if (cadence && times) {
+              if (list.expires[index] - this.periodicExpiryOffset <= now) {
+                const next = now + outcomeBuffTick(this.firstTick)
+                cadence.set(next, (cadence.get(next) ?? 0) + mass * chance)
+              } else this.accumulateCadences(cadence, times, chance, now)
+            }
             list.mass[index] = mass * (1 - chance)
             list.pending[index] *= 1 - chance
             if (times) for (const [tick, value] of times) times.set(tick, value * (1 - chance))
@@ -324,7 +403,7 @@ export class ExpectedPeriodicTracker {
         this.visitLists(list => {
           for (let index = list.head; !active && index >= 0; index = list.next(index))
             if (
-              tick < list.expires[index] &&
+              this.tickBeforeExpiry(tick, list.expires[index]) &&
               list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0) > 0
             )
               active = true
@@ -338,7 +417,7 @@ export class ExpectedPeriodicTracker {
       for (let index = list.head; index >= 0; index = list.next(index))
         for (const next of list.cadences[index]?.keys() ?? []) {
           const tick = next < after ? next + Math.ceil((after - next) / interval) * interval : next
-          if (tick < list.expires[index]) earliest = Math.min(earliest, tick)
+          if (this.tickBeforeExpiry(tick, list.expires[index])) earliest = Math.min(earliest, tick)
         }
     })
     return Number.isFinite(earliest) ? earliest / OUTCOME_BUFF_TICKS_PER_SECOND : undefined
@@ -358,7 +437,7 @@ export class ExpectedPeriodicTracker {
       return result
     this.visitLists((list, source) => {
       for (let index = list.head; index >= 0; index = list.next(index)) {
-        if (tick >= list.expires[index]) continue
+        if (!this.tickBeforeExpiry(tick, list.expires[index])) continue
         let mass = 0
         if (this.tickOrigin !== undefined)
           mass = list.mass[index] - (tick === this.sharedTick ? list.pending[index] : 0)

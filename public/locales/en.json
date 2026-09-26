@@ -293,6 +293,7 @@
   "data.divinecraft.WaterFire.name": "Water-Fire",
   "data.divinecraft.WaterPoison.description": "HP DMG +1%, Qi DMG +4%, and healing grants 1 Vitality with a 3s cooldown.",
   "data.divinecraft.WaterPoison.name": "Water-Poison",
+  "data.dot.innerway.QingyisPoison.name": "Qingyi's Poison",
   "data.dot.innerway.WeepingBlood.name": "Weeping Blood",
   "data.dot.mystic.Combustion.name": "Combustion",
   "data.dot.mystic.Combustion.shortName": "Com",

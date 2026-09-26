@@ -420,7 +420,39 @@ Action `chance` accepts a number or supported dynamic value; finite results are
 clamped to 0–1, invalid results rejected. The supported expected periodic case
 is a refreshing target DOT applied by non-DOT damage with preserved cadence;
 expected threshold payloads are damage-only triggered skills without cooldowns.
-Keep this support boundary when extending data.
+Trigger `apply` actions may use an array of effect IDs to share one proc roll.
+Bitter Seasons uses this for its five-second Poison and ten-second defense debuff:
+applications add and refresh each effect's own stacks; Poison always deals one
+0.02-coefficient tick regardless of stack count. T3 incoming-hit procs retain
+10% chance even when T4 raises outgoing-hit chance to 15%.
+
+Chance-applied nonperiodic target debuffs support unconditional damage effects.
+They reuse the periodic tracker's stack/expiration distribution. Damage resolves
+at each possible stack count before weighting, rather than applying average
+stacks to a nonlinear formula. For a grouped DOT/debuff application,
+tick damage uses the debuff distribution conditional on that tick occurring;
+the shorter DOT lifetime can restart its cadence while debuff stacks persist.
+Poison uses the same expected battle-clock alignment as Weeping Blood, limiting
+it to one probability-weighted tick per battle second. Its linked defense-debuff
+distribution uses the same clock; sampled simulation retains exact application
+cadence. This approximates Poison tick timing, not its application chance.
+As with other shared-clock DOTs, this can change damage-triggered cooldown and
+resource feedback. In particular, many tiny exact-cadence tick weights can occupy
+the shared Vitality cooldown; grouping them changes expected Vitality and can
+therefore change the Mystic damage penalty even when raw Poison damage barely changes.
+This is not joint tracking of unrelated chance systems. Keep this support
+boundary when extending data.
+
+`reductionGroup` in a damage effect groups party-shared defense and Physical
+Resistance reductions. Each field takes its strongest reduction within the group.
+Bitter Seasons' existing global T1/T6 controls therefore supply permanent maximum
+stacks without adding a second defense reduction to local Poison procs; a local
+T6 debuff can still supply its five-stack resistance reduction alongside global T1.
+Existing saved global-debuff IDs remain unchanged. Bitter Seasons tiers opt into
+`showCoverage`: reported average stacks use marginal expected stacks at output
+actions, and uptime integrates active probability between applications and expiry,
+clipped to the combat window. Coverage never fabricates a guaranteed tracked debuff
+or reuses Poison's shorter lifetime. Permanent global copies report full uptime.
 
 `expectedTickAlignment: "battle"` deliberately approximates expected DOT timing
 on shared battle-clock boundaries, with no partial ticks; an application waits

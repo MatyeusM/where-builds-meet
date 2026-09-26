@@ -511,6 +511,14 @@ expected-state calculations use marginal hit weights, not a joint distribution
 of every proc, resource cap, and other random buff. Simulations instead rebuild
 concrete timelines, including on-hit resource gains. Damage and proc draws occur
 in chronological execution order, once per action/application, without replay.
+Bitter Seasons reuses this tracker for the longer-lived defense debuff applied
+by the same chance roll as its Poison. Action snapshots carry weighted damage-effect
+alternatives, and the central damage formula evaluates each stack outcome. Linked
+Poison ticks condition those weights on their own cadence/lifetime, preserving the
+proc correlation without introducing a second probability engine. The linked
+debuff also uses the shared tick clock, avoiding per-application cadence maps.
+Inclusive final
+DOT ticks are honored in expected and sampled timelines.
 Selecting or comparing an Inner
 Way that can add these events must rebuild the timeline.
 The distribution is partitioned by temporary branch identity inside each effect's
@@ -525,7 +533,7 @@ conditional chances, owner-specific expiration, and probability conservation.
 `script/probe/benchmark-fivefold-bleed.mjs` measures timeline runtime, output rows,
 peak combat states, and executed tick/expiration checks for dense distinct-cadence hits.
 The exact factorization reduces transition overhead without pruning rare outcomes.
-Weeping Blood additionally opts into `periodic.expectedTickAlignment: "battle"`.
+Weeping Blood and Qingyi's Poison opt into `periodic.expectedTickAlignment: "battle"`.
 Expected timelines use one shared cadence at battle seconds 1, 2, and so on,
 with one probability-weighted DOT row per active boundary. New applications wait
 for the next strictly later boundary; refreshes retain it. Expiration and threshold

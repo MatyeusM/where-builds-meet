@@ -7,13 +7,14 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [{ "effect": { "defenseBonus": -0.006 } }],
-      [{ "effect": { "defenseBonus": -0.012 } }],
-      [{ "effect": { "defenseBonus": -0.018 } }],
-      [{ "effect": { "defenseBonus": -0.024 } }],
-      [{ "effect": { "defenseBonus": -0.03 } }]
+      [{ "effect": { "defenseBonus": -0.006, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.012, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.018, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.024, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.03, "reductionGroup": "BitterSeasons" } }]
     ],
-    "refresh": true
+    "refresh": true,
+    "showCoverage": true
   },
   "QingyisCharmT1": {
     "name": "Bitter Seasons",
@@ -23,13 +24,14 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [{ "effect": { "defenseBonus": -0.012 } }],
-      [{ "effect": { "defenseBonus": -0.024 } }],
-      [{ "effect": { "defenseBonus": -0.036 } }],
-      [{ "effect": { "defenseBonus": -0.048 } }],
-      [{ "effect": { "defenseBonus": -0.06 } }]
+      [{ "effect": { "defenseBonus": -0.012, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.024, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.036, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.048, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.06, "reductionGroup": "BitterSeasons" } }]
     ],
-    "refresh": true
+    "refresh": true,
+    "showCoverage": true
   },
   "QingyisCharmT6": {
     "name": "Bitter Seasons",
@@ -39,12 +41,13 @@
     "maxStack": 5,
     "shared": true,
     "stackEffects": [
-      [{ "effect": { "defenseBonus": -0.012 } }],
-      [{ "effect": { "defenseBonus": -0.024 } }],
-      [{ "effect": { "defenseBonus": -0.036 } }],
-      [{ "effect": { "defenseBonus": -0.048 } }],
-      [{ "effect": { "defenseBonus": -0.06, "physicalResistance": -10 } }]
+      [{ "effect": { "defenseBonus": -0.012, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.024, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.036, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.048, "reductionGroup": "BitterSeasons" } }],
+      [{ "effect": { "defenseBonus": -0.06, "physicalResistance": -10, "reductionGroup": "BitterSeasons" } }]
     ],
-    "refresh": true
+    "refresh": true,
+    "showCoverage": true
   }
 }

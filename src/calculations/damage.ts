@@ -121,6 +121,7 @@ export type DamageContext = {
   currentHPRatio?: number
   targetHPRatio?: number
   isDot?: boolean
+  expectedEffects?: Array<Array<{ probability: number; effects: Record<string, unknown>[] }>>
 }
 
 const numberValue = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : 0)
@@ -249,7 +250,18 @@ function calculateDamageBreakdownInternal(
   }
   if (import.meta.env.DEV) finishCalculationPhase("damageEffectAccumulatorInitialization", accumulatorStartedAt)
   const remainingScanStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
-  for (const effect of effects) {
+  // Party-shared reductions use the strongest active value in their group, per field.
+  const reductionGroups = new Map<string, Record<string, unknown>>()
+  const groupedEffects = effects.map(effect => {
+    if (typeof effect.reductionGroup !== "string") return effect
+    let group = reductionGroups.get(effect.reductionGroup)
+    if (!group) reductionGroups.set(effect.reductionGroup, (group = {}))
+    for (const field of ["defenseBonus", "physicalResistance"])
+      group[field] = Math.min(Number(group[field] ?? 0), effectValue(effect[field]))
+    const { defenseBonus: _defense, physicalResistance: _resistance, ...remaining } = effect
+    return remaining
+  })
+  for (const effect of [...groupedEffects, ...reductionGroups.values()]) {
     resolvedEffects.attackBonus.physical += effectValue(effect.physicalAttackBonus)
     for (const attribute of attributeDamageTypes) {
       resolvedEffects.attackBonus[attribute] += effectValue(effect[`${attribute}AttackBonus`])
@@ -523,7 +535,20 @@ function calculateDamageBreakdownInternal(
 }
 
 export function calculateDamageBreakdown(action: DamageAction, context: DamageContext): DamageBreakdown {
-  return calculateDamageBreakdownInternal(action, resolveActionStatContext(context))
+  const [distribution, ...remaining] = context.expectedEffects ?? []
+  if (!distribution) return calculateDamageBreakdownInternal(action, resolveActionStatContext(context))
+  let result: DamageBreakdown | undefined
+  for (const outcome of distribution) {
+    const current = calculateDamageBreakdown(action, {
+      ...context,
+      effects: [...context.effects, ...outcome.effects],
+      expectedEffects: remaining,
+    })
+    result ??= { ...current, physical: 0, bellstrike: 0, stonesplit: 0, silkbind: 0, bamboocut: 0, total: 0 }
+    for (const field of ["physical", "bellstrike", "stonesplit", "silkbind", "bamboocut", "total"] as const)
+      result[field] += current[field] * outcome.probability
+  }
+  return result!
 }
 
 export function calculateSimulatedDamageBreakdown(
