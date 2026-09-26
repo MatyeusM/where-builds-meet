@@ -324,8 +324,12 @@ uses the effective average shown above. The simulator uses a `simulate` mode:
    applying the same penetration, bonus, and outcome multipliers.
 
 Every simulated run uses the deterministic timeline, start anchor, and duration
-for the active rotation snapshot. Its outcome percentages are hit-count shares,
-not damage shares. Runs are sorted by DPS; Best, P99, P95, P90, P75, and Median select
+for the active rotation snapshot. Its four outcome percentages are shares of the
+run's total damage, not of its hit count, so the four always total 100%. Replay
+damage resolves no outcome and is credited to normal. Mystic damage is
+accumulated in per-outcome buckets, so the Vitality deficit adjustment scales
+each share and the denominator together. Healing outcome percentages remain
+heal-count shares. Runs are sorted by DPS; Best, P99, P95, P90, P75, and Median select
 the nearest actual run at each percentile rather than interpolating damage from
 two runs. Session-configured custom percentile rows use the same selection rule.
 
@@ -819,7 +823,9 @@ Affinity, Abrasion, or other outcome is evaluated again. Replay damage is
 reported in the physical/total breakdown channel, cannot emit another damage
 event, and is excluded from simulation outcome-rate hit counts. The average
 calculator and Monte Carlo simulator use the same source-link resolution, so a
-simulation replay copies that run's randomized source hits.
+simulation replay copies that run's randomized source hits. Because a replay
+resolves no outcome, its damage is credited to the normal simulation damage
+share.
 
 Vendetta T3 records Rodent-tagged hits during Rodent Hunt's base 20-second window (user-confirmed despite the Inner Way's 15-second wording).
 Expiry and reapplication each settle the active window once at 30% of its

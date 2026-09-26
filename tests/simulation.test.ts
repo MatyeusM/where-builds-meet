@@ -115,7 +115,7 @@ describe("simulation", () => {
     )
     assert(
       ordered.every(result => result.normalPercentage === 100),
-      "Outcome percentages must count the sampled hit outcomes.",
+      "Outcome percentages must be shares of total damage, not of hit count.",
     )
     const healingStats = { ...stats, crit: 1 }
     const healingSummary = simulateRotation(

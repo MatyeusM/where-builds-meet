@@ -218,8 +218,12 @@ describe("damage-replay", () => {
     }
     const simulation = simulateRotation(createBundle(), 3, () => 0.5)
     assert(
-      simulation.runs.every(run => run.normalPercentage === 100),
-      "Replay ticks must not dilute simulated hit-outcome percentages.",
+      simulation.runs.every(
+        run =>
+          run.normalPercentage === 100 &&
+          run.abrasionPercentage + run.criticalPercentage + run.affinityPercentage === 0,
+      ),
+      "Replay payouts must count inside the damage total and be credited to normal, not drop the share.",
     )
   })
 })

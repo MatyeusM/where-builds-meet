@@ -1166,7 +1166,9 @@ remains component memory and is not stored.
 Healing simulations independently sample each recipient's Normal/Critical
 outcome and uniform ±8% final-healing fluctuation. They publish HPS plus
 recipient-weighted Normal and Critical healing percentages on the same
-DPS-ranked run records. Deterministic rotation results remain unchanged.
+DPS-ranked run records. Damage outcomes publish shares of the run's total
+damage, with replay damage credited to normal, so the four always total 100%.
+Deterministic rotation results remain unchanged.
 
 ## Baseline and variant calculation
 

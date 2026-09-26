@@ -6,6 +6,12 @@ import {
   type RotationSimulationBundle,
 } from "./rotationCalculator"
 
+/**
+ * Every damage percentage is a share of the run's total damage rather than of its
+ * hit count, so the four always total 100%. Replay damage resolves no outcome and
+ * is credited to normal. These field names cross the worker boundary, so they stay
+ * stable across refactors to keep a version skew from throwing during render.
+ */
 export type SimulationRunResult = {
   totalDamage: number
   dps: number
@@ -32,6 +38,10 @@ export type SimulationSummary = {
     median: SimulationRunResult
   }
 }
+
+const damageOutcomes: DamageOutcome[] = ["abrasion", "normal", "critical", "affinity"]
+
+const emptyOutcomeDamage = (): Record<DamageOutcome, number> => ({ abrasion: 0, normal: 0, critical: 0, affinity: 0 })
 
 const emptyRun = (): SimulationRunResult => ({
   totalDamage: 0,
@@ -85,23 +95,19 @@ export function simulateRotation(
   const progressStep = Math.max(1, Math.floor(count / 100))
 
   for (let runIndex = 0; runIndex < count; runIndex += 1) {
-    let totalDamage = 0
-    const outcomes: Record<DamageOutcome, number> = { abrasion: 0, normal: 0, critical: 0, affinity: 0 }
-    let hitCount = 0
+    const outcomeDamage = emptyOutcomeDamage()
+    const mysticOutcomeDamage = emptyOutcomeDamage()
     let totalHealing = 0
     let normalHeals = 0
     let criticalHeals = 0
     let healCount = 0
-    let mysticDamage = 0
     const simulated = samplesTimeline ? calculateSimulatedRotationRun(bundle, random) : undefined
     const resolvedSequence = simulated?.resolvedSequence ?? calculateRotationDamageSequence(baseline.baseline, random)
     resolvedSequence.forEach(({ entry, breakdown }) => {
-      totalDamage += breakdown.total
-      if (entry.context.skillTags.includes("Mystic")) mysticDamage += breakdown.total
-      if (breakdown.outcome) {
-        outcomes[breakdown.outcome] += 1
-        hitCount += 1
-      }
+      // Replay damage resolves no sampled outcome and is credited to normal.
+      const outcome = breakdown.outcome ?? "normal"
+      outcomeDamage[outcome] += breakdown.total
+      if (entry.context.skillTags.includes("Mystic")) mysticOutcomeDamage[outcome] += breakdown.total
       if (breakdown.healing) {
         totalHealing += breakdown.healing.total
         for (const recipientHealing of breakdown.recipientHealing ?? [breakdown.healing]) {
@@ -118,8 +124,10 @@ export function simulateRotation(
         }
       }
     })
-    totalDamage -= mysticDamage * (1 - (simulated?.mysticVitalityDamageScale ?? baseline.mysticVitalityDamageScale))
-    const percentage = (outcome: DamageOutcome) => (hitCount > 0 ? (outcomes[outcome] / hitCount) * 100 : 0)
+    const mysticDeficit = 1 - (simulated?.mysticVitalityDamageScale ?? baseline.mysticVitalityDamageScale)
+    for (const outcome of damageOutcomes) outcomeDamage[outcome] -= mysticOutcomeDamage[outcome] * mysticDeficit
+    const totalDamage = damageOutcomes.reduce((sum, outcome) => sum + outcomeDamage[outcome], 0)
+    const percentage = (outcome: DamageOutcome) => (totalDamage > 0 ? (outcomeDamage[outcome] / totalDamage) * 100 : 0)
     const runDuration = simulated?.duration ?? baseline.duration
     runs.push({
       totalDamage,
