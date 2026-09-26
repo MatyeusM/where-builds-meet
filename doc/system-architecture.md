@@ -637,7 +637,13 @@ same-origin session keys are left untouched.
 
 The former global active-build and active-rotation IDs migrate into the current
 combat path when that path has no saved selection in the new per-path maps.
-Loaders validate enough shape to fall back to defaults and include migrations
+A stored `empty` selection is discarded on read, from both the per-path maps and
+the former global keys. `empty` is the placeholder preset that paths without
+real builds or rotations point at, so a stored `empty` records that the path was
+opened before it had presets rather than a deliberate pick. Discarding it lets a
+path that ships its first build or rotation resolve its configured default even
+while it is still work in progress, instead of pinning earlier visitors to the
+placeholder. Loaders validate enough shape to fall back to defaults and include migrations
 for older percentage, penetration, attunement, rotation, per-build inventory,
 single-inventory gear, and session-wide build setup formats. Non-zero values from the former raw character and attunement
 storage keys migrate to overrides, preserving existing manual inputs. Calculated

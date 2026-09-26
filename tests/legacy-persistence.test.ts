@@ -94,4 +94,35 @@ describe("legacy persistence adapters", () => {
 
     expect(loadRotationEntries().some(entry => entry.id === "migrated-default-rotation")).toBe(true)
   })
+
+  it("discards a stored placeholder selection so a WIP path resolves its configured default", async () => {
+    const { defaultBuildIdForPath, defaultRotationIdForPath } = await import("../src/application/gameData/paths")
+    const { resolvePathWorkspaceSelection } = await import("../src/pathWorkspace")
+    const pathId = "bamboocutDust"
+    localStorage.setItem("wwm-active-build-by-path-v1", JSON.stringify({ [pathId]: "empty" }))
+    localStorage.setItem("wwm-active-rotation-by-path-v1", JSON.stringify({ [pathId]: "empty" }))
+
+    const selection = resolvePathWorkspaceSelection({
+      buildIds: ["empty", defaultBuildIdForPath(pathId)],
+      rotationIds: ["empty", defaultRotationIdForPath(pathId)],
+      savedBuildId: loadPathSelectionIds("wwm-active-build-by-path-v1", "wwm-active-build-v1", pathId)[pathId],
+      savedRotationId: loadPathSelectionIds("wwm-active-rotation-by-path-v1", "wwm-active-rotation-session-v1", pathId)[
+        pathId
+      ],
+      defaultBuildId: defaultBuildIdForPath(pathId),
+      defaultRotationId: defaultRotationIdForPath(pathId),
+    })
+
+    expect(selection?.buildId).toBe(defaultBuildIdForPath(pathId))
+    expect(selection?.rotationId).toBe(defaultRotationIdForPath(pathId))
+  })
+
+  it("does not promote a legacy selection that holds the placeholder", () => {
+    localStorage.setItem("wwm-active-build-v1", "empty")
+
+    const selections = loadPathSelectionIds("wwm-active-build-by-path-v1", "wwm-active-build-v1", "stonesplitMight")
+
+    expect(selections.stonesplitMight).toBeUndefined()
+    expect(localStorage.getItem("wwm-active-build-by-path-v1")).toBeNull()
+  })
 })
