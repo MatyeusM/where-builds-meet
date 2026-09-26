@@ -1,4 +1,30 @@
 {
+  "AdaptiveSteelHengBlade": {
+    "name": "Varied Combo DMG Boost",
+    "shortName": "VC Boost",
+    "description": "After a Heng Blade deflection, increases Light/Heavy Varied Combo damage by 5% for 5 seconds. Triggers once every 20 seconds.",
+    "duration": 5,
+    "cooldown": 20,
+    "maxStack": 1,
+    "refresh": true,
+    "showCoverage": true,
+    "effect": [
+      {
+        "requirement": [
+          { "target": "skillTag", "value": "HengBlade" },
+          { "target": "skillTag", "value": "VariedCombo" },
+          {
+            "operator": "or",
+            "operand": [
+              { "target": "skillTag", "value": "Light" },
+              { "target": "skillTag", "value": "Heavy" }
+            ]
+          }
+        ],
+        "effect": { "dmgBonus": 0.05 }
+      }
+    ]
+  },
   "Cadence": {
     "name": "Cadence",
     "shortName": "Cad",

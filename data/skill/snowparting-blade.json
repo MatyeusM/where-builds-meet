@@ -52,7 +52,7 @@
     "shortName": "Heng VC",
     "castTime": 0.857,
     "action": [
-      { "type": "damage", "phyCoef": 2.8245, "phyBonus": 782, "attrBonus": 425, "time": 0.565, "attrCoef": 2.8245 },
+      { "type": "damage", "phyCoef": 2.07686, "phyBonus": 575, "attrBonus": 313, "time": 0.565, "attrCoef": 2.07686 },
       { "type": "consume", "target": "self", "value": "InnerPassion", "stack": 1, "time": 0.565 },
       {
         "type": "trigger",
@@ -93,7 +93,7 @@
         "time": 0.565
       }
     ],
-    "modifier": [],
+    "modifier": [{ "effect": { "baseDMGBonus": 0.36 } }],
     "tags": [
       "DirectDamage",
       "MartialArts",

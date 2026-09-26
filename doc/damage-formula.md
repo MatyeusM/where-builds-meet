@@ -537,6 +537,15 @@ Shared Multiplier =
 
 `baseDMGBonus` applies to physical damage and all four attributes. It is a separate multiplier from Category 1.
 
+Snowbreak Spring uses its unscaled level-100 baseline (2.07686 physical and
+attribute coefficients, 575 physical flat damage, 313 attribute flat damage).
+Its unconditional PvE `baseDMGBonus: 0.36` adds to Frost-Clad Night T4's
+`baseDMGBonus: 0.4` while Inner Passion is active or, at T6, the target is
+Exhausted. The resulting base multiplier is 1.36 normally and 1.76 when
+enhanced; overlapping conditions grant the enhancement only once. This scales
+coefficients and flat damage together, separately from HP damage bonuses.
+T6's separate 10% damage bonus remains in Category 1.
+
 Category 1 currently contains:
 
 - `vsBossDmg` (the current encounter is treated as a boss)
@@ -545,6 +554,14 @@ Category 1 currently contains:
 - Single-Target Mystic Skill DMG Boost for `SingleTargetMystic`, or Area Mystic Skill DMG Boost for `AreaMystic`
 - active `dmgBonus` effects
 - active `hpDMGBonus` effects whose requirements pass
+
+Adaptive Steel grants its Heng Blade buff on a successful deflection while Heng
+Blade is the current weapon. The buff lasts 5 seconds with a 20-second application
+cooldown and adds 5% Category 1 damage to Heng Blade Light/Heavy Varied Combos.
+Failed deflections and perfect dodges do not grant it. The existing shared
+deflection-success action applies the buff; Inner Way comparisons rebuild the
+timeline. Adaptive Steel retains its Might-only path eligibility. Other
+weapon-mastery branches and T6 cross-weapon retention are outside this implementation.
 
 Art of Resistance T3 contributes 5% `dmgBonus` while the shared player Shield
 is active. At T6 its cumulative contribution is 10%. A Shield Broken event

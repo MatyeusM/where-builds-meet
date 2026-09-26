@@ -56,7 +56,7 @@
               ]
             }
           ],
-          "effect": { "hpDMGBonus": 0.4 }
+          "effect": { "baseDMGBonus": 0.4 }
         }
       ]
     },

@@ -269,6 +269,16 @@
     "name": "Deflect (Successful)",
     "castTime": 0,
     "action": [
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "AdaptiveSteelHengBlade",
+        "time": 0,
+        "requirement": [
+          { "target": "self", "value": "AdaptiveSteelT0" },
+          { "target": "currentWeapon", "value": "HengBlade" }
+        ]
+      },
       { "type": "addResource", "value": "Vitality", "amount": 3, "time": 0 },
       {
         "type": "addResource",
