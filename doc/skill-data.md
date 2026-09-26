@@ -173,10 +173,18 @@ A castable skill may hand its damage to `Triggered` component skills, and matchi
 runs against the component that actually deals the hit. A component that continues
 its parent's hits must therefore repeat the parent's skill-category tags
 (`Charged`, `Special`, `MartialArt`, `Light`, `Heavy`, `VariedCombo`, `Pursuit`).
-Piercing Dart's seven `PiercingDartSweepN` hits are `Charged` for this reason.
-`MartialArtEffect` marks a separate summoned attack rather than a continuation, so
-it is deliberately exempt; `inheritTags` appends the parent's tags and is the
-alternative to restating them. `tests/attunement.test.ts` enforces both rules.
+Piercing Dart's seven `PiercingDartSweepN` hits repeat `Heavy` and `Charged` for this
+reason. `MartialArtEffect` marks a separate summoned attack rather than a
+continuation, so it is deliberately exempt; `inheritTags` appends the parent's tags
+and is the alternative to restating them. `tests/attunement.test.ts` enforces both
+rules.
+
+Attack categories are independent, not exclusive. A charged attack carries `Charged`
+plus the attack it charges: `Charged` and `Heavy` for Avalanche, Burning Heart, and
+Piercing Dart; `Charged` and `Light` for Snowparting's charged light. `Charged` alone
+is for a dedicated charged move that is neither, such as Vile Condemned. Gate an
+effect on the combination when it should only cover one of them, as Exquisite
+Scenery's T6 does with `Heavy` and `Charged`.
 
 ### Requirements and dynamic values
 

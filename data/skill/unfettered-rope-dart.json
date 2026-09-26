@@ -383,7 +383,7 @@
       { "type": "trigger", "value": "PiercingDartSweep7", "time": 1.967 }
     ],
     "modifier": [],
-    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged", "PiercingDart"],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Heavy", "Charged", "PiercingDart"],
     "martialArt": "unfettered",
     "weapon": "RopeDart",
     "skillBreakdownCategory": "Piercing Dart"
@@ -421,7 +421,7 @@
     "castTime": 1.5,
     "action": [],
     "modifier": [],
-    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged"],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Heavy", "Charged"],
     "martialArt": "unfettered",
     "weapon": "RopeDart",
     "skillBreakdownCategory": "Piercing Dart"
@@ -626,7 +626,7 @@
       { "type": "trigger", "value": "PiercingDartSweep4", "time": 1.017 }
     ],
     "modifier": [],
-    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Charged", "PiercingDart"],
+    "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Heavy", "Charged", "PiercingDart"],
     "martialArt": "unfettered",
     "weapon": "RopeDart",
     "shortName": "RD Heavy 4 Hits",
@@ -644,6 +644,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep1"
@@ -662,6 +663,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep2"
@@ -680,6 +682,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep3"
@@ -698,6 +701,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep4"
@@ -717,6 +721,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep5"
@@ -736,6 +741,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep6"
@@ -755,6 +761,7 @@
       "DirectDamage",
       "RopeDart",
       "UnfetteredRopeDart",
+      "Heavy",
       "Charged",
       "PiercingDart",
       "PiercingDartSweep7"
