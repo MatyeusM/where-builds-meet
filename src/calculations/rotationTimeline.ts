@@ -496,6 +496,10 @@ export type EffectDefinition = {
   showCoverage?: boolean
   /** Internal bookkeeping effect, such as a cadence counter. Never shown in the timeline. */
   hidden?: boolean
+  /** Internal counter lifetime and attribution follow this self buff. */
+  parentEffect?: string
+  /** Reactive actions while this buff is active; uses the shared setup-trigger contract. */
+  trigger?: EditableObject
   refresh?: boolean
   duration?: number
   cooldown?: number
@@ -1455,8 +1459,21 @@ export function buildRotationTimeline(
       ...Array.from(debuffs.values()).map(effect => effect.unconditionalDamageEffects),
     )
   }
+  const parentBoundEffects = Object.entries(effectDefinitions).flatMap(([name, definition]) =>
+    definition.parentEffect ? [{ name, parent: definition.parentEffect }] : [],
+  )
   const setBuffs = (next: EffectState) => {
     if (next === buffs) return
+    for (const { name, parent: parentName } of parentBoundEffects) {
+      const effect = next.get(name)
+      if (!effect) continue
+      const parent = next.get(parentName)
+      if (parent && effect.expiresAt === parent.expiresAt && effect.sourceRowId === parent.sourceRowId) continue
+      const updated = new Map(next)
+      if (parent) updated.set(name, { ...effect, expiresAt: parent.expiresAt, sourceRowId: parent.sourceRowId })
+      else updated.delete(name)
+      next = updated
+    }
     buffs = prepareTrackedEffects(next)
     for (const name of accumulatorStates.keys()) {
       if (!buffs.has(name)) accumulatorStates.delete(name)
@@ -1656,21 +1673,32 @@ export function buildRotationTimeline(
     string,
     { recovery: "window"; expiresAt: number; uses: number } | { recovery: "independent"; readyTimes: number[] }
   > = {}
-  const setupTriggerCooldowns = new Map<number, number>()
+  const effectTriggerCooldowns = new Map<number, number>()
   const buffDurationRules = setupEffects.filter(effect => typeof effect.buffDurationBonus === "number")
-  const setupTriggersByEvent = new Map<string, Array<{ setupIndex: number; trigger: EditableObject }>>()
-  setupEffects.forEach((setup, setupIndex) => {
+  const effectTriggersByEvent = new Map<
+    string,
+    Array<{ triggerIndex: number; trigger: EditableObject; owner?: string }>
+  >()
+  setupEffects.forEach((setup, triggerIndex) => {
     const trigger =
       setup.trigger && typeof setup.trigger === "object" && !Array.isArray(setup.trigger)
         ? (setup.trigger as EditableObject)
         : undefined
     if (typeof trigger?.event !== "string") return
-    setupTriggersByEvent.set(trigger.event, [
-      ...(setupTriggersByEvent.get(trigger.event) ?? []),
-      { setupIndex, trigger },
+    effectTriggersByEvent.set(trigger.event, [
+      ...(effectTriggersByEvent.get(trigger.event) ?? []),
+      { triggerIndex, trigger },
     ])
   })
   const innerWayTriggersByEvent = new Map<string, InnerWayEffectRule[]>()
+  Object.entries(effectDefinitions).forEach(([owner, definition], index) => {
+    const trigger = definition.trigger
+    if (typeof trigger?.event !== "string") return
+    effectTriggersByEvent.set(trigger.event, [
+      ...(effectTriggersByEvent.get(trigger.event) ?? []),
+      { triggerIndex: setupEffects.length + index, trigger, owner },
+    ])
+  })
   const innerWayTriggerStates = new Map<InnerWayEffectRule, { hits: number[]; readyAt: number }>()
   innerWayRules.forEach(rule => {
     const triggerEvent = rule.trigger?.event ?? "damage"
@@ -3068,7 +3096,7 @@ export function buildRotationTimeline(
         })
       if (
         event.row.skill?.silent ||
-        !setupTriggersByEvent.has("skillStart") ||
+        !effectTriggersByEvent.has("skillStart") ||
         event.row.step.type !== "skill" ||
         (event.row.kind !== "rotation" && event.row.kind !== "trigger")
       )
@@ -3396,6 +3424,15 @@ export function buildRotationTimeline(
         }
       }
     }
+    const isFirstDamageAction = () => {
+      const stage = multiActionSegments
+        .get(event.row.id)
+        ?.find(segment => segment.actionIndexes.includes(event.actionIndex ?? -1))
+      const firstDamageIndex = stage
+        ? stage.actionIndexes.find(index => event.row.actions[index]?.type === "damage")
+        : event.row.actions.findIndex(entry => entry.type === "damage")
+      return event.actionIndex === firstDamageIndex
+    }
     const accumulateEventValue = (eventName: string, amount: number) => {
       if (!(amount > 0)) return
       for (const activeBuff of buffs.values()) {
@@ -3415,15 +3452,7 @@ export function buildRotationTimeline(
           )
         )
           continue
-        if (accumulatorDefinition.oncePerSkill) {
-          const stage = multiActionSegments
-            .get(event.row.id)
-            ?.find(segment => segment.actionIndexes.includes(event.actionIndex ?? -1))
-          const firstDamageIndex = stage
-            ? stage.actionIndexes.find(index => event.row.actions[index]?.type === "damage")
-            : event.row.actions.findIndex(entry => entry.type === "damage")
-          if (event.actionIndex !== firstDamageIndex) continue
-        }
+        if (accumulatorDefinition.oncePerSkill && !isFirstDamageAction()) continue
         let accumulator = accumulatorStates.get(activeBuff.name)
         if (
           !accumulator &&
@@ -3738,7 +3767,11 @@ export function buildRotationTimeline(
         undefined,
         triggerAction.value,
         typeof triggerAction.boostDamageSource === "string" ? buffs.get(triggerAction.boostDamageSource) : undefined,
-        damageSource(definition, fallbackSourceRowId),
+        damageSource(
+          definition,
+          (definition.parentEffect ? buffs.get(definition.parentEffect)?.sourceRowId : undefined) ??
+            fallbackSourceRowId,
+        ),
       )
       const existing = targetEffects.get(triggerAction.value as string)
       if (existing && triggerAction.reapply === false) return
@@ -3817,10 +3850,15 @@ export function buildRotationTimeline(
         if (definition.cooldown !== undefined) cooldowns[triggerAction.value] = event.time + definition.cooldown
       }
     }
-    const runSetupTriggers = (triggerEvent: string) => {
-      ;(setupTriggersByEvent.get(triggerEvent) ?? []).forEach(({ setupIndex, trigger }) => {
+    const runEffectTriggers = (triggerEvent: string, tracked = false) => {
+      ;(effectTriggersByEvent.get(triggerEvent) ?? []).forEach(({ triggerIndex, trigger, owner }) => {
+        if (Boolean(owner) !== tracked || (owner && !buffs.has(owner))) return
+        if (trigger.oncePerSkill) {
+          if (action.type !== "damage" || (!procRoll && action.hitProbability !== undefined)) return
+          if (!isFirstDamageAction()) return
+        }
         if (
-          (setupTriggerCooldowns.get(setupIndex) ?? 0) > event.time ||
+          (effectTriggerCooldowns.get(triggerIndex) ?? 0) > event.time ||
           !requirementsPass(
             trigger.requirement,
             buffs,
@@ -3836,7 +3874,7 @@ export function buildRotationTimeline(
         if (trigger.action && typeof trigger.action === "object" && !Array.isArray(trigger.action)) {
           applyTriggerAction(trigger.action as EditableObject, "setup")
           if (typeof trigger.cooldown === "number" && trigger.cooldown > 0)
-            setupTriggerCooldowns.set(setupIndex, event.time + trigger.cooldown)
+            effectTriggerCooldowns.set(triggerIndex, event.time + trigger.cooldown)
         }
       })
     }
@@ -3904,11 +3942,13 @@ export function buildRotationTimeline(
       })
     }
     if (event.kind === "start") {
-      runSetupTriggers("skillStart")
+      runEffectTriggers("skillStart")
+      runEffectTriggers("skillStart", true)
       continue
     }
     if (event.kind === "attackResponse") {
-      runSetupTriggers("attackResponse")
+      runEffectTriggers("attackResponse")
+      runEffectTriggers("attackResponse", true)
       enqueueTriggeredSkill(
         event.row.skill!.attackResponse!.onSuccess,
         event.row.sourceRowId ?? event.row.id,
@@ -3944,8 +3984,9 @@ export function buildRotationTimeline(
       setCurrentHP(currentHP - resolvedDamage)
       applyResourceEvent("takeDamage", event.time, previousHP - currentHP)
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
-      runSetupTriggers("takeDamage")
+      runEffectTriggers("takeDamage")
       runInnerWayTriggers("takeDamage", event.row)
+      runEffectTriggers("takeDamage", true)
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt)
       continue
     }
@@ -4023,8 +4064,9 @@ export function buildRotationTimeline(
         }
       }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
-      runSetupTriggers("damage")
+      runEffectTriggers("damage")
       runInnerWayTriggers("damage", event.row)
+      runEffectTriggers("damage", true)
       if (procRoll || action.hitProbability === undefined) accumulateEventValue("damage", 1)
       if (event.row.expectedBranch) {
         const branch = event.row.expectedBranch
@@ -4053,8 +4095,9 @@ export function buildRotationTimeline(
         )
       }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
-      runSetupTriggers("heal")
+      runEffectTriggers("heal")
       runInnerWayTriggers("heal", event.row)
+      runEffectTriggers("heal", true)
       if (import.meta.env.DEV) finishCalculationPhase("effectTriggering", triggerStartedAt)
     }
     if (action.type === "trigger" && typeof action.value === "string") {

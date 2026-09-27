@@ -2,6 +2,10 @@
 
 Date: 2026-09-27. Calculator revision: `f0f40a7` before this audit.
 
+The original measurements below precede the internal-buff counter change.
+The implementation follow-up at the end corrects the original attribution of
+the comparison rebuilds to Rodent counters alone.
+
 ## Reproduction and scope
 
 Run `node script/probe/benchmark-wind-innerways.mjs` from the repository root.
@@ -67,7 +71,10 @@ explosion.
   resolution whenever the baseline contains an accumulator application, among
   other feedback conditions. Wind applies Rodent Rampage/Enhanced Rodent Rampage,
   which use accumulators, so even the seven attunement variants rebuild combat.
-  The guard has existed since September 16; this audit does not establish a new
+  Subsequent inspection also found Rodent Hunt recording/replays and World to
+  Sword applications in this fixture. Each independently keeps the live guard
+  active, so removing the Rodent counter blocker alone cannot enable reuse for
+  the full preset. The guard has existed since September 16; this audit does not establish a new
   regression. Fivefold magnifies the cost of that existing conservative choice.
 - Any supplied `setupEffects` also forces live resolution, even when the caller
   supplies no replacement timeline. The current fast-path description is thus
@@ -105,3 +112,49 @@ Do not raise the probability-merging threshold, discard rare bursts or reuse
 merged publication rows as combat inputs merely to improve this benchmark.
 Those changes alter numerical behavior or causal semantics. No production
 calculation changes or snapshot updates were made by this audit.
+
+## Internal-buff counter implementation follow-up
+
+Rodent Rampage and Enhanced Rodent Rampage now count coordinated attacks with
+separate hidden buffs, using `onMaxStack` like Dust's summon cadence. Active
+buff triggers reuse the setup-trigger action handler. The shared
+`oncePerSkill` filter accepts the first damage action of each stage and rejects
+probability-weighted expected rows. `additionalStack` supplies the second count
+for Infernal/Mortal attacks. Each counter declares its `parentEffect` so refresh
+preserves progress and updates expiry/attribution, while removal or replacement
+clears the count. Other accumulator behavior and the comparison guard are
+unchanged.
+
+Differential tests use a coordinated-Rodent rotation without recording or
+healing. Both Morale Chant and Fivefold Bleed variants reuse the timeline, and
+all eligible attunement comparisons match forced live resolution. The full
+dummy preset still takes the live path because of Rodent Hunt and World to
+Sword; this change alone does not resolve its multi-second comparison cost.
+
+A same-process before/after benchmark replaced only the Wind buff definitions
+with their pre-change versions for the control cases. Each case discarded two
+warm-ups and measured six samples, alternating forward/reverse order. Full-preset
+medians (milliseconds) were:
+
+| Work                     | Morale before | Morale after | Fivefold before | Fivefold after |
+| ------------------------ | ------------: | -----------: | --------------: | -------------: |
+| Baseline                 |        100.15 |       102.65 |          406.65 |         404.63 |
+| 26 stat comparisons      |      1,818.43 |     1,930.75 |        7,341.00 |       7,523.15 |
+| 7 attunement comparisons |        505.88 |       509.18 |        1,941.74 |       2,005.42 |
+
+There is no measured full-preset speedup; combined comparison time was about
+3–5% higher in this run. Baseline DPS and timeline row counts were unchanged.
+
+An isolated rotation (Rampage, ten Infernal Light 3 casts, three-second delay,
+40 ms ping) removes recording/healing casts while retaining the same build and
+comparison groups. Its medians were:
+
+| Work                     | Morale before | Morale after | Fivefold before | Fivefold after |
+| ------------------------ | ------------: | -----------: | --------------: | -------------: |
+| 26 stat comparisons      |         78.54 |        39.99 |          177.70 |          71.95 |
+| 7 attunement comparisons |         18.06 |         7.27 |           45.69 |          16.40 |
+
+This demonstrates the reuse benefit where Rodent was the only blocker. It does
+not represent the full preset or browser latency. Differential tests additionally
+cover attack, crit, and affinity stat variants; the accepted DPS snapshot guard
+passes without refreshing any snapshot.

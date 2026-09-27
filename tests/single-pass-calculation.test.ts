@@ -1,5 +1,6 @@
 import { assert, afterEach, describe, expect, it, vi } from "vitest"
 
+import { attunementAvailableForSettings } from "../src/application/characterComposition"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { resolveActionStatContext } from "../src/calculations/actionStats"
 import {
@@ -8,6 +9,7 @@ import {
   calculateSimulatedRotationRun,
 } from "../src/calculations/rotationCalculator"
 import * as scheduler from "../src/calculations/rotationTimeline"
+import { attunementData, defaultBuildPresets, maxGearRoll } from "../src/gear"
 import { loadDpsSnapshotFixtures, dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
 
 afterEach(() => {
@@ -15,20 +17,28 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function windBundle() {
+async function windBundle(way: "MoraleChant" | "FivefoldBleed" = "MoraleChant") {
   const fixture = (await loadDpsSnapshotFixtures()).find(
     entry => entry.id === "bamboocutWind/wind-dummy-1-min-infinite-vitality",
   )!
-  return buildPresetRotationBundle(
-    {
-      ...dpsSnapshotEnvironment,
-      pathId: fixture.pathId,
-      martialArts: fixture.rotation.martialArts,
-      rotation: fixture.rotation,
-      skillOverrides: {},
-    },
-    fixture.fixture.build,
-  )!
+  const preset = defaultBuildPresets.find(build => build.id === fixture.fixture.build)!
+  const selection = preset.setup.innerWays.find(selection => selection.innerWay === "MoraleChant")!
+  const original = selection.innerWay
+  try {
+    selection.innerWay = way
+    return buildPresetRotationBundle(
+      {
+        ...dpsSnapshotEnvironment,
+        pathId: fixture.pathId,
+        martialArts: fixture.rotation.martialArts,
+        rotation: fixture.rotation,
+        skillOverrides: {},
+      },
+      fixture.fixture.build,
+    )!
+  } finally {
+    selection.innerWay = original
+  }
 }
 
 function observeTraversals() {
@@ -68,6 +78,59 @@ function observeTraversals() {
 }
 
 describe("single-pass calculation", () => {
+  it.each(["MoraleChant", "FivefoldBleed"] as const)(
+    "reuses Rodent events for all attunements with %s and matches live calculations",
+    async way => {
+      const bundle = await windBundle(way)
+      // Isolate coordinated attacks from the full preset's recording and healing mechanics.
+      bundle.timeline.rotation = {
+        name: "Coordinated Rodent comparison",
+        ping: 40,
+        steps: [
+          { type: "skill", skill: "RodentRampage" },
+          ...Array.from({ length: 10 }, () => ({ type: "skill" as const, skill: "InfernalLight3" })),
+          { type: "event", event: "Delay", duration: 3 },
+        ],
+      }
+      bundle.startAnchor = { rowId: "rotation-0" }
+      const settings = { weapons: bundle.weapons, breakthrough: "17", ping: 40 }
+      bundle.statPriority = ["minPhys", "crit", "affinity"].map(key => ({
+        label: key,
+        stats: { ...bundle.baseStats!, [key]: bundle.baseStats![key] + (key === "minPhys" ? 10 : 0.01) },
+      }))
+      bundle.attunementPriority = Object.keys(attunementData)
+        .filter(key => attunementAvailableForSettings(key, "bamboocutWind", settings))
+        .map(key => ({
+          label: key,
+          attunement: {
+            ...bundle.attunement,
+            [key]: bundle.attunement[key] + maxGearRoll(key, "attunement", false, bundle.enemy.level)!,
+          },
+        }))
+      const baseline = calculateRotationBaseline(bundle)
+      expect(baseline.metrics.breakdown.skills.find(skill => skill.id === "Rodent")?.damage).toBeGreaterThan(0)
+      const observed = observeTraversals()
+      const reused = calculateRotationComparisons(bundle, baseline)
+      expect(observed.build).not.toHaveBeenCalled()
+      const live = calculateRotationComparisons(
+        {
+          ...bundle,
+          statPriority: bundle.statPriority.map(variant => ({ ...variant, timeline: bundle.timeline })),
+          attunementPriority: bundle.attunementPriority.map(variant => ({ ...variant, timeline: bundle.timeline })),
+        },
+        baseline,
+      )
+      expect(observed.build).toHaveBeenCalledTimes(bundle.statPriority.length + bundle.attunementPriority.length)
+      expect(reused).toEqual(live)
+      const events = (result: ReturnType<typeof calculateRotationBaseline>) =>
+        result.timeline.map(row => ({ skill: row.step.skill, startTime: row.startTime, actions: row.actions }))
+      for (const variant of bundle.attunementPriority) {
+        const recalculated = calculateRotationBaseline({ ...bundle, attunement: variant.attunement! })
+        expect(recalculated.duration).toBe(baseline.duration)
+        expect(events(recalculated)).toEqual(events(baseline))
+      }
+    },
+  )
   it("resolves a Wind baseline, feedback variant, and sampled run once each", async () => {
     const bundle = await windBundle()
     const observed = observeTraversals()
