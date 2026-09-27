@@ -142,6 +142,7 @@ src/
     damage.ts                    per-action expected damage
     rotationTimeline.ts          event simulation and state tracking
     rotationCalculator.ts        baseline, variants, metrics, and breakdowns
+    rotationComparisonBundle.ts  the comparison variants a subject is measured against
     rotationWorker.ts            worker entry point
     rotationWorkerTransport.ts   worker pool, queue policy, and request coalescing
     simulationCalculator.ts      Monte Carlo run aggregation and percentiles
@@ -327,10 +328,11 @@ It renders seven tabs:
 
 The Rotation Editor is loaded on demand, on the first visit to its tab, and stays
 mounted and hidden with CSS after that, which preserves its local state. It is
-not deferred because it is large alone: nothing outside it reads a comparison, so
-until it is opened the only calculation is the active rotation's baseline, which
-the application resolves itself. It is absent from the idle preload of the other
-deferred tabs, which would hand back what deferring it saves.
+deferred because it is the largest module in the application and, once the
+application resolves the active rotation's comparisons itself, has nothing left
+to do that the rest of the interface does not already have. It is absent from the
+idle preload of the other deferred tabs, which would hand back what deferring it
+saves.
 
 Main, DPS Breakdown, and the simulation tab read the published rotation from
 `rotationStore`, which is a zustand store read with selectors. They render the
@@ -1754,15 +1756,26 @@ a category sorts its rows and a sort only reproduces against a fixed input
 order. The categories own disjoint metric fields, so they need no ordering
 between them either, and one landing never disturbs another.
 
-That is what makes the rotation editor deferrable. The application resolves the
-active rotation's baseline itself, because a headline number does not need an
-owner; only the editor resolves comparisons, because nothing outside it reads
-them. The editor therefore mounts on the first visit to its tab, after which it
-stays mounted so its scroll offset survives.
+A rotation's result is therefore the same wherever it is read, and the
+application resolves all of it: the baseline every surface shows, and the
+comparisons the character sheet's priority panels weigh. Those panels used to
+say the rotation editor had to be opened, which was true only while a sweep
+inside the editor produced them.
+
+That is also what makes the editor deferrable. It resolves a rotation's
+comparisons only when the rotation being edited is not the active one, because
+the active rotation's are already published; it contributes a baseline and an
+editor timeline for what is on screen, and a draft of its own when the active
+rotation carries unsaved edits. It mounts on the first visit to its tab, after
+which it stays mounted so its scroll offset survives.
+
+The comparison variants are built from the calculation subject and the static
+definitions, in `rotationComparisonBundle.ts`, so producing them needs no
+component. A bundle's fingerprint is what both callers agree on, so the
+application's comparisons and the editor's are the same cache entries.
 
 Editing any rotation calculates and caches only that rotation's baseline
-timeline, expected damage, DPS, and action breakdowns. Saving requests
-comparisons only when the edited rotation is active. Making an inactive rotation
+timeline, expected damage, DPS, and action breakdowns. Making an inactive rotation
 active reuses its valid baseline cache and requests comparisons. An editor
 preview never requests comparison variants.
 
