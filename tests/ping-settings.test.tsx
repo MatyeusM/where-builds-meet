@@ -8,6 +8,7 @@ import App from "../src/App"
 import { bossDefinitions } from "../src/calculations/combatDefaults"
 import { initializeI18n } from "../src/i18n"
 import { dpsBundles, resetDpsMock } from "./helpers/dpsStoreMock"
+import { openRotationEditorTab } from "./helpers/rotationEditorTab"
 
 vi.mock("../src/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
@@ -94,7 +95,7 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
   await act(async () => root.render(<App />))
   await click("Settings")
   expect(control().value).toBe("85")
-  await click("Rotation Editor")
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   const presetPing = container.querySelector(".rotation-ping-field")!
   expect(presetPing.querySelector("input")?.disabled).toBe(true)
   expect(presetPing.querySelector("input")?.value).toBe("40")
@@ -141,7 +142,7 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
 
 it("defaults Enemy Count to one before Ping and persists edits into worker requests", async () => {
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   const getInput = () => container.querySelector<HTMLInputElement>(".rotation-enemy-count input")!
   expect(getInput().value).toBe("1")
   expect(getInput().disabled).toBe(true)
@@ -165,7 +166,7 @@ it("defaults Enemy Count to one before Ping and persists edits into worker reque
 
 it("selects the practice target, orders it before Infinite Vitality, and persists it", async () => {
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   const select = () => container.querySelector<HTMLSelectElement>(".rotation-target-select select")!
   expect([...select().options].map(option => option.value)).toEqual(bossDefinitions.map(definition => definition.id))
   expect([...select().options].map(option => option.textContent)).toEqual(["Dummy", "Dummy (Attack)", "Boss"])

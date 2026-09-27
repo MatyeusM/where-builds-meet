@@ -28,7 +28,6 @@ import type { AttunementOverrides } from "./calculations/attunementStats"
 import { type AttunementStats } from "./calculations/damage"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
-import { RotationEditorTab } from "./features/rotations/RotationEditorTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
 import { SkillEditorTab } from "./features/skills/SkillEditorTab"
 import { loadGlobalDebuffs } from "./globalDebuffs"
@@ -37,8 +36,10 @@ import { Chip } from "./ui/Chip"
 import { Tab } from "./ui/Tab"
 const loadBuildTab = () => import("./features/build/BuildTab")
 const loadSimulationTab = () => import("./features/simulation/SimulationTab")
+const loadRotationEditorTab = () => import("./features/rotations/RotationEditorTab")
 const BuildTab = lazy(loadBuildTab)
 const SimulationTab = lazy(loadSimulationTab)
+const RotationEditorTab = lazy(() => loadRotationEditorTab().then(module => ({ default: module.RotationEditorTab })))
 import {
   activeBuildByPathStorageKey,
   attunementOverrideStorageKey,
@@ -112,6 +113,12 @@ export default function App() {
   // Mount the simulator only on first use, then keep it mounted while hidden. Its module is preloaded below.
   // Remounting would cancel its worker and discard progress/results on every tab switch.
   const [simulationMounted, setSimulationMounted] = useState(false)
+  // The rotation editor is deferred for a different reason: it is the largest module in the
+  // application, and it is only needed to read comparisons, which nothing else displays. It is
+  // deliberately absent from the idle preload below, which would give back what deferring it
+  // saves. The active rotation's own totals are resolved by the application, so the headline
+  // number does not wait for it.
+  const [rotationsMounted, setRotationsMounted] = useState(false)
 
   useEffect(() => {
     const preloadDeferredTabs = () => {
@@ -517,7 +524,13 @@ export default function App() {
             dps: activeResult?.metrics.hps ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
           })}
         </Tab>
-        <Tab active={activeTab === "rotations"} onClick={() => setActiveTab("rotations")}>
+        <Tab
+          active={activeTab === "rotations"}
+          onClick={() => {
+            setRotationsMounted(true)
+            setActiveTab("rotations")
+          }}
+        >
           {t("ui.app.rotationEditor")}
         </Tab>
         <Tab
@@ -600,20 +613,26 @@ export default function App() {
           onLayoutChange={changeLayoutPreview}
         />
       ) : null}
-      <div className={`viewport-tab-content ${activeTab === "rotations" ? "" : "tab-hidden"}`}>
-        <RotationEditorTab
-          key={pathId}
-          character={character}
-          pathId={pathId}
-          devMode={devMode}
-          active={activeTab === "rotations"}
-          defaultRotationId={defaultRotationIdForPath(pathId)}
-          selectedRotationId={selectedRotationId}
-          skillOverrides={skillOverrides}
-          onSelectRotationWeapons={selectBuildWeapons}
-          onActiveRotationChange={activateRotationForPath}
-        />
-      </div>
+      {rotationsMounted && (
+        <div className={`viewport-tab-content ${activeTab === "rotations" ? "" : "tab-hidden"}`}>
+          <FeatureLoadBoundary>
+            <Suspense fallback={tabSuspenseFallback}>
+              <RotationEditorTab
+                key={pathId}
+                character={character}
+                pathId={pathId}
+                devMode={devMode}
+                active={activeTab === "rotations"}
+                defaultRotationId={defaultRotationIdForPath(pathId)}
+                selectedRotationId={selectedRotationId}
+                skillOverrides={skillOverrides}
+                onSelectRotationWeapons={selectBuildWeapons}
+                onActiveRotationChange={activateRotationForPath}
+              />
+            </Suspense>
+          </FeatureLoadBoundary>
+        </div>
+      )}
       {simulationMounted && (
         <div className={activeTab === "simulation" ? "" : "tab-hidden"}>
           <FeatureLoadBoundary>

@@ -10,6 +10,7 @@ import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { initializeI18n } from "../src/i18n"
 import { dpsHeldKeys, dpsRequests, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
+import { openRotationEditorTab } from "./helpers/rotationEditorTab"
 
 /**
  * A path with several rotations, so this fails if the editor calculates rotations the
@@ -130,6 +131,14 @@ function calculatedRotations() {
   return dpsRequests("baseline").map(request => (request.build().timeline.rotation.name as string).trim())
 }
 
+async function click(text: string) {
+  const button = [...container.querySelectorAll("button")].find(
+    node => node.textContent?.trim() === text || node.getAttribute("aria-label") === text,
+  )
+  expect(button).toBeDefined()
+  await act(async () => button!.click())
+}
+
 /** Display names in the rotation list, and which one is active. */
 function listedRotations() {
   const items = [...container.querySelectorAll<HTMLElement>(".rotation-list-item")]
@@ -139,8 +148,20 @@ function listedRotations() {
   }))
 }
 
-it("does not calculate every rotation on first render", async () => {
+it("resolves only the active rotation before the editor is opened", async () => {
   await act(async () => root.render(<App />))
+  await settle()
+
+  expect(container.querySelector(".rotation-editor-panel")).toBeNull()
+  // Only the active rotation, which every surface shows. The editor is what needs the rest, and
+  // it is not on screen yet.
+  expect(calculatedRotations()).toHaveLength(1)
+})
+
+it("does not calculate every rotation when the editor is opened", async () => {
+  await act(async () => root.render(<App />))
+  await settle()
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await settle()
 
   // Stored entries merge with the path's bundled presets, so the list is longer than what
@@ -158,6 +179,8 @@ it("does not calculate every rotation on first render", async () => {
 
 it("calculates a rotation when it is selected", async () => {
   await act(async () => root.render(<App />))
+  await settle()
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await settle()
   const before = calculatedRotations()
 
@@ -199,6 +222,7 @@ function rotationResults() {
 it("reports a pending calculation instead of a zeroed result", async () => {
   baselinePending = true
   await act(async () => root.render(<App />))
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await settle()
 
   const results = rotationResults()
@@ -209,6 +233,7 @@ it("reports a pending calculation instead of a zeroed result", async () => {
 
 it("shows the calculated result once it arrives", async () => {
   await act(async () => root.render(<App />))
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await settle()
 
   const results = rotationResults()

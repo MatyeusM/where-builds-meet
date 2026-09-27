@@ -8,6 +8,7 @@ import App from "../src/App"
 import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { initializeI18n } from "../src/i18n"
 import { dpsBundles, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
+import { openRotationEditorTab } from "./helpers/rotationEditorTab"
 
 vi.mock("../src/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
@@ -94,7 +95,7 @@ it("opens action anchors on selection but allows their rows to remain collapsed"
     ),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await act(async () => vi.advanceTimersByTimeAsync(150))
   const expandButton = () => container.querySelector<HTMLButtonElement>(".rotation-expand-button")!
   expect(expandButton().getAttribute("aria-expanded")).toBe("true")
@@ -133,7 +134,7 @@ it("moves an after-start Qi event to the adjacent action instead of the first da
     ]),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditorTab(container, () => click("Rotation Editor"))
   await act(async () => vi.advanceTimersByTimeAsync(200))
   const eventRow = container.querySelector<HTMLElement>('[data-rotation-step-index="0"]')!
   const timeInput = eventRow.querySelector<HTMLInputElement>('input[aria-label="Start Time"]')!

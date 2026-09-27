@@ -50,6 +50,24 @@ async function click(text: string) {
   assert(button !== undefined, text)
   await act(async () => button!.click())
 }
+
+/**
+ * Waits for the rotation editor, which is loaded on demand when its tab is first opened.
+ *
+ * Its module resolves on the real event loop, which the fake clock these tests run on does not
+ * drive, so loading it here is what lets the suspended render finish. Anything that opens the
+ * editor has to await this rather than assume the editor is already on screen.
+ */
+async function openRotationEditor() {
+  await click("Rotation Editor")
+  await act(async () => {
+    await import("../src/features/rotations/RotationEditorTab")
+  })
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0)
+  })
+  assert(container.querySelector(".rotation-editor-panel") !== null, "the rotation editor did not finish loading")
+}
 async function fill(input: HTMLInputElement, value: string) {
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value)
@@ -64,7 +82,7 @@ async function commit(input: HTMLInputElement, trigger: "enter" | "blur" = "blur
 }
 it("adds a timed Hellfire event, edits signed amounts, and saves it", async () => {
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await click("Duplicate")
   const selects = [...container.querySelectorAll<HTMLSelectElement>('select[aria-label="Skill or event"]')]
   expect(selects.length).toBeGreaterThan(1)
@@ -134,7 +152,7 @@ it("allows a Delay action in a one-skill rotation", async () => {
     ]),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await act(async () => vi.advanceTimersByTimeAsync(200))
   const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
   expect(select).not.toBeNull()
@@ -168,7 +186,7 @@ it("keeps a sole ordered skill when replacing it with a fixed-time event", async
     ]),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await act(async () => vi.advanceTimersByTimeAsync(200))
   const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
   await act(async () => {
@@ -201,7 +219,7 @@ it("clears an action start anchor when replacing its skill with an actionless sk
     ]),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await act(async () => vi.advanceTimersByTimeAsync(200))
   const select = container.querySelector<HTMLSelectElement>('select[aria-label="Skill or event"]')!
   await act(async () => {
@@ -242,7 +260,7 @@ it("retains generated rows until the latest complete editor revision arrives", a
       }),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await click("Duplicate")
   await act(async () => {
     await vi.advanceTimersByTimeAsync(100)
@@ -301,7 +319,7 @@ it.each([0, 1, 3])("preserves the neighboring row's viewport position when delet
       }),
   )
   await act(async () => root.render(<App />))
-  await click("Rotation Editor")
+  await openRotationEditor()
   await click("Duplicate")
   await act(async () => {
     await vi.advanceTimersByTimeAsync(100)
