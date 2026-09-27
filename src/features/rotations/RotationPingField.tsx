@@ -1,4 +1,4 @@
-import { IconRotate } from "@tabler/icons-react"
+import { IconRestore } from "@tabler/icons-react"
 import { useState } from "react"
 
 import { t } from "../../i18n"
@@ -52,7 +52,7 @@ export function RotationPingField({ value, inheritedValue, disabled, onCommit }:
               onCommit(undefined)
             }}
           >
-            <IconRotate size="1em" aria-hidden />
+            <IconRestore size="1em" aria-hidden />
           </button>
         )}
       </span>

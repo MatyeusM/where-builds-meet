@@ -191,7 +191,9 @@ component and consumes shared custom properties from the globally loaded
 `src/styles/tokens.css`. Reusable appearance options are explicit primitive
 props and local module classes rather than recreated global classes. For
 example, `Button` owns primary, secondary, and danger variants, their hover
-states, and the small size. Its `data-button` marker exists only so domain
+states, the small size, and an icon-only presentation that takes its block size
+from the size it is combined with and centres itself, so an icon-only action
+stands as tall as a labelled button of the same size. Its `data-button` marker exists only so domain
 layout rules can target primitive instances; it does not provide a global
 button-style fallback. `Panel` and `PanelHeading` expose the corresponding
 `data-panel` and `data-panel-heading` hooks for stable application selectors

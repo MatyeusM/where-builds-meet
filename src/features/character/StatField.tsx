@@ -1,4 +1,4 @@
-import { IconRotate } from "@tabler/icons-react"
+import { IconRestore } from "@tabler/icons-react"
 import { useState } from "react"
 
 import { formatNumber } from "../../application/formatting"
@@ -74,7 +74,7 @@ export function StatField({
               onReset?.()
             }}
           >
-            <IconRotate size="1em" aria-hidden />
+            <IconRestore size="1em" aria-hidden />
           </button>
         )}
       </span>

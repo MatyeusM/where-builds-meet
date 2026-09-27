@@ -1,4 +1,4 @@
-import { IconRotate, IconX } from "@tabler/icons-react"
+import { IconRestore, IconX } from "@tabler/icons-react"
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 
 import {
@@ -357,15 +357,16 @@ export function StatsTab({
           <CalculationStatus category={key} />
         </div>
         {buildSetupOverrides[key] && (
-          <button
-            className="stat-reset-button"
+          <Button
+            variant="secondary"
+            iconOnly
             type="button"
             aria-label={t("ui.app.resetNamedValue", { name: title })}
             title={t("ui.app.resetToBuildValue")}
             onClick={() => onBuildSetupReset(key)}
           >
-            <IconRotate size="1em" aria-hidden />
-          </button>
+            <IconRestore size="1em" aria-hidden />
+          </Button>
         )}
       </PanelHeading>
       <div className="gear-set-list">
@@ -812,7 +813,7 @@ export function StatsTab({
                             resetAttunement(key)
                           }}
                         >
-                          <IconRotate size="1em" aria-hidden />
+                          <IconRestore size="1em" aria-hidden />
                         </button>
                       )}
                     </span>
@@ -980,15 +981,16 @@ export function StatsTab({
                 <h2>{t("ui.app.innerWays")}</h2>
               </div>
               {buildSetupOverrides.innerWays && (
-                <button
-                  className="stat-reset-button"
+                <Button
+                  variant="secondary"
+                  iconOnly
                   type="button"
                   aria-label={t("ui.app.resetInnerWays")}
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("innerWays")}
                 >
-                  <IconRotate size="1em" aria-hidden />
-                </button>
+                  <IconRestore size="1em" aria-hidden />
+                </Button>
               )}
             </PanelHeading>
             <div className="inner-way-list">
@@ -1047,15 +1049,16 @@ export function StatsTab({
                 <CalculationStatus category="bowRingSet" />
               </div>
               {buildSetupOverrides.bowRingSet !== undefined && (
-                <button
-                  className="stat-reset-button"
+                <Button
+                  variant="secondary"
+                  iconOnly
                   type="button"
                   aria-label={t("ui.app.resetBowRingSet")}
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("bowRingSet")}
                 >
-                  <IconRotate size="1em" aria-hidden />
-                </button>
+                  <IconRestore size="1em" aria-hidden />
+                </Button>
               )}
             </PanelHeading>
             <ButtonGroup>
@@ -1078,15 +1081,16 @@ export function StatsTab({
                 <CalculationStatus category="arsenal" />
               </div>
               {buildSetupOverrides.arsenal !== undefined && (
-                <button
-                  className="stat-reset-button"
+                <Button
+                  variant="secondary"
+                  iconOnly
                   type="button"
                   aria-label={t("ui.app.resetArsenal")}
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("arsenal")}
                 >
-                  <IconRotate size="1em" aria-hidden />
-                </button>
+                  <IconRestore size="1em" aria-hidden />
+                </Button>
               )}
             </PanelHeading>
             <ButtonGroup>

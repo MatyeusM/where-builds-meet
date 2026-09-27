@@ -37,11 +37,22 @@
     border-color: var(--primary);
   }
 
+  /*
+   * An icon-only button takes its block size from the size it is combined with, so an
+   * icon-only action at the default size stands as tall as a button beside it carrying a
+   * label, and the same action at the small size stands as tall as a small labelled button.
+   * The ratio makes it square, since there is no label to give it an intrinsic width.
+   *
+   * It aligns to the centre rather than to a baseline: a centred glyph has no text baseline
+   * to sit on, and baseline-aligning it in a row of text would displace that text.
+   */
   .icon-only {
     display: inline-grid;
-    min-inline-size: 2.25rem;
-    padding: 5px;
+    flex: 0 0 auto;
+    align-self: center;
+    padding-inline: 0;
     place-items: center;
+    aspect-ratio: 1;
   }
 
   .primary {
