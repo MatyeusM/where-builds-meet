@@ -210,6 +210,7 @@ export function RotationEditorTab({
   character,
   pathId,
   devMode,
+  active,
   defaultRotationId,
   selectedRotationId,
   calculationCache,
@@ -223,6 +224,8 @@ export function RotationEditorTab({
   character: CharacterState
   pathId: PathId
   devMode: boolean
+  /** Whether this tab is the visible one. Hidden tabs keep their scroll offset across engines. */
+  active: boolean
   defaultRotationId: string
   selectedRotationId: string
   calculationCache: RotationCalculationCache
@@ -320,6 +323,10 @@ export function RotationEditorTab({
   const rotationImportInputRef = useRef<HTMLInputElement>(null)
   const rotationScrollRef = useRef<HTMLDivElement>(null)
   const rotationStepListRef = useRef<HTMLDivElement>(null)
+  // The tab wrapper is `display: none` while another tab is active, which drops the
+  // scroll box. Chromium keeps the offset across that and Firefox does not, so the last
+  // rendered offset is recorded here and reapplied when the tab becomes visible again.
+  const savedScrollTopRef = useRef(0)
   const pendingEventScrollRef = useRef<{
     stepIndex: number
     top: number
@@ -1381,6 +1388,30 @@ export function RotationEditorTab({
     scrollToRow,
     displayKeyByStepIndex,
   ])
+  // Only a rendered container reports a real offset: a hidden one measures 0 and would
+  // otherwise overwrite the saved position with the top of the list.
+  useEffect(() => {
+    const scrollContainer = rotationScrollRef.current
+    if (!scrollContainer) return
+    const record = () => {
+      if (scrollContainer.clientHeight === 0) return
+      savedScrollTopRef.current = scrollContainer.scrollTop
+    }
+    record()
+    scrollContainer.addEventListener("scroll", record, { passive: true })
+    return () => scrollContainer.removeEventListener("scroll", record)
+  }, [rotationScrollRef])
+  useLayoutEffect(() => {
+    if (!active) return
+    const scrollContainer = rotationScrollRef.current
+    if (!scrollContainer) return
+    // A pending event scroll or skill focus already chose a deliberate position.
+    if (pendingEventScrollRef.current || pendingSkillFocusRef.current !== null) return
+    // A different rotation, or a column change, makes the saved offset meaningless.
+    if (scrollContainer.scrollHeight <= scrollContainer.clientHeight) return
+    if (scrollContainer.scrollTop === savedScrollTopRef.current) return
+    scrollContainer.scrollTop = savedScrollTopRef.current
+  }, [active, rotationScrollRef])
   const totalRotationTime = currentCachedResult?.duration ?? 0
   const totalRotationDamage = currentCachedResult?.metrics.totalDamage ?? 0
   const rotationDps = currentCachedResult?.metrics.dps ?? 0

@@ -649,6 +649,7 @@ export default function App() {
           character={character}
           pathId={pathId}
           devMode={devMode}
+          active={activeTab === "rotations"}
           defaultRotationId={defaultRotationIdForPath(pathId)}
           selectedRotationId={selectedRotationId}
           calculationCache={rotationCalculationCache}
