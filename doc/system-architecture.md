@@ -1305,8 +1305,18 @@ The development table reports skill-static cache misses separately, then splits
 the remaining damage-effect aggregation into aggregate initialization, the
 residual per-hit scan, and dynamic-value resolution nested within that scan.
 
-Pure stat and attunement variants reuse the baseline timeline and its effect
-snapshots. Inner Way definitions also declare `altersTimeline`; every current
+Event-invariant stat and attunement variants reuse the baseline timeline and its
+effect snapshots. The current conservative guard forces a rebuild when the
+variant supplies its own timeline, setup effects, Inner Way rules or conditions,
+when the rotation has target HP, when Inner Way rules carry a damage listener, or
+when the baseline was compacted into fallback results. It also rebuilds when the
+baseline timeline itself contains healing, replay, accumulator, or recording
+applications. Supplying setup effects therefore forces a rebuild even when the
+caller supplies no replacement timeline, so this fast path is narrower than it
+sounds. Wind's Rodent accumulators currently prevent even attunement-only
+variants from reaching it. See [the Wind performance audit](wind-innerway-performance.md)
+for measurements and proposed dependency refinement. Inner Way definitions also
+declare `altersTimeline`; every current
 Inner Way sets it to true, so removal variants conservatively rebuild the
 timeline because triggers, cooldowns, durations, stacks, and cast times may
 change. Setup candidates reuse
