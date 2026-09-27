@@ -192,26 +192,9 @@
     min-inline-size: 39.625rem;
   }
 
-  .layout-mobile .setup-option-list-wide,
-  .layout-mobile .setup-option-list-food,
-  .layout-mobile .setup-option-list-arsenal,
-  .layout-mobile .bow-ring-option-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .layout-mobile .script-option-list,
   .layout-mobile .divinecraft-option-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .layout-mobile .global-debuff-options,
-  .layout-mobile .global-debuff-options.qingyi-options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .layout-mobile .global-debuff-options > button,
-  .layout-mobile .global-debuff-options.qingyi-options > button {
-    grid-column: auto;
   }
 
   .layout-mobile .dps-value {

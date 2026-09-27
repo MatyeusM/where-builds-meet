@@ -55,6 +55,7 @@ import { publishNotice, dismissNotice } from "../../notices"
 import { createOfficialGearBookmarklet } from "../../officialGearBookmarklet"
 import type { WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "../../ui/ButtonGroup"
 import { Dialog } from "../../ui/Dialog"
 import { Panel, PanelHeading } from "../../ui/Panel"
 import {
@@ -752,12 +753,12 @@ function BuildSetupPanel({
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
-                <div className="setup-option-list">
+                <ButtonGroup cellWidth="5rem">
                   {[0, 2, 4].map(tier => (
-                    <button
-                      className={selectedTier === tier ? "selected" : ""}
-                      type="button"
+                    <ButtonGroupOption
                       key={tier}
+                      label={t(`system.setPieces.${tier}`)}
+                      selected={selectedTier === tier}
                       disabled={locked}
                       title={lockedTitle}
                       onClick={() =>
@@ -766,11 +767,9 @@ function BuildSetupPanel({
                           [key]: selectSetTier(setup[key], setName, tier as 0 | 2 | 4, definitions),
                         })
                       }
-                    >
-                      {t(`system.setPieces.${tier}`)}
-                    </button>
+                    />
                   ))}
-                </div>
+                </ButtonGroup>
               </div>
             </div>
           )
@@ -845,20 +844,18 @@ function BuildSetupPanel({
             <h2>{t("ui.buildTab.bowRingSet")}</h2>
           </div>
         </PanelHeading>
-        <div className="setup-option-list setup-option-list-wide">
+        <ButtonGroup>
           {Object.entries(bowRingSetDefinitions).map(([value, definition]) => (
-            <button
-              className={setup.bowRingSet === value ? "selected" : ""}
-              type="button"
+            <ButtonGroupOption
               key={value}
+              label={gameText(definition.name)}
+              selected={setup.bowRingSet === value}
               disabled={locked}
               title={lockedTitle}
               onClick={() => onChange({ ...setup, bowRingSet: value })}
-            >
-              {gameText(definition.name)}
-            </button>
+            />
           ))}
-        </div>
+        </ButtonGroup>
       </Panel>
       <Panel className="setup-placeholder-panel build-setup-panel">
         <PanelHeading>
@@ -866,20 +863,18 @@ function BuildSetupPanel({
             <h2>{t("ui.buildTab.arsenal")}</h2>
           </div>
         </PanelHeading>
-        <div className="setup-option-list setup-option-list-arsenal">
+        <ButtonGroup>
           {Object.entries(arsenalDefinitions).map(([value, definition]) => (
-            <button
-              className={setup.arsenal === value ? "selected" : ""}
-              type="button"
+            <ButtonGroupOption
               key={value}
+              label={gameText(definition.name)}
+              selected={setup.arsenal === value}
               disabled={locked}
               title={lockedTitle}
               onClick={() => onChange({ ...setup, arsenal: value })}
-            >
-              {gameText(definition.name)}
-            </button>
+            />
           ))}
-        </div>
+        </ButtonGroup>
       </Panel>
       <Panel className="setup-placeholder-panel build-setup-panel build-affix-summary-panel">
         <PanelHeading>

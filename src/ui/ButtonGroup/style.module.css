@@ -1,0 +1,84 @@
+@layer ui {
+  /*
+   * A group of mutually exclusive options drawn as one element. The divider colour is the
+   * group's own background showing through a one pixel gap, so every pair of options is
+   * separated by a single line no matter how the grid wraps. Drawing a border per option
+   * instead would put two lines between neighbours, which is what made a grid of options
+   * read as a set of separate buttons.
+   *
+   * Tracks are `auto-fit` with an `fr` maximum, so the options share the available width
+   * equally and fill it, rather than a fixed column count that leaves a group of two
+   * occupying two thirds of its panel while the group above it fills all of it.
+   */
+  .group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--button-group-cell, 8rem), 100%), 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--border);
+    color: var(--text-muted);
+
+    /* Clips the square option corners to the group's radius. Focus rings are drawn inside
+       the option, so clipping cannot hide one. */
+    overflow: clip;
+  }
+
+  .option {
+    display: grid;
+    align-content: start;
+    gap: 3px;
+    min-inline-size: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 6px 8px;
+    background: var(--surface-alt);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1.2;
+    text-align: start;
+    overflow-wrap: anywhere;
+  }
+
+  /* Focus and disabled come before hover so no later rule raises specificity over them. */
+  .option:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+
+  .option:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  .option:hover:not(:disabled) {
+    background: var(--primary-soft);
+  }
+
+  .option[data-selected] {
+    background: var(--primary-soft);
+  }
+
+  /*
+   * The option's name is what the option is, so it carries the weight and, once chosen, the
+   * full text colour. The note below it is a measurement of that choice rather than part of
+   * the name, so it steps down in size and in luminance. Two lines of the same weight and
+   * nearly the same colour left the reader unable to tell which was the option.
+   */
+  .label {
+    font-weight: 650;
+  }
+
+  .option[data-selected] .label {
+    color: var(--text);
+  }
+
+  .note {
+    display: grid;
+    font-size: 0.8em;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--text-dim);
+  }
+}

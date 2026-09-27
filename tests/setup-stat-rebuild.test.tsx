@@ -81,12 +81,22 @@ async function settle() {
   await act(async () => vi.advanceTimersByTimeAsync(300))
 }
 
-async function choose(selector: string, name: string) {
-  const button = [...container.querySelectorAll<HTMLButtonElement>(`${selector} button`)].find(node =>
-    node.textContent?.startsWith(name),
+/**
+ * Chooses an option by the panel it belongs to and the option's own name, rather than by a
+ * styling class, so a group can be restyled or replaced without rewriting every choice. An
+ * option only has to be a button: the panels that show an image rather than a name and a
+ * note render their own options, and both kinds have to be choosable the same way.
+ */
+async function choose(panelName: string, optionName: string) {
+  const panel = [...container.querySelectorAll<HTMLElement>("[data-panel]")].find(
+    node => node.querySelector("h2")?.textContent?.trim() === panelName,
   )
-  expect(button).toBeDefined()
-  await act(async () => button!.click())
+  expect(panel, `no panel headed ${panelName}`).toBeDefined()
+  const option = [...panel!.querySelectorAll<HTMLButtonElement>("button")].find(node =>
+    node.textContent?.startsWith(optionName),
+  )
+  expect(option, `no option ${optionName} in ${panelName}`).toBeDefined()
+  await act(async () => option!.click())
   await settle()
 }
 
@@ -110,7 +120,7 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   const fishDps = getRotationMetrics()!.dps
   expect(fishDps).toBeGreaterThan(0)
 
-  await choose(".setup-option-list-food", "None")
+  await choose("Food", "None")
   const noneBundle = latestBundle()
   expect(rotationBundleFingerprint(noneBundle)).not.toBe(rotationBundleFingerprint(fishBundle))
   expect(noneBundle.stats.minPhys).toBe(fishBundle.stats.minPhys)
@@ -124,7 +134,7 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   expect(localStorage.getItem("wwm-food-session-v1")).toBe("None")
 
   const dispatchesBeforeReturn = dpsDispatches("baseline").length
-  await choose(".setup-option-list-food", "Simmering Fish Slices")
+  await choose("Food", "Simmering Fish Slices")
   expect(dpsDispatches("baseline")).toHaveLength(dispatchesBeforeReturn)
   expect(getRotationMetrics()!.dps).toBeCloseTo(fishDps, 8)
 })
@@ -134,16 +144,16 @@ it("keeps Script and Divinecraft selections in the same calculation as the chara
   await settle()
   const originalStats = latestBundle().stats
   const fireDps = getRotationMetrics()!.dps
-  await choose(".divinecraft-option-list", "None")
+  await choose("Divinecraft", "None")
   const noneDps = getRotationMetrics()!.dps
   expect(noneDps).toBeLessThan(fireDps)
   expect(latestBundle().stats).toEqual(originalStats)
-  await choose(".script-option-list", "Insight Script")
+  await choose("Script", "Insight Script")
   expect(getRotationMetrics()!.dps).toBeGreaterThan(noneDps)
   expect(latestBundle().stats).toEqual(originalStats)
-  await choose(".script-option-list", "None")
+  await choose("Script", "None")
   expect(getRotationMetrics()!.dps).toBeCloseTo(noneDps, 8)
-  await choose(".divinecraft-option-list", "Fire")
+  await choose("Divinecraft", "Fire")
   expect(getRotationMetrics()!.dps).toBeCloseTo(fireDps, 8)
 })
 
@@ -191,7 +201,7 @@ it("rebuilds edited stats and preserves final-value overrides across food change
   expect(latestBundle().stats.minPhys).toBe(target)
   expect(getRotationMetrics()!.dps).toBeGreaterThan(beforeDps)
   const fishDps = getRotationMetrics()!.dps
-  await choose(".setup-option-list-food", "None")
+  await choose("Food", "None")
   expect(latestBundle().stats.minPhys).toBe(target)
   expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
   expect(JSON.parse(localStorage.getItem("wwm-stat-overrides-v1")!).minPhys).toBe(target)

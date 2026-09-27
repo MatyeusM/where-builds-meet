@@ -195,7 +195,16 @@ states, and the small size. Its `data-button` marker exists only so domain
 layout rules can target primitive instances; it does not provide a global
 button-style fallback. `Panel` and `PanelHeading` expose the corresponding
 `data-panel` and `data-panel-heading` hooks for stable application selectors
-while their generated module classes remain private.
+while their generated module classes remain private. `ButtonGroup` owns a set of
+mutually exclusive options: it draws the divider colour as its own background
+showing through a one-pixel gap, so neighbours are separated by a single line
+however the grid wraps, and it gives every option an equal share of the available
+width via `auto-fit` tracks with an `fr` maximum rather than a fixed column count.
+`ButtonGroupOption` takes the option's name as its label and anything else as a
+note beneath it, so the name carries the weight and the note steps down in size and
+luminance; the two are never rendered as peers. Panels that present an image per
+option instead of a name and a note are not option groups and keep their own
+presentation.
 
 Domain-specific classes one layer above a primitive may still adjust layout
 or context-specific appearance with the same design tokens. Primitives do not

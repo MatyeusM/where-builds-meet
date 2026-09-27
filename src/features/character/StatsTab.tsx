@@ -51,6 +51,7 @@ import { publishNotice, dismissNotice } from "../../notices"
 import { setPersistentItem } from "../../persistentStorage"
 import { type CharacterStats } from "../../types"
 import { Button } from "../../ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "../../ui/ButtonGroup"
 import { Panel, PanelHeading } from "../../ui/Panel"
 import { CalculatedStatField } from "./CalculatedStatField"
 import { StatPair } from "./StatPair"
@@ -314,10 +315,10 @@ export function StatsTab({
   const availableWeaponSets = availableSetEntriesForSettings(typedWeaponSetDefinitions, settings, pathId)
   const availableArmorSets = availableSetEntriesForSettings(typedArmorSetDefinitions, settings, pathId)
   const setupStatus = (group: string, value: string, active: boolean) => {
-    if (active) return <small className="setup-active-label">{t("ui.app.active")}</small>
+    if (active) return <span className="setup-active-label">{t("ui.app.active")}</span>
     const comparison = rotationMetrics?.setupComparisons[group]?.find(row => row.label === value)
     return comparison ? (
-      <small className="setup-delta-label">
+      <span className="setup-delta-label">
         <span className={throughputDeltaClass(comparison.dpsDifference, "damage")}>
           {deltaPrefix(comparison.dpsDifference)}
           {formatDelta(comparison.dpsDifference)} {t("system.dps")}
@@ -338,9 +339,9 @@ export function StatsTab({
             </span>
           </>
         ) : null}
-      </small>
+      </span>
     ) : (
-      <small className="setup-inactive-label">—</small>
+      <span className="setup-inactive-label">—</span>
     )
   }
   const setPanel = (
@@ -374,21 +375,20 @@ export function StatsTab({
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
-                <div className="setup-option-list">
+                <ButtonGroup cellWidth="5rem">
                   {[0, 2, 4].map(tier => (
-                    <button
-                      className={selectedTier === tier ? "selected" : ""}
-                      type="button"
+                    <ButtonGroupOption
                       key={tier}
+                      label={t(`system.setPieces.${tier}`)}
+                      selected={selectedTier === tier}
                       onClick={() =>
                         onBuildSetupChange(key, selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions))
                       }
                     >
-                      {t(`system.setPieces.${tier}`)}
-                      <span>{setupStatus(`${key}:${setName}`, String(tier), selectedTier === tier)}</span>
-                    </button>
+                      {setupStatus(`${key}:${setName}`, String(tier), selectedTier === tier)}
+                    </ButtonGroupOption>
                   ))}
-                </div>
+                </ButtonGroup>
               </div>
             </div>
           )
@@ -400,15 +400,14 @@ export function StatsTab({
     const active = globalDebuffs[key] === value
     const optionValue = value ? "on" : "off"
     return (
-      <button
-        className={active ? "selected" : ""}
-        type="button"
+      <ButtonGroupOption
         key={optionValue}
+        label={label}
+        selected={active}
         onClick={() => updateGlobalDebuff(key, value)}
       >
-        {label}
-        <span>{setupStatus(`debuff:${key}`, optionValue, active)}</span>
-      </button>
+        {setupStatus(`debuff:${key}`, optionValue, active)}
+      </ButtonGroupOption>
     )
   }
   const floatingGraceOptionLabel = (value: GlobalDebuffState["floatingGrace"]) => {
@@ -853,15 +852,15 @@ export function StatsTab({
                       {gameText(name)}
                       {path && <> ({gameText(path)})</>}
                     </span>
-                    <div className="setup-option-list global-debuff-options">
+                    <ButtonGroup cellWidth="5rem">
                       {globalDebuffOption(key, false, t("ui.app.off"))}
                       {globalDebuffOption(key, true, t("ui.app.on"))}
-                    </div>
+                    </ButtonGroup>
                   </div>
                 ))}
                 <div className="global-debuff-row">
                   <span>{t("ui.app.draughtDebuffs")}</span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup>
                     {(["none", "strayhunt", "both"] as const).map(value => {
                       const active = globalDebuffs.draught === value
                       const labels = {
@@ -870,58 +869,55 @@ export function StatsTab({
                         both: t("ui.app.both"),
                       }
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={labels[value]}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("draught", value)}
                         >
-                          {labels[value]}
-                          <span>{setupStatus("debuff:draught", value, active)}</span>
-                        </button>
+                          {setupStatus("debuff:draught", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
                 <div className="global-debuff-row">
                   <span>
                     {gameText("Floating Grace")} ({t("system.path.deluge")})
                   </span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup>
                     {(["none", "mixed", "deluge"] as const).map(value => {
                       const active = globalDebuffs.floatingGrace === value
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={floatingGraceOptionLabel(value)}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("floatingGrace", value)}
                         >
-                          {floatingGraceOptionLabel(value)}
-                          <span>{setupStatus("buff:floatingGrace", value, active)}</span>
-                        </button>
+                          {setupStatus("buff:floatingGrace", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
                 <div className="global-debuff-row">
                   <span>{t("system.innerWay.bitterSeasons")}</span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup>
                     {(["none", "T1", "T6"] as const).map(value => {
                       const active = globalDebuffs.qingyisCharm === value
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={value === "none" ? t("ui.app.none") : value}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("qingyisCharm", value)}
                         >
-                          {value === "none" ? t("ui.app.none") : value}
-                          <span>{setupStatus("debuff:qingyisCharm", value, active)}</span>
-                        </button>
+                          {setupStatus("debuff:qingyisCharm", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
               </div>
             </Panel>
@@ -1044,7 +1040,7 @@ export function StatsTab({
           {setPanel(t("ui.app.weaponSet"), "weaponSets", typedWeaponSetDefinitions, availableWeaponSets)}
           {availableArmorSets.length > 0 &&
             setPanel(t("ui.app.armorSet"), "armorSets", typedArmorSetDefinitions, availableArmorSets)}
-          <Panel className="setup-placeholder-panel bow-ring-panel">
+          <Panel className="setup-placeholder-panel">
             <PanelHeading>
               <div>
                 <h2>{t("ui.app.bowRingSet")}</h2>
@@ -1062,19 +1058,18 @@ export function StatsTab({
                 </button>
               )}
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-wide bow-ring-option-list">
+            <ButtonGroup>
               {Object.entries(typedBowRingSetDefinitions).map(([value, definition]) => (
-                <button
-                  className={bowRingSet === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={bowRingSet === value}
                   onClick={() => onBuildSetupChange("bowRingSet", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("bowRingSet", value, bowRingSet === value)}</span>
-                </button>
+                  {setupStatus("bowRingSet", value, bowRingSet === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
@@ -1094,19 +1089,18 @@ export function StatsTab({
                 </button>
               )}
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-arsenal">
+            <ButtonGroup>
               {Object.entries(typedArsenalDefinitions).map(([value, definition]) => (
-                <button
-                  className={arsenal === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={arsenal === value}
                   onClick={() => onBuildSetupChange("arsenal", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("arsenal", value, arsenal === value)}</span>
-                </button>
+                  {setupStatus("arsenal", value, arsenal === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
@@ -1115,19 +1109,18 @@ export function StatsTab({
                 <CalculationStatus category="food" />
               </div>
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-food">
+            <ButtonGroup>
               {Object.entries(typedFoodDefinitions).map(([value, definition]) => (
-                <button
-                  className={food === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={food === value}
                   onClick={() => onSetupSelectionChange("food", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("food", value, food === value)}</span>
-                </button>
+                  {setupStatus("food", value, food === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
