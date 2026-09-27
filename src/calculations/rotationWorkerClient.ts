@@ -31,129 +31,190 @@ type CalculationRequest = {
   reject: (error: Error) => void
 }
 
-let worker: Worker | undefined
+type WorkerResultMessage = {
+  id: number
+  metrics?: RotationMetrics
+  editorTimeline?: EditorTimelineResult
+  timeline?: TimelineRow[]
+  anchorTime?: number
+  duration?: number
+  actionBreakdowns?: Record<string, RotationActionBreakdown>
+  baseline?: RotationSimulationBaseline["baseline"]
+  compactedInnerWayResults?: boolean
+  expectedOutcomeBuffSchedule?: RotationSimulationBaseline["expectedOutcomeBuffSchedule"]
+  mysticVitalityDamageScale?: number
+  progress?: number
+  error?: string
+}
+
+/**
+ * A slot mirrors the baseline cache its worker keeps for itself. A `comparisons`
+ * request reads `baselineCache` inside the worker and throws when the key is
+ * absent, so the key set has to be per slot: one shared set would let a job land
+ * on a slot that never ran the baseline and suppress the caller-supplied fallback.
+ */
+type WorkerSlot = {
+  worker: Worker
+  running?: { id: number; request: CalculationRequest }
+  baselineKeys: Set<string>
+  idleSince: number
+}
+
+const maxWorkers = 4
+let slots: WorkerSlot[] = []
 let requestId = 0
 let requestSequence = 0
-let running: { id: number; request: CalculationRequest } | undefined
 let pending: CalculationRequest[] = []
-let workerBaselineKeys = new Set<string>()
+let idleCounter = 0
 
-function rejectAllRequests(message: string) {
+function workerBudget() {
+  const cores = typeof navigator === "undefined" ? 2 : (navigator.hardwareConcurrency ?? 2)
+  return Math.max(1, Math.min(maxWorkers, cores - 1))
+}
+
+/**
+ * Tear down every worker, rejecting whatever each one was running plus the queue.
+ * Interrupted requests are captured before the slots are cleared, otherwise the
+ * rejections find nothing left to settle and the callers hang forever.
+ */
+function teardownSlots(message: string) {
   const error = new Error(message)
-  const interrupted = running?.request
+  const interrupted = slots.flatMap(slot => (slot.running ? [slot.running.request] : []))
+  const doomed = slots
+  slots = []
   const queued = pending
-  running = undefined
   pending = []
-  interrupted?.reject(error)
+  doomed.forEach(slot => {
+    slot.worker.terminate()
+    slot.running = undefined
+  })
+  interrupted.forEach(request => request.reject(error))
   queued.forEach(request => request.reject(error))
 }
 
-function dispatchNext() {
-  if (running || pending.length === 0) return
-  pending.sort((left, right) => right.priority - left.priority || left.sequence - right.sequence)
-  dispatch(pending.shift()!)
+function higherPriorityFirst(left: CalculationRequest, right: CalculationRequest) {
+  return right.priority - left.priority || left.sequence - right.sequence
 }
 
-function getWorker() {
-  if (worker) return worker
-  const createdWorker = new Worker(new URL("./rotationWorker.ts", import.meta.url), { type: "module" })
-  worker = createdWorker
-  createdWorker.addEventListener(
-    "message",
-    (
-      event: MessageEvent<{
-        id: number
-        metrics?: RotationMetrics
-        editorTimeline?: EditorTimelineResult
-        timeline?: TimelineRow[]
-        anchorTime?: number
-        duration?: number
-        actionBreakdowns?: Record<string, RotationActionBreakdown>
-        baseline?: RotationSimulationBaseline["baseline"]
-        compactedInnerWayResults?: boolean
-        expectedOutcomeBuffSchedule?: RotationSimulationBaseline["expectedOutcomeBuffSchedule"]
-        mysticVitalityDamageScale?: number
-        progress?: number
-        error?: string
-      }>,
-    ) => {
-      if (!running || event.data.id !== running.id) return
-      if (typeof event.data.progress === "number") {
-        running.request.onProgress?.(event.data.progress)
-        return
-      }
-      const completed = running.request
-      running = undefined
-      if (event.data.error) completed.reject(new Error(event.data.error))
-      else if (event.data.editorTimeline) completed.resolve({ editorTimeline: event.data.editorTimeline })
-      else if (event.data.metrics) {
-        if (completed.cacheKey && (completed.mode === "baseline" || completed.baseline))
-          workerBaselineKeys.add(completed.cacheKey)
-        completed.resolve(
-          completed.mode === "simulation" || completed.mode === "baseline"
-            ? {
-                metrics: event.data.metrics,
-                timeline: event.data.timeline ?? [],
-                anchorTime: event.data.anchorTime ?? 0,
-                duration: event.data.duration ?? 0,
-                actionBreakdowns: event.data.actionBreakdowns ?? {},
-                ...(event.data.baseline ? { baseline: event.data.baseline } : {}),
-                ...(event.data.compactedInnerWayResults ? { compactedInnerWayResults: true } : {}),
-                ...(event.data.expectedOutcomeBuffSchedule
-                  ? { expectedOutcomeBuffSchedule: event.data.expectedOutcomeBuffSchedule }
-                  : {}),
-                ...(event.data.mysticVitalityDamageScale !== undefined
-                  ? { mysticVitalityDamageScale: event.data.mysticVitalityDamageScale }
-                  : {}),
-              }
-            : { metrics: event.data.metrics },
-        )
-      }
-      dispatchNext()
-    },
-  )
-  const recoverFromWorkerFailure = (message: string) => {
-    if (worker !== createdWorker) return
-    createdWorker.terminate()
-    worker = undefined
-    workerBaselineKeys = new Set()
-    const interrupted = running?.request
-    running = undefined
-    if (interrupted) {
-      if (interrupted.retryCount < 1) pending.push({ ...interrupted, retryCount: interrupted.retryCount + 1 })
-      else interrupted.reject(new Error(message))
-    }
-    dispatchNext()
+/** Prefer a slot that already cached the requested baseline over cloning it again. */
+function pickSlot(request: CalculationRequest) {
+  const free = slots.filter(slot => !slot.running)
+  if (request.cacheKey) {
+    const holding = free.find(slot => slot.baselineKeys.has(request.cacheKey!))
+    if (holding) return holding
   }
+  return free.reduce((oldest, slot) => (slot.idleSince < oldest.idleSince ? slot : oldest))
+}
+
+function removeSlot(slot: WorkerSlot) {
+  const index = slots.indexOf(slot)
+  if (index < 0) return false
+  slots.splice(index, 1)
+  slot.worker.terminate()
+  return true
+}
+
+function translateResult(request: CalculationRequest, message: WorkerResultMessage): WorkerResult {
+  if (message.error) throw new Error(message.error)
+  if (message.editorTimeline) return { editorTimeline: message.editorTimeline }
+  if (!message.metrics) throw new Error("Rotation calculation worker returned no result")
+  if (request.mode !== "simulation" && request.mode !== "baseline") return { metrics: message.metrics }
+  return {
+    metrics: message.metrics,
+    timeline: message.timeline ?? [],
+    anchorTime: message.anchorTime ?? 0,
+    duration: message.duration ?? 0,
+    actionBreakdowns: message.actionBreakdowns ?? {},
+    ...(message.baseline ? { baseline: message.baseline } : {}),
+    ...(message.compactedInnerWayResults ? { compactedInnerWayResults: true } : {}),
+    ...(message.expectedOutcomeBuffSchedule
+      ? { expectedOutcomeBuffSchedule: message.expectedOutcomeBuffSchedule }
+      : {}),
+    ...(message.mysticVitalityDamageScale !== undefined
+      ? { mysticVitalityDamageScale: message.mysticVitalityDamageScale }
+      : {}),
+  }
+}
+
+function settleSlotFailure(slot: WorkerSlot, message: string, cause?: unknown) {
+  if (!removeSlot(slot)) return
+  const interrupted = slot.running?.request
+  slot.running = undefined
+  if (interrupted) requeueOrReject(interrupted, cause instanceof Error ? cause : new Error(message))
+  dispatchPending()
+}
+
+function requeueOrReject(request: CalculationRequest, error: Error) {
+  if (request.retryCount < 1) pending.push({ ...request, retryCount: request.retryCount + 1 })
+  else request.reject(error)
+}
+
+function createSlot(): WorkerSlot {
+  const slot: WorkerSlot = { worker: undefined as unknown as Worker, baselineKeys: new Set(), idleSince: 0 }
+  const createdWorker = new Worker(new URL("./rotationWorker.ts", import.meta.url), { type: "module" })
+  slot.worker = createdWorker
+
+  createdWorker.addEventListener("message", (event: MessageEvent<WorkerResultMessage>) => {
+    if (slots.indexOf(slot) < 0) return
+    const running = slot.running
+    if (!running || event.data.id !== running.id) return
+    if (typeof event.data.progress === "number") {
+      running.request.onProgress?.(event.data.progress)
+      return
+    }
+    const completed = running.request
+    slot.running = undefined
+    slot.idleSince = ++idleCounter
+    if (completed.cacheKey && (completed.mode === "baseline" || completed.baseline)) {
+      slot.baselineKeys.add(completed.cacheKey)
+    }
+    try {
+      completed.resolve(translateResult(completed, event.data))
+    } catch (error) {
+      completed.reject(error instanceof Error ? error : new Error("Rotation calculation failed"))
+    }
+    dispatchPending()
+  })
+
   createdWorker.addEventListener("error", event => {
-    recoverFromWorkerFailure(event.message || "Rotation calculation worker failed")
+    settleSlotFailure(slot, event.message || "Rotation calculation worker failed")
   })
   createdWorker.addEventListener("messageerror", () => {
-    recoverFromWorkerFailure("Rotation calculation worker returned an unreadable result")
+    settleSlotFailure(slot, "Rotation calculation worker returned an unreadable result")
   })
-  return createdWorker
+
+  slots.push(slot)
+  return slot
 }
 
-function dispatch(request: CalculationRequest) {
+function dispatchTo(slot: WorkerSlot, request: CalculationRequest) {
   const id = ++requestId
-  running = { id, request }
+  slot.running = { id, request }
   try {
-    getWorker().postMessage({
+    slot.worker.postMessage({
       id,
       bundle: request.bundle,
       mode: request.mode,
       cacheKey: request.cacheKey,
-      ...(!request.cacheKey || workerBaselineKeys.has(request.cacheKey) ? {} : { baseline: request.baseline }),
+      ...(!request.cacheKey || slot.baselineKeys.has(request.cacheKey) ? {} : { baseline: request.baseline }),
     })
   } catch (error) {
-    const failed = running?.request
-    running = undefined
-    worker?.terminate()
-    worker = undefined
-    workerBaselineKeys = new Set()
-    if (failed && failed.retryCount < 1) pending.push({ ...failed, retryCount: failed.retryCount + 1 })
-    else failed?.reject(error instanceof Error ? error : new Error("Rotation calculation worker failed"))
-    dispatchNext()
+    slot.running = undefined
+    removeSlot(slot)
+    requeueOrReject(request, error instanceof Error ? error : new Error("Rotation calculation worker failed"))
+  }
+}
+
+function dispatchPending() {
+  pending.sort(higherPriorityFirst)
+  while (pending.length > 0) {
+    let free = slots.filter(slot => !slot.running)
+    if (free.length === 0) {
+      if (slots.length >= workerBudget()) return
+      free = [createSlot()]
+    }
+    const next = pending.shift()!
+    dispatchTo(pickSlot(next) ?? free[0], next)
   }
 }
 
@@ -175,7 +236,7 @@ function enqueue(
     pending.splice(replacedIndex, 1)
   }
   pending.push(queued)
-  dispatchNext()
+  dispatchPending()
 }
 
 /** Queue requests by priority and replace stale pending work with the same key. */
@@ -234,19 +295,13 @@ export function requestRotationComparisons(
 
 /** Stop the active calculation batch so its replacement starts without stale queued work or worker cache. */
 export function supersedeRotationCalculationRequests() {
-  // An idle worker has no stale requests to cancel; retain its prepared editor timeline.
-  if (!running && pending.length === 0) return
-  worker?.terminate()
-  worker = undefined
-  workerBaselineKeys = new Set()
-  rejectAllRequests("Calculation superseded by a newer batch")
+  // Idle workers hold no stale requests; keeping them preserves their prepared editor timeline.
+  if (pending.length === 0 && slots.every(slot => !slot.running)) return
+  teardownSlots("Calculation superseded by a newer batch")
 }
 
 export function disposeRotationCalculationWorker() {
-  worker?.terminate()
-  worker = undefined
-  workerBaselineKeys = new Set()
-  rejectAllRequests("Calculation worker disposed")
+  teardownSlots("Calculation worker disposed")
 }
 
 /** Cancel only this editor's obsolete build, preserving unrelated queued work. */
@@ -258,15 +313,13 @@ export function cancelEditorTimelineRequest(key: string) {
     request.reject(error)
     return false
   })
-  if (running && matches(running.request)) {
-    const request = running.request
-    running = undefined
-    worker?.terminate()
-    worker = undefined
-    workerBaselineKeys = new Set()
+  const interrupted = slots.find(slot => slot.running && matches(slot.running.request))
+  if (interrupted) {
+    const request = interrupted.running!.request
+    removeSlot(interrupted)
     request.reject(error)
   }
-  dispatchNext()
+  dispatchPending()
 }
 
 export function requestEditorTimeline(bundle: RotationSimulationBundle, options?: RequestOptions) {
