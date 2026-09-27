@@ -103,6 +103,28 @@ function collectStatLabels(source, file, entries) {
   visit(sourceFile)
 }
 
+// The character sheet builds `system.innerWay.<id>` directly from the runtime Inner
+// Way id, so the canonical owner must exist for every registered Inner Way. Reading
+// the ids from the definition object keeps this true when a data file is renamed.
+function collectInnerWayIds(source, file) {
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+  const ids = []
+  const visit = node => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(sourceFile) === "innerWayDefinitions") {
+      // `= { ... } satisfies Record<string, InnerWayDefinition>` wraps the literal.
+      let initializer = node.initializer
+      while (initializer && ts.isSatisfiesExpression(initializer)) initializer = initializer.expression
+      if (initializer && ts.isObjectLiteralExpression(initializer))
+        for (const property of initializer.properties)
+          if (ts.isPropertyAssignment(property) && ts.isIdentifier(property.name)) ids.push(property.name.text)
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(sourceFile)
+  if (!ids.length) throw new Error("Could not read Inner Way ids from src/data/innerWayDefinitions.ts.")
+  return ids
+}
+
 const existing = await readCatalog(catalogFile)
 const headers = existing.headers.length >= 2 ? existing.headers : ["key", "en"]
 if (headers[0] !== "key" || !headers.includes("en"))
@@ -159,8 +181,33 @@ for (const [file, source] of dataSources) {
       canonicalKeysByEnglish.set(name, key)
     }
   }
+  if (relative.startsWith("innerway.") && typeof data.name === "string" && data.name.trim()) {
+    const key = `system.innerWay.${relative.slice("innerway.".length)}`
+    expectedEnglish.set(key, data.name)
+    canonicalKeysByEnglish.set(data.name, key)
+  }
   collectDataStrings(data, `data.${relative}`, expectedEnglish, canonicalKeysByEnglish, undefined, relative === "boss")
 }
+
+// Every runtime Inner Way id must own a canonical row, because the character sheet
+// builds that key from the id. A data file that is renamed without updating
+// `innerWayDefinitions`, or a registered id with no definition file, is a defect.
+const innerWayIds = collectInnerWayIds(
+  await readFile(path.join(root, "src", "data", "innerWayDefinitions.ts"), "utf8"),
+  path.join(root, "src", "data", "innerWayDefinitions.ts"),
+)
+for (const id of innerWayIds) {
+  const key = `system.innerWay.${id.charAt(0).toLowerCase()}${id.slice(1)}`
+  if (!expectedEnglish.has(key))
+    throw new Error(`Inner Way ${id} owns ${key} in the UI but has no canonical translation row.`)
+}
+const orphanInnerWayFiles = [...expectedEnglish.keys()].filter(
+  key =>
+    key.startsWith("system.innerWay.") &&
+    !innerWayIds.some(id => key === `system.innerWay.${id.charAt(0).toLowerCase()}${id.slice(1)}`),
+)
+if (orphanInnerWayFiles.length)
+  throw new Error(`Inner Way definitions without a registered id: ${orphanInnerWayFiles.join(", ")}`)
 
 const sourceKeys = new Set()
 const untranslated = []
