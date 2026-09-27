@@ -73,9 +73,9 @@ export type DpsRequest<K extends DpsKind> = {
 
 /**
  * A baseline carries a whole timeline and a comparison only metrics, so they are
- * retained apart. An editor timeline is a preview keyed by rotation rather than by
- * revision, so holding one would answer a later revision with an earlier timeline; the
- * worker keeps its own short-lived copy and the store holds none.
+ * retained apart. An editor timeline is a preview of one revision of one rotation, and every
+ * request for it is its own key, so there is nothing to hold: a timeline for an earlier
+ * revision is worse than none, because the caller would accept it as current.
  *
  * A reading is neither: it is asked for by name to be weighed against something else — a
  * graduated preset against the best one, a build against the active one — and only its
@@ -182,8 +182,7 @@ function startDispatch<K extends DpsKind>({ set, request, key, startedAt, timing
     key,
     // A reading is routed by the baseline cache when it names one, because a worker holding that
     // baseline already has the answer and needs to run nothing. Only an editor timeline is
-    // dispatched without a key to look up: it is keyed by rotation rather than by revision and no
-    // baseline cache holds it.
+    // dispatched without a key to look up, since no baseline cache holds one.
     cacheKey: request.kind === "editorTimeline" ? undefined : request.cacheKey,
     baseline: request.baseline?.(),
     priority: request.priority,
