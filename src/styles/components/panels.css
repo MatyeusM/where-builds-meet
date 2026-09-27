@@ -83,14 +83,17 @@
   }
 
   /*
-   * A panel whose content begins with a joined option group has a rounded edge directly
-   * below its heading. Indenting the heading by half that radius lines the text up with
-   * where the corner's curve ends, so the heading reads as belonging to the block beneath
-   * it rather than sitting outboard of it.
+   * A panel's heading, and the label of each row within it, sit above a joined option group
+   * whose rounded edge begins below them. Indenting by half that radius lines the text up
+   * with where the corner's curve ends, so the label reads as belonging to the block beneath
+   * it rather than sitting outboard of it. The offset is derived from the radius rather than
+   * written as a length, so it follows the token if the corner radius changes.
    */
   .setup-placeholder-panel [data-panel-heading] h2,
   .inner-way-panel [data-panel-heading] h2,
-  .global-debuff-panel [data-panel-heading] h2 {
+  .global-debuff-panel [data-panel-heading] h2,
+  .gear-set-list .setup-field > span,
+  .global-debuff-row > span {
     margin-inline-start: calc(var(--radius-xs) * 0.5);
   }
 
