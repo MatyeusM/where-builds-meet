@@ -3,10 +3,12 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import english from "../public/locales/en.json"
 import App from "../src/App"
 import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
 import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
+import { initializeI18n } from "../src/i18n"
 import { dpsHeldKeys, dpsRequests, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
 /**
@@ -36,7 +38,15 @@ dpsResolves("editorTimeline", async request => {
   }
 })
 
-dpsResolves("baseline", async request => calculateRotationBaseline(request.build()))
+/**
+ * A baseline that never arrives leaves the editor showing a calculation that has not
+ * finished, which is the state the toolbar's placeholder exists for.
+ */
+let baselinePending = false
+dpsResolves("baseline", async request => {
+  if (baselinePending) return new Promise(() => {})
+  return calculateRotationBaseline(request.build())
+})
 
 /**
  * Comparisons only need to resolve for the batch to publish; their numbers are not what
@@ -62,7 +72,9 @@ let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(async () => {
+  await initializeI18n()
   resetDpsMock()
+  baselinePending = false
   localStorage.clear()
   sessionStorage.clear()
   localStorage.setItem("wwm-path-session-v1", "stonesplitStrength")
@@ -86,7 +98,12 @@ beforeEach(async () => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }))
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}), text: async () => "{}" })),
+    vi.fn(async (url: string) => ({
+      ok: true,
+      status: 200,
+      json: async () => (url.endsWith("manifest.json") ? { default: "en", locales: ["en"] } : english),
+      text: async () => "{}",
+    })),
   )
   container = document.createElement("div")
   document.body.appendChild(container)
@@ -174,4 +191,30 @@ it("forgets a path's cached calculations when another path is selected", async (
 
   const retained = firstPath.filter(key => dpsHeldKeys().includes(key))
   expect(retained, `still holding ${retained.length} calculations from the previous path`).toEqual([])
+})
+
+/** The results row of the rotation toolbar, as its rendered text. */
+function rotationResults() {
+  return container.querySelector(".rotation-results")?.textContent ?? ""
+}
+
+it("reports a pending calculation instead of a zeroed result", async () => {
+  baselinePending = true
+  await act(async () => root.render(<App />))
+  await settle()
+
+  const results = rotationResults()
+  expect(results).toContain("Recalculating")
+  expect(results).not.toMatch(/0\.00/)
+  expect(container.querySelector(".rotation-results .calculation-status.indeterminate")).not.toBeNull()
+})
+
+it("shows the calculated result once it arrives", async () => {
+  await act(async () => root.render(<App />))
+  await settle()
+
+  const results = rotationResults()
+  expect(results).toContain("DPS")
+  expect(results).not.toContain("Recalculating")
+  expect(container.querySelector(".rotation-results .calculation-status")).toBeNull()
 })

@@ -321,6 +321,14 @@
     font-weight: 700;
   }
 
+  /* Sits in the results row, so it takes that row's weight and aligns to it. */
+  .rotation-results-status {
+    min-block-size: 0;
+    margin-block-start: 0;
+    align-self: center;
+    font-size: inherit;
+  }
+
   /* Rotation Timeline Table */
   .rotation-table {
     min-inline-size: 0;

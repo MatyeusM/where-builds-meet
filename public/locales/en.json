@@ -1301,6 +1301,7 @@
   "ui.app.readableFormat": "Readable Format",
   "ui.app.readableRotation": "Readable rotation",
   "ui.app.reapply": "Reapply",
+  "ui.app.recalculating": "Recalculating…",
   "ui.app.recalculatingProgress": "Recalculating… {percentage}%",
   "ui.app.recordSaveError": "Could not save this record.",
   "ui.app.refreshDuration": "Refresh Duration",

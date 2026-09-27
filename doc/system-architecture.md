@@ -373,8 +373,14 @@ fingerprinting the worker bundle. A matching main-thread baseline cache entry is
 published without recalculation; a cache miss is queued as low-priority worker
 work. Results enter the cache when completed, but only the latest requested
 fingerprint may replace the editor preview. The previous completed preview stays
-visible while newer work runs. Editor previews never request comparison variants;
-active-rotation comparisons remain tied to save, activation, or setup changes.
+visible while newer work runs. A previewed result records the calculation context
+it was produced under, so the toolbar can tell a result that still describes the
+current inputs from one a pending calculation is about to replace. Until such a
+result exists the toolbar reports the calculation rather than a zeroed result,
+because a total of zero reads as an answer where there is not one yet; once a
+result exists it stays on screen while its replacement is calculated. Editor
+previews never request comparison variants; active-rotation comparisons remain
+tied to save, activation, or setup changes.
 Manual event rows expose their authored start time as an input. Entering a time
 switches the event to explicit battle-relative timing while retaining its old
 anchor only for editor navigation; the previous/next event controls remove that

@@ -224,26 +224,6 @@
     }
   }
 
-  .calculation-status {
-    --calculation-progress: 0%;
-
-    inline-size: fit-content;
-    min-block-size: 1.4em;
-    margin-block-start: 0.2rem;
-    border-radius: 0.35rem;
-    padding-inline: 0.45rem;
-    background: linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--primary) 24%, transparent) 0 var(--calculation-progress),
-      transparent var(--calculation-progress) 100%
-    );
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 700;
-    line-height: 1.4;
-    letter-spacing: 0.02em;
-  }
-
   [data-panel-heading] > div:has(> .calculation-status) {
     display: flex;
     min-inline-size: 0;
@@ -256,10 +236,6 @@
     margin-block-start: 0;
     flex: 0 0 auto;
     white-space: nowrap;
-  }
-
-  .calculation-status.idle {
-    display: none;
   }
 
   .dps-calculation-status {

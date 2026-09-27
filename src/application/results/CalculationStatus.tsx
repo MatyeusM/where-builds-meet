@@ -1,12 +1,16 @@
-import { useMemo, useSyncExternalStore, type CSSProperties } from "react"
+import { useSyncExternalStore } from "react"
 
 import {
   getRotationCalculationStatus,
   subscribeToRotationCalculationStatus,
   type RotationCalculationCategory,
 } from "../../calculations/rotationMetrics"
-import { t } from "../../i18n"
+import { CalculationStatus as CalculationStatusView } from "../../ui/CalculationStatus"
 
+/**
+ * Binds one category of the rotation calculation to the shared status view. A category the
+ * calculation reports no progress for renders indeterminate.
+ */
 export function CalculationStatus({
   category,
   className = "",
@@ -20,21 +24,5 @@ export function CalculationStatus({
     getRotationCalculationStatus,
   )
   const { recalculating, progress } = statuses[category]
-  const percentage = Math.round(progress * 100)
-  const progressStyle = useMemo(() => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties, [percentage])
-  return (
-    <div
-      className={`calculation-status ${className} ${recalculating ? "" : "idle"}`}
-      style={progressStyle}
-      aria-live="polite"
-    >
-      <progress
-        className="visually-hidden"
-        max={100}
-        value={recalculating ? percentage : 100}
-        aria-label={t("ui.app.recalculatingProgress", { percentage })}
-      />
-      {recalculating ? t("ui.app.recalculatingProgress", { percentage }) : t("ui.app.upToDate")}
-    </div>
-  )
+  return <CalculationStatusView recalculating={recalculating} progress={progress} className={className} />
 }

@@ -172,6 +172,7 @@ import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../../s
 import { useDpsStore } from "../../stores/dpsStore"
 import { type CharacterStats, type WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
+import { CalculationStatus } from "../../ui/CalculationStatus"
 
 function rotationEntryDisplayName(entry: RotationEntry) {
   const name = entry.rotation.name || "Unnamed Rotation"
@@ -295,8 +296,11 @@ export function RotationEditorTab({
   const [eventDurationDrafts, setEventDurationDrafts] = useState<Record<string, string>>({})
   const [eventDistanceDrafts, setEventDistanceDrafts] = useState<Record<string, string>>({})
   const [eventHPDrafts, setEventHPDrafts] = useState<Record<string, string>>({})
+  // The context a result was calculated under is kept beside it, so the toolbar can tell a
+  // result that still describes the current inputs from one the pending calculation is about
+  // to replace, without fingerprinting every listed rotation on each render.
   const [rotationResults, setRotationResults] = useState<
-    Record<string, { key: string; result: RotationSimulationResult }>
+    Record<string, { key: string; context: string; result: RotationSimulationResult }>
   >({})
   const rotationResultsRef = useRef(rotationResults)
   const editorPreviewRequestSequenceRef = useRef(0)
@@ -1181,7 +1185,14 @@ export function RotationEditorTab({
     }
   }
 
-  const currentCachedResult = rotationResults[editingRotationId]?.result
+  const currentCachedEntry = rotationResults[editingRotationId]
+  const currentCachedResult = currentCachedEntry?.result
+  /**
+   * True until a result calculated under the current inputs exists. The previous result stays
+   * on screen while its replacement is calculated; before the first one arrives there is
+   * nothing to show, so the toolbar reports the calculation instead of a zeroed result.
+   */
+  const rotationResultPending = currentCachedEntry?.context !== calculationContextKey
   const editorRevision: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation }
 
   const [editorTimelineState, setEditorTimelineState] = useState<EditorTimelineResult & { revision: EditorRevision }>()
@@ -1824,7 +1835,7 @@ export function RotationEditorTab({
   ])
 
   function storeBaselineResult(id: string, key: string, result: RotationSimulationResult) {
-    const next = { ...rotationResultsRef.current, [id]: { key, result } }
+    const next = { ...rotationResultsRef.current, [id]: { key, context: calculationContextKeyRef.current, result } }
     rotationResultsRef.current = next
     setRotationResults(next)
   }
@@ -2323,23 +2334,28 @@ export function RotationEditorTab({
                 {t("ui.app.sTotalTime")}
               </span>
               <span className="rotation-results">
-                <span>
-                  {t("system.totalDamage")}: {formatDamageNumber(rotationCalculation.unscaledTotalDamage)}
-                </span>
-                {rotationCalculation.totalHealing > 0 ? (
-                  <span className="healing-value">
-                    {t("system.totalHealing")}: +{formatDamageNumber(rotationCalculation.totalHealing)}
-                  </span>
-                ) : null}
-                <span>
-                  {t("system.dps")}: {formatDamageNumber(rotationCalculation.unscaledDps)}
-                  {rotationCalculation.hps > 0 ? (
-                    <span className="healing-value">
-                      {" / "}
-                      {t("system.hps")}: {formatDamageNumber(rotationCalculation.hps)}
+                {currentCachedResult ? (
+                  <>
+                    <span>
+                      {t("system.totalDamage")}: {formatDamageNumber(rotationCalculation.unscaledTotalDamage)}
                     </span>
-                  ) : null}
-                </span>
+                    {rotationCalculation.totalHealing > 0 ? (
+                      <span className="healing-value">
+                        {t("system.totalHealing")}: +{formatDamageNumber(rotationCalculation.totalHealing)}
+                      </span>
+                    ) : null}
+                    <span>
+                      {t("system.dps")}: {formatDamageNumber(rotationCalculation.unscaledDps)}
+                      {rotationCalculation.hps > 0 ? (
+                        <span className="healing-value">
+                          {" / "}
+                          {t("system.hps")}: {formatDamageNumber(rotationCalculation.hps)}
+                        </span>
+                      ) : null}
+                    </span>
+                  </>
+                ) : null}
+                {rotationResultPending ? <CalculationStatus recalculating className="rotation-results-status" /> : null}
               </span>
             </div>
             <div className="rotation-scroll-content" ref={rotationScrollRef}>
