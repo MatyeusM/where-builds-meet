@@ -8,6 +8,7 @@ import {
   dispatchCalculation,
   disposeCalculationWorkers,
   supersedeCalculations,
+  type GraduationThroughput,
   type TransportResult,
 } from "../calculations/rotationWorkerTransport"
 import { recordFetch, reportDpsCache } from "./dpsStoreDiagnostics"
@@ -26,6 +27,7 @@ export type DpsResults = {
   editorTimeline: EditorTimelineResult
   baseline: RotationSimulationBaseline
   comparisons: { metrics: RotationMetrics }
+  graduation: GraduationThroughput
 }
 export type DpsKind = keyof DpsResults
 
@@ -56,7 +58,13 @@ export type DpsEntry<Result = unknown> = {
 
 export type DpsRequest<K extends DpsKind> = {
   kind: K
-  /** Identity of the calculation. Requests sharing a cache key share one worker job. */
+  /**
+   * Identity of the calculation. Requests sharing a cache key share one worker job.
+   *
+   * A key identifies a calculation on its own, so it must be unique across kinds: the
+   * retained results and the in-flight jobs are both keyed by it alone, and a graduation
+   * reusing a rotation's key would answer with the wrong shape of result.
+   */
   cacheKey: string
   /**
    * Builds the worker bundle and runs only when the result is not already held, so a
@@ -74,8 +82,13 @@ export type DpsRequest<K extends DpsKind> = {
  * retained apart. An editor timeline is a preview keyed by rotation rather than by
  * revision, so holding one would answer a later revision with an earlier timeline; the
  * worker keeps its own short-lived copy and the store holds none.
+ *
+ * A graduation is neither: it is a graduated preset that exists only to be compared
+ * against, and only its throughput is ever read, so it is kept apart from the baselines it
+ * would otherwise displace. Its fingerprint covers the whole environment, so a handful of
+ * recent ones cover every revisit worth serving.
  */
-const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 64, comparisons: 4096 }
+const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 64, comparisons: 4096, graduation: 8 }
 
 const isRetained = (kind: DpsKind) => retentionByKind[kind] > 0
 
@@ -185,7 +198,9 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
           mode: kind,
           bundle,
           key: cacheKey,
-          cacheKey: kind === "editorTimeline" ? undefined : cacheKey,
+          // Only a run that populates a worker's baseline cache is routed by that cache, so
+          // an editor timeline and a graduation are dispatched without one to look up.
+          cacheKey: kind === "editorTimeline" || kind === "graduation" ? undefined : cacheKey,
           baseline: request.baseline?.(),
           priority: request.priority,
           onTiming: timing => {

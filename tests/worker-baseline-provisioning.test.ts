@@ -13,6 +13,8 @@ function faithfulWorker() {
     listeners = new Map()
     terminated = false
     sent: any[] = []
+    /** The cache this worker keeps for itself, which is what a run must not occupy. */
+    baselineCache = baselineCache
     addEventListener(type: string, listener: (event: any) => void) {
       const list = this.listeners.get(type) ?? []
       list.push(listener)
@@ -27,6 +29,12 @@ function faithfulWorker() {
             baselineCache.set(message.cacheKey, { metrics: { dps: 1, breakdown: {} } })
             if (baselineCache.size > 64) baselineCache.delete(baselineCache.keys().next().value!)
             this.reply(message, { metrics: { dps: 1, breakdown: {} } })
+            return
+          }
+          if (message.mode === "graduation") {
+            // A graduated preset is only ever compared against, so the run reports throughput
+            // and leaves the baseline cache alone.
+            this.reply(message, { graduation: { dps: 1, hps: 0 } })
             return
           }
           if (message.mode === "comparisons") {
@@ -66,8 +74,9 @@ async function loadStore() {
     }
   }
   vi.stubGlobal("Worker", Tracking)
+  const transport = await import("../src/calculations/rotationWorkerTransport.ts")
   const { useDpsStore } = await import("../src/stores/dpsStore.ts")
-  return { useDpsStore, workers }
+  return { useDpsStore, workers, transport }
 }
 
 const bundle = { timeline: { rotation: { name: "Sweep", steps: [] } }, weapons: [] } as never
@@ -152,5 +161,28 @@ describe("calculation worker baseline provisioning", () => {
       held.every(worker => worker.terminated),
       "A worker that cached a baseline before the reset was left running.",
     )
+  })
+
+  it("keeps a graduation to its throughput and out of the baseline caches", async () => {
+    const { useDpsStore, workers } = await loadStore()
+    const key = "graduation:preset"
+    const store = () => useDpsStore.getState()
+    const cached = () => workers.flatMap(worker => Array.from(worker.baselineCache.keys()))
+
+    const throughput = await store().ensure({ kind: "graduation", cacheKey: key, build: () => bundle })
+    assert.deepEqual(
+      Object.keys(throughput).sort(),
+      ["dps", "hps"],
+      "A graduation kept something other than the throughput it is compared by.",
+    )
+    assert.deepEqual(cached(), [], "A graduation run left a baseline in a worker's cache.")
+
+    // The control: a real baseline run does occupy one, so the assertion above is detecting
+    // a difference rather than an empty cache everywhere. It needs its own key, because a
+    // cache key identifies a calculation on its own, across kinds.
+    const controlKey = "rotation:preset"
+    await store().ensure({ kind: "baseline", cacheKey: controlKey, build: () => bundle })
+    assert.deepEqual(cached(), [controlKey], "A baseline run did not populate a worker's cache.")
+    useDpsStore.getState().reset()
   })
 })

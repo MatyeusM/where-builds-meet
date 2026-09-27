@@ -14,7 +14,7 @@ import {
 type WorkerRequest = {
   id: number
   bundle: RotationCalculationBundle | RotationSimulationBundle
-  mode?: "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline"
+  mode?: "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline" | "graduation"
   cacheKey?: string
   baseline?: RotationSimulationBaseline
 }
@@ -72,6 +72,13 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
           baselineCache.set(cacheKey, calculated)
           if (baselineCache.size > 64) baselineCache.delete(baselineCache.keys().next().value!)
           return compactInnerWayResults(calculated)
+        }
+        case "graduation": {
+          // A graduated preset exists only to be compared against, so the run keeps nothing
+          // but the throughput it is compared by. It caches no baseline and never reads a
+          // cached one, so it neither consumes nor occupies a slot in the baseline cache.
+          const calculated = calculateRotationBaseline(bundle as RotationSimulationBundle)
+          return { graduation: { dps: calculated.metrics.dps, hps: calculated.metrics.hps } }
         }
         case "comparisons": {
           if (!cacheKey) throw new Error("A comparison cache key is required")

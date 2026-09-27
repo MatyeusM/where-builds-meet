@@ -620,11 +620,11 @@ export default function BuildTab({
             </div>
             <div className="detail-active-actions">
               <Button
-                className="build-duplicate-button"
                 aria-label={t("ui.app.duplicate")}
                 title={t("ui.app.duplicate")}
                 variant="secondary"
                 size="small"
+                iconOnly
                 type="button"
                 onClick={duplicateBuild}
               >

@@ -42,8 +42,11 @@ afterEach(async () => {
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
+/** Finds a button by its visible text, or by its accessible name when it carries only an icon. */
 async function click(text: string) {
-  const button = [...container.querySelectorAll("button")].find(node => node.textContent?.trim() === text)
+  const button = [...container.querySelectorAll("button")].find(
+    node => node.textContent?.trim() === text || node.getAttribute("aria-label") === text,
+  )
   assert(button !== undefined, text)
   await act(async () => button!.click())
 }

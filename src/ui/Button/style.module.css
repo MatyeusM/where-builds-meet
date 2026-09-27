@@ -37,6 +37,13 @@
     border-color: var(--primary);
   }
 
+  .icon-only {
+    display: inline-grid;
+    min-inline-size: 2.25rem;
+    padding: 5px;
+    place-items: center;
+  }
+
   .primary {
     background: var(--primary);
     color: var(--primary-contrast);

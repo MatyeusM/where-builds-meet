@@ -123,13 +123,11 @@ async function settle() {
 }
 
 /**
- * Rotation names a baseline was actually built for. Graduation presets are excluded:
- * they build bundles for preset builds, not for the rotations in the list.
+ * Rotation names a baseline was actually built for. A graduation preset is a separate kind
+ * of request now, so asking for baselines already excludes them.
  */
 function calculatedRotations() {
-  return dpsRequests("baseline")
-    .filter(request => !request.cacheKey.startsWith("graduation:"))
-    .map(request => (request.build().timeline.rotation.name as string).trim())
+  return dpsRequests("baseline").map(request => (request.build().timeline.rotation.name as string).trim())
 }
 
 /** Display names in the rotation list, and which one is active. */

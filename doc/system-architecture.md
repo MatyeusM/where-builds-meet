@@ -1067,7 +1067,7 @@ rotation.
 
 The application resolves inherited ping into each immutable worker rotation
 before fingerprinting. Active calculations, editor previews, comparison timelines,
-graduation baselines, and Monte Carlo snapshots therefore use the same latency.
+graduation runs, and Monte Carlo snapshots therefore use the same latency.
 The low-level timeline accepts explicit milliseconds; omitted ping there is zero
 for callers without application settings. DPS regression fixtures explicitly
 record their configured ping.
@@ -1441,11 +1441,20 @@ The Main-tab DPS panel derives Graduation Rate from the current DPS divided by
 the highest DPS among the path's `graduated` build presets under the same
 rotation, breakthrough, food, Divinecraft, Script, and global buff/debuff
 state. Every configured preset is calculated through the ordinary deterministic
-worker pipeline, and the maximum completed baseline becomes the denominator. A
+worker pipeline, and the maximum completed throughput becomes the denominator. A
 fingerprint of that environment, the path, the graduate preset IDs, and active
-skill overrides keys the existing bounded baseline cache. A new environment
-schedules the required baseline calculations; build-only changes reuse the
-cached denominators. No Monte Carlo simulation is involved.
+skill overrides keys a bounded cache. A new environment schedules the required
+calculations; build-only changes reuse the cached denominators. No Monte Carlo
+simulation is involved.
+
+A graduation is a request kind of its own, neither a baseline nor a comparison.
+It runs the same calculation, because only a full run yields a damage pipeline to
+measure, but it keeps nothing but the throughput it is compared by: the worker
+returns DPS and HPS and nothing else, and it neither reads nor writes a worker's
+baseline cache, so a graduated preset cannot displace a rotation's own baseline.
+It is dispatched without a baseline cache key, so it is routed by nothing but
+worker availability. Because only DPS is read today, HPS is retained beside it as
+the other half of a rotation's throughput rather than as something consulted.
 `data/path.json` declares `defaultBuild` and a `graduated` preset array
 separately so the build loaded by default does not have to be one of the builds
 used as graduation denominators.
@@ -1779,7 +1788,7 @@ The exported `buildPresetRotationBundle` in `src/application/graduation.ts` buil
 using the same setup, gear, stats, definitions, and timeline inputs as the
 Graduation comparison. `buildGraduationBundleSet` resolves every preset in the
 path's `graduated` array, and `selectHighestGraduationResult` chooses the
-highest DPS result as the denominator. The headless DPS snapshot runner instead
+highest DPS throughput as the denominator. The headless DPS snapshot runner instead
 supplies its default build ID and explicit environment settings. Both use the
 centralized rotation calculator. The Pages
 workflow runs `npm run test:dps` before deployment; ordinary build, test, and

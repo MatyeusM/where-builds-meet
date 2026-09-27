@@ -59,10 +59,10 @@ export function graduationEnvironmentFingerprint(
   })
 }
 
-export function selectHighestGraduationResult<T extends { metrics: { dps: number } }>(results: readonly T[]) {
+export function selectHighestGraduationResult<T extends { dps: number }>(results: readonly T[]) {
   let highest: T | undefined
   for (const result of results) {
-    if (!highest || result.metrics.dps > highest.metrics.dps) highest = result
+    if (!highest || result.dps > highest.dps) highest = result
   }
   return highest
 }

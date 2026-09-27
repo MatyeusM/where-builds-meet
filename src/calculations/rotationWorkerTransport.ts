@@ -13,8 +13,15 @@ import type { TimelineRow } from "./rotationTimeline"
  * lifetime, queueing and message translation, so nothing outside it talks to a worker.
  */
 
-export type TransportMode = "editorTimeline" | "baseline" | "comparisons"
-export type TransportResult = EditorTimelineResult | RotationSimulationBaseline | { metrics: RotationMetrics }
+/** What a graduated preset run is compared by. Nothing else about it is ever read. */
+export type GraduationThroughput = { dps: number; hps: number }
+
+export type TransportMode = "editorTimeline" | "baseline" | "comparisons" | "graduation"
+export type TransportResult =
+  | EditorTimelineResult
+  | GraduationThroughput
+  | RotationSimulationBaseline
+  | { metrics: RotationMetrics }
 
 export type TransportTiming = {
   /** Time spent waiting for a free worker before the job started. */
@@ -64,6 +71,7 @@ type WorkerResultMessage = {
   id: number
   metrics?: RotationMetrics
   editorTimeline?: EditorTimelineResult
+  graduation?: GraduationThroughput
   timeline?: TimelineRow[]
   anchorTime?: number
   duration?: number
@@ -149,6 +157,7 @@ function pickSlot(request: QueuedRequest) {
 function translateResult(request: QueuedRequest, message: WorkerResultMessage): TransportResult {
   if (message.error) throw new Error(message.error)
   if (message.editorTimeline) return message.editorTimeline
+  if (message.graduation) return message.graduation
   if (!message.metrics) throw new Error("Rotation calculation worker returned no result")
   if (request.mode !== "baseline") return { metrics: message.metrics }
   return {

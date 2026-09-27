@@ -219,12 +219,6 @@
     white-space: nowrap;
   }
 
-  .build-duplicate-button {
-    display: inline-grid;
-    inline-size: 2.25rem;
-    place-items: center;
-  }
-
   .detail-active-button {
     min-inline-size: 6rem;
   }

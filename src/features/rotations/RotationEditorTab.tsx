@@ -3,6 +3,7 @@ import {
   IconChevronRight,
   IconChevronUp,
   IconClockPin,
+  IconCopy,
   IconEdit,
   IconPlus,
   IconPointFilled,
@@ -1809,12 +1810,12 @@ export function RotationEditorTab({
       graduationFingerprintRef.current = graduation?.fingerprint ?? null
       let cachedGraduation: number | undefined
       if (graduation) {
-        const cachedBaselines = graduation.candidates.flatMap(candidate => {
-          const baseline = useDpsStore.getState().peek<"baseline">(candidate.fingerprint)
-          return baseline ? [baseline] : []
+        const cachedThroughput = graduation.candidates.flatMap(candidate => {
+          const throughput = useDpsStore.getState().peek<"graduation">(candidate.fingerprint)
+          return throughput ? [throughput] : []
         })
-        if (cachedBaselines.length === graduation.candidates.length)
-          cachedGraduation = selectHighestGraduationResult(cachedBaselines)?.metrics.dps
+        if (cachedThroughput.length === graduation.candidates.length)
+          cachedGraduation = selectHighestGraduationResult(cachedThroughput)?.dps
       }
       onActiveSimulationBundleChange(
         calculationBundleFor(activeRotation, false),
@@ -1876,21 +1877,21 @@ export function RotationEditorTab({
   async function calculateGraduationDps(rotationRecord: RotationRecord) {
     const prepared = prepareGraduationCalculation(rotationRecord)
     if (!prepared) return
-    const baselines = await Promise.all(
+    const throughputs = await Promise.all(
       prepared.candidates.map(candidate =>
         useDpsStore
           .getState()
           .ensure({
-            kind: "baseline" as const,
+            kind: "graduation" as const,
             cacheKey: candidate.fingerprint,
             build: () => candidate.bundle,
             priority: 390,
           }),
       ),
     )
-    const highest = selectHighestGraduationResult(baselines)
+    const highest = selectHighestGraduationResult(throughputs)
     if (highest && graduationFingerprintRef.current === prepared.fingerprint)
-      onGraduationDpsChange(prepared.fingerprint, highest.metrics.dps)
+      onGraduationDpsChange(prepared.fingerprint, highest.dps)
   }
 
   const calculateDiffsForRotation = useEffectEvent(
@@ -2312,8 +2313,16 @@ export function RotationEditorTab({
                     </>
                   )}
                   <span className="rotation-activation-actions">
-                    <Button variant="secondary" size="small" type="button" onClick={duplicateRotation}>
-                      {t("ui.app.duplicate")}
+                    <Button
+                      aria-label={t("ui.app.duplicate")}
+                      title={t("ui.app.duplicate")}
+                      variant="secondary"
+                      size="small"
+                      iconOnly
+                      type="button"
+                      onClick={duplicateRotation}
+                    >
+                      <IconCopy size="1em" aria-hidden />
                     </Button>
                     <Button
                       className="detail-active-button"
