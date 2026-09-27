@@ -22,17 +22,11 @@ import {
 } from "react"
 
 import {
-  attunementAvailableForSettings,
-  characterStatAvailableForSettings,
-  innerWayAvailableForPath,
   innerWayConditionsFor,
   innerWayEffectRulesFor,
   selectableRotationSkillGroups,
-  selectedSetupEffects,
-  setAvailableForSettings,
-  setupConditionsFor,
 } from "../../application/characterComposition"
-import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
+import type { CharacterState, PathId } from "../../application/contracts"
 import {
   formatThroughput,
   formatNumber,
@@ -43,17 +37,7 @@ import {
 import { martialArtDefinitions } from "../../application/gameData/martialArts"
 import { typedPathDefinitions } from "../../application/gameData/paths"
 import { rotationEventDisplayName } from "../../application/gameData/rotationEffects"
-import {
-  breakthroughProfile,
-  typedArmorSetDefinitions,
-  typedArsenalDefinitions,
-  typedBowRingSetDefinitions,
-  typedDivinecraftDefinitions,
-  typedFoodDefinitions,
-  typedScriptDefinitions,
-  typedSystemStats,
-  typedWeaponSetDefinitions,
-} from "../../application/gameData/setup"
+import { breakthroughProfile, typedSystemStats } from "../../application/gameData/setup"
 import {
   defaultSkillMaps,
   dotDefinitions,
@@ -71,7 +55,6 @@ import {
   selectHighestGraduationResult,
   type GraduationPresetEnvironment,
 } from "../../application/graduation"
-import { percentageAttunementKeys } from "../../application/persistence/attunements"
 import { initialRotationEditorState } from "../../application/persistence/rotations"
 import { resolveComparisonMetrics } from "../../application/resolveRotationMetrics"
 import { calculationStatusLabel } from "../../application/results/calculationStatusLabel"
@@ -95,20 +78,14 @@ import {
   resolveTargetType,
   type TargetType,
 } from "../../calculations/combatDefaults"
-import { type AttunementStats } from "../../calculations/damage"
 import type { EditorTimelineResult } from "../../calculations/editorTimeline"
-import {
-  buildRotationCalculationBundle,
-  buildRotationTimeline,
-  type CalculationSubject,
-  type TimelineOverrides,
-} from "../../calculations/rotationCalculationBundle"
+import { type CalculationSubject } from "../../calculations/rotationCalculationBundle"
 import {
   type RotationActionBreakdown,
   type RotationSimulationBundle,
   type RotationSimulationResult,
-  type RotationSimulationVariant,
 } from "../../calculations/rotationCalculator"
+import { buildRotationComparisonBundle } from "../../calculations/rotationComparisonBundle"
 import { emptyRotationBreakdown, type RotationMetrics, type RotationPriority } from "../../calculations/rotationMetrics"
 import {
   editableCastTimeMaximum,
@@ -117,16 +94,10 @@ import {
   mergeEffectDefinition,
   type RotationRecord,
   type RotationStep,
-  type TimelineBuildInput,
   type TimelineRow,
 } from "../../calculations/rotationTimeline"
-import { innerWayDefinitions } from "../../data/innerWayDefinitions"
-import { setupSelectionChangesTimeline } from "../../data/scriptDefinitions"
-import { allStatDefinitions } from "../../data/statDefinitions"
 import { sameEditorRevision, type EditorRevision } from "../../editorTimelinePreview"
-import type { BuildSetup } from "../../gear"
-import { attunementData, maxGearRoll, selectSetTier, setSelectionChangesTimeline, statRollsForLevel } from "../../gear"
-import { globalDebuffRows, loadGlobalDebuffs } from "../../globalDebuffs"
+import { loadGlobalDebuffs } from "../../globalDebuffs"
 import { gameText, t } from "../../i18n"
 import { publishNotice, dismissNotice } from "../../notices"
 import { displayEntryKey, visibleTimelineEffects } from "../../rotationDisplay"
@@ -150,7 +121,7 @@ import { exportRotationEntries, mergeImportedRotationEntries, type RotationEntry
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../../skillOverrides"
 import { useDpsStore } from "../../stores/dpsStore"
 import { useRotationStore } from "../../stores/rotationStore"
-import { type CharacterStats, type WeaponId } from "../../types"
+import { type WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
 import { CalculationStatus } from "../../ui/CalculationStatus"
 
@@ -1374,24 +1345,6 @@ export function RotationEditorTab({
   const rotationDps = currentCachedResult?.metrics.dps ?? 0
   const totalRotationHealing = currentCachedResult?.metrics.totalHealing ?? 0
   const rotationHps = currentCachedResult?.metrics.hps ?? 0
-  const applyPriorityStatLine = (key: keyof CharacterStats, amount: number) => {
-    return { ...rawCharacterStats, [key]: rawCharacterStats[key] + amount }
-  }
-  const priorityLevelData = statRollsForLevel(enemy.level)
-  const priorityCharacter = Object.fromEntries(
-    Object.entries(priorityLevelData?.affix ?? {}).filter(([key]) =>
-      characterStatAvailableForSettings(key as keyof CharacterStats, settings, pathId),
-    ),
-  ) as Partial<Record<keyof CharacterStats, number>>
-  const priorityAttunement = Object.keys(attunementData)
-    .filter(key => attunementAvailableForSettings(key, pathId, settings))
-    .flatMap(key => {
-      const amount = maxGearRoll(key, "attunement", false, enemy.level)
-      return typeof amount === "number" ? [[key, amount] as const] : []
-    })
-  const selectedInnerWays = buildSetup.innerWays.filter(
-    row => row.innerWay && innerWayAvailableForPath(row.innerWay, pathId),
-  )
   const priorityStats: RotationPriority[] = []
   const priorityAttunementRows: RotationPriority[] = []
   const priorityInnerWays: RotationPriority[] = []
@@ -1415,17 +1368,6 @@ export function RotationEditorTab({
       setReadableCopyStatus(t("ui.app.manualCopyInstruction"))
     }
   }
-  // Every setup variant compared for a rotation inherits that rotation's
-  // Divinecraft damage flag, so a comparison delta isolates the varying option.
-  function setupEffectsForRotation(
-    rotationRecord: RotationRecord,
-    overrides: Partial<BuildSetup & SetupSelections> = {},
-  ) {
-    return selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
-      ...overrides,
-      divinecraftDamage: rotationRecord.divinecraftDamage,
-    })
-  }
   /**
    * The subject a bundle is built from. One per rotation, so every variant below it and the
    * bundle that carries them are the same rotation measured against the same build.
@@ -1448,195 +1390,11 @@ export function RotationEditorTab({
     },
   })
 
-  function makeTimelineInput(rotationRecord: RotationRecord, overrides: TimelineOverrides = {}): TimelineBuildInput {
-    return buildRotationTimeline(calculationSubjectFor(rotationRecord), overrides)
-  }
   const calculationBundleFor = useEffectEvent(
-    (rotationRecord: RotationRecord, includeDiffs: boolean): RotationSimulationBundle => {
-      const baselineSetupEffects = setupEffectsForRotation(rotationRecord)
-      const setComparisonGroups = includeDiffs
-        ? Object.fromEntries(
-            (
-              [
-                ["weaponSets", typedWeaponSetDefinitions],
-                ["armorSets", typedArmorSetDefinitions],
-              ] as const
-            ).flatMap(([key, definitions]) =>
-              Object.entries(definitions)
-                .filter(([, definition]) => setAvailableForSettings(definition, settings, pathId))
-                .map(([setName]) => [
-                  `${key}:${setName}`,
-                  [0, 2, 4]
-                    .filter(tier => tier !== buildSetup[key][setName])
-                    .map(tier => {
-                      const selections = selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions)
-                      const setupEffects = setupEffectsForRotation(rotationRecord, { [key]: selections })
-                      const rebuildTimeline = setSelectionChangesTimeline(buildSetup[key], selections, definitions)
-                      return Object.assign(
-                        { label: String(tier), setupEffects },
-                        rebuildTimeline ? { timeline: makeTimelineInput(rotationRecord, { setupEffects }) } : {},
-                      )
-                    }),
-                ]),
-            ),
-          )
-        : {}
-      const selectedFood = currentFood
-      const selectedScript = currentScript
-      const selectedDivinecraft = currentDivinecraft
-      const subject = calculationSubjectFor(rotationRecord)
-      return {
-        ...buildRotationCalculationBundle(subject),
-        statPriority: includeDiffs
-          ? Object.entries(priorityCharacter).map(([key, amount]) => {
-              const variantStats = applyPriorityStatLine(key as keyof CharacterStats, Number(amount))
-              const definition = allStatDefinitions.find(candidate => candidate.key === key)
-              return {
-                label: definition?.label ?? key,
-                maxRoll: Number(amount) * (definition?.unit === "%" ? 100 : 1),
-                stats: variantStats,
-              }
-            })
-          : [],
-        attunementPriority: includeDiffs
-          ? priorityAttunement.map(([key, amount]) => {
-              const variantAttunement = {
-                ...attunementStats,
-                [key]: attunementStats[key as keyof AttunementStats] + Number(amount),
-              }
-              return {
-                label: attunementData[key]?.name ?? key,
-                maxRoll: Number(amount) * (percentageAttunementKeys.has(key as keyof AttunementStats) ? 100 : 1),
-                attunement: variantAttunement,
-              }
-            })
-          : [],
-        innerWayPriority: includeDiffs
-          ? selectedInnerWays.map(selected => {
-              const definition = innerWayDefinitions[selected.innerWay as keyof typeof innerWayDefinitions]
-              const variantRules = innerWayEffectRules.filter(rule => rule.source !== selected.innerWay)
-              const variantConditions = innerWayConditionsFor(buildSetup.innerWays, selected.innerWay, pathId)
-              const setupEffects = baselineSetupEffects
-              return Object.assign(
-                { label: definition?.name ?? selected.innerWay },
-                definition?.altersTimeline
-                  ? {
-                      timeline: makeTimelineInput(rotationRecord, {
-                        innerWayConditions: variantConditions,
-                        innerWayRules: variantRules,
-                        setupEffects,
-                      }),
-                    }
-                  : {},
-                {
-                  innerWayRules: variantRules,
-                  innerWayConditions: [...variantConditions, ...setupConditionsFor(setupEffects)],
-                },
-              )
-            })
-          : [],
-        setupComparisons: includeDiffs
-          ? {
-              arsenal: Object.keys(typedArsenalDefinitions)
-                .filter(value => value !== buildSetup.arsenal)
-                .map(value => ({
-                  label: value,
-                  setupEffects: setupEffectsForRotation(rotationRecord, { arsenal: value }),
-                })),
-              bowRingSet: Object.keys(typedBowRingSetDefinitions)
-                .filter(value => value !== buildSetup.bowRingSet)
-                .map(value => ({
-                  label: value,
-                  setupEffects: setupEffectsForRotation(rotationRecord, { bowRingSet: value }),
-                })),
-              food: Object.keys(typedFoodDefinitions)
-                .filter(value => value !== selectedFood)
-                .map(value => ({
-                  label: value,
-                  setupEffects: setupEffectsForRotation(rotationRecord, { food: value }),
-                })),
-              script: Object.entries(typedScriptDefinitions)
-                .filter(([value]) => value !== selectedScript)
-                .map(([value]) => {
-                  const setupEffects = setupEffectsForRotation(rotationRecord, { script: value })
-                  const rebuildTimeline = setupSelectionChangesTimeline(selectedScript, value, typedScriptDefinitions)
-                  return Object.assign(
-                    { label: value, setupEffects },
-                    rebuildTimeline ? { timeline: makeTimelineInput(rotationRecord, { setupEffects }) } : {},
-                  )
-                }),
-              divinecraft: Object.entries(typedDivinecraftDefinitions)
-                .filter(([value, definition]) => definition.available !== false && value !== selectedDivinecraft)
-                .map(([value]) => {
-                  const setupEffects = setupEffectsForRotation(rotationRecord, { divinecraft: value })
-                  const rebuildTimeline = setupSelectionChangesTimeline(
-                    selectedDivinecraft,
-                    value,
-                    typedDivinecraftDefinitions,
-                  )
-                  return Object.assign(
-                    { label: value, setupEffects },
-                    rebuildTimeline ? { timeline: makeTimelineInput(rotationRecord, { setupEffects }) } : {},
-                  )
-                }),
-              ...Object.fromEntries(
-                globalDebuffRows.map(({ key }) => [
-                  `debuff:${key}`,
-                  [false, true]
-                    .filter(enabled => enabled !== currentGlobalDebuffs[key])
-                    .map(enabled => {
-                      const globalDebuffs = { ...currentGlobalDebuffs, [key]: enabled }
-                      return {
-                        label: enabled ? "on" : "off",
-                        timeline: makeTimelineInput(rotationRecord, {
-                          setupEffects: baselineSetupEffects,
-                          globalDebuffs: globalDebuffs,
-                        }),
-                      }
-                    }),
-                ]),
-              ),
-              "debuff:draught": (["none", "strayhunt", "both"] as const)
-                .filter(value => value !== currentGlobalDebuffs.draught)
-                .map(value => ({
-                  label: value,
-                  timeline: makeTimelineInput(rotationRecord, {
-                    setupEffects: baselineSetupEffects,
-                    globalDebuffs: { ...currentGlobalDebuffs, draught: value },
-                  }),
-                })),
-              "debuff:qingyisCharm": (["none", "T1", "T6"] as const)
-                .filter(value => value !== currentGlobalDebuffs.qingyisCharm)
-                .map(value => {
-                  const globalDebuffs = { ...currentGlobalDebuffs, qingyisCharm: value }
-                  return {
-                    label: value,
-                    timeline: makeTimelineInput(rotationRecord, {
-                      setupEffects: baselineSetupEffects,
-                      globalDebuffs: globalDebuffs,
-                    }),
-                  }
-                }),
-              "buff:floatingGrace": (["none", "mixed", "deluge"] as const)
-                .filter(value => value !== currentGlobalDebuffs.floatingGrace)
-                .map(value => {
-                  const globalDebuffs = { ...currentGlobalDebuffs, floatingGrace: value }
-                  return {
-                    label: value,
-                    timeline: makeTimelineInput(rotationRecord, {
-                      setupEffects: baselineSetupEffects,
-                      globalDebuffs: globalDebuffs,
-                    }),
-                  }
-                }),
-              ...setComparisonGroups,
-            }
-          : ({} as Record<string, RotationSimulationVariant[]>),
-      }
-    },
+    (rotationRecord: RotationRecord, includeDiffs: boolean): RotationSimulationBundle =>
+      buildRotationComparisonBundle(calculationSubjectFor(rotationRecord), includeDiffs),
   )
-  // Requests the structural editor timeline for the current revision. Declared after
-  // calculationBundleFor so the effect only references initialized bindings.
+
   /**
    * An editor timeline is a preview of one revision, and is deliberately neither held nor shared:
    * a timeline for an earlier revision is worse than none, because the revision check would accept
