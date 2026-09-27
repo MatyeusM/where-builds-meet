@@ -193,7 +193,10 @@ props and local module classes rather than recreated global classes. For
 example, `Button` owns primary, secondary, and danger variants, their hover
 states, the small size, and an icon-only presentation that takes its block size
 from the size it is combined with and centres itself, so an icon-only action
-stands as tall as a labelled button of the same size. Its `data-button` marker exists only so domain
+stands as tall as a labelled button of the same size. An icon-only button carries
+its wording in `aria-label` and `title` rather than in text. A reset offered
+beside a label of its own keeps the small circular dot of `stat-reset-button`,
+because a bordered control the height of a labelled one would crowd that label. Its `data-button` marker exists only so domain
 layout rules can target primitive instances; it does not provide a global
 button-style fallback. `Panel` and `PanelHeading` expose the corresponding
 `data-panel` and `data-panel-heading` hooks for stable application selectors
