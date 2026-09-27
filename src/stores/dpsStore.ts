@@ -10,7 +10,11 @@ import {
   supersedeCalculations,
   type TransportResult,
 } from "../calculations/rotationWorkerTransport"
-import { reportDpsCache } from "./dpsStoreDiagnostics"
+import { recordFetch, reportDpsCache } from "./dpsStoreDiagnostics"
+
+function currentTime() {
+  return performance.now()
+}
 
 /**
  * The single entry point for calculation work. Every baseline, comparison and editor
@@ -24,6 +28,22 @@ export type DpsResults = {
   comparisons: { metrics: RotationMetrics }
 }
 export type DpsKind = keyof DpsResults
+
+/** How a request was served, which is what distinguishes a fast path from a slow one. */
+export type DpsSource = "held" | "joined" | "dispatched" | "failed"
+
+export type DpsFetchTiming = {
+  kind: DpsKind
+  source: DpsSource
+  /** Total time the caller waited. */
+  totalMs: number
+  /** Time spent waiting for a free worker. */
+  queueMs: number
+  /** Time the job spent running on a worker. */
+  workerMs: number
+  /** Time to turn the request into a bundle, which a held result never pays. */
+  buildMs: number
+}
 
 export type DpsEntry<Result = unknown> = {
   cacheKey: string
@@ -116,17 +136,51 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
 
     ensure: async <K extends DpsKind>(request: DpsRequest<K>) => {
       const { cacheKey, kind } = request
+      const requestedAt = currentTime()
       const running = inFlight.get(cacheKey)
-      if (running) return (await running) as DpsResults[K]
+      if (running) {
+        try {
+          const joined = (await running) as DpsResults[K]
+          recordFetch({
+            kind,
+            source: "joined",
+            totalMs: currentTime() - requestedAt,
+            queueMs: 0,
+            workerMs: 0,
+            buildMs: 0,
+          })
+          return joined
+        } catch (error) {
+          recordFetch({
+            kind,
+            source: "failed",
+            totalMs: currentTime() - requestedAt,
+            queueMs: 0,
+            workerMs: 0,
+            buildMs: 0,
+          })
+          throw error
+        }
+      }
 
       const startedAt = generation
       const held = get().entries.get(cacheKey)
-      if (isRetained(kind) && held?.status === "ready") return held.result as DpsResults[K]
+      if (isRetained(kind) && held?.status === "ready") {
+        // Served without building a bundle or touching a worker, which is the point of
+        // holding a result at all.
+        recordFetch({ kind, source: "held", totalMs: currentTime() - requestedAt, queueMs: 0, workerMs: 0, buildMs: 0 })
+        return held.result as DpsResults[K]
+      }
 
       if (isRetained(kind)) put({ cacheKey, kind, status: "pending", progress: 0 })
 
+      let buildMs = 0
+      let queueMs = 0
+      let workerMs = 0
       const job = (async () => {
+        const buildStartedAt = currentTime()
         const bundle = request.build()
+        buildMs = currentTime() - buildStartedAt
         return dispatchCalculation({
           mode: kind,
           bundle,
@@ -134,6 +188,10 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
           cacheKey: kind === "editorTimeline" ? undefined : cacheKey,
           baseline: request.baseline?.(),
           priority: request.priority,
+          onTiming: timing => {
+            queueMs = timing.queueMs
+            workerMs = timing.workerMs
+          },
           onProgress: progress => {
             request.onProgress?.(progress)
             if (generation !== startedAt) return
@@ -153,13 +211,17 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       const settle = (entry: DpsEntry) => {
         if (generation === startedAt && isRetained(kind)) put(entry)
       }
+      const record = (source: DpsSource) =>
+        recordFetch({ kind, source, totalMs: currentTime() - requestedAt, queueMs, workerMs, buildMs })
 
       try {
         const result = (await job) as DpsResults[K]
         settle({ cacheKey, kind, status: "ready", progress: 1, result })
+        record("dispatched")
         return result
       } catch (error) {
         settle({ cacheKey, kind, status: "failed", progress: 1, error: errorMessage(error) })
+        record("failed")
         throw error
       } finally {
         if (inFlight.get(cacheKey) === job) inFlight.delete(cacheKey)

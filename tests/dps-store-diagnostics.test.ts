@@ -44,6 +44,16 @@ function captureConsole() {
   return { groups, tables, restore: () => vi.restoreAllMocks() }
 }
 
+/**
+ * Each report prints occupancy, then per-source totals, then per-fetch rows. Only the
+ * occupancy table carries a retention bound, which identifies it without depending on
+ * the order the report happens to print them in.
+ */
+function latestOccupancy(tables: unknown[][]) {
+  const occupancy = tables.filter(rows => rows.length > 0 && Object.hasOwn(rows[0] as object, "limit"))
+  return occupancy.at(-1) as Array<Record<string, unknown>>
+}
+
 /** Long enough for the report's coalescing delay to have elapsed. */
 const settle = () => new Promise(resolve => setTimeout(resolve, 300))
 
@@ -70,7 +80,7 @@ describe("dps-store-diagnostics", () => {
       assert.equal(console_.groups.length, 2, "A changed summary was not reported.")
       assert.match(console_.groups[1], /baseline 13\/64/, `Unexpected report: ${console_.groups[1]}`)
 
-      const rows = console_.tables.at(-1) as Array<Record<string, unknown>>
+      const rows = latestOccupancy(console_.tables)
       assert.equal(rows.find(row => row.kind === "baseline")!.ready, 13)
       assert.equal(rows.find(row => row.kind === "baseline")!.limit, 64)
       assert.equal(rows.find(row => row.kind === "editorTimeline")!.limit, 0)
@@ -90,7 +100,7 @@ describe("dps-store-diagnostics", () => {
       await store().ensure({ kind: "baseline", cacheKey: "bulky", build: () => bulky })
       await settle()
 
-      const rows = console_.tables.at(-1) as Array<Record<string, unknown>>
+      const rows = latestOccupancy(console_.tables)
       const baseline = rows.find(row => row.kind === "baseline")!
       assert.equal(baseline.ready, 1)
       assert.ok(Number(baseline.bytes) > 4096, `Expected the held result to be measured, got ${baseline.bytes} bytes.`)
@@ -100,7 +110,7 @@ describe("dps-store-diagnostics", () => {
       // A repeat of the same result is the same object, so it must not be measured twice.
       await store().ensure({ kind: "baseline", cacheKey: "bulky", build: () => bulky })
       await settle()
-      const after = console_.tables.at(-1) as Array<Record<string, unknown>>
+      const after = latestOccupancy(console_.tables)
       assert.equal(after.find(row => row.kind === "baseline")!.bytes, baseline.bytes)
       store().dispose()
     } finally {

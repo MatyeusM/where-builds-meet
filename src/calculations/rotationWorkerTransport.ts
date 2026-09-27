@@ -16,6 +16,13 @@ import type { TimelineRow } from "./rotationTimeline"
 export type TransportMode = "editorTimeline" | "baseline" | "comparisons"
 export type TransportResult = EditorTimelineResult | RotationSimulationBaseline | { metrics: RotationMetrics }
 
+export type TransportTiming = {
+  /** Time spent waiting for a free worker before the job started. */
+  queueMs: number
+  /** Time the job spent running on a worker. */
+  workerMs: number
+}
+
 export type TransportRequest = {
   mode: TransportMode
   bundle: RotationSimulationBundle
@@ -27,13 +34,30 @@ export type TransportRequest = {
   baseline?: RotationSimulationBaseline
   priority?: number
   onProgress?: (progress: number) => void
+  /** Reports how long the job waited for a worker and then ran on one. */
+  onTiming?: (timing: TransportTiming) => void
 }
 
 type QueuedRequest = TransportRequest & {
   sequence: number
   retryCount: number
+  queuedAt: number
+  /** Set when a worker picks the job up, which separates waiting from running. */
+  dispatchedAt?: number
   resolve: (r: TransportResult) => void
   reject: (e: Error) => void
+}
+
+function currentTime() {
+  return performance.now()
+}
+
+/** Report one job's wait and run times, and tolerate a caller that only wants one. */
+function reportTiming(request: QueuedRequest) {
+  if (!request.onTiming) return
+  const dispatchedAt = request.dispatchedAt ?? request.queuedAt
+  const finishedAt = currentTime()
+  request.onTiming({ queueMs: dispatchedAt - request.queuedAt, workerMs: finishedAt - dispatchedAt })
 }
 
 type WorkerResultMessage = {
@@ -93,8 +117,10 @@ function teardownSlots(message: string) {
     slot.worker.terminate()
     slot.running = undefined
   })
-  interrupted.forEach(request => request.reject(error))
-  queued.forEach(request => request.reject(error))
+  for (const request of [...interrupted, ...queued]) {
+    reportTiming(request)
+    request.reject(error)
+  }
 }
 
 function removeSlot(slot: WorkerSlot) {
@@ -169,8 +195,11 @@ function createSlot(): WorkerSlot {
       slot.baselineKeys.add(completed.cacheKey)
     }
     try {
-      completed.resolve(translateResult(completed, event.data))
+      const result = translateResult(completed, event.data)
+      reportTiming(completed)
+      completed.resolve(result)
     } catch (error) {
+      reportTiming(completed)
       completed.reject(error instanceof Error ? error : new Error("Rotation calculation failed"))
     }
     dispatchPending()
@@ -189,6 +218,7 @@ function createSlot(): WorkerSlot {
 
 function dispatchTo(slot: WorkerSlot, request: QueuedRequest) {
   const id = ++requestId
+  request.dispatchedAt = currentTime()
   slot.running = { id, request }
   try {
     slot.worker.postMessage({
@@ -201,6 +231,7 @@ function dispatchTo(slot: WorkerSlot, request: QueuedRequest) {
   } catch (error) {
     slot.running = undefined
     removeSlot(slot)
+    reportTiming(request)
     requeueOrReject(request, error instanceof Error ? error : new Error("Rotation calculation worker failed"))
   }
 }
@@ -230,11 +261,14 @@ export function dispatchCalculation(request: TransportRequest) {
       priority: request.priority ?? 0,
       sequence: ++requestSequence,
       retryCount: 0,
+      queuedAt: currentTime(),
       resolve,
       reject,
     }
     const replacedIndex = pending.findIndex(candidate => candidate.key === queued.key)
     if (replacedIndex >= 0) {
+      // Never dispatched, so all of its elapsed time was queue wait.
+      reportTiming(pending[replacedIndex])
       pending[replacedIndex].reject(new Error("Calculation superseded by a newer request"))
       pending.splice(replacedIndex, 1)
     }
@@ -266,6 +300,7 @@ export function cancelCalculation(key: string, message = "Calculation superseded
   if (interrupted) {
     const request = interrupted.running!.request
     removeSlot(interrupted)
+    reportTiming(request)
     request.reject(error)
   }
   dispatchPending()

@@ -1,4 +1,4 @@
-import type { DpsEntry, DpsKind } from "./dpsStore"
+import type { DpsEntry, DpsFetchTiming, DpsKind } from "./dpsStore"
 
 /**
  * Cache occupancy reporting for local development. The store has no other observer, so
@@ -71,6 +71,54 @@ function render(rows: KindSummary[], total: number) {
   return [`total ${total}`, body, `serialized ${formatBytes(bytes)}`, ...inflight].filter(Boolean).join("  |  ")
 }
 
+/** Enough recent fetches to see a sweep's shape without the console becoming the bottleneck. */
+const recentLimit = 24
+const recent: DpsFetchTiming[] = []
+
+/**
+ * Record how one request was served. Kept outside the store's state so timing never
+ * triggers a re-render, and so the numbers reflect the calls the application made
+ * rather than the entries that happen to survive.
+ */
+export function recordFetch(timing: DpsFetchTiming) {
+  if (!enabled) return
+  recent.push(timing)
+  if (recent.length > recentLimit) recent.shift()
+}
+
+function round(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+function fetchRows() {
+  return recent.map(entry => ({
+    kind: entry.kind,
+    source: entry.source,
+    totalMs: round(entry.totalMs),
+    queueMs: round(entry.queueMs),
+    workerMs: round(entry.workerMs),
+    buildMs: round(entry.buildMs),
+  }))
+}
+
+/** Totals per source, so a sweep dominated by dispatch or by cache reads is obvious. */
+function fetchTotals() {
+  const totals = new Map<string, { count: number; totalMs: number; slowestMs: number }>()
+  for (const entry of recent) {
+    const row = totals.get(entry.source) ?? { count: 0, totalMs: 0, slowestMs: 0 }
+    row.count += 1
+    row.totalMs += entry.totalMs
+    row.slowestMs = Math.max(row.slowestMs, entry.totalMs)
+    totals.set(entry.source, row)
+  }
+  return [...totals].map(([source, row]) => ({
+    source,
+    count: row.count,
+    totalMs: round(row.totalMs),
+    slowestMs: round(row.slowestMs),
+  }))
+}
+
 export function reportDpsCache(entries: ReadonlyMap<string, DpsEntry>, retention: Record<DpsKind, number>) {
   if (!enabled) return
   // The newest snapshot wins: a burst keeps overwriting this while the report is
@@ -88,9 +136,12 @@ export function reportDpsCache(entries: ReadonlyMap<string, DpsEntry>, retention
     lastSummary = summary
     console.groupCollapsed(`[DPS cache] ${summary}`)
     console.table(rows.map(row => Object.assign({ size: formatBytes(row.bytes) }, row)))
+    console.info("Held results by size (serialized, not heap; shared references count once per occurrence).")
+    console.table(fetchTotals())
     console.info(
-      "Serialized size, not heap: a reference shared inside one result is counted once per occurrence, so this is an upper bound. Held results resolve without building a bundle.",
+      "Recent fetches. 'held' never built a bundle or reached a worker; 'joined' waited on someone else's job; 'dispatched' paid build + queue + worker.",
     )
+    console.table(fetchRows())
     console.groupEnd()
   }, reportDelayMs)
 }
