@@ -151,10 +151,28 @@ src/
     rotationMetrics.ts           result types and the category list
 
 public/
+  apple-touch-icon.png           home-screen icon, opaque, 180px
   divinecraft/                   static selector images copied into the build
+  favicon.ico                    multi-size icon for the automatic root request
+  favicon.svg                    the icon, drawn on a plate, for surfaces that take vectors
   licenses/                      third-party notices copied into the build
   locales/                       generated per-locale runtime message JSON
+  mask-icon.png                  solid silhouette, for surfaces that tint a mask themselves
 ```
+
+The icons in `public/` are generated from `script/logo/logo.png` by
+`npm run icons:build`; `npm run icons:preview` draws the result at every size a
+surface uses it, on a light and a dark one. They are checked in rather than built
+during a deploy because they are part of the site's identity, not of a build.
+
+The emblem is gold line art whose pale highlight measures 1.12:1 against a light
+browser tab, where it is not visible, and no browser recolours an icon to
+compensate. Every icon is therefore drawn on a plate of the same `#11131a` the
+`theme-color` meta declares: that puts each tone of the artwork between 5.7:1 and
+14.9:1, and because the plate matches a dark tab it disappears on one rather than
+framing the emblem. The source is cropped to its ink first, which is most of the
+emblem's apparent size, and each embed is palette-quantised, which is worth about
+two thirds of the remaining bytes.
 
 Combat-path icons live under `src/assets/path-icons/` and are imported with
 `vite-imagetools` using `?w=56&h=56&format=webp`; production builds emit
