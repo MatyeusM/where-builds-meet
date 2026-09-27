@@ -1,8 +1,8 @@
 import { IconBrandDiscord, IconBrandGithub } from "@tabler/icons-react"
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
+import { resolveBuildStatState } from "./application/buildStatState"
 import { settingsForPath } from "./application/characterComposition"
-import { calculateGlobalStatState } from "./application/characterComposition"
 import type { CalculatorSettings, LayoutMode, PathId, SetupSelections } from "./application/contracts"
 import { martialArtDefinitions } from "./application/gameData/martialArts"
 import { pathIcons } from "./application/gameData/pathIcons"
@@ -15,7 +15,7 @@ import {
   type PathDefinition,
 } from "./application/gameData/paths"
 import { breakthroughProfile } from "./application/gameData/setup"
-import { defaultAttunementStats, loadAttunementOverrides } from "./application/persistence/attunements"
+import { loadAttunementOverrides } from "./application/persistence/attunements"
 import { loadRotationEntries } from "./application/persistence/rotations"
 import { loadSettings } from "./application/persistence/settings"
 import { loadBuildSetupOverrides, sameBuildSetupValue } from "./application/persistence/setupOverrides"
@@ -24,7 +24,7 @@ import { loadStatOverrides } from "./application/persistence/stats"
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
-import { resolveAttunementStats, type AttunementOverrides } from "./calculations/attunementStats"
+import type { AttunementOverrides } from "./calculations/attunementStats"
 import { type AttunementStats } from "./calculations/damage"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
@@ -72,7 +72,7 @@ import {
   subscribeToRotationMetrics,
   type RotationMetrics,
 } from "./calculations/rotationMetrics"
-import { type CharacterStatOverrides, type StatEffectContainer } from "./calculations/statEffects"
+import type { CharacterStatOverrides } from "./calculations/statEffects"
 import {
   characterProfileStorageKey,
   loadCharacterProfiles,
@@ -84,9 +84,7 @@ import {
   buildEntryAvailableForPath,
   buildEntryIsTestPreset,
   buildListStorageKey,
-  calculateEquippedGearEffects,
   loadBuildState,
-  resolveBuildInventory,
   resolveBuildSetup,
   sameWeaponPair,
   serializeBuildState,
@@ -196,78 +194,45 @@ export default function App() {
   const [buildSetupOverrides, setBuildSetupOverrides] = useState<BuildSetupOverrides>(() =>
     loadBuildSetupOverrides(activeBuildSetup),
   )
-  const buildSetup = useMemo<BuildSetup>(
-    () => ({
-      innerWays: (buildSetupOverrides.innerWays ?? activeBuildSetup.innerWays).map(row => Object.assign({}, row)),
-      weaponSets: { ...(buildSetupOverrides.weaponSets ?? activeBuildSetup.weaponSets) },
-      armorSets: { ...(buildSetupOverrides.armorSets ?? activeBuildSetup.armorSets) },
-      bowRingSet: buildSetupOverrides.bowRingSet ?? activeBuildSetup.bowRingSet,
-      arsenal: buildSetupOverrides.arsenal ?? activeBuildSetup.arsenal,
-    }),
-    [activeBuildSetup, buildSetupOverrides],
-  )
-  const activeGearInventory = useMemo(
+  const activeStatState = useMemo(
     () =>
-      activeBuild
-        ? resolveBuildInventory(activeBuild, buildState.gearItems, settings.weapons)
-        : { items: [], equipped: {} },
-    [activeBuild, buildState.gearItems, settings.weapons],
-  )
-  const equippedGearEffects = useMemo(
-    () => calculateEquippedGearEffects(activeGearInventory, settings.weapons, activeBuild?.isDefault !== true),
-    [activeGearInventory, settings.weapons, activeBuild?.isDefault],
-  )
-  const gearStatEffect = useMemo<StatEffectContainer>(
-    () => ({ rawStat: equippedGearEffects.stats }),
-    [equippedGearEffects],
-  )
-  const globalStatState = useMemo(
-    () => calculateGlobalStatState(statOverrides, settings, gearStatEffect, buildSetup, setupSelections, pathId),
-    [statOverrides, settings, gearStatEffect, buildSetup, setupSelections, pathId],
-  )
-  const displayedStats = globalStatState.stats
-  const derivedStats = globalStatState.derivedStats
-  const resolvedAttunementStats = useMemo(
-    () =>
-      resolveAttunementStats(defaultAttunementStats, equippedGearEffects.attunement, attunementOverrides, {
-        physicalPenetration: displayedStats.physicalPenetration,
-        formlessPenetration: displayedStats.formlessPenetration,
+      resolveBuildStatState({
+        build: activeBuild,
+        gearItems: buildState.gearItems,
+        settings,
+        statOverrides,
+        attunementOverrides,
+        setupSelections,
+        pathId,
+        buildSetupOverrides,
       }),
     [
+      activeBuild,
+      buildState.gearItems,
+      settings,
+      statOverrides,
       attunementOverrides,
-      displayedStats.physicalPenetration,
-      displayedStats.formlessPenetration,
-      equippedGearEffects.attunement,
+      setupSelections,
+      pathId,
+      buildSetupOverrides,
     ],
   )
   const character = useMemo(
     () => ({
-      stats: displayedStats,
-      rawStats: globalStatState.rawStats,
-      baseStats: globalStatState.baseStats,
-      attunementStats: resolvedAttunementStats.calculation,
-      displayedAttunementStats: resolvedAttunementStats.displayed,
+      stats: activeStatState.stats,
+      rawStats: activeStatState.rawStats,
+      baseStats: activeStatState.baseStats,
+      attunementStats: activeStatState.attunement,
+      displayedAttunementStats: activeStatState.displayedAttunement,
       settings,
       enemy,
-      derivedStats,
+      derivedStats: activeStatState.derivedStats,
       innerWayRevision,
       setupSelections,
-      gearStatEffect,
-      buildSetup,
+      gearStatEffect: activeStatState.gearStatEffect,
+      buildSetup: activeStatState.buildSetup,
     }),
-    [
-      displayedStats,
-      globalStatState.baseStats,
-      globalStatState.rawStats,
-      resolvedAttunementStats,
-      settings,
-      enemy,
-      derivedStats,
-      innerWayRevision,
-      setupSelections,
-      gearStatEffect,
-      buildSetup,
-    ],
+    [activeStatState, settings, enemy, innerWayRevision, setupSelections],
   )
   const updateStatOverride = (key: keyof CharacterStats, value: number) => {
     setStatOverrides(current => ({ ...current, [key]: value }))
