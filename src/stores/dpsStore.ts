@@ -10,6 +10,7 @@ import {
   supersedeCalculations,
   type TransportResult,
 } from "../calculations/rotationWorkerTransport"
+import { reportDpsCache } from "./dpsStoreDiagnostics"
 
 /**
  * The single entry point for calculation work. Every baseline, comparison and editor
@@ -97,6 +98,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       entries.delete(entry.cacheKey)
       entries.set(entry.cacheKey, entry)
       if (entry.status === "ready") evictOverflow(entries, entry.kind)
+      reportDpsCache(entries, retentionByKind)
       return { entries }
     })
 
@@ -165,7 +167,9 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
 
     reset: () => {
       inFlight.clear()
-      set({ entries: new Map() })
+      const entries = new Map<string, DpsEntry>()
+      reportDpsCache(entries, retentionByKind)
+      set({ entries })
     },
   }
 })
