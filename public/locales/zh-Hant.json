@@ -872,8 +872,6 @@
   "ui.app.notSpecified": "未指定",
   "ui.app.off": "關閉",
   "ui.app.on": "開啟",
-  "ui.app.openTheRotationEditorToCalculatePriority": "開啟循環編輯器以計算優先度。",
-  "ui.app.openTheRotationEditorToCalculateTheActive": "開啟循環編輯器以計算使用中的循環。",
   "ui.app.orGroup": "「或」群組",
   "ui.app.parameter": "參數",
   "ui.app.pc": "電腦版",

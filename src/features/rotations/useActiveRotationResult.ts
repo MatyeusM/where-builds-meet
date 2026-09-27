@@ -4,25 +4,27 @@ import type { PathId } from "../../application/contracts"
 import { typedPathDefinitions } from "../../application/gameData/paths"
 import { buildGraduationBundleSet, selectHighestGraduationResult } from "../../application/graduation"
 import { loadRotationEntries } from "../../application/persistence/rotations"
-import { resolveBaseline } from "../../application/resolveRotationMetrics"
+import { resolveBaseline, resolveComparisonMetrics } from "../../application/resolveRotationMetrics"
 import { rotationAvailableForWeapons, rotationRecordForEntry } from "../../application/rotationCatalog"
-import { calculationFingerprint } from "../../calculations/calculationFingerprint"
+import { calculationFingerprint, rotationBundleFingerprint } from "../../calculations/calculationFingerprint"
 import { resolvePing } from "../../calculations/combatDefaults"
 import type { MeasurementContext } from "../../calculations/rotationCalculationBundle"
-import { buildMeasurement } from "../../calculations/rotationCalculationBundle"
+import { buildRotationCalculationBundle, measurementSubject } from "../../calculations/rotationCalculationBundle"
+import { buildRotationComparisonBundle } from "../../calculations/rotationComparisonBundle"
 import type { BuildEntry, GearItem } from "../../gear"
 import { gameText } from "../../i18n"
 import { useDpsStore } from "../../stores/dpsStore"
 import { useRotationStore, type ActiveRotationResult } from "../../stores/rotationStore"
 
 /**
- * Publishes the rotation every other surface shows.
+ * Resolves and publishes the rotation every other surface shows: its baseline, its graduation
+ * reading, and its comparisons.
  *
- * The rotation editor used to own this because it also owned the comparison sweep, and only
- * something that ran the sweep could produce a rotation's numbers. A rotation's totals are a
- * single baseline entry in the calculation cache, so they no longer need an owner to stay alive
- * and this resolves them directly. Nothing outside the editor reads a comparison, so the sweep
- * stays with the editor and the application no longer waits for it on load.
+ * Nothing here needs the rotation editor, which is the point. The editor used to own this because
+ * it ran the comparison sweep, so the character sheet's priority panels and the breakdown could
+ * only be filled once it was opened. Every part of a rotation's result is a cache entry keyed by
+ * the fingerprint of the bundle it came from, so the application resolves the same entries the
+ * editor does and lands on the same numbers, whether or not it is on screen.
  */
 
 type ActiveRotationInput = {
@@ -50,6 +52,17 @@ function resolveActiveRotation(input: ActiveRotationInput) {
   return { entry, rotation, name: entry.isDefault ? gameText(rotation.name) : rotation.name || "Active rotation" }
 }
 
+/** The graduation reading already held for every candidate, or undefined while any is missing. */
+function cachedGraduationDps(prepared: ReturnType<typeof buildGraduationBundleSet>) {
+  if (!prepared) return undefined
+  const cached = prepared.candidates.flatMap(candidate => {
+    const reading = useDpsStore.getState().peek("throughput", candidate.fingerprint)
+    return reading ? [reading] : []
+  })
+  if (cached.length !== prepared.candidates.length) return undefined
+  return selectHighestGraduationResult(cached)?.dps
+}
+
 export function useActiveRotationResult(input: ActiveRotationInput) {
   const { pathId, build, gearItems, measurement, activeRotationId, defaultRotationId } = input
   const requestRef = useRef(0)
@@ -66,7 +79,11 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
     const current = () => requestRef.current === request
     const active = resolveActiveRotation({ ...input, weapons: input.weapons as never })
     if (!active) return
-    const { bundle, cacheKey } = buildMeasurement({ build, gearItems, context, rotation: active.rotation })
+    // One subject for both bundles, so the comparisons resolve against the baseline the store
+    // already holds rather than a second assembly of the same rotation.
+    const subject = measurementSubject({ build, gearItems, context, rotation: active.rotation })
+    const bundle = buildRotationCalculationBundle(subject)
+    const cacheKey = rotationBundleFingerprint(bundle)
     const bundleKey = `${active.entry.id}:${cacheKey}`
 
     // Unsaved edits to the active rotation have always moved the headline, so the editor's
@@ -107,19 +124,35 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
     }
 
     void (async () => {
+      const store = useRotationStore.getState()
       try {
+        store.startCategory("baseline")
         const resolved = await resolveBaseline(bundle)
         if (!current()) return
-        const cached = graduation
-          ? selectHighestGraduationResult(
-              graduation.candidates.flatMap(candidate => {
-                const reading = useDpsStore.getState().peek("throughput", candidate.fingerprint)
-                return reading ? [reading] : []
-              }),
-            )?.dps
-          : undefined
-        publish(resolved.baseline.metrics, cached)
-        if (!graduation || cached !== undefined || !current()) return
+        store.settleCategory("baseline")
+        // The totals are published before the comparisons, so the headline lands as soon as the
+        // rotation itself is measured rather than waiting for the panels around it.
+        publish(resolved.baseline.metrics, cachedGraduationDps(graduation))
+
+        const metrics = await resolveComparisonMetrics({
+          bundle: buildRotationComparisonBundle(subject),
+          baselineKey: cacheKey,
+          baseline: () => resolved.baseline,
+          onCategoryStarted: category => {
+            if (current()) useRotationStore.getState().startCategory(category)
+          },
+          onCategoryProgress: (category, progress) => {
+            if (current()) useRotationStore.getState().progressCategory(category, progress)
+          },
+          onCategoryResolved: (merged, category) => {
+            if (!current()) return
+            publish(merged, cachedGraduationDps(graduation))
+            useRotationStore.getState().settleCategory(category)
+          },
+        })
+        if (!current()) return
+        publish(metrics, cachedGraduationDps(graduation))
+        if (!graduation || cachedGraduationDps(graduation) !== undefined || !current()) return
         const readings = await Promise.all(
           graduation.candidates.map(candidate =>
             useDpsStore
@@ -132,7 +165,7 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
               }),
           ),
         )
-        publish(resolved.baseline.metrics, selectHighestGraduationResult(readings)?.dps)
+        publish(metrics, selectHighestGraduationResult(readings)?.dps)
       } catch {
         // A superseded or cancelled resolve is an ordinary outcome of switching path or rotation,
         // and the next effect run publishes the current one. A real failure surfaces through the

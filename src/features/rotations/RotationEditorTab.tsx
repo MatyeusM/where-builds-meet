@@ -26,6 +26,7 @@ import {
   innerWayEffectRulesFor,
   selectableRotationSkillGroups,
 } from "../../application/characterComposition"
+import { baselineMetricsWithPreviousComparisons } from "../../application/comparison"
 import type { CharacterState, PathId } from "../../application/contracts"
 import {
   formatThroughput,
@@ -1610,23 +1611,31 @@ export function RotationEditorTab({
           })
         })
 
-        const metrics = await resolveComparisonMetrics({
-          bundle: calculationBundleFor(rotationRecord, true),
-          baselineKey: resultKey,
-          baseline: () => baseline,
-          onCategoryStarted: category => {
-            if (current()) useRotationStore.getState().startCategory(category)
-          },
-          onCategoryProgress: (category, progress) => {
-            if (current()) useRotationStore.getState().progressCategory(category, progress)
-          },
-          onCategoryResolved: (metrics, category) => {
-            if (!current()) return
-            storeBaselineResult(id, resultKey, { ...baseline, metrics })
-            useRotationStore.getState().settleCategory(category)
-            publishDraft(id, rotationRecord, metrics)
-          },
-        })
+        // The store resolves the active rotation's comparisons for every surface, so the editor
+        // only asks for the ones it has no published answer for: a rotation being edited that is
+        // not the active one. Otherwise two callers would drive the same category, and the second
+        // would be answered entirely from the cache.
+        const published = useRotationStore.getState().result
+        const metrics =
+          published && !published.draft && published.rotationId === id
+            ? baseline.metrics
+            : await resolveComparisonMetrics({
+                bundle: calculationBundleFor(rotationRecord, true),
+                baselineKey: resultKey,
+                baseline: () => baseline,
+                onCategoryStarted: category => {
+                  if (current()) useRotationStore.getState().startCategory(category)
+                },
+                onCategoryProgress: (category, progress) => {
+                  if (current()) useRotationStore.getState().progressCategory(category, progress)
+                },
+                onCategoryResolved: (merged, category) => {
+                  if (!current()) return
+                  storeBaselineResult(id, resultKey, { ...baseline, metrics: merged })
+                  useRotationStore.getState().settleCategory(category)
+                  publishDraft(id, rotationRecord, merged)
+                },
+              })
         if (!current()) return "superseded" as const
         storeBaselineResult(id, resultKey, { ...baseline, metrics })
         publishDraft(id, rotationRecord, metrics)
@@ -1656,7 +1665,15 @@ export function RotationEditorTab({
     innerWayPriority: priorityInnerWays,
     setupComparisons,
   }
-  const rotationCalculation = currentCachedResult?.metrics ?? localRotationCalculation
+  const publishedResult = useRotationStore(state => state.result)
+  const storeHasComparisons =
+    publishedResult !== null && !publishedResult.draft && publishedResult.rotationId === editingRotationId
+  const rotationCalculation = storeHasComparisons
+    ? baselineMetricsWithPreviousComparisons(
+        currentCachedResult?.metrics ?? localRotationCalculation,
+        publishedResult.metrics,
+      )
+    : (currentCachedResult?.metrics ?? localRotationCalculation)
 
   useEffect(() => {
     const requestSequence = ++editorPreviewRequestSequenceRef.current

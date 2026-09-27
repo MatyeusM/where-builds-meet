@@ -1268,8 +1268,6 @@ ui.app.notAvailableYet,Not available yet.,尚未開放。,,,아직 활성화 되
 ui.app.notSpecified,Not specified,未指定,,,미지정,,,,,,,
 ui.app.off,Off,關閉,,,끄기,,,,,,,
 ui.app.on,On,開啟,,,켜기,,,,,,,
-ui.app.openTheRotationEditorToCalculatePriority,Open the Rotation Editor to calculate priority.,開啟循環編輯器以計算優先度。,,,우선순위를 계산하려면 로테이션 에디터를 엽니다.,,,,,,,
-ui.app.openTheRotationEditorToCalculateTheActive,Open the Rotation Editor to calculate the active rotation.,開啟循環編輯器以計算使用中的循環。,,,로테이션 에디터를 열어 활성화된 로테이션을 계산합니다.,,,,,,,
 ui.app.orGroup,OR group,「或」群組,,,,,,,,,,
 ui.app.parameter,Parameter,參數,,,,,,,,,,
 ui.app.pc,PC,電腦版,,,,,,,,,,

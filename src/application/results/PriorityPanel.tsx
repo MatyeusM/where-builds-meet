@@ -121,9 +121,7 @@ export function PriorityPanel({
             </div>
           ))}
         </div>
-      ) : (
-        <p className="priority-empty">{t("ui.app.openTheRotationEditorToCalculatePriority")}</p>
-      )}
+      ) : null}
     </Panel>
   )
 }

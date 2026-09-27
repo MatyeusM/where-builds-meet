@@ -502,11 +502,6 @@
     border-block-start: 1px solid var(--border-muted);
   }
 
-  .priority-empty {
-    margin: 0;
-    color: var(--text-muted);
-  }
-
   /* Stats Responsive Breakpoints */
   @media (max-width: 43.75em) {
     .character-stats-heading {

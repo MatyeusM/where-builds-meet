@@ -150,18 +150,27 @@ export type MeasurementContext = {
 }
 
 /**
+ * The subject a build is measured against: the sheet it sits on, the enemy, and everything about
+ * the environment that no build chooses.
+ *
+ * Split out from `buildMeasurement` so a caller needing the comparison variants of the same build
+ * resolves the same subject, and therefore the same baseline fingerprint, instead of assembling a
+ * second one that would miss the cache the first populated.
+ */
+
+/**
  * The bundle a build is measured with, and the key its result is held under.
  *
  * The key is the bundle's own fingerprint, which is the same key the rotation editor's baseline
  * for that build is held under. That is what lets the active build's reading be answered from
  * that baseline instead of running the rotation a second time.
  */
-export function buildMeasurement(input: {
+export function measurementSubject(input: {
   build: BuildEntry | undefined
   gearItems: GearItem[]
   context: MeasurementContext
   rotation: RotationRecord
-}): { bundle: RotationSimulationBundle; cacheKey: string } {
+}): CalculationSubject {
   const { environment, statOverrides, attunementOverrides, buildSetupOverrides: unsaved } = input.context
   const build = resolveBuildStatState({
     build: input.build,
@@ -175,7 +184,16 @@ export function buildMeasurement(input: {
     // that reads as equal when both are absent and would apply edits that do not exist.
     buildSetupOverrides: unsaved && unsaved.buildId === input.build?.id ? unsaved.overrides : undefined,
   })
-  const bundle = buildRotationCalculationBundle({ ...environment, rotation: input.rotation, build })
+  return { ...environment, rotation: input.rotation, build }
+}
+
+export function buildMeasurement(input: {
+  build: BuildEntry | undefined
+  gearItems: GearItem[]
+  context: MeasurementContext
+  rotation: RotationRecord
+}): { bundle: RotationSimulationBundle; cacheKey: string } {
+  const bundle = buildRotationCalculationBundle(measurementSubject(input))
   return { bundle, cacheKey: rotationBundleFingerprint(bundle) }
 }
 

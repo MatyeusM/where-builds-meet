@@ -194,7 +194,7 @@ export function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; p
     return (
       <Panel className="breakdown-empty">
         <h2>{t("ui.app.dpsBreakdown", { dps: t("system.dps") })}</h2>
-        <p>{t("ui.app.openTheRotationEditorToCalculateTheActive")}</p>
+        <p>{t("ui.app.recalculating")}</p>
       </Panel>
     )
   const { breakdown } = metrics

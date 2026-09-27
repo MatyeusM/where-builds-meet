@@ -512,8 +512,6 @@
   "ui.app.notSpecified": "미지정",
   "ui.app.off": "끄기",
   "ui.app.on": "켜기",
-  "ui.app.openTheRotationEditorToCalculatePriority": "우선순위를 계산하려면 로테이션 에디터를 엽니다.",
-  "ui.app.openTheRotationEditorToCalculateTheActive": "로테이션 에디터를 열어 활성화된 로테이션을 계산합니다.",
   "ui.app.percentage": "퍼센트",
   "ui.app.physicalBonus": "외공 보너스",
   "ui.app.physicalCoefficient": "외공계수",
