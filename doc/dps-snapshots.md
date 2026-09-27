@@ -125,6 +125,11 @@ four added HP/defense enhancement entries in system progression. The added HP
 also feeds Thundercry's charged/varied-combo talent scaling; the preset remains
 at 30 ms ping with the same combat duration.
 
+Dust's Dummy 1 Min keeps the 58,334.43 DPS baseline accepted with its
+implementation, at the rotation's own 20 ms ping, with 3,500,065.96 total damage.
+It is the path's only preset rotation, so promoting Dust from WIP to available
+changed no snapshot.
+
 ## Updating reviewed rotations
 
 Run `npm run test:dps`, explain each affected rotation's old/new result and cause,
