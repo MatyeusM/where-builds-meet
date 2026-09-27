@@ -497,22 +497,18 @@
   }
 
   .damage-breakdown-wrap {
-    position: relative;
     display: inline-block;
     min-inline-size: 0;
     max-inline-size: 100%;
     cursor: help;
   }
 
+  /* The box is portalled out of the trigger, so its contents are laid out here while the
+     primitive owns showing it. A reveal rule keyed on the trigger could no longer match. */
   .damage-breakdown-tooltip {
-    display: none;
+    display: flex;
     gap: var(--space-sm);
     color: inherit;
-  }
-
-  .damage-breakdown-wrap:hover .damage-breakdown-tooltip,
-  .damage-breakdown-wrap:focus-within .damage-breakdown-tooltip {
-    display: flex;
   }
 
   .rotation-action-result {
@@ -835,14 +831,9 @@
   }
 
   .effect-plate-tooltip {
-    display: none;
+    display: block;
     font-weight: 500;
     line-height: 1.35;
-  }
-
-  .effect-plate:hover .effect-plate-tooltip,
-  .effect-plate:focus-within .effect-plate-tooltip {
-    display: block;
   }
 
   .effect-plate-tooltip strong,

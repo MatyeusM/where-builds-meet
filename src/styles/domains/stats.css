@@ -441,9 +441,9 @@
     transform: translateY(-0.25rem);
     visibility: hidden;
     transition:
-      opacity 120ms ease,
-      transform 120ms ease,
-      visibility 120ms;
+      opacity var(--transition-fast),
+      transform var(--transition-fast),
+      visibility var(--transition-fast);
   }
 
   .breakthrough-detail-tooltip > span {

@@ -222,7 +222,9 @@ measuring needs the box to exist, it is rendered invisible for the frame before 
 is placed. The anchor is a real inline-flex box rather than a `display: contents`
 one: an element that generates nothing has no rectangle to measure and no pointer
 events of its own to hang the reveal on, and the box is rendered only while the
-trigger is hovered or focused.
+trigger is hovered or focused. A consumer class may lay the box's contents out,
+but it must not own the box's display or reveal: a rule keyed on the trigger can no
+longer reach a box that is not inside it.
 
 Domain-specific classes one layer above a primitive may still adjust layout
 or context-specific appearance with the same design tokens. Primitives do not
