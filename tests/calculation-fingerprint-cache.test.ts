@@ -3,8 +3,9 @@ import { assert, describe, it } from "vitest"
 // Ported from script/probe/check-calculation-fingerprint-cache.mjs.
 describe("calculation-fingerprint-cache", () => {
   it("Calculation fingerprint cache probe passed", async () => {
-    const { calculationFingerprint, rotationBundleFingerprint, RotationCalculationCache } =
-      await import("../src/calculations/rotationCalculationCache.ts")
+    const { calculationFingerprint, rotationBundleFingerprint } =
+      await import("../src/calculations/calculationFingerprint.ts")
+    const { RotationCalculationCache } = await import("../src/calculations/rotationCalculationCache.ts")
     const cache = new RotationCalculationCache()
     const setupA = calculationFingerprint({ stats: { minPhys: 1 }, selector: "A", rotation: ["SkillA"] })
     const setupB = calculationFingerprint({ stats: { minPhys: 2 }, selector: "B", rotation: ["SkillA"] })

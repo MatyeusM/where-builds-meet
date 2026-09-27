@@ -1,4 +1,4 @@
-import { rotationVariantFingerprint } from "../calculations/rotationCalculationCache"
+import { rotationVariantFingerprint } from "../calculations/calculationFingerprint"
 import {
   sortAttunementPriorityRows,
   sortRotationPriorityRows,

@@ -46,7 +46,7 @@ describe("skill-override-calculation", () => {
       "Old stack-damage overrides must preserve expiration behavior and physical-only coefficients, but drop stack scaling.",
     )
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
-    const { rotationBundleFingerprint } = await import("../src/calculations/rotationCalculationCache.ts")
+    const { rotationBundleFingerprint } = await import("../src/calculations/calculationFingerprint.ts")
     const defaults = {
       Snowparting: { Attack: { name: "Attack", castTime: 1, action: [{ type: "damage", time: 1 }] } },
       Phalanxbane: {},

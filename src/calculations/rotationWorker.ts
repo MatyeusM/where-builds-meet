@@ -1,6 +1,6 @@
 import { withCalculationBenchmark } from "./calculationBenchmark"
+import { rotationBundleFingerprint } from "./calculationFingerprint"
 import { compactInnerWayResults } from "./compactInnerWayResults"
-import { rotationBundleFingerprint } from "./rotationCalculationCache"
 import {
   calculateRotationBaseline,
   calculateRotationComparisons,

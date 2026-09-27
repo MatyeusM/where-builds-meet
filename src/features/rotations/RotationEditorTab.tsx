@@ -92,6 +92,7 @@ import {
   rotationAvailableForWeapons,
   rotationRecordForEntry,
 } from "../../application/rotationCatalog"
+import { calculationFingerprint, rotationBundleFingerprint } from "../../calculations/calculationFingerprint"
 import {
   bossDefinitionFor,
   bossDefinitions,
@@ -102,11 +103,7 @@ import {
 } from "../../calculations/combatDefaults"
 import { type AttunementStats } from "../../calculations/damage"
 import type { EditorTimelineResult } from "../../calculations/editorTimeline"
-import {
-  RotationCalculationCache,
-  calculationFingerprint,
-  rotationBundleFingerprint,
-} from "../../calculations/rotationCalculationCache"
+import { RotationCalculationCache } from "../../calculations/rotationCalculationCache"
 import {
   type RotationActionBreakdown,
   type RotationSimulationBundle,

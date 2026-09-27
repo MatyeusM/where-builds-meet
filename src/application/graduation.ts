@@ -1,5 +1,5 @@
+import { calculationFingerprint } from "../calculations/calculationFingerprint"
 import { resolvePing } from "../calculations/combatDefaults"
-import { calculationFingerprint } from "../calculations/rotationCalculationCache"
 import type { RotationSimulationBundle } from "../calculations/rotationCalculator"
 import type { RotationRecord } from "../calculations/rotationTimeline"
 import {

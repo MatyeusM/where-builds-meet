@@ -6,8 +6,8 @@ import heavenwill from "../data/skill/heavenwill-gauntlets.json"
 import infernal from "../data/skill/infernal-twinblades.json"
 import mystic from "../data/skill/mystic.json"
 import phalanxbane from "../data/skill/phalanxbane-blade.json"
+import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
 import { normalizePing, resolvePing } from "../src/calculations/combatDefaults"
-import { rotationBundleFingerprint } from "../src/calculations/rotationCalculationCache"
 import {
   buildRotationTimeline,
   type SkillRecord,
