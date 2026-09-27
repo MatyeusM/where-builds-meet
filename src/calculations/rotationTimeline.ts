@@ -644,43 +644,122 @@ export function resolveSkillStepDuration(
   return Math.max(0, maximum === undefined ? step.duration : Math.min(step.duration, maximum))
 }
 
-/** Resolve the reserved action slots and local times produced by a composite skill. */
-export function expandedSkillActionLayout(skillId: string, skills: Record<string, SkillRecord>) {
-  const actionTimes: number[] = []
-  let castTime = 0
-  const append = (currentSkillId: string, fallbackSkillId: string | undefined, ancestry: Set<string>): void => {
-    if (!currentSkillId || ancestry.has(currentSkillId)) return
-    const skill = skills[currentSkillId]
-    if (!skill) return
-    const fallback = fallbackSkillId ? skills[fallbackSkillId] : undefined
-    const baseCastTime = resolveSkillCastTime(skill)
-    const baseActions = Array.isArray(skill.action) ? (skill.action as EditableObject[]) : []
-    const fallbackActions = Array.isArray(fallback?.action) ? (fallback.action as EditableObject[]) : []
-    const actionCount = Math.max(baseActions.length, fallbackActions.length)
-    for (let index = 0; index < actionCount; index += 1) {
-      const action = baseActions[index] ?? fallbackActions[index]
-      actionTimes.push(castTime + (action && typeof action.time === "number" ? action.time : baseCastTime))
-    }
-    castTime += baseCastTime
-    const nextAncestry = new Set(ancestry).add(currentSkillId)
-    for (const entry of skill.subAction ?? []) {
-      const reference = typeof entry === "string" ? { value: entry } : entry
-      const primary = Array.isArray(reference.value) ? reference.value : [reference.value]
-      const fallbackValues = Array.isArray(reference.fallback)
-        ? reference.fallback
-        : reference.fallback
-          ? [reference.fallback]
-          : []
-      if (Array.isArray(reference.value) || Array.isArray(reference.fallback)) {
-        for (let index = 0; index < Math.max(primary.length, fallbackValues.length); index += 1)
-          append(primary[index] ?? fallbackValues[index] ?? "", undefined, nextAncestry)
-      } else append(primary[0], reference.fallback, nextAncestry)
-    }
+type ExpandedSkillSegment = {
+  skillId: string
+  skill: SkillRecord
+  reference?: {
+    value?: string
+    requirement?: unknown
+    fallback?: string
+    waitForRequirement?: boolean
+    choiceGroup?: number
+    choiceIndex?: number
   }
-  append(skillId, undefined, new Set())
-  return { actionTimes, castTime }
+  baseCastTime: number
+  baseStartOffset: number
+  actionIndexes: number[]
+  localActionTimes: number[]
+}
+function expandSkill(skillId: string, skills: Record<string, SkillRecord>) {
+  const root = skills[skillId]
+  const segments: ExpandedSkillSegment[] = []
+  const actions: EditableObject[] = []
+  let castTime = 0
+  let nextChoiceGroup = 0
+  const normalizeSubAction = (value: string | SubActionReference): SubActionReference =>
+    typeof value === "string" ? { value } : value
+  const append = (
+    currentSkillId: string | undefined,
+    ancestry: Set<string>,
+    reference?: ExpandedSkillSegment["reference"],
+  ) => {
+    if (currentSkillId && ancestry.has(currentSkillId)) return
+    const skill = currentSkillId ? skills[currentSkillId] : undefined
+    const fallbackSkill = reference?.fallback ? skills[reference.fallback] : undefined
+    if (!skill && !fallbackSkill) return
+    const baseCastTime = resolveSkillCastTime(skill)
+    const baseActions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : []
+    if (skill?.silent && (baseActions.length || skill.cooldown !== undefined || skill.attackResponse))
+      throw new Error(`Silent skill ${currentSkillId} cannot define actions, cooldowns, or attack responses.`)
+    const fallbackActions = Array.isArray(fallbackSkill?.action) ? (fallbackSkill.action as EditableObject[]) : []
+    const actionSlotCount = Math.max(baseActions.length, fallbackActions.length)
+    const actionIndexes = Array.from({ length: actionSlotCount }, (_, localIndex) => {
+      const action = baseActions[localIndex]
+      const actionIndex = actions.length
+      actions.push(
+        action
+          ? { ...action, time: castTime + (typeof action.time === "number" ? action.time : 0) }
+          : { type: "inactive", time: castTime + baseCastTime },
+      )
+      return actionIndex
+    })
+    segments.push({
+      skillId: currentSkillId ?? reference?.fallback ?? "",
+      skill: skill ?? { name: "Inactive sub-action", castTime: 0, action: [], tags: ["SubAction"] },
+      reference,
+      baseCastTime,
+      baseStartOffset: castTime,
+      actionIndexes,
+      localActionTimes: Array.from({ length: actionSlotCount }, (_, localIndex) => {
+        const action = baseActions[localIndex]
+        return action && typeof action.time === "number" ? action.time : baseCastTime
+      }),
+    })
+    castTime += baseCastTime
+    const nextAncestry = currentSkillId ? new Set(ancestry).add(currentSkillId) : new Set(ancestry)
+    if (Array.isArray(skill?.subAction))
+      skill.subAction.forEach(entry => {
+        const subAction = normalizeSubAction(entry)
+        appendSubAction(subAction, nextAncestry)
+      })
+  }
+  const appendSubAction = (reference: SubActionReference, ancestry: Set<string>) => {
+    const primary = Array.isArray(reference.value) ? reference.value : [reference.value]
+    const fallback = Array.isArray(reference.fallback)
+      ? reference.fallback
+      : reference.fallback
+        ? [reference.fallback]
+        : []
+    const isSequence = Array.isArray(reference.value) || Array.isArray(reference.fallback)
+    if (!isSequence) {
+      append(primary[0], ancestry, {
+        value: primary[0],
+        requirement: reference.requirement,
+        waitForRequirement: reference.waitForRequirement,
+        fallback: fallback[0],
+      })
+      return
+    }
+    const choiceGroup = nextChoiceGroup++
+    const componentCount = Math.max(primary.length, fallback.length)
+    for (let choiceIndex = 0; choiceIndex < componentCount; choiceIndex += 1)
+      append(primary[choiceIndex], ancestry, {
+        value: primary[choiceIndex],
+        requirement: reference.requirement,
+        waitForRequirement: reference.waitForRequirement,
+        fallback: fallback[choiceIndex],
+        choiceGroup,
+        choiceIndex,
+      })
+  }
+  append(skillId, new Set())
+  return { skill: root, actions, segments, castTime, isMultiAction: Boolean(root?.subAction?.length) }
 }
 
+/** Resolve the reserved action slots and local times produced by a composite skill. */
+export function expandedSkillActionLayout(skillId: string, skills: Record<string, SkillRecord>) {
+  const expanded = expandSkill(skillId, skills)
+  const actionTimes = expanded.segments.flatMap(segment => {
+    const primary = Array.isArray(segment.skill.action) ? (segment.skill.action as EditableObject[]) : []
+    const fallbackSkill = segment.reference?.fallback ? skills[segment.reference.fallback] : undefined
+    const fallback = Array.isArray(fallbackSkill?.action) ? (fallbackSkill.action as EditableObject[]) : []
+    return segment.actionIndexes.map((_, index) => {
+      const action = primary[index] ?? fallback[index]
+      return segment.baseStartOffset + (action && typeof action.time === "number" ? action.time : segment.baseCastTime)
+    })
+  })
+  return { actionTimes, castTime: expanded.castTime }
+}
 /** Count the reserved action slots produced by a composite skill and all fallback branches. */
 export function expandedSkillActionCount(skillId: string, skills: Record<string, SkillRecord>) {
   return expandedSkillActionLayout(skillId, skills).actionTimes.length
@@ -961,111 +1040,10 @@ export function buildRotationTimeline(
       ? `innerway-${definition.damageGroup.id}`
       : fallback
   const isSequentialStep = (step: RotationStep) => step.type === "skill" || step.event === "Delay"
-  type ExpandedSkillSegment = {
-    skillId: string
-    skill: SkillRecord
-    reference?: {
-      value?: string
-      requirement?: unknown
-      fallback?: string
-      waitForRequirement?: boolean
-      choiceGroup?: number
-      choiceIndex?: number
-    }
-    baseCastTime: number
-    baseStartOffset: number
-    actionIndexes: number[]
-    localActionTimes: number[]
-  }
-  const expandSkill = (skillId: string) => {
-    const root = skills[skillId]
-    const segments: ExpandedSkillSegment[] = []
-    const actions: EditableObject[] = []
-    let castTime = 0
-    let nextChoiceGroup = 0
-    const normalizeSubAction = (value: string | SubActionReference): SubActionReference =>
-      typeof value === "string" ? { value } : value
-    const append = (
-      currentSkillId: string | undefined,
-      ancestry: Set<string>,
-      reference?: ExpandedSkillSegment["reference"],
-    ) => {
-      if (currentSkillId && ancestry.has(currentSkillId)) return
-      const skill = currentSkillId ? skills[currentSkillId] : undefined
-      const fallbackSkill = reference?.fallback ? skills[reference.fallback] : undefined
-      if (!skill && !fallbackSkill) return
-      const baseCastTime = resolveSkillCastTime(skill)
-      const baseActions = Array.isArray(skill?.action) ? (skill.action as EditableObject[]) : []
-      if (skill?.silent && (baseActions.length || skill.cooldown !== undefined || skill.attackResponse))
-        throw new Error(`Silent skill ${currentSkillId} cannot define actions, cooldowns, or attack responses.`)
-      const fallbackActions = Array.isArray(fallbackSkill?.action) ? (fallbackSkill.action as EditableObject[]) : []
-      const actionSlotCount = Math.max(baseActions.length, fallbackActions.length)
-      const actionIndexes = Array.from({ length: actionSlotCount }, (_, localIndex) => {
-        const action = baseActions[localIndex]
-        const actionIndex = actions.length
-        actions.push(
-          action
-            ? { ...action, time: castTime + (typeof action.time === "number" ? action.time : 0) }
-            : { type: "inactive", time: castTime + baseCastTime },
-        )
-        return actionIndex
-      })
-      segments.push({
-        skillId: currentSkillId ?? reference?.fallback ?? "",
-        skill: skill ?? { name: "Inactive sub-action", castTime: 0, action: [], tags: ["SubAction"] },
-        reference,
-        baseCastTime,
-        baseStartOffset: castTime,
-        actionIndexes,
-        localActionTimes: Array.from({ length: actionSlotCount }, (_, localIndex) => {
-          const action = baseActions[localIndex]
-          return action && typeof action.time === "number" ? action.time : baseCastTime
-        }),
-      })
-      castTime += baseCastTime
-      const nextAncestry = currentSkillId ? new Set(ancestry).add(currentSkillId) : new Set(ancestry)
-      if (Array.isArray(skill?.subAction))
-        skill.subAction.forEach(entry => {
-          const subAction = normalizeSubAction(entry)
-          appendSubAction(subAction, nextAncestry)
-        })
-    }
-    const appendSubAction = (reference: SubActionReference, ancestry: Set<string>) => {
-      const primary = Array.isArray(reference.value) ? reference.value : [reference.value]
-      const fallback = Array.isArray(reference.fallback)
-        ? reference.fallback
-        : reference.fallback
-          ? [reference.fallback]
-          : []
-      const isSequence = Array.isArray(reference.value) || Array.isArray(reference.fallback)
-      if (!isSequence) {
-        append(primary[0], ancestry, {
-          value: primary[0],
-          requirement: reference.requirement,
-          waitForRequirement: reference.waitForRequirement,
-          fallback: fallback[0],
-        })
-        return
-      }
-      const choiceGroup = nextChoiceGroup++
-      const componentCount = Math.max(primary.length, fallback.length)
-      for (let choiceIndex = 0; choiceIndex < componentCount; choiceIndex += 1)
-        append(primary[choiceIndex], ancestry, {
-          value: primary[choiceIndex],
-          requirement: reference.requirement,
-          waitForRequirement: reference.waitForRequirement,
-          fallback: fallback[choiceIndex],
-          choiceGroup,
-          choiceIndex,
-        })
-    }
-    append(skillId, new Set())
-    return { skill: root, actions, segments, castTime, isMultiAction: Boolean(root?.subAction?.length) }
-  }
   const sequentialCastTime = (step: RotationStep) => {
     if (step.type === "skill") {
       const skill = skills[step.skill ?? ""]
-      return resolveSkillStepDuration(step, skill) ?? expandSkill(step.skill ?? "").castTime
+      return resolveSkillStepDuration(step, skill) ?? expandSkill(step.skill ?? "", skills).castTime
     }
     return step.event === "Delay" ? Math.max(0, step.duration) : 0
   }
@@ -1098,7 +1076,7 @@ export function buildRotationTimeline(
       (authoredStartStep.event === "Delay" ||
         (!isFixedTimeEvent(authoredStartStep) && ("before" in authoredStartStep || "after" in authoredStartStep))))
   const authoredStartActions =
-    authoredStartStep?.type === "skill" ? expandSkill(authoredStartStep.skill ?? "").actions : undefined
+    authoredStartStep?.type === "skill" ? expandSkill(authoredStartStep.skill ?? "", skills).actions : undefined
   const startAction =
     authoredStart?.action !== undefined &&
     Number.isInteger(authoredStart.action) &&
@@ -1117,7 +1095,7 @@ export function buildRotationTimeline(
     Array<ExpandedSkillSegment & { startOffset: number; effectiveCastTime: number }>
   >()
   const createRow = (rowIndex: number, step: RotationStep, startTime: number) => {
-    const expandedSkill = step.type === "skill" ? expandSkill(step.skill ?? "") : undefined
+    const expandedSkill = step.type === "skill" ? expandSkill(step.skill ?? "", skills) : undefined
     const skill = expandedSkill?.skill ?? (step.type === "event" ? eventDefinitions[step.event] : undefined)
     const requestedDuration = resolveSkillStepDuration(step, skill)
     const castTime = requestedDuration ?? expandedSkill?.castTime ?? sequentialCastTime(step)

@@ -492,6 +492,10 @@ duration uses the configured maximum; `required: true` additionally prevents
 an authored/imported step from omitting that duration.
 
 `start: { step, action? }` chooses battle start; omitted action means cast start.
+Composite action indexes use the same structural expansion as the simulator,
+reserving the larger action count of each primary/fallback component pair,
+including sequence alternatives. Layout times are authored estimates; live
+requirements and timing modifiers still resolve in the event loop.
 Only ordered or live-attached rows can be selected as a fight-start anchor; fixed-time
 rows are not valid starts. Preserve attachment indexes and fight-start anchors when
 editing/migrating data.
