@@ -5,7 +5,7 @@ import { assert, describe, it, vi } from "vitest"
  * reused or recomputed, so it is covered rather than trusted: it must collapse a burst
  * into one report, reprint when occupancy changes, and stay silent in a test build.
  */
-async function withStore(mode: string) {
+async function withStore(mode: string, response: Record<string, unknown> = {}) {
   vi.resetModules()
   vi.stubEnv("MODE", mode)
   vi.stubEnv("DEV", true)
@@ -19,7 +19,7 @@ async function withStore(mode: string) {
     postMessage(message: any) {
       queueMicrotask(() => {
         for (const listener of this.listeners.get("message") ?? []) {
-          listener({ data: { id: message.id, metrics: { dps: 1, breakdown: {} } } })
+          listener({ data: { id: message.id, metrics: { dps: 1, breakdown: {}, ...response } } })
         }
       })
     }
@@ -74,6 +74,34 @@ describe("dps-store-diagnostics", () => {
       assert.equal(rows.find(row => row.kind === "baseline")!.ready, 13)
       assert.equal(rows.find(row => row.kind === "baseline")!.limit, 64)
       assert.equal(rows.find(row => row.kind === "editorTimeline")!.limit, 0)
+      store().dispose()
+    } finally {
+      console_.restore()
+    }
+  })
+
+  it("accounts for held results by size and reports it in the summary", async () => {
+    // A response big enough to leave the byte range, so the unit conversion is exercised.
+    const { useDpsStore } = await withStore("development", { filler: "x".repeat(4096) })
+    const console_ = captureConsole()
+    try {
+      const store = () => useDpsStore.getState()
+      const bulky = { timeline: { rotation: { name: "Bulky", steps: [] } } } as never
+      await store().ensure({ kind: "baseline", cacheKey: "bulky", build: () => bulky })
+      await settle()
+
+      const rows = console_.tables.at(-1) as Array<Record<string, unknown>>
+      const baseline = rows.find(row => row.kind === "baseline")!
+      assert.equal(baseline.ready, 1)
+      assert.ok(Number(baseline.bytes) > 4096, `Expected the held result to be measured, got ${baseline.bytes} bytes.`)
+      assert.match(String(baseline.size), /KB|MB/, `Size was not formatted for reading: ${baseline.size}`)
+      assert.match(console_.groups.at(-1)!, /serialized [\d.]+ (KB|MB)/, "The summary omitted the total size.")
+
+      // A repeat of the same result is the same object, so it must not be measured twice.
+      await store().ensure({ kind: "baseline", cacheKey: "bulky", build: () => bulky })
+      await settle()
+      const after = console_.tables.at(-1) as Array<Record<string, unknown>>
+      assert.equal(after.find(row => row.kind === "baseline")!.bytes, baseline.bytes)
       store().dispose()
     } finally {
       console_.restore()

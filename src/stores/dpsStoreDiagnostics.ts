@@ -13,19 +13,51 @@ let pending: ReturnType<typeof setTimeout> | undefined
 let latest: { entries: ReadonlyMap<string, DpsEntry>; retention: Record<DpsKind, number> } | undefined
 let lastSummary = ""
 
-type KindSummary = { kind: DpsKind; ready: number; pending: number; failed: number; limit: number }
+type KindSummary = { kind: DpsKind; ready: number; pending: number; failed: number; limit: number; bytes: number }
+
+/**
+ * Serialized size of a held result, measured once per result object. A result is never
+ * mutated once stored, so identity is a sufficient key, and a fan-out measures each
+ * baseline once rather than re-serializing the whole cache on every report.
+ */
+const measured = new WeakMap<object, number>()
+
+function resultBytes(result: unknown) {
+  if (result === undefined) return 0
+  if (typeof result !== "object" || result === null) return 8
+  const known = measured.get(result)
+  if (known !== undefined) return known
+  let bytes = 0
+  try {
+    bytes = JSON.stringify(result)?.length ?? 0
+  } catch {
+    // A cycle or a non-serialisable value would otherwise stall the report; the cache
+    // key is produced the same way, so nothing held here is expected to hit this.
+    bytes = 0
+  }
+  measured.set(result, bytes)
+  return bytes
+}
+
+function formatBytes(bytes: number) {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${bytes} B`
+}
 
 function summarize(entries: ReadonlyMap<string, DpsEntry>, retention: Record<DpsKind, number>) {
   const rows: KindSummary[] = []
   for (const kind of Object.keys(retention) as DpsKind[]) {
-    rows.push({ kind, ready: 0, pending: 0, failed: 0, limit: retention[kind] })
+    rows.push({ kind, ready: 0, pending: 0, failed: 0, limit: retention[kind], bytes: 0 })
   }
   const byKind = new Map(rows.map(row => [row.kind, row]))
   for (const entry of entries.values()) {
     const row = byKind.get(entry.kind)
     if (!row) continue
-    if (entry.status === "ready") row.ready += 1
-    else if (entry.status === "pending") row.pending += 1
+    if (entry.status === "ready") {
+      row.ready += 1
+      row.bytes += resultBytes(entry.result)
+    } else if (entry.status === "pending") row.pending += 1
     else row.failed += 1
   }
   return rows
@@ -35,7 +67,8 @@ function render(rows: KindSummary[], total: number) {
   const held = rows.filter(row => row.limit > 0)
   const body = held.map(row => `${row.kind} ${row.ready}/${row.limit}`).join("  ")
   const inflight = rows.flatMap(row => (row.pending > 0 ? [`${row.kind} pending ${row.pending}`] : []))
-  return [`total ${total}`, body, ...inflight].filter(Boolean).join("  |  ")
+  const bytes = rows.reduce((sum, row) => sum + row.bytes, 0)
+  return [`total ${total}`, body, `serialized ${formatBytes(bytes)}`, ...inflight].filter(Boolean).join("  |  ")
 }
 
 export function reportDpsCache(entries: ReadonlyMap<string, DpsEntry>, retention: Record<DpsKind, number>) {
@@ -54,8 +87,10 @@ export function reportDpsCache(entries: ReadonlyMap<string, DpsEntry>, retention
     if (summary === lastSummary) return
     lastSummary = summary
     console.groupCollapsed(`[DPS cache] ${summary}`)
-    console.table(rows)
-    console.info("Held results resolve without building a bundle. `useDpsStore.getState().entries` lists them.")
+    console.table(rows.map(row => Object.assign({ size: formatBytes(row.bytes) }, row)))
+    console.info(
+      "Serialized size, not heap: a reference shared inside one result is counted once per occurrence, so this is an upper bound. Held results resolve without building a bundle.",
+    )
     console.groupEnd()
   }, reportDelayMs)
 }
