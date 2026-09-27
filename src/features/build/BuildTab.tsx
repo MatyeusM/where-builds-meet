@@ -652,31 +652,29 @@ export default function BuildTab({
                   </small>
                 ) : null
               ) : !comparison ? null : (
-                <span className="build-detail-dps-anchor">
-                  <Tooltip
-                    className="build-detail-dps-tooltip"
-                    content={
-                      <>
-                        <span className="build-detail-dps-row">
-                          <span>{t("ui.buildTab.notActiveDps")}</span>
-                          <strong>{formatThroughput(comparison.reading.dps, 0)}</strong>
-                        </span>
-                        <span className="build-detail-dps-row">
-                          <span>{t("ui.buildTab.rotationUsed")}</span>
-                          <strong>{activeRotationName ?? ""}</strong>
-                        </span>
-                        <span className="build-detail-dps-row">
-                          <span>{t("system.totalDamage")}</span>
-                          <strong>{formatThroughput(comparison.reading.totalDamage)}</strong>
-                        </span>
-                      </>
-                    }
-                  >
-                    <small className={`build-detail-dps ${throughputDeltaClass(comparison.delta, "damage")}`}>
-                      ({formatThroughputDelta(comparison.delta, 0)} {t("system.dps")})
-                    </small>
-                  </Tooltip>
-                </span>
+                <Tooltip
+                  className="build-detail-dps-tooltip"
+                  content={
+                    <>
+                      <span className="build-detail-dps-row">
+                        <span>{t("ui.buildTab.notActiveDps")}</span>
+                        <strong>{formatThroughput(comparison.reading.dps, 0)}</strong>
+                      </span>
+                      <span className="build-detail-dps-row">
+                        <span>{t("ui.buildTab.rotationUsed")}</span>
+                        <strong>{activeRotationName ?? ""}</strong>
+                      </span>
+                      <span className="build-detail-dps-row">
+                        <span>{t("system.totalDamage")}</span>
+                        <strong>{formatThroughput(comparison.reading.totalDamage)}</strong>
+                      </span>
+                    </>
+                  }
+                >
+                  <small className={`build-detail-dps ${throughputDeltaClass(comparison.delta, "damage")}`}>
+                    ({formatThroughputDelta(comparison.delta, 0)} {t("system.dps")})
+                  </small>
+                </Tooltip>
               )}
             </div>
             <div className="detail-active-actions">

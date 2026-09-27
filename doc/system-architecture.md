@@ -130,7 +130,7 @@ src/
     Panel/                        panel and panel-heading shells
     Select/                       native select shell
     Tab/                          selectable button state shell
-    Tooltip/                      layout-neutral hover/focus tooltip
+    Tooltip/                      portalled hover/focus floating box
   i18n.ts                         locale resolution, message loading, and UI translation
   gear.ts                         persisted gear model and equipped effects
   readableRotation.ts             pure readable-sequence formatter
@@ -210,6 +210,19 @@ note beneath it, so the name carries the weight and the note steps down in size 
 luminance; the two are never rendered as peers. Panels that present an image per
 option instead of a name and a note are not option groups and keep their own
 presentation.
+
+`Tooltip` renders its floating box through a portal onto `document.body`, which
+is what lets it escape a trigger's scrolling or clipping ancestors — a build
+editor, a rotation table, a panel that scrolls on one axis — where a box left in
+the trigger's own tree would be cut off at the region's edge or would escape over
+whatever follows it. The box is `position: fixed` and placed against the
+trigger's viewport rectangle, preferring above and falling below when there is no
+room, and it is measured again whenever the page scrolls or resizes. Because
+measuring needs the box to exist, it is rendered invisible for the frame before it
+is placed. The anchor is a real inline-flex box rather than a `display: contents`
+one: an element that generates nothing has no rectangle to measure and no pointer
+events of its own to hang the reveal on, and the box is rendered only while the
+trigger is hovered or focused.
 
 Domain-specific classes one layer above a primitive may still adjust layout
 or context-specific appearance with the same design tokens. Primitives do not

@@ -228,16 +228,6 @@
     color: var(--primary);
   }
 
-  /*
-   * The tooltip primitive's anchor generates no box of its own, so the element it is measured
-   * against has to be a real one. Without this the tooltip resolves against some ancestor far
-   * up the page and opens somewhere the reader is not looking.
-   */
-  .build-detail-dps-anchor {
-    position: relative;
-    display: inline-flex;
-  }
-
   /* A build that is not active shows only how it differs, so the figures it is actually
      worth are one hover away rather than crowding the row beside the build's name. */
   .build-detail-dps-tooltip {
