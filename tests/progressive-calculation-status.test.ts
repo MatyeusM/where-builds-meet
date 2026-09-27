@@ -33,22 +33,24 @@ describe("progressive-calculation-status", () => {
     beginRotationCalculation()
     const started = getRotationCalculationStatus()
     assert(
-      !rotationCalculationCategories.some(category => !started[category].recalculating || started[category].progress),
-      "Every category must begin pending at zero progress.",
+      !rotationCalculationCategories.some(
+        category => !started[category].recalculating || started[category].progress !== undefined,
+      ),
+      "Every category must begin pending, reporting no progress until it measures some.",
     )
 
     publishRotationCategoryProgress("statPriority", 0.5)
     const progressing = getRotationCalculationStatus()
     assert(
-      !(progressing.statPriority.progress !== 0.5 || progressing.attunementPriority.progress !== 0),
-      "Category progress must update independently.",
+      !(progressing.statPriority.progress !== 0.5 || progressing.attunementPriority.progress !== undefined),
+      "Category progress must update independently, and only for the category that reported it.",
     )
 
     completeRotationCalculationCategory("statPriority")
     const completed = getRotationCalculationStatus()
     assert(
-      !(completed.statPriority.recalculating || completed.statPriority.progress !== 1),
-      "A completed category must be idle at full progress.",
+      !(completed.statPriority.recalculating || completed.statPriority.progress !== undefined),
+      "A completed category must be idle, carrying no progress to report.",
     )
 
     endRotationCalculation()

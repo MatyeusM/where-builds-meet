@@ -6,10 +6,11 @@ import {
   type RotationCalculationCategory,
 } from "../../calculations/rotationMetrics"
 import { CalculationStatus as CalculationStatusView } from "../../ui/CalculationStatus"
+import { calculationStatusLabel } from "./calculationStatusLabel"
 
 /**
- * Binds one category of the rotation calculation to the shared status view. A category the
- * calculation reports no progress for renders indeterminate.
+ * Binds one category of the rotation calculation to the shared status primitive. A category
+ * the calculation reports no progress for is described without a percentage.
  */
 export function CalculationStatus({
   category,
@@ -24,5 +25,12 @@ export function CalculationStatus({
     getRotationCalculationStatus,
   )
   const { recalculating, progress } = statuses[category]
-  return <CalculationStatusView recalculating={recalculating} progress={progress} className={className} />
+  return (
+    <CalculationStatusView
+      busy={recalculating}
+      progress={progress}
+      label={calculationStatusLabel(recalculating, progress)}
+      className={className}
+    />
+  )
 }

@@ -1,5 +1,5 @@
-@layer components {
-  .calculation-status {
+@layer ui {
+  .status {
     --calculation-progress: 0%;
 
     inline-size: fit-content;
@@ -19,9 +19,9 @@
     letter-spacing: 0.02em;
   }
 
-  /* Work that reports no progress has no fraction to fill to, so it reads as moving rather
-     than as a stalled zero. A static stripe keeps that honest and needs no motion. */
-  .calculation-status.indeterminate {
+  /* Work that reports no progress has no fraction to fill to, so it reads as under way
+     rather than as a stalled zero. A static stripe keeps that honest and needs no motion. */
+  .indeterminate {
     background: repeating-linear-gradient(
       115deg,
       color-mix(in oklab, var(--primary) 24%, transparent) 0 8px,
@@ -29,7 +29,7 @@
     );
   }
 
-  .calculation-status.idle {
+  .idle {
     display: none;
   }
 }

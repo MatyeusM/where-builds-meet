@@ -378,9 +378,17 @@ it was produced under, so the toolbar can tell a result that still describes the
 current inputs from one a pending calculation is about to replace. Until such a
 result exists the toolbar reports the calculation rather than a zeroed result,
 because a total of zero reads as an answer where there is not one yet; once a
-result exists it stays on screen while its replacement is calculated. Editor
-previews never request comparison variants; active-rotation comparisons remain
-tied to save, activation, or setup changes.
+result exists it stays on screen while its replacement is calculated.
+
+A calculation status is reported in two variants: with the fraction it measured,
+or without a percentage when the calculation publishes no intermediate steps. A
+baseline reports no steps, so it is described as under way rather than as stalled
+at zero percent; a comparison sweep reports per-variant steps and carries its
+fraction. Both are the same primitive, given a progress or not given one, and the
+wording is shared by every caller, so a status reads identically wherever it
+appears. The stats tab and the rotation toolbar therefore describe the same
+pending baseline the same way. Editor previews never request comparison variants;
+active-rotation comparisons remain tied to save, activation, or setup changes.
 Manual event rows expose their authored start time as an input. Entering a time
 switches the event to explicit battle-relative timing while retaining its old
 anchor only for editor navigation; the previous/next event controls remove that

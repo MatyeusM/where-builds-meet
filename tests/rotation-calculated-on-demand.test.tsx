@@ -206,7 +206,7 @@ it("reports a pending calculation instead of a zeroed result", async () => {
   const results = rotationResults()
   expect(results).toContain("Recalculating")
   expect(results).not.toMatch(/0\.00/)
-  expect(container.querySelector(".rotation-results .calculation-status.indeterminate")).not.toBeNull()
+  expect(container.querySelector(".rotation-results [data-calculation-status]")).not.toBeNull()
 })
 
 it("shows the calculated result once it arrives", async () => {
@@ -216,5 +216,5 @@ it("shows the calculated result once it arrives", async () => {
   const results = rotationResults()
   expect(results).toContain("DPS")
   expect(results).not.toContain("Recalculating")
-  expect(container.querySelector(".rotation-results .calculation-status")).toBeNull()
+  expect(container.querySelector(".rotation-results [data-calculation-status]")).toBeNull()
 })

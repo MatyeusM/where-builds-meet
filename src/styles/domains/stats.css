@@ -224,14 +224,14 @@
     }
   }
 
-  [data-panel-heading] > div:has(> .calculation-status) {
+  [data-panel-heading] > div:has(> [data-calculation-status]) {
     display: flex;
     min-inline-size: 0;
     align-items: baseline;
     gap: var(--space-xs);
   }
 
-  [data-panel-heading] > div > .calculation-status {
+  [data-panel-heading] > div > [data-calculation-status] {
     min-block-size: 0;
     margin-block-start: 0;
     flex: 0 0 auto;
@@ -245,7 +245,8 @@
     font-size: inherit;
   }
 
-  .dps-calculation-status.idle {
+  /* Reserves the row so the value above it does not shift when the status appears. */
+  [data-calculation-status].dps-calculation-status:not([data-busy]) {
     display: block;
     visibility: hidden;
   }

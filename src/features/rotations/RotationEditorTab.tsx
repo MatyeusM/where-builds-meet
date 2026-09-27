@@ -81,6 +81,7 @@ import {
 import { percentageAttunementKeys } from "../../application/persistence/attunements"
 import { rotationListStorageKey } from "../../application/persistence/keys"
 import { initialRotationEditorState } from "../../application/persistence/rotations"
+import { calculationStatusLabel } from "../../application/results/calculationStatusLabel"
 import { RotationActionBreakdownValue } from "../../application/results/DamageBreakdownValue"
 import { RotationSkillName } from "../../application/results/RotationSkillName"
 import {
@@ -2355,7 +2356,13 @@ export function RotationEditorTab({
                     </span>
                   </>
                 ) : null}
-                {rotationResultPending ? <CalculationStatus recalculating className="rotation-results-status" /> : null}
+                {rotationResultPending ? (
+                  <CalculationStatus
+                    busy
+                    label={calculationStatusLabel(true, undefined)}
+                    className="rotation-results-status"
+                  />
+                ) : null}
               </span>
             </div>
             <div className="rotation-scroll-content" ref={rotationScrollRef}>

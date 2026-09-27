@@ -124,10 +124,15 @@ export const rotationCalculationCategories = [
   "food",
 ] as const
 export type RotationCalculationCategory = (typeof rotationCalculationCategories)[number]
-export type RotationCalculationCategoryStatus = { recalculating: boolean; progress: number }
+/**
+ * Progress is absent rather than zero for a calculation that publishes no steps. A baseline
+ * reports none, so it is described as under way instead of as stalled at the start, and a
+ * comparison that does report steps carries the fraction it measured.
+ */
+export type RotationCalculationCategoryStatus = { recalculating: boolean; progress?: number }
 export type RotationCalculationStatus = Record<RotationCalculationCategory, RotationCalculationCategoryStatus>
 
-const idleCategoryStatus = (): RotationCalculationCategoryStatus => ({ recalculating: false, progress: 1 })
+const idleCategoryStatus = (): RotationCalculationCategoryStatus => ({ recalculating: false })
 let calculationStatus = Object.fromEntries(
   rotationCalculationCategories.map(category => [category, idleCategoryStatus()]),
 ) as RotationCalculationStatus
@@ -161,7 +166,7 @@ export function subscribeToRotationCalculationStatus(listener: Listener) {
 
 export function beginRotationCalculation() {
   calculationStatus = Object.fromEntries(
-    rotationCalculationCategories.map(category => [category, { recalculating: true, progress: 0 }]),
+    rotationCalculationCategories.map(category => [category, { recalculating: true }]),
   ) as RotationCalculationStatus
   calculationStatusListeners.forEach(listener => listener())
 }
@@ -176,8 +181,8 @@ export function publishRotationCategoryProgress(category: RotationCalculationCat
 
 export function completeRotationCalculationCategory(category: RotationCalculationCategory) {
   const current = calculationStatus[category]
-  if (!current.recalculating && current.progress === 1) return
-  calculationStatus = { ...calculationStatus, [category]: { recalculating: false, progress: 1 } }
+  if (!current.recalculating) return
+  calculationStatus = { ...calculationStatus, [category]: { recalculating: false } }
   calculationStatusListeners.forEach(listener => listener())
 }
 

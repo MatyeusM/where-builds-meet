@@ -1,22 +1,24 @@
 import { useMemo, type CSSProperties } from "react"
 
-import { t } from "../../i18n"
+import styles from "./style.module.css"
 
 /**
- * How far along a calculation is. A progress of undefined means the work reports no
- * intermediate steps, which reads as indeterminate rather than as a stalled zero, because
- * a calculation that reports nothing is not a calculation stuck at the start.
+ * Reports that a calculation is under way, and how far along it is.
  *
- * Presentation only. Whoever owns the calculation subscribes to it and passes the numbers
- * in, so this stays independent of any particular calculation's state.
+ * A progress of undefined means the calculation reports no intermediate steps. That is not
+ * the same as zero progress, so it renders without a percentage rather than claiming a
+ * stalled start. The caller supplies the wording, because what a calculation is called is
+ * the caller's to decide, and this stays independent of any particular calculation.
  */
 export function CalculationStatus({
-  recalculating,
+  busy,
   progress,
-  className = "",
+  label,
+  className,
 }: {
-  recalculating: boolean
+  busy: boolean
   progress?: number
+  label: string
   className?: string
 }) {
   const percentage = progress === undefined ? undefined : Math.round(progress * 100)
@@ -24,18 +26,20 @@ export function CalculationStatus({
     () => (percentage === undefined ? undefined : ({ "--calculation-progress": `${percentage}%` } as CSSProperties)),
     [percentage],
   )
-  const label = statusLabel(recalculating, percentage)
-  const indeterminate = recalculating && percentage === undefined
+  const indeterminate = busy && percentage === undefined
+  const primitiveClass = primitiveClassName(busy, indeterminate)
   return (
     <div
-      className={`calculation-status ${className} ${recalculating ? "" : "idle"} ${indeterminate ? "indeterminate" : ""}`}
+      data-calculation-status=""
+      data-busy={busy || undefined}
+      className={className ? `${primitiveClass} ${className}` : primitiveClass}
       style={progressStyle}
       aria-live="polite"
     >
       <progress
         className="visually-hidden"
         max={100}
-        {...(percentage === undefined ? {} : { value: recalculating ? percentage : 100 })}
+        {...(percentage === undefined ? {} : { value: busy ? percentage : 100 })}
         aria-label={label}
       />
       {label}
@@ -43,8 +47,8 @@ export function CalculationStatus({
   )
 }
 
-function statusLabel(recalculating: boolean, percentage: number | undefined) {
-  if (!recalculating) return t("ui.app.upToDate")
-  if (percentage === undefined) return t("ui.app.recalculating")
-  return t("ui.app.recalculatingProgress", { percentage })
+function primitiveClassName(busy: boolean, indeterminate: boolean) {
+  if (indeterminate) return `${styles.status} ${styles.indeterminate}`
+  if (busy) return styles.status
+  return `${styles.status} ${styles.idle}`
 }
