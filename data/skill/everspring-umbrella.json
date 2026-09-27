@@ -29,8 +29,7 @@
     "name": "Scarlet Spin",
     "shortName": "Umbrella Q",
     "castTime": 12,
-    "editableCastTime": true,
-    "durationInput": { "effect": "FlowerBurial", "max": 12, "required": true },
+    "editableCastTime": { "effect": "FlowerBurial", "max": 12, "required": true },
     "action": [
       { "type": "consume", "target": "self", "value": "PhantomUmbrellaThrow", "stack": "all", "time": 0 },
       { "type": "apply", "target": "self", "value": "PhantomUmbrellaThrow", "stack": 2, "reapply": true, "time": 0 },

@@ -32,6 +32,11 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     if (Array.isArray(entry)) return entry.map(migrate)
     if (!entry || typeof entry !== "object") return entry
     const record = Object.fromEntries(Object.entries(entry).map(([key, child]) => [key, migrate(child)]))
+    if (record.durationInput !== undefined) {
+      record.editableCastTime =
+        record.durationInput && typeof record.durationInput === "object" ? record.durationInput : true
+      delete record.durationInput
+    }
     if (record.value === "VendettaToken" && record.target === "self") record.target = "target"
     if (record.stackDamage !== undefined) {
       if (record.stackDamage === true && record.tickOnExpire === undefined) record.tickOnExpire = false

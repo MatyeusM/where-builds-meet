@@ -1,7 +1,7 @@
 import { allSkillDefinitions } from "./application/gameData/skills"
 import { normalizeEnemyCount, normalizePing, resolveTargetType } from "./calculations/combatDefaults"
 import {
-  durationInputRequired,
+  editableCastTimeRequired,
   expandedSkillActionCount,
   type RotationRecord,
   type RotationStep,
@@ -48,7 +48,7 @@ function parseRotationStep(value: unknown): RotationStep | undefined {
   const step = value as Record<string, unknown>
   if (step.type === "skill" && typeof step.skill === "string" && step.skill) {
     const duration = typeof step.duration === "number" && Number.isFinite(step.duration) ? step.duration : undefined
-    if (durationInputRequired(allSkillDefinitions[step.skill]) && duration === undefined) return undefined
+    if (editableCastTimeRequired(allSkillDefinitions[step.skill]) && duration === undefined) return undefined
     return {
       type: "skill",
       skill: step.skill,

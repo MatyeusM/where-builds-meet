@@ -125,8 +125,8 @@ import {
   type RotationPriority,
 } from "../../calculations/rotationMetrics"
 import {
-  durationInputMaximum,
-  durationInputRequired,
+  editableCastTimeMaximum,
+  editableCastTimeRequired,
   isFixedTimeEvent,
   mergeEffectDefinition,
   type RotationRecord,
@@ -439,11 +439,11 @@ export function RotationEditorTab({
 
   function createEditorSkillStep(skillId: string): RotationStep {
     const skill = calculationDefinitions.skills[skillId]
-    const maximum = durationInputMaximum(skill)
+    const maximum = editableCastTimeMaximum(skill)
     return {
       type: "skill",
       skill: skillId,
-      ...(durationInputRequired(skill) ? { duration: maximum ?? baseSkillCastTime(skill) } : {}),
+      ...(editableCastTimeRequired(skill) ? { duration: maximum ?? baseSkillCastTime(skill) } : {}),
     }
   }
 
@@ -642,7 +642,7 @@ export function RotationEditorTab({
     const duration = Number(draft)
     const step = rotation.steps[stepIndex]
     const maximum =
-      step?.type === "skill" ? durationInputMaximum(calculationDefinitions.skills[step.skill ?? ""]) : undefined
+      step?.type === "skill" ? editableCastTimeMaximum(calculationDefinitions.skills[step.skill ?? ""]) : undefined
     if (Number.isFinite(duration))
       updateStep(stepIndex, { duration: Math.max(0, maximum === undefined ? duration : Math.min(duration, maximum)) })
     setEventDurationDrafts(current => {
@@ -2567,12 +2567,10 @@ export function RotationEditorTab({
                         : selfHPPercentage
                     const durationEvent =
                       isManualEvent && (step.event === "Controlled" || step.event === "Delay") ? step.event : undefined
-                    const editableCastTime =
-                      step.type === "skill" &&
-                      (row.skill?.editableCastTime === true || row.skill?.durationInput !== undefined)
-                    const durationMaximum = step.type === "skill" ? durationInputMaximum(row.skill) : undefined
+                    const editableCastTime = step.type === "skill" && Boolean(row.skill?.editableCastTime)
+                    const durationMaximum = step.type === "skill" ? editableCastTimeMaximum(row.skill) : undefined
                     const durationLabel =
-                      step.type === "skill" && row.skill?.durationInput !== undefined
+                      step.type === "skill" && typeof row.skill?.editableCastTime === "object"
                         ? t("ui.app.duration")
                         : t("ui.app.castTime")
                     let durationValue = 0

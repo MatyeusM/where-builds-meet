@@ -484,8 +484,8 @@ remain in the editor's Action category and retain their existing action/sequenti
 semantics. Legacy attached Take Damage records without an explicit battle-start
 reference are converted to fixed time during migration; battle-start records
 preserve explicit attachments so reattachment round-trips through the editor.
-`editableCastTime` permits a step duration override before timing modifiers.
-`durationInput: { effect, max, required? }` makes a step duration the authoritative held
+`editableCastTime: true` permits a step duration override before timing modifiers.
+`editableCastTime: { effect, max, required? }` makes a step duration the authoritative held
 cast duration and mirrors it onto the named self effect. The cap is applied
 before anchor timing, editor display, and the sequential scheduler. An omitted
 duration uses the configured maximum; `required: true` additionally prevents

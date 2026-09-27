@@ -4,7 +4,7 @@ import { normalizeEnemyCount, normalizePing, resolveTargetType } from "../calcul
 import { resolveSwitchValue } from "../calculations/dynamicValues"
 import {
   buildRotationTimeline,
-  durationInputRequired,
+  editableCastTimeRequired,
   expandedSkillActionCount,
   expandedSkillActionLayout,
   isFixedTimeEvent,
@@ -44,7 +44,7 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
     (step): RotationStep[] => {
       if (step.type === "event") return [migrateVendettaTokenStep(step)]
       if (
-        durationInputRequired(allSkillDefinitions[step.skill ?? ""]) &&
+        editableCastTimeRequired(allSkillDefinitions[step.skill ?? ""]) &&
         (typeof step.duration !== "number" || !Number.isFinite(step.duration))
       )
         return []

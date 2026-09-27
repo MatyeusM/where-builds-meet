@@ -48,7 +48,7 @@ export type SubActionReference = {
   /** Delay the ordered cast until this component is ready after its action-free prefix. */
   waitForRequirement?: boolean
 }
-export type SkillDurationInput = {
+export type EditableCastTimeOptions = {
   /** The tracked effect whose duration follows the user-entered rotation duration. */
   effect?: string
   /** Hard upper bound for the authored duration. */
@@ -76,12 +76,11 @@ export type SkillRecord = {
     /** Resolve success at cast start only when no incoming attack is selected. */
     fallback?: boolean
   }
-  editableCastTime?: boolean
   /**
    * A duration-controlled skill uses the step duration as its held cast duration and
    * can mirror that value onto an internal tracked effect.
    */
-  durationInput?: SkillDurationInput | boolean
+  editableCastTime?: EditableCastTimeOptions | boolean
   castTime?: number | SwitchValue
   cooldown?: number
   cooldownGroup?: string
@@ -615,22 +614,22 @@ function resolveSkillCastTime(skill: SkillRecord | undefined, state: Requirement
   return typeof resolved === "number" && Number.isFinite(resolved) ? resolved : 0
 }
 
-function durationInputDefinition(skill: SkillRecord | undefined) {
-  const input = skill?.durationInput
+function editableCastTimeOptions(skill: SkillRecord | undefined) {
+  const input = skill?.editableCastTime
   return input && typeof input === "object" ? input : undefined
 }
 
-export function durationInputMaximum(skill: SkillRecord | undefined) {
-  const maximum = durationInputDefinition(skill)?.max
+export function editableCastTimeMaximum(skill: SkillRecord | undefined) {
+  const maximum = editableCastTimeOptions(skill)?.max
   return typeof maximum === "number" && Number.isFinite(maximum) && maximum >= 0 ? maximum : undefined
 }
 
-export function durationInputRequired(skill: SkillRecord | undefined) {
-  return durationInputDefinition(skill)?.required === true
+export function editableCastTimeRequired(skill: SkillRecord | undefined) {
+  return editableCastTimeOptions(skill)?.required === true
 }
 
-function durationInputEffect(skill: SkillRecord | undefined) {
-  return durationInputDefinition(skill)?.effect
+function editableCastTimeEffect(skill: SkillRecord | undefined) {
+  return editableCastTimeOptions(skill)?.effect
 }
 
 /** Resolve the held duration, defaulting a bounded duration input to its maximum. */
@@ -639,8 +638,8 @@ export function resolveSkillStepDuration(
   skill: SkillRecord | undefined,
 ): number | undefined {
   if (step?.type !== "skill" || !skill) return undefined
-  if (skill.durationInput === undefined && skill.editableCastTime !== true) return undefined
-  const maximum = durationInputMaximum(skill)
+  if (!skill.editableCastTime) return undefined
+  const maximum = editableCastTimeMaximum(skill)
   if (typeof step.duration !== "number" || !Number.isFinite(step.duration)) return maximum
   return Math.max(0, maximum === undefined ? step.duration : Math.min(step.duration, maximum))
 }
@@ -1122,7 +1121,7 @@ export function buildRotationTimeline(
     const skill = expandedSkill?.skill ?? (step.type === "event" ? eventDefinitions[step.event] : undefined)
     const requestedDuration = resolveSkillStepDuration(step, skill)
     const castTime = requestedDuration ?? expandedSkill?.castTime ?? sequentialCastTime(step)
-    const durationEffect = durationInputEffect(skill)
+    const durationEffect = editableCastTimeEffect(skill)
     const sourceActions = expandedSkill?.isMultiAction
       ? expandedSkill.actions
       : Array.isArray(skill?.action)
