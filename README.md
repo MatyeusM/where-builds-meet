@@ -65,10 +65,11 @@ npm run build
 
 Simulation changes should also receive a focused calculation check.
 
-Release deployment runs `npm run test:dps`, which blocks unreviewed DPS changes
-of 1% or more for any implemented path. Ordinary builds and tests exclude this
-release guard. Review failures before updating accepted baselines;
-see [DPS regression snapshots](doc/dps-snapshots.md) for inputs and update commands.
+Release deployment runs `npm run test:dps`, which blocks any unreviewed DPS,
+total damage, or duration change beyond 4 ULPs for any implemented path. Ordinary
+builds and tests exclude this release guard. Review failures before updating
+accepted baselines; see [DPS regression snapshots](doc/dps-snapshots.md) for
+inputs and update commands.
 
 ### Contributing translations
 

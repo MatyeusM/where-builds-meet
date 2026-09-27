@@ -35,13 +35,21 @@ the check.
 Schema version 2 replaces the old one-case-per-path file. Each case records its
 fixture, DPS, total damage, and duration. The gate fails on:
 
-- A DPS increase or decrease of 1% or more, independently for each rotation.
+- Any change beyond 4 units in the last place in DPS, total damage, or duration,
+  independently for each rotation and in either direction.
 - Missing or removed rotation coverage.
 - A changed build, rotation, martial-art pair, or fixed environment.
 - Non-finite, zero, or negative DPS, damage, or duration.
 
-Total damage and duration provide context; DPS is the thresholded metric.
-Changes accumulate against the last accepted value, not the previous test run.
+The budget is counted in ULPs rather than a percentage because the damage
+pipeline is bit-deterministic: it uses only exactly specified IEEE-754
+operations, accumulates in a fixed single-threaded order, and takes no
+locale-, time-, or random-dependent input. The same inputs must therefore
+reproduce the same bits. Four ULPs absorbs a single-representation shift from a
+summation reassociation or an engine change and rejects every real change; a 1%
+band was roughly 8x10^11 ULPs wide and silently accepted unreviewed edits. All
+three stored numbers are compared, and changes accumulate against the last
+accepted value, not the previous test run.
 
 At the user's request, expanded non-Deluge baselines preserve the values from
 before this session's ping, timing, and preset changes. They were reconstructed
@@ -71,10 +79,12 @@ seconds accounts for the remaining 17.38 DPS. The General's Bane opener and
 0.33-second delay before the later Legion Summon remain included.
 
 Strength's Mixed Dummy Infinite Vitality 1 Min now uses its user-approved result
-at 40 ms ping: 66,557.01 DPS, replacing 66,827.33 DPS at zero ping (-0.40%).
+at 40 ms ping: 66,557.16 DPS, replacing 66,827.33 DPS at zero ping (-0.40%).
 This includes the Burning Heart ping exemptions, paired dummy attacks, and the
 combat-start anchor on the final hit of the first Fleeting Trace. Its dodge
-activates Mystery DMG Boost on the 11.5-second dummy attack.
+activates Mystery DMG Boost on the 11.5-second dummy attack. The accepted value
+was later raised to 66,557.16 DPS when the Heng Blade Varied Combo base damage
+bonus was modelled explicitly instead of folded into its coefficient.
 
 Strength's Mixed Dummy Smolder Poet 1 Min now uses its user-approved result at
 40 ms ping with Infinite Vitality enabled: 66,371.50 DPS, replacing 63,485.87 DPS
@@ -96,10 +106,11 @@ falls outside the 60-second combat window. This adds 1,134.39 DPS compared with
 the preceding 76,141.87 DPS rotation.
 
 Strength's Mixed Double Stab now uses its user-approved result at 40 ms ping:
-65,563.95 DPS, replacing 65,244.22 DPS at zero ping (+0.49%). This includes
+65,564.25 DPS, replacing 65,244.22 DPS at zero ping (+0.51%). This includes
 the revised opener and skill sequence, Burning Heart charge/slam ping exemptions,
-and the later Heng LC timing update. All current preset snapshots have now
-completed the ping-transition review.
+and the later Heng LC timing update. Its accepted value was likewise raised from
+65,563.95 DPS by the same Heng Blade Varied Combo rescaling. All current preset
+snapshots have now completed the ping-transition review.
 
 Wind's Dummy 1 Min Infinite Vitality uses the user-approved current rotation and
 `wind-fully-relayed-min` build at 40 ms ping: 67,931.14 DPS over 60 seconds,

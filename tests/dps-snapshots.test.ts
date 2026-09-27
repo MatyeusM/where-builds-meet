@@ -9,7 +9,7 @@ import { assert, describe, it } from "vitest"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { loadDpsSnapshotFixtures, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures"
-import { compareDpsSnapshots, dpsSnapshotTolerance } from "./helpers/dps-snapshot-guard.mjs"
+import { compareDpsSnapshots, dpsSnapshotUlpBudget } from "./helpers/dps-snapshot-guard.mjs"
 
 describe("dps-snapshots", () => {
   it("compares every preset rotation against its accepted DPS snapshot", async () => {
@@ -50,10 +50,10 @@ describe("dps-snapshots", () => {
       console.log(
         id +
           ": " +
-          metrics.dps.toFixed(2) +
+          metrics.dps +
           " DPS" +
           (previous > 0
-            ? "; baseline " + previous.toFixed(2) + ", change " + ((metrics.dps / previous - 1) * 100).toFixed(2) + "%"
+            ? "; baseline " + previous + ", change " + ((metrics.dps / previous - 1) * 100).toExponential(3) + "%"
             : "; no accepted baseline"),
       )
     }
@@ -78,7 +78,7 @@ describe("dps-snapshots", () => {
     } else {
       const failures = compareDpsSnapshots(snapshot.cases, actual)
       assert(!failures.length, failures.join("\n") + "\nReview each change; update only confirmed rotation snapshots.")
-      console.log("All preset rotations remain within " + dpsSnapshotTolerance * 100 + "% of their accepted snapshots.")
+      console.log("All preset rotations reproduce their accepted snapshots within " + dpsSnapshotUlpBudget + " ULPs.")
     }
   })
 })

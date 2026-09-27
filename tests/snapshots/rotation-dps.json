@@ -261,8 +261,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 65563.95202772405,
-      "totalDamage": 3933837.121663443,
+      "dps": 65564.25140226183,
+      "totalDamage": 3933855.084135709,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min": {
@@ -285,8 +285,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66557.00536858689,
-      "totalDamage": 3993420.3221152136,
+      "dps": 66557.15557583928,
+      "totalDamage": 3993429.3345503574,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min": {

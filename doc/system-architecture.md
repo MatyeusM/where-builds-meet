@@ -1592,8 +1592,8 @@ from data.
 - Release deployment runs deterministic DPS snapshot checks for every non-empty preset,
   including WIP paths. Ordinary builds run preset, localization, behavioral-test, type, and
   production-bundle verification without the accepted-snapshot comparison.
-  A DPS change of 1% or more in either direction requires review before release; see
-  [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
+  Any difference beyond 4 ULPs in DPS, total damage, or duration, in either direction, requires review
+  before release; see [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
 ### Rotation editor calculation lifecycle
 

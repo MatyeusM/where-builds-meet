@@ -52,9 +52,19 @@ describe("rotation DPS snapshot fixtures", () => {
       )
   })
   it("detects a sibling rotation regression or missing baseline independently", () => {
-    const sample = (dps: number) => ({ fixture: { build: "same" }, dps, totalDamage: dps * 60, duration: 60 })
-    const old = { "kite/regular": sample(100), "kite/bp": sample(100) }
-    expect(compareDpsSnapshots(old, { ...old, "kite/regular": sample(99), "kite/bp": sample(101) })).toHaveLength(2)
+    // Each snapshot number is compared on its own, so a case must move exactly
+    // the field under test rather than deriving it from another.
+    const sample = (overrides = {}) => ({
+      fixture: { build: "same" },
+      dps: 100,
+      totalDamage: 6000,
+      duration: 60,
+      ...overrides,
+    })
+    const old = { "kite/regular": sample(), "kite/bp": sample() }
+    expect(
+      compareDpsSnapshots(old, { ...old, "kite/regular": sample({ dps: 99 }), "kite/bp": sample({ dps: 101 }) }),
+    ).toHaveLength(2)
     expect(compareDpsSnapshots(old, { "kite/regular": old["kite/regular"] })).toHaveLength(1)
   })
 })
