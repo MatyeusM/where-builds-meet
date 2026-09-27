@@ -65,6 +65,13 @@ const isRetained = (kind: DpsKind) => retentionByKind[kind] > 0
  */
 const inFlight = new Map<string, Promise<TransportResult>>()
 
+/**
+ * Bumped when a batch is superseded. A request outlives the batch that started it when
+ * the workers are torn down underneath it, and its rejection would otherwise land on
+ * whatever now holds the same key, marking a live request failed and untracking it.
+ */
+let generation = 0
+
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error)
 }
@@ -112,6 +119,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       const running = inFlight.get(cacheKey)
       if (running) return (await running) as DpsResults[K]
 
+      const startedAt = generation
       const held = get().entries.get(cacheKey)
       if (isRetained(kind) && held?.status === "ready") return held.result as DpsResults[K]
 
@@ -128,6 +136,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
           priority: request.priority,
           onProgress: progress => {
             request.onProgress?.(progress)
+            if (generation !== startedAt) return
             set(state => {
               const current = state.entries.get(cacheKey)
               if (current?.status !== "pending") return state
@@ -140,21 +149,32 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       })()
 
       inFlight.set(cacheKey, job)
+      /** Only the batch that started this request may record its outcome. */
+      const settle = (entry: DpsEntry) => {
+        if (generation === startedAt && isRetained(kind)) put(entry)
+      }
 
       try {
         const result = (await job) as DpsResults[K]
-        if (isRetained(kind)) put({ cacheKey, kind, status: "ready", progress: 1, result })
+        settle({ cacheKey, kind, status: "ready", progress: 1, result })
         return result
       } catch (error) {
-        if (isRetained(kind)) put({ cacheKey, kind, status: "failed", progress: 1, error: errorMessage(error) })
+        settle({ cacheKey, kind, status: "failed", progress: 1, error: errorMessage(error) })
         throw error
       } finally {
-        inFlight.delete(cacheKey)
+        if (inFlight.get(cacheKey) === job) inFlight.delete(cacheKey)
       }
     },
 
     supersede: () => {
+      generation += 1
       inFlight.clear()
+      // Held results stay valid across a supersede; only in-flight bookkeeping does not.
+      set(state => {
+        const entries = new Map([...state.entries].filter(([, entry]) => entry.status === "ready"))
+        reportDpsCache(entries, retentionByKind)
+        return { entries }
+      })
       supersedeCalculations()
     },
 
