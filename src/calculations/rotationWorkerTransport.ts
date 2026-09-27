@@ -13,13 +13,17 @@ import type { TimelineRow } from "./rotationTimeline"
  * lifetime, queueing and message translation, so nothing outside it talks to a worker.
  */
 
-/** What a graduated preset run is compared by. Nothing else about it is ever read. */
-export type GraduationThroughput = { dps: number; hps: number }
+/**
+ * The numbers a run is compared by. A reading carries no timeline, because nothing that
+ * asks for one goes on to read it: a graduated preset is only ever weighed against another,
+ * and a build is only ever weighed against the active one.
+ */
+export type ThroughputReading = { dps: number; hps: number; totalDamage: number }
 
-export type TransportMode = "editorTimeline" | "baseline" | "comparisons" | "graduation"
+export type TransportMode = "editorTimeline" | "baseline" | "comparisons" | "throughput"
 export type TransportResult =
   | EditorTimelineResult
-  | GraduationThroughput
+  | ThroughputReading
   | RotationSimulationBaseline
   | { metrics: RotationMetrics }
 
@@ -71,7 +75,7 @@ type WorkerResultMessage = {
   id: number
   metrics?: RotationMetrics
   editorTimeline?: EditorTimelineResult
-  graduation?: GraduationThroughput
+  throughput?: ThroughputReading
   timeline?: TimelineRow[]
   anchorTime?: number
   duration?: number
@@ -157,7 +161,7 @@ function pickSlot(request: QueuedRequest) {
 function translateResult(request: QueuedRequest, message: WorkerResultMessage): TransportResult {
   if (message.error) throw new Error(message.error)
   if (message.editorTimeline) return message.editorTimeline
-  if (message.graduation) return message.graduation
+  if (message.throughput) return message.throughput
   if (!message.metrics) throw new Error("Rotation calculation worker returned no result")
   if (request.mode !== "baseline") return { metrics: message.metrics }
   return {

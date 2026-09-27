@@ -31,10 +31,13 @@ function faithfulWorker() {
             this.reply(message, { metrics: { dps: 1, breakdown: {} } })
             return
           }
-          if (message.mode === "graduation") {
-            // A graduated preset is only ever compared against, so the run reports throughput
-            // and leaves the baseline cache alone.
-            this.reply(message, { graduation: { dps: 1, hps: 0 } })
+          if (message.mode === "throughput") {
+            // A reading is compared against something and never displayed, so the run reports
+            // throughput alone and leaves the baseline cache as it found it. A key that names a
+            // baseline this worker already holds answers from it without running anything, which
+            // the reported dps distinguishes: 1 is the cached baseline, 2 is a fresh run.
+            const held = message.cacheKey ? baselineCache.get(message.cacheKey) : undefined
+            this.reply(message, { throughput: { dps: held ? 1 : 2, hps: 0, totalDamage: 10 } })
             return
           }
           if (message.mode === "comparisons") {
@@ -163,26 +166,38 @@ describe("calculation worker baseline provisioning", () => {
     )
   })
 
-  it("keeps a graduation to its throughput and out of the baseline caches", async () => {
+  it("keeps a reading to its throughput and out of the baseline caches", async () => {
     const { useDpsStore, workers } = await loadStore()
     const key = "graduation:preset"
     const store = () => useDpsStore.getState()
     const cached = () => workers.flatMap(worker => Array.from(worker.baselineCache.keys()))
 
-    const throughput = await store().ensure({ kind: "graduation", cacheKey: key, build: () => bundle })
+    const reading = await store().ensure({ kind: "throughput", cacheKey: key, build: () => bundle })
     assert.deepEqual(
-      Object.keys(throughput).sort(),
-      ["dps", "hps"],
-      "A graduation kept something other than the throughput it is compared by.",
+      Object.keys(reading).sort(),
+      ["dps", "hps", "totalDamage"],
+      "A reading kept something other than the numbers it is compared by.",
     )
-    assert.deepEqual(cached(), [], "A graduation run left a baseline in a worker's cache.")
+    assert.deepEqual(cached(), [], "A reading run left a baseline in a worker's cache.")
 
-    // The control: a real baseline run does occupy one, so the assertion above is detecting
-    // a difference rather than an empty cache everywhere. It needs its own key, because a
-    // cache key identifies a calculation on its own, across kinds.
+    // The control: a real baseline run does occupy one, so the assertion above is detecting a
+    // difference rather than an empty cache everywhere.
     const controlKey = "rotation:preset"
     await store().ensure({ kind: "baseline", cacheKey: controlKey, build: () => bundle })
     assert.deepEqual(cached(), [controlKey], "A baseline run did not populate a worker's cache.")
+    useDpsStore.getState().reset()
+  })
+
+  it("answers a reading of an already-calculated rotation from the baseline its worker holds", async () => {
+    const { useDpsStore } = await loadStore()
+    const key = "rotation:preset"
+    const store = () => useDpsStore.getState()
+
+    await store().ensure({ kind: "baseline", cacheKey: key, build: () => bundle })
+    // The same key, so the reading names the baseline just calculated and is routed to the
+    // worker holding it. dps 1 is that baseline, dps 2 would mean the rotation ran again.
+    const reading = await store().ensure({ kind: "throughput", cacheKey: key, build: () => bundle })
+    assert.equal(reading.dps, 1, "A reading of an already-calculated rotation ran the rotation again.")
     useDpsStore.getState().reset()
   })
 })

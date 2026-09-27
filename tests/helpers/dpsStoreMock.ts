@@ -14,6 +14,12 @@ const mock = {
 }
 
 /**
+ * The real store keys its results by kind as well as by the caller's cache key, so two
+ * kinds choosing the same string do not answer for one another.
+ */
+const entryKey = (kind: string, cacheKey: string) => `${kind}:${cacheKey}`
+
+/**
  * Forget held results and recorded requests so each test starts from an empty store.
  * Registered handlers survive, matching a per-file stand-in that a test may re-register.
  */
@@ -64,17 +70,20 @@ export function mockDpsStore() {
         entries: new Map(mock.held),
         ensure: vi.fn<(request: any) => Promise<unknown>>(async request => {
           mock.requests.push(request)
-          if (retained(request.kind) && mock.held.has(request.cacheKey)) return mock.held.get(request.cacheKey)
+          const key = entryKey(request.kind, request.cacheKey)
+          if (retained(request.kind) && mock.held.has(key)) return mock.held.get(key)
           mock.dispatches.push(request)
           const handler = mock.handlers.get(request.kind)
           if (!handler) return never()
           const result = await handler(request)
-          if (retained(request.kind)) mock.held.set(request.cacheKey, result)
+          if (retained(request.kind)) mock.held.set(key, result)
           return result
         }),
-        peek: vi.fn<(cacheKey: string) => unknown>(cacheKey => mock.held.get(cacheKey)),
+        peek: vi.fn<(kind: string, cacheKey: string) => unknown>((kind, cacheKey) =>
+          mock.held.get(entryKey(kind, cacheKey)),
+        ),
         supersede: vi.fn<() => void>(),
-        cancel: vi.fn<(cacheKey: string) => void>(),
+        cancel: vi.fn<(kind: string, cacheKey: string) => void>(),
         // The real reset terminates the workers, so a worker's caches go with them. A
         // stand-in has no workers, so dropping the held results is the observable part.
         reset: vi.fn<() => void>(() => {
@@ -82,6 +91,5 @@ export function mockDpsStore() {
         }),
       }),
     },
-    selectDpsEntry: () => undefined,
   }
 }

@@ -8,7 +8,7 @@ import {
   dispatchCalculation,
   disposeCalculationWorkers,
   supersedeCalculations,
-  type GraduationThroughput,
+  type ThroughputReading,
   type TransportResult,
 } from "../calculations/rotationWorkerTransport"
 import { recordFetch, reportDpsCache } from "./dpsStoreDiagnostics"
@@ -27,7 +27,7 @@ export type DpsResults = {
   editorTimeline: EditorTimelineResult
   baseline: RotationSimulationBaseline
   comparisons: { metrics: RotationMetrics }
-  graduation: GraduationThroughput
+  throughput: ThroughputReading
 }
 export type DpsKind = keyof DpsResults
 
@@ -59,11 +59,9 @@ export type DpsEntry<Result = unknown> = {
 export type DpsRequest<K extends DpsKind> = {
   kind: K
   /**
-   * Identity of the calculation. Requests sharing a cache key share one worker job.
-   *
-   * A key identifies a calculation on its own, so it must be unique across kinds: the
-   * retained results and the in-flight jobs are both keyed by it alone, and a graduation
-   * reusing a rotation's key would answer with the wrong shape of result.
+   * Identity of the calculation. Requests of the same kind sharing a cache key share one
+   * worker job, and two different kinds may choose the same string without colliding: the
+   * store keys its results by kind as well.
    */
   cacheKey: string
   /**
@@ -83,14 +81,28 @@ export type DpsRequest<K extends DpsKind> = {
  * revision, so holding one would answer a later revision with an earlier timeline; the
  * worker keeps its own short-lived copy and the store holds none.
  *
- * A graduation is neither: it is a graduated preset that exists only to be compared
- * against, and only its throughput is ever read, so it is kept apart from the baselines it
- * would otherwise displace. Its fingerprint covers the whole environment, so a handful of
- * recent ones cover every revisit worth serving.
+ * A reading is neither: it is asked for by name to be weighed against something else — a
+ * graduated preset against the best one, a build against the active one — and only its
+ * throughput is ever read, so it is kept apart from the baselines it would otherwise
+ * displace. Its fingerprint covers the whole environment, so a handful of recent ones cover
+ * every revisit worth serving.
  */
-const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 64, comparisons: 4096, graduation: 8 }
+const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 64, comparisons: 4096, throughput: 8 }
 
 const isRetained = (kind: DpsKind) => retentionByKind[kind] > 0
+
+/**
+ * The identity a result is stored and looked up under.
+ *
+ * A caller's key identifies a calculation to the caller, and nothing stops two callers from
+ * choosing the same string for work of different shapes — a graduated preset and a build are
+ * both fingerprinted bundles, so they can genuinely collide. Keying by key alone would let
+ * one kind join another's job and answer with the wrong shape of result, so the kind is part
+ * of the identity.
+ */
+function entryKey(kind: DpsKind, cacheKey: string) {
+  return `${kind}:${cacheKey}`
+}
 
 /**
  * In-flight work, kept outside the store so its state stays serialisable. Two callers
@@ -119,10 +131,12 @@ function evictOverflow(entries: Map<string, DpsEntry>, kind: DpsKind) {
 export type DpsStore = {
   entries: ReadonlyMap<string, DpsEntry>
   ensure: <K extends DpsKind>(request: DpsRequest<K>) => Promise<DpsResults[K]>
-  /** Read a held result without scheduling anything. */
-  peek: <K extends DpsKind>(cacheKey: DpsRequest<K>["cacheKey"]) => DpsResults[K] | undefined
+  /** The held record for a calculation, including its status, without scheduling anything. */
+  entry: (kind: DpsKind, cacheKey: string) => DpsEntry | undefined
+  /** The held result for a calculation, without scheduling anything. */
+  peek: <K extends DpsKind>(kind: K, cacheKey: DpsRequest<K>["cacheKey"]) => DpsResults[K] | undefined
   supersede: () => void
-  cancel: (cacheKey: string) => void
+  cancel: (kind: DpsKind, cacheKey: string) => void
   /** Forget every cached calculation, in the store and in every worker. */
   reset: () => void
 }
@@ -135,8 +149,9 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
   const put = (entry: DpsEntry) =>
     set(state => {
       const entries = new Map(state.entries)
-      entries.delete(entry.cacheKey)
-      entries.set(entry.cacheKey, entry)
+      const key = entryKey(entry.kind, entry.cacheKey)
+      entries.delete(key)
+      entries.set(key, entry)
       if (entry.status === "ready") evictOverflow(entries, entry.kind)
       reportDpsCache(entries, retentionByKind)
       return { entries }
@@ -145,12 +160,15 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
   return {
     entries: new Map(),
 
-    peek: cacheKey => get().entries.get(cacheKey)?.result as never,
+    entry: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey)),
+
+    peek: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey))?.result as never,
 
     ensure: async <K extends DpsKind>(request: DpsRequest<K>) => {
       const { cacheKey, kind } = request
+      const key = entryKey(kind, cacheKey)
       const requestedAt = currentTime()
-      const running = inFlight.get(cacheKey)
+      const running = inFlight.get(key)
       if (running) {
         try {
           const joined = (await running) as DpsResults[K]
@@ -177,7 +195,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       }
 
       const startedAt = generation
-      const held = get().entries.get(cacheKey)
+      const held = get().entries.get(key)
       if (isRetained(kind) && held?.status === "ready") {
         // Served without building a bundle or touching a worker, which is the point of
         // holding a result at all.
@@ -197,10 +215,12 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
         return dispatchCalculation({
           mode: kind,
           bundle,
-          key: cacheKey,
-          // Only a run that populates a worker's baseline cache is routed by that cache, so
-          // an editor timeline and a graduation are dispatched without one to look up.
-          cacheKey: kind === "editorTimeline" || kind === "graduation" ? undefined : cacheKey,
+          key,
+          // A reading is routed by the baseline cache when it names one, because a worker
+          // holding that baseline already has the answer and needs to run nothing. Only an
+          // editor timeline is dispatched without a key to look up: it is keyed by rotation
+          // rather than by revision and no baseline cache holds it.
+          cacheKey: kind === "editorTimeline" ? undefined : cacheKey,
           baseline: request.baseline?.(),
           priority: request.priority,
           onTiming: timing => {
@@ -211,17 +231,17 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
             request.onProgress?.(progress)
             if (generation !== startedAt) return
             set(state => {
-              const current = state.entries.get(cacheKey)
+              const current = state.entries.get(key)
               if (current?.status !== "pending") return state
               const entries = new Map(state.entries)
-              entries.set(cacheKey, { ...current, progress })
+              entries.set(key, { ...current, progress })
               return { entries }
             })
           },
         })
       })()
 
-      inFlight.set(cacheKey, job)
+      inFlight.set(key, job)
       /** Only the batch that started this request may record its outcome. */
       const settle = (entry: DpsEntry) => {
         if (generation === startedAt && isRetained(kind)) put(entry)
@@ -239,7 +259,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
         record("failed")
         throw error
       } finally {
-        if (inFlight.get(cacheKey) === job) inFlight.delete(cacheKey)
+        if (inFlight.get(key) === job) inFlight.delete(key)
       }
     },
 
@@ -255,7 +275,7 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
       supersedeCalculations()
     },
 
-    cancel: cacheKey => cancelCalculation(cacheKey),
+    cancel: (kind, cacheKey) => cancelCalculation(entryKey(kind, cacheKey)),
 
     reset: () => {
       inFlight.clear()
@@ -269,7 +289,3 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
     },
   }
 })
-
-export function selectDpsEntry(cacheKey: string) {
-  return (state: DpsStore) => state.entries.get(cacheKey)
-}

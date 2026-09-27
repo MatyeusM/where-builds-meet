@@ -1775,7 +1775,7 @@ export function RotationEditorTab({
     return () => {
       cancelled = true
       window.clearTimeout(timer)
-      useDpsStore.getState().cancel(`editor:${requested.id}`)
+      useDpsStore.getState().cancel("editorTimeline", `editor:${requested.id}`)
     }
   }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
@@ -1811,7 +1811,7 @@ export function RotationEditorTab({
       let cachedGraduation: number | undefined
       if (graduation) {
         const cachedThroughput = graduation.candidates.flatMap(candidate => {
-          const throughput = useDpsStore.getState().peek<"graduation">(candidate.fingerprint)
+          const throughput = useDpsStore.getState().peek("throughput", candidate.fingerprint)
           return throughput ? [throughput] : []
         })
         if (cachedThroughput.length === graduation.candidates.length)
@@ -1851,7 +1851,7 @@ export function RotationEditorTab({
     const resultKey = prepared.fingerprint
     const displayed = rotationResultsRef.current[id]
     if (displayed?.key === resultKey) {
-      const cachedBaseline = useDpsStore.getState().peek<"baseline">(resultKey)
+      const cachedBaseline = useDpsStore.getState().peek("baseline", resultKey)
       if (cachedBaseline) return cachedBaseline
     }
     const result = await useDpsStore
@@ -1882,7 +1882,7 @@ export function RotationEditorTab({
         useDpsStore
           .getState()
           .ensure({
-            kind: "graduation" as const,
+            kind: "throughput" as const,
             cacheKey: candidate.fingerprint,
             build: () => candidate.bundle,
             priority: 390,

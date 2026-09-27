@@ -20,8 +20,13 @@ async function loadStore() {
       dispatched.push(message)
       queueMicrotask(() => {
         if (this.terminated) return
+        // A reading is answered with a reading; every other mode is answered with metrics.
+        const payload =
+          message.mode === "throughput"
+            ? { throughput: { dps: 1, hps: 2, totalDamage: 3 } }
+            : { metrics: { dps: 1, breakdown: {} } }
         for (const listener of this.listeners.get("message") ?? []) {
-          listener({ data: { id: message.id, metrics: { dps: 1, breakdown: {} } } })
+          listener({ data: { id: message.id, ...payload } })
         }
       })
     }
@@ -51,11 +56,11 @@ describe("dps-store", () => {
     assert(dispatched.length === 1, `A repeated calculation dispatched ${dispatched.length} jobs.`)
     assert(builds === 1, `A repeated calculation built its bundle ${builds} times.`)
     assert(first === second, "A repeated calculation did not return the held result.")
-    assert(store().peek("a") === first, "The held result was not readable without scheduling.")
+    assert(store().peek("baseline", "a") === first, "The held result was not readable without scheduling.")
 
     await store().ensure({ kind: "baseline", cacheKey: "b", build })
     assert(dispatched.length === 2, "A distinct calculation reused another fingerprint's job.")
-    assert(store().peek("a") === first, "A new calculation evicted an unrelated held result.")
+    assert(store().peek("baseline", "a") === first, "A new calculation evicted an unrelated held result.")
     store().reset()
   })
 
@@ -80,7 +85,26 @@ describe("dps-store", () => {
       dispatched.length === 2,
       "An editor timeline was held, so a second revision of the same rotation reused the first timeline.",
     )
-    assert(store().peek("editor:one") === undefined, "An editor timeline was retained in the store.")
+    assert(store().peek("editorTimeline", "editor:one") === undefined, "An editor timeline was retained in the store.")
+    store().reset()
+  })
+
+  it("keeps two kinds apart when they choose the same cache key", async () => {
+    const { useDpsStore, dispatched } = await loadStore()
+    const store = () => useDpsStore.getState()
+    // Both a reading and a baseline are fingerprinted bundles, so the same key can honestly
+    // name work of two different shapes. One must not answer for the other.
+    const baseline = await store().ensure({ kind: "baseline", cacheKey: "shared", build: () => bundle })
+    const reading = await store().ensure({ kind: "throughput", cacheKey: "shared", build: () => bundle })
+
+    assert.equal(dispatched.length, 2, "A reading joined the baseline's job instead of running its own.")
+    assert.deepEqual(reading, { dps: 1, hps: 2, totalDamage: 3 }, "A reading was answered with a baseline's result.")
+    assert.equal(store().peek("baseline", "shared"), baseline, "A reading displaced the baseline held under its key.")
+    assert.deepEqual(
+      store().peek("throughput", "shared"),
+      { dps: 1, hps: 2, totalDamage: 3 },
+      "The reading was not readable under its own kind.",
+    )
     store().reset()
   })
 
@@ -93,9 +117,9 @@ describe("dps-store", () => {
         store().ensure({ kind: "baseline", cacheKey: `key-${index}`, build: () => bundle }),
       ),
     )
-    assert(store().peek("key-0") === undefined, "The oldest baseline survived past the retention bound.")
-    assert(store().peek("key-1") === undefined, "Eviction did not continue past the oldest entry.")
-    assert(store().peek(`key-${limit + 4}`) !== undefined, "The newest baseline was evicted.")
+    assert(store().peek("baseline", "key-0") === undefined, "The oldest baseline survived past the retention bound.")
+    assert(store().peek("baseline", "key-1") === undefined, "Eviction did not continue past the oldest entry.")
+    assert(store().peek("baseline", `key-${limit + 4}`) !== undefined, "The newest baseline was evicted.")
     store().reset()
   })
 })

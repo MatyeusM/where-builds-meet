@@ -87,13 +87,13 @@ describe("calculation store supersession", () => {
     // cleanup must not untrack the replacement.
     const abandonedResult = await abandoned
     assert.ok("rejected" in abandonedResult, "The superseded request was not rejected.")
-    const stillTracked = store().entries.get(key)?.status
+    const stillTracked = store().entry("comparisons", key)?.status
     assert.equal(stillTracked, "pending", `The replacement was lost to the older batch: ${stillTracked}`)
 
     workers[workers.length - 1].flush()
     const result = await fresh
     assert.equal(result.metrics.dps, 1, "The replacement batch did not complete.")
-    assert.equal(store().entries.get(key)?.status, "ready", "The replacement did not settle as ready.")
+    assert.equal(store().entry("comparisons", key)?.status, "ready", "The replacement did not settle as ready.")
     store().reset()
   })
 
@@ -134,7 +134,7 @@ describe("calculation store supersession", () => {
     assert.ok(!("rejected" in freshOutcome), `The replacement sweep failed: ${JSON.stringify(freshOutcome)}`)
     assert.equal(freshOutcome.length, variants.length, "The replacement sweep did not finish every variant.")
     assert.deepEqual(
-      variants.map(key => store().entries.get(key)?.status),
+      variants.map(key => store().entry("comparisons", key)?.status),
       variants.map(() => "ready"),
       "A variant in the replacement sweep did not settle as ready.",
     )
@@ -162,8 +162,8 @@ describe("calculation store supersession", () => {
     workers[workers.length - 1].flush()
     await fresh
     // A failure left by the older batch must not shadow the real result.
-    assert.equal(store().entries.get(key)?.status, "ready")
-    assert.equal(store().peek(key)?.metrics.dps, 1)
+    assert.equal(store().entry("comparisons", key)?.status, "ready")
+    assert.equal(store().peek("comparisons", key)?.metrics.dps, 1)
     store().reset()
   })
 })

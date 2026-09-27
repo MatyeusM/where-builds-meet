@@ -1482,15 +1482,20 @@ skill overrides keys a bounded cache. A new environment schedules the required
 calculations; build-only changes reuse the cached denominators. No Monte Carlo
 simulation is involved.
 
-A graduation is a request kind of its own, neither a baseline nor a comparison.
-It runs the same calculation, because only a full run yields a damage pipeline to
-measure, but it keeps nothing but the throughput it is compared by: the worker
-returns DPS and HPS and nothing else, and it neither reads nor writes a worker's
-baseline cache, so a graduated preset cannot displace a rotation's own baseline.
-It is dispatched without a baseline cache key, so it is routed by nothing but
-worker availability. Because only DPS is read today, HPS is retained beside it as
-the other half of a rotation's throughput rather than as something consulted.
-`data/path.json` declares `defaultBuild` and a `graduated` preset array
+A throughput reading is a request kind of its own, neither a baseline nor a
+comparison. It runs the same calculation, because only a full run yields a damage
+pipeline to measure, but it keeps nothing but the numbers it is weighed by: the
+worker returns DPS, HPS and total damage and nothing else, so the megabytes of a
+timeline are never copied back to the main thread for a figure that is only ever
+compared. A graduated preset is read this way to be weighed against the best
+graduated preset, and a build against the active one.
+
+A reading names the baseline whose key it shares, so it is routed to the worker
+already holding that baseline and answered from it without running anything. That
+is what makes reading the active build free: its baseline is already calculated
+for the rotation editor, and the identical bundle produces the identical key. A
+reading writes nothing back, so it never occupies a place in a baseline cache
+either. `data/path.json` declares `defaultBuild` and a `graduated` preset array
 separately so the build loaded by default does not have to be one of the builds
 used as graduation denominators.
 

@@ -14,7 +14,7 @@ import {
 type WorkerRequest = {
   id: number
   bundle: RotationCalculationBundle | RotationSimulationBundle
-  mode?: "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline" | "graduation"
+  mode?: "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline" | "throughput"
   cacheKey?: string
   baseline?: RotationSimulationBaseline
 }
@@ -73,12 +73,24 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
           if (baselineCache.size > 64) baselineCache.delete(baselineCache.keys().next().value!)
           return compactInnerWayResults(calculated)
         }
-        case "graduation": {
-          // A graduated preset exists only to be compared against, so the run keeps nothing
-          // but the throughput it is compared by. It caches no baseline and never reads a
-          // cached one, so it neither consumes nor occupies a slot in the baseline cache.
-          const calculated = calculateRotationBaseline(bundle as RotationSimulationBundle)
-          return { graduation: { dps: calculated.metrics.dps, hps: calculated.metrics.hps } }
+        case "throughput": {
+          // A reading is asked for by name often enough to be worth not repeating: when this
+          // worker already holds the baseline its key names, that baseline's metrics are the
+          // answer and nothing runs. A key is optional because a reading of something nothing
+          // else has been calculated for has no baseline to find.
+          //
+          // It writes nothing back, so a reading neither consumes nor occupies a place in the
+          // baseline cache, and the megabytes of a timeline are never copied back to the main
+          // thread for a number that is only ever compared.
+          const held = cacheKey ? baselineCache.get(cacheKey) : undefined
+          const calculated = held ?? calculateRotationBaseline(bundle as RotationSimulationBundle)
+          return {
+            throughput: {
+              dps: calculated.metrics.dps,
+              hps: calculated.metrics.hps,
+              totalDamage: calculated.metrics.totalDamage,
+            },
+          }
         }
         case "comparisons": {
           if (!cacheKey) throw new Error("A comparison cache key is required")
