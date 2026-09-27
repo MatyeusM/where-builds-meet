@@ -87,7 +87,7 @@
         "value": "ScarletSpinStage2",
         "time": 1.0769230769230769,
         "queueTime": 0.6153846153846154,
-        "queueSourceEffect": "FlowerBurial",
+        "sourceEffect": "FlowerBurial",
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
       {
@@ -161,7 +161,7 @@
         "value": "ScarletSpinStage3",
         "time": 0.9583333333333333,
         "queueTime": 0.4166666666666667,
-        "queueSourceEffect": "FlowerBurial",
+        "sourceEffect": "FlowerBurial",
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
       {
@@ -235,7 +235,7 @@
         "value": "ScarletSpinStage4",
         "time": 1.0909090909090908,
         "queueTime": 0.5454545454545454,
-        "queueSourceEffect": "FlowerBurial",
+        "sourceEffect": "FlowerBurial",
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
       {
@@ -309,7 +309,7 @@
         "value": "ScarletSpinStage2",
         "time": 1,
         "queueTime": 0.45454545454545453,
-        "queueSourceEffect": "FlowerBurial",
+        "sourceEffect": "FlowerBurial",
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
       {

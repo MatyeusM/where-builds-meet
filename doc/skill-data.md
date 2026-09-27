@@ -143,7 +143,7 @@ before its ping gap; modifiers and start-bound requirements resolve at the
 actual delayed start.
 
 A trigger action with `queueTime` is accepted at that earlier local time and
-executes at its normal `time`. `queueSourceEffect` and `queueRequirement` are
+executes at its normal `time`. `sourceEffect` and `queueRequirement` are
 checked when the input is accepted, so a queued execution may occur after the
 tracked source state expires. A queued trigger extends the owning ordered
 row's effective cast through the queued skill's delayed start and completion;

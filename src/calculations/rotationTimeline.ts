@@ -2821,7 +2821,7 @@ export function buildRotationTimeline(
     if (event.kind === "queueTrigger") {
       const action = event.row.actions[event.actionIndex ?? -1]
       if (action?.type === "trigger") {
-        const sourceEffect = action.queueSourceEffect ?? action.sourceEffect
+        const sourceEffect = action.sourceEffect
         const sourceMatches =
           typeof sourceEffect !== "string" ||
           buffs.get(sourceEffect)?.sourceRowId === (event.row.sourceRowId ?? event.row.id)

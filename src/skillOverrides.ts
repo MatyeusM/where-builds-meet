@@ -59,6 +59,12 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
       })
     }
     switch (record.type) {
+      case "trigger":
+        if (record.queueSourceEffect !== undefined) {
+          record.sourceEffect = record.queueSourceEffect ?? record.sourceEffect
+          delete record.queueSourceEffect
+        }
+        break
       case "damage":
         if (!currentCoefficients && record.attrCoef === undefined) record.attrCoef = record.phyCoef ?? 0
         break
