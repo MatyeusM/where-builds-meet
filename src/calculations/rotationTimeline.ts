@@ -1507,7 +1507,8 @@ export function buildRotationTimeline(
     string,
     {
       id: number
-      sourceEntryIds: string[]
+      sourceDamage: number
+      hasMatchedDamage: boolean
       sourceRowId: string
       expiresAt: number
       definition: NonNullable<EffectDefinition["recording"]>
@@ -3228,7 +3229,7 @@ export function buildRotationTimeline(
       probability?: number,
       expectedBranch?: TimelineRow["expectedBranch"],
       triggerTags?: string[],
-      replaySourceEntryIds?: string[],
+      replaySourceDamage?: number,
       suppressFallback = false,
       queuedFrom?: string,
     ) => {
@@ -3272,7 +3273,7 @@ export function buildRotationTimeline(
           Object.assign(
             {},
             item,
-            item.type === "replay" && replaySourceEntryIds ? { replaySourceEntryIds } : {},
+            item.type === "replay" && replaySourceDamage !== undefined ? { replaySourceDamage } : {},
             probability !== undefined && item.type === "damage"
               ? { damageScale: Number(item.damageScale ?? 1) * probability, hitProbability: probability }
               : {},
@@ -3462,7 +3463,7 @@ export function buildRotationTimeline(
       const recording = recordings.get(key)
       if (!recording || (expectedId !== undefined && recording.id !== expectedId)) return
       recordings.delete(key)
-      if (recording.sourceEntryIds.length > 0)
+      if (recording.hasMatchedDamage)
         enqueueTriggeredSkill(
           recording.definition.action.value,
           recording.sourceRowId,
@@ -3471,7 +3472,7 @@ export function buildRotationTimeline(
           undefined,
           undefined,
           undefined,
-          [...recording.sourceEntryIds],
+          recording.sourceDamage,
         )
     }
     const startRecording = (
@@ -3486,7 +3487,8 @@ export function buildRotationTimeline(
       resolveRecording(key)
       recordings.set(key, {
         id: nextRecordingId++,
-        sourceEntryIds: [],
+        sourceDamage: 0,
+        hasMatchedDamage: false,
         sourceRowId,
         expiresAt: appliedEffect.expiresAt,
         definition: definition.recording,
@@ -3996,7 +3998,7 @@ export function buildRotationTimeline(
               undefined,
               undefined,
               undefined,
-              [actionResolutionKey(event.row, event.actionIndex!)],
+              resolvedAction!.damage,
             )
           )
             listenerCooldowns.set(rule, event.time + Math.max(0, Number(listener.cooldown ?? 0)))
@@ -4015,8 +4017,10 @@ export function buildRotationTimeline(
             resources,
             requirementState(),
           )
-        )
-          recording.sourceEntryIds.push(actionResolutionKey(event.row, event.actionIndex!))
+        ) {
+          recording.sourceDamage += resolvedAction?.damage ?? 0
+          recording.hasMatchedDamage = true
+        }
       }
       const triggerStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
       runSetupTriggers("damage")

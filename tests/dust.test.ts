@@ -830,12 +830,16 @@ describe("Dust WIP mechanics", () => {
       const result = calculateRotationBaseline(input)
       const payouts = result.baseline.filter(entry => entry.replay)
       expect(payouts).toHaveLength(tier === 6 ? 2 : 1)
-      for (const entry of payouts) {
+      for (const [index, entry] of payouts.entries()) {
+        // Snap records its hit before T6 refresh settles the first window.
+        const windows =
+          tier === 4
+            ? [["rotation-1:0", "rotation-2:0", "rotation-3:0"]]
+            : [["rotation-1:0", "rotation-2:0"], ["rotation-3:0"]]
+        const sourceIds = windows[index]
         const expected =
-          entry.replay!.sourceEntryIds.reduce((sum, id) => sum + result.actionBreakdowns[id].total, 0) *
-          (tier === 6 ? 0.1 : 0.05)
+          sourceIds.reduce((sum, id) => sum + result.actionBreakdowns[id].total, 0) * (tier === 6 ? 0.1 : 0.05)
         expect(result.actionBreakdowns[entry.id!].total).toBeCloseTo(expected)
-        expect(entry.replay!.sourceEntryIds.every(id => !payouts.some(payout => payout.id === id))).toBe(true)
       }
       expect(payouts.at(-1)!.timelineTime).toBe(tier === 6 ? 22 : 21)
     }

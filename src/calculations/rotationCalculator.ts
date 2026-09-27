@@ -88,7 +88,7 @@ export type RotationDamageEntry = {
   sourceRowId?: string
   activeBuffStacks?: Record<string, number>
   activeDebuffStacks?: Record<string, number>
-  replay?: { sourceEntryIds: string[]; coef: number }
+  replay?: { sourceDamage: number; coef: number }
   hawkwing?: HawkwingEffect
   insightfulStrike?: InsightfulStrikeEffect
   seasonalEdge?: SeasonalEdgeEntryState
@@ -220,21 +220,18 @@ function combineHealingBreakdowns(recipients: HealingBreakdown[]): HealingBreakd
 
 function calculateRotationDamageEntry(
   entry: RotationDamageEntry,
-  resolved: Map<string, RotationActionBreakdown>,
   outcomeEffects?: UnconditionalDamageEffects,
   directAffinityBonus = 0,
   random?: () => number,
-  record = true,
   additionalEffects: EditableObject[] = [],
 ): RotationActionBreakdown {
   let breakdown: RotationActionBreakdown
   if (entry.replay) {
-    const sourceDamage = entry.replay.sourceEntryIds.reduce((total, id) => total + (resolved.get(id)?.total ?? 0), 0)
     const replayDmgBonus = entry.context.effects.reduce(
       (total, effect) => total + (typeof effect.replayDmgBonus === "number" ? effect.replayDmgBonus : 0),
       0,
     )
-    breakdown = replayBreakdown(sourceDamage * entry.replay.coef * (1 + replayDmgBonus))
+    breakdown = replayBreakdown(entry.replay.sourceDamage * entry.replay.coef * (1 + replayDmgBonus))
   } else if (entry.action.type === "heal") {
     const healingContext = {
       ...entry.context,
@@ -278,7 +275,6 @@ function calculateRotationDamageEntry(
       : calculateDamageBreakdown(entry.action, context)
     if (import.meta.env.DEV) finishCalculationPhase("damageCalculation", damageStartedAt)
   }
-  if (record && entry.id) resolved.set(entry.id, breakdown)
   return breakdown
 }
 
@@ -355,7 +351,6 @@ export type ResolvedRotationDamage = {
 }
 
 function createRotationDamageResolver(random?: () => number, schedule?: ExpectedOutcomeBuffSchedule) {
-  const resolved = new Map<string, RotationActionBreakdown>()
   const expectedHawkwing = random ? undefined : new ExpectedHawkwingTracker()
   const simulatedHawkwing = random ? new SimulatedHawkwingTracker() : undefined
   const expectedInsightfulStrike = random ? undefined : new ExpectedInsightfulStrikeTracker()
@@ -440,15 +435,13 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
     ): RotationActionBreakdown => {
       const outcomes = entry.seasonalEdge?.outcomes
       if (!outcomes?.length || entry.action.type !== "damage" || entry.replay)
-        return calculateRotationDamageEntry(entry, resolved, baseOutcomeEffects, directAffinityBonus, random, false)
+        return calculateRotationDamageEntry(entry, baseOutcomeEffects, directAffinityBonus, random)
       if (random) {
         return calculateRotationDamageEntry(
           entry,
-          resolved,
           baseOutcomeEffects,
           directAffinityBonus,
           random,
-          false,
           effectsForSeasonalOutcome(entry.context, selectedSeasonalOutcome!),
         )
       }
@@ -462,15 +455,7 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
       let combined: RotationActionBreakdown | undefined
       let combinedWeight = 0
       grouped.forEach(({ weight, effects }) => {
-        const current = calculateRotationDamageEntry(
-          entry,
-          resolved,
-          baseOutcomeEffects,
-          directAffinityBonus,
-          undefined,
-          false,
-          effects,
-        )
+        const current = calculateRotationDamageEntry(entry, baseOutcomeEffects, directAffinityBonus, undefined, effects)
         combined = combined ? blendDamageBreakdowns(combined, current, weight / (combinedWeight + weight)) : current
         combinedWeight += weight
       })
@@ -490,7 +475,6 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
         inactiveBreakdown && activeBreakdown
           ? blendDamageBreakdowns(inactiveBreakdown, activeBreakdown, concentrationProbability)
           : (activeBreakdown ?? inactiveBreakdown)!
-      if (entry.id) resolved.set(entry.id, breakdown)
     } else {
       const concentrationActive = concentrationProbability === 1
       breakdown = calculateWithSeason(
@@ -527,7 +511,6 @@ function createRotationDamageResolver(random?: () => number, schedule?: Expected
           )
       }
     }
-    if (entry.id) resolved.set(entry.id, breakdown)
     return {
       entry,
       breakdown,
@@ -1584,9 +1567,9 @@ function createTimelineEntryBuilder(
     const replay =
       action.type === "replay" &&
       row.skill?.tags?.includes("Replayed") &&
-      Array.isArray(action.replaySourceEntryIds) &&
+      typeof action.replaySourceDamage === "number" &&
       typeof action.coef === "number"
-        ? { sourceEntryIds: action.replaySourceEntryIds as string[], coef: action.coef }
+        ? { sourceDamage: action.replaySourceDamage, coef: action.coef }
         : undefined
     if (action.type !== "damage" && action.type !== "heal" && !accumulatorSnapshot && !replay) return []
     const actionTime = row.startTime + Number(action.time ?? 0)

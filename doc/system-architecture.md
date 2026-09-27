@@ -1087,11 +1087,11 @@ After an ordinary hit resolves, the centralized damage sequence emits a typed,
 synchronous damage event containing its final damage, action-specific tags, and
 the immutable combat-state snapshot for that action. Active Inner Way listeners
 are data-defined and evaluated against this event. A successful listener may
-spawn a parameterized `Replayed` skill; its delayed actions retain a link to the
-source entry rather than copying a deterministic value into the timeline.
+spawn a parameterized `Replayed` skill; its delayed actions capture the source
+hit's final damage as a number.
 
-The average calculator and simulator resolve that link after calculating the
-source hit. Replay actions therefore follow randomized source damage during
+The average calculator and simulator capture damage within their own live
+traversal. Replay actions therefore follow randomized source damage during
 Monte Carlo runs while bypassing normal multipliers and outcomes. The shared replay resolver additionally applies the dedicated numeric replayDmgBonus from requirement-filtered hit-time effects; Wildstride is its sole authored source. Generated
 replay rows participate in duration, target-HP progression, Battle End cutoff,
 timeline display, and breakdown attribution. They do not emit damage events,
@@ -1735,12 +1735,14 @@ Qi Blades, alongside the existing healing checks.
 
 Timed recording effects use the existing event queue and expiry scheduling.
 Expiry and reapplication share one resolver; activation IDs reject stale expiry
-events. A window stores damage-entry references, and the shared replay calculator
-resolves their sum from the current expected or sampled run. Recording-dependent
+events. A window accumulates final resolved damage in a running total and tracks
+whether any hit matched, so zero-damage hits still settle while empty windows do
+not. Settlement captures the total for the shared replay calculator; replay bonuses
+still resolve at payout time. Recording-dependent
 calculations use the live combat traversal, also used for healing and accumulator
 snapshots, so settlement affects target HP before subsequent actions. Comparison
 variants rebuild that traversal and resolve their own source damage. Runtime
-recording IDs and source references are not persisted in user rotations.
+recording IDs and source totals are not persisted in user rotations.
 
 ### Attack-aligned casts
 

@@ -839,7 +839,7 @@ No attack roll, defense, resistance, penetration, ordinary damage bonus, Critica
 Affinity, Abrasion, or other outcome is evaluated again. Replay damage is
 reported in the physical/total breakdown channel, cannot emit another damage
 event, and is excluded from simulation outcome-rate hit counts. The average
-calculator and Monte Carlo simulator use the same source-link resolution, so a
+calculator and Monte Carlo simulator accumulate source totals within each live run, so a
 simulation replay copies that run's randomized source hits. Because a replay
 resolves no outcome, its damage is credited to the normal simulation damage
 share.

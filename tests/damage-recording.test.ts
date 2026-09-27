@@ -77,10 +77,14 @@ describe("damage-recording", () => {
     const payouts = result => result.baseline.filter(entry => entry.replay)
     const rodents = result => result.baseline.filter(entry => entry.context.skillTags.includes("Rodent"))
     const damage = (result, entries) => entries.reduce((sum, entry) => sum + result.actionBreakdowns[entry.id].total, 0)
+    const recordedHits = (result, payout) => {
+      const index = payouts(result).indexOf(payout)
+      const start = index > 0 ? payouts(result)[index - 1].timelineTime : -Infinity
+      return rodents(result).filter(hit => hit.timelineTime >= start && hit.timelineTime < payout.timelineTime)
+    }
     const checkPayouts = result => {
       for (const entry of payouts(result)) {
-        const expected =
-          entry.replay.sourceEntryIds.reduce((sum, id) => sum + result.actionBreakdowns[id].total, 0) * 0.3
+        const expected = damage(result, recordedHits(result, entry)) * 0.3
         close(result.actionBreakdowns[entry.id].total, expected, "Payout copies the final damage of recorded hits")
         assert.equal(result.actionBreakdowns[entry.id].outcomeRates, undefined, "Payout cannot roll a new outcome")
       }
@@ -99,7 +103,7 @@ describe("damage-recording", () => {
     const result = calculateRotationBaseline(bundle(steps))
     assert.equal(payouts(result).length, 1, "Expiry settles one window")
     assert.equal(
-      payouts(result)[0].replay.sourceEntryIds.length,
+      recordedHits(result, payouts(result)[0]).length,
       4,
       "One ordinary Rodent plus all three FA5 Rodents are recorded",
     )
@@ -111,7 +115,7 @@ describe("damage-recording", () => {
     )
     assert.equal(rodents(enhanced).length, 15, "Vendetta ERR supplies fifteen automatic Rodents")
     assert.equal(
-      payouts(enhanced)[0].replay.sourceEntryIds.length,
+      recordedHits(enhanced, payouts(enhanced)[0]).length,
       15,
       "The 20-second Hunt records all fifteen automatic Rodents",
     )
@@ -156,7 +160,7 @@ describe("damage-recording", () => {
     close(payouts(reapply)[0].timelineTime, 8.385, "Reapplication settles immediately")
     close(payouts(reapply)[1].timelineTime, 28.385, "Old expiry does not settle the replacement window")
     assert.deepEqual(
-      payouts(reapply).map(entry => entry.replay.sourceEntryIds.length),
+      payouts(reapply).map(entry => recordedHits(reapply, entry).length),
       [1, 1],
     )
     checkPayouts(reapply)
@@ -179,10 +183,11 @@ describe("damage-recording", () => {
       bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(19.5), cast("Rodent"), delay(1)]),
     )
     assert.equal(
-      payouts(exact)[0].replay.sourceEntryIds.length,
+      recordedHits(exact, payouts(exact)[0]).length,
       1,
       "Hit at the exclusive expiration boundary is not recorded",
     )
+    checkPayouts(exact)
     const fixed = calculateRotationBaseline(
       bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Extend"), cast("Token"), delay(21)]),
     )
@@ -192,6 +197,15 @@ describe("damage-recording", () => {
       0,
       "Empty window emits no damage",
     )
+    const zeroBundle = bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(21)])
+    zeroBundle.timeline.skills.Rodent = {
+      castTime: 0,
+      tags: ["Rodent"],
+      action: [{ type: "damage", phyCoef: 0, attrCoef: 0, time: 0 }],
+    }
+    const zero = calculateRotationBaseline(zeroBundle)
+    assert.equal(payouts(zero).length, 1, "Matched zero-damage hits still settle")
+    close(damage(zero, payouts(zero)), 0, "Zero source damage produces a zero payout")
     const short = calculateRotationBaseline(bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(1)]))
     assert.equal(payouts(short).length, 0, "Recording does not extend combat")
     close(short.duration, 1.385, "Combat ends at the final explicit Delay")
@@ -228,13 +242,16 @@ describe("damage-recording", () => {
 
     for (const roll of [0.1, 0.9]) {
       const sampled = calculateSimulatedRotationRun(bundle(steps), () => roll)
-      const byId = new Map(sampled.resolvedSequence.map(item => [item.entry.id, item.breakdown.total]))
       const settlements = sampled.resolvedSequence.filter(item => item.entry.replay)
       assert.equal(settlements.length, 1)
       for (const { entry, breakdown } of settlements)
         close(
           breakdown.total,
-          entry.replay.sourceEntryIds.reduce((sum, id) => sum + byId.get(id), 0) * 0.3,
+          sampled.resolvedSequence
+            .filter(
+              item => item.entry.context.skillTags.includes("Rodent") && item.entry.timelineTime < entry.timelineTime,
+            )
+            .reduce((sum, item) => sum + item.breakdown.total, 0) * 0.3,
           "Sampled payout uses this run's source outcomes",
         )
       const total = sampled.resolvedSequence.reduce((sum, item) => sum + item.breakdown.total, 0)

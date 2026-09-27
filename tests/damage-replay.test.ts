@@ -107,6 +107,12 @@ describe("damage-replay", () => {
       }
     }
 
+    const sourceDamage = (result, replay) => {
+      const source = result.baseline
+        .filter(entry => !entry.replay && entry.action.type === "damage")
+        .find(entry => entry.timelineTime > replay.timelineTime - 4 && entry.timelineTime < replay.timelineTime)
+      return result.actionBreakdowns[source.id].total
+    }
     const result = calculateRotationBaseline(createBundle())
     const healingBundle = createBundle()
     healingBundle.timeline.skills = {
@@ -119,7 +125,7 @@ describe("damage-replay", () => {
     const withHealing = calculateRotationBaseline(healingBundle)
     assert(
       closeTo(withHealing.metrics.totalDamage, result.metrics.totalDamage),
-      "Live healing resolution must preserve cached source damage for every delayed replay.",
+      "Live healing resolution must preserve captured source damage for every delayed replay.",
     )
     const normalEntries = result.baseline.filter(entry => !entry.replay)
     const replayEntries = result.baseline.filter(entry => entry.replay)
@@ -187,7 +193,7 @@ describe("damage-replay", () => {
       ]
       const actual = calculateRotationBaseline(bundle)
       for (const entry of actual.baseline.filter(entry => entry.replay)) {
-        const source = entry.replay.sourceEntryIds.reduce((sum, id) => sum + actual.actionBreakdowns[id].total, 0)
+        const source = sourceDamage(actual, entry)
         const enabled = active.length === 2 && entry.timelineTime < 20
         assert(
           closeTo(actual.actionBreakdowns[entry.id].total, source * entry.replay.coef * (enabled ? 1.2 : 1)),
@@ -210,7 +216,7 @@ describe("damage-replay", () => {
     globalBundle.timeline.initialDebuffs = globalDebuffTimelineEffects({ ...defaultGlobalDebuffs, draught: "both" })
     const maintained = calculateRotationBaseline(globalBundle)
     for (const entry of maintained.baseline.filter(entry => entry.replay)) {
-      const source = entry.replay.sourceEntryIds.reduce((sum, id) => sum + maintained.actionBreakdowns[id].total, 0)
+      const source = sourceDamage(maintained, entry)
       assert(
         closeTo(maintained.actionBreakdowns[entry.id].total, source * entry.replay.coef * 1.2),
         "Global Wildstride and Strayhunt remain active beyond their manual durations.",
