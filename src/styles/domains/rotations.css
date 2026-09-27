@@ -40,6 +40,7 @@
     border-block-end: 1px solid var(--border);
     color: var(--text-muted);
     font-weight: 750;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
@@ -47,19 +48,31 @@
     min-inline-size: 0;
   }
 
-  .rotation-list-heading [data-button] {
-    inline-size: auto;
-    min-inline-size: 0;
-    padding-inline: 6px;
-    line-height: 1.15;
-    text-align: center;
-    white-space: nowrap;
-  }
-
   .rotation-list-entries {
     flex: 1 1 0;
     min-block-size: 0;
     overflow-y: auto;
+  }
+
+  .rotation-list-create {
+    display: flex;
+    inline-size: 100%;
+    min-block-size: 44px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    border: 0;
+    border-block-end: 1px solid var(--border-muted);
+    padding: 9px 13px;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 650;
+    text-align: start;
+  }
+
+  .rotation-list-create:hover {
+    background: var(--surface-alt);
+    color: var(--text);
   }
 
   .rotation-list-item {
