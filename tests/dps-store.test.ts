@@ -56,7 +56,7 @@ describe("dps-store", () => {
     await store().ensure({ kind: "baseline", cacheKey: "b", build })
     assert(dispatched.length === 2, "A distinct calculation reused another fingerprint's job.")
     assert(store().peek("a") === first, "A new calculation evicted an unrelated held result.")
-    store().dispose()
+    store().reset()
   })
 
   it("joins concurrent requests for one calculation instead of queueing both", async () => {
@@ -68,7 +68,7 @@ describe("dps-store", () => {
     ])
     assert(dispatched.length === 1, `Concurrent requests for one calculation dispatched ${dispatched.length} jobs.`)
     assert(left === right, "Concurrent requests for one calculation produced different results.")
-    store().dispose()
+    store().reset()
   })
 
   it("holds no editor timeline, so a later revision cannot read an earlier one", async () => {
@@ -81,7 +81,7 @@ describe("dps-store", () => {
       "An editor timeline was held, so a second revision of the same rotation reused the first timeline.",
     )
     assert(store().peek("editor:one") === undefined, "An editor timeline was retained in the store.")
-    store().dispose()
+    store().reset()
   })
 
   it("bounds how many baselines it holds, dropping the oldest first", async () => {
@@ -96,6 +96,6 @@ describe("dps-store", () => {
     assert(store().peek("key-0") === undefined, "The oldest baseline survived past the retention bound.")
     assert(store().peek("key-1") === undefined, "Eviction did not continue past the oldest entry.")
     assert(store().peek(`key-${limit + 4}`) !== undefined, "The newest baseline was evicted.")
-    store().dispose()
+    store().reset()
   })
 })

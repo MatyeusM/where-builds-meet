@@ -82,7 +82,7 @@ describe("dps-fetch-timing", () => {
       assert.equal(rows[1].workerMs, 0, "A held result reported worker time.")
       assert.equal(rows[1].queueMs, 0, "A held result reported queue time.")
       assert.ok(rows[0].workerMs >= 0, "A dispatched result reported no worker time.")
-      store().dispose()
+      store().reset()
     } finally {
       console_.restore()
     }
@@ -128,7 +128,7 @@ describe("dps-fetch-timing", () => {
         ["dispatched", "joined"],
         "One request was not recorded as joining the other's job.",
       )
-      store().dispose()
+      store().reset()
     } finally {
       console_.restore()
     }
@@ -175,7 +175,7 @@ describe("dps-fetch-timing", () => {
       }
       const unqueued = rows.filter(row => (row.queueMs as number) === 0)
       assert.ok(unqueued.length > 0, "No request ran without waiting, so the pool gave each its own worker.")
-      store().dispose()
+      store().reset()
     } finally {
       console_.restore()
     }

@@ -37,6 +37,11 @@ export function dpsDispatches(kind: string) {
   return mock.dispatches.filter(request => request.kind === kind)
 }
 
+/** Cache keys the store is still holding a result for, as the real store's entry map. */
+export function dpsHeldKeys() {
+  return [...mock.held.keys()]
+}
+
 /**
  * Bundles handed to the worker for one kind. A request builds its bundle lazily, so
  * tests that assert on the bundle build it here rather than reaching into the thunk.
@@ -70,8 +75,11 @@ export function mockDpsStore() {
         peek: vi.fn<(cacheKey: string) => unknown>(cacheKey => mock.held.get(cacheKey)),
         supersede: vi.fn<() => void>(),
         cancel: vi.fn<(cacheKey: string) => void>(),
-        dispose: vi.fn<() => void>(),
-        reset: vi.fn<() => void>(),
+        // The real reset terminates the workers, so a worker's caches go with them. A
+        // stand-in has no workers, so dropping the held results is the observable part.
+        reset: vi.fn<() => void>(() => {
+          mock.held.clear()
+        }),
       }),
     },
     selectDpsEntry: () => undefined,

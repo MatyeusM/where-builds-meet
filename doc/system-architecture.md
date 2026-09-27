@@ -352,14 +352,20 @@ Build and rotation activation are stored independently for every combat path.
 A single parent-owned path transition resolves the destination path's compatible
 build and rotation before changing any visible state. A missing or incompatible
 saved selection falls back to that path's configured default. The transition
-invalidates the previous calculation batch, installs the path, martial arts,
-build, and rotation together, then lets the normal fingerprint schedule restore
-a cached result or start one replacement batch. The Rotation Editor remounts at
-this path boundary but shares the application-level calculation cache; it does
-not reconcile the new path through a later child effect. Calculation
-fingerprints explicitly contain the ordered pair of equipped martial arts, so
-otherwise identical rotations from different martial-art selections cannot
-share cached results.
+invalidates the previous calculation batch, forgets every cached calculation,
+installs the path, martial arts, build, and rotation together, then lets the
+normal fingerprint schedule start a replacement batch. Forgetting reaches the
+store and the workers, because a worker's baseline and editor-timeline caches
+exist only inside the worker holding them, so terminating the pool is the only
+way to release that memory. A fingerprint covers the whole bundle, so another
+path's results can never be read as this path's, and nothing reaches for them
+once the path has changed; keeping them would only spend memory. A transition
+resolving to the path already selected, as choosing that path's martial arts
+does, changes no fingerprint and so forgets nothing. The Rotation Editor remounts
+at this path boundary; it does not reconcile the new path through a later child
+effect. Calculation fingerprints explicitly contain the ordered pair of equipped
+martial arts, so otherwise identical rotations from different martial-art
+selections cannot share cached results.
 
 Rotation editing uses a separate baseline-preview schedule. Input changes render
 immediately while a short debounce coalesces rapid edits before constructing and

@@ -397,6 +397,10 @@ export default function App() {
     if (!selection) return
 
     useDpsStore.getState().supersede()
+    // A calculation is keyed by the whole bundle, so another path's results can never be
+    // read as this path's, but nothing reaches for them again either. Switching paths
+    // forgets them so the cache holds the path in use rather than every path visited.
+    if (nextPathId !== pathId) useDpsStore.getState().reset()
     endRotationCalculation()
     setActiveSimulation(undefined)
 

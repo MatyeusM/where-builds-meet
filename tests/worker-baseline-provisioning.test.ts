@@ -111,7 +111,7 @@ describe("calculation worker baseline provisioning", () => {
       .flatMap(worker => worker.sent)
       .filter(message => message.mode === "comparisons" && message.baseline)
     assert.ok(seeded.length > 0, "No variant carried a baseline, so this proved nothing.")
-    useDpsStore.getState().dispose()
+    useDpsStore.getState().reset()
   })
 
   it("serves a repeated variant from the store without reaching a worker again", async () => {
@@ -124,6 +124,33 @@ describe("calculation worker baseline provisioning", () => {
       1,
       `A repeated variant reached a worker ${sent.length} times instead of being served from the store.`,
     )
-    useDpsStore.getState().dispose()
+    useDpsStore.getState().reset()
+  })
+
+  it("forgets held results and the workers holding them when the store is reset", async () => {
+    const { useDpsStore, workers } = await loadStore()
+    const store = () => useDpsStore.getState()
+    const request = () => store().ensure({ kind: "baseline" as const, cacheKey: "key", build: () => bundle })
+    const dispatches = () => workers.flatMap(worker => worker.sent).filter(message => message.mode === "baseline")
+
+    await request()
+    assert.equal(dispatches().length, 1, "The baseline should have reached a worker.")
+    await request()
+    assert.equal(dispatches().length, 1, "A repeated baseline should have been served from the store.")
+    const held = [...workers]
+
+    store().reset()
+    await request()
+    assert.equal(
+      dispatches().length,
+      2,
+      "After a reset the baseline reached no worker, so a cached result survived the reset.",
+    )
+    // A worker's caches exist only inside the worker, so terminating it is the only way to
+    // forget them. Termination is therefore part of the reset contract, not an aside.
+    assert.ok(
+      held.every(worker => worker.terminated),
+      "A worker that cached a baseline before the reset was left running.",
+    )
   })
 })

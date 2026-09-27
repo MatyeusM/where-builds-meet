@@ -7,7 +7,7 @@ import App from "../src/App"
 import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
 import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
-import { dpsRequests, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
+import { dpsHeldKeys, dpsRequests, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
 /**
  * A path with several rotations, so this fails if the editor calculates rotations the
@@ -157,4 +157,21 @@ it("calculates a rotation when it is selected", async () => {
   const after = calculatedRotations()
   expect(after.length).toBeGreaterThan(before.length)
   expect(after).toContain(idleName)
+})
+
+it("forgets a path's cached calculations when another path is selected", async () => {
+  await act(async () => root.render(<App />))
+  await settle()
+  const firstPath = dpsHeldKeys()
+  expect(firstPath.length).toBeGreaterThan(0)
+
+  const otherPath = [...container.querySelectorAll<HTMLButtonElement>(".path-selector-options button")].find(
+    button => button.getAttribute("aria-pressed") === "false" && !button.disabled,
+  )
+  expect(otherPath).toBeDefined()
+  await act(async () => otherPath!.click())
+  await settle()
+
+  const retained = firstPath.filter(key => dpsHeldKeys().includes(key))
+  expect(retained, `still holding ${retained.length} calculations from the previous path`).toEqual([])
 })

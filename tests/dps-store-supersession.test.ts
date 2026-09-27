@@ -94,7 +94,7 @@ describe("calculation store supersession", () => {
     const result = await fresh
     assert.equal(result.metrics.dps, 1, "The replacement batch did not complete.")
     assert.equal(store().entries.get(key)?.status, "ready", "The replacement did not settle as ready.")
-    store().dispose()
+    store().reset()
   })
 
   it("lets a comparison sweep run to completion while a newer batch supersedes it", async () => {
@@ -143,7 +143,7 @@ describe("calculation store supersession", () => {
       "rejected" in abandonedResult,
       `The superseded sweep was expected to fail, but resolved: ${JSON.stringify(abandonedResult).slice(0, 80)}`,
     )
-    store().dispose()
+    store().reset()
   })
 
   it("keeps a superseded entry from being served as a result", async () => {
@@ -164,6 +164,6 @@ describe("calculation store supersession", () => {
     // A failure left by the older batch must not shadow the real result.
     assert.equal(store().entries.get(key)?.status, "ready")
     assert.equal(store().peek(key)?.metrics.dps, 1)
-    store().dispose()
+    store().reset()
   })
 })

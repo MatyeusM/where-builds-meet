@@ -110,7 +110,7 @@ export type DpsStore = {
   peek: <K extends DpsKind>(cacheKey: DpsRequest<K>["cacheKey"]) => DpsResults[K] | undefined
   supersede: () => void
   cancel: (cacheKey: string) => void
-  dispose: () => void
+  /** Forget every cached calculation, in the store and in every worker. */
   reset: () => void
 }
 
@@ -242,13 +242,12 @@ export const useDpsStore = create<DpsStore>()((set, get) => {
 
     cancel: cacheKey => cancelCalculation(cacheKey),
 
-    dispose: () => {
-      inFlight.clear()
-      disposeCalculationWorkers()
-    },
-
     reset: () => {
       inFlight.clear()
+      // A worker's baseline and editor-timeline caches live inside the worker, so the
+      // only way to forget them is to terminate it. Any request in flight is rejected,
+      // which is the same signal a supersession gives its caller.
+      disposeCalculationWorkers()
       const entries = new Map<string, DpsEntry>()
       reportDpsCache(entries, retentionByKind)
       set({ entries })

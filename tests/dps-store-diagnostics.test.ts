@@ -84,7 +84,10 @@ describe("dps-store-diagnostics", () => {
       assert.equal(rows.find(row => row.kind === "baseline")!.ready, 13)
       assert.equal(rows.find(row => row.kind === "baseline")!.limit, 64)
       assert.equal(rows.find(row => row.kind === "editorTimeline")!.limit, 0)
-      store().dispose()
+      store().reset()
+      // The report is coalesced on a timer, so let the reset's own report print before
+      // the spy is restored. Otherwise it lands in the next test's console.
+      await settle()
     } finally {
       console_.restore()
     }
@@ -112,7 +115,10 @@ describe("dps-store-diagnostics", () => {
       await settle()
       const after = latestOccupancy(console_.tables)
       assert.equal(after.find(row => row.kind === "baseline")!.bytes, baseline.bytes)
-      store().dispose()
+      store().reset()
+      // The report is coalesced on a timer, so let the reset's own report print before
+      // the spy is restored. Otherwise it lands in the next test's console.
+      await settle()
     } finally {
       console_.restore()
     }
@@ -130,7 +136,10 @@ describe("dps-store-diagnostics", () => {
       )
       await settle()
       assert.match(console_.groups.at(-1)!, /baseline 64\/64/, "Occupancy did not stop at the retention bound.")
-      store().dispose()
+      store().reset()
+      // The report is coalesced on a timer, so let the reset's own report print before
+      // the spy is restored. Otherwise it lands in the next test's console.
+      await settle()
     } finally {
       console_.restore()
     }
