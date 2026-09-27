@@ -250,6 +250,27 @@ calculation bundles, cache identities, stored builds, stored rotations, and
 game-data IDs never contain localized values. See `localization.md` for the
 catalog workflow and validation rules.
 
+Damage, healing, and the per-second rates taken from them are presented by
+`formatThroughput` and `formatThroughputDelta` in
+`src/application/formatting.ts`, which take the active locale from
+`getLocale()` and hand the digits to `Intl.NumberFormat`. Two rules are the
+module's own rather than `Intl`'s. A thousand separator appears only once a
+magnitude reaches `10000`, because a number already short enough to count at a
+glance is not made easier to read by being split, and two figures of similar size
+stop occupying the same width. The threshold is judged on the rounded magnitude,
+so a value that rounds up across it is grouped like the number it becomes. And
+a difference of nothing is written `0` rather than `+0.00`, because a sign on an
+absent value is noise and would claim a direction the colour reads as no change.
+
+A magnitude is shown to two decimals unless a call site asks for another, which
+`BuildTab` does for a build's headline rate. Percentages, stat values, and
+durations are not magnitudes a reader weighs against one another and stay on
+`formatNumber`, which is not locale-aware. The distinction that matters is that
+`Intl` rounds the shortest decimal representation of a value where `toFixed` does
+not — `1.005` is `1.00` to one and `1.01` to the other — so the rounding a
+difference is coloured by is read back out of a formatter rather than computed
+separately, and it is read back in a fixed locale so the text stays parseable.
+
 ## Application and UI state
 
 `App.tsx` owns the shared character state:

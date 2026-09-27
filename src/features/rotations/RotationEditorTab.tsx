@@ -42,7 +42,7 @@ import {
 } from "../../application/comparison"
 import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
 import {
-  formatDamageNumber,
+  formatThroughput,
   formatNumber,
   formatResourceRange,
   skillCategoryLabel,
@@ -2347,19 +2347,19 @@ export function RotationEditorTab({
                 {currentCachedResult ? (
                   <>
                     <span>
-                      {t("system.totalDamage")}: {formatDamageNumber(rotationCalculation.unscaledTotalDamage)}
+                      {t("system.totalDamage")}: {formatThroughput(rotationCalculation.unscaledTotalDamage)}
                     </span>
                     {rotationCalculation.totalHealing > 0 ? (
                       <span className="healing-value">
-                        {t("system.totalHealing")}: +{formatDamageNumber(rotationCalculation.totalHealing)}
+                        {t("system.totalHealing")}: +{formatThroughput(rotationCalculation.totalHealing)}
                       </span>
                     ) : null}
                     <span>
-                      {t("system.dps")}: {formatDamageNumber(rotationCalculation.unscaledDps)}
+                      {t("system.dps")}: {formatThroughput(rotationCalculation.unscaledDps)}
                       {rotationCalculation.hps > 0 ? (
                         <span className="healing-value">
                           {" / "}
-                          {t("system.hps")}: {formatDamageNumber(rotationCalculation.hps)}
+                          {t("system.hps")}: {formatThroughput(rotationCalculation.hps)}
                         </span>
                       ) : null}
                     </span>
@@ -2425,7 +2425,7 @@ export function RotationEditorTab({
                             {showHeavensWillColumn && <span aria-hidden="true" />}
                             {showVitalityColumn && <span aria-hidden="true" />}
                             <span className="rotation-damage-value" data-mobile-label={t("ui.app.damage")}>
-                              {formatDamageNumber(damage)}
+                              {formatThroughput(damage)}
                             </span>
                             <span aria-hidden="true" />
                             <span aria-hidden="true" />
@@ -2913,7 +2913,7 @@ export function RotationEditorTab({
                               <span data-mobile-label={t("ui.app.selfHp")}>
                                 {isManualEvent && step.event === "TakeDamage" ? (
                                   rowReadOnly ? (
-                                    <span>{formatDamageNumber(resolvedTakeDamage)}</span>
+                                    <span>{formatThroughput(resolvedTakeDamage)}</span>
                                   ) : (
                                     <span className="rotation-distance-input-wrap">
                                       <input

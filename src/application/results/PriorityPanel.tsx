@@ -1,7 +1,7 @@
 import { IconArrowUp } from "@tabler/icons-react"
 import { useMemo, useState } from "react"
 
-import { deltaPrefix, formatDelta, formatNumber, throughputDeltaClass } from "../../application/formatting"
+import { deltaPrefix, formatNumber, formatThroughputDelta, throughputDeltaClass } from "../../application/formatting"
 import type { RotationCalculationCategory, RotationPriority } from "../../calculations/rotationMetrics"
 import { gameText, t } from "../../i18n"
 import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "../../statPriorityDisplay"
@@ -101,22 +101,20 @@ export function PriorityPanel({
                 </strong>
               )}
               <strong className={throughputDeltaClass(row.dpsDifference, "damage")}>
-                {deltaPrefix(row.dpsDifference)}
-                {formatDelta(row.dpsDifference)}
+                {formatThroughputDelta(row.dpsDifference)}
               </strong>
               <strong className={throughputDeltaClass(row.increase, "damage")}>
                 {deltaPrefix(row.increase)}
-                {formatDelta(row.increase)}%
+                {formatNumber(row.increase)}%
               </strong>
               {showHealing ? (
                 <>
                   <strong className={throughputDeltaClass(row.hpsDifference, "healing")}>
-                    {deltaPrefix(row.hpsDifference)}
-                    {formatDelta(row.hpsDifference)}
+                    {formatThroughputDelta(row.hpsDifference)}
                   </strong>
                   <strong className={throughputDeltaClass(row.healingIncrease, "healing")}>
                     {deltaPrefix(row.healingIncrease)}
-                    {formatDelta(row.healingIncrease)}%
+                    {formatNumber(row.healingIncrease)}%
                   </strong>
                 </>
               ) : null}

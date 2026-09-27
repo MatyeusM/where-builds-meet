@@ -1,6 +1,7 @@
 import { IconTrash, IconX } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
 
+import { formatNumber, formatThroughput } from "../../application/formatting"
 import { customPercentileStorageKey } from "../../application/persistence/keys"
 import type { RotationSimulationBundle } from "../../calculations/rotationCalculator"
 import {
@@ -43,8 +44,7 @@ function loadCustomPercentiles() {
   )
 }
 
-const formatNumber = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })
-const formatPercentage = (value: number) => `${value.toFixed(2)}%`
+const formatDuration = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })
 
 function simulationResultRows(summary: SimulationSummary, customPercentiles: number[]) {
   return [
@@ -92,7 +92,7 @@ function SimulationResultCard({
           </span>
           <span>
             {record.summary.runCount.toLocaleString()} {t("ui.simulationTab.runs")}{" "}
-            {formatNumber(record.summary.duration)}
+            {formatDuration(record.summary.duration)}
             {t("ui.simulationTab.s")}
           </span>
           <Chip className={current ? "simulation-current" : "simulation-outdated"}>{statusLabel}</Chip>
@@ -141,17 +141,17 @@ function SimulationResultCard({
                 <th scope="row">
                   <strong>{label}</strong>
                 </th>
-                <td>{formatNumber(result.totalDamage)}</td>
-                <td>{formatNumber(result.dps)}</td>
-                {hasHealing ? <td className="healing-value">{formatNumber(result.hps)}</td> : null}
-                <td>{formatPercentage(result.abrasionPercentage)}</td>
-                <td>{formatPercentage(result.normalPercentage)}</td>
-                <td>{formatPercentage(result.criticalPercentage)}</td>
-                <td>{formatPercentage(result.affinityPercentage)}</td>
+                <td>{formatThroughput(result.totalDamage)}</td>
+                <td>{formatThroughput(result.dps)}</td>
+                {hasHealing ? <td className="healing-value">{formatThroughput(result.hps)}</td> : null}
+                <td>{formatNumber(result.abrasionPercentage)}%</td>
+                <td>{formatNumber(result.normalPercentage)}%</td>
+                <td>{formatNumber(result.criticalPercentage)}%</td>
+                <td>{formatNumber(result.affinityPercentage)}%</td>
                 {hasHealing ? (
                   <>
-                    <td className="healing-value">{formatPercentage(result.healingNormalPercentage)}</td>
-                    <td className="healing-value">{formatPercentage(result.healingCriticalPercentage)}</td>
+                    <td className="healing-value">{formatNumber(result.healingNormalPercentage)}%</td>
+                    <td className="healing-value">{formatNumber(result.healingCriticalPercentage)}%</td>
                   </>
                 ) : null}
               </tr>

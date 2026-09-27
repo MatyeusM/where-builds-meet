@@ -14,6 +14,7 @@ import {
 
 import arsenalDefinitions from "../../../data/arsenal.json"
 import bowRingSetDefinitions from "../../../data/bow-ring-set.json"
+import { formatThroughput } from "../../application/formatting"
 import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
 import {
   defaultBuildSetup,
@@ -615,7 +616,7 @@ export default function BuildTab({
               )}
               {showActiveBuildDps ? (
                 <small className="build-detail-dps">
-                  ({formatNumber(Math.round(activeBuildDps))} {t("system.dps")})
+                  ({formatThroughput(activeBuildDps, 0)} {t("system.dps")})
                 </small>
               ) : null}
             </div>

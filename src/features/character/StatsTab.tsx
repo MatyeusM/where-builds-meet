@@ -7,7 +7,13 @@ import {
   innerWayAvailableForPath,
 } from "../../application/characterComposition"
 import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
-import { deltaPrefix, formatDelta, formatNumber, throughputDeltaClass } from "../../application/formatting"
+import {
+  deltaPrefix,
+  formatNumber,
+  formatThroughput,
+  formatThroughputDelta,
+  throughputDeltaClass,
+} from "../../application/formatting"
 import { artStatByWeaponFamily, martialArtDefinitions } from "../../application/gameData/martialArts"
 import { typedPathDefinitions } from "../../application/gameData/paths"
 import {
@@ -320,22 +326,20 @@ export function StatsTab({
     return comparison ? (
       <span className="setup-delta-label">
         <span className={throughputDeltaClass(comparison.dpsDifference, "damage")}>
-          {deltaPrefix(comparison.dpsDifference)}
-          {formatDelta(comparison.dpsDifference)} {t("system.dps")}
+          {formatThroughputDelta(comparison.dpsDifference)} {t("system.dps")}
         </span>
         <span className={throughputDeltaClass(comparison.increase, "damage")}>
           ({deltaPrefix(comparison.increase)}
-          {formatDelta(comparison.increase)}%)
+          {formatNumber(comparison.increase)}%)
         </span>
         {rotationMetrics && rotationMetrics.hps > 0 ? (
           <>
             <span className={throughputDeltaClass(comparison.hpsDifference, "healing")}>
-              {deltaPrefix(comparison.hpsDifference)}
-              {formatDelta(comparison.hpsDifference)} {t("system.hps")}
+              {formatThroughputDelta(comparison.hpsDifference)} {t("system.hps")}
             </span>
             <span className={throughputDeltaClass(comparison.healingIncrease, "healing")}>
               ({deltaPrefix(comparison.healingIncrease)}
-              {formatDelta(comparison.healingIncrease)}%)
+              {formatNumber(comparison.healingIncrease)}%)
             </span>
           </>
         ) : null}
@@ -1247,11 +1251,11 @@ export function StatsTab({
             <div className="dps-value">
               {rotationMetrics ? (
                 <>
-                  <span>{formatNumber(rotationMetrics.dps)}</span>
+                  <span>{formatThroughput(rotationMetrics.dps)}</span>
                   {rotationMetrics.hps > 0 ? (
                     <>
                       <span className="throughput-separator">/</span>
-                      <span className="healing-value">{formatNumber(rotationMetrics.hps)}</span>
+                      <span className="healing-value">{formatThroughput(rotationMetrics.hps)}</span>
                     </>
                   ) : null}
                 </>
