@@ -237,8 +237,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 65625.28722277684,
-      "totalDamage": 3937517.2333666096,
+      "dps": 66309.24559508955,
+      "totalDamage": 3978554.7357053724,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab": {
@@ -333,8 +333,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 63716.039290245964,
-      "totalDamage": 3822962.357414758,
+      "dps": 64778.96536070183,
+      "totalDamage": 3886737.92164211,
       "duration": 60
     }
   }
