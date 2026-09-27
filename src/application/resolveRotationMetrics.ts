@@ -80,6 +80,8 @@ export type ComparisonResolution = {
   /** Resolved per variant as they are asked for, so the caller need not hold the baseline. */
   baseline: () => RotationSimulationBaseline
   categories?: readonly RotationCalculationCategory[]
+  /** Called as each category's work begins, so a panel can show itself as busy while it waits. */
+  onCategoryStarted?: (category: RotationCalculationCategory) => void
   onCategoryProgress?: (category: RotationCalculationCategory, progress: number) => void
   /** Called as each category lands, so a caller can fill its panels in rather than at the end. */
   onCategoryResolved?: (metrics: RotationMetrics, category: RotationCalculationCategory) => void
@@ -144,6 +146,7 @@ export async function resolveComparisonMetrics(resolution: ComparisonResolution)
 
   await Promise.all(
     categories.map(async category => {
+      resolution.onCategoryStarted?.(category)
       const contribution = await resolveComparisonCategory(resolution, category)
       contributions.set(category, contribution)
       for (const settled of comparisonCategoryOrder) fold(settled)

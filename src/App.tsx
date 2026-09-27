@@ -41,8 +41,6 @@ const BuildTab = lazy(loadBuildTab)
 const SimulationTab = lazy(loadSimulationTab)
 import {
   activeBuildByPathStorageKey,
-  activeRotationByPathStorageKey,
-  activeRotationStorageKey,
   attunementOverrideStorageKey,
   buildSetupOverrideStorageKey,
   divinecraftStorageKey,
@@ -65,14 +63,6 @@ import {
   loadSelectedPath,
   subscribeToCompactLayout,
 } from "./application/persistence/settings"
-import { type RotationSimulationBundle } from "./calculations/rotationCalculator"
-import {
-  endRotationCalculation,
-  getRotationMetrics,
-  publishRotationMetrics,
-  subscribeToRotationMetrics,
-  type RotationMetrics,
-} from "./calculations/rotationMetrics"
 import type { CharacterStatOverrides } from "./calculations/statEffects"
 import {
   characterProfileStorageKey,
@@ -80,6 +70,7 @@ import {
   serializeCharacterProfiles,
   type CharacterProfile,
 } from "./characterProfiles"
+import { useActiveRotationResult } from "./features/rotations/useActiveRotationResult"
 import {
   activeBuildStorageKey,
   buildEntryAvailableForPath,
@@ -107,6 +98,7 @@ import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { useDpsStore } from "./stores/dpsStore"
+import { useRotationStore } from "./stores/rotationStore"
 import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
 
 const tabSuspenseFallback = <div className="viewport-tab-content" />
@@ -135,15 +127,6 @@ export default function App() {
 
   const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides)
   const skillEditorModified = hasSkillOverrides(skillOverrides)
-  const [activeSimulation, setActiveSimulation] = useState<{
-    bundle: RotationSimulationBundle
-    rotationName: string
-    bundleKey: string
-    rotationIsDefault: boolean
-    graduationFingerprint?: string
-    graduationDps?: number
-  }>()
-  const rotationMetrics = useSyncExternalStore(subscribeToRotationMetrics, getRotationMetrics, getRotationMetrics)
   const [innerWayRevision, setInnerWayRevision] = useState(0)
   const [setupSelections, setSetupSelections] = useState<SetupSelections>(() => ({
     food: loadFood(),
@@ -165,9 +148,17 @@ export default function App() {
   const [activeBuildIdsByPath, setActiveBuildIdsByPath] = useState<PathSelectionIds>(() =>
     loadPathSelectionIds(activeBuildByPathStorageKey, activeBuildStorageKey, pathId),
   )
-  const [activeRotationIdsByPath, setActiveRotationIdsByPath] = useState<PathSelectionIds>(() =>
-    loadPathSelectionIds(activeRotationByPathStorageKey, activeRotationStorageKey, pathId),
-  )
+  // The rotation store is a module singleton, so its persisted state is read during the first
+  // render rather than when its module happens to be imported, which a lazily loaded editor
+  // decides. It has to be read before the editor picks the rotation to open on that same render,
+  // and before this component subscribes, so the write lands on a store nothing is watching yet.
+  const [rotationStoreRead, markRotationStoreRead] = useState(false)
+  if (!rotationStoreRead) {
+    markRotationStoreRead(true)
+    useRotationStore.getState().initialise(pathId)
+  }
+  const activeRotationIdsByPath = useRotationStore(state => state.activeRotationIdsByPath)
+  const activeResult = useRotationStore(state => state.result)
   const breakthrough = breakthroughProfile(settings)
   const enemy: EnemyProfile = breakthrough
   const availableBuildEntries = buildState.entries.filter(
@@ -261,6 +252,16 @@ export default function App() {
     }),
     [activeStatState, settings, enemy, innerWayRevision, setupSelections],
   )
+  useActiveRotationResult({
+    pathId,
+    build: activeBuild,
+    gearItems: buildState.gearItems,
+    measurement: buildMeasurementContext,
+    activeRotationId: selectedRotationId,
+    defaultRotationId: defaultRotationIdForPath(pathId),
+    devMode,
+    weapons: settings.weapons,
+  })
   const updateStatOverride = (key: keyof CharacterStats, value: number) => {
     setStatOverrides(current => ({ ...current, [key]: value }))
   }
@@ -308,38 +309,11 @@ export default function App() {
       arsenal: profile.buildSetup.arsenal,
     })
   }
-  const handleRotationMetrics = (metrics: RotationMetrics, isActive: boolean) => {
-    if (isActive) publishRotationMetrics(metrics)
-  }
-  const handleActiveSimulationBundle = useCallback(
-    (
-      bundle: RotationSimulationBundle,
-      rotationName: string,
-      bundleKey: string,
-      rotationIsDefault: boolean,
-      graduation?: { fingerprint: string; dps?: number },
-    ) =>
-      setActiveSimulation({
-        bundle,
-        rotationName,
-        bundleKey,
-        rotationIsDefault,
-        graduationFingerprint: graduation?.fingerprint,
-        graduationDps: graduation?.dps,
-      }),
-    [],
+  const activateRotationForPath = useCallback(
+    (id: string, targetPathId = pathId) => useRotationStore.getState().selectRotationForPath(id, targetPathId),
+    [pathId],
   )
-  const handleGraduationDps = useCallback((fingerprint: string, dps: number) => {
-    setActiveSimulation(current =>
-      current?.graduationFingerprint === fingerprint ? { ...current, graduationDps: dps } : current,
-    )
-  }, [])
-  const activeRotationRecord = activeSimulation?.bundle.timeline.rotation
-  const activeRotationDisplayName = activeSimulation
-    ? activeSimulation.rotationIsDefault
-      ? gameText(activeSimulation.rotationName)
-      : activeSimulation.rotationName
-    : "—"
+  const activeRotationDisplayName = activeResult?.rotationName ?? "—"
   const activateBuildForPath = useCallback(
     (id: string, targetPathId = pathId) => {
       setActiveBuildIdsByPath(current => {
@@ -348,16 +322,6 @@ export default function App() {
         return next
       })
       setBuildState(current => (current.activeBuildId === id ? current : { ...current, activeBuildId: id }))
-    },
-    [pathId],
-  )
-  const activateRotationForPath = useCallback(
-    (id: string, targetPathId = pathId) => {
-      setActiveRotationIdsByPath(current => {
-        const next = withPathSelection(current, targetPathId, id)
-        if (next !== current) setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(next))
-        return next
-      })
     },
     [pathId],
   )
@@ -394,18 +358,15 @@ export default function App() {
     // read as this path's, but nothing reaches for them again either. Switching paths
     // forgets them so the cache holds the path in use rather than every path visited.
     if (nextPathId !== pathId) useDpsStore.getState().reset()
-    endRotationCalculation()
-    setActiveSimulation(undefined)
+    useRotationStore.getState().clear()
 
     const nextBuildIds = withPathSelection(activeBuildIdsByPath, nextPathId, selection.buildId)
     const nextRotationIds = withPathSelection(activeRotationIdsByPath, nextPathId, selection.rotationId)
     if (nextBuildIds !== activeBuildIdsByPath)
       setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(nextBuildIds))
-    if (nextRotationIds !== activeRotationIdsByPath)
-      setPersistentItem(activeRotationByPathStorageKey, JSON.stringify(nextRotationIds))
     setPersistentItem(pathStorageKey, nextPathId)
     setActiveBuildIdsByPath(nextBuildIds)
-    setActiveRotationIdsByPath(nextRotationIds)
+    useRotationStore.getState().setRotationsByPath(nextRotationIds)
     setBuildState(current => ({ ...current, activeBuildId: selection.buildId }))
     setPathId(nextPathId)
     setSettings(nextSettings)
@@ -553,8 +514,7 @@ export default function App() {
         </Tab>
         <Tab active={activeTab === "breakdown"} onClick={() => setActiveTab("breakdown")}>
           {t("ui.app.dpsBreakdown", {
-            dps:
-              rotationMetrics && rotationMetrics.hps > 0 ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
+            dps: activeResult?.metrics.hps ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
           })}
         </Tab>
         <Tab active={activeTab === "rotations"} onClick={() => setActiveTab("rotations")}>
@@ -593,8 +553,8 @@ export default function App() {
           onBreakthroughChange={breakthrough => setSettings(current => ({ ...current, breakthrough }))}
           onBuildSetupChange={updateBuildSetupOverride}
           onBuildSetupReset={resetBuildSetupOverride}
-          rotationMetrics={rotationMetrics}
-          graduationDps={activeSimulation?.graduationDps}
+          rotationMetrics={activeResult?.metrics}
+          graduationDps={activeResult?.graduation?.dps}
           activeBuildName={activeBuildDisplayName}
           activeRotationName={activeRotationDisplayName}
           onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
@@ -616,14 +576,14 @@ export default function App() {
                 onActiveBuildChange={activateBuildForPath}
                 onSelectBuildWeapons={selectBuildWeapons}
                 measurement={buildMeasurementContext}
-                activeRotation={activeRotationRecord}
+                activeRotation={activeResult?.rotation}
                 activeRotationName={activeRotationDisplayName}
               />
             </div>
           </Suspense>
         </FeatureLoadBoundary>
       ) : activeTab === "breakdown" ? (
-        <BreakdownTab metrics={rotationMetrics} pathId={pathId} />
+        <BreakdownTab metrics={activeResult?.metrics} pathId={pathId} />
       ) : activeTab === "skills" ? (
         <SkillEditorTab
           weapons={settings.weapons}
@@ -652,9 +612,6 @@ export default function App() {
           skillOverrides={skillOverrides}
           onSelectRotationWeapons={selectBuildWeapons}
           onActiveRotationChange={activateRotationForPath}
-          onMetricsChange={handleRotationMetrics}
-          onActiveSimulationBundleChange={handleActiveSimulationBundle}
-          onGraduationDpsChange={handleGraduationDps}
         />
       </div>
       {simulationMounted && (
@@ -662,9 +619,9 @@ export default function App() {
           <FeatureLoadBoundary>
             <Suspense fallback={null}>
               <SimulationTab
-                bundle={activeSimulation?.bundle}
-                bundleKey={activeSimulation?.bundleKey}
-                rotationName={activeSimulation ? activeRotationDisplayName : undefined}
+                bundle={activeResult?.bundle}
+                bundleKey={activeResult?.bundleKey}
+                rotationName={activeResult ? activeRotationDisplayName : undefined}
                 buildName={activeBuildDisplayName}
               />
             </Suspense>

@@ -11,6 +11,7 @@ const mock = {
   requests: [] as any[],
   dispatches: [] as any[],
   held: new Map<string, unknown>(),
+  inFlight: new Map<string, Promise<unknown>>(),
 }
 
 /**
@@ -27,6 +28,7 @@ export function resetDpsMock() {
   mock.requests.length = 0
   mock.dispatches.length = 0
   mock.held.clear()
+  mock.inFlight.clear()
 }
 
 /** Register the result for one calculation kind. Unhandled kinds never settle. */
@@ -72,12 +74,25 @@ export function mockDpsStore() {
           mock.requests.push(request)
           const key = entryKey(request.kind, request.cacheKey)
           if (retained(request.kind) && mock.held.has(key)) return mock.held.get(key)
-          mock.dispatches.push(request)
-          const handler = mock.handlers.get(request.kind)
-          if (!handler) return never()
-          const result = await handler(request)
-          if (retained(request.kind)) mock.held.set(key, result)
-          return result
+          // The real store keeps in-flight work outside the result map, so two callers asking for
+          // the same calculation join one job rather than each reaching a worker. Without this a
+          // caller that asks while another is still waiting would be counted as a second dispatch.
+          const running = mock.inFlight.get(key)
+          if (running) return running
+          const job = (async () => {
+            mock.dispatches.push(request)
+            const handler = mock.handlers.get(request.kind)
+            if (!handler) return never()
+            const result = await handler(request)
+            if (retained(request.kind)) mock.held.set(key, result)
+            return result
+          })()
+          mock.inFlight.set(key, job)
+          try {
+            return await job
+          } finally {
+            if (mock.inFlight.get(key) === job) mock.inFlight.delete(key)
+          }
         }),
         peek: vi.fn<(kind: string, cacheKey: string) => unknown>((kind, cacheKey) =>
           mock.held.get(entryKey(kind, cacheKey)),
@@ -88,6 +103,7 @@ export function mockDpsStore() {
         // stand-in has no workers, so dropping the held results is the observable part.
         reset: vi.fn<() => void>(() => {
           mock.held.clear()
+          mock.inFlight.clear()
         }),
       }),
     },

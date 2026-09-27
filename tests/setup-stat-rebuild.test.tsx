@@ -8,9 +8,9 @@ import App from "../src/App"
 import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
 import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
-import { getRotationMetrics } from "../src/calculations/rotationMetrics"
 import type { ResolvedStats } from "../src/calculations/statEffects"
 import { initializeI18n } from "../src/i18n"
+import { useRotationStore } from "../src/stores/rotationStore"
 import { dpsDispatches, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
 vi.mock("../src/stores/dpsStore", async () => {
@@ -117,7 +117,7 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   await act(async () => root.render(<App />))
   await settle()
   const fishBundle = latestBundle()
-  const fishDps = getRotationMetrics()!.dps
+  const fishDps = useRotationStore.getState().result!.metrics.dps
   expect(fishDps).toBeGreaterThan(0)
 
   await choose("Food", "None")
@@ -130,31 +130,31 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   expect((noneBundle.stats as ResolvedStats).effectiveMaxPhys).toBeLessThan(
     (fishBundle.stats as ResolvedStats).effectiveMaxPhys,
   )
-  expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeLessThan(fishDps)
   expect(localStorage.getItem("wwm-food-session-v1")).toBe("None")
 
   const dispatchesBeforeReturn = dpsDispatches("baseline").length
   await choose("Food", "Simmering Fish Slices")
   expect(dpsDispatches("baseline")).toHaveLength(dispatchesBeforeReturn)
-  expect(getRotationMetrics()!.dps).toBeCloseTo(fishDps, 8)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(fishDps, 8)
 })
 
 it("keeps Script and Divinecraft selections in the same calculation as the character sheet", async () => {
   await act(async () => root.render(<App />))
   await settle()
   const originalStats = latestBundle().stats
-  const fireDps = getRotationMetrics()!.dps
+  const fireDps = useRotationStore.getState().result!.metrics.dps
   await choose("Divinecraft", "None")
-  const noneDps = getRotationMetrics()!.dps
+  const noneDps = useRotationStore.getState().result!.metrics.dps
   expect(noneDps).toBeLessThan(fireDps)
   expect(latestBundle().stats).toEqual(originalStats)
   await choose("Script", "Insight Script")
-  expect(getRotationMetrics()!.dps).toBeGreaterThan(noneDps)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeGreaterThan(noneDps)
   expect(latestBundle().stats).toEqual(originalStats)
   await choose("Script", "None")
-  expect(getRotationMetrics()!.dps).toBeCloseTo(noneDps, 8)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(noneDps, 8)
   await choose("Divinecraft", "Fire")
-  expect(getRotationMetrics()!.dps).toBeCloseTo(fireDps, 8)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(fireDps, 8)
 })
 
 it.each([
@@ -164,7 +164,7 @@ it.each([
   await act(async () => root.render(<App />))
   await settle()
   const before = latestBundle()
-  const beforeDps = getRotationMetrics()!.dps
+  const beforeDps = useRotationStore.getState().result!.metrics.dps
   const select = container.querySelector<HTMLSelectElement>(selector)!
   const original = select.value
   expect(original).not.toBe(value)
@@ -174,19 +174,19 @@ it.each([
   })
   await settle()
   expect(latestBundle().stats).not.toEqual(before.stats)
-  expect(getRotationMetrics()!.dps).not.toBe(beforeDps)
+  expect(useRotationStore.getState().result!.metrics.dps).not.toBe(beforeDps)
   await act(async () => {
     select.value = original
     select.dispatchEvent(new Event("change", { bubbles: true }))
   })
   await settle()
-  expect(getRotationMetrics()!.dps).toBeCloseTo(beforeDps, 8)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(beforeDps, 8)
 })
 
 it("rebuilds edited stats and preserves final-value overrides across food changes", async () => {
   await act(async () => root.render(<App />))
   await settle()
-  const beforeDps = getRotationMetrics()!.dps
+  const beforeDps = useRotationStore.getState().result!.metrics.dps
   const beforeStats = latestBundle().stats
   const input = [...container.querySelectorAll<HTMLLabelElement>("label.field")]
     .find(label => label.textContent?.startsWith("Min Physical Attack"))!
@@ -199,10 +199,10 @@ it("rebuilds edited stats and preserves final-value overrides across food change
   await act(async () => input.dispatchEvent(new FocusEvent("focusout", { bubbles: true })))
   await settle()
   expect(latestBundle().stats.minPhys).toBe(target)
-  expect(getRotationMetrics()!.dps).toBeGreaterThan(beforeDps)
-  const fishDps = getRotationMetrics()!.dps
+  expect(useRotationStore.getState().result!.metrics.dps).toBeGreaterThan(beforeDps)
+  const fishDps = useRotationStore.getState().result!.metrics.dps
   await choose("Food", "None")
   expect(latestBundle().stats.minPhys).toBe(target)
-  expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeLessThan(fishDps)
   expect(JSON.parse(localStorage.getItem("wwm-stat-overrides-v1")!).minPhys).toBe(target)
 })

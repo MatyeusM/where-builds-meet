@@ -5,12 +5,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import { CalculationStatus as CategoryStatus } from "../src/application/results/CalculationStatus"
-import {
-  beginRotationCalculation,
-  endRotationCalculation,
-  publishRotationCategoryProgress,
-} from "../src/calculations/rotationMetrics"
 import { initializeI18n } from "../src/i18n"
+import { useRotationStore } from "../src/stores/rotationStore"
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -28,14 +24,15 @@ beforeEach(async () => {
     })),
   )
   await initializeI18n()
-  beginRotationCalculation()
+  // A baseline reports no progress while it runs, which is the state these describe.
+  useRotationStore.getState().startCategory("baseline")
   container = document.createElement("div")
   document.body.appendChild(container)
   root = createRoot(container)
 })
 
 afterEach(async () => {
-  endRotationCalculation()
+  useRotationStore.getState().clear()
   await act(async () => root.unmount())
   container.remove()
 })
@@ -54,13 +51,19 @@ it("describes a calculation that reports no progress without a percentage", asyn
 })
 
 it("describes a calculation that reports progress with the fraction it measured", async () => {
-  await act(async () => publishRotationCategoryProgress("statPriority", 0.42))
+  await act(async () => {
+    useRotationStore.getState().startCategory("statPriority")
+    useRotationStore.getState().progressCategory("statPriority", 0.42)
+  })
   const { text } = await render("statPriority")
   expect(text).toBe("Recalculating… 42%")
 })
 
 it("reports a measured zero as zero rather than as an absent measurement", async () => {
-  await act(async () => publishRotationCategoryProgress("statPriority", 0))
+  await act(async () => {
+    useRotationStore.getState().startCategory("statPriority")
+    useRotationStore.getState().progressCategory("statPriority", 0)
+  })
   const { text } = await render("statPriority")
   expect(text).toBe("Recalculating… 0%")
 })

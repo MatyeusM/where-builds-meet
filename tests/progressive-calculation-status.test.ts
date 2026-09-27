@@ -1,17 +1,16 @@
-import { assert, describe, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
-// Ported from script/probe/check-progressive-calculation-status.mjs.
-describe("progressive-calculation-status", () => {
-  it("Progressive calculation status probe passed", async () => {
-    const {
-      beginRotationCalculation,
-      completeRotationCalculationCategory,
-      endRotationCalculation,
-      getRotationCalculationStatus,
-      publishRotationCategoryProgress,
-      rotationCalculationCategories,
-    } = await import("../src/calculations/rotationMetrics.ts")
-    const expectedOrder = [
+import { rotationCalculationCategories } from "../src/calculations/rotationMetrics"
+import { useRotationStore } from "../src/stores/rotationStore"
+
+const status = () => useRotationStore.getState().status
+const recalculating = () => rotationCalculationCategories.filter(category => status()[category].recalculating)
+
+describe("calculation status", () => {
+  beforeEach(() => useRotationStore.getState().clear())
+
+  it("orders the categories so the baseline is measured before anything it is compared against", () => {
+    expect([...rotationCalculationCategories]).toEqual([
       "baseline",
       "statPriority",
       "attunementPriority",
@@ -24,39 +23,39 @@ describe("progressive-calculation-status", () => {
       "script",
       "divinecraft",
       "food",
-    ]
-    assert(
-      JSON.stringify(rotationCalculationCategories) === JSON.stringify(expectedOrder),
-      "Progressive calculation categories are not in the required order.",
-    )
+    ])
+  })
 
-    beginRotationCalculation()
-    const started = getRotationCalculationStatus()
-    assert(
-      !rotationCalculationCategories.some(
-        category => !started[category].recalculating || started[category].progress !== undefined,
-      ),
-      "Every category must begin pending, reporting no progress until it measures some.",
-    )
+  it("reports a started category as busy without a progress it has not measured", () => {
+    useRotationStore.getState().startCategory("statPriority")
+    expect(status().statPriority).toEqual({ recalculating: true })
+    expect(recalculating()).toEqual(["statPriority"])
+  })
 
-    publishRotationCategoryProgress("statPriority", 0.5)
-    const progressing = getRotationCalculationStatus()
-    assert(
-      !(progressing.statPriority.progress !== 0.5 || progressing.attunementPriority.progress !== undefined),
-      "Category progress must update independently, and only for the category that reported it.",
-    )
+  it("keeps progress to the category that reported it", () => {
+    useRotationStore.getState().startCategory("statPriority")
+    useRotationStore.getState().progressCategory("statPriority", 0.5)
+    expect(status().statPriority.progress).toBe(0.5)
+    expect(status().attunementPriority).toEqual({ recalculating: false })
+  })
 
-    completeRotationCalculationCategory("statPriority")
-    const completed = getRotationCalculationStatus()
-    assert(
-      !(completed.statPriority.recalculating || completed.statPriority.progress !== undefined),
-      "A completed category must be idle, carrying no progress to report.",
-    )
+  it("leaves a settled category idle and carrying no progress", () => {
+    useRotationStore.getState().startCategory("statPriority")
+    useRotationStore.getState().progressCategory("statPriority", 0.5)
+    useRotationStore.getState().settleCategory("statPriority")
+    expect(status().statPriority).toEqual({ recalculating: false })
+  })
 
-    endRotationCalculation()
-    assert(
-      !rotationCalculationCategories.some(category => getRotationCalculationStatus()[category].recalculating),
-      "Ending a calculation must clear every remaining category status.",
-    )
+  it("runs categories independently, so one settling does not clear another", () => {
+    useRotationStore.getState().startCategory("statPriority")
+    useRotationStore.getState().startCategory("innerWays")
+    useRotationStore.getState().settleCategory("statPriority")
+    expect(recalculating()).toEqual(["innerWays"])
+  })
+
+  it("reports every category idle again once the calculation is forgotten", () => {
+    for (const category of rotationCalculationCategories) useRotationStore.getState().startCategory(category)
+    useRotationStore.getState().clear()
+    expect(recalculating()).toEqual([])
   })
 })

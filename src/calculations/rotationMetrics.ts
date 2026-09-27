@@ -107,8 +107,6 @@ export type RotationMetrics = {
   setupComparisons: Record<string, RotationPriority[]>
 }
 
-type Listener = () => void
-
 export const rotationCalculationCategories = [
   "baseline",
   "statPriority",
@@ -131,70 +129,3 @@ export type RotationCalculationCategory = (typeof rotationCalculationCategories)
  */
 export type RotationCalculationCategoryStatus = { recalculating: boolean; progress?: number }
 export type RotationCalculationStatus = Record<RotationCalculationCategory, RotationCalculationCategoryStatus>
-
-const idleCategoryStatus = (): RotationCalculationCategoryStatus => ({ recalculating: false })
-let calculationStatus = Object.fromEntries(
-  rotationCalculationCategories.map(category => [category, idleCategoryStatus()]),
-) as RotationCalculationStatus
-const calculationStatusListeners = new Set<Listener>()
-
-let currentMetrics: RotationMetrics | undefined
-const listeners = new Set<Listener>()
-
-export function getRotationMetrics() {
-  return currentMetrics
-}
-
-export function publishRotationMetrics(metrics: RotationMetrics) {
-  currentMetrics = metrics
-  listeners.forEach(listener => listener())
-}
-
-export function subscribeToRotationMetrics(listener: Listener) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
-}
-
-export function getRotationCalculationStatus() {
-  return calculationStatus
-}
-
-export function subscribeToRotationCalculationStatus(listener: Listener) {
-  calculationStatusListeners.add(listener)
-  return () => calculationStatusListeners.delete(listener)
-}
-
-export function beginRotationCalculation() {
-  calculationStatus = Object.fromEntries(
-    rotationCalculationCategories.map(category => [category, { recalculating: true }]),
-  ) as RotationCalculationStatus
-  calculationStatusListeners.forEach(listener => listener())
-}
-
-export function publishRotationCategoryProgress(category: RotationCalculationCategory, progress: number) {
-  const normalized = Math.min(1, Math.max(0, progress))
-  const current = calculationStatus[category]
-  if (current.recalculating && current.progress === normalized) return
-  calculationStatus = { ...calculationStatus, [category]: { recalculating: true, progress: normalized } }
-  calculationStatusListeners.forEach(listener => listener())
-}
-
-export function completeRotationCalculationCategory(category: RotationCalculationCategory) {
-  const current = calculationStatus[category]
-  if (!current.recalculating) return
-  calculationStatus = { ...calculationStatus, [category]: { recalculating: false } }
-  calculationStatusListeners.forEach(listener => listener())
-}
-
-export function endRotationCalculation() {
-  let changed = false
-  const next = { ...calculationStatus }
-  for (const category of rotationCalculationCategories) {
-    if (!next[category].recalculating) continue
-    next[category] = { ...next[category], recalculating: false }
-    changed = true
-  }
-  if (!changed) return
-  calculationStatus = next
-  calculationStatusListeners.forEach(listener => listener())
-}

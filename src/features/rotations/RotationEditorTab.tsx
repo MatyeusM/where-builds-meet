@@ -32,14 +32,6 @@ import {
   setAvailableForSettings,
   setupConditionsFor,
 } from "../../application/characterComposition"
-import {
-  baselineMetricsWithPreviousComparisons,
-  combineComparisonVariantMetrics,
-  comparisonCategoryOrder,
-  comparisonVariantRequests,
-  mergeComparisonCategory,
-  type ComparisonVariantRequest,
-} from "../../application/comparison"
 import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
 import {
   formatThroughput,
@@ -80,8 +72,8 @@ import {
   type GraduationPresetEnvironment,
 } from "../../application/graduation"
 import { percentageAttunementKeys } from "../../application/persistence/attunements"
-import { rotationListStorageKey } from "../../application/persistence/keys"
 import { initialRotationEditorState } from "../../application/persistence/rotations"
+import { resolveComparisonMetrics } from "../../application/resolveRotationMetrics"
 import { calculationStatusLabel } from "../../application/results/calculationStatusLabel"
 import { RotationActionBreakdownValue } from "../../application/results/DamageBreakdownValue"
 import { RotationSkillName } from "../../application/results/RotationSkillName"
@@ -117,17 +109,7 @@ import {
   type RotationSimulationResult,
   type RotationSimulationVariant,
 } from "../../calculations/rotationCalculator"
-import {
-  beginRotationCalculation,
-  completeRotationCalculationCategory,
-  emptyRotationBreakdown,
-  endRotationCalculation,
-  getRotationMetrics,
-  publishRotationCategoryProgress,
-  type RotationCalculationCategory,
-  type RotationMetrics,
-  type RotationPriority,
-} from "../../calculations/rotationMetrics"
+import { emptyRotationBreakdown, type RotationMetrics, type RotationPriority } from "../../calculations/rotationMetrics"
 import {
   editableCastTimeMaximum,
   editableCastTimeRequired,
@@ -147,7 +129,6 @@ import { attunementData, maxGearRoll, selectSetTier, setSelectionChangesTimeline
 import { globalDebuffRows, loadGlobalDebuffs } from "../../globalDebuffs"
 import { gameText, t } from "../../i18n"
 import { publishNotice, dismissNotice } from "../../notices"
-import { setPersistentItem } from "../../persistentStorage"
 import { displayEntryKey, visibleTimelineEffects } from "../../rotationDisplay"
 import {
   attachedEventPhase,
@@ -165,14 +146,10 @@ import {
   supportsEventStartTime,
   type RotationAttachmentTarget,
 } from "../../rotationEditing"
-import {
-  exportRotationEntries,
-  mergeImportedRotationEntries,
-  serializeRotationEntries,
-  type RotationEntry,
-} from "../../rotationTransfer"
+import { exportRotationEntries, mergeImportedRotationEntries, type RotationEntry } from "../../rotationTransfer"
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../../skillOverrides"
 import { useDpsStore } from "../../stores/dpsStore"
+import { useRotationStore } from "../../stores/rotationStore"
 import { type CharacterStats, type WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
 import { CalculationStatus } from "../../ui/CalculationStatus"
@@ -212,9 +189,6 @@ export function RotationEditorTab({
   skillOverrides,
   onSelectRotationWeapons,
   onActiveRotationChange,
-  onMetricsChange,
-  onActiveSimulationBundleChange,
-  onGraduationDpsChange,
 }: {
   character: CharacterState
   pathId: PathId
@@ -226,15 +200,6 @@ export function RotationEditorTab({
   skillOverrides: SkillOverrides
   onSelectRotationWeapons: (weapons: [WeaponId, WeaponId], rotationId: string) => boolean
   onActiveRotationChange: (id: string) => void
-  onMetricsChange: (metrics: RotationMetrics, isActive: boolean) => void
-  onActiveSimulationBundleChange: (
-    bundle: RotationSimulationBundle,
-    rotationName: string,
-    bundleKey: string,
-    isDefault: boolean,
-    graduation?: { fingerprint: string; dps?: number },
-  ) => void
-  onGraduationDpsChange: (fingerprint: string, dps: number) => void
 }) {
   const {
     stats: displayedCharacterStats,
@@ -274,14 +239,16 @@ export function RotationEditorTab({
     }
     return maxStacks
   }, [calculationDefinitions.effectDefinitions, innerWayEffectRules])
+  const rotationEntries = useRotationStore(state => state.entries)
+  const updateRotationEntries = useRotationStore(state => state.updateEntries)
+  const persistEntries = useRotationStore(state => state.persistEntries)
   const [initialState] = useState(() =>
     initialRotationEditorState(devMode, selectedRotationId || defaultRotationId, settings.weapons),
   )
-  const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>(initialState.entries)
   const savedRotationSnapshotsRef = useRef<Map<string, RotationRecord> | null>(null)
   if (savedRotationSnapshotsRef.current === null)
     savedRotationSnapshotsRef.current = new Map(
-      initialState.entries.map(entry => [entry.id, JSON.parse(JSON.stringify(entry.rotation)) as RotationRecord]),
+      rotationEntries.map(entry => [entry.id, JSON.parse(JSON.stringify(entry.rotation)) as RotationRecord]),
     )
   const [editingRotationId, setEditingRotationId] = useState(initialState.activeId)
   const rotationNameInputRef = useRef<HTMLInputElement>(null)
@@ -311,7 +278,6 @@ export function RotationEditorTab({
   const scheduledRefreshTargetRef = useRef<string | null>(null)
   const runningRefreshTargetRef = useRef<string | null>(null)
   const graduationFingerprintRef = useRef<string | null>(null)
-  const [refreshRetryRevision, setRefreshRetryRevision] = useState(0)
   const [readableDialogOpen, setReadableDialogOpen] = useState(false)
   const [readableCopyStatus, setReadableCopyStatus] = useState("")
   const readableDialogRef = useRef<HTMLDialogElement>(null)
@@ -409,10 +375,6 @@ export function RotationEditorTab({
   useEffect(() => {
     rotationResultsRef.current = rotationResults
   }, [rotationResults])
-
-  function persistRotationEntries(entries: RotationEntry[]) {
-    setPersistentItem(rotationListStorageKey, serializeRotationEntries(entries))
-  }
 
   useEffect(() => {
     if (activeRotationId && selectedRotationId !== activeRotationId) onActiveRotationChange(activeRotationId)
@@ -950,14 +912,13 @@ export function RotationEditorTab({
     const nextEntries = rotationEntries.map(entry =>
       entry.id === editingRotationId && !entry.isDefault ? { ...entry, rotation: normalized } : entry,
     )
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     setRotation(normalized)
     savedRotationSnapshotsRef.current?.set(editingRotationId, JSON.parse(JSON.stringify(normalized)) as RotationRecord)
-    persistRotationEntries(nextEntries)
     setError("")
     setStatus(t("ui.app.savedForThisSession"))
     if (editingRotationId === activeRotationId && editorTimelineReady)
-      void calculateDiffsForRotation(editingRotationId, normalized)
+      void resolveRotationForEditor(editingRotationId, normalized)
   }
   function resetRotation() {
     if (rotationLocked) return
@@ -987,7 +948,7 @@ export function RotationEditorTab({
     const nextEntry = nextEntries.find(entry => entry.id === id)
     if (!nextEntry) return
     const nextRotation = rotationRecordForEntry(nextEntry)
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     onActiveRotationChange(id)
     setEditingRotationId(id)
     setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
@@ -997,7 +958,6 @@ export function RotationEditorTab({
         : { rowId: "rotation-0" },
     )
     setEventTimeDrafts({})
-    persistRotationEntries(nextEntries)
   }
   function editRotation(id: string) {
     if (id === editingRotationId) return
@@ -1008,7 +968,7 @@ export function RotationEditorTab({
     const nextEntry = nextEntries.find(entry => entry.id === id)
     if (!nextEntry) return
     const nextRotation = rotationRecordForEntry(nextEntry)
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     setEditingRotationId(id)
     setRotation(JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
     setStartAnchor(
@@ -1017,13 +977,12 @@ export function RotationEditorTab({
         : { rowId: "rotation-0" },
     )
     setEventTimeDrafts({})
-    persistRotationEntries(nextEntries)
   }
   function selectRotation(entry: RotationEntry) {
     if (!rotationAvailableForWeapons(entry, settings.weapons)) {
       const entryMartialArts = [...new Set(entry.martialArts)]
       if (entryMartialArts.length !== 2) return
-      persistRotationEntries(currentRotationEntries())
+      persistEntries()
       onSelectRotationWeapons([entryMartialArts[0], entryMartialArts[1]], entry.id)
       return
     }
@@ -1045,13 +1004,12 @@ export function RotationEditorTab({
       ),
       { id, rotation: nextRotation, martialArts: [...new Set(settings.weapons)] },
     ]
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     setEditingRotationId(id)
     setRotation(nextRotation)
     savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(nextRotation)) as RotationRecord)
     setStartAnchor({ rowId: "rotation-0" })
     setEventTimeDrafts({})
-    persistRotationEntries(nextEntries)
   }
   function duplicateRotation() {
     const id = createRotationId()
@@ -1064,7 +1022,7 @@ export function RotationEditorTab({
       ...rotationEntries,
       { id, rotation: duplicate, martialArts: [...(sourceEntry?.martialArts ?? new Set(settings.weapons))] },
     ]
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     setEditingRotationId(id)
     setRotation(duplicate)
     savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(duplicate)) as RotationRecord)
@@ -1078,7 +1036,6 @@ export function RotationEditorTab({
     setEditingName(false)
     setStatus("")
     setError("")
-    persistRotationEntries(nextEntries)
   }
   function removeRotation(id: string) {
     const entry = rotationEntries.find(candidate => candidate.id === id)
@@ -1092,8 +1049,7 @@ export function RotationEditorTab({
     const nextEntries = rotationEntries.filter(entry => entry.id !== id)
     savedRotationSnapshotsRef.current?.delete(id)
     if (id !== editingRotationId && id !== activeRotationId) {
-      setRotationEntries(nextEntries)
-      persistRotationEntries(nextEntries)
+      updateRotationEntries(() => nextEntries)
       return
     }
     const nextVisibleEntries = nextEntries.filter(entry => rotationAvailableForWeapons(entry, settings.weapons))
@@ -1101,7 +1057,7 @@ export function RotationEditorTab({
       nextVisibleEntries[Math.max(0, listedRotationEntries.findIndex(entry => entry.id === id) - 1)] ??
       nextVisibleEntries[0]
     if (!nextActive) return
-    setRotationEntries(nextEntries)
+    updateRotationEntries(() => nextEntries)
     if (id === activeRotationId) {
       onActiveRotationChange(nextActive.id)
     }
@@ -1115,7 +1071,6 @@ export function RotationEditorTab({
       )
     }
     setEventTimeDrafts({})
-    persistRotationEntries(nextEntries)
   }
 
   function currentRotationEntries() {
@@ -1155,8 +1110,7 @@ export function RotationEditorTab({
         if (imported)
           savedRotationSnapshotsRef.current?.set(id, JSON.parse(JSON.stringify(imported.rotation)) as RotationRecord)
       })
-      setRotationEntries(migratedEntries)
-      persistRotationEntries(migratedEntries)
+      updateRotationEntries(() => migratedEntries)
       const importedEntry = migratedEntries.find(entry => entry.id === result.importedIds[0])
       if (importedEntry) {
         setEditingRotationId(importedEntry.id)
@@ -1683,6 +1637,16 @@ export function RotationEditorTab({
   )
   // Requests the structural editor timeline for the current revision. Declared after
   // calculationBundleFor so the effect only references initialized bindings.
+  /**
+   * An editor timeline is a preview of one revision, and is deliberately neither held nor shared:
+   * a timeline for an earlier revision is worse than none, because the revision check would accept
+   * it as current. Keyed by rotation alone, an edit made while the previous revision was still
+   * running joined that job instead of dispatching its own, and was handed the rotation as it was.
+   * So every request is its own key, and a number that never repeats is what makes it so.
+   */
+  const editorTimelineRequestRef = useRef(0)
+  const editorTimelineKey = (id: string) => `editor:${id}:${(editorTimelineRequestRef.current += 1)}`
+
   useEffect(() => {
     if (editorTimelineReady) return
     const requested: EditorRevision = { id: editingRotationId, context: calculationContextKey, rotation }
@@ -1695,7 +1659,7 @@ export function RotationEditorTab({
           .getState()
           .ensure({
             kind: "editorTimeline",
-            cacheKey: `editor:${requested.id}`,
+            cacheKey: editorTimelineKey(requested.id),
             build: () => calculationBundleFor(requested.rotation, false),
             priority: 450,
           })
@@ -1718,7 +1682,7 @@ export function RotationEditorTab({
     return () => {
       cancelled = true
       window.clearTimeout(timer)
-      useDpsStore.getState().cancel("editorTimeline", `editor:${requested.id}`)
+      useDpsStore.getState().cancel("editorTimeline", editorTimelineKey(requested.id))
     }
   }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
@@ -1741,44 +1705,20 @@ export function RotationEditorTab({
     }
     return buildGraduationBundleSet(environment)
   })
-  // Publishes the active rotation's simulation bundle. Declared after
-  // prepareGraduationCalculation so the effect only references initialized bindings.
-  useEffect(() => {
-    if (!activeRotationId) return
-    const activeEntry = rotationEntries.find(entry => entry.id === activeRotationId)
-    const activeRotation =
-      activeRotationId === editingRotationId ? rotation : activeEntry ? rotationRecordForEntry(activeEntry) : undefined
-    if (activeRotation) {
-      const graduation = prepareGraduationCalculation(activeRotation)
-      graduationFingerprintRef.current = graduation?.fingerprint ?? null
-      let cachedGraduation: number | undefined
-      if (graduation) {
-        const cachedThroughput = graduation.candidates.flatMap(candidate => {
-          const throughput = useDpsStore.getState().peek("throughput", candidate.fingerprint)
-          return throughput ? [throughput] : []
-        })
-        if (cachedThroughput.length === graduation.candidates.length)
-          cachedGraduation = selectHighestGraduationResult(cachedThroughput)?.dps
-      }
-      onActiveSimulationBundleChange(
-        calculationBundleFor(activeRotation, false),
-        activeRotation.name || "Active rotation",
-        `${activeRotationId}:${calculationContextKey}:${JSON.stringify(activeRotation)}`,
-        activeEntry?.isDefault === true,
-        graduation ? { fingerprint: graduation.fingerprint, dps: cachedGraduation } : undefined,
-      )
-    }
-  }, [
-    editingRotationId,
-    rotation,
-    rotationEntries,
-    calculationContextKey,
-    pathId,
-    defaultRotationId,
-    activeRotationId,
-    onActiveSimulationBundleChange,
-  ])
 
+  /**
+   * The graduation reading already in the cache, or undefined while any candidate is missing.
+   * Every candidate names the same environment, so a partial set is not a smaller answer.
+   */
+  function cachedGraduationDps(prepared: ReturnType<typeof buildGraduationBundleSet>) {
+    if (!prepared) return undefined
+    const cached = prepared.candidates.flatMap(candidate => {
+      const reading = useDpsStore.getState().peek("throughput", candidate.fingerprint)
+      return reading ? [reading] : []
+    })
+    if (cached.length !== prepared.candidates.length) return undefined
+    return selectHighestGraduationResult(cached)?.dps
+  }
   function storeBaselineResult(id: string, key: string, result: RotationSimulationResult) {
     const next = { ...rotationResultsRef.current, [id]: { key, context: calculationContextKeyRef.current, result } }
     rotationResultsRef.current = next
@@ -1833,108 +1773,108 @@ export function RotationEditorTab({
       ),
     )
     const highest = selectHighestGraduationResult(throughputs)
-    if (highest && graduationFingerprintRef.current === prepared.fingerprint)
-      onGraduationDpsChange(prepared.fingerprint, highest.dps)
+    // The published graduation belongs to the rotation the editor published, so a reading that
+    // arrived after the rotation changed is dropped rather than attributed to the new one.
+    if (highest && graduationFingerprintRef.current === prepared.fingerprint) {
+      const published = useRotationStore.getState().result
+      if (published?.graduation?.fingerprint === prepared.fingerprint)
+        useRotationStore.getState().publish({ ...published, graduation: { ...published.graduation, dps: highest.dps } })
+    }
   }
 
-  const calculateDiffsForRotation = useEffectEvent(
+  /**
+   * Publishes the rotation being edited, when it is also the active one.
+   *
+   * Unsaved edits to the active rotation have always moved the headline, so while that is the
+   * rotation on screen the editor is the authority on it. The application publishes the stored
+   * record otherwise, and stands down while a draft here disagrees with it. Publishing happens
+   * where the numbers arrive rather than in an effect watching them, because the metrics are a
+   * fresh object each render and an effect depending on one would republish on every render.
+   */
+  const publishDraft = useEffectEvent((id: string, rotationRecord: RotationRecord, metrics: RotationMetrics) => {
+    if (id !== activeRotationId || editingRotationId !== activeRotationId) return
+    const entry = rotationEntries.find(candidate => candidate.id === id)
+    if (!entry) return
+    const graduation = prepareGraduationCalculation(rotationRecord)
+    graduationFingerprintRef.current = graduation?.fingerprint ?? null
+    const bundle = calculationBundleFor(rotationRecord, false)
+    useRotationStore
+      .getState()
+      .publish({
+        pathId,
+        rotationId: id,
+        rotationName: rotationEntryDisplayName(entry),
+        rotationIsDefault: entry.isDefault === true,
+        rotation: rotationRecord,
+        bundle,
+        bundleKey: `${id}:${rotationBundleFingerprint(bundle)}`,
+        metrics,
+        draft: true,
+        contextKey: calculationContextKey,
+        graduation: graduation
+          ? { fingerprint: graduation.fingerprint, dps: cachedGraduationDps(graduation) }
+          : undefined,
+      })
+  })
+
+  /**
+   * Resolves the edited rotation's metrics: its baseline, then every comparison category.
+   *
+   * The category sweep this replaces ran one variant at a time and republished after each
+   * category, which is why the resolution needs no accumulating state and no per-step staleness
+   * checks — the store sequences every request by key, so a resolve that is overtaken simply
+   * resolves against inputs nothing reads any more.
+   */
+  const resolveRotationForEditor = useEffectEvent(
     async (id: string, rotationRecord: RotationRecord, prepared = prepareBaselineCalculation(rotationRecord)) => {
       const requestSequence = ++diffRequestSequenceRef.current
-      useDpsStore.getState().supersede()
-      beginRotationCalculation()
       const contextKey = calculationContextKey
       const resultKey = prepared.fingerprint
-      const refreshTarget = `${id}:${resultKey}`
-      scheduledRefreshTargetRef.current = refreshTarget
-      runningRefreshTargetRef.current = refreshTarget
+      const current = () =>
+        diffRequestSequenceRef.current === requestSequence &&
+        calculationContextKeyRef.current === contextKey &&
+        resolvedActiveRotationIdRef.current === id
+      const store = useRotationStore.getState()
       try {
+        store.startCategory("baseline")
         const baseline = await calculateBaselineForRotation(id, rotationRecord, 400, prepared)
-        if (calculationContextKeyRef.current !== contextKey) {
-          if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
-          endRotationCalculation()
-          return "discarded" as const
-        }
-        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
-        if (resolvedActiveRotationIdRef.current !== id) {
-          endRotationCalculation()
-          return "discarded" as const
-        }
+        if (!current()) return "superseded" as const
+        store.settleCategory("baseline")
+        publishDraft(id, rotationRecord, baseline.metrics)
 
-        let metrics = baselineMetricsWithPreviousComparisons(baseline.metrics, getRotationMetrics())
-        onMetricsChange(metrics, true)
-        completeRotationCalculationCategory("baseline")
-
-        // Graduation is the denominator of a percentage shown next to the current DPS,
-        // not a step toward it. It costs a baseline per graduated preset, so it runs
-        // alongside the priority panels instead of holding them up.
+        // Graduation is the denominator of a percentage shown next to the current DPS, not a step
+        // toward it, so it runs alongside the panels rather than holding them up.
         void calculateGraduationDps(rotationRecord).catch((graduationError: unknown) => {
-          if (diffRequestSequenceRef.current === requestSequence)
-            publishNotice({
-              id: "graduation-calculation",
-              error: true,
-              message: graduationError instanceof Error ? graduationError.message : t("ui.notices.calculationError"),
-            })
+          if (!current()) return
+          publishNotice({
+            id: "graduation-calculation",
+            error: true,
+            message: graduationError instanceof Error ? graduationError.message : t("ui.notices.calculationError"),
+          })
         })
-        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
 
-        const comparisonBundle = calculationBundleFor(rotationRecord, true)
-        const calculateComparisonCategory = async (
-          category: RotationCalculationCategory,
-          previousMetrics: RotationMetrics,
-        ): Promise<RotationMetrics | "superseded" | "discarded"> => {
-          const variants = comparisonVariantRequests(comparisonBundle, category)
-          if (variants.length === 0) return mergeComparisonCategory(previousMetrics, baseline.metrics, category)
-          const variantMetrics: RotationMetrics[] = []
-          const calculateComparisonVariant = async (variant: ComparisonVariantRequest, index: number) => {
-            const calculated = await useDpsStore.getState().ensure({
-              kind: "comparisons",
-              cacheKey: `${resultKey}:${variant.key}`,
-              build: () => variant.bundle,
-              baseline: () => baseline,
-              priority: 350,
-              onProgress: progress => {
-                if (diffRequestSequenceRef.current === requestSequence)
-                  publishRotationCategoryProgress(category, (index + progress) / variants.length)
-              },
-            })
-            variantMetrics.push(calculated.metrics)
-            if (diffRequestSequenceRef.current === requestSequence)
-              publishRotationCategoryProgress(category, (index + 1) / variants.length)
-          }
-          await variants.reduce(
-            (previous, variant, index) => previous.then(() => calculateComparisonVariant(variant, index)),
-            Promise.resolve(),
-          )
-          if (calculationContextKeyRef.current !== contextKey) {
-            if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
-            endRotationCalculation()
-            return "discarded" as const
-          }
-          if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
-          if (resolvedActiveRotationIdRef.current !== id) {
-            endRotationCalculation()
-            return "discarded" as const
-          }
-          return combineComparisonVariantMetrics(previousMetrics, variantMetrics, category)
-        }
-        type ComparisonProgress = { status: "published" | "superseded" | "discarded"; metrics: RotationMetrics }
-        const comparisonOutcome = await comparisonCategoryOrder.reduce(
-          async (previous, category): Promise<ComparisonProgress> => {
-            const state = await previous
-            if (state.status !== "published") return state
-            const result = await calculateComparisonCategory(category, state.metrics)
-            if (result === "superseded" || result === "discarded") return { status: result, metrics: state.metrics }
-            onMetricsChange(result, true)
-            completeRotationCalculationCategory(category)
-            return { status: "published" as const, metrics: result }
+        const metrics = await resolveComparisonMetrics({
+          bundle: calculationBundleFor(rotationRecord, true),
+          baselineKey: resultKey,
+          baseline: () => baseline,
+          onCategoryStarted: category => {
+            if (current()) useRotationStore.getState().startCategory(category)
           },
-          Promise.resolve({ status: "published" as const, metrics }),
-        )
-        if (comparisonOutcome.status !== "published") return comparisonOutcome.status
-        metrics = comparisonOutcome.metrics
+          onCategoryProgress: (category, progress) => {
+            if (current()) useRotationStore.getState().progressCategory(category, progress)
+          },
+          onCategoryResolved: (metrics, category) => {
+            if (!current()) return
+            storeBaselineResult(id, resultKey, { ...baseline, metrics })
+            useRotationStore.getState().settleCategory(category)
+            publishDraft(id, rotationRecord, metrics)
+          },
+        })
+        if (!current()) return "superseded" as const
+        storeBaselineResult(id, resultKey, { ...baseline, metrics })
+        publishDraft(id, rotationRecord, metrics)
         return "published" as const
       } catch (calculationError) {
-        if (diffRequestSequenceRef.current === requestSequence) endRotationCalculation()
         if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
         publishNotice({
           id: "rotation-calculation",
@@ -1942,8 +1882,6 @@ export function RotationEditorTab({
           message: calculationError instanceof Error ? calculationError.message : t("ui.notices.calculationError"),
         })
         return "failed" as const
-      } finally {
-        if (diffRequestSequenceRef.current === requestSequence) runningRefreshTargetRef.current = null
       }
     },
   )
@@ -1996,11 +1934,7 @@ export function RotationEditorTab({
     const refreshTarget = `${activeEntry.id}:${prepared.fingerprint}`
     if (scheduledRefreshTargetRef.current === refreshTarget) return
     void (async () => {
-      const outcome = await calculateDiffsForRotation(activeEntry.id, activeRotation, prepared)
-      if (outcome === "discarded") {
-        setRefreshRetryRevision(current => current + 1)
-        return
-      }
+      const outcome = await resolveRotationForEditor(activeEntry.id, activeRotation, prepared)
       if (outcome !== "published") return
       if (calculationContextKeyRef.current !== calculationContextKey) return
     })()
@@ -2009,7 +1943,6 @@ export function RotationEditorTab({
     calculationContextKey,
     defaultRotationId,
     editingRotationId,
-    refreshRetryRevision,
     editorTimelineReady,
     rotation,
     rotationEntries,
