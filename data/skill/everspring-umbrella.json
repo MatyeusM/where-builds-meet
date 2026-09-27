@@ -77,7 +77,6 @@
         "type": "trigger",
         "value": "EverspringPerfectCatch",
         "time": 1.0769230769230769,
-        "inheritTags": true,
         "queueTime": 0.6153846153846154,
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
@@ -93,7 +92,6 @@
         "type": "trigger",
         "value": "PhantomUmbrellaSummon",
         "time": 0.8003077042332063,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomRallyT6" }]
       },
       {
@@ -151,7 +149,6 @@
         "type": "trigger",
         "value": "EverspringPerfectCatch",
         "time": 0.9583333333333333,
-        "inheritTags": true,
         "queueTime": 0.4166666666666667,
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
@@ -167,7 +164,6 @@
         "type": "trigger",
         "value": "PhantomUmbrellaSummon",
         "time": 0.63364999204874,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomRallyT6" }]
       },
       {
@@ -225,7 +221,6 @@
         "type": "trigger",
         "value": "EverspringPerfectCatch",
         "time": 1.0909090909090908,
-        "inheritTags": true,
         "queueTime": 0.5454545454545454,
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
@@ -241,7 +236,6 @@
         "type": "trigger",
         "value": "PhantomUmbrellaSummon",
         "time": 0.782190828025341,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomRallyT6" }]
       },
       {
@@ -299,7 +293,6 @@
         "type": "trigger",
         "value": "EverspringPerfectCatch",
         "time": 1,
-        "inheritTags": true,
         "queueTime": 0.45454545454545453,
         "queueRequirement": [{ "target": "self", "value": "FlowerBurial" }]
       },
@@ -315,7 +308,6 @@
         "type": "trigger",
         "value": "PhantomUmbrellaSummon",
         "time": 0.682212355516174,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomRallyT6" }]
       },
       {
@@ -347,10 +339,20 @@
     "skillBreakdownCategory": "Scarlet Spin"
   },
   "Resonance": {
-    "name": "Resonance",
+    "name": "Resonance (Scarlet Spin)",
     "castTime": 0,
     "action": [{ "type": "damage", "time": 0, "phyCoef": 0.54, "attrCoef": 0.54, "phyBonus": 0, "attrBonus": 0 }],
-    "tags": ["Triggered", "DirectDamage", "MartialArts", "EverspringUmbrella", "PhantomResonance"]
+    "tags": [
+      "Triggered",
+      "DirectDamage",
+      "MartialArts",
+      "EverspringUmbrella",
+      "PhantomResonance",
+      "MartialArt",
+      "Umbrella",
+      "ReturningUmbrella"
+    ],
+    "skillBreakdownCategory": "Resonance"
   },
   "PhantomUmbrellaSummon": {
     "name": "Summon Phantom Umbrella",
@@ -358,7 +360,7 @@
     "action": [
       { "type": "consume", "target": "self", "value": "PhantomUmbrella", "stack": "all", "time": 0 },
       { "type": "apply", "target": "self", "value": "PhantomUmbrella", "stack": 1, "reapply": true, "time": 0 },
-      { "type": "trigger", "value": "Resonance", "time": 0, "inheritTags": true }
+      { "type": "trigger", "value": "Resonance", "time": 0 }
     ],
     "tags": ["Triggered", "EverspringUmbrella", "PhantomUmbrella"]
   },
@@ -388,7 +390,6 @@
         "type": "trigger",
         "value": "Resonance",
         "time": 0,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomUmbrella" }]
       }
     ],
@@ -427,9 +428,8 @@
       },
       {
         "type": "trigger",
-        "value": "PhantomUmbrellaSummon",
+        "value": "BubblesPhantomUmbrellaSummon",
         "time": 0.830453520655632,
-        "inheritTags": true,
         "requirement": [{ "target": "self", "value": "PhantomRallyT6" }]
       }
     ],
@@ -445,5 +445,32 @@
       "ReturningUmbrella",
       "SubAction"
     ]
+  },
+  "BubblesResonance": {
+    "name": "Resonance (Dreamwrought Bubbles)",
+    "castTime": 0,
+    "action": [{ "type": "damage", "time": 0, "phyCoef": 0.54, "attrCoef": 0.54, "phyBonus": 0, "attrBonus": 0 }],
+    "tags": [
+      "Triggered",
+      "DirectDamage",
+      "MartialArts",
+      "EverspringUmbrella",
+      "PhantomResonance",
+      "Heavy",
+      "Charged",
+      "Umbrella",
+      "ReturningUmbrella"
+    ],
+    "skillBreakdownCategory": "Resonance"
+  },
+  "BubblesPhantomUmbrellaSummon": {
+    "name": "Summon Phantom Umbrella (Dreamwrought Bubbles)",
+    "castTime": 0,
+    "action": [
+      { "type": "consume", "target": "self", "value": "PhantomUmbrella", "stack": "all", "time": 0 },
+      { "type": "apply", "target": "self", "value": "PhantomUmbrella", "stack": 1, "reapply": true, "time": 0 },
+      { "type": "trigger", "value": "BubblesResonance", "time": 0 }
+    ],
+    "tags": ["Triggered", "EverspringUmbrella", "PhantomUmbrella"]
   }
 }

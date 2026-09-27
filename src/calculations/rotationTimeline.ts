@@ -3816,13 +3816,6 @@ export function buildRotationTimeline(
       }
     }
     const runSetupTriggers = (triggerEvent: string) => {
-      // A skillStart trigger belongs to the skill being started, so it matches that
-      // skill's own tags. A raised skill that inherited its parent's tags must not
-      // satisfy the parent's own start-of-cast effects, only its damage boosts.
-      const triggerTags =
-        triggerEvent === "skillStart" && event.row.step.type === "skill"
-          ? (skills[event.row.step.skill ?? ""]?.tags ?? [])
-          : skillTags
       ;(setupTriggersByEvent.get(triggerEvent) ?? []).forEach(({ setupIndex, trigger }) => {
         if (
           (setupTriggerCooldowns.get(setupIndex) ?? 0) > event.time ||
@@ -3830,7 +3823,7 @@ export function buildRotationTimeline(
             trigger.requirement,
             buffs,
             debuffs,
-            triggerTags,
+            skillTags,
             innerWayConditions,
             weapons,
             resources,
@@ -4096,11 +4089,7 @@ export function buildRotationTimeline(
         "skill",
         probability === 1 ? undefined : probability,
         expectedBranch,
-        // inheritTags passes the raising skill's tags to the raised skill, so an attack
-        // summoned by one skill is matched by the boosts of that skill. It is opt-in
-        // because inheriting everywhere lets a raised skill satisfy its parent's
-        // tag-gated effects and fire extra procs.
-        action.inheritTags === true ? skillTags : undefined,
+        undefined,
         undefined,
         false,
         queuedTrigger ? (event.row.sourceRowId ?? event.row.id) : undefined,

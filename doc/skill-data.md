@@ -175,9 +175,15 @@ its parent's hits must therefore repeat the parent's skill-category tags
 (`Charged`, `Special`, `MartialArt`, `Light`, `Heavy`, `VariedCombo`, `Pursuit`).
 Piercing Dart's seven `PiercingDartSweepN` hits repeat `Heavy` and `Charged` for this
 reason. `MartialArtEffect` marks a separate summoned attack rather than a
-continuation, so it is deliberately exempt; `inheritTags` appends the parent's tags
-and is the alternative to restating them. `tests/attunement.test.ts` enforces both
-rules.
+continuation, so it is deliberately exempt. Trigger actions do not inherit parent
+tags. `tests/attunement.test.ts` checks explicitly authored component categories.
+
+Scarlet Spin Resonance uses `MartialArt`, including lower-tier cadence summons.
+Dreamwrought Bubbles Resonance uses `Heavy` and `Charged`. Both also carry `Umbrella`
+and `ReturningUmbrella` for weapon and returning-umbrella bonuses, without parent
+identity tags. They share `skillBreakdownCategory: "Resonance"`.
+Saved skill overrides migrate the former shared Resonance and summon definitions
+to both routes, preserving customized damage and summon actions.
 
 Attack categories are independent, not exclusive. A charged attack carries `Charged`
 plus the attack it charges: `Charged` and `Heavy` for Avalanche, Burning Heart, and

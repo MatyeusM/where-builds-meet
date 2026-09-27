@@ -1,4 +1,5 @@
-import type { EffectDefinition, SkillRecord } from "./calculations/rotationTimeline"
+import umbrellaSkills from "../data/skill/everspring-umbrella.json"
+import type { EditableObject, EffectDefinition, SkillRecord } from "./calculations/rotationTimeline"
 import { validateUnknown } from "./schemas/json"
 import { skillOverridesInputSchema } from "./schemas/skillOverrides"
 
@@ -26,8 +27,8 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
   const validated = validateUnknown(skillOverridesInputSchema, value)
   if (!validated.success) return {}
   const stored = value as Record<string, unknown>
-  const currentCoefficients = stored.version === 2 || stored.version === 3
-  const exclusiveSegments = stored.version === 3
+  const currentCoefficients = stored.version === 2 || stored.version === 3 || stored.version === 4
+  const exclusiveSegments = stored.version === 3 || stored.version === 4
   const migrate = (entry: unknown): unknown => {
     if (Array.isArray(entry)) return entry.map(migrate)
     if (!entry || typeof entry !== "object") return entry
@@ -65,6 +66,7 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     }
     switch (record.type) {
       case "trigger":
+        delete record.inheritTags
         if (record.queueSourceEffect !== undefined) {
           record.sourceEffect = record.queueSourceEffect ?? record.sourceEffect
           delete record.queueSourceEffect
@@ -80,6 +82,41 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
     return record
   }
   const overrides = migrate(currentCoefficients ? (stored.overrides ?? {}) : value) as SkillOverrides
+  if (stored.version !== 4 && overrides.Everspring) {
+    const skills = overrides.Everspring
+    if (skills.Resonance) {
+      const original = skills.Resonance
+      skills.Resonance = {
+        ...original,
+        tags: [...new Set([...(original.tags ?? []), ...umbrellaSkills.Resonance.tags])],
+        skillBreakdownCategory: "Resonance",
+      }
+      skills.BubblesResonance ??= {
+        ...original,
+        name: umbrellaSkills.BubblesResonance.name,
+        tags: [...new Set([...(original.tags ?? []), ...umbrellaSkills.BubblesResonance.tags])],
+        skillBreakdownCategory: "Resonance",
+      }
+    }
+    if (skills.PhantomUmbrellaSummon) {
+      skills.BubblesPhantomUmbrellaSummon ??= {
+        ...skills.PhantomUmbrellaSummon,
+        name: umbrellaSkills.BubblesPhantomUmbrellaSummon.name,
+        action: skills.PhantomUmbrellaSummon.action?.map(action =>
+          (action as EditableObject)?.type === "trigger" && (action as EditableObject).value === "Resonance"
+            ? Object.assign({}, action, { value: "BubblesResonance" })
+            : action,
+        ),
+      }
+    }
+    if (skills.DreamwroughtBubblesRelease?.action) {
+      skills.DreamwroughtBubblesRelease.action = skills.DreamwroughtBubblesRelease.action.map(action =>
+        (action as EditableObject)?.type === "trigger" && (action as EditableObject).value === "PhantomUmbrellaSummon"
+          ? Object.assign({}, action, { value: "BubblesPhantomUmbrellaSummon" })
+          : action,
+      )
+    }
+  }
   const legacyToken = overrides.Buff?.VendettaToken
   if (legacyToken) {
     overrides.Debuff = {
@@ -92,7 +129,7 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
 }
 
 export function serializeSkillOverrides(overrides: SkillOverrides) {
-  return JSON.stringify({ version: 3, overrides })
+  return JSON.stringify({ version: 4, overrides })
 }
 
 export function resolveSkillCalculationDefinitions(

@@ -196,9 +196,9 @@ describe("attunement", () => {
         const componentTags = component.tags ?? []
         const dealsDamage = (component.action ?? []).some(entry => entry.type === "damage" || entry.type === "heal")
         if (!dealsDamage) continue
-        // inheritTags appends the parent's tags, and MartialArtEffect marks a separate
+        // MartialArtEffect marks a separate
         // summoned attack that is deliberately not categorised by the skill that raised it.
-        if (action.inheritTags === true || componentTags.includes("MartialArtEffect")) continue
+        if (componentTags.includes("MartialArtEffect")) continue
         const absent = skillCategories.filter(
           category => (skill.tags ?? []).includes(category) && !componentTags.includes(category),
         )

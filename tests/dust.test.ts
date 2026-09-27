@@ -31,9 +31,7 @@ import { emptyStats } from "../src/data/statDefinitions"
 
 const cast = (skill: string) => ({ type: "skill" as const, skill })
 const delay = (duration: number) => ({ type: "event" as const, event: "Delay", duration })
-// Select Scarlet Spin chain rows by id, not by tag. A throw inherits its parent's tags
-// and a catch hands the PerfectCatch tag to the Resonance it raises, so neither tag
-// identifies these rows on its own any more.
+// Select the stage rows separately from their Resonance attacks.
 const isThrow = (row: TimelineRow) => /^ScarletSpinStage\d$/.test(row.step.skill ?? "")
 const isCatch = (row: TimelineRow) => row.step.skill === "EverspringPerfectCatch"
 // Resolve the action state that observes an effect by name, so adding actions does
@@ -948,6 +946,28 @@ it.each([15, 16])("Towline T6 refreshes target Soulbreak within 15m: distance %s
 })
 
 describe("Phantom Umbrella summons and Resonance", () => {
+  it.each([
+    ["Resonance", "MartialArt", 1.2],
+    ["Resonance", "Heavy", 1],
+    ["Resonance", "Charged", 1],
+    ["BubblesResonance", "MartialArt", 1],
+    ["BubblesResonance", "Heavy", 1.2],
+    ["BubblesResonance", "Charged", 1.2],
+    ["Resonance", "ReturningUmbrella", 1.2],
+    ["BubblesResonance", "ReturningUmbrella", 1.2],
+    ["Resonance", "Umbrella", 1.2],
+    ["BubblesResonance", "Umbrella", 1.2],
+  ])("applies %s bonuses for %s with multiplier %s", (skill, tag, multiplier) => {
+    const damage = (boost: boolean) => {
+      const input = bundle()
+      input.timeline.rotation.steps = [cast(String(skill)), cast("Hit")]
+      input.timeline.setupEffects = boost
+        ? [{ requirement: [{ target: "skillTag", value: tag }], effect: { dmgBonus: 0.2 } }]
+        : []
+      return calculateRotationBaseline(input).actionBreakdowns["rotation-0:0"].total
+    }
+    expect(damage(true) / damage(false)).toBeCloseTo(Number(multiplier), 9)
+  })
   const run = (tier: number, steps: RotationStep[]) => {
     const selection = [{ innerWay: "PhantomRally", tier: `T${tier}` as const }]
     const input = bundle()
@@ -958,9 +978,15 @@ describe("Phantom Umbrella summons and Resonance", () => {
     return calculateRotationBaseline(input)
   }
   const resonances = (result: ReturnType<typeof run>) =>
-    result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "Resonance")
+    result.timeline.filter(
+      row => row.step.type === "skill" && ["Resonance", "BubblesResonance"].includes(row.step.skill ?? ""),
+    )
   const summons = (result: ReturnType<typeof run>) =>
-    result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "PhantomUmbrellaSummon")
+    result.timeline.filter(
+      row =>
+        row.step.type === "skill" &&
+        ["PhantomUmbrellaSummon", "BubblesPhantomUmbrellaSummon"].includes(row.step.skill ?? ""),
+    )
   // Resonance is a triggered attack published under its own row, so total only the
   // rows that are actually Resonance rather than every triggered row in the cast.
   const resonanceDamage = (result: ReturnType<typeof run>) => {
@@ -990,6 +1016,26 @@ describe("Phantom Umbrella summons and Resonance", () => {
       ),
     }
   }
+
+  it.each([3, 6])("classifies every Scarlet Spin Resonance at tier %s as Martial Art", tier => {
+    const hits = resonances(run(tier, [{ type: "skill", skill: "ScarletSpin", duration: 12 }]))
+    expect(hits.length).toBeGreaterThan(1)
+    expect(hits.every(row => row.skill?.tags?.includes("MartialArt"))).toBe(true)
+    expect(hits.some(row => row.skill?.tags?.includes("PerfectCatch"))).toBe(false)
+  })
+
+  it("groups both Resonance routes while preserving their individual damage totals", () => {
+    const result = run(6, [{ type: "skill", skill: "ScarletSpin", duration: 2 }, cast("DreamwroughtBubbles")])
+    const flat = result.metrics.breakdown.skills.filter(row => ["Resonance", "BubblesResonance"].includes(row.id))
+    expect(flat).toHaveLength(2)
+    const group = result.metrics.breakdown.groupedSkills.find(row => row.name === "Resonance")!
+    expect(group.children).toHaveLength(2)
+    expect(group.damage).toBeCloseTo(
+      flat.reduce((sum, row) => sum + row.damage, 0),
+      9,
+    )
+    expect(group.hits).toBe(flat.reduce((sum, row) => sum + row.hits, 0))
+  })
 
   it("seeds every throw after the first with a Perfect Catch, at any ping", () => {
     // A throw is scheduled by the catch that precedes it, so a cast can never resolve
@@ -1034,12 +1080,13 @@ describe("Phantom Umbrella summons and Resonance", () => {
     input.timeline.innerWayRules = []
     input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
     const result = calculateRotationBaseline(input)
-    // The tag really does reach the Resonances a catch raises, so the trigger would
-    // fire for those too if a start-of-cast trigger read inherited tags.
+    // Resonance has its own damage category without the PerfectCatch identity.
     const inherited = result.timeline.filter(
-      row => row.step.skill === "Resonance" && (row.skill?.tags ?? []).includes("PerfectCatch"),
+      row =>
+        ["Resonance", "BubblesResonance"].includes(row.step.skill ?? "") &&
+        (row.skill?.tags ?? []).includes("PerfectCatch"),
     )
-    expect(inherited.length).toBeGreaterThan(0)
+    expect(inherited).toHaveLength(0)
     // Each catch raises exactly one Mark, and nothing else does.
     expect(result.timeline.filter(row => row.step.skill === "Mark")).toHaveLength(
       result.timeline.filter(isCatch).length,

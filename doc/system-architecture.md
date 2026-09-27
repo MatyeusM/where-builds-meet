@@ -955,15 +955,12 @@ even when a triggered skill changes its damage group. These rules execute within
 the shared worker timeline; comparisons that change them require a rebuilt
 timeline rather than reusing baseline effect snapshots.
 
-A `trigger` action marked `inheritTags: true` appends the raising skill's tags to
-the raised skill's own, so an attack summoned by one skill is matched by that
-skill's damage boosts. The merge composes down a chain: each link passes on its
-merged tags, so a skill raised by a raised skill inherits from both. It is opt-in
-per trigger because propagating every tag lets a raised skill satisfy its parent's
-tag-gated damage effects and fire extra procs. Tag _category_ markers such as
-`MartialArt`, `Heavy` and `ReturningUmbrella` are meant to cross; a skill's own
-identity marker such as `PerfectCatch` is what start-of-cast triggers key on, and
-those triggers read own tags to keep the two apart.
+Triggered attacks use explicit authored tags. Scarlet Spin and Dreamwrought Bubbles
+raise separate Resonance definitions, with `MartialArt` and `Heavy`/`Charged`
+respectively. Both retain `Umbrella` and `ReturningUmbrella` bonuses and share the
+Resonance breakdown category. Start-of-cast triggers
+use the same event tags as other setup triggers; Resonance never carries the
+Perfect Catch identity. Explicit threshold `triggerTags` remain supported.
 
 Main-tab global-effect controls seed permanent tracked player buffs or target
 debuffs into this initial state at their configured stack count. They therefore
