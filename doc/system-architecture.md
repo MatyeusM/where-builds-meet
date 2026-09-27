@@ -1075,13 +1075,18 @@ assumed full and each contribute one-fifth of their own healing number to World
 to Sword. Every recipient emits a separate accumulator event. A single-target
 periodic heal assigned to a teammate
 also assumes that teammate is full, but contributes its complete healing rather
-than the group-heal one-fifth weight. Buff accumulators subscribe to named events. Damage actions also feed a
-requirement-filtered count: numeric thresholds, data-defined increments, and
-`oncePerSkill` let Rodent Rampage count the first damage hit of each attack
-stage, including multi-action components. Its accumulator preserves progress on
-refresh and clears it on expiry or removal. Probability-weighted expected proc
-rows do not advance the damage counter. Threshold objects continue to request
-attack snapshots, while numeric thresholds work directly in the timeline. World to Sword snapshots
+than the group-heal one-fifth weight. Buff accumulators subscribe to named events.
+Rodent's coordinated attacks instead use hidden stack buffs and the shared
+`onMaxStack` trigger. Each Rampage buff declares a reactive `trigger` using the
+setup-trigger action contract. Its `oncePerSkill` filter accepts the first damage
+hit of each attack stage, including multi-action components, and excludes
+probability-weighted expected proc rows. One stack is added for other martial
+arts and two for Infernal/Mortal; two stacks consume the counter and launch Rodent.
+Each counter's `parentEffect` binds its expiry and attribution to its Rampage
+buff. Refresh preserves progress and follows the new expiry/source; removing or
+replacing the parent clears progress. These counters do not require live damage
+values and do not invoke the accumulator-based comparison rebuild guard.
+World to Sword snapshots
 its threshold from fully buffed Physical/Silkbind attack at its own cast event, accepts `overheal`, and
 checks only on overheal or a Qi Blade's delayed `QiBladeCheck`. Expected and
 simulation modes both reset the accumulator after a launch. Healing received
@@ -1313,9 +1318,11 @@ when the baseline was compacted into fallback results. It also rebuilds when the
 baseline timeline itself contains healing, replay, accumulator, or recording
 applications. Supplying setup effects therefore forces a rebuild even when the
 caller supplies no replacement timeline, so this fast path is narrower than it
-sounds. Wind's Rodent accumulators currently prevent even attunement-only
-variants from reaching it. See [the Wind performance audit](wind-innerway-performance.md)
-for measurements and proposed dependency refinement. Inner Way definitions also
+sounds. Wind's coordinated Rodent counters use ordinary internal buffs and do
+not block reuse. The full Wind dummy preset still rebuilds because it also
+applies Rodent Hunt recording and World to Sword and contains replay actions.
+See [the Wind performance audit](wind-innerway-performance.md) for measurements
+and scope. Inner Way definitions also
 declare `altersTimeline`; every current
 Inner Way sets it to true, so removal variants conservatively rebuild the
 timeline because triggers, cooldowns, durations, stacks, and cast times may

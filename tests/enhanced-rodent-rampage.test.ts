@@ -42,6 +42,47 @@ for (const sampled of [false, true]) {
   const build = (data: TimelineBuildInput) => buildRotationTimeline(data, sampled ? () => 0.5 : undefined)
   describe(`Enhanced Rodent Rampage (sampled=${sampled})`, () => {
     it.each([
+      ["RodentRampage", "EnhancedRodentRampage"],
+      ["EnhancedRodentRampage", "RodentRampage"],
+    ])("clears partial coordinated progress when %s is replaced by %s", (first, second) => {
+      const data = input([cast("First"), cast("Slow"), cast("Second"), cast("Slow"), cast("Slow"), delay(0.6)])
+      data.skills.First = { castTime: 0, action: [{ type: "apply", target: "self", value: first, time: 0 }] }
+      data.skills.Second = { castTime: 0, action: [{ type: "apply", target: "self", value: second, time: 0 }] }
+      data.skills.Slow = {
+        castTime: 0.1,
+        martialArt: "snowparting",
+        weapon: "HengBlade",
+        tags: ["MartialArts", "Light"],
+        action: [{ type: "damage", phyCoef: 1, time: 0.05 }],
+      }
+      const rows = build(data)
+      const coordinated = rows.filter(row => row.step.skill === "Rodent" && row.startTime < 0.4)
+      expect(coordinated).toHaveLength(1)
+      expect(coordinated[0].startTime).toBeCloseTo(0.25)
+      expect(coordinated[0].sourceRowId).toBe(rows.find(row => row.step.skill === "Second")!.id)
+    })
+
+    it("preserves partial progress beyond the old expiry when the parent refreshes", () => {
+      const data = input([cast("Apply"), cast("Slow"), delay(0.5), cast("Apply"), delay(0.5), cast("Slow"), delay(0.6)])
+      data.skills.Apply = {
+        castTime: 0,
+        action: [{ type: "apply", target: "self", value: "RodentRampage", duration: 1, time: 0 }],
+      }
+      data.skills.Slow = {
+        castTime: 0.1,
+        martialArt: "snowparting",
+        weapon: "HengBlade",
+        tags: ["MartialArts", "Light"],
+        action: [{ type: "damage", phyCoef: 1, time: 0.05 }],
+      }
+      const rows = build(data)
+      const rodent = rows.filter(row => row.step.skill === "Rodent")
+      expect(rodent).toHaveLength(1)
+      expect(rodent[0].startTime).toBeCloseTo(1.15)
+      expect(rodent[0].sourceRowId).toBe(rows.findLast(row => row.step.skill === "Apply")!.id)
+    })
+
+    it.each([
       [-1, 10],
       [0, 15],
       [3, 15],

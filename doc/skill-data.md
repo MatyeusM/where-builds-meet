@@ -315,6 +315,12 @@ has no counterpart the player reads, so the timeline omits it. Use it for counte
 such as the Stonesplit Strength `Cadence` and the Dust Phantom Umbrella summon
 cadence, which would otherwise appear as meaningless buff plates. The effect still
 resolves normally; only its display is suppressed.
+Internal self-buff counters may declare `parentEffect: "BuffId"` to follow that
+buff's lifetime and source attribution. Parent refreshes preserve the counter's
+stacks while updating its expiry/source; parent removal, expiry, or replacement
+removes its counter. Use `onMaxStack` for count-based threshold triggers rather
+than a damage/healing accumulator. Wind uses separate counters for ordinary and
+Enhanced Rodent Rampage so progress cannot transfer between activations.
 Permanent seeded effects are not consumed and merge with later applications.
 Canonical conditional rules use `{ requirement: [...], effect: {...} }`.
 
@@ -365,6 +371,13 @@ incoming attack. When a following attack is available, the normal attack-aligned
 response is preserved.
 
 A trigger's `cooldown` is independent of the cooldown of its actions.
+An active self-buff may declare `trigger` with the same event, requirement, and
+single-action contract as a setup trigger. Buff triggers run after the ordinary
+Inner Way triggers on damage/heal/take-damage events. `oncePerSkill: true` on a
+setup or buff trigger accepts only the first damage action of each stage,
+including composite components; it excludes probability-weighted expected proc
+rows. It does not treat a later hit as the first when the buff appears mid-stage.
+Rodent uses this with `additionalStack` to count Infernal/Mortal stages twice.
 `hitWindow: { count, seconds }` counts eligible damage timestamps, includes the
 lower time boundary, and keeps receiving hits during cooldown. Expected rows
 carrying `hitProbability` do not count, even at probability one; sampled actual

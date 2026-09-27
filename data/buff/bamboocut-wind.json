@@ -84,34 +84,33 @@
     "maxStack": 1,
     "refresh": true,
     "showCoverage": true,
-    "accumulator": {
+    "action": [{ "type": "consume", "target": "self", "value": "EnhancedRodentRampage", "stack": "all", "time": 0 }],
+    "trigger": {
       "event": "damage",
-      "threshold": 2,
-      "amount": {
-        "function": "switch",
-        "param1": "currentMartialArt",
-        "param2": { "infernalTwinblades": 2, "mortalRopeDart": 2 },
-        "fallback": 1
-      },
+      "oncePerSkill": true,
       "requirement": [
         { "target": "skillTag", "value": "MartialArts" },
         { "target": "skillTag", "value": "Light" }
       ],
-      "oncePerSkill": true,
-      "resetOnRefresh": false,
-      "checkEvent": "RodentAttackCheck"
-    },
-    "listen": [
-      {
-        "event": "RodentAttackCheck",
-        "action": {
-          "type": "trigger",
-          "value": "Rodent",
-          "requirement": [{ "target": "distance", "comparison": "<", "amount": 12 }]
+      "action": {
+        "type": "apply",
+        "target": "self",
+        "value": "RodentRampageCount",
+        "stack": 1,
+        "additionalStack": {
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "currentMartialArt", "value": "infernalTwinblades" },
+                { "target": "currentMartialArt", "value": "mortalRopeDart" }
+              ]
+            }
+          ],
+          "stack": 1
         }
       }
-    ],
-    "action": [{ "type": "consume", "target": "self", "value": "EnhancedRodentRampage", "stack": "all", "time": 0 }]
+    }
   },
   "EnhancedRodentRampage": {
     "name": "Enhanced Rodent Rampage",
@@ -120,33 +119,6 @@
     "maxStack": 1,
     "refresh": true,
     "showCoverage": true,
-    "accumulator": {
-      "event": "damage",
-      "threshold": 2,
-      "amount": {
-        "function": "switch",
-        "param1": "currentMartialArt",
-        "param2": { "infernalTwinblades": 2, "mortalRopeDart": 2 },
-        "fallback": 1
-      },
-      "requirement": [
-        { "target": "skillTag", "value": "MartialArts" },
-        { "target": "skillTag", "value": "Light" }
-      ],
-      "oncePerSkill": true,
-      "resetOnRefresh": false,
-      "checkEvent": "RodentAttackCheck"
-    },
-    "listen": [
-      {
-        "event": "RodentAttackCheck",
-        "action": {
-          "type": "trigger",
-          "value": "Rodent",
-          "requirement": [{ "target": "distance", "comparison": "<", "amount": 12 }]
-        }
-      }
-    ],
     "description": "Retains coordinated Rodent attacks. Automatic Rodents launch at +0.5s, then every second, and land 0.5s later. Lasts 10 seconds, 15 with Vendetta, or 20 at Vendetta T4.",
     "action": [{ "type": "consume", "target": "self", "value": "RodentRampage", "stack": "all", "time": 0 }],
     "periodic": {
@@ -161,6 +133,48 @@
           "requirement": [{ "target": "distance", "comparison": "<", "amount": 12 }]
         }
       ]
+    },
+    "trigger": {
+      "event": "damage",
+      "oncePerSkill": true,
+      "requirement": [
+        { "target": "skillTag", "value": "MartialArts" },
+        { "target": "skillTag", "value": "Light" }
+      ],
+      "action": {
+        "type": "apply",
+        "target": "self",
+        "value": "EnhancedRodentRampageCount",
+        "stack": 1,
+        "additionalStack": {
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "currentMartialArt", "value": "infernalTwinblades" },
+                { "target": "currentMartialArt", "value": "mortalRopeDart" }
+              ]
+            }
+          ],
+          "stack": 1
+        }
+      }
     }
+  },
+  "RodentRampageCount": {
+    "name": "Rodent Rampage Attack Count",
+    "hidden": true,
+    "parentEffect": "RodentRampage",
+    "maxStack": 2,
+    "refresh": true,
+    "onMaxStack": { "consume": "all", "trigger": "Rodent" }
+  },
+  "EnhancedRodentRampageCount": {
+    "name": "Enhanced Rodent Rampage Attack Count",
+    "hidden": true,
+    "parentEffect": "EnhancedRodentRampage",
+    "maxStack": 2,
+    "refresh": true,
+    "onMaxStack": { "consume": "all", "trigger": "Rodent" }
   }
 }
