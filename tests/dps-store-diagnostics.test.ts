@@ -57,6 +57,13 @@ function latestOccupancy(tables: unknown[][]) {
 /** Long enough for the report's coalescing delay to have elapsed. */
 const settle = () => new Promise(resolve => setTimeout(resolve, 300))
 
+/**
+ * The bounds the store ships with. They are small enough that a burst of baselines saturates the
+ * first of them, so a test that needs its summary to keep changing has to touch another kind.
+ */
+const baselineLimit = 4
+const throughputLimit = 64
+
 describe("dps-store-diagnostics", () => {
   it("collapses a burst into one report and reprints when occupancy changes", async () => {
     const { useDpsStore } = await withStore("development")
@@ -70,19 +77,36 @@ describe("dps-store-diagnostics", () => {
       )
       await settle()
       assert.equal(console_.groups.length, 1, "A burst of calculations did not collapse into one report.")
-      assert.match(console_.groups[0], /baseline 12\/64/, `Unexpected report: ${console_.groups[0]}`)
+      // More baselines than the bound holds, so the report shows the bound being reached rather
+      // than the number that happened to be requested.
+      assert.match(
+        console_.groups[0],
+        new RegExp(`baseline ${baselineLimit}/${baselineLimit}`),
+        `Unexpected report: ${console_.groups[0]}`,
+      )
 
       await settle()
       assert.equal(console_.groups.length, 1, "An unchanged summary was reprinted.")
 
+      // A further baseline cannot change the summary, because occupancy is already at its bound,
+      // so the kind that still has room is what proves a reprint follows a change.
       await store().ensure({ kind: "baseline", cacheKey: "burst-extra", build: () => bundle })
       await settle()
+      assert.equal(console_.groups.length, 1, "A summary that could not have changed was reprinted.")
+
+      await store().ensure({ kind: "throughput", cacheKey: "burst-reading", build: () => bundle })
+      await settle()
       assert.equal(console_.groups.length, 2, "A changed summary was not reported.")
-      assert.match(console_.groups[1], /baseline 13\/64/, `Unexpected report: ${console_.groups[1]}`)
+      assert.match(
+        console_.groups[1],
+        new RegExp(`throughput 1/${throughputLimit}`),
+        `Unexpected report: ${console_.groups[1]}`,
+      )
 
       const rows = latestOccupancy(console_.tables)
-      assert.equal(rows.find(row => row.kind === "baseline")!.ready, 13)
-      assert.equal(rows.find(row => row.kind === "baseline")!.limit, 64)
+      assert.equal(rows.find(row => row.kind === "baseline")!.ready, baselineLimit)
+      assert.equal(rows.find(row => row.kind === "baseline")!.limit, baselineLimit)
+      assert.equal(rows.find(row => row.kind === "throughput")!.limit, throughputLimit)
       assert.equal(rows.find(row => row.kind === "editorTimeline")!.limit, 0)
       store().reset()
       // The report is coalesced on a timer, so let the reset's own report print before
@@ -130,12 +154,16 @@ describe("dps-store-diagnostics", () => {
     try {
       const store = () => useDpsStore.getState()
       await Promise.all(
-        Array.from({ length: 70 }, (_, index) =>
+        Array.from({ length: baselineLimit * 4 }, (_, index) =>
           store().ensure({ kind: "baseline", cacheKey: `fill-${index}`, build: () => bundle }),
         ),
       )
       await settle()
-      assert.match(console_.groups.at(-1)!, /baseline 64\/64/, "Occupancy did not stop at the retention bound.")
+      assert.match(
+        console_.groups.at(-1)!,
+        new RegExp(`baseline ${baselineLimit}/${baselineLimit}`),
+        "Occupancy did not stop at the retention bound.",
+      )
       store().reset()
       // The report is coalesced on a timer, so let the reset's own report print before
       // the spy is restored. Otherwise it lands in the next test's console.

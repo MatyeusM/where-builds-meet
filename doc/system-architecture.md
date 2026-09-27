@@ -1823,6 +1823,32 @@ at zero percent. Progress is stored apart from metrics in `rotationStore`, and
 each status component subscribes to its own category, so a progress report
 rerenders that component rather than the application tree.
 
+### What the calculation cache holds
+
+The cache keeps a fixed number of finished results per kind, and the sizes differ by orders of
+magnitude because the kinds differ in size and in how many a session actually has. Measured by
+driving the application through a session, with the store's own instrumentation:
+
+| state                            | baselines | readings | comparisons |
+| -------------------------------- | --------- | -------- | ----------- |
+| on load                          | 1         | 2        | 78          |
+| editor opened                    | 1         | 2        | 78          |
+| five rotations activated in turn | 5         | 10       | 390         |
+
+A baseline is the expensive kind, because it carries a whole timeline, and also the most redundant:
+the application resolves the active rotation and the editor resolves the one on screen, which are
+the same rotation nearly always. Four are held, so flipping between rotations is free and a longer
+tour costs one rotation run rather than the memory of dozens of timelines. Readings are asked for by
+name to be weighed against something else and only their throughput is read, so they are cheap; a
+couple exist at rest and a couple more arrive per rotation visited, which is why they are the kind
+that is culled last and held longest. Comparisons are metrics only, one per variant, so the limit is
+set in rotations' worth rather than in entries. An editor timeline is a preview of one revision
+under a key per request, and holding one is never right: a timeline for an earlier revision is
+worse than none, because the caller would accept it as current.
+
+Note that two rotations differing only in name are one calculation, not two, because a bundle's
+fingerprint deliberately excludes the display name.
+
 ### The two stores
 
 `dpsStore` is a cache and is read non-reactively, through `getState()`. Its

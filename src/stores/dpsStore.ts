@@ -72,18 +72,15 @@ export type DpsRequest<K extends DpsKind> = {
 }
 
 /**
- * A baseline carries a whole timeline and a comparison only metrics, so they are
- * retained apart. An editor timeline is a preview of one revision of one rotation, and every
- * request for it is its own key, so there is nothing to hold: a timeline for an earlier
- * revision is worse than none, because the caller would accept it as current.
+ * How many finished results of each kind are held. The sizes differ by orders of magnitude
+ * because the kinds differ in size and in how many of them a session actually has: one baseline
+ * at rest and one more per rotation activated, a couple of readings at rest and a couple more per
+ * rotation visited, and hundreds of comparisons to a single rotation. An editor timeline is a
+ * preview of one revision with a key per request, so holding one is never right.
  *
- * A reading is neither: it is asked for by name to be weighed against something else — a
- * graduated preset against the best one, a build against the active one — and only its
- * throughput is ever read, so it is kept apart from the baselines it would otherwise
- * displace. Its fingerprint covers the whole environment, so a handful of recent ones cover
- * every revisit worth serving.
+ * `doc/system-architecture.md` records the working set these were measured against.
  */
-const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 64, comparisons: 4096, throughput: 8 }
+const retentionByKind: Record<DpsKind, number> = { editorTimeline: 0, baseline: 4, comparisons: 4096, throughput: 64 }
 
 const isRetained = (kind: DpsKind) => retentionByKind[kind] > 0
 
