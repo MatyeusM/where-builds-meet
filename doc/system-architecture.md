@@ -143,11 +143,11 @@ src/
     rotationTimeline.ts          event simulation and state tracking
     rotationCalculator.ts        baseline, variants, metrics, and breakdowns
     rotationWorker.ts            worker entry point
-    rotationWorkerClient.ts      persistent worker and request coalescing
+    rotationWorkerTransport.ts   worker pool, queue policy, and request coalescing
     simulationCalculator.ts      Monte Carlo run aggregation and percentiles
     simulationWorker.ts          isolated Monte Carlo worker entry point
     simulationWorkerClient.ts    per-run worker lifecycle and cancellation
-    rotationMetrics.ts           central published result store
+    rotationMetrics.ts           result types and the category list
 
 public/
   divinecraft/                   static selector images copied into the build
@@ -325,11 +325,16 @@ It renders seven tabs:
 6. Skill Editor
 7. Settings
 
-The Rotation Editor subtree remains mounted when another tab is selected and is
-hidden with CSS. This preserves its local state and lets its worker calculation
-continue. Main and DPS Breakdown subscribe to `rotationMetrics.ts` with
-`useSyncExternalStore`; they render the latest published immutable metrics rather
-than calculating independently.
+The Rotation Editor is loaded on demand, on the first visit to its tab, and stays
+mounted and hidden with CSS after that, which preserves its local state. It is
+not deferred because it is large alone: nothing outside it reads a comparison, so
+until it is opened the only calculation is the active rotation's baseline, which
+the application resolves itself. It is absent from the idle preload of the other
+deferred tabs, which would hand back what deferring it saves.
+
+Main, DPS Breakdown, and the simulation tab read the published rotation from
+`rotationStore`, which is a zustand store read with selectors. They render the
+latest published immutable metrics rather than calculating independently.
 
 In PC mode, Build or Rotation Editor constrains the page shell to the visible
 viewport. The header, tabs, and footer remain visible while the build manager
@@ -433,8 +438,9 @@ result exists it stays on screen while its replacement is calculated.
 A calculation status is reported in two variants: with the fraction it measured,
 or without a percentage when the calculation publishes no intermediate steps. A
 baseline reports no steps, so it is described as under way rather than as stalled
-at zero percent; a comparison sweep reports per-variant steps and carries its
-fraction. Both are the same primitive, given a progress or not given one, and the
+at zero percent; a comparison category reports the fraction of its variants that
+have settled, counting a dispatched variant as part-settled by the progress it
+reports, so a category does not read as stalled while its first variants run. Both are the same primitive, given a progress or not given one, and the
 wording is shared by every caller, so a status reads identically wherever it
 appears. The stats tab and the rotation toolbar therefore describe the same
 pending baseline the same way. Editor previews never request comparison variants;
@@ -1220,7 +1226,8 @@ same baseline inputs plus all variants, but the worker consumes an already
 cached baseline instead of rebuilding its timeline or recalculating its DPS.
 The main thread does not run the rotation simulation.
 
-`rotationWorkerClient.ts` owns one persistent module worker. Its queue policy is:
+`rotationWorkerTransport.ts` owns a small pool of persistent module workers. Its
+queue policy is:
 
 1. If idle, dispatch immediately.
 2. If a job is running, retain pending requests in priority order.
@@ -1229,19 +1236,14 @@ The main thread does not run the rotation simulation.
    comparisons and then inactive baselines.
 5. Equal-priority work remains first-in, first-out.
 
-Every full recalculation starts a new batch. Starting that batch terminates the
-worker executing the previous batch and rejects all of its pending requests,
-then schedules a fresh baseline followed by the new comparison categories.
-This batch boundary takes precedence over keyed pending-request replacement and
-also clears the worker's baseline cache, so comparisons cannot use a baseline
-from a superseded state. The main thread can explicitly reseed a cached baseline
-into the replacement worker before its first missing variant. Keyed replacement
-still coalesces requests scheduled within the same batch.
+Switching path supersedes the batch, which terminates the workers and rejects
+their pending requests, so a comparison cannot resolve against a baseline from a
+superseded state. Each slot keeps its own baseline cache, because a shared set
+would let one slot's cached baseline answer another's comparison.
 
-`rotationWorker.ts` has no React or browser-storage dependency. It owns a
-bounded in-memory baseline cache keyed by rotation ID, calculation context, and
-rotation content. A comparison job reads that exact entry and posts only the
-completed metrics.
+`rotationWorker.ts` has no React, browser-storage, or zustand dependency. It owns
+a bounded in-memory baseline cache keyed by the bundle's fingerprint. A
+comparison job reads that exact entry and posts only the completed metrics.
 
 The Simulation tab receives an immutable baseline-only snapshot for the active
 rotation. Starting a simulation creates a separate `simulationWorker.ts`
@@ -1735,55 +1737,76 @@ from data.
   Any difference beyond 4 ULPs in DPS, total damage, or duration, in either direction, requires review
   before release; see [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
-### Rotation editor calculation lifecycle
+### Rotation calculation as a pull
+
+A rotation's result is a derivation, not a computation that has to be run in
+order. Every part of it is a cache entry keyed by the fingerprint of the bundle
+it came from, and every merge of those parts is a pure function of them, so
+nothing needs to stay alive between the parts. `resolveComparisonMetrics`
+expresses that: it asks the store for the baseline, then for each category's
+variants, and folds the pure merges. A caller asks for the categories it
+displays, the store answers the ones it already holds, and the rest are
+dispatched.
+
+The variants of a category are dispatched together and each is written into its
+own slot rather than appended in the order the workers finish, because combining
+a category sorts its rows and a sort only reproduces against a fixed input
+order. The categories own disjoint metric fields, so they need no ordering
+between them either, and one landing never disturbs another.
+
+That is what makes the rotation editor deferrable. The application resolves the
+active rotation's baseline itself, because a headline number does not need an
+owner; only the editor resolves comparisons, because nothing outside it reads
+them. The editor therefore mounts on the first visit to its tab, after which it
+stays mounted so its scroll offset survives.
 
 Editing any rotation calculates and caches only that rotation's baseline
 timeline, expected damage, DPS, and action breakdowns. Saving requests
 comparisons only when the edited rotation is active. Making an inactive rotation
-active reuses its valid baseline cache and requests comparisons.
+active reuses its valid baseline cache and requests comparisons. An editor
+preview never requests comparison variants.
 
-When character stats, attunements, Inner Ways, food, Divinecraft, build, breakthrough,
-or settings change, the refresh order is: active baseline; stat priority;
-attunement priority; weapon sets; armor sets; bow/ring; arsenal; global
-buffs/debuffs; Inner Ways; Script; Divinecraft; food; then every inactive
-baseline. A context key prevents an older result from being treated as current
-or published after a newer refresh begins. The Rotation Editor keeps the last
-completed timeline for each rotation mounted during its replacement calculation
-so scroll position and focused controls survive the refresh. Main retains each
-category's previous rows until that category completes, then publishes the
-replacement rows immediately. Each panel subscribes to its own category status,
-whose reserved layout space prevents progress text from shifting the panel.
+When character stats, attunements, Inner Ways, food, Divinecraft, build,
+breakthrough, or settings change, the inputs are part of the bundle, so their
+fingerprints change and the next pull finds nothing held. The category order is
+`baseline`, `statPriority`, `attunementPriority`, `weaponSets`, `armorSets`,
+`bowRingSet`, `arsenal`, `globalDebuffs`, `innerWays`, `script`, `divinecraft`,
+`food`. The Rotation Editor keeps the last completed timeline for each rotation
+during its replacement calculation so scroll position and focused controls
+survive the refresh, and Main keeps each category's previous rows until that
+category completes.
 
-The refresh identity combines the resolved active rotation ID with the complete
-baseline fingerprint. Scheduling records that identity immediately. A later
-different identity always supersedes the running batch, even if it was
-calculated earlier in the session; cached results are restored through the same
-publication path instead of suppressing the schedule. Path filtering can
-replace an incompatible active rotation while a request is running without
-allowing a discarded transitional request to suppress its replacement.
-Requests superseded by a newer full calculation do not schedule another retry;
-the newer request is already their replacement. This distinction prevents
-development effect replays and rapid context changes from forming a retry loop.
+Staleness is the store's problem, not the caller's. A request is keyed by what
+it computes, so work overtaken by newer inputs resolves against inputs nothing
+reads any more, and the puller discards a result whose own request is no longer
+its current one. An editor preview is the exception that proves the rule: it is
+neither held nor shared, because a timeline for an earlier revision is worse than
+none, since the revision check would accept it as current. Each preview is
+therefore its own request.
 
-Completed full calculations publish directly when their request is still the
-latest request for the resolved active rotation. Publication does not wait for a
-second effect to reconcile the stored active and editing IDs during a path
-transition. If the persistent worker fails while loading or processing a
-request, the client discards it and retries the interrupted request once on a
-fresh worker instead of leaving later work attached to a dead worker.
+A category's status is reported as the fraction of its variants that have
+settled, counting a dispatched variant as part-settled by the progress it
+reports, so a category does not read as stalled while its first variants run. A
+baseline reports no steps, so it is described as under way rather than as stalled
+at zero percent. Progress is stored apart from metrics in `rotationStore`, and
+each status component subscribes to its own category, so a progress report
+rerenders that component rather than the application tree.
 
-Each comparison category reports deterministic variant progress independently.
-Before a category begins, all category indicators enter a pending zero-percent
-state. Each worker comparison request calculates one variant. A variant is
-complete only after its timeline entries and final damage total have both been
-calculated and cached. Cache hits count as immediately completed work. The
-displayed percentage is exactly `completed category variants / total category
-variants`. The baseline is one
-separate unit that moves from zero to complete when its metrics publish.
-Categories with no variants complete immediately without a worker request.
-Progress is stored separately from metrics; status components subscribe through
-the external calculation-status store rather than causing the application tree
-to rerender on every worker update.
+### The two stores
+
+`dpsStore` is a cache and is read non-reactively, through `getState()`. Its
+entries are the output of dispatched work, so a component that subscribed to one
+would rerender whenever a calculation it never asked for reported progress.
+Nothing subscribes, and a selector on it returns nothing for that reason.
+
+`rotationStore` is published state and is read with selectors. What it holds is
+what the interface mirrors: a headline number, a rotation name, a progress bar,
+the rotation list and the per-path selection. It owns the rotations themselves
+and persists them, so writing a rotation and storing it are one act, and a
+rotation is still resolvable when the editor is not mounted. It is a module
+singleton, so its persisted state is read during the first render of the
+application rather than when its module is imported, which a deferred editor
+decides.
 
 ## Development and deployment
 
