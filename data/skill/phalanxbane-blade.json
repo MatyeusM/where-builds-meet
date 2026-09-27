@@ -636,7 +636,8 @@
       "AnxiSoldier",
       "MartialArtEffect",
       "Triggered"
-    ]
+    ],
+    "skillBreakdownCategory": "Mo Blade Anxi Soldier"
   },
   "AnxiSoldierBurningHeart3": {
     "name": "Anxi Soldier Burning Heart 3rd Stage",
@@ -665,7 +666,8 @@
       "AnxiSoldier",
       "MartialArtEffect",
       "Triggered"
-    ]
+    ],
+    "skillBreakdownCategory": "Mo Blade Anxi Soldier"
   },
   "AnxiSoldierTotalAnnihilation": {
     "name": "Anxi Soldier Total Annihilation",
@@ -694,6 +696,7 @@
       "AnxiSoldier",
       "MartialArtEffect",
       "Triggered"
-    ]
+    ],
+    "skillBreakdownCategory": "Mo Blade Anxi Soldier"
   }
 }

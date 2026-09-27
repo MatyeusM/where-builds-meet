@@ -294,7 +294,8 @@
       "AnxiSoldier",
       "MartialArtEffect",
       "Triggered"
-    ]
+    ],
+    "skillBreakdownCategory": "Heng Blade Anxi Soldier"
   },
   "AnxiSoldierGeneralsBaneStab": {
     "name": "Anxi Soldier General's Bane: Stab",
@@ -316,6 +317,7 @@
       "AnxiSoldier",
       "MartialArtEffect",
       "Triggered"
-    ]
+    ],
+    "skillBreakdownCategory": "Heng Blade Anxi Soldier"
   }
 }
