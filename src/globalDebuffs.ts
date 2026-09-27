@@ -86,12 +86,27 @@ export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
   }
 }
 
+/**
+ * Read the stored selection, returning the same object while the stored value is unchanged.
+ *
+ * Callers hold this in dependency arrays and pass it into calculation subjects, so handing
+ * back a fresh object per read would make every consumer's inputs look changed on each render.
+ */
+let lastSource: string | undefined
+let lastState: GlobalDebuffState | undefined
+
 export function loadGlobalDebuffs(): GlobalDebuffState {
+  const source = getPersistentItem(globalDebuffStorageKey) ?? "null"
+  if (source === lastSource && lastState) return lastState
+  let state: GlobalDebuffState
   try {
-    return normalizeGlobalDebuffs(JSON.parse(getPersistentItem(globalDebuffStorageKey) ?? "null"))
+    state = normalizeGlobalDebuffs(JSON.parse(source) as unknown)
   } catch {
-    return { ...defaultGlobalDebuffs }
+    state = { ...defaultGlobalDebuffs }
   }
+  lastSource = source
+  lastState = state
+  return state
 }
 
 const definitions = {

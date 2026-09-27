@@ -1,5 +1,8 @@
 @layer ui {
   .button {
+    /* The block size an icon-only button of this size takes. See `.icon-only`. */
+    --button-block-size: calc(1.2em + 20px);
+
     max-inline-size: 100%;
     min-inline-size: 0;
     border: 1px solid transparent;
@@ -26,6 +29,8 @@
   }
 
   .small {
+    --button-block-size: calc(1.2em + 10px);
+
     padding: 5px 9px;
     border-color: var(--border);
     background: var(--surface-alt);
@@ -38,13 +43,14 @@
   }
 
   /*
-   * An icon-only button takes its block size from the size it is combined with, so an
-   * icon-only action at the default size stands as tall as a button beside it carrying a
-   * label, and the same action at the small size stands as tall as a small labelled button.
-   * The ratio makes it square, since there is no label to give it an intrinsic width.
+   * An icon-only button is square: it has no label to give it an intrinsic inline size, so it
+   * takes the block size of the size variant it is combined with. The size is written out as
+   * the padding plus the line box rather than taken from `aspect-ratio`, because the box is
+   * centre-aligned and therefore has a content-derived block size, which leaves a ratio with
+   * no definite axis to resolve from and collapses the button to the width of its glyph.
    *
-   * It aligns to the centre rather than to a baseline: a centred glyph has no text baseline
-   * to sit on, and baseline-aligning it in a row of text would displace that text.
+   * The em is the same line box a labelled button of this size gets, so the two stay the same
+   * height in whatever context they are used.
    */
   .icon-only {
     display: inline-grid;
@@ -52,7 +58,8 @@
     align-self: center;
     padding-inline: 0;
     place-items: center;
-    aspect-ratio: 1;
+    block-size: var(--button-block-size);
+    inline-size: var(--button-block-size);
   }
 
   .primary {

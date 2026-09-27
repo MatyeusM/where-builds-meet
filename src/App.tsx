@@ -31,6 +31,7 @@ import { StatsTab } from "./features/character/StatsTab"
 import { RotationEditorTab } from "./features/rotations/RotationEditorTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
 import { SkillEditorTab } from "./features/skills/SkillEditorTab"
+import { loadGlobalDebuffs } from "./globalDebuffs"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
 import { Tab } from "./ui/Tab"
@@ -217,6 +218,32 @@ export default function App() {
       buildSetupOverrides,
     ],
   )
+  const currentGlobalDebuffs = loadGlobalDebuffs()
+  /**
+   * What a build is measured against. Everything here belongs to the sheet or the environment
+   * rather than to any build, so a build measured without being activated resolves against the
+   * same inputs the active one did.
+   */
+  const buildMeasurementContext = useMemo(
+    () => ({
+      environment: { pathId, settings, setupSelections, skillOverrides, globalDebuffs: currentGlobalDebuffs, enemy },
+      statOverrides,
+      attunementOverrides,
+      buildSetupOverrides: { buildId: activeBuild?.id ?? "", overrides: buildSetupOverrides },
+    }),
+    [
+      activeBuild?.id,
+      pathId,
+      settings,
+      setupSelections,
+      skillOverrides,
+      currentGlobalDebuffs,
+      enemy,
+      statOverrides,
+      attunementOverrides,
+      buildSetupOverrides,
+    ],
+  )
   const character = useMemo(
     () => ({
       stats: activeStatState.stats,
@@ -307,6 +334,7 @@ export default function App() {
       current?.graduationFingerprint === fingerprint ? { ...current, graduationDps: dps } : current,
     )
   }, [])
+  const activeRotationRecord = activeSimulation?.bundle.timeline.rotation
   const activeRotationDisplayName = activeSimulation
     ? activeSimulation.rotationIsDefault
       ? gameText(activeSimulation.rotationName)
@@ -583,11 +611,13 @@ export default function App() {
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildIds={typedPathDefinitions[pathId].graduated}
                 devMode={devMode}
-                activeBuildDps={rotationMetrics?.dps}
                 buildState={effectiveBuildState}
                 onBuildStateChange={setBuildState}
                 onActiveBuildChange={activateBuildForPath}
                 onSelectBuildWeapons={selectBuildWeapons}
+                measurement={buildMeasurementContext}
+                activeRotation={activeRotationRecord}
+                activeRotationName={activeRotationDisplayName}
               />
             </div>
           </Suspense>

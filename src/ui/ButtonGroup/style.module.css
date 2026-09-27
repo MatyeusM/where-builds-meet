@@ -39,6 +39,10 @@
     line-height: 1.2;
     text-align: start;
     overflow-wrap: anywhere;
+
+    /* An option is a target the reader moves onto deliberately and then reads, so it eases
+       at the normal duration rather than snapping under the pointer. */
+    transition: background-color var(--transition-normal);
   }
 
   /* Focus and disabled come before hover so no later rule raises specificity over them. */

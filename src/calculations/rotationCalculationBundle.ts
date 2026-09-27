@@ -1,4 +1,4 @@
-import type { BuildStatState } from "../application/buildStatState"
+import { resolveBuildStatState, type BuildStatState } from "../application/buildStatState"
 import {
   innerWayConditionsFor,
   innerWayEffectRulesFor,
@@ -10,12 +10,16 @@ import { martialArtDefinitions } from "../application/gameData/martialArts"
 import { rotationEventDefinitions } from "../application/gameData/rotationEffects"
 import { breakthroughProfile, typedSystemStats } from "../application/gameData/setup"
 import { defaultSkillMaps, dotDefinitions, effectDefinitions } from "../application/gameData/skills"
+import type { BuildEntry, BuildSetupOverrides, GearItem } from "../gear"
 import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "../globalDebuffs"
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../skillOverrides"
 import type { EnemyProfile } from "../types"
+import type { AttunementOverrides } from "./attunementStats"
+import { rotationBundleFingerprint } from "./calculationFingerprint"
 import { resolvePing } from "./combatDefaults"
 import type { RotationSimulationBundle } from "./rotationCalculator"
 import type { EditableObject, InnerWayEffectRule, RotationRecord, TimelineBuildInput } from "./rotationTimeline"
+import type { CharacterStatOverrides } from "./statEffects"
 
 /**
  * The part of a resolved build a calculation reads. Narrower than a `BuildStatState` on
@@ -123,6 +127,56 @@ export function buildRotationTimeline(
     resourceEvents: typedSystemStats.resourceEvents,
     maxHP: build.stats.maxHp,
   }
+}
+
+/**
+ * Everything a build is measured against except the build itself: the sheet, the enemy and
+ * the environment, which no build chooses. Held as one value so a caller measuring a build it
+ * did not activate has everything the sheet the active build was resolved from.
+ */
+export type MeasurementContext = {
+  environment: Omit<CalculationSubject, "rotation" | "build">
+  statOverrides: CharacterStatOverrides
+  attunementOverrides: AttunementOverrides
+  /**
+   * Unsaved setup edits, and the build they were made on.
+   *
+   * They are applied only to that build. They belong to the build whose sheet is on screen, and
+   * measuring some other build with them would compare it against a setup nobody chose for it.
+   * Carrying the build's identity here rather than leaving it to each caller to remember is
+   * what keeps that from being a rule someone has to know.
+   */
+  buildSetupOverrides?: { buildId: string; overrides: BuildSetupOverrides }
+}
+
+/**
+ * The bundle a build is measured with, and the key its result is held under.
+ *
+ * The key is the bundle's own fingerprint, which is the same key the rotation editor's baseline
+ * for that build is held under. That is what lets the active build's reading be answered from
+ * that baseline instead of running the rotation a second time.
+ */
+export function buildMeasurement(input: {
+  build: BuildEntry | undefined
+  gearItems: GearItem[]
+  context: MeasurementContext
+  rotation: RotationRecord
+}): { bundle: RotationSimulationBundle; cacheKey: string } {
+  const { environment, statOverrides, attunementOverrides, buildSetupOverrides: unsaved } = input.context
+  const build = resolveBuildStatState({
+    build: input.build,
+    gearItems: input.gearItems,
+    pathId: environment.pathId,
+    settings: environment.settings,
+    setupSelections: environment.setupSelections,
+    statOverrides,
+    attunementOverrides,
+    // Compared with an explicit guard rather than `unsaved?.buildId === build?.id`, because
+    // that reads as equal when both are absent and would apply edits that do not exist.
+    buildSetupOverrides: unsaved && unsaved.buildId === input.build?.id ? unsaved.overrides : undefined,
+  })
+  const bundle = buildRotationCalculationBundle({ ...environment, rotation: input.rotation, build })
+  return { bundle, cacheKey: rotationBundleFingerprint(bundle) }
 }
 
 /**

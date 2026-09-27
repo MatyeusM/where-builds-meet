@@ -212,11 +212,54 @@
     gap: 8px;
   }
 
+  /*
+   * The active build's own rate is a headline figure and takes the accent colour. A build
+   * being compared is coloured by whether it is ahead of or behind the active one instead, so
+   * the accent is not set here: a rule that always set one would win over the delta's own
+   * colour and a worse build would read as an improvement.
+   */
   .build-detail-dps {
-    color: var(--primary);
     font-size: 0.85rem;
     font-weight: 700;
     white-space: nowrap;
+  }
+
+  .build-detail-dps-active {
+    color: var(--primary);
+  }
+
+  /*
+   * The tooltip primitive's anchor generates no box of its own, so the element it is measured
+   * against has to be a real one. Without this the tooltip resolves against some ancestor far
+   * up the page and opens somewhere the reader is not looking.
+   */
+  .build-detail-dps-anchor {
+    position: relative;
+    display: inline-flex;
+  }
+
+  /* A build that is not active shows only how it differs, so the figures it is actually
+     worth are one hover away rather than crowding the row beside the build's name. */
+  .build-detail-dps-tooltip {
+    display: grid;
+    gap: 4px;
+    min-inline-size: 14rem;
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row > span {
+    color: var(--text-muted);
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row > strong {
+    color: var(--text);
+    text-align: end;
   }
 
   .detail-active-button {

@@ -33,8 +33,14 @@
     --radius-pill: 999px;
     --focus-ring: 2px solid var(--primary);
     --focus-ring-offset: 2px;
-    --transition-fast: 120ms ease;
-    --transition-normal: 180ms ease;
+
+    /*
+     * Two durations, not three. A middle step between these read as the same speed as the
+     * slow one while still feeling like a delay, so anything that wants "noticeable but
+     * unhurried" uses the normal one and only genuinely incidental feedback uses the fast one.
+     */
+    --transition-fast: 150ms ease;
+    --transition-normal: 300ms ease;
 
     /* Background & Surfaces */
     --bg: oklch(0.18 0.015 275);

@@ -14,7 +14,9 @@ import {
 
 import arsenalDefinitions from "../../../data/arsenal.json"
 import bowRingSetDefinitions from "../../../data/bow-ring-set.json"
-import { formatThroughput } from "../../application/formatting"
+import { formatThroughput, formatThroughputDelta, throughputDeltaClass } from "../../application/formatting"
+import type { MeasurementContext } from "../../calculations/rotationCalculationBundle"
+import type { RotationRecord } from "../../calculations/rotationTimeline"
 import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
 import {
   defaultBuildSetup,
@@ -59,6 +61,7 @@ import { Button } from "../../ui/Button"
 import { ButtonGroup, ButtonGroupOption } from "../../ui/ButtonGroup"
 import { Dialog } from "../../ui/Dialog"
 import { Panel, PanelHeading } from "../../ui/Panel"
+import { Tooltip } from "../../ui/Tooltip"
 import {
   GearEditor,
   capAndFilterGearDraft,
@@ -70,6 +73,7 @@ import {
   normalizeDraftValue,
   type GearDraft,
 } from "./GearEditor"
+import { useBuildThroughput } from "./useBuildThroughput"
 
 function gearSlotLabel(slot: GearSlot) {
   return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
@@ -90,11 +94,14 @@ type BuildTabProps = {
   buildGroup: string
   graduatedBuildIds: string[]
   devMode: boolean
-  activeBuildDps?: number
   buildState: BuildState
   onBuildStateChange: Dispatch<SetStateAction<BuildState>>
   onActiveBuildChange: (id: string) => void
   onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean
+  /** The sheet and environment a build is measured against, and the rotation it runs. */
+  measurement: MeasurementContext
+  activeRotation?: RotationRecord
+  activeRotationName?: string
 }
 
 type BuildManagementProps = {
@@ -265,11 +272,13 @@ export default function BuildTab({
   buildGroup,
   graduatedBuildIds,
   devMode,
-  activeBuildDps,
   buildState,
   onBuildStateChange,
   onActiveBuildChange,
   onSelectBuildWeapons,
+  measurement,
+  activeRotation,
+  activeRotationName,
 }: BuildTabProps) {
   const [editingBuildId, setEditingBuildId] = useState(buildState.activeBuildId)
   const [editingName, setEditingName] = useState(false)
@@ -336,8 +345,26 @@ export default function BuildTab({
         </div>
       </Panel>
     )
-  const showActiveBuildDps =
-    editingEntry.id === buildState.activeBuildId && activeBuildDps !== undefined && activeBuildDps > 0
+  const isActiveBuild = editingEntry.id === buildState.activeBuildId
+  const activeEntry = listedEntries.find(entry => entry.id === buildState.activeBuildId)
+  // The build on screen, and the active one it is weighed against. When they are the same build
+  // both hooks ask for the same key, so the store answers the second from the first.
+  const editedThroughput = useBuildThroughput({
+    build: editingEntry,
+    gearItems: buildState.gearItems,
+    context: measurement,
+    rotation: activeRotation,
+  })
+  const activeThroughput = useBuildThroughput({
+    build: activeEntry,
+    gearItems: buildState.gearItems,
+    context: measurement,
+    rotation: activeRotation,
+  })
+  const comparison =
+    !isActiveBuild && editedThroughput && activeThroughput
+      ? { delta: editedThroughput.dps - activeThroughput.dps, reading: editedThroughput }
+      : undefined
   const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons)
   const setup = resolveBuildSetup(editingEntry)
   const usageCounts = new Map<string, number>()
@@ -614,11 +641,43 @@ export default function BuildTab({
                   ) : null}
                 </h3>
               )}
-              {showActiveBuildDps ? (
-                <small className="build-detail-dps">
-                  ({formatThroughput(activeBuildDps, 0)} {t("system.dps")})
-                </small>
-              ) : null}
+              {isActiveBuild ? (
+                activeThroughput ? (
+                  <small className="build-detail-dps build-detail-dps-active">
+                    ({formatThroughput(activeThroughput.dps, 0)} {t("system.dps")}
+                    {activeThroughput.hps > 0
+                      ? ` / ${formatThroughput(activeThroughput.hps, 0)} ${t("system.hps")}`
+                      : ""}
+                    )
+                  </small>
+                ) : null
+              ) : !comparison ? null : (
+                <span className="build-detail-dps-anchor">
+                  <Tooltip
+                    className="build-detail-dps-tooltip"
+                    content={
+                      <>
+                        <span className="build-detail-dps-row">
+                          <span>{t("ui.buildTab.notActiveDps")}</span>
+                          <strong>{formatThroughput(comparison.reading.dps, 0)}</strong>
+                        </span>
+                        <span className="build-detail-dps-row">
+                          <span>{t("ui.buildTab.rotationUsed")}</span>
+                          <strong>{activeRotationName ?? ""}</strong>
+                        </span>
+                        <span className="build-detail-dps-row">
+                          <span>{t("system.totalDamage")}</span>
+                          <strong>{formatThroughput(comparison.reading.totalDamage)}</strong>
+                        </span>
+                      </>
+                    }
+                  >
+                    <small className={`build-detail-dps ${throughputDeltaClass(comparison.delta, "damage")}`}>
+                      ({formatThroughputDelta(comparison.delta, 0)} {t("system.dps")})
+                    </small>
+                  </Tooltip>
+                </span>
+              )}
             </div>
             <div className="detail-active-actions">
               <Button
