@@ -97,9 +97,9 @@ debuff stacking/refresh, and new buff/trigger behavior. Existing affected probes
 are revised for the datamined numbers and the confirmed Mystic Precision exception.
 Formatting, localization extraction, and the production build remain the gates.
 
-## Dust WIP follow-up
+## Dust modelling notes
 
-Dust's rotation-scoped draft uses explicitly successful catch variants. The
+Dust's rotation uses explicitly successful catch variants. The
 rank-13 Perfect Catch Enhancement accumulates five-second Falling Blossoms;
 three stacks grant one-use Fragrant Song, with Delicate from Phantom Rally T1.
 The next throw snapshots Fragrant Song damage and an unconditional guaranteed crit,
@@ -110,7 +110,7 @@ flight and accelerated-flight guaranteed catch are represented in the
 source-faithful Scarlet Spin chain; the acceleration is applied to the next
 throw's Stage 4 cadence. Each queued throw pays its own ping, and both the
 outgoing and returning hit remain in the timeline.
-The draft only casts the four-hit opener, so sweeps five through seven are
+The rotation only casts the four-hit opener, so sweeps five through seven are
 modelled but unused; Tokens of Gratitude and Fading Crimson are intentionally
 ignored by user instruction. Per-skill timing fallbacks are listed in
 [skill-data](skill-data.md#bamboocut-dust-definitions).

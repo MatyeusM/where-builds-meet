@@ -72,7 +72,7 @@
   "bamboocutDust": {
     "name": "Dust",
     "tag": "BamboocutDust",
-    "status": "wip",
+    "status": "available",
     "buildGroup": "bamboocut-dust",
     "defaultBuild": "dust-fully-relayed-min",
     "graduated": ["dust-full-min"],

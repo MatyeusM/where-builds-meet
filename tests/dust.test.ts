@@ -141,7 +141,7 @@ function stacks(result: ReturnType<typeof calculateRotationBaseline>, name: stri
     .map(row => row.actionStates?.[0].buffs.get(name)?.stack ?? 0)
 }
 
-describe("Dust WIP mechanics", () => {
+describe("Dust mechanics", () => {
   it.each([
     { tier: 0, count: undefined, active: false },
     { tier: 0, count: 2, active: false },
