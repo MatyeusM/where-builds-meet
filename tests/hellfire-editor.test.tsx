@@ -5,21 +5,20 @@ import { assert, afterEach, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import App from "../src/App"
-import { requestEditorTimeline } from "../src/calculations/rotationWorkerClient"
+import type { EditorTimelineResult } from "../src/calculations/editorTimeline"
 import { initializeI18n } from "../src/i18n"
+import { dpsBundles, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
-vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  supersedeRotationCalculationRequests: vi.fn<() => void>(),
-  cancelEditorTimelineRequest: vi.fn<() => void>(),
-}))
+vi.mock("../src/stores/dpsStore", async () => {
+  const { mockDpsStore } = await import("./helpers/dpsStoreMock")
+  return mockDpsStore()
+})
 
 let container: HTMLDivElement
 let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(async () => {
+  resetDpsMock()
   localStorage.clear()
   sessionStorage.clear()
   vi.useFakeTimers()
@@ -105,13 +104,11 @@ it("adds a timed Hellfire event, edits signed amounts, and saves it", async () =
     await vi.advanceTimersByTimeAsync(300)
   })
   expect(
-    vi
-      .mocked(requestEditorTimeline)
-      .mock.calls.some(([bundle]) =>
-        bundle.timeline.rotation.steps.some(
-          step => step.type === "event" && step.event === "Hellfire" && step.amount === 25,
-        ),
+    dpsBundles("editorTimeline").some(bundle =>
+      bundle.timeline.rotation.steps.some(
+        step => step.type === "event" && step.event === "Hellfire" && step.amount === 25,
       ),
+    ),
   ).toBe(true)
 })
 
@@ -143,9 +140,7 @@ it("allows a Delay action in a one-skill rotation", async () => {
     select.dispatchEvent(new Event("change", { bubbles: true }))
     await vi.advanceTimersByTimeAsync(200)
   })
-  const bundle = vi
-    .mocked(requestEditorTimeline)
-    .mock.calls.map(([value]) => value)
+  const bundle = dpsBundles("editorTimeline")
     .reverse()
     .find(value => value?.timeline?.rotation?.name === "One skill")
   expect(bundle?.timeline.rotation.steps[0]).toMatchObject({ type: "event", event: "Delay" })
@@ -178,9 +173,7 @@ it("keeps a sole ordered skill when replacing it with a fixed-time event", async
     select.dispatchEvent(new Event("change", { bubbles: true }))
     await vi.advanceTimersByTimeAsync(200)
   })
-  const bundle = vi
-    .mocked(requestEditorTimeline)
-    .mock.calls.map(([value]) => value)
+  const bundle = dpsBundles("editorTimeline")
     .reverse()
     .find(value => value?.timeline?.rotation?.name === "One skill fixed replacement")
   expect(bundle?.timeline.rotation.steps).toEqual([{ type: "skill", skill: "Defense" }])
@@ -213,9 +206,7 @@ it("clears an action start anchor when replacing its skill with an actionless sk
     select.dispatchEvent(new Event("change", { bubbles: true }))
     await vi.advanceTimersByTimeAsync(200)
   })
-  const bundle = vi
-    .mocked(requestEditorTimeline)
-    .mock.calls.map(([value]) => value)
+  const bundle = dpsBundles("editorTimeline")
     .reverse()
     .find(value => value?.timeline?.rotation?.name === "Action anchor replacement")
   expect(bundle?.timeline.rotation.start).toEqual({ step: 0 })
@@ -224,11 +215,13 @@ it("clears an action start anchor when replacing its skill with an actionless sk
 
 it("retains generated rows until the latest complete editor revision arrives", async () => {
   const { pendingEditorTimeline } = await import("../src/editorTimelinePreview")
-  type Result = Awaited<ReturnType<typeof requestEditorTimeline>>
+  type Result = EditorTimelineResult
   const requests: { result: Result; resolve: (result: Result) => void }[] = []
-  vi.mocked(requestEditorTimeline).mockImplementation(
-    bundle =>
+  dpsResolves(
+    "editorTimeline",
+    request =>
       new Promise(resolve => {
+        const bundle = request.build()
         const timeline = pendingEditorTimeline(bundle.timeline).map(row =>
           Object.assign({}, row, { pendingCalculation: false }),
         )
@@ -288,11 +281,13 @@ it("retains generated rows until the latest complete editor revision arrives", a
 
 it.each([0, 1, 3])("preserves the neighboring row's viewport position when deleting item %i", async deletePosition => {
   const { pendingEditorTimeline } = await import("../src/editorTimelinePreview")
-  type Result = Awaited<ReturnType<typeof requestEditorTimeline>>
+  type Result = EditorTimelineResult
   const requests: { result: Result; resolve: (result: Result) => void }[] = []
-  vi.mocked(requestEditorTimeline).mockImplementation(
-    bundle =>
+  dpsResolves(
+    "editorTimeline",
+    request =>
       new Promise(resolve => {
+        const bundle = request.build()
         const timeline = pendingEditorTimeline(bundle.timeline).map(row =>
           Object.assign({}, row, { pendingCalculation: false }),
         )

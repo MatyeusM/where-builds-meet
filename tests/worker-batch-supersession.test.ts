@@ -66,35 +66,34 @@ describe("worker-batch-supersession", () => {
     const sent = (predicate: (message: any) => boolean) => workers.flatMap(worker => worker.messages).filter(predicate)
 
     try {
-      const {
-        disposeRotationCalculationWorker,
-        requestRotationBaseline,
-        requestRotationCalculation,
-        requestRotationComparisons,
-      } = await import("../src/calculations/rotationWorkerClient.ts")
+      const { disposeCalculationWorkers, dispatchCalculation } =
+        await import("../src/calculations/rotationWorkerTransport.ts")
+      const baseline = (cacheKey: string, key: string) =>
+        dispatchCalculation({ mode: "baseline", bundle, cacheKey, key })
+      const comparisons = (cacheKey: string, key: string, baseline?: unknown) =>
+        dispatchCalculation({ mode: "comparisons", bundle, cacheKey, key, baseline } as never)
+      const calculation = (key: string, held = bundle) =>
+        dispatchCalculation({ mode: "baseline", bundle: held, key } as never)
 
       // Two independent batches are dispatched at once rather than queued behind one worker.
-      const settled = await Promise.all([
-        requestRotationCalculation(bundle, { key: "first" }),
-        requestRotationCalculation(bundle, { key: "second" }),
-      ])
+      const settled = await Promise.all([calculation("first"), calculation("second")])
       assert(workers.length === 2, `Expected the pool to run two batches at once, but made ${workers.length} workers.`)
       assert(
-        settled.every(result => result.dps === metrics.dps),
+        settled.every(result => (result as { metrics: { dps: number } }).metrics.dps === metrics.dps),
         "Both parallel batches did not complete.",
       )
 
-      disposeRotationCalculationWorker()
+      disposeCalculationWorkers()
 
       // A worker caches the baseline for a key. While that same worker is busy, a request
       // for the key can only go to a different worker, which has no such cache. The worker
       // throws rather than recomputing one, so the client must send the baseline it was
       // handed even though another worker already holds that key. Affinity routing only
       // avoids this while the holding worker is free, so the case has to be built.
-      await requestRotationBaseline(bundle, "shared-key", { key: "seed" })
+      await baseline("shared-key", "seed")
       respondWhen = message => !message.bundle?.hold
-      const occupying = requestRotationCalculation(holdingBundle, { key: "occupy" })
-      const onOtherWorker = requestRotationComparisons(bundle, "shared-key", cachedBaseline, { key: "elsewhere" })
+      const occupying = calculation("occupy", holdingBundle)
+      const onOtherWorker = comparisons("shared-key", "elsewhere", cachedBaseline)
       respondWhen = () => true
       held.splice(0).forEach(settle => settle())
       await Promise.all([occupying, onOtherWorker])
@@ -113,20 +112,20 @@ describe("worker-batch-supersession", () => {
       )
 
       // A key no worker has must always be seeded from the caller's baseline.
-      await requestRotationComparisons(bundle, "unseen-key", cachedBaseline, { key: "unseen" })
+      await comparisons("unseen-key", "unseen", cachedBaseline)
       const unseen = sent(message => message.cacheKey === "unseen-key")
       assert(unseen[0]?.baseline === cachedBaseline, "A comparisons batch for an uncached key was not seeded.")
 
       // Once nothing is in flight, a worker holding the key can serve a repeat request
       // from its own cache, so the baseline must not be cloned across the wire again.
-      await requestRotationComparisons(bundle, "shared-key", cachedBaseline, { key: "rerouted" })
+      await comparisons("shared-key", "rerouted", cachedBaseline)
       const rerouted = sent(message => message.cacheKey === "shared-key" && message.mode === "comparisons").find(
         message => message !== carriers[0],
       )
       assert(rerouted !== undefined, "The repeat comparisons batch was never sent.")
       assert(rerouted?.baseline === undefined, "A worker that already cached the baseline was sent it again.")
 
-      disposeRotationCalculationWorker()
+      disposeCalculationWorkers()
     } finally {
       delete (globalThis as { Worker?: unknown }).Worker
     }

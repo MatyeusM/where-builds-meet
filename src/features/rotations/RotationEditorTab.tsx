@@ -103,7 +103,6 @@ import {
 } from "../../calculations/combatDefaults"
 import { type AttunementStats } from "../../calculations/damage"
 import type { EditorTimelineResult } from "../../calculations/editorTimeline"
-import { RotationCalculationCache } from "../../calculations/rotationCalculationCache"
 import {
   type RotationActionBreakdown,
   type RotationSimulationBundle,
@@ -131,13 +130,6 @@ import {
   type TimelineBuildInput,
   type TimelineRow,
 } from "../../calculations/rotationTimeline"
-import {
-  requestRotationBaseline,
-  requestEditorTimeline,
-  cancelEditorTimelineRequest,
-  requestRotationComparisons,
-  supersedeRotationCalculationRequests,
-} from "../../calculations/rotationWorkerClient"
 import { innerWayDefinitions } from "../../data/innerWayDefinitions"
 import { setupSelectionChangesTimeline } from "../../data/scriptDefinitions"
 import { allStatDefinitions } from "../../data/statDefinitions"
@@ -177,6 +169,7 @@ import {
   type RotationEntry,
 } from "../../rotationTransfer"
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../../skillOverrides"
+import { useDpsStore } from "../../stores/dpsStore"
 import { type CharacterStats, type WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
 
@@ -212,7 +205,6 @@ export function RotationEditorTab({
   active,
   defaultRotationId,
   selectedRotationId,
-  calculationCache,
   skillOverrides,
   onSelectRotationWeapons,
   onActiveRotationChange,
@@ -227,7 +219,6 @@ export function RotationEditorTab({
   active: boolean
   defaultRotationId: string
   selectedRotationId: string
-  calculationCache: RotationCalculationCache
   skillOverrides: SkillOverrides
   onSelectRotationWeapons: (weapons: [WeaponId, WeaponId], rotationId: string) => boolean
   onActiveRotationChange: (id: string) => void
@@ -308,7 +299,6 @@ export function RotationEditorTab({
     Record<string, { key: string; result: RotationSimulationResult }>
   >({})
   const rotationResultsRef = useRef(rotationResults)
-  const calculationCacheRef = useRef(calculationCache)
   const editorPreviewRequestSequenceRef = useRef(0)
   const diffRequestSequenceRef = useRef(0)
   const scheduledRefreshTargetRef = useRef<string | null>(null)
@@ -1745,10 +1735,14 @@ export function RotationEditorTab({
     const current = () => !cancelled
     const run = async () => {
       try {
-        const result = await requestEditorTimeline(calculationBundleFor(requested.rotation, false), {
-          key: `editor:${requested.id}`,
-          priority: 450,
-        })
+        const result = await useDpsStore
+          .getState()
+          .ensure({
+            kind: "editorTimeline",
+            cacheKey: `editor:${requested.id}`,
+            build: () => calculationBundleFor(requested.rotation, false),
+            priority: 450,
+          })
         if (!current()) return
         setEditorTimelineState({ ...result, rotation: requested.rotation, revision: requested })
       } catch (error) {
@@ -1768,7 +1762,7 @@ export function RotationEditorTab({
     return () => {
       cancelled = true
       window.clearTimeout(timer)
-      cancelEditorTimelineRequest(`editor:${requested.id}`)
+      useDpsStore.getState().cancel(`editor:${requested.id}`)
     }
   }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
@@ -1804,7 +1798,7 @@ export function RotationEditorTab({
       let cachedGraduation: number | undefined
       if (graduation) {
         const cachedBaselines = graduation.candidates.flatMap(candidate => {
-          const baseline = calculationCacheRef.current.baseline(candidate.fingerprint)
+          const baseline = useDpsStore.getState().peek<"baseline">(candidate.fingerprint)
           return baseline ? [baseline] : []
         })
         if (cachedBaselines.length === graduation.candidates.length)
@@ -1829,8 +1823,6 @@ export function RotationEditorTab({
     onActiveSimulationBundleChange,
   ])
 
-  const workerCacheKeyFor = (fingerprint: string) => `rotation:${fingerprint}`
-
   function storeBaselineResult(id: string, key: string, result: RotationSimulationResult) {
     const next = { ...rotationResultsRef.current, [id]: { key, result } }
     rotationResultsRef.current = next
@@ -1846,19 +1838,12 @@ export function RotationEditorTab({
     const resultKey = prepared.fingerprint
     const displayed = rotationResultsRef.current[id]
     if (displayed?.key === resultKey) {
-      const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
+      const cachedBaseline = useDpsStore.getState().peek<"baseline">(resultKey)
       if (cachedBaseline) return cachedBaseline
     }
-    const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
-    if (cachedBaseline) {
-      storeBaselineResult(id, resultKey, cachedBaseline)
-      return cachedBaseline
-    }
-    const result = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(resultKey), {
-      key: `baseline:${id}`,
-      priority,
-    })
-    calculationCacheRef.current.storeBaseline(resultKey, result)
+    const result = await useDpsStore
+      .getState()
+      .ensure({ kind: "baseline", cacheKey: resultKey, build: () => prepared.bundle, priority })
     storeBaselineResult(id, resultKey, result)
     return result
   }
@@ -1868,18 +1853,10 @@ export function RotationEditorTab({
       const prepared = prepareBaselineCalculation(rotationRecord)
       const resultKey = prepared.fingerprint
       const refreshTarget = `${id}:${resultKey}`
-      const cachedBaseline = calculationCacheRef.current.baseline(resultKey)
-      if (cachedBaseline) {
-        if (editorPreviewRequestSequenceRef.current === requestSequence)
-          storeBaselineResult(id, resultKey, cachedBaseline)
-        return
-      }
       if (runningRefreshTargetRef.current === refreshTarget) return
-      const result = await requestRotationBaseline(prepared.bundle, workerCacheKeyFor(resultKey), {
-        key: `preview:${id}`,
-        priority: 200,
-      })
-      calculationCacheRef.current.storeBaseline(resultKey, result)
+      const result = await useDpsStore
+        .getState()
+        .ensure({ kind: "baseline", cacheKey: resultKey, build: () => prepared.bundle, priority: 200 })
       if (editorPreviewRequestSequenceRef.current === requestSequence) storeBaselineResult(id, resultKey, result)
     },
   )
@@ -1888,16 +1865,16 @@ export function RotationEditorTab({
     const prepared = prepareGraduationCalculation(rotationRecord)
     if (!prepared) return
     const baselines = await Promise.all(
-      prepared.candidates.map(async candidate => {
-        const cachedBaseline = calculationCacheRef.current.baseline(candidate.fingerprint)
-        if (cachedBaseline) return cachedBaseline
-        const baseline = await requestRotationBaseline(candidate.bundle, workerCacheKeyFor(candidate.fingerprint), {
-          key: `graduation:${candidate.fingerprint}`,
-          priority: 390,
-        })
-        calculationCacheRef.current.storeBaseline(candidate.fingerprint, baseline)
-        return baseline
-      }),
+      prepared.candidates.map(candidate =>
+        useDpsStore
+          .getState()
+          .ensure({
+            kind: "baseline" as const,
+            cacheKey: candidate.fingerprint,
+            build: () => candidate.bundle,
+            priority: 390,
+          }),
+      ),
     )
     const highest = selectHighestGraduationResult(baselines)
     if (highest && graduationFingerprintRef.current === prepared.fingerprint)
@@ -1907,7 +1884,7 @@ export function RotationEditorTab({
   const calculateDiffsForRotation = useEffectEvent(
     async (id: string, rotationRecord: RotationRecord, prepared = prepareBaselineCalculation(rotationRecord)) => {
       const requestSequence = ++diffRequestSequenceRef.current
-      supersedeRotationCalculationRequests()
+      useDpsStore.getState().supersede()
       beginRotationCalculation()
       const contextKey = calculationContextKey
       const resultKey = prepared.fingerprint
@@ -1952,19 +1929,18 @@ export function RotationEditorTab({
           if (variants.length === 0) return mergeComparisonCategory(previousMetrics, baseline.metrics, category)
           const variantMetrics: RotationMetrics[] = []
           const calculateComparisonVariant = async (variant: ComparisonVariantRequest, index: number) => {
-            let calculated = calculationCacheRef.current.variant(resultKey, variant.key)
-            if (!calculated) {
-              calculated = await requestRotationComparisons(variant.bundle, workerCacheKeyFor(resultKey), baseline, {
-                key: `diff:${id}:${category}:${variant.key}`,
-                priority: 350,
-                onProgress: progress => {
-                  if (diffRequestSequenceRef.current === requestSequence)
-                    publishRotationCategoryProgress(category, (index + progress) / variants.length)
-                },
-              })
-              calculationCacheRef.current.storeVariant(resultKey, variant.key, calculated)
-            }
-            variantMetrics.push(calculated)
+            const calculated = await useDpsStore.getState().ensure({
+              kind: "comparisons",
+              cacheKey: `${resultKey}:${variant.key}`,
+              build: () => variant.bundle,
+              baseline: () => baseline,
+              priority: 350,
+              onProgress: progress => {
+                if (diffRequestSequenceRef.current === requestSequence)
+                  publishRotationCategoryProgress(category, (index + progress) / variants.length)
+              },
+            })
+            variantMetrics.push(calculated.metrics)
             if (diffRequestSequenceRef.current === requestSequence)
               publishRotationCategoryProgress(category, (index + 1) / variants.length)
           }

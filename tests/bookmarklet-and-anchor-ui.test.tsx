@@ -5,20 +5,18 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
 import english from "../public/locales/en.json"
 import App from "../src/App"
-import { calculateEditorTimeline, type EditorTimelineResult } from "../src/calculations/editorTimeline"
-import type { RotationSimulationBundle } from "../src/calculations/rotationCalculator"
-import { requestEditorTimeline } from "../src/calculations/rotationWorkerClient"
+import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
 import { initializeI18n } from "../src/i18n"
+import { dpsBundles, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
-vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn<(bundle: RotationSimulationBundle) => Promise<EditorTimelineResult>>(async bundle => ({
-    ...calculateEditorTimeline(bundle.timeline),
-    fingerprint: "editor-test",
-  })),
-  cancelEditorTimelineRequest: vi.fn<() => void>(),
-  supersedeRotationCalculationRequests: vi.fn<() => void>(),
+vi.mock("../src/stores/dpsStore", async () => {
+  const { mockDpsStore } = await import("./helpers/dpsStoreMock")
+  return mockDpsStore()
+})
+
+dpsResolves("editorTimeline", async request => ({
+  ...calculateEditorTimeline(request.build().timeline),
+  fingerprint: "editor-test",
 }))
 
 let container: HTMLDivElement
@@ -26,6 +24,7 @@ let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(async () => {
+  resetDpsMock()
   localStorage.clear()
   sessionStorage.clear()
   vi.useFakeTimers()
@@ -154,7 +153,7 @@ it("moves an after-start Qi event to the adjacent action instead of the first da
     nextButton.click()
     await vi.advanceTimersByTimeAsync(200)
   })
-  const latestBundle = vi.mocked(requestEditorTimeline).mock.calls.at(-1)![0]
+  const latestBundle = dpsBundles("editorTimeline").at(-1)!
   const movedQi = latestBundle.timeline.rotation.steps.find(step => step.type === "event" && step.event === "Qi")
   expect(movedQi).toMatchObject({ after: { action: "start" } })
   expect(movedQi).not.toHaveProperty("startTime")

@@ -6,32 +6,34 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import english from "../public/locales/en.json"
 import App from "../src/App"
 import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
-import { calculateEditorTimeline, type EditorTimelineResult } from "../src/calculations/editorTimeline"
-import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
+import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
+import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { getRotationMetrics } from "../src/calculations/rotationMetrics"
-import { requestRotationBaseline } from "../src/calculations/rotationWorkerClient"
 import type { ResolvedStats } from "../src/calculations/statEffects"
 import { initializeI18n } from "../src/i18n"
+import { dpsDispatches, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
-vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<typeof requestRotationBaseline>(async bundle => {
-    if (bundle.timeline.rotation.name !== "Setup regression") return new Promise<never>(() => {})
-    return calculateRotationBaseline(bundle)
-  }),
-  requestRotationComparisons: vi.fn<() => Promise<never>>(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn<(bundle: RotationSimulationBundle) => Promise<EditorTimelineResult>>(async bundle => ({
-    ...calculateEditorTimeline(bundle.timeline),
-    fingerprint: rotationBundleFingerprint(bundle),
-  })),
-  cancelEditorTimelineRequest: vi.fn<() => void>(),
-  supersedeRotationCalculationRequests: vi.fn<() => void>(),
-}))
+vi.mock("../src/stores/dpsStore", async () => {
+  const { mockDpsStore } = await import("./helpers/dpsStoreMock")
+  return mockDpsStore()
+})
+
+dpsResolves("baseline", async request => {
+  const bundle = request.build()
+  if (bundle.timeline.rotation.name !== "Setup regression") return new Promise<never>(() => {})
+  return calculateRotationBaseline(bundle)
+})
+dpsResolves("editorTimeline", async request => {
+  const bundle = request.build()
+  return { ...calculateEditorTimeline(bundle.timeline), fingerprint: rotationBundleFingerprint(bundle) }
+})
 
 let container: HTMLDivElement
 let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(async () => {
+  resetDpsMock()
   localStorage.clear()
   sessionStorage.clear()
   localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
@@ -88,14 +90,17 @@ async function choose(selector: string, name: string) {
   await settle()
 }
 
+/**
+ * The bundle for the rotation this test drives. Graduation also calculates baselines
+ * for the same rotation, but builds them without the user's stat overrides, so they
+ * are excluded by their own key prefix rather than by anything in the bundle.
+ */
 function latestBundle() {
-  const calls = vi
-    .mocked(requestRotationBaseline)
-    .mock.calls.filter(
-      ([, , options]) => options?.key === "baseline:setup-regression" || options?.key === "preview:setup-regression",
-    )
-  expect(calls.length).toBeGreaterThan(0)
-  return calls.at(-1)![0]
+  const bundles = dpsDispatches("baseline")
+    .filter(request => !request.cacheKey.startsWith("graduation:"))
+    .map(request => request.build())
+  expect(bundles.length).toBeGreaterThan(0)
+  return bundles.at(-1)!
 }
 
 it("rebuilds food stats before publishing DPS and restores the cached original on a round trip", async () => {
@@ -118,9 +123,9 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
   expect(localStorage.getItem("wwm-food-session-v1")).toBe("None")
 
-  const requestsBeforeReturn = vi.mocked(requestRotationBaseline).mock.calls.length
+  const dispatchesBeforeReturn = dpsDispatches("baseline").length
   await choose(".setup-option-list-food", "Simmering Fish Slices")
-  expect(vi.mocked(requestRotationBaseline).mock.calls).toHaveLength(requestsBeforeReturn)
+  expect(dpsDispatches("baseline")).toHaveLength(dispatchesBeforeReturn)
   expect(getRotationMetrics()!.dps).toBeCloseTo(fishDps, 8)
 })
 

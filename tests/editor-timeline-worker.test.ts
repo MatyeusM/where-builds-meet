@@ -140,31 +140,31 @@ describe("editor-timeline-worker", () => {
         }
       }
       globalThis.Worker = ControlledWorker
-      const client = await import("../src/calculations/rotationWorkerClient.ts")
+      const client = await import("../src/calculations/rotationWorkerTransport.ts")
       let currentRevision = revision
       let accepted
-      const first = client.requestEditorTimeline(bundle, { key: "editor:a" }).then(result => {
+      const first = client.dispatchCalculation({ mode: "editorTimeline", bundle, key: "editor:a" }).then(result => {
         if (sameEditorRevision(currentRevision, revision)) accepted = result
       })
       currentRevision = { ...revision, rotation: draft }
       workers[0].reply({ ...resolved, fingerprint: "old" })
       await first
       assert.equal(accepted, undefined, "Late completion must not replace a newer edit")
-      client.supersedeRotationCalculationRequests()
+      client.supersedeCalculations()
       assert.ok(!workers[0].terminated, "An idle prepared-timeline worker should survive batch supersession")
-      const second = client.requestEditorTimeline(bundle, { key: "editor:a" })
+      const second = client.dispatchCalculation({ mode: "editorTimeline", bundle, key: "editor:a" })
       workers[0].reply({ ...resolved, fingerprint: "latest" })
       assert.equal((await second).fingerprint, "latest")
-      const obsolete = client.requestEditorTimeline(bundle, { key: "editor:a" })
+      const obsolete = client.dispatchCalculation({ mode: "editorTimeline", bundle, key: "editor:a" })
       const rejected = assert.rejects(obsolete, /superseded/)
-      client.cancelEditorTimelineRequest("editor:a")
+      client.cancelCalculation("editor:a")
       assert.ok(workers[0].terminated, "An obsolete running editor build is terminated")
-      const replacement = client.requestEditorTimeline(bundle, { key: "editor:a" })
+      const replacement = client.dispatchCalculation({ mode: "editorTimeline", bundle, key: "editor:a" })
       workers[0].reply({ ...resolved, fingerprint: "cancelled" })
       workers[1].reply({ ...resolved, fingerprint: "replacement" })
       await rejected
       assert.equal((await replacement).fingerprint, "replacement")
-      client.disposeRotationCalculationWorker()
+      client.disposeCalculationWorkers()
     } finally {
       delete globalThis.Worker
     }

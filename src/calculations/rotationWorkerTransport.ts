@@ -1,34 +1,39 @@
 import type { EditorTimelineResult } from "./editorTimeline"
 import type {
-  RotationCalculationBundle,
   RotationSimulationBaseline,
   RotationSimulationBundle,
-  RotationSimulationResult,
   RotationActionBreakdown,
 } from "./rotationCalculator"
 import type { RotationMetrics } from "./rotationMetrics"
 import type { TimelineRow } from "./rotationTimeline"
 
-type WorkerResult =
-  | RotationSimulationBaseline
-  | RotationSimulationResult
-  | { metrics: RotationMetrics }
-  | { editorTimeline: EditorTimelineResult }
-type RequestMode = "calculation" | "simulation" | "baseline" | "comparisons" | "editorTimeline"
-type RequestOptions = { key?: string; priority?: number; onProgress?: (progress: number) => void }
+/**
+ * Transport for the calculation worker pool. Dispatch decisions, result caching and
+ * cancellation policy belong to the calculation store; this module only owns worker
+ * lifetime, queueing and message translation, so nothing outside it talks to a worker.
+ */
 
-type CalculationRequest = {
-  bundle: RotationCalculationBundle | RotationSimulationBundle
-  mode: RequestMode
-  cacheKey?: string
-  baseline?: RotationSimulationBaseline
+export type TransportMode = "editorTimeline" | "baseline" | "comparisons"
+export type TransportResult = EditorTimelineResult | RotationSimulationBaseline | { metrics: RotationMetrics }
+
+export type TransportRequest = {
+  mode: TransportMode
+  bundle: RotationSimulationBundle
+  /** Stable identity of the work, used to replace a queued duplicate. */
   key: string
-  priority: number
+  /** Identifies the baseline the worker caches, for modes that build on one. */
+  cacheKey?: string
+  /** Supplied to a worker that does not hold the baseline itself. */
+  baseline?: RotationSimulationBaseline
+  priority?: number
+  onProgress?: (progress: number) => void
+}
+
+type QueuedRequest = TransportRequest & {
   sequence: number
   retryCount: number
-  onProgress?: (progress: number) => void
-  resolve: (result: WorkerResult) => void
-  reject: (error: Error) => void
+  resolve: (r: TransportResult) => void
+  reject: (e: Error) => void
 }
 
 type WorkerResultMessage = {
@@ -55,7 +60,7 @@ type WorkerResultMessage = {
  */
 type WorkerSlot = {
   worker: Worker
-  running?: { id: number; request: CalculationRequest }
+  running?: { id: number; request: QueuedRequest }
   baselineKeys: Set<string>
   idleSince: number
 }
@@ -64,7 +69,7 @@ const maxWorkers = 4
 let slots: WorkerSlot[] = []
 let requestId = 0
 let requestSequence = 0
-let pending: CalculationRequest[] = []
+let pending: QueuedRequest[] = []
 let idleCounter = 0
 
 function workerBudget() {
@@ -74,15 +79,15 @@ function workerBudget() {
 
 /**
  * Tear down every worker, rejecting whatever each one was running plus the queue.
- * Interrupted requests are captured before the slots are cleared, otherwise the
+ * Interrupted requests are collected before the slots are cleared, otherwise the
  * rejections find nothing left to settle and the callers hang forever.
  */
 function teardownSlots(message: string) {
   const error = new Error(message)
   const interrupted = slots.flatMap(slot => (slot.running ? [slot.running.request] : []))
   const doomed = slots
-  slots = []
   const queued = pending
+  slots = []
   pending = []
   doomed.forEach(slot => {
     slot.worker.terminate()
@@ -90,20 +95,6 @@ function teardownSlots(message: string) {
   })
   interrupted.forEach(request => request.reject(error))
   queued.forEach(request => request.reject(error))
-}
-
-function higherPriorityFirst(left: CalculationRequest, right: CalculationRequest) {
-  return right.priority - left.priority || left.sequence - right.sequence
-}
-
-/** Prefer a slot that already cached the requested baseline over cloning it again. */
-function pickSlot(request: CalculationRequest) {
-  const free = slots.filter(slot => !slot.running)
-  if (request.cacheKey) {
-    const holding = free.find(slot => slot.baselineKeys.has(request.cacheKey!))
-    if (holding) return holding
-  }
-  return free.reduce((oldest, slot) => (slot.idleSince < oldest.idleSince ? slot : oldest))
 }
 
 function removeSlot(slot: WorkerSlot) {
@@ -114,11 +105,26 @@ function removeSlot(slot: WorkerSlot) {
   return true
 }
 
-function translateResult(request: CalculationRequest, message: WorkerResultMessage): WorkerResult {
+function requeueOrReject(request: QueuedRequest, error: Error) {
+  if (request.retryCount < 1) pending.push({ ...request, retryCount: request.retryCount + 1 })
+  else request.reject(error)
+}
+
+/** Prefer a slot that already cached the requested baseline over cloning it again. */
+function pickSlot(request: QueuedRequest) {
+  const free = slots.filter(slot => !slot.running)
+  if (request.cacheKey) {
+    const holding = free.find(slot => slot.baselineKeys.has(request.cacheKey!))
+    if (holding) return holding
+  }
+  return free.reduce((oldest, slot) => (slot.idleSince < oldest.idleSince ? slot : oldest))
+}
+
+function translateResult(request: QueuedRequest, message: WorkerResultMessage): TransportResult {
   if (message.error) throw new Error(message.error)
-  if (message.editorTimeline) return { editorTimeline: message.editorTimeline }
+  if (message.editorTimeline) return message.editorTimeline
   if (!message.metrics) throw new Error("Rotation calculation worker returned no result")
-  if (request.mode !== "simulation" && request.mode !== "baseline") return { metrics: message.metrics }
+  if (request.mode !== "baseline") return { metrics: message.metrics }
   return {
     metrics: message.metrics,
     timeline: message.timeline ?? [],
@@ -133,20 +139,14 @@ function translateResult(request: CalculationRequest, message: WorkerResultMessa
     ...(message.mysticVitalityDamageScale !== undefined
       ? { mysticVitalityDamageScale: message.mysticVitalityDamageScale }
       : {}),
-  }
+  } as RotationSimulationBaseline
 }
-
 function settleSlotFailure(slot: WorkerSlot, message: string, cause?: unknown) {
   if (!removeSlot(slot)) return
   const interrupted = slot.running?.request
   slot.running = undefined
   if (interrupted) requeueOrReject(interrupted, cause instanceof Error ? cause : new Error(message))
   dispatchPending()
-}
-
-function requeueOrReject(request: CalculationRequest, error: Error) {
-  if (request.retryCount < 1) pending.push({ ...request, retryCount: request.retryCount + 1 })
-  else request.reject(error)
 }
 
 function createSlot(): WorkerSlot {
@@ -187,7 +187,7 @@ function createSlot(): WorkerSlot {
   return slot
 }
 
-function dispatchTo(slot: WorkerSlot, request: CalculationRequest) {
+function dispatchTo(slot: WorkerSlot, request: QueuedRequest) {
   const id = ++requestId
   slot.running = { id, request }
   try {
@@ -206,7 +206,7 @@ function dispatchTo(slot: WorkerSlot, request: CalculationRequest) {
 }
 
 function dispatchPending() {
-  pending.sort(higherPriorityFirst)
+  pending.sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0) || left.sequence - right.sequence)
   while (pending.length > 0) {
     let free = slots.filter(slot => !slot.running)
     if (free.length === 0) {
@@ -218,120 +218,55 @@ function dispatchPending() {
   }
 }
 
-function enqueue(
-  request: Omit<CalculationRequest, "key" | "priority" | "sequence" | "retryCount">,
-  options: RequestOptions = {},
-) {
-  const queued: CalculationRequest = {
-    ...request,
-    key: options.key ?? `${request.mode}:${++requestSequence}`,
-    priority: options.priority ?? 0,
-    sequence: ++requestSequence,
-    retryCount: 0,
-    onProgress: options.onProgress,
-  }
-  const replacedIndex = pending.findIndex(candidate => candidate.key === queued.key)
-  if (replacedIndex >= 0) {
-    pending[replacedIndex].reject(new Error("Calculation superseded by a newer request"))
-    pending.splice(replacedIndex, 1)
-  }
-  pending.push(queued)
-  dispatchPending()
-}
-
-/** Queue requests by priority and replace stale pending work with the same key. */
-export function requestRotationCalculation(bundle: RotationCalculationBundle, options?: RequestOptions) {
-  return new Promise<RotationMetrics>((resolve, reject) => {
-    enqueue(
-      {
-        bundle,
-        mode: "calculation",
-        resolve: result => resolve((result as { metrics: RotationMetrics }).metrics),
-        reject,
-      },
-      options,
-    )
+/**
+ * Queue a request, replacing any queued work with the same key. The key names a
+ * piece of work, so re-issuing it discards the older attempt rather than waiting
+ * behind it; callers that want to keep the earlier result must not reuse the key.
+ */
+export function dispatchCalculation(request: TransportRequest) {
+  return new Promise<TransportResult>((resolve, reject) => {
+    const queued: QueuedRequest = {
+      ...request,
+      priority: request.priority ?? 0,
+      sequence: ++requestSequence,
+      retryCount: 0,
+      resolve,
+      reject,
+    }
+    const replacedIndex = pending.findIndex(candidate => candidate.key === queued.key)
+    if (replacedIndex >= 0) {
+      pending[replacedIndex].reject(new Error("Calculation superseded by a newer request"))
+      pending.splice(replacedIndex, 1)
+    }
+    pending.push(queued)
+    dispatchPending()
   })
 }
 
-export function requestRotationSimulation(bundle: RotationSimulationBundle, options?: RequestOptions) {
-  return new Promise<RotationSimulationResult>((resolve, reject) => {
-    enqueue(
-      { bundle, mode: "simulation", resolve: result => resolve(result as RotationSimulationResult), reject },
-      options,
-    )
-  })
-}
-
-export function requestRotationBaseline(bundle: RotationSimulationBundle, cacheKey: string, options?: RequestOptions) {
-  return new Promise<RotationSimulationBaseline>((resolve, reject) => {
-    enqueue(
-      { bundle, mode: "baseline", cacheKey, resolve: result => resolve(result as RotationSimulationBaseline), reject },
-      options,
-    )
-  })
-}
-
-export function requestRotationComparisons(
-  bundle: RotationSimulationBundle,
-  cacheKey: string,
-  baseline: RotationSimulationBaseline,
-  options?: RequestOptions,
-) {
-  return new Promise<RotationMetrics>((resolve, reject) => {
-    enqueue(
-      {
-        bundle,
-        mode: "comparisons",
-        cacheKey,
-        baseline,
-        resolve: result => resolve((result as { metrics: RotationMetrics }).metrics),
-        reject,
-      },
-      options,
-    )
-  })
-}
-
-/** Stop the active calculation batch so its replacement starts without stale queued work or worker cache. */
-export function supersedeRotationCalculationRequests() {
+/** Stop the active batch so its replacement starts without stale queued work or worker cache. */
+export function supersedeCalculations() {
   // Idle workers hold no stale requests; keeping them preserves their prepared editor timeline.
   if (pending.length === 0 && slots.every(slot => !slot.running)) return
   teardownSlots("Calculation superseded by a newer batch")
 }
 
-export function disposeRotationCalculationWorker() {
+export function disposeCalculationWorkers() {
   teardownSlots("Calculation worker disposed")
 }
 
-/** Cancel only this editor's obsolete build, preserving unrelated queued work. */
-export function cancelEditorTimelineRequest(key: string) {
-  const matches = (request: CalculationRequest) => request.mode === "editorTimeline" && request.key === key
-  const error = new Error("Calculation superseded by a newer editor revision")
+/** Drop queued work with this key, and abandon it if a worker is already running it. */
+export function cancelCalculation(key: string, message = "Calculation superseded by a newer revision") {
+  const error = new Error(message)
   pending = pending.filter(request => {
-    if (!matches(request)) return true
+    if (request.key !== key) return true
     request.reject(error)
     return false
   })
-  const interrupted = slots.find(slot => slot.running && matches(slot.running.request))
+  const interrupted = slots.find(slot => slot.running?.request.key === key)
   if (interrupted) {
     const request = interrupted.running!.request
     removeSlot(interrupted)
     request.reject(error)
   }
   dispatchPending()
-}
-
-export function requestEditorTimeline(bundle: RotationSimulationBundle, options?: RequestOptions) {
-  return new Promise<EditorTimelineResult>((resolve, reject) => {
-    enqueue(
-      {
-        bundle,
-        mode: "editorTimeline",
-        resolve: result => resolve((result as { editorTimeline: EditorTimelineResult }).editorTimeline),
-        reject,
-      },
-      options,
-    )
-  })
 }

@@ -64,7 +64,6 @@ import {
   loadSelectedPath,
   subscribeToCompactLayout,
 } from "./application/persistence/settings"
-import { RotationCalculationCache } from "./calculations/rotationCalculationCache"
 import { type RotationSimulationBundle } from "./calculations/rotationCalculator"
 import {
   endRotationCalculation,
@@ -73,7 +72,6 @@ import {
   subscribeToRotationMetrics,
   type RotationMetrics,
 } from "./calculations/rotationMetrics"
-import { supersedeRotationCalculationRequests } from "./calculations/rotationWorkerClient"
 import { type CharacterStatOverrides, type StatEffectContainer } from "./calculations/statEffects"
 import {
   characterProfileStorageKey,
@@ -109,6 +107,7 @@ import {
 import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
+import { useDpsStore } from "./stores/dpsStore"
 import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
 
 const tabSuspenseFallback = <div className="viewport-tab-content" />
@@ -170,7 +169,6 @@ export default function App() {
   const [activeRotationIdsByPath, setActiveRotationIdsByPath] = useState<PathSelectionIds>(() =>
     loadPathSelectionIds(activeRotationByPathStorageKey, activeRotationStorageKey, pathId),
   )
-  const [rotationCalculationCache] = useState(() => new RotationCalculationCache())
   const breakthrough = breakthroughProfile(settings)
   const enemy: EnemyProfile = breakthrough
   const availableBuildEntries = buildState.entries.filter(
@@ -398,7 +396,7 @@ export default function App() {
     })
     if (!selection) return
 
-    supersedeRotationCalculationRequests()
+    useDpsStore.getState().supersede()
     endRotationCalculation()
     setActiveSimulation(undefined)
 
@@ -652,7 +650,6 @@ export default function App() {
           active={activeTab === "rotations"}
           defaultRotationId={defaultRotationIdForPath(pathId)}
           selectedRotationId={selectedRotationId}
-          calculationCache={rotationCalculationCache}
           skillOverrides={skillOverrides}
           onSelectRotationWeapons={selectBuildWeapons}
           onActiveRotationChange={activateRotationForPath}

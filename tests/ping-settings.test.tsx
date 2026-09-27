@@ -6,21 +6,19 @@ import { assert, afterEach, beforeEach, expect, it, vi } from "vitest"
 import english from "../public/locales/en.json"
 import App from "../src/App"
 import { bossDefinitions } from "../src/calculations/combatDefaults"
-import { requestRotationBaseline, requestEditorTimeline } from "../src/calculations/rotationWorkerClient"
 import { initializeI18n } from "../src/i18n"
+import { dpsBundles, resetDpsMock } from "./helpers/dpsStoreMock"
 
-vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestRotationComparisons: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn<() => Promise<unknown>>(() => new Promise(() => {})),
-  supersedeRotationCalculationRequests: vi.fn<() => void>(),
-  cancelEditorTimelineRequest: vi.fn<() => void>(),
-}))
+vi.mock("../src/stores/dpsStore", async () => {
+  const { mockDpsStore } = await import("./helpers/dpsStoreMock")
+  return mockDpsStore()
+})
 
 let container: HTMLDivElement
 let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(async () => {
+  resetDpsMock()
   localStorage.clear()
   sessionStorage.clear()
   vi.useFakeTimers()
@@ -85,10 +83,7 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
   await act(async () => {
     await vi.advanceTimersByTimeAsync(300)
   })
-  const bundles = [
-    ...vi.mocked(requestRotationBaseline).mock.calls,
-    ...vi.mocked(requestEditorTimeline).mock.calls,
-  ].map(([bundle]) => bundle)
+  const bundles = [...dpsBundles("baseline"), ...dpsBundles("editorTimeline")]
   expect(bundles.some(bundle => bundle.timeline.rotation.ping === 40)).toBe(true)
   expect(bundles.some(bundle => bundle.timeline.rotation.ping === 85)).toBe(false)
   await act(async () => root.unmount())
@@ -127,16 +122,14 @@ it("persists Settings ping, fixes preset ping, and resets custom overrides to in
   await act(async () => {
     await vi.advanceTimersByTimeAsync(300)
   })
-  expect(vi.mocked(requestEditorTimeline).mock.calls.some(([bundle]) => bundle.timeline.rotation.ping === 85)).toBe(
-    true,
-  )
+  expect(dpsBundles("editorTimeline").some(bundle => bundle.timeline.rotation.ping === 85)).toBe(true)
   expect(customPing.value).toBe("")
   expect(customPing.placeholder).toBe("85")
-  const pendingRequests = vi.mocked(requestEditorTimeline).mock.calls.length
+  const pendingRequests = dpsBundles("editorTimeline").length
   await fill(customPing, "45")
   expect(customPing.closest("label")?.classList.contains("modified-field")).toBe(true)
   expect(customPing.closest("label")?.querySelector(".stat-reset-button")).not.toBeNull()
-  expect(vi.mocked(requestEditorTimeline).mock.calls).toHaveLength(pendingRequests)
+  expect(dpsBundles("editorTimeline")).toHaveLength(pendingRequests)
   expect(container.textContent).not.toContain("Calculating timeline")
   await commit(customPing, "enter")
   expect(customPing.closest("label")?.querySelector(".stat-reset-button")).not.toBeNull()
@@ -158,9 +151,7 @@ it("defaults Enemy Count to one before Ping and persists edits into worker reque
   await act(async () => {
     await vi.advanceTimersByTimeAsync(300)
   })
-  expect(
-    vi.mocked(requestEditorTimeline).mock.calls.some(([bundle]) => bundle.timeline.rotation.enemyCount === 3),
-  ).toBe(true)
+  expect(dpsBundles("editorTimeline").some(bundle => bundle.timeline.rotation.enemyCount === 3)).toBe(true)
   await click("Save")
   const saved = JSON.parse(localStorage.getItem("wwm-rotation-list-session-v1")!)
   expect(saved.some((entry: { rotation: { enemyCount?: number } }) => entry.rotation.enemyCount === 3)).toBe(true)
@@ -187,9 +178,7 @@ it("selects the practice target, orders it before Infinite Vitality, and persist
     await vi.advanceTimersByTimeAsync(300)
   })
   expect(select().value).toBe("Boss")
-  expect(
-    vi.mocked(requestEditorTimeline).mock.calls.some(([bundle]) => bundle.timeline.rotation.targetType === "Boss"),
-  ).toBe(true)
+  expect(dpsBundles("editorTimeline").some(bundle => bundle.timeline.rotation.targetType === "Boss")).toBe(true)
   await click("Save")
   const saved = JSON.parse(localStorage.getItem("wwm-rotation-list-session-v1")!)
   expect(saved.some((entry: { rotation: { targetType?: string } }) => entry.rotation.targetType === "Boss")).toBe(true)
