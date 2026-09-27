@@ -38,13 +38,6 @@
     text-transform: uppercase;
   }
 
-  .build-list-heading [data-button] {
-    inline-size: auto;
-    min-inline-size: 0;
-    line-height: 1.15;
-    overflow-wrap: normal;
-  }
-
   .build-list-entries {
     flex: 1 1 0;
     min-block-size: 0;

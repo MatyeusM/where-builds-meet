@@ -48,15 +48,6 @@
     min-inline-size: 0;
   }
 
-  .rotation-list-heading [data-button] {
-    inline-size: auto;
-    min-inline-size: 0;
-    padding-inline: 6px;
-    line-height: 1.15;
-    text-align: center;
-    white-space: nowrap;
-  }
-
   .rotation-list-entries {
     flex: 1 1 0;
     min-block-size: 0;
