@@ -82,6 +82,18 @@
     min-block-size: 92px;
   }
 
+  /*
+   * A panel whose content begins with a joined option group has a rounded edge directly
+   * below its heading. Indenting the heading by half that radius lines the text up with
+   * where the corner's curve ends, so the heading reads as belonging to the block beneath
+   * it rather than sitting outboard of it.
+   */
+  .setup-placeholder-panel [data-panel-heading] h2,
+  .inner-way-panel [data-panel-heading] h2,
+  .global-debuff-panel [data-panel-heading] h2 {
+    margin-inline-start: calc(var(--radius-xs) * 0.5);
+  }
+
   .setup-placeholder-panel p {
     margin: 0;
     color: var(--text-muted);
