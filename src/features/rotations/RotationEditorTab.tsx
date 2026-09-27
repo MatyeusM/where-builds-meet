@@ -1908,16 +1908,17 @@ export function RotationEditorTab({
         onMetricsChange(metrics, true)
         completeRotationCalculationCategory("baseline")
 
-        try {
-          await calculateGraduationDps(rotationRecord)
-        } catch (graduationError) {
+        // Graduation is the denominator of a percentage shown next to the current DPS,
+        // not a step toward it. It costs a baseline per graduated preset, so it runs
+        // alongside the priority panels instead of holding them up.
+        void calculateGraduationDps(rotationRecord).catch((graduationError: unknown) => {
           if (diffRequestSequenceRef.current === requestSequence)
             publishNotice({
               id: "graduation-calculation",
               error: true,
               message: graduationError instanceof Error ? graduationError.message : t("ui.notices.calculationError"),
             })
-        }
+        })
         if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
 
         const comparisonBundle = calculationBundleFor(rotationRecord, true)
@@ -2046,15 +2047,6 @@ export function RotationEditorTab({
       }
       if (outcome !== "published") return
       if (calculationContextKeyRef.current !== calculationContextKey) return
-      const refreshEntryBaseline = async (entry: RotationEntry) => {
-        if (entry.id === activeEntry.id) return
-        try {
-          await calculateBaselineForRotation(entry.id, rotationRecordForEntry(entry), 100)
-        } catch {
-          /* Superseded by newer work. */
-        }
-      }
-      await entries.reduce((previous, entry) => previous.then(() => refreshEntryBaseline(entry)), Promise.resolve())
     })()
   }, [
     activeRotationId,
