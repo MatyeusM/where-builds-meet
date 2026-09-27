@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 
 import type { PathId } from "../../application/contracts"
 import { typedPathDefinitions } from "../../application/gameData/paths"
@@ -6,6 +6,7 @@ import { buildGraduationBundleSet, selectHighestGraduationResult } from "../../a
 import { loadRotationEntries } from "../../application/persistence/rotations"
 import { resolveBaseline } from "../../application/resolveRotationMetrics"
 import { rotationAvailableForWeapons, rotationRecordForEntry } from "../../application/rotationCatalog"
+import { calculationFingerprint } from "../../calculations/calculationFingerprint"
 import { resolvePing } from "../../calculations/combatDefaults"
 import type { MeasurementContext } from "../../calculations/rotationCalculationBundle"
 import { buildMeasurement } from "../../calculations/rotationCalculationBundle"
@@ -53,7 +54,12 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
   const { pathId, build, gearItems, measurement, activeRotationId, defaultRotationId } = input
   const requestRef = useRef(0)
   const context = measurement
-  const contextKey = `${pathId}:${activeRotationId}:${defaultRotationId}:${JSON.stringify(measurement)}`
+  // Fingerprinted rather than serialised, and memoised, because this is read on every render of
+  // the application and the inputs it covers are only worth re-reading when they actually change.
+  const contextKey = useMemo(
+    () => `${pathId}:${activeRotationId}:${defaultRotationId}:${calculationFingerprint(measurement)}`,
+    [pathId, activeRotationId, defaultRotationId, measurement],
+  )
 
   useEffect(() => {
     const request = ++requestRef.current
@@ -96,7 +102,6 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
           bundleKey,
           metrics,
           draft: false,
-          contextKey,
           graduation: graduation ? { fingerprint: graduation.fingerprint, dps } : undefined,
         })
     }
@@ -134,7 +139,8 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
         // notices the calculation path already raises.
       }
     })()
-    // `contextKey` covers every input above, so it stands in for them as the trigger.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `contextKey` is a fingerprint of every input read above, so depending on it alone is both
+    // correct and cheaper than listing them: they are read inside the effect only when it runs.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [contextKey])
 }

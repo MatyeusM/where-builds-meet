@@ -1810,7 +1810,6 @@ export function RotationEditorTab({
         bundleKey: `${id}:${rotationBundleFingerprint(bundle)}`,
         metrics,
         draft: true,
-        contextKey: calculationContextKey,
         graduation: graduation
           ? { fingerprint: graduation.fingerprint, dps: cachedGraduationDps(graduation) }
           : undefined,

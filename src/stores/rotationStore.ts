@@ -52,8 +52,6 @@ export type ActiveRotationResult = {
    * stored record over one would quietly stop that.
    */
   draft: boolean
-  /** The inputs this was resolved against, so a later pull can tell whether it is still current. */
-  contextKey: string
 }
 
 const idleStatus = (): RotationCalculationStatus =>
