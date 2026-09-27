@@ -18,9 +18,8 @@ function currentTime() {
 }
 
 /**
- * The single entry point for calculation work. Every baseline, comparison and editor
- * timeline is requested here, so the worker pool is reached from one place and a given
- * calculation runs once however many callers ask for it.
+ * The single entry point for calculation work, so the worker pool is reached from one place and
+ * a given calculation runs once however many callers ask for it.
  */
 
 export type DpsResults = {
@@ -64,10 +63,7 @@ export type DpsRequest<K extends DpsKind> = {
    * store keys its results by kind as well.
    */
   cacheKey: string
-  /**
-   * Builds the worker bundle and runs only when the result is not already held, so a
-   * repeat request costs a map lookup instead of a bundle construction and a dispatch.
-   */
+  /** Builds the worker bundle, and runs only when the result is not already held. */
   build: () => RotationSimulationBundle
   priority?: number
   onProgress?: (progress: number) => void
@@ -94,26 +90,21 @@ const isRetained = (kind: DpsKind) => retentionByKind[kind] > 0
 /**
  * The identity a result is stored and looked up under.
  *
- * A caller's key identifies a calculation to the caller, and nothing stops two callers from
- * choosing the same string for work of different shapes — a graduated preset and a build are
- * both fingerprinted bundles, so they can genuinely collide. Keying by key alone would let
- * one kind join another's job and answer with the wrong shape of result, so the kind is part
- * of the identity.
+ * A caller's key identifies a calculation to that caller, and two callers can choose the same
+ * string for work of different shapes — a graduated preset and a build are both fingerprinted
+ * bundles, so they genuinely collide. The kind is therefore part of the identity.
  */
 function entryKey(kind: DpsKind, cacheKey: string) {
   return `${kind}:${cacheKey}`
 }
 
-/**
- * In-flight work, kept outside the store so its state stays serialisable. Two callers
- * asking for the same calculation join one job instead of queueing a second.
- */
+/** In-flight work, kept outside the store so its state stays serialisable. */
 const inFlight = new Map<string, Promise<TransportResult>>()
 
 /**
- * Bumped when a batch is superseded. A request outlives the batch that started it when
- * the workers are torn down underneath it, and its rejection would otherwise land on
- * whatever now holds the same key, marking a live request failed and untracking it.
+ * Bumped when a batch is superseded. A request outlives the batch that started it when the
+ * workers are torn down underneath it, and its rejection would otherwise land on whatever now
+ * holds the same key, marking a live request failed.
  */
 let generation = 0
 
@@ -141,151 +132,168 @@ export type DpsStore = {
   reset: () => void
 }
 
-export const useDpsStore = create<DpsStore>()((set, get) => {
-  /**
-   * Re-insert so a refreshed entry counts as newest rather than inheriting the
-   * position it first took, which would make it the next eviction candidate.
-   */
-  const put = (entry: DpsEntry) =>
+type StoreAccessors = {
+  set: (partial: Partial<DpsStore> | ((state: DpsStore) => Partial<DpsStore>)) => void
+  get: () => DpsStore
+}
+
+/** Where a dispatch spent its time, filled in by the transport while the job runs. */
+type DispatchTimings = { buildMs: number; queueMs: number; workerMs: number }
+
+/** A request answered without reaching a worker spends no time in one. */
+const noWorkerTimings = { queueMs: 0, workerMs: 0, buildMs: 0 }
+
+/** One dispatched request, and the bookkeeping that decides whether its outcome still counts. */
+type RequestRun<K extends DpsKind> = {
+  set: StoreAccessors["set"]
+  request: DpsRequest<K>
+  key: string
+  startedAt: number
+  requestedAt: number
+  timings: DispatchTimings
+}
+
+/** Re-insert so a refreshed entry counts as newest rather than becoming the next eviction. */
+function put(set: StoreAccessors["set"], entry: DpsEntry) {
+  set(state => {
+    const entries = new Map(state.entries)
+    const key = entryKey(entry.kind, entry.cacheKey)
+    entries.delete(key)
+    entries.set(key, entry)
+    if (entry.status === "ready") evictOverflow(entries, entry.kind)
+    reportDpsCache(entries, retentionByKind)
+    return { entries }
+  })
+}
+
+/**
+ * Hands the job to the transport.
+ *
+ * The bundle is built here rather than by the caller so a held result costs neither a bundle nor
+ * a worker, and so `buildMs` measures only the callers who actually reach a worker.
+ */
+function startDispatch<K extends DpsKind>({ set, request, key, startedAt, timings }: RequestRun<K>) {
+  const buildStartedAt = currentTime()
+  const bundle = request.build()
+  timings.buildMs = currentTime() - buildStartedAt
+  return dispatchCalculation({
+    mode: request.kind,
+    bundle,
+    key,
+    // A reading is routed by the baseline cache when it names one, because a worker holding that
+    // baseline already has the answer and needs to run nothing. Only an editor timeline is
+    // dispatched without a key to look up: it is keyed by rotation rather than by revision and no
+    // baseline cache holds it.
+    cacheKey: request.kind === "editorTimeline" ? undefined : request.cacheKey,
+    baseline: request.baseline?.(),
+    priority: request.priority,
+    onTiming: timing => {
+      timings.queueMs = timing.queueMs
+      timings.workerMs = timing.workerMs
+    },
+    onProgress: progress => {
+      request.onProgress?.(progress)
+      if (generation !== startedAt) return
+      set(state => {
+        const current = state.entries.get(key)
+        if (current?.status !== "pending") return state
+        return { entries: new Map([...state.entries, [key, { ...current, progress }]]) }
+      })
+    },
+  })
+}
+
+/** A request already running for this identity, which the caller waits on instead of redoing. */
+async function joinRunning<K extends DpsKind>(
+  running: Promise<TransportResult>,
+  request: DpsRequest<K>,
+  requestedAt: number,
+) {
+  try {
+    const joined = (await running) as DpsResults[K]
+    recordFetch({ kind: request.kind, source: "joined", totalMs: currentTime() - requestedAt, ...noWorkerTimings })
+    return joined
+  } catch (error) {
+    recordFetch({ kind: request.kind, source: "failed", totalMs: currentTime() - requestedAt, ...noWorkerTimings })
+    throw error
+  }
+}
+
+async function ensureRequest<K extends DpsKind>(
+  { set, get }: StoreAccessors,
+  request: DpsRequest<K>,
+): Promise<DpsResults[K]> {
+  const { cacheKey, kind } = request
+  const key = entryKey(kind, cacheKey)
+  const requestedAt = currentTime()
+  const running = inFlight.get(key)
+  if (running) return await joinRunning(running, request, requestedAt)
+
+  const startedAt = generation
+  const held = get().entries.get(key)
+  // Served without building a bundle or touching a worker, which is the point of holding a result.
+  if (isRetained(kind) && held?.status === "ready") {
+    recordFetch({ kind, source: "held", totalMs: currentTime() - requestedAt, ...noWorkerTimings })
+    return held.result as DpsResults[K]
+  }
+  if (isRetained(kind)) put(set, { cacheKey, kind, status: "pending", progress: 0 })
+
+  const run: RequestRun<K> = { set, request, key, startedAt, requestedAt, timings: { ...noWorkerTimings } }
+  const job = startDispatch(run)
+  inFlight.set(key, job)
+  return await settleRun(run, job)
+}
+
+/** Only the batch that started a request may record its outcome. */
+async function settleRun<K extends DpsKind>(run: RequestRun<K>, job: Promise<TransportResult>) {
+  const { set, request, key, startedAt, requestedAt, timings } = run
+  const { cacheKey, kind } = request
+  try {
+    const result = (await job) as DpsResults[K]
+    if (generation === startedAt && isRetained(kind)) put(set, { cacheKey, kind, status: "ready", progress: 1, result })
+    recordFetch({ kind, source: "dispatched", totalMs: currentTime() - requestedAt, ...timings })
+    return result
+  } catch (error) {
+    if (generation === startedAt && isRetained(kind))
+      put(set, { cacheKey, kind, status: "failed", progress: 1, error: errorMessage(error) })
+    recordFetch({ kind, source: "failed", totalMs: currentTime() - requestedAt, ...timings })
+    throw error
+  } finally {
+    if (inFlight.get(key) === job) inFlight.delete(key)
+  }
+}
+
+export const useDpsStore = create<DpsStore>()((set, get) => ({
+  entries: new Map(),
+
+  entry: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey)),
+
+  peek: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey))?.result as never,
+
+  ensure: request => ensureRequest({ set, get }, request),
+
+  supersede: () => {
+    generation += 1
+    inFlight.clear()
+    // Held results stay valid across a supersede; only in-flight bookkeeping does not.
     set(state => {
-      const entries = new Map(state.entries)
-      const key = entryKey(entry.kind, entry.cacheKey)
-      entries.delete(key)
-      entries.set(key, entry)
-      if (entry.status === "ready") evictOverflow(entries, entry.kind)
+      const entries = new Map([...state.entries].filter(([, entry]) => entry.status === "ready"))
       reportDpsCache(entries, retentionByKind)
       return { entries }
     })
+    supersedeCalculations()
+  },
 
-  return {
-    entries: new Map(),
+  cancel: (kind, cacheKey) => cancelCalculation(entryKey(kind, cacheKey)),
 
-    entry: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey)),
-
-    peek: (kind, cacheKey) => get().entries.get(entryKey(kind, cacheKey))?.result as never,
-
-    ensure: async <K extends DpsKind>(request: DpsRequest<K>) => {
-      const { cacheKey, kind } = request
-      const key = entryKey(kind, cacheKey)
-      const requestedAt = currentTime()
-      const running = inFlight.get(key)
-      if (running) {
-        try {
-          const joined = (await running) as DpsResults[K]
-          recordFetch({
-            kind,
-            source: "joined",
-            totalMs: currentTime() - requestedAt,
-            queueMs: 0,
-            workerMs: 0,
-            buildMs: 0,
-          })
-          return joined
-        } catch (error) {
-          recordFetch({
-            kind,
-            source: "failed",
-            totalMs: currentTime() - requestedAt,
-            queueMs: 0,
-            workerMs: 0,
-            buildMs: 0,
-          })
-          throw error
-        }
-      }
-
-      const startedAt = generation
-      const held = get().entries.get(key)
-      if (isRetained(kind) && held?.status === "ready") {
-        // Served without building a bundle or touching a worker, which is the point of
-        // holding a result at all.
-        recordFetch({ kind, source: "held", totalMs: currentTime() - requestedAt, queueMs: 0, workerMs: 0, buildMs: 0 })
-        return held.result as DpsResults[K]
-      }
-
-      if (isRetained(kind)) put({ cacheKey, kind, status: "pending", progress: 0 })
-
-      let buildMs = 0
-      let queueMs = 0
-      let workerMs = 0
-      const job = (async () => {
-        const buildStartedAt = currentTime()
-        const bundle = request.build()
-        buildMs = currentTime() - buildStartedAt
-        return dispatchCalculation({
-          mode: kind,
-          bundle,
-          key,
-          // A reading is routed by the baseline cache when it names one, because a worker
-          // holding that baseline already has the answer and needs to run nothing. Only an
-          // editor timeline is dispatched without a key to look up: it is keyed by rotation
-          // rather than by revision and no baseline cache holds it.
-          cacheKey: kind === "editorTimeline" ? undefined : cacheKey,
-          baseline: request.baseline?.(),
-          priority: request.priority,
-          onTiming: timing => {
-            queueMs = timing.queueMs
-            workerMs = timing.workerMs
-          },
-          onProgress: progress => {
-            request.onProgress?.(progress)
-            if (generation !== startedAt) return
-            set(state => {
-              const current = state.entries.get(key)
-              if (current?.status !== "pending") return state
-              const entries = new Map(state.entries)
-              entries.set(key, { ...current, progress })
-              return { entries }
-            })
-          },
-        })
-      })()
-
-      inFlight.set(key, job)
-      /** Only the batch that started this request may record its outcome. */
-      const settle = (entry: DpsEntry) => {
-        if (generation === startedAt && isRetained(kind)) put(entry)
-      }
-      const record = (source: DpsSource) =>
-        recordFetch({ kind, source, totalMs: currentTime() - requestedAt, queueMs, workerMs, buildMs })
-
-      try {
-        const result = (await job) as DpsResults[K]
-        settle({ cacheKey, kind, status: "ready", progress: 1, result })
-        record("dispatched")
-        return result
-      } catch (error) {
-        settle({ cacheKey, kind, status: "failed", progress: 1, error: errorMessage(error) })
-        record("failed")
-        throw error
-      } finally {
-        if (inFlight.get(key) === job) inFlight.delete(key)
-      }
-    },
-
-    supersede: () => {
-      generation += 1
-      inFlight.clear()
-      // Held results stay valid across a supersede; only in-flight bookkeeping does not.
-      set(state => {
-        const entries = new Map([...state.entries].filter(([, entry]) => entry.status === "ready"))
-        reportDpsCache(entries, retentionByKind)
-        return { entries }
-      })
-      supersedeCalculations()
-    },
-
-    cancel: (kind, cacheKey) => cancelCalculation(entryKey(kind, cacheKey)),
-
-    reset: () => {
-      inFlight.clear()
-      // A worker's baseline and editor-timeline caches live inside the worker, so the
-      // only way to forget them is to terminate it. Any request in flight is rejected,
-      // which is the same signal a supersession gives its caller.
-      disposeCalculationWorkers()
-      const entries = new Map<string, DpsEntry>()
-      reportDpsCache(entries, retentionByKind)
-      set({ entries })
-    },
-  }
-})
+  reset: () => {
+    inFlight.clear()
+    // A worker's baseline and editor-timeline caches live inside the worker, so the only way to
+    // forget them is to terminate it. Any request in flight is rejected, which is the same signal
+    // a supersession gives its caller.
+    disposeCalculationWorkers()
+    const entries = new Map<string, DpsEntry>()
+    reportDpsCache(entries, retentionByKind)
+    set({ entries })
+  },
+}))
