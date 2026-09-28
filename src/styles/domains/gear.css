@@ -132,14 +132,17 @@
 
   .build-remove-button {
     display: inline-grid;
-    inline-size: 23px;
-    block-size: 23px;
+
+    /* 24px is the smallest target that clears WCAG 2.2 AA's 24×24 minimum, and it gives a 1em
+       icon 4px of breathing room on each side rather than 3.5px, which read as cramped. */
+    inline-size: 24px;
+    block-size: 24px;
     flex: 0 0 auto;
     place-items: center;
     border: 0;
 
     /* The user agent gives a button 1px 6px of padding, which this rule never cancels. Inside a
-       23px box that leaves 11px of content width, narrower than a 1em icon, so the icon overflows
+       24px box that leaves 12px of content width, narrower than a 1em icon, so the icon overflows
        to the right and `place-items` cannot recentre it. Same reset `.icon-only` uses. */
     padding-inline: 0;
     border-radius: var(--radius-2xs);
