@@ -313,31 +313,51 @@
   }
 
   /*
-   * The footer's own translucent surface, so it reads as a bar that belongs to the page rather
-   * than a line drawn over the background. The body paints a gradient, so an opaque fill would
-   * have to pick one value for every position the footer can land at, and a transparent one
-   * leaves the gradient showing through instead. Nothing scrolls under the footer, because the
-   * column puts it at the end rather than over the content, so there is nothing to blur.
+   * A translucent bar rather than a rule drawn over the background: the body paints a gradient,
+   * so an opaque fill would have to pick one value for every position the bar can land at, while
+   * a translucent one leaves the gradient showing through. Nothing scrolls under the bar, because
+   * the column puts the footer at the end rather than over the content, so there is nothing to blur.
+   *
+   * Both the bar and the rule above it are painted as spread shadows rather than as a background
+   * and a border, because the shell insets its children horizontally and the footer is one of
+   * them. Cancelling that inset with a negative margin would mean restating the gutter here, and
+   * the shell's width is not one value: a fixed inset on the wide layout, a capped and centred
+   * width on the narrow and mobile ones, so the inset changes per breakpoint and any copy of it
+   * would drift. A spread paints out from the box under the gutter instead, and a clip trims it
+   * back to the block bounds, so the paint reaches the left, right and bottom edges and can never
+   * cover the content above. The rule needs this as much as the bar does, because a border paints
+   * only along the element's own edges and would leave a notch at each end of the line.
+   * `vmax` rather than `vw` because a shadow does not affect layout, and the document reserves a
+   * scrollbar gutter that `100vw` would not.
    *
    * The automatic block margin is what pins it. Each tab renders straight into the shell as a
-   * sibling of this footer, so there is no wrapper to grow; an auto margin on the last item
-   * absorbs whatever height the shell has to spare and needs no target to be named. The gap
-   * above the rule is padding rather than margin, because an auto margin resolves to nothing
-   * when the content is tall enough to leave no slack, and the gap has to survive that case.
-   *
-   * The bottom padding is inside the background on purpose, so the bar runs to the edge of the
-   * page. The shell has no bottom padding of its own for the same reason.
+   * sibling of this footer, so there is no wrapper to grow, and an auto margin on the last item
+   * absorbs the shell's spare height without a target having to be named. The gap above the rule
+   * is padding rather than margin, because an auto margin resolves to nothing once the content is
+   * tall enough to leave no slack, and the gap has to survive that case. The bottom padding is
+   * inside the bar so it reaches the edge of the page, which is why the shell has none of its own.
    */
   .page-footer {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 16px;
     margin-block-start: auto;
     padding: 24px 2px 32px;
-    border-block-start: 1px solid var(--border);
-    background: oklch(from var(--surface) l c h / 0.5);
+    box-shadow: 0 0 0 100vmax oklch(from var(--surface) l c h / 0.5);
+    clip-path: inset(0 -100vmax);
     color: var(--text-muted);
+  }
+
+  .page-footer::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 1px;
+    box-shadow: 0 0 0 100vmax var(--border);
+    clip-path: inset(0 -100vmax);
   }
 
   .page-footer-accuracy {
