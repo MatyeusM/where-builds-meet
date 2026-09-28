@@ -604,7 +604,7 @@ Loss, which is applied immediately after its corresponding hit.
 | Skill                | Temporary values                                                | Existing cast duration                                      |
 | -------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
 | Soul Sweep           | Three damage timestamps at 0                                    | 1.75 s, source interrupt                                    |
-| Piercing Dart        | Measured seven-hit marker series; four-hit release truncates it | 1.967 s full, 1.017 s interrupted release                   |
+| Piercing Dart        | Measured seven-hit marker series; four-hit release truncates it | 1.841 s full, 0.796 s interrupted release                   |
 | Burn and Bury        | Finger snap at 0.53 s, inside the 0.65 s cast                   | 0.65 s, source interrupt                                    |
 | Scarlet Spin         | Four source stage markers; duration input controls the chain    | User-entered, capped at 12 s                                |
 | Dreamwrought Bubbles | Charge and release split into sub-actions                       | 0.743 s charge + 1.2 s release; Delicate removes the charge |
@@ -619,6 +619,12 @@ ordinal indexes the anchoring step's own trigger actions and later throws are
 raised by the stage rows. The exhaust therefore sits on the sixth throw's
 forward hit of the second Scarlet Spin, and a second proportional ramp follows
 the first Exhausted window without reaching a second exhaust.
+
+The second ramp's spacing is measured from the exhaust's expiry, so re-authoring
+the exhaust moves its steps twice: once by the exhaust's own shift and once by
+whatever change the first ramp's shape took. Shortening the four-hit release
+moved the whole downstream timeline 0.2209835277 s earlier, so the first ramp
+shifted by that much and the second by twice it.
 
 Out of scope by user instruction: Fading Crimson, Tokens of Gratitude, Song of
 Tang HP drain, and Tenacity damage. These are exclusions rather than gaps, so
@@ -637,11 +643,20 @@ The source routes for Piercing Dart are cumulative prefixes of one seven-hit ser
 measured from the side-button press: `20702101` is the charging stance and reports
 no hits, `20702102` is the three-hit release, `20702103` the five-hit release, and
 `20702104` the seven-hit release. Each variant is therefore the leading markers of
-`[0.233, 0.483, 0.7, 1.017, 1.217, 1.4, 1.967]`, and the cast time is the last
-marker it lands: 1.967 s for the full release and 1.017 s for the four-hit release,
+`[0.099, 0.298, 0.498, 0.796, 1.02, 1.268, 1.841]`, and the cast time is the last
+marker it lands: 1.841 s for the full release and 0.796 s for the four-hit release,
 which ends at the interrupt. Soul Loss is applied on the same markers as the hit it
 belongs to, and its requirement resolves at skill start because Soulbound is
 consumed there.
+
+Each sweep's coefficients come from `timings.hitCoefficients` on `20702104`, matched
+by the `hitIds` list parallel to `hitTimes` and read at level 100. Each ordinal
+lists the collision alternatives observed for it, and every alternative within an
+ordinal shares one coefficient, so the mapping is unambiguous. Ordinals 1 and 2
+both resolve to the `20702102` 0.3-multiplier curve, so the first two hits are
+deliberately equal; the ramp is 0.334122, 0.334122, 0.445496, 0.313564, 0.470346,
+0.689664, 1.034496. The per-hit `multiplier` is already folded into these
+coefficients, so it is not applied again.
 
 Dreamwrought Bubbles is split into a charge and a release sub-action. Actions
 scheduled past a skill's cast time are inactive, and action times are absolute from
