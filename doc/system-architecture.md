@@ -1897,6 +1897,14 @@ singleton, so its persisted state is read during the first render of the
 application rather than when its module is imported, which a deferred editor
 decides.
 
+`overrideStore` holds the character sheet's stat and attunement overrides. An
+absent key means the value is inherited from the game data, which is why
+resetting one removes the key rather than storing a zero, and why the sheet can
+mark a modified field by key presence alone. Its records are still written when
+every key is gone, because their loaders fall back to the pre-override keys when
+a record is missing: removing the record to mean "nothing overridden" would
+resurrect the values an older session stored there.
+
 ## Development and deployment
 
 Every production build embeds a unique version and emits the matching

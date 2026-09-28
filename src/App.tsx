@@ -15,16 +15,12 @@ import {
   type PathDefinition,
 } from "./application/gameData/paths"
 import { breakthroughProfile } from "./application/gameData/setup"
-import { loadAttunementOverrides } from "./application/persistence/attunements"
 import { loadRotationEntries } from "./application/persistence/rotations"
 import { loadBuildSetupOverrides, sameBuildSetupValue } from "./application/persistence/setupOverrides"
 import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence/skillOverrides"
-import { loadStatOverrides } from "./application/persistence/stats"
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
-import type { AttunementOverrides } from "./calculations/attunementStats"
-import { type AttunementStats } from "./calculations/damage"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
@@ -40,17 +36,11 @@ const SimulationTab = lazy(loadSimulationTab)
 const RotationEditorTab = lazy(() => loadRotationEditorTab().then(module => ({ default: module.RotationEditorTab })))
 import { visibleBuilds, visibleGearItems } from "@/application/gearScope"
 
-import {
-  attunementOverrideStorageKey,
-  buildSetupOverrideStorageKey,
-  skillStorageKey,
-  statOverrideStorageKey,
-} from "./application/persistence/keys"
+import { buildSetupOverrideStorageKey, skillStorageKey } from "./application/persistence/keys"
 import { withPathSelection } from "./application/persistence/pathSelection"
 // Only the live viewport query stays here. The settings and loadout loaders, and the build and
 // rotation selections, moved to the stores that own those values.
 import { compactLayoutSnapshot, subscribeToCompactLayout } from "./application/persistence/settings"
-import type { CharacterStatOverrides } from "./calculations/statEffects"
 import {
   characterProfileStorageKey,
   loadCharacterProfiles,
@@ -66,9 +56,10 @@ import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { useDpsStore } from "./stores/dpsStore"
 import { useGearStore } from "./stores/gearStore"
 import { useLoadoutStore } from "./stores/loadoutStore"
+import { useOverrideStore } from "./stores/overrideStore"
 import { useRotationStore } from "./stores/rotationStore"
 import { useSettingsStore } from "./stores/settingsStore"
-import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
+import { type EnemyProfile, type WeaponId } from "./types"
 
 const tabSuspenseFallback = <div className="viewport-tab-content" />
 
@@ -103,8 +94,6 @@ export default function App() {
   const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides)
   const skillEditorModified = hasSkillOverrides(skillOverrides)
   const [innerWayRevision, setInnerWayRevision] = useState(0)
-  const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
-  const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
   // The stores are module singletons, so their persisted state is read during the first render
   // rather than when their modules happen to be imported, which a lazily loaded editor decides. It
@@ -121,6 +110,7 @@ export default function App() {
     markAppStoresRead(true)
     useSettingsStore.getState().initialise(compactViewport)
     useLoadoutStore.getState().initialise(useSettingsStore.getState().devMode)
+    useOverrideStore.getState().initialise()
   }
   const devMode = useSettingsStore(state => state.devMode)
   const layoutPreview = useSettingsStore(state => state.layoutPreview)
@@ -128,6 +118,8 @@ export default function App() {
   const settings = useLoadoutStore(state => state.settings)
   const setupSelections = useLoadoutStore(state => state.setupSelections)
   const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
+  const statOverrides = useOverrideStore(state => state.statOverrides)
+  const attunementOverrides = useOverrideStore(state => state.attunementOverrides)
   const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
   const [workspaceStoresRead, markWorkspaceStoresRead] = useState(false)
   if (!workspaceStoresRead) {
@@ -246,24 +238,11 @@ export default function App() {
     devMode,
     weapons: settings.weapons,
   })
-  const updateStatOverride = (key: keyof CharacterStats, value: number) => {
-    setStatOverrides(current => ({ ...current, [key]: value }))
-  }
-  const resetStatOverride = (key: keyof CharacterStats) => {
-    setStatOverrides(current => {
-      const next = { ...current }
-      delete next[key]
-      return next
-    })
-  }
-  const updateAttunementOverride = (key: keyof AttunementStats, value: number) =>
-    setAttunementOverrides(current => ({ ...current, [key]: value }))
-  const resetAttunementOverride = (key: keyof AttunementStats) =>
-    setAttunementOverrides(current => {
-      const next = { ...current }
-      delete next[key]
-      return next
-    })
+  const setStatOverride = useOverrideStore(state => state.setStatOverride)
+  const resetStatOverride = useOverrideStore(state => state.resetStatOverride)
+  const setAttunementOverride = useOverrideStore(state => state.setAttunementOverride)
+  const resetAttunementOverride = useOverrideStore(state => state.resetAttunementOverride)
+  const setOverrides = useOverrideStore(state => state.setOverrides)
   function updateBuildSetupOverride<K extends keyof BuildSetup>(key: K, value: BuildSetup[K]) {
     setBuildSetupOverrides(current => {
       if (!sameBuildSetupValue(key, value, activeBuildSetup[key])) return { ...current, [key]: value }
@@ -279,8 +258,10 @@ export default function App() {
       return next
     })
   const applyCharacterProfile = (profile?: CharacterProfile) => {
-    setStatOverrides(profile ? { ...profile.statOverrides } : {})
-    setAttunementOverrides(profile ? { ...profile.attunementOverrides } : {})
+    setOverrides({
+      statOverrides: profile?.statOverrides ?? {},
+      attunementOverrides: profile?.attunementOverrides ?? {},
+    })
     if (!profile) {
       setBuildSetupOverrides({})
       return
@@ -383,7 +364,6 @@ export default function App() {
     else removePersistentItem(skillStorageKey)
   }
 
-  useEffect(() => setPersistentItem(statOverrideStorageKey, JSON.stringify(statOverrides)), [statOverrides])
   useEffect(
     () => setPersistentItem(characterProfileStorageKey, serializeCharacterProfiles(characterProfiles)),
     [characterProfiles],
@@ -403,10 +383,6 @@ export default function App() {
     }
     store.selectBuildForPath(activeBuild.id, pathId)
   }, [activeBuild, activeBuildIdsByPath, pathId])
-  useEffect(
-    () => setPersistentItem(attunementOverrideStorageKey, JSON.stringify(attunementOverrides)),
-    [attunementOverrides],
-  )
   useEffect(
     () => setPersistentItem(buildSetupOverrideStorageKey, JSON.stringify(buildSetupOverrides)),
     [buildSetupOverrides],
@@ -529,9 +505,9 @@ export default function App() {
           attunementOverrides={attunementOverrides}
           characterProfiles={characterProfiles}
           buildSetupOverrides={buildSetupOverrides}
-          onStatChange={updateStatOverride}
+          onStatChange={setStatOverride}
           onStatReset={resetStatOverride}
-          onAttunementChange={updateAttunementOverride}
+          onAttunementChange={setAttunementOverride}
           onAttunementReset={resetAttunementOverride}
           onApplyCharacterProfile={applyCharacterProfile}
           onCharacterProfilesChange={setCharacterProfiles}
