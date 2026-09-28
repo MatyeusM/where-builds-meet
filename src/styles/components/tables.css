@@ -2,10 +2,7 @@
   .breakdown-page {
     display: grid;
     gap: 4px;
-
-    /* As with the settings panel, this is a direct child of the shell, whose gutter padding counts
-       inside the cap. Added back so the cap is 1500px of content. */
-    max-inline-size: calc(1500px + var(--shell-gutter) * 2);
+    max-inline-size: 1500px;
   }
 
   .breakdown-panel {

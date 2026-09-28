@@ -394,214 +394,218 @@ export default function App() {
       className={`page-shell layout-${layoutMode} ${layoutMode === "pc" && (activeTab === "build" || activeTab === "rotations") ? "viewport-page-shell" : ""}`}
       data-layout={layoutMode}
     >
-      <header className="page-header">
-        <div className="page-header-start">
-          <div className="page-title">
-            {/* The mark beside the heading, so it is decorative: the heading already names the
+      <div className="page-content">
+        <header className="page-header">
+          <div className="page-header-start">
+            <div className="page-title">
+              {/* The mark beside the heading, so it is decorative: the heading already names the
                 application, and an empty alt keeps a screen reader from reading it twice. */}
-            <img className="page-title-logo" src={logo} alt="" width={48} height={48} />
-            <h1>{t("ui.app.whereBuildsMeet")}</h1>
-          </div>
-          <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
-          <section className="path-selector" aria-label={t("ui.app.combatPath")}>
-            <div className="path-selector-options">
-              {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(([value, definition]) => {
-                const icon = pathIcons[value]
-                return (
-                  <button
-                    className={pathId === value ? "selected" : ""}
-                    type="button"
-                    key={value}
-                    aria-pressed={pathId === value}
-                    disabled={pathRequiresDev(definition) && !devMode}
-                    onClick={() => selectPath(value)}
-                  >
-                    {icon && <img src={icon} alt="" />}
-                    <span>{gameText(definition.name)}</span>
-                    {definition.status !== "available" && (
-                      <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
-                    )}
-                  </button>
-                )
-              })}
+              <img className="page-title-logo" src={logo} alt="" width={48} height={48} />
+              <h1>{t("ui.app.whereBuildsMeet")}</h1>
             </div>
-          </section>
-        </div>
-        <div className="page-header-end">
-          <div className="page-header-controls">
-            <NoticeArea />
-            <label className="locale-selector">
-              <span>{t("ui.app.language")}</span>
-              <select value={locale} onChange={event => void changeLocale(event.target.value)}>
-                {getSupportedLocales().map(supportedLocale => (
-                  <option
-                    value={supportedLocale}
-                    key={supportedLocale}
-                    disabled={!devMode && isLocaleWip(supportedLocale)}
-                  >
-                    {getLocaleDisplayName(supportedLocale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button
-              className="dev-mode-button"
-              variant="secondary"
-              type="button"
-              aria-pressed={devMode}
-              onClick={toggleDevMode}
-            >
-              {t("ui.app.dev")}
-            </Button>
+            <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
+            <section className="path-selector" aria-label={t("ui.app.combatPath")}>
+              <div className="path-selector-options">
+                {(Object.entries(typedPathDefinitions) as Array<[PathId, PathDefinition]>).map(
+                  ([value, definition]) => {
+                    const icon = pathIcons[value]
+                    return (
+                      <button
+                        className={pathId === value ? "selected" : ""}
+                        type="button"
+                        key={value}
+                        aria-pressed={pathId === value}
+                        disabled={pathRequiresDev(definition) && !devMode}
+                        onClick={() => selectPath(value)}
+                      >
+                        {icon && <img src={icon} alt="" />}
+                        <span>{gameText(definition.name)}</span>
+                        {definition.status !== "available" && (
+                          <Chip className="path-status-badge">{pathStatusLabel(definition)}</Chip>
+                        )}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </section>
           </div>
-          <div className="project-links">
-            <a href="https://discord.gg/UtqAw8HaXA" target="_blank" rel="noreferrer">
-              <IconBrandDiscord size="1em" aria-hidden />
-              <span>{t("ui.app.discord")}</span>
-            </a>
-            <a href="https://github.com/greydust/where-builds-meet" target="_blank" rel="noreferrer">
-              <IconBrandGithub size="1em" aria-hidden />
-              <span>{t("ui.app.github")}</span>
-            </a>
-          </div>
-        </div>
-      </header>
-      <nav className="main-tabs" aria-label={t("ui.app.mainSections")}>
-        <Tab active={activeTab === "main"} onClick={() => setActiveTab("main")}>
-          {t("ui.app.main")}
-        </Tab>
-        <Tab active={activeTab === "build"} onClick={() => setActiveTab("build")}>
-          {t("ui.app.build")}
-        </Tab>
-        <Tab active={activeTab === "breakdown"} onClick={() => setActiveTab("breakdown")}>
-          {t("ui.app.dpsBreakdown", {
-            dps: activeResult?.metrics.hps ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
-          })}
-        </Tab>
-        <Tab
-          active={activeTab === "rotations"}
-          onClick={() => {
-            setRotationsMounted(true)
-            setActiveTab("rotations")
-          }}
-        >
-          {t("ui.app.rotationEditor")}
-        </Tab>
-        <Tab
-          active={activeTab === "simulation"}
-          onClick={() => {
-            setSimulationMounted(true)
-            setActiveTab("simulation")
-          }}
-        >
-          {t("ui.app.simulation")}
-        </Tab>
-        <Tab active={activeTab === "skills"} modified={skillEditorModified} onClick={() => setActiveTab("skills")}>
-          {t("ui.app.skillEditor")}
-        </Tab>
-        <Tab active={activeTab === "settings"} onClick={() => setActiveTab("settings")}>
-          {t("ui.app.settings")}
-        </Tab>
-      </nav>
-      {activeTab === "main" ? (
-        <StatsTab
-          character={character}
-          pathId={pathId}
-          statOverrides={statOverrides}
-          attunementOverrides={attunementOverrides}
-          characterProfiles={characterProfiles}
-          buildSetupOverrides={buildSetupOverrides}
-          onStatChange={setStatOverride}
-          onStatReset={resetStatOverride}
-          onAttunementChange={setAttunementOverride}
-          onAttunementReset={resetAttunementOverride}
-          onApplyCharacterProfile={applyCharacterProfile}
-          onCharacterProfilesChange={setCharacterProfiles}
-          onBreakthroughChange={breakthrough =>
-            useLoadoutStore.getState().setSettings(current => ({ ...current, breakthrough }))
-          }
-          onBuildSetupChange={updateBuildSetupOverride}
-          onBuildSetupReset={resetBuildSetupOverride}
-          rotationMetrics={activeResult?.metrics}
-          graduationDps={activeResult?.graduation?.dps}
-          activeBuildName={activeBuildDisplayName}
-          activeRotationName={activeRotationDisplayName}
-          onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
-          onSetupSelectionChange={(key, value) => useLoadoutStore.getState().setSetupSelection(key, value)}
-        />
-      ) : activeTab === "build" ? (
-        <FeatureLoadBoundary>
-          <Suspense fallback={tabSuspenseFallback}>
-            <div className="viewport-tab-content">
-              <BuildTab
-                pathId={pathId}
-                builds={availableBuildEntries}
-                visibleItems={visibleGear}
-                weapons={settings.weapons}
-                martialArtTags={buildTabMartialArtTags}
-                pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
-                graduatedBuildIds={typedPathDefinitions[pathId].graduated}
-                onActiveBuildChange={activateBuildForPath}
-                onSelectBuildWeapons={selectBuildWeapons}
-                measurement={buildMeasurementContext}
-                activeRotation={activeResult?.rotation}
-                activeRotationName={activeRotationDisplayName}
-              />
+          <div className="page-header-end">
+            <div className="page-header-controls">
+              <NoticeArea />
+              <label className="locale-selector">
+                <span>{t("ui.app.language")}</span>
+                <select value={locale} onChange={event => void changeLocale(event.target.value)}>
+                  {getSupportedLocales().map(supportedLocale => (
+                    <option
+                      value={supportedLocale}
+                      key={supportedLocale}
+                      disabled={!devMode && isLocaleWip(supportedLocale)}
+                    >
+                      {getLocaleDisplayName(supportedLocale)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                className="dev-mode-button"
+                variant="secondary"
+                type="button"
+                aria-pressed={devMode}
+                onClick={toggleDevMode}
+              >
+                {t("ui.app.dev")}
+              </Button>
             </div>
-          </Suspense>
-        </FeatureLoadBoundary>
-      ) : activeTab === "breakdown" ? (
-        <BreakdownTab metrics={activeResult?.metrics} pathId={pathId} />
-      ) : activeTab === "skills" ? (
-        <SkillEditorTab
-          weapons={settings.weapons}
-          overrides={skillOverrides}
-          onOverridesChange={updateSkillOverrides}
-        />
-      ) : activeTab === "settings" ? (
-        <SettingsTab
-          settings={settings}
-          pathId={pathId}
-          devMode={devMode}
-          layoutMode={layoutMode}
-          onSettingsChange={next => useLoadoutStore.getState().setSettings(next)}
-          onLayoutChange={changeLayoutPreview}
-        />
-      ) : null}
-      {rotationsMounted && (
-        <div className={`viewport-tab-content ${activeTab === "rotations" ? "" : "tab-hidden"}`}>
+            <div className="project-links">
+              <a href="https://discord.gg/UtqAw8HaXA" target="_blank" rel="noreferrer">
+                <IconBrandDiscord size="1em" aria-hidden />
+                <span>{t("ui.app.discord")}</span>
+              </a>
+              <a href="https://github.com/greydust/where-builds-meet" target="_blank" rel="noreferrer">
+                <IconBrandGithub size="1em" aria-hidden />
+                <span>{t("ui.app.github")}</span>
+              </a>
+            </div>
+          </div>
+        </header>
+        <nav className="main-tabs" aria-label={t("ui.app.mainSections")}>
+          <Tab active={activeTab === "main"} onClick={() => setActiveTab("main")}>
+            {t("ui.app.main")}
+          </Tab>
+          <Tab active={activeTab === "build"} onClick={() => setActiveTab("build")}>
+            {t("ui.app.build")}
+          </Tab>
+          <Tab active={activeTab === "breakdown"} onClick={() => setActiveTab("breakdown")}>
+            {t("ui.app.dpsBreakdown", {
+              dps: activeResult?.metrics.hps ? `${t("system.dps")} / ${t("system.hps")}` : t("system.dps"),
+            })}
+          </Tab>
+          <Tab
+            active={activeTab === "rotations"}
+            onClick={() => {
+              setRotationsMounted(true)
+              setActiveTab("rotations")
+            }}
+          >
+            {t("ui.app.rotationEditor")}
+          </Tab>
+          <Tab
+            active={activeTab === "simulation"}
+            onClick={() => {
+              setSimulationMounted(true)
+              setActiveTab("simulation")
+            }}
+          >
+            {t("ui.app.simulation")}
+          </Tab>
+          <Tab active={activeTab === "skills"} modified={skillEditorModified} onClick={() => setActiveTab("skills")}>
+            {t("ui.app.skillEditor")}
+          </Tab>
+          <Tab active={activeTab === "settings"} onClick={() => setActiveTab("settings")}>
+            {t("ui.app.settings")}
+          </Tab>
+        </nav>
+        {activeTab === "main" ? (
+          <StatsTab
+            character={character}
+            pathId={pathId}
+            statOverrides={statOverrides}
+            attunementOverrides={attunementOverrides}
+            characterProfiles={characterProfiles}
+            buildSetupOverrides={buildSetupOverrides}
+            onStatChange={setStatOverride}
+            onStatReset={resetStatOverride}
+            onAttunementChange={setAttunementOverride}
+            onAttunementReset={resetAttunementOverride}
+            onApplyCharacterProfile={applyCharacterProfile}
+            onCharacterProfilesChange={setCharacterProfiles}
+            onBreakthroughChange={breakthrough =>
+              useLoadoutStore.getState().setSettings(current => ({ ...current, breakthrough }))
+            }
+            onBuildSetupChange={updateBuildSetupOverride}
+            onBuildSetupReset={resetBuildSetupOverride}
+            rotationMetrics={activeResult?.metrics}
+            graduationDps={activeResult?.graduation?.dps}
+            activeBuildName={activeBuildDisplayName}
+            activeRotationName={activeRotationDisplayName}
+            onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
+            onSetupSelectionChange={(key, value) => useLoadoutStore.getState().setSetupSelection(key, value)}
+          />
+        ) : activeTab === "build" ? (
           <FeatureLoadBoundary>
             <Suspense fallback={tabSuspenseFallback}>
-              <RotationEditorTab
-                key={pathId}
-                character={character}
-                pathId={pathId}
-                devMode={devMode}
-                active={activeTab === "rotations"}
-                defaultRotationId={defaultRotationIdForPath(pathId)}
-                selectedRotationId={selectedRotationId}
-                skillOverrides={skillOverrides}
-                onSelectRotationWeapons={selectBuildWeapons}
-                onActiveRotationChange={activateRotationForPath}
-              />
+              <div className="viewport-tab-content">
+                <BuildTab
+                  pathId={pathId}
+                  builds={availableBuildEntries}
+                  visibleItems={visibleGear}
+                  weapons={settings.weapons}
+                  martialArtTags={buildTabMartialArtTags}
+                  pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
+                  graduatedBuildIds={typedPathDefinitions[pathId].graduated}
+                  onActiveBuildChange={activateBuildForPath}
+                  onSelectBuildWeapons={selectBuildWeapons}
+                  measurement={buildMeasurementContext}
+                  activeRotation={activeResult?.rotation}
+                  activeRotationName={activeRotationDisplayName}
+                />
+              </div>
             </Suspense>
           </FeatureLoadBoundary>
-        </div>
-      )}
-      {simulationMounted && (
-        <div className={activeTab === "simulation" ? "" : "tab-hidden"}>
-          <FeatureLoadBoundary>
-            <Suspense fallback={null}>
-              <SimulationTab
-                bundle={activeResult?.bundle}
-                bundleKey={activeResult?.bundleKey}
-                rotationName={activeResult ? activeRotationDisplayName : undefined}
-                buildName={activeBuildDisplayName}
-              />
-            </Suspense>
-          </FeatureLoadBoundary>
-        </div>
-      )}
+        ) : activeTab === "breakdown" ? (
+          <BreakdownTab metrics={activeResult?.metrics} pathId={pathId} />
+        ) : activeTab === "skills" ? (
+          <SkillEditorTab
+            weapons={settings.weapons}
+            overrides={skillOverrides}
+            onOverridesChange={updateSkillOverrides}
+          />
+        ) : activeTab === "settings" ? (
+          <SettingsTab
+            settings={settings}
+            pathId={pathId}
+            devMode={devMode}
+            layoutMode={layoutMode}
+            onSettingsChange={next => useLoadoutStore.getState().setSettings(next)}
+            onLayoutChange={changeLayoutPreview}
+          />
+        ) : null}
+        {rotationsMounted && (
+          <div className={`viewport-tab-content ${activeTab === "rotations" ? "" : "tab-hidden"}`}>
+            <FeatureLoadBoundary>
+              <Suspense fallback={tabSuspenseFallback}>
+                <RotationEditorTab
+                  key={pathId}
+                  character={character}
+                  pathId={pathId}
+                  devMode={devMode}
+                  active={activeTab === "rotations"}
+                  defaultRotationId={defaultRotationIdForPath(pathId)}
+                  selectedRotationId={selectedRotationId}
+                  skillOverrides={skillOverrides}
+                  onSelectRotationWeapons={selectBuildWeapons}
+                  onActiveRotationChange={activateRotationForPath}
+                />
+              </Suspense>
+            </FeatureLoadBoundary>
+          </div>
+        )}
+        {simulationMounted && (
+          <div className={activeTab === "simulation" ? "" : "tab-hidden"}>
+            <FeatureLoadBoundary>
+              <Suspense fallback={null}>
+                <SimulationTab
+                  bundle={activeResult?.bundle}
+                  bundleKey={activeResult?.bundleKey}
+                  rotationName={activeResult ? activeRotationDisplayName : undefined}
+                  buildName={activeBuildDisplayName}
+                />
+              </Suspense>
+            </FeatureLoadBoundary>
+          </div>
+        )}
+      </div>
       <footer className="page-footer">
         <span>{t("ui.app.authorGreydustWwmIgnGreydustDiscord")}</span>
         <span className="page-footer-accuracy">

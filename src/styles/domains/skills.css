@@ -157,10 +157,7 @@
 
   /* Settings */
   .settings-panel {
-    /* This panel is a direct child of the shell, which insets its children with padding rather
-       than insetting itself, so the page gutter counts inside this cap. It is added back here so
-       the panel is still 960px of content, which is where the fields inside it were laid out. */
-    max-inline-size: calc(960px + var(--shell-gutter) * 2);
+    max-inline-size: 960px;
   }
 
   .settings-fields {

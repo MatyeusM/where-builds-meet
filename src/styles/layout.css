@@ -11,9 +11,8 @@
    * height and clipping that its internal scrolling needs.
    */
   .page-shell {
-    /* The page's horizontal inset, named once and applied to the content below rather than to the
-       shell itself, because the footer is the bar and has to reach the left and right edges. A
-       shell that is itself inset cannot hand that to one of its children. */
+    /* The page's horizontal inset, named once and used by both the content below and the footer
+       at the foot of the shell. */
     --shell-gutter: 14px;
 
     display: flex;
@@ -28,41 +27,28 @@
   }
 
   /*
-   * Everything the shell holds is inset from the page edges except the footer, by padding rather
-   * than by insetting the shell, so the footer can still reach those edges. The measure is
-   * unchanged: a child is as wide as the content box less the gutter, which is the width
-   * `calc(100% - 28px)` used to give.
+   * The content the page is made of, and the reason it is a box of its own. The footer is the bar
+   * across the bottom, so it cannot live inside the inset and capped region the rest of the page
+   * occupies; keeping that region as its own element is what lets the bar reach the edges while
+   * everything above it stays in the measure it was laid out in.
    *
-   * No auto margin here. In a column it centres a child along the inline axis, and it overrides
-   * the stretch, so a child that sized itself to its content would drift to the middle of the row
-   * instead of filling it. The centred case is the capped one, and that declares its own, where it
-   * pairs with an explicit `inline-size`: an auto margin takes the leftover space only once the
-   * item has a width, and without one it would collapse the item to its content instead, which
-   * for the horizontally scrolling tab strip is far wider than the page.
+   * The gutter is padding here, so a child that paints a card or a rule is inset by it, rather
+   * than each child having to inset itself and each capped layout having to centre it. The cap
+   * counts the padding, so a capped content area is as wide as the capped shell used to be, and
+   * an uncapped one is as wide as `100%` less the gutter, which is what it was before.
+   *
+   * The explicit `inline-size` is what the auto margin needs: an auto margin takes the leftover
+   * space only once the item has a width, and without one it would collapse the content to its
+   * own width instead of filling the page.
    */
-  .page-shell > *:not(.page-footer) {
+  .page-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-block-size: 0;
+    inline-size: 100%;
+    margin-inline: auto;
     padding-inline: var(--shell-gutter);
-  }
-
-  /*
-   * The strip's rule is drawn inside its content box rather than as a border. A border paints
-   * along the element's own edges, so as a border it would run the width of the strip, which is
-   * the width of the page, and overhang everything above the footer. Drawing it inside keeps it
-   * aligned with the labels and with the header whatever the layout does to the strip's box,
-   * which the capped layouts change.
-   */
-  .page-shell > .main-tabs {
-    position: relative;
-    border-block-end: 0;
-  }
-
-  .page-shell > .main-tabs::after {
-    content: "";
-    position: absolute;
-    inset-block-end: 0;
-    inset-inline: var(--shell-gutter);
-    block-size: 1px;
-    background: var(--border);
   }
 
   .viewport-page-shell {
@@ -467,10 +453,8 @@
       padding-block-start: 22px;
     }
 
-    .page-shell > *:not(.page-footer) {
-      inline-size: 100%;
+    .page-content {
       max-inline-size: calc(1100px + var(--shell-gutter) * 2);
-      margin-inline: auto;
     }
 
     .page-header {
