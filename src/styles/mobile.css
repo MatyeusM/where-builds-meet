@@ -4,14 +4,21 @@
    * rule under .layout-mobile preserves the established PC layout verbatim.
    */
   .layout-mobile {
-    inline-size: min(100% - 1rem, 32rem);
+    --shell-gutter: 0.5rem;
+
     min-block-size: 100dvh;
-    margin-inline: auto;
 
     /* No bottom padding, for the same reason the PC shell has none: the footer's own background
        has to reach the bottom edge, and the footer is what stands the page off the window. */
     padding-block: 0.75rem 0;
     overflow: visible;
+  }
+
+  /* The cap the mobile shell used to carry as its own width, now on the content it insets. */
+  .layout-mobile.page-shell > *:not(.page-footer) {
+    inline-size: 100%;
+    max-inline-size: calc(32rem + var(--shell-gutter) * 2);
+    margin-inline: auto;
   }
 
   .layout-mobile .page-header {

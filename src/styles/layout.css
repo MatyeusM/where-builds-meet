@@ -11,16 +11,37 @@
    * height and clipping that its internal scrolling needs.
    */
   .page-shell {
+    /* The page's horizontal inset, named once and applied to the content below rather than to the
+       shell itself, because the footer is the bar and has to reach the left and right edges. A
+       shell that is itself inset cannot hand that to one of its children. */
+    --shell-gutter: 14px;
+
     display: flex;
     flex-direction: column;
     min-block-size: 100dvh;
-    inline-size: calc(100% - 28px);
-    margin: 0 auto;
+    inline-size: 100%;
 
     /* No bottom padding: the footer carries the space below it, inside its own background, so the
        bar meets the bottom edge instead of stopping short of it with a strip of bare gradient
        below. The footer's own padding is what stands the page off the window. */
     padding: 28px 0 0;
+  }
+
+  /*
+   * Everything the shell holds is inset from the page edges except the footer, by padding rather
+   * than by insetting the shell, so the footer can still reach those edges. The measure is
+   * unchanged: a child is as wide as the content box less the gutter, which is the width
+   * `calc(100% - 28px)` used to give.
+   *
+   * No auto margin here. In a column it centres a child along the inline axis, and it overrides
+   * the stretch, so a child that sized itself to its content would drift to the middle of the row
+   * instead of filling it. The centred case is the capped one, and that declares its own, where it
+   * pairs with an explicit `inline-size`: an auto margin takes the leftover space only once the
+   * item has a width, and without one it would collapse the item to its content instead, which
+   * for the horizontally scrolling tab strip is far wider than the page.
+   */
+  .page-shell > *:not(.page-footer) {
+    padding-inline: var(--shell-gutter);
   }
 
   .viewport-page-shell {
@@ -338,26 +359,15 @@
    * inside the bar so it reaches the edge of the page, which is why the shell has none of its own.
    */
   .page-footer {
-    position: relative;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 16px;
     margin-block-start: auto;
-    padding: 24px 2px 32px;
-    box-shadow: 0 0 0 100vmax oklch(from var(--surface) l c h / 0.5);
-    clip-path: inset(0 -100vmax);
+    padding: 24px var(--shell-gutter) 32px;
+    border-block-start: 1px solid var(--border);
+    background: oklch(from var(--surface) l c h / 0.5);
     color: var(--text-muted);
-  }
-
-  .page-footer::before {
-    content: "";
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    block-size: 1px;
-    box-shadow: 0 0 0 100vmax var(--border);
-    clip-path: inset(0 -100vmax);
   }
 
   .page-footer-accuracy {
@@ -431,8 +441,15 @@
 
   @media (max-width: 37.5em) {
     .page-shell {
-      inline-size: min(100% - 20px, 1100px);
+      --shell-gutter: 10px;
+
       padding-block-start: 22px;
+    }
+
+    .page-shell > *:not(.page-footer) {
+      inline-size: 100%;
+      max-inline-size: calc(1100px + var(--shell-gutter) * 2);
+      margin-inline: auto;
     }
 
     .page-header {
