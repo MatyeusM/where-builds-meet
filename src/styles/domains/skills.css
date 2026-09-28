@@ -332,15 +332,25 @@
 
   .array-item-controls {
     display: flex;
-    gap: 2px;
+    gap: var(--space-3xs);
     padding-inline-end: 5px;
   }
 
+  /*
+   * The user agent gives a button 1px 6px of padding, which this rule never cancels. Inside a 25px
+   * box that leaves a 13px content box, narrower than a 1em icon, and `text-align: center` starts
+   * the overflowing icon at the content edge rather than centring it, which put every icon 3px from
+   * the right and 6px from the left. `place-items` centres it in the box, and the padding goes so
+   * the box is the thing being centred in. Same reset `.icon-only` uses.
+   */
   .array-item-controls button {
+    display: grid;
+    place-items: center;
     inline-size: 25px;
     block-size: 25px;
     border: 0;
     border-radius: var(--radius-2xs);
+    padding: 0;
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -468,6 +478,32 @@
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+  }
+
+  /*
+   * The same reset as `.array-item-controls button`, for the same reason: these fill a 25px grid
+   * track, and the user agent's 1px 6px padding left a 13px content box for a 1em icon, so the icon
+   * sat 3px from the right and 6px from the left.
+   *
+   * Only the two icon-only buttons get it. The button in an OR heading carries the word "Remove",
+   * and a text control has no icon to centre: its content box is as wide as its label, so it never
+   * had the fault this fixes, and cancelling its padding would only crowd the label.
+   *
+   * The minimum block size is what the padding used to supply for the icon buttons. One of these
+   * rows centres its children rather than stretching them, so with the padding gone the button
+   * would be the bare height of its icon, under the 24px WCAG 2.2 AA target. The row that stretches
+   * this button to its own height is unaffected, because a minimum does not cap it.
+   */
+  .condition-row button,
+  .effect-row button {
+    display: grid;
+    place-items: center;
+    min-block-size: 1.5rem;
+    padding: 0;
+  }
+
+  .or-condition-heading button {
+    min-block-size: 1.5rem;
   }
 
   .condition-row button:hover,
