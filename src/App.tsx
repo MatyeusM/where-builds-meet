@@ -39,15 +39,14 @@ const BuildTab = lazy(loadBuildTab)
 const SimulationTab = lazy(loadSimulationTab)
 const RotationEditorTab = lazy(() => loadRotationEditorTab().then(module => ({ default: module.RotationEditorTab })))
 import {
-  activeBuildByPathStorageKey,
   attunementOverrideStorageKey,
   buildSetupOverrideStorageKey,
   skillStorageKey,
   statOverrideStorageKey,
 } from "./application/persistence/keys"
-import { loadPathSelectionIds, withPathSelection, type PathSelectionIds } from "./application/persistence/pathSelection"
-// Only the live viewport query stays here; everything stored in settings moved to
-// `stores/settingsStore`, which is where those loaders and keys are read from now.
+import { withPathSelection } from "./application/persistence/pathSelection"
+// Only the live viewport query stays here. The settings and loadout loaders, and the build and
+// rotation selections, moved to the stores that own those values.
 import { compactLayoutSnapshot, subscribeToCompactLayout } from "./application/persistence/settings"
 import type { CharacterStatOverrides } from "./calculations/statEffects"
 import {
@@ -58,23 +57,19 @@ import {
 } from "./characterProfiles"
 import { useActiveRotationResult } from "./features/rotations/useActiveRotationResult"
 import {
-  activeBuildStorageKey,
   buildEntryAvailableForPath,
   buildEntryIsTestPreset,
-  buildListStorageKey,
-  loadBuildState,
   resolveBuildSetup,
   sameWeaponPair,
-  serializeBuildState,
   type BuildSetup,
   type BuildSetupOverrides,
-  type BuildState,
 } from "./gear"
 import { gameText, getLocale, getLocaleDisplayName, getSupportedLocales, isLocaleWip, selectLocale, t } from "./i18n"
 import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { useDpsStore } from "./stores/dpsStore"
+import { useGearStore } from "./stores/gearStore"
 import { useLoadoutStore } from "./stores/loadoutStore"
 import { useRotationStore } from "./stores/rotationStore"
 import { useSettingsStore } from "./stores/settingsStore"
@@ -116,13 +111,19 @@ export default function App() {
   const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
   const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
-  // Both stores are module singletons, so their persisted state is read during the first render
-  // rather than when their modules happen to be imported. It has to be read before the first render
-  // reads the path, the build list is filtered by, or the editor picks a rotation. Application
-  // settings boot first because the path a saved session resolves to depends on the dev toggle.
-  const [storesRead, markStoresRead] = useState(false)
-  if (!storesRead) {
-    markStoresRead(true)
+  // The stores are module singletons, so their persisted state is read during the first render
+  // rather than when their modules happen to be imported, which a lazily loaded editor decides. It
+  // has to be read before the first render reads the path, the build list is filtered by, or the
+  // editor picks a rotation to open on, and before this component subscribes, so the write lands on
+  // a store nothing is watching yet.
+  //
+  // The order is a dependency chain. Application settings boot first because the path a saved
+  // session resolves to depends on the development toggle, so the loadout store takes that value
+  // rather than reading the same key again. The path that resolves then decides which build and
+  // rotation each of the two remaining stores restores its selection for.
+  const [appStoresRead, markAppStoresRead] = useState(false)
+  if (!appStoresRead) {
+    markAppStoresRead(true)
     useSettingsStore.getState().initialise(compactViewport)
     useLoadoutStore.getState().initialise(useSettingsStore.getState().devMode)
   }
@@ -133,19 +134,14 @@ export default function App() {
   const setupSelections = useLoadoutStore(state => state.setupSelections)
   const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
   const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
-  const [buildState, setBuildState] = useState<BuildState>(loadBuildState)
-  const [activeBuildIdsByPath, setActiveBuildIdsByPath] = useState<PathSelectionIds>(() =>
-    loadPathSelectionIds(activeBuildByPathStorageKey, activeBuildStorageKey, pathId),
-  )
-  // The rotation store is a module singleton, so its persisted state is read during the first
-  // render rather than when its module happens to be imported, which a lazily loaded editor
-  // decides. It has to be read before the editor picks the rotation to open on that same render,
-  // and before this component subscribes, so the write lands on a store nothing is watching yet.
-  const [rotationStoreRead, markRotationStoreRead] = useState(false)
-  if (!rotationStoreRead) {
-    markRotationStoreRead(true)
+  const [workspaceStoresRead, markWorkspaceStoresRead] = useState(false)
+  if (!workspaceStoresRead) {
+    markWorkspaceStoresRead(true)
+    useGearStore.getState().initialise(pathId)
     useRotationStore.getState().initialise(pathId)
   }
+  const buildState = useGearStore(state => state.buildState)
+  const activeBuildIdsByPath = useGearStore(state => state.activeBuildIdsByPath)
   const activeRotationIdsByPath = useRotationStore(state => state.activeRotationIdsByPath)
   const activeResult = useRotationStore(state => state.result)
   const breakthrough = breakthroughProfile(settings)
@@ -159,10 +155,6 @@ export default function App() {
     availableBuildEntries.find(entry => entry.id === activeBuildIdsByPath[pathId]) ??
     availableBuildEntries.find(entry => entry.id === defaultBuildIdForPath(pathId)) ??
     availableBuildEntries[0]
-  const effectiveBuildState = useMemo(
-    () => ({ ...buildState, activeBuildId: activeBuild?.id ?? "" }),
-    [activeBuild?.id, buildState],
-  )
   const buildTabMartialArtTags = useMemo(
     () => settings.weapons.map(weapon => martialArtDefinitions[weapon].tag),
     [settings.weapons],
@@ -303,14 +295,7 @@ export default function App() {
   )
   const activeRotationDisplayName = activeResult?.rotationName ?? "—"
   const activateBuildForPath = useCallback(
-    (id: string, targetPathId = pathId) => {
-      setActiveBuildIdsByPath(current => {
-        const next = withPathSelection(current, targetPathId, id)
-        if (next !== current) setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(next))
-        return next
-      })
-      setBuildState(current => (current.activeBuildId === id ? current : { ...current, activeBuildId: id }))
-    },
+    (id: string, targetPathId = pathId) => useGearStore.getState().selectBuildForPath(id, targetPathId),
     [pathId],
   )
   const transitionPath = (
@@ -350,11 +335,9 @@ export default function App() {
 
     const nextBuildIds = withPathSelection(activeBuildIdsByPath, nextPathId, selection.buildId)
     const nextRotationIds = withPathSelection(activeRotationIdsByPath, nextPathId, selection.rotationId)
-    if (nextBuildIds !== activeBuildIdsByPath)
-      setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(nextBuildIds))
-    setActiveBuildIdsByPath(nextBuildIds)
+    useGearStore.getState().setBuildsByPath(nextBuildIds)
+    useGearStore.getState().selectBuildForPath(selection.buildId, nextPathId)
     useRotationStore.getState().setRotationsByPath(nextRotationIds)
-    setBuildState(current => ({ ...current, activeBuildId: selection.buildId }))
     // The path and the settings move together: the settings for a path are derived from it, so
     // storing one without the other would leave a session whose weapons do not fit its path.
     useLoadoutStore.getState().setSettings(nextSettings)
@@ -398,14 +381,21 @@ export default function App() {
     () => setPersistentItem(characterProfileStorageKey, serializeCharacterProfiles(characterProfiles)),
     [characterProfiles],
   )
-  if (activeBuild && activeBuildIdsByPath[pathId] === activeBuild.id && activeBuild.id !== buildState.activeBuildId)
-    setBuildState(current => ({ ...current, activeBuildId: activeBuild.id }))
-  if (activeBuild && activeBuildIdsByPath[pathId] !== activeBuild.id)
-    setActiveBuildIdsByPath(withPathSelection(activeBuildIdsByPath, pathId, activeBuild.id))
+  // The build a path resolves to is filtered by what that path allows, so it can differ from what
+  // is stored for it: a saved build whose weapons no longer fit the path is not offered, and the
+  // default takes its place. Recording that is a write, so it belongs in an effect rather than in
+  // the render body — a store is shared, and writing to it mid-render would notify subscribers
+  // while React is still rendering.
   useEffect(() => {
-    setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(activeBuildIdsByPath))
-  }, [activeBuildIdsByPath])
-  useEffect(() => setPersistentItem(buildListStorageKey, serializeBuildState(buildState)), [buildState])
+    if (!activeBuild) return
+    const store = useGearStore.getState()
+    if (activeBuildIdsByPath[pathId] === activeBuild.id) {
+      if (store.buildState.activeBuildId !== activeBuild.id)
+        store.updateBuildState(current => ({ ...current, activeBuildId: activeBuild.id }))
+      return
+    }
+    store.selectBuildForPath(activeBuild.id, pathId)
+  }, [activeBuild, activeBuildIdsByPath, pathId])
   useEffect(
     () => setPersistentItem(attunementOverrideStorageKey, JSON.stringify(attunementOverrides)),
     [attunementOverrides],
@@ -561,8 +551,6 @@ export default function App() {
                 buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildIds={typedPathDefinitions[pathId].graduated}
                 devMode={devMode}
-                buildState={effectiveBuildState}
-                onBuildStateChange={setBuildState}
                 onActiveBuildChange={activateBuildForPath}
                 onSelectBuildWeapons={selectBuildWeapons}
                 measurement={buildMeasurementContext}

@@ -47,7 +47,6 @@ import {
   type BuildSetup,
   type GearAffixSummary,
   type BuildEntry,
-  type BuildState,
   type GearInventory,
   type GearItem,
   type GearLevel,
@@ -56,6 +55,7 @@ import {
 import { dataText, gameText, t } from "@/i18n"
 import { publishNotice, dismissNotice } from "@/notices"
 import { createOfficialGearBookmarklet } from "@/officialGearBookmarklet"
+import { useGearStore } from "@/stores/gearStore"
 import type { WeaponId } from "@/types"
 import { Button } from "@/ui/Button"
 import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
@@ -95,8 +95,6 @@ type BuildTabProps = {
   buildGroup: string
   graduatedBuildIds: string[]
   devMode: boolean
-  buildState: BuildState
-  onBuildStateChange: Dispatch<SetStateAction<BuildState>>
   onActiveBuildChange: (id: string) => void
   onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean
   /** The sheet and environment a build is measured against, and the rotation it runs. */
@@ -273,14 +271,17 @@ export default function BuildTab({
   buildGroup,
   graduatedBuildIds,
   devMode,
-  buildState,
-  onBuildStateChange,
   onActiveBuildChange,
   onSelectBuildWeapons,
   measurement,
   activeRotation,
   activeRotationName,
 }: BuildTabProps) {
+  // The build list and the shared gear inventory are one stored record, held by `gearStore`
+  // rather than handed in: this component is where they are created, renamed, duplicated,
+  // deleted and equipped, so it is also where they are stored.
+  const buildState = useGearStore(state => state.buildState)
+  const updateBuildState = useGearStore(state => state.updateBuildState)
   const [editingBuildId, setEditingBuildId] = useState(buildState.activeBuildId)
   const [editingName, setEditingName] = useState(false)
   const [officialImportText, setOfficialImportText] = useState("")
@@ -314,7 +315,7 @@ export default function BuildTab({
   if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
     const id = createBuildId()
-    onBuildStateChange(current => ({
+    updateBuildState(current => ({
       ...current,
       entries: [
         ...current.entries,
@@ -378,7 +379,7 @@ export default function BuildTab({
 
   function updateInventory(update: SetStateAction<GearInventory>) {
     if (editingEntry.isDefault) return
-    onBuildStateChange(current => {
+    updateBuildState(current => {
       const currentEntry = current.entries.find(entry => entry.id === editingEntry.id)
       if (!currentEntry || currentEntry.isDefault) return current
       const currentInventory = { items: current.gearItems, equipped: currentEntry.equipped ?? {} }
@@ -404,7 +405,7 @@ export default function BuildTab({
   }
 
   function renameBuild(name: string) {
-    onBuildStateChange(current => ({
+    updateBuildState(current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id && !entry.isDefault ? { ...entry, name } : entry,
@@ -419,14 +420,14 @@ export default function BuildTab({
   function duplicateBuild() {
     const id = createBuildId()
     const name = t("ui.buildTab.copyOfNamedBuild", { name: buildEntryDisplayName(editingEntry) })
-    onBuildStateChange(current => duplicateBuildState(current, editingEntry.id, { id, name }))
+    updateBuildState(current => duplicateBuildState(current, editingEntry.id, { id, name }))
     setEditingBuildId(id)
     setEditingName(false)
   }
 
   function updateSetup(nextSetup: BuildSetup) {
     if (editingEntry.isDefault) return
-    onBuildStateChange(current => ({
+    updateBuildState(current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id ? { ...entry, setup: normalizeBuildSetup(nextSetup) } : entry,
@@ -444,7 +445,7 @@ export default function BuildTab({
       return
     const remaining = listedEntries.filter(candidate => candidate.id !== id)
     const fallback = remaining.find(candidate => candidate.isDefault) ?? remaining[0]
-    onBuildStateChange(current => ({ ...current, entries: current.entries.filter(candidate => candidate.id !== id) }))
+    updateBuildState(current => ({ ...current, entries: current.entries.filter(candidate => candidate.id !== id) }))
     if (buildState.activeBuildId === id && fallback) onActiveBuildChange(fallback.id)
     if (editingBuildId === id) setEditingBuildId(fallback?.id ?? "")
   }
@@ -469,7 +470,7 @@ export default function BuildTab({
     dismissNotice("build-import")
     try {
       const result = mergeImportedBuildState(buildState, JSON.parse(await file.text()) as unknown)
-      onBuildStateChange(result.state)
+      updateBuildState(() => result.state)
       if (result.importedBuildIds[0]) {
         setEditingBuildId(result.importedBuildIds[0])
         setEditingName(false)
@@ -498,7 +499,7 @@ export default function BuildTab({
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)
         throw new Error(t("ui.buildTab.dashboardValidationError"))
       if (official.warnings.length) publishNotice({ id: "official-import", message: official.warnings.join("\n") })
-      onBuildStateChange(result.state)
+      updateBuildState(() => result.state)
       setEditingBuildId(result.importedBuildIds[0])
       setEditingName(false)
       officialImportDialogRef.current?.close()
