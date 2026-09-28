@@ -21,17 +21,23 @@
       {
         "patterns": [
           {
-            "group": ["**/App", "**/App.*", "**/main", "**/main.*"],
+            "group": ["**/App", "**/App.*", "**/main", "**/main.*", "@/App", "@/App.*", "@/main", "@/main.*"],
             "message": "Stores must not import the application entrypoint."
           },
           {
             "group": [
               "../features",
-              "../features/*",
+              "../features/**",
               "../application/results",
-              "../application/results/*",
+              "../application/results/**",
               "../ui",
-              "../ui/*"
+              "../ui/**",
+              "@/features",
+              "@/features/**",
+              "@/application/results",
+              "@/application/results/**",
+              "@/ui",
+              "@/ui/**"
             ],
             "message": "Stores must not import feature or presentation modules; a store holds state, not a view."
           }

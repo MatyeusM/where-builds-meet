@@ -21,25 +21,39 @@
       {
         "patterns": [
           {
-            "group": ["**/App", "**/App.*", "**/main", "**/main.*"],
+            "group": ["**/App", "**/App.*", "**/main", "**/main.*", "@/App", "@/App.*", "@/main", "@/main.*"],
             "message": "Features must not import the application entrypoint."
           },
           {
             "group": [
               "../analysis",
-              "../analysis/*",
+              "../analysis/**",
               "../build",
-              "../build/*",
+              "../build/**",
               "../character",
-              "../character/*",
+              "../character/**",
               "../rotations",
-              "../rotations/*",
+              "../rotations/**",
               "../settings",
-              "../settings/*",
+              "../settings/**",
               "../simulation",
-              "../simulation/*",
+              "../simulation/**",
               "../skills",
-              "../skills/*"
+              "../skills/**",
+              "@/analysis",
+              "@/analysis/**",
+              "@/build",
+              "@/build/**",
+              "@/character",
+              "@/character/**",
+              "@/rotations",
+              "@/rotations/**",
+              "@/settings",
+              "@/settings/**",
+              "@/simulation",
+              "@/simulation/**",
+              "@/skills",
+              "@/skills/**"
             ],
             "message": "Features must not import sibling features."
           }
