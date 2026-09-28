@@ -24,13 +24,21 @@
     align-items: center;
   }
 
+  /*
+   * The row owns its height rather than inheriting the select's. A select's intrinsic height is a
+   * user-agent value that differs between engines, and it was the only thing setting the line's
+   * cross size, so the three controls agreed in one browser and not the other. Every child states
+   * the row's height instead, which also makes the `align-self: stretch` this relied on
+   * unnecessary: it never applied to a child with a definite cross size.
+   */
   .character-profile-controls {
     display: flex;
     min-inline-size: 0;
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
+    gap: var(--space-xs);
+    block-size: 2.75rem;
   }
 
   .character-profile-controls select {
@@ -38,20 +46,38 @@
     min-inline-size: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 8px;
+    padding: var(--space-xs);
     background: var(--surface-alt);
     color: var(--text);
     font: inherit;
+    block-size: 100%;
   }
 
   .character-profile-controls button {
     flex: 0 0 auto;
-    align-self: stretch;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 10px;
+    padding: var(--space-xs);
     white-space: nowrap;
+
+    /*
+     * An icon-only button carries a definite block-size from the Button primitive, and a definite
+     * cross size makes `align-self: stretch` behave as `flex-start`, which left this one a few
+     * pixels shorter than the controls beside it. Stating the height here overrides it, and
+     * `components` is a later layer than the primitive's `ui`, so this wins without changing the
+     * primitive for every other caller.
+     */
+    block-size: 100%;
+  }
+
+  /*
+   * An icon-only button is square by design, and it takes that square from the primitive's own
+   * block-size, which is smaller than the row. Without a width here it would be the row's height
+   * by one axis and its own by the other, so it states the row's height on both.
+   */
+  .character-profile-controls .profile-reset-button {
+    inline-size: 2.75rem;
   }
 
   .stats-grid {

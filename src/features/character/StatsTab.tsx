@@ -461,6 +461,9 @@ export function StatsTab({
                   variant="secondary"
                   iconOnly
                   type="button"
+                  // A stable hook, because the primitive's icon-only class is a hashed module
+                  // name and this row has to state a width the row's own height does not give.
+                  className="profile-reset-button"
                   aria-label={t("ui.app.reset")}
                   title={t("ui.app.reset")}
                   onClick={() => selectProfile()}
