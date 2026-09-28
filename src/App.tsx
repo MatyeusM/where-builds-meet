@@ -391,7 +391,7 @@ export default function App() {
     const store = useGearStore.getState()
     if (activeBuildIdsByPath[pathId] === activeBuild.id) {
       if (store.buildState.activeBuildId !== activeBuild.id)
-        store.updateBuildState(current => ({ ...current, activeBuildId: activeBuild.id }))
+        store.updateBuildState(pathId, current => ({ ...current, activeBuildId: activeBuild.id }))
       return
     }
     store.selectBuildForPath(activeBuild.id, pathId)
@@ -545,6 +545,7 @@ export default function App() {
           <Suspense fallback={tabSuspenseFallback}>
             <div className="viewport-tab-content">
               <BuildTab
+                pathId={pathId}
                 weapons={settings.weapons}
                 martialArtTags={buildTabMartialArtTags}
                 pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}

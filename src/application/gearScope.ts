@@ -65,10 +65,15 @@ export function persistGearScope(scope: GearScope) {
 
 /** Forgets ids nothing refers to any more, so a deleted build or item does not linger. */
 export function gearScopeWithoutIds(scope: GearScope, removed: { buildIds?: string[]; itemIds?: string[] }): GearScope {
+  const gone = {
+    buildIds: (removed.buildIds ?? []).filter(id => placedSomewhere(scope, "builds", id)),
+    itemIds: (removed.itemIds ?? []).filter(id => placedSomewhere(scope, "inventory", id)),
+  }
+  if (!gone.buildIds.length && !gone.itemIds.length) return scope
   return {
     ...scope,
-    buildIdsByPath: withoutIds(scope.buildIdsByPath, removed.buildIds),
-    itemIdsByPath: withoutIds(scope.itemIdsByPath, removed.itemIds),
+    buildIdsByPath: withoutIds(scope.buildIdsByPath, gone.buildIds),
+    itemIdsByPath: withoutIds(scope.itemIdsByPath, gone.itemIds),
   }
 }
 
@@ -167,8 +172,61 @@ export function visibleGearItems(input: {
   return buildState.gearItems.filter(item => named.has(item.id))
 }
 
+/** The build ids a scope has to account for. Presets are excluded because they are never scoped. */
+export function scopedBuildIds(buildState: BuildState): string[] {
+  return buildState.entries.filter(entry => !entry.isDefault).map(entry => entry.id)
+}
+
+export function scopedItemIds(buildState: BuildState): string[] {
+  return buildState.gearItems.map(item => item.id)
+}
+
+/**
+ * Brings the scope back in line with a change to the build list or the inventory.
+ *
+ * A build or item that has just appeared is placed on the path the change was made on, so a new
+ * one starts on the path the user is looking at instead of nowhere, and only when its setting is
+ * private: while the setting is shared there is nothing to place. A build or item that has just
+ * gone is forgotten, so a later record reusing the id does not inherit a scope it never chose.
+ *
+ * This lives beside the scope rather than in the caller because the two halves have to be
+ * applied together, and a caller that placed new ids without forgetting removed ones would leave
+ * a record whose scope describes records that no longer exist.
+ */
+export function gearScopeReconciled(
+  scope: GearScope,
+  before: BuildState,
+  after: BuildState,
+  pathId: PathId,
+): GearScope {
+  const beforeBuilds = scopedBuildIds(before)
+  const afterBuilds = scopedBuildIds(after)
+  const beforeItems = scopedItemIds(before)
+  const afterItems = scopedItemIds(after)
+  // A change that only moves the active selection appears here as nothing new and nothing gone,
+  // and must return the same scope value so the store does not store it again.
+  const freshBuilds = scope.sharedBuilds ? [] : afterBuilds.filter(id => !beforeBuilds.includes(id))
+  const freshItems = scope.sharedInventory ? [] : afterItems.filter(id => !beforeItems.includes(id))
+  const pruned = gearScopeWithoutIds(scope, {
+    buildIds: beforeBuilds.filter(id => !afterBuilds.includes(id)),
+    itemIds: beforeItems.filter(id => !afterItems.includes(id)),
+  })
+  if (freshBuilds.length > 0) {
+    return gearScopeWithIds(pruned, "builds", freshBuilds, { target: "path", pathId })
+  }
+  if (freshItems.length > 0) {
+    return gearScopeWithIds(pruned, "inventory", freshItems, { target: "path", pathId })
+  }
+  return pruned
+}
+
 function allPathIds(): PathId[] {
   return Object.keys(typedPathDefinitions) as PathId[]
+}
+
+function placedSomewhere(scope: GearScope, target: ScopeTarget, id: string) {
+  const key = target === "inventory" ? "itemIdsByPath" : "buildIdsByPath"
+  return allPathIds().some(pathId => scope[key][pathId]?.includes(id))
 }
 
 function pathIdListMap(value: Record<string, string[]> | undefined) {

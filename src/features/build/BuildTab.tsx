@@ -14,6 +14,7 @@ import {
   type SetStateAction,
 } from "react"
 
+import type { PathId } from "@/application/contracts"
 import { formatThroughput, formatThroughputDelta, throughputDeltaClass } from "@/application/formatting"
 import type { MeasurementContext } from "@/calculations/rotationCalculationBundle"
 import type { RotationRecord } from "@/calculations/rotationTimeline"
@@ -89,6 +90,7 @@ function createBuildId() {
 }
 
 type BuildTabProps = {
+  pathId: PathId
   weapons: [WeaponId, WeaponId]
   martialArtTags: string[]
   pathTag?: string
@@ -265,6 +267,7 @@ function RelayedIndicator({ item }: { item?: GearItem }) {
 }
 
 export default function BuildTab({
+  pathId,
   weapons,
   martialArtTags,
   pathTag,
@@ -315,7 +318,7 @@ export default function BuildTab({
   if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
     const id = createBuildId()
-    updateBuildState(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: [
         ...current.entries,
@@ -379,7 +382,7 @@ export default function BuildTab({
 
   function updateInventory(update: SetStateAction<GearInventory>) {
     if (editingEntry.isDefault) return
-    updateBuildState(current => {
+    updateBuildState(pathId, current => {
       const currentEntry = current.entries.find(entry => entry.id === editingEntry.id)
       if (!currentEntry || currentEntry.isDefault) return current
       const currentInventory = { items: current.gearItems, equipped: currentEntry.equipped ?? {} }
@@ -405,7 +408,7 @@ export default function BuildTab({
   }
 
   function renameBuild(name: string) {
-    updateBuildState(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id && !entry.isDefault ? { ...entry, name } : entry,
@@ -420,14 +423,14 @@ export default function BuildTab({
   function duplicateBuild() {
     const id = createBuildId()
     const name = t("ui.buildTab.copyOfNamedBuild", { name: buildEntryDisplayName(editingEntry) })
-    updateBuildState(current => duplicateBuildState(current, editingEntry.id, { id, name }))
+    updateBuildState(pathId, current => duplicateBuildState(current, editingEntry.id, { id, name }))
     setEditingBuildId(id)
     setEditingName(false)
   }
 
   function updateSetup(nextSetup: BuildSetup) {
     if (editingEntry.isDefault) return
-    updateBuildState(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id ? { ...entry, setup: normalizeBuildSetup(nextSetup) } : entry,
@@ -445,7 +448,10 @@ export default function BuildTab({
       return
     const remaining = listedEntries.filter(candidate => candidate.id !== id)
     const fallback = remaining.find(candidate => candidate.isDefault) ?? remaining[0]
-    updateBuildState(current => ({ ...current, entries: current.entries.filter(candidate => candidate.id !== id) }))
+    updateBuildState(pathId, current => ({
+      ...current,
+      entries: current.entries.filter(candidate => candidate.id !== id),
+    }))
     if (buildState.activeBuildId === id && fallback) onActiveBuildChange(fallback.id)
     if (editingBuildId === id) setEditingBuildId(fallback?.id ?? "")
   }
@@ -470,7 +476,7 @@ export default function BuildTab({
     dismissNotice("build-import")
     try {
       const result = mergeImportedBuildState(buildState, JSON.parse(await file.text()) as unknown)
-      updateBuildState(() => result.state)
+      updateBuildState(pathId, () => result.state)
       if (result.importedBuildIds[0]) {
         setEditingBuildId(result.importedBuildIds[0])
         setEditingName(false)
@@ -499,7 +505,7 @@ export default function BuildTab({
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)
         throw new Error(t("ui.buildTab.dashboardValidationError"))
       if (official.warnings.length) publishNotice({ id: "official-import", message: official.warnings.join("\n") })
-      updateBuildState(() => result.state)
+      updateBuildState(pathId, () => result.state)
       setEditingBuildId(result.importedBuildIds[0])
       setEditingName(false)
       officialImportDialogRef.current?.close()
