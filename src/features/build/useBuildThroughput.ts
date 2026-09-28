@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 
-import { buildMeasurement, type MeasurementContext } from "../../calculations/rotationCalculationBundle"
-import type { RotationRecord } from "../../calculations/rotationTimeline"
-import type { ThroughputReading } from "../../calculations/rotationWorkerTransport"
-import type { BuildEntry, GearItem } from "../../gear"
-import { useDpsStore } from "../../stores/dpsStore"
+import { buildMeasurement, type MeasurementContext } from "@/calculations/rotationCalculationBundle"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
+import type { ThroughputReading } from "@/calculations/rotationWorkerTransport"
+import type { BuildEntry, GearItem } from "@/gear"
+import { useDpsStore } from "@/stores/dpsStore"
 
 /**
  * A build's throughput, measured when it is looked at rather than when it is activated.

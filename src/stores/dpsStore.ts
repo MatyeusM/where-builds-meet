@@ -1,8 +1,8 @@
 import { create } from "zustand"
 
-import type { EditorTimelineResult } from "../calculations/editorTimeline"
-import type { RotationSimulationBaseline, RotationSimulationBundle } from "../calculations/rotationCalculator"
-import type { RotationMetrics } from "../calculations/rotationMetrics"
+import type { EditorTimelineResult } from "@/calculations/editorTimeline"
+import type { RotationSimulationBaseline, RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { RotationMetrics } from "@/calculations/rotationMetrics"
 import {
   cancelCalculation,
   dispatchCalculation,
@@ -10,7 +10,8 @@ import {
   supersedeCalculations,
   type ThroughputReading,
   type TransportResult,
-} from "../calculations/rotationWorkerTransport"
+} from "@/calculations/rotationWorkerTransport"
+
 import { recordFetch, reportDpsCache } from "./dpsStoreDiagnostics"
 
 function currentTime() {

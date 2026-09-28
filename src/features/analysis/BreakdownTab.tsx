@@ -1,8 +1,8 @@
 import { Fragment, useState } from "react"
 
-import type { PathId } from "../../application/contracts"
-import { formatThroughput, formatNumber, skillDisplayName } from "../../application/formatting"
-import { allSkillDefinitions, effectDefinitions } from "../../application/gameData/skills"
+import type { PathId } from "@/application/contracts"
+import { formatThroughput, formatNumber, skillDisplayName } from "@/application/formatting"
+import { allSkillDefinitions, effectDefinitions } from "@/application/gameData/skills"
 import {
   type RotationEffectCoverage,
   type RotationGroupBreakdown,
@@ -10,10 +10,10 @@ import {
   type RotationHealingSkillBreakdown,
   type RotationMetrics,
   type RotationSkillBreakdown,
-} from "../../calculations/rotationMetrics"
-import type { SkillBreakdownGroup } from "../../calculations/skillBreakdownCategories"
-import { gameText, t } from "../../i18n"
-import { Panel, PanelHeading } from "../../ui/Panel"
+} from "@/calculations/rotationMetrics"
+import type { SkillBreakdownGroup } from "@/calculations/skillBreakdownCategories"
+import { gameText, t } from "@/i18n"
+import { Panel, PanelHeading } from "@/ui/Panel"
 
 function BreakdownGroupTable({
   title,

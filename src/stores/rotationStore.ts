@@ -1,28 +1,24 @@
 import { create } from "zustand"
 
-import type { PathId } from "../application/contracts"
+import type { PathId } from "@/application/contracts"
 import {
   activeRotationByPathStorageKey,
   activeRotationStorageKey,
   rotationListStorageKey,
-} from "../application/persistence/keys"
-import {
-  loadPathSelectionIds,
-  withPathSelection,
-  type PathSelectionIds,
-} from "../application/persistence/pathSelection"
-import { loadRotationEntries } from "../application/persistence/rotations"
-import type { RotationSimulationBundle } from "../calculations/rotationCalculator"
+} from "@/application/persistence/keys"
+import { loadPathSelectionIds, withPathSelection, type PathSelectionIds } from "@/application/persistence/pathSelection"
+import { loadRotationEntries } from "@/application/persistence/rotations"
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
 import {
   rotationCalculationCategories,
   type RotationCalculationCategory,
   type RotationCalculationCategoryStatus,
   type RotationCalculationStatus,
   type RotationMetrics,
-} from "../calculations/rotationMetrics"
-import type { RotationRecord } from "../calculations/rotationTimeline"
-import { setPersistentItem } from "../persistentStorage"
-import { serializeRotationEntries, type RotationEntry } from "../rotationTransfer"
+} from "@/calculations/rotationMetrics"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
+import { setPersistentItem } from "@/persistentStorage"
+import { serializeRotationEntries, type RotationEntry } from "@/rotationTransfer"
 
 /**
  * The rotation the rest of the application is showing, and the work currently under way for it.

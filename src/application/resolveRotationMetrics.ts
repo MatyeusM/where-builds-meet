@@ -1,7 +1,8 @@
-import { rotationBundleFingerprint } from "../calculations/calculationFingerprint"
-import type { RotationSimulationBaseline, RotationSimulationBundle } from "../calculations/rotationCalculator"
-import type { RotationCalculationCategory, RotationMetrics } from "../calculations/rotationMetrics"
-import { useDpsStore } from "../stores/dpsStore"
+import { rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
+import type { RotationSimulationBaseline, RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { RotationCalculationCategory, RotationMetrics } from "@/calculations/rotationMetrics"
+import { useDpsStore } from "@/stores/dpsStore"
+
 import {
   baselineMetricsWithPreviousComparisons,
   combineComparisonVariantMetrics,

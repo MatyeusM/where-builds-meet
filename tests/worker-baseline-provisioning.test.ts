@@ -77,8 +77,8 @@ async function loadStore() {
     }
   }
   vi.stubGlobal("Worker", Tracking)
-  const transport = await import("../src/calculations/rotationWorkerTransport.ts")
-  const { useDpsStore } = await import("../src/stores/dpsStore.ts")
+  const transport = await import("@/calculations/rotationWorkerTransport.ts")
+  const { useDpsStore } = await import("@/stores/dpsStore.ts")
   return { useDpsStore, workers, transport }
 }
 

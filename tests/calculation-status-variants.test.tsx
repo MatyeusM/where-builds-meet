@@ -3,10 +3,11 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import { CalculationStatus as CategoryStatus } from "@/application/results/CalculationStatus"
+import { initializeI18n } from "@/i18n"
+import { useRotationStore } from "@/stores/rotationStore"
+
 import english from "../public/locales/en.json"
-import { CalculationStatus as CategoryStatus } from "../src/application/results/CalculationStatus"
-import { initializeI18n } from "../src/i18n"
-import { useRotationStore } from "../src/stores/rotationStore"
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 

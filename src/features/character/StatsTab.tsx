@@ -5,17 +5,17 @@ import {
   attunementAvailableForSettings,
   availableSetEntriesForSettings,
   innerWayAvailableForPath,
-} from "../../application/characterComposition"
-import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
+} from "@/application/characterComposition"
+import type { CharacterState, PathId, SetupSelections } from "@/application/contracts"
 import {
   deltaPrefix,
   formatNumber,
   formatThroughput,
   formatThroughputDelta,
   throughputDeltaClass,
-} from "../../application/formatting"
-import { artStatByWeaponFamily, martialArtDefinitions } from "../../application/gameData/martialArts"
-import { typedPathDefinitions } from "../../application/gameData/paths"
+} from "@/application/formatting"
+import { artStatByWeaponFamily, martialArtDefinitions } from "@/application/gameData/martialArts"
+import { typedPathDefinitions } from "@/application/gameData/paths"
 import {
   breakthroughProfile,
   scriptDisplayOrder,
@@ -29,36 +29,32 @@ import {
   typedScriptDefinitions,
   typedWeaponSetDefinitions,
   type GearSetDefinition,
-} from "../../application/gameData/setup"
-import { percentageAttunementKeys } from "../../application/persistence/attunements"
-import { statDefinition } from "../../application/persistence/stats"
-import { CalculationStatus } from "../../application/results/CalculationStatus"
-import { emptyPriorityRows, PriorityPanel } from "../../application/results/PriorityPanel"
-import { type AttunementOverrides } from "../../calculations/attunementStats"
-import { type AttunementStats } from "../../calculations/damage"
-import { type RotationMetrics } from "../../calculations/rotationMetrics"
-import { type CharacterStatOverrides } from "../../calculations/statEffects"
+} from "@/application/gameData/setup"
+import { percentageAttunementKeys } from "@/application/persistence/attunements"
+import { statDefinition } from "@/application/persistence/stats"
+import { CalculationStatus } from "@/application/results/CalculationStatus"
+import { emptyPriorityRows, PriorityPanel } from "@/application/results/PriorityPanel"
+import { type AttunementOverrides } from "@/calculations/attunementStats"
+import { type AttunementStats } from "@/calculations/damage"
+import { type RotationMetrics } from "@/calculations/rotationMetrics"
+import { type CharacterStatOverrides } from "@/calculations/statEffects"
 import {
   characterProfileMatches,
   exportCharacterProfiles,
   mergeImportedCharacterProfiles,
   type CharacterProfile,
-} from "../../characterProfiles"
-import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
-import { attunementData, selectSetTier, type BuildSetup, type BuildSetupOverrides } from "../../gear"
-import {
-  globalDebuffRows,
-  globalDebuffStorageKey,
-  loadGlobalDebuffs,
-  type GlobalDebuffState,
-} from "../../globalDebuffs"
-import { dataText, gameText, t } from "../../i18n"
-import { publishNotice, dismissNotice } from "../../notices"
-import { setPersistentItem } from "../../persistentStorage"
-import { type CharacterStats } from "../../types"
-import { Button } from "../../ui/Button"
-import { ButtonGroup, ButtonGroupOption } from "../../ui/ButtonGroup"
-import { Panel, PanelHeading } from "../../ui/Panel"
+} from "@/characterProfiles"
+import { innerWayEntriesForTag } from "@/data/innerWayDefinitions"
+import { attunementData, selectSetTier, type BuildSetup, type BuildSetupOverrides } from "@/gear"
+import { globalDebuffRows, globalDebuffStorageKey, loadGlobalDebuffs, type GlobalDebuffState } from "@/globalDebuffs"
+import { dataText, gameText, t } from "@/i18n"
+import { publishNotice, dismissNotice } from "@/notices"
+import { setPersistentItem } from "@/persistentStorage"
+import { type CharacterStats } from "@/types"
+import { Button } from "@/ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
+import { Panel, PanelHeading } from "@/ui/Panel"
+
 import { CalculatedStatField } from "./CalculatedStatField"
 import { StatPair } from "./StatPair"
 

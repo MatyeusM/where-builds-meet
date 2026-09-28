@@ -1,14 +1,15 @@
-import { resolveAttunementStats, type AttunementOverrides } from "../calculations/attunementStats"
-import type { AttunementStats } from "../calculations/damage"
-import type { CharacterStatOverrides, StatEffectContainer } from "../calculations/statEffects"
+import { resolveAttunementStats, type AttunementOverrides } from "@/calculations/attunementStats"
+import type { AttunementStats } from "@/calculations/damage"
+import type { CharacterStatOverrides, StatEffectContainer } from "@/calculations/statEffects"
 import {
   calculateEquippedGearEffects,
   resolveBuildInventory,
   resolveBuildSetup,
   type BuildSetup,
   type BuildSetupOverrides,
-} from "../gear"
-import type { CharacterStats } from "../types"
+} from "@/gear"
+import type { CharacterStats } from "@/types"
+
 import { calculateGlobalStatState } from "./characterComposition"
 import type { CalculatorSettings, PathId, SetupSelections } from "./contracts"
 import { defaultAttunementStats } from "./persistence/attunements"

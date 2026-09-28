@@ -3,14 +3,15 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import App from "@/App"
+import { rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
+import { calculateEditorTimeline } from "@/calculations/editorTimeline"
+import { calculateRotationBaseline } from "@/calculations/rotationCalculator"
+import { emptyRotationBreakdown, type RotationMetrics } from "@/calculations/rotationMetrics"
+import { initializeI18n } from "@/i18n"
+import { useRotationStore } from "@/stores/rotationStore"
+
 import english from "../public/locales/en.json"
-import App from "../src/App"
-import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
-import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
-import { emptyRotationBreakdown, type RotationMetrics } from "../src/calculations/rotationMetrics"
-import { initializeI18n } from "../src/i18n"
-import { useRotationStore } from "../src/stores/rotationStore"
 import { dpsDispatches, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
 /**
@@ -21,7 +22,7 @@ import { dpsDispatches, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock
 
 const rotationId = "comparison-probe"
 
-vi.mock("../src/stores/dpsStore", async () => {
+vi.mock("@/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
   return mockDpsStore()
 })

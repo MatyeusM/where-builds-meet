@@ -1,6 +1,7 @@
-import type { SkillRecord } from "../calculations/rotationTimeline"
-import { dataText, getLocale } from "../i18n"
-import type { EditorCategory } from "../skillOverrides"
+import type { SkillRecord } from "@/calculations/rotationTimeline"
+import { dataText, getLocale } from "@/i18n"
+import type { EditorCategory } from "@/skillOverrides"
+
 import { allSkillDefinitions, skillDataNamespaceById } from "./gameData/skills"
 
 export function skillCategoryLabel(category: EditorCategory) {

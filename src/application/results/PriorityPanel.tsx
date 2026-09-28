@@ -1,12 +1,13 @@
 import { IconArrowUp } from "@tabler/icons-react"
 import { useMemo, useState } from "react"
 
-import { deltaPrefix, formatNumber, formatThroughputDelta, throughputDeltaClass } from "../../application/formatting"
-import type { RotationCalculationCategory, RotationPriority } from "../../calculations/rotationMetrics"
-import { gameText, t } from "../../i18n"
-import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "../../statPriorityDisplay"
-import { Button } from "../../ui/Button"
-import { Panel, PanelHeading } from "../../ui/Panel"
+import { deltaPrefix, formatNumber, formatThroughputDelta, throughputDeltaClass } from "@/application/formatting"
+import type { RotationCalculationCategory, RotationPriority } from "@/calculations/rotationMetrics"
+import { gameText, t } from "@/i18n"
+import { nextStatPriorityMode, statPriorityDisplayRows, type StatPriorityMode } from "@/statPriorityDisplay"
+import { Button } from "@/ui/Button"
+import { Panel, PanelHeading } from "@/ui/Panel"
+
 import { CalculationStatus } from "./CalculationStatus"
 
 export const emptyPriorityRows: RotationPriority[] = []

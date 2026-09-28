@@ -1,6 +1,7 @@
-import type { RotationCalculationCategory } from "../../calculations/rotationMetrics"
-import { useRotationStore } from "../../stores/rotationStore"
-import { CalculationStatus as CalculationStatusView } from "../../ui/CalculationStatus"
+import type { RotationCalculationCategory } from "@/calculations/rotationMetrics"
+import { useRotationStore } from "@/stores/rotationStore"
+import { CalculationStatus as CalculationStatusView } from "@/ui/CalculationStatus"
+
 import { calculationStatusLabel } from "./calculationStatusLabel"
 
 /**

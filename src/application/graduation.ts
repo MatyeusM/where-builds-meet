@@ -1,17 +1,18 @@
-import { calculationFingerprint } from "../calculations/calculationFingerprint"
-import { resolvePing } from "../calculations/combatDefaults"
-import type { RotationSimulationBundle } from "../calculations/rotationCalculator"
-import type { RotationRecord } from "../calculations/rotationTimeline"
+import { calculationFingerprint } from "@/calculations/calculationFingerprint"
+import { resolvePing } from "@/calculations/combatDefaults"
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
 import {
   calculateStatsWithOverrides,
   requirementIsUnconditional,
   type StatEffectContainer,
-} from "../calculations/statEffects"
-import { emptyStats } from "../data/statDefinitions"
-import { buildPresetInventory, calculateEquippedGearEffects, defaultBuildPresets, normalizeBuildSetup } from "../gear"
-import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "../globalDebuffs"
-import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../skillOverrides"
-import type { WeaponId } from "../types"
+} from "@/calculations/statEffects"
+import { emptyStats } from "@/data/statDefinitions"
+import { buildPresetInventory, calculateEquippedGearEffects, defaultBuildPresets, normalizeBuildSetup } from "@/gear"
+import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "@/globalDebuffs"
+import { resolveSkillCalculationDefinitions, type SkillOverrides } from "@/skillOverrides"
+import type { WeaponId } from "@/types"
+
 import {
   innerWayConditionsFor,
   innerWayEffectRulesFor,

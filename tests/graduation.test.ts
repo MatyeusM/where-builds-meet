@@ -1,12 +1,13 @@
 import { assert, describe, it } from "vitest"
 
-import { typedPathDefinitions } from "../src/application/gameData/paths"
+import { typedPathDefinitions } from "@/application/gameData/paths"
 import {
   buildGraduationBundleSet,
   selectHighestGraduationResult,
   type GraduationPresetEnvironment,
-} from "../src/application/graduation"
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
+} from "@/application/graduation"
+import { calculateRotationBaseline } from "@/calculations/rotationCalculator"
+
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 
 describe("graduation", () => {

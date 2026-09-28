@@ -35,7 +35,7 @@ async function loadStore() {
     }
   }
   vi.stubGlobal("Worker", FakeWorker)
-  const { useDpsStore } = await import("../src/stores/dpsStore.ts")
+  const { useDpsStore } = await import("@/stores/dpsStore.ts")
   return { useDpsStore, dispatched }
 }
 

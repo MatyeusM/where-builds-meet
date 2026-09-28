@@ -25,9 +25,9 @@ import {
   innerWayConditionsFor,
   innerWayEffectRulesFor,
   selectableRotationSkillGroups,
-} from "../../application/characterComposition"
-import { baselineMetricsWithPreviousComparisons } from "../../application/comparison"
-import type { CharacterState, PathId } from "../../application/contracts"
+} from "@/application/characterComposition"
+import { baselineMetricsWithPreviousComparisons } from "@/application/comparison"
+import type { CharacterState, PathId } from "@/application/contracts"
 import {
   formatThroughput,
   formatThroughputDelta,
@@ -36,11 +36,11 @@ import {
   skillCategoryLabel,
   skillDisplayName,
   throughputDeltaClass,
-} from "../../application/formatting"
-import { martialArtDefinitions } from "../../application/gameData/martialArts"
-import { typedPathDefinitions } from "../../application/gameData/paths"
-import { rotationEventDisplayName } from "../../application/gameData/rotationEffects"
-import { breakthroughProfile, typedSystemStats } from "../../application/gameData/setup"
+} from "@/application/formatting"
+import { martialArtDefinitions } from "@/application/gameData/martialArts"
+import { typedPathDefinitions } from "@/application/gameData/paths"
+import { rotationEventDisplayName } from "@/application/gameData/rotationEffects"
+import { breakthroughProfile, typedSystemStats } from "@/application/gameData/setup"
 import {
   defaultSkillMaps,
   dotDefinitions,
@@ -52,17 +52,17 @@ import {
   rotationEventOptionIds,
   withExpectedOutcomeBuffPlates,
   withExpectedDebuffPlates,
-} from "../../application/gameData/skills"
+} from "@/application/gameData/skills"
 import {
   buildGraduationBundleSet,
   selectHighestGraduationResult,
   type GraduationPresetEnvironment,
-} from "../../application/graduation"
-import { initialRotationEditorState } from "../../application/persistence/rotations"
-import { resolveComparisonMetrics } from "../../application/resolveRotationMetrics"
-import { calculationStatusLabel } from "../../application/results/calculationStatusLabel"
-import { RotationActionBreakdownValue } from "../../application/results/DamageBreakdownValue"
-import { RotationSkillName } from "../../application/results/RotationSkillName"
+} from "@/application/graduation"
+import { initialRotationEditorState } from "@/application/persistence/rotations"
+import { resolveComparisonMetrics } from "@/application/resolveRotationMetrics"
+import { calculationStatusLabel } from "@/application/results/calculationStatusLabel"
+import { RotationActionBreakdownValue } from "@/application/results/DamageBreakdownValue"
+import { RotationSkillName } from "@/application/results/RotationSkillName"
 import {
   baseSkillCastTime,
   createRotationId,
@@ -71,8 +71,8 @@ import {
   normalizeStartAction,
   rotationAvailableForWeapons,
   rotationRecordForEntry,
-} from "../../application/rotationCatalog"
-import { calculationFingerprint, rotationBundleFingerprint } from "../../calculations/calculationFingerprint"
+} from "@/application/rotationCatalog"
+import { calculationFingerprint, rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
 import {
   bossDefinitionFor,
   bossDefinitions,
@@ -80,16 +80,16 @@ import {
   resolvePing,
   resolveTargetType,
   type TargetType,
-} from "../../calculations/combatDefaults"
-import type { EditorTimelineResult } from "../../calculations/editorTimeline"
-import { type CalculationSubject } from "../../calculations/rotationCalculationBundle"
+} from "@/calculations/combatDefaults"
+import type { EditorTimelineResult } from "@/calculations/editorTimeline"
+import { type CalculationSubject } from "@/calculations/rotationCalculationBundle"
 import {
   type RotationActionBreakdown,
   type RotationSimulationBundle,
   type RotationSimulationResult,
-} from "../../calculations/rotationCalculator"
-import { buildRotationComparisonBundle } from "../../calculations/rotationComparisonBundle"
-import { emptyRotationBreakdown, type RotationMetrics, type RotationPriority } from "../../calculations/rotationMetrics"
+} from "@/calculations/rotationCalculator"
+import { buildRotationComparisonBundle } from "@/calculations/rotationComparisonBundle"
+import { emptyRotationBreakdown, type RotationMetrics, type RotationPriority } from "@/calculations/rotationMetrics"
 import {
   editableCastTimeMaximum,
   editableCastTimeRequired,
@@ -98,12 +98,12 @@ import {
   type RotationRecord,
   type RotationStep,
   type TimelineRow,
-} from "../../calculations/rotationTimeline"
-import { sameEditorRevision, type EditorRevision } from "../../editorTimelinePreview"
-import { loadGlobalDebuffs } from "../../globalDebuffs"
-import { gameText, t } from "../../i18n"
-import { publishNotice, dismissNotice } from "../../notices"
-import { displayEntryKey, visibleTimelineEffects } from "../../rotationDisplay"
+} from "@/calculations/rotationTimeline"
+import { sameEditorRevision, type EditorRevision } from "@/editorTimelinePreview"
+import { loadGlobalDebuffs } from "@/globalDebuffs"
+import { gameText, t } from "@/i18n"
+import { publishNotice, dismissNotice } from "@/notices"
+import { displayEntryKey, visibleTimelineEffects } from "@/rotationDisplay"
 import {
   attachedEventPhase,
   attachedEventSiblingIndex,
@@ -119,22 +119,23 @@ import {
   resolveAttachmentTargetIndex,
   supportsEventStartTime,
   type RotationAttachmentTarget,
-} from "../../rotationEditing"
-import { exportRotationEntries, mergeImportedRotationEntries, type RotationEntry } from "../../rotationTransfer"
-import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../../skillOverrides"
-import { useDpsStore } from "../../stores/dpsStore"
-import { useRotationStore } from "../../stores/rotationStore"
-import { type WeaponId } from "../../types"
-import { Button } from "../../ui/Button"
-import { CalculationStatus } from "../../ui/CalculationStatus"
+} from "@/rotationEditing"
+import { exportRotationEntries, mergeImportedRotationEntries, type RotationEntry } from "@/rotationTransfer"
+import { resolveSkillCalculationDefinitions, type SkillOverrides } from "@/skillOverrides"
+import { useDpsStore } from "@/stores/dpsStore"
+import { useRotationStore } from "@/stores/rotationStore"
+import { type WeaponId } from "@/types"
+import { Button } from "@/ui/Button"
+import { CalculationStatus } from "@/ui/CalculationStatus"
 
 function rotationEntryDisplayName(entry: RotationEntry) {
   const name = entry.rotation.name || "Unnamed Rotation"
   return entry.isDefault ? gameText(name) : name
 }
-import { Chip } from "../../ui/Chip"
-import { Panel } from "../../ui/Panel"
-import { Tooltip } from "../../ui/Tooltip"
+import { Chip } from "@/ui/Chip"
+import { Panel } from "@/ui/Panel"
+import { Tooltip } from "@/ui/Tooltip"
+
 import { RotationEnemyCountField } from "./RotationEnemyCountField"
 import { RotationPingField } from "./RotationPingField"
 import { useRotationTimelineDisplay } from "./useRotationTimelineDisplay"

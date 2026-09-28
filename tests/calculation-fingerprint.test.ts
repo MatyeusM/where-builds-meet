@@ -4,7 +4,7 @@ import { assert, describe, it } from "vitest"
 describe("calculation-fingerprint", () => {
   it("Fingerprint probe passed", async () => {
     const { calculationFingerprint, rotationBundleFingerprint } =
-      await import("../src/calculations/calculationFingerprint.ts")
+      await import("@/calculations/calculationFingerprint.ts")
     const setupA = calculationFingerprint({ stats: { minPhys: 1 }, selector: "A", rotation: ["SkillA"] })
     const setupB = calculationFingerprint({ stats: { minPhys: 2 }, selector: "B", rotation: ["SkillA"] })
     const setupC = calculationFingerprint({ stats: { minPhys: 3 }, selector: "C", rotation: ["SkillA"] })

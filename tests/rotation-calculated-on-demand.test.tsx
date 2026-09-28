@@ -3,12 +3,13 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import App from "@/App"
+import { rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
+import { calculateEditorTimeline } from "@/calculations/editorTimeline"
+import { calculateRotationBaseline } from "@/calculations/rotationCalculator"
+import { initializeI18n } from "@/i18n"
+
 import english from "../public/locales/en.json"
-import App from "../src/App"
-import { rotationBundleFingerprint } from "../src/calculations/calculationFingerprint"
-import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
-import { initializeI18n } from "../src/i18n"
 import { dpsHeldKeys, dpsRequests, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 import { openRotationEditorTab } from "./helpers/rotationEditorTab"
 
@@ -25,7 +26,7 @@ const rotations = [
   "dummy-smolder-poet-1-min",
 ]
 
-vi.mock("../src/stores/dpsStore", async () => {
+vi.mock("@/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
   return mockDpsStore()
 })

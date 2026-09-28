@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const activeLocale = { current: "en" }
 
-vi.mock("../src/i18n", async importOriginal => {
-  const actual = await importOriginal<typeof import("../src/i18n")>()
+vi.mock("@/i18n", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/i18n")>()
   return { ...actual, getLocale: () => activeLocale.current }
 })
 
 const { deltaPrefix, formatNumber, formatThroughput, formatThroughputDelta, throughputDeltaClass } =
-  await import("../src/application/formatting")
+  await import("@/application/formatting")
 
 const differences = [
   -12345.678, -1000, -8.575, -1.005, -0.5, -0.005, -0.004, -0.001, 0, 0.001, 0.004, 0.005, 0.5, 1.005, 8.575, 1000,

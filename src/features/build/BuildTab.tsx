@@ -1,3 +1,5 @@
+import arsenalDefinitions from "@gamedata/arsenal.json"
+import bowRingSetDefinitions from "@gamedata/bow-ring-set.json"
 import { IconArrowUp, IconCopy, IconEdit, IconPlus, IconPointFilled, IconX } from "@tabler/icons-react"
 import { nanoid } from "nanoid"
 import {
@@ -12,12 +14,10 @@ import {
   type SetStateAction,
 } from "react"
 
-import arsenalDefinitions from "../../../data/arsenal.json"
-import bowRingSetDefinitions from "../../../data/bow-ring-set.json"
-import { formatThroughput, formatThroughputDelta, throughputDeltaClass } from "../../application/formatting"
-import type { MeasurementContext } from "../../calculations/rotationCalculationBundle"
-import type { RotationRecord } from "../../calculations/rotationTimeline"
-import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
+import { formatThroughput, formatThroughputDelta, throughputDeltaClass } from "@/application/formatting"
+import type { MeasurementContext } from "@/calculations/rotationCalculationBundle"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
+import { innerWayEntriesForTag } from "@/data/innerWayDefinitions"
 import {
   defaultBuildSetup,
   duplicateBuildState,
@@ -52,16 +52,17 @@ import {
   type GearItem,
   type GearLevel,
   type GearSlot,
-} from "../../gear"
-import { dataText, gameText, t } from "../../i18n"
-import { publishNotice, dismissNotice } from "../../notices"
-import { createOfficialGearBookmarklet } from "../../officialGearBookmarklet"
-import type { WeaponId } from "../../types"
-import { Button } from "../../ui/Button"
-import { ButtonGroup, ButtonGroupOption } from "../../ui/ButtonGroup"
-import { Dialog } from "../../ui/Dialog"
-import { Panel, PanelHeading } from "../../ui/Panel"
-import { Tooltip } from "../../ui/Tooltip"
+} from "@/gear"
+import { dataText, gameText, t } from "@/i18n"
+import { publishNotice, dismissNotice } from "@/notices"
+import { createOfficialGearBookmarklet } from "@/officialGearBookmarklet"
+import type { WeaponId } from "@/types"
+import { Button } from "@/ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
+import { Dialog } from "@/ui/Dialog"
+import { Panel, PanelHeading } from "@/ui/Panel"
+import { Tooltip } from "@/ui/Tooltip"
+
 import {
   GearEditor,
   capAndFilterGearDraft,
@@ -491,7 +492,7 @@ export default function BuildTab({
   async function importFromOfficial() {
     dismissNotice("official-import")
     try {
-      const { parseOfficialGearExport } = await import("../../officialGearImport")
+      const { parseOfficialGearExport } = await import("@/officialGearImport")
       const official = parseOfficialGearExport(JSON.parse(officialImportText), weapons)
       const result = mergeImportedBuildState(buildState, official.exportValue, { reuseIdenticalGear: true })
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)

@@ -7,7 +7,8 @@ import {
   selectedSetupEffects,
   setAvailableForSettings,
   setupConditionsFor,
-} from "../application/characterComposition"
+} from "@/application/characterComposition"
+import type { SetupSelections } from "@/application/contracts"
 import {
   breakthroughProfile,
   typedArmorSetDefinitions,
@@ -17,16 +18,16 @@ import {
   typedFoodDefinitions,
   typedScriptDefinitions,
   typedWeaponSetDefinitions,
-} from "../application/gameData/setup"
-import { percentageAttunementKeys } from "../application/persistence/attunements"
-import { innerWayDefinitions } from "../data/innerWayDefinitions"
-import { setupSelectionChangesTimeline } from "../data/scriptDefinitions"
-import { allStatDefinitions } from "../data/statDefinitions"
-import type { SetupSelections } from "../application/contracts"
-import { attunementData, maxGearRoll, selectSetTier, setSelectionChangesTimeline, statRollsForLevel } from "../gear"
-import type { BuildSetup } from "../gear"
-import { globalDebuffRows } from "../globalDebuffs"
-import type { CharacterStats } from "../types"
+} from "@/application/gameData/setup"
+import { percentageAttunementKeys } from "@/application/persistence/attunements"
+import { innerWayDefinitions } from "@/data/innerWayDefinitions"
+import { setupSelectionChangesTimeline } from "@/data/scriptDefinitions"
+import { allStatDefinitions } from "@/data/statDefinitions"
+import { attunementData, maxGearRoll, selectSetTier, setSelectionChangesTimeline, statRollsForLevel } from "@/gear"
+import type { BuildSetup } from "@/gear"
+import { globalDebuffRows } from "@/globalDebuffs"
+import type { CharacterStats } from "@/types"
+
 import type { AttunementStats } from "./damage"
 import {
   buildRotationCalculationBundle,
@@ -175,22 +176,13 @@ export function buildRotationComparisonBundle(
       ? {
           arsenal: Object.keys(typedArsenalDefinitions)
             .filter(value => value !== buildSetup.arsenal)
-            .map(value => ({
-              label: value,
-              setupEffects: setupEffectsForRotation({ arsenal: value }),
-            })),
+            .map(value => ({ label: value, setupEffects: setupEffectsForRotation({ arsenal: value }) })),
           bowRingSet: Object.keys(typedBowRingSetDefinitions)
             .filter(value => value !== buildSetup.bowRingSet)
-            .map(value => ({
-              label: value,
-              setupEffects: setupEffectsForRotation({ bowRingSet: value }),
-            })),
+            .map(value => ({ label: value, setupEffects: setupEffectsForRotation({ bowRingSet: value }) })),
           food: Object.keys(typedFoodDefinitions)
             .filter(value => value !== selectedFood)
-            .map(value => ({
-              label: value,
-              setupEffects: setupEffectsForRotation({ food: value }),
-            })),
+            .map(value => ({ label: value, setupEffects: setupEffectsForRotation({ food: value }) })),
           script: Object.entries(typedScriptDefinitions)
             .filter(([value]) => value !== selectedScript)
             .map(([value]) => {

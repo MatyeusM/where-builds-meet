@@ -26,7 +26,7 @@ async function withStore(mode: string, response: Record<string, unknown> = {}) {
     terminate() {}
   }
   vi.stubGlobal("Worker", FakeWorker)
-  return import("../src/stores/dpsStore.ts")
+  return import("@/stores/dpsStore.ts")
 }
 
 const bundle = { timeline: { rotation: { name: "Diagnostics", steps: [] } }, weapons: [] } as never

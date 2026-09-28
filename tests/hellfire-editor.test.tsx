@@ -3,13 +3,14 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { assert, afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import App from "@/App"
+import type { EditorTimelineResult } from "@/calculations/editorTimeline"
+import { initializeI18n } from "@/i18n"
+
 import english from "../public/locales/en.json"
-import App from "../src/App"
-import type { EditorTimelineResult } from "../src/calculations/editorTimeline"
-import { initializeI18n } from "../src/i18n"
 import { dpsBundles, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
-vi.mock("../src/stores/dpsStore", async () => {
+vi.mock("@/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
   return mockDpsStore()
 })
@@ -61,7 +62,7 @@ async function click(text: string) {
 async function openRotationEditor() {
   await click("Rotation Editor")
   await act(async () => {
-    await import("../src/features/rotations/RotationEditorTab")
+    await import("@/features/rotations/RotationEditorTab")
   })
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0)
@@ -235,7 +236,7 @@ it("clears an action start anchor when replacing its skill with an actionless sk
 })
 
 it("retains generated rows until the latest complete editor revision arrives", async () => {
-  const { pendingEditorTimeline } = await import("../src/editorTimelinePreview")
+  const { pendingEditorTimeline } = await import("@/editorTimelinePreview")
   type Result = EditorTimelineResult
   const requests: { result: Result; resolve: (result: Result) => void }[] = []
   dpsResolves(
@@ -301,7 +302,7 @@ it("retains generated rows until the latest complete editor revision arrives", a
 })
 
 it.each([0, 1, 3])("preserves the neighboring row's viewport position when deleting item %i", async deletePosition => {
-  const { pendingEditorTimeline } = await import("../src/editorTimelinePreview")
+  const { pendingEditorTimeline } = await import("@/editorTimelinePreview")
   type Result = EditorTimelineResult
   const requests: { result: Result; resolve: (result: Result) => void }[] = []
   dpsResolves(

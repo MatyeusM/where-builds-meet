@@ -13,7 +13,7 @@ import { expect, vi } from "vitest"
 export async function openRotationEditorTab(container: HTMLElement, openTab: () => Promise<void>) {
   await openTab()
   await act(async () => {
-    await import("../../src/features/rotations/RotationEditorTab")
+    await import("@/features/rotations/RotationEditorTab")
   })
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0)

@@ -1,4 +1,4 @@
-import { t } from "../../i18n"
+import { t } from "@/i18n"
 
 /**
  * Wording for a calculation status, shared by everything that reports one.

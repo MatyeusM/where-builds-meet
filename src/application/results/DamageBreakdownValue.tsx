@@ -1,8 +1,8 @@
-import { formatThroughput } from "../../application/formatting"
-import type { DamageBreakdown } from "../../calculations/damage"
-import type { RotationActionBreakdown } from "../../calculations/rotationCalculator"
-import { gameText } from "../../i18n"
-import { Tooltip } from "../../ui/Tooltip"
+import { formatThroughput } from "@/application/formatting"
+import type { DamageBreakdown } from "@/calculations/damage"
+import type { RotationActionBreakdown } from "@/calculations/rotationCalculator"
+import { gameText } from "@/i18n"
+import { Tooltip } from "@/ui/Tooltip"
 
 const damageTooltipParts: Array<[keyof DamageBreakdown, string]> = [
   ["physical", "Physical"],

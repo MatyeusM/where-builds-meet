@@ -3,14 +3,15 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import App from "@/App"
+import { calculateEditorTimeline } from "@/calculations/editorTimeline"
+import { initializeI18n } from "@/i18n"
+
 import english from "../public/locales/en.json"
-import App from "../src/App"
-import { calculateEditorTimeline } from "../src/calculations/editorTimeline"
-import { initializeI18n } from "../src/i18n"
 import { dpsBundles, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 import { openRotationEditorTab } from "./helpers/rotationEditorTab"
 
-vi.mock("../src/stores/dpsStore", async () => {
+vi.mock("@/stores/dpsStore", async () => {
   const { mockDpsStore } = await import("./helpers/dpsStoreMock")
   return mockDpsStore()
 })

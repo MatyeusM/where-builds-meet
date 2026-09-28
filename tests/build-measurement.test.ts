@@ -1,9 +1,10 @@
 import { assert, describe, it } from "vitest"
 
-import { breakthroughProfile } from "../src/application/gameData/setup"
-import { buildMeasurement, type MeasurementContext } from "../src/calculations/rotationCalculationBundle"
-import { defaultBuildPresets, type BuildEntry } from "../src/gear"
-import { defaultGlobalDebuffs } from "../src/globalDebuffs"
+import { breakthroughProfile } from "@/application/gameData/setup"
+import { buildMeasurement, type MeasurementContext } from "@/calculations/rotationCalculationBundle"
+import { defaultBuildPresets, type BuildEntry } from "@/gear"
+import { defaultGlobalDebuffs } from "@/globalDebuffs"
+
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
 
@@ -131,7 +132,7 @@ describe("measuring a build that is not the active one", () => {
 
 describe("global debuff selection", () => {
   it("is read as a stable value, so a re-render does not look like a changed selection", async () => {
-    const { loadGlobalDebuffs } = await import("../src/globalDebuffs")
+    const { loadGlobalDebuffs } = await import("@/globalDebuffs")
     assert.equal(loadGlobalDebuffs(), loadGlobalDebuffs(), "Reading the selection twice produced two objects.")
     assert.deepEqual(loadGlobalDebuffs(), defaultGlobalDebuffs)
   })

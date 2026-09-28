@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-vi.mock("../src/stores/dpsStore", async () => (await import("./helpers/dpsStoreMock")).mockDpsStore())
+vi.mock("@/stores/dpsStore", async () => (await import("./helpers/dpsStoreMock")).mockDpsStore())
 
 import {
   baselineMetricsWithPreviousComparisons,
@@ -8,11 +8,12 @@ import {
   comparisonCategoryOrder,
   comparisonVariantRequests,
   mergeComparisonCategory,
-} from "../src/application/comparison"
-import { resolveComparisonCategory, resolveComparisonMetrics } from "../src/application/resolveRotationMetrics"
-import type { RotationSimulationBundle, RotationSimulationVariant } from "../src/calculations/rotationCalculator"
-import type { RotationMetrics } from "../src/calculations/rotationMetrics"
-import { emptyRotationBreakdown } from "../src/calculations/rotationMetrics"
+} from "@/application/comparison"
+import { resolveComparisonCategory, resolveComparisonMetrics } from "@/application/resolveRotationMetrics"
+import type { RotationSimulationBundle, RotationSimulationVariant } from "@/calculations/rotationCalculator"
+import type { RotationMetrics } from "@/calculations/rotationMetrics"
+import { emptyRotationBreakdown } from "@/calculations/rotationMetrics"
+
 import { dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
 
 /**
@@ -112,7 +113,7 @@ const resolution = { bundle, baselineKey: "fp", baseline: () => baseline }
 
 /** The sweep as it was written: one dispatch at a time, folding each category into the last. */
 async function resolveSequentially() {
-  const { useDpsStore } = await import("../src/stores/dpsStore")
+  const { useDpsStore } = await import("@/stores/dpsStore")
   let merged = baselineMetricsWithPreviousComparisons(baseline.metrics)
   for (const category of comparisonCategoryOrder) {
     const variants = comparisonVariantRequests(bundle, category)

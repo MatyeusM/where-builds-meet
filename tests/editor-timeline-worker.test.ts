@@ -6,11 +6,11 @@ import { describe, it } from "vitest"
 describe("editor-timeline-worker", () => {
   it("Editor timeline worker probe passed: live cooldown waits, stable authored input, anchors, pending edits, stale-result rejection, and baseline reuse", async () => {
     try {
-      const { calculateEditorTimeline } = await import("../src/calculations/editorTimeline.ts")
-      const { pendingEditorTimeline, sameEditorRevision } = await import("../src/editorTimelinePreview.ts")
-      const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
-      const { emptyStats } = await import("../src/data/statDefinitions.ts")
-      const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+      const { calculateEditorTimeline } = await import("@/calculations/editorTimeline.ts")
+      const { pendingEditorTimeline, sameEditorRevision } = await import("@/editorTimelinePreview.ts")
+      const { calculateRotationBaseline } = await import("@/calculations/rotationCalculator.ts")
+      const { emptyStats } = await import("@/data/statDefinitions.ts")
+      const { calculateDerivedStats } = await import("@/calculations/effectiveStats.ts")
       const rotation = {
         name: "Async editor",
         start: { step: 1 },
@@ -140,7 +140,7 @@ describe("editor-timeline-worker", () => {
         }
       }
       globalThis.Worker = ControlledWorker
-      const client = await import("../src/calculations/rotationWorkerTransport.ts")
+      const client = await import("@/calculations/rotationWorkerTransport.ts")
       let currentRevision = revision
       let accepted
       const first = client.dispatchCalculation({ mode: "editorTimeline", bundle, key: "editor:a" }).then(result => {

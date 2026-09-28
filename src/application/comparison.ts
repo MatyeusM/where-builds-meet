@@ -1,15 +1,15 @@
-import { rotationVariantFingerprint } from "../calculations/calculationFingerprint"
+import { rotationVariantFingerprint } from "@/calculations/calculationFingerprint"
 import {
   sortAttunementPriorityRows,
   sortRotationPriorityRows,
   type RotationSimulationBundle,
   type RotationSimulationVariant,
-} from "../calculations/rotationCalculator"
+} from "@/calculations/rotationCalculator"
 import {
   rotationCalculationCategories,
   type RotationCalculationCategory,
   type RotationMetrics,
-} from "../calculations/rotationMetrics"
+} from "@/calculations/rotationMetrics"
 
 export const comparisonCategoryOrder: RotationCalculationCategory[] = rotationCalculationCategories.filter(
   category => category !== "baseline",

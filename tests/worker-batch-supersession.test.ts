@@ -67,7 +67,7 @@ describe("worker-batch-supersession", () => {
 
     try {
       const { disposeCalculationWorkers, dispatchCalculation } =
-        await import("../src/calculations/rotationWorkerTransport.ts")
+        await import("@/calculations/rotationWorkerTransport.ts")
       const baseline = (cacheKey: string, key: string) =>
         dispatchCalculation({ mode: "baseline", bundle, cacheKey, key })
       const comparisons = (cacheKey: string, key: string, baseline?: unknown) =>

@@ -1,19 +1,20 @@
-import { resolveBuildStatState, type BuildStatState } from "../application/buildStatState"
+import { resolveBuildStatState, type BuildStatState } from "@/application/buildStatState"
 import {
   innerWayConditionsFor,
   innerWayEffectRulesFor,
   selectedSetupEffects,
   setupConditionsFor,
-} from "../application/characterComposition"
-import type { CalculatorSettings, PathId, SetupSelections } from "../application/contracts"
-import { martialArtDefinitions } from "../application/gameData/martialArts"
-import { rotationEventDefinitions } from "../application/gameData/rotationEffects"
-import { breakthroughProfile, typedSystemStats } from "../application/gameData/setup"
-import { defaultSkillMaps, dotDefinitions, effectDefinitions } from "../application/gameData/skills"
-import type { BuildEntry, BuildSetupOverrides, GearItem } from "../gear"
-import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "../globalDebuffs"
-import { resolveSkillCalculationDefinitions, type SkillOverrides } from "../skillOverrides"
-import type { EnemyProfile } from "../types"
+} from "@/application/characterComposition"
+import type { CalculatorSettings, PathId, SetupSelections } from "@/application/contracts"
+import { martialArtDefinitions } from "@/application/gameData/martialArts"
+import { rotationEventDefinitions } from "@/application/gameData/rotationEffects"
+import { breakthroughProfile, typedSystemStats } from "@/application/gameData/setup"
+import { defaultSkillMaps, dotDefinitions, effectDefinitions } from "@/application/gameData/skills"
+import type { BuildEntry, BuildSetupOverrides, GearItem } from "@/gear"
+import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "@/globalDebuffs"
+import { resolveSkillCalculationDefinitions, type SkillOverrides } from "@/skillOverrides"
+import type { EnemyProfile } from "@/types"
+
 import type { AttunementOverrides } from "./attunementStats"
 import { rotationBundleFingerprint } from "./calculationFingerprint"
 import { resolvePing } from "./combatDefaults"

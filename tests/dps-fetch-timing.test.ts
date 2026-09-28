@@ -29,8 +29,8 @@ async function withStore() {
     terminate() {}
   }
   vi.stubGlobal("Worker", FakeWorker)
-  const { useDpsStore } = await import("../src/stores/dpsStore.ts")
-  const diagnostics = await import("../src/stores/dpsStoreDiagnostics.ts")
+  const { useDpsStore } = await import("@/stores/dpsStore.ts")
+  const diagnostics = await import("@/stores/dpsStoreDiagnostics.ts")
   return { useDpsStore, posted, diagnostics }
 }
 
@@ -111,7 +111,7 @@ describe("dps-fetch-timing", () => {
       terminate() {}
     }
     vi.stubGlobal("Worker", SlowWorker)
-    const { useDpsStore } = await import("../src/stores/dpsStore.ts")
+    const { useDpsStore } = await import("@/stores/dpsStore.ts")
     const console_ = captureConsole()
     try {
       const store = () => useDpsStore.getState()
@@ -155,7 +155,7 @@ describe("dps-fetch-timing", () => {
       terminate() {}
     }
     vi.stubGlobal("Worker", SlowWorker)
-    const { useDpsStore } = await import("../src/stores/dpsStore.ts")
+    const { useDpsStore } = await import("@/stores/dpsStore.ts")
     const console_ = captureConsole()
     try {
       const store = () => useDpsStore.getState()

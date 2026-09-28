@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { rotationCalculationCategories } from "../src/calculations/rotationMetrics"
-import { useRotationStore } from "../src/stores/rotationStore"
+import { rotationCalculationCategories } from "@/calculations/rotationMetrics"
+import { useRotationStore } from "@/stores/rotationStore"
 
 const status = () => useRotationStore.getState().status
 const recalculating = () => rotationCalculationCategories.filter(category => status()[category].recalculating)
