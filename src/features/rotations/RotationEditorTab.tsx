@@ -2010,30 +2010,28 @@ export function RotationEditorTab({
                 {currentCachedResult ? (
                   <>
                     <span>
-                      {t("system.totalDamage")}: {formatThroughput(rotationCalculation.unscaledTotalDamage)}
+                      {t("system.totalDamage")}: {formatThroughput(rotationCalculation.unscaledTotalDamage)}{" "}
                       {dpsDelta === undefined ? (
-                        <small className="rotation-results-dps">
-                          {" "}
+                        <small className="rotation-results-rate">
                           ({formatThroughput(rotationCalculation.unscaledDps)} {t("system.dps")})
                         </small>
                       ) : (
                         <Tooltip
-                          className="rotation-results-dps-tooltip"
+                          className="rotation-results-rate-tooltip"
                           content={
                             <>
-                              <span className="rotation-results-dps-row">
+                              <span className="rotation-results-rate-row">
                                 <span>{t("ui.app.notActiveDps")}</span>
                                 <strong>{formatThroughput(rotationCalculation.unscaledDps)}</strong>
                               </span>
-                              <span className="rotation-results-dps-row">
+                              <span className="rotation-results-rate-row">
                                 <span>{t("ui.app.rotationUsed")}</span>
                                 <strong>{activeRotationReading?.rotationName ?? ""}</strong>
                               </span>
                             </>
                           }
                         >
-                          <small className={`rotation-results-dps ${throughputDeltaClass(dpsDelta, "damage")}`}>
-                            {" "}
+                          <small className={`rotation-results-rate ${throughputDeltaClass(dpsDelta, "damage")}`}>
                             ({formatThroughputDelta(dpsDelta)} {t("system.dps")})
                           </small>
                         </Tooltip>
@@ -2042,11 +2040,14 @@ export function RotationEditorTab({
                     {rotationCalculation.totalHealing > 0 ? (
                       <span className="healing-value">
                         {t("system.totalHealing")}: +{formatThroughput(rotationCalculation.totalHealing)}
-                      </span>
-                    ) : null}
-                    {rotationCalculation.hps > 0 ? (
-                      <span className="healing-value">
-                        {t("system.hps")}: {formatThroughput(rotationCalculation.hps)}
+                        {rotationCalculation.hps > 0 ? (
+                          <>
+                            {" "}
+                            <small className="rotation-results-rate">
+                              ({formatThroughput(rotationCalculation.hps)} {t("system.hps")})
+                            </small>
+                          </>
+                        ) : null}
                       </span>
                     ) : null}
                   </>

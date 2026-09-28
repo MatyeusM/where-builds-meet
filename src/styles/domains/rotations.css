@@ -329,33 +329,36 @@
     font-size: inherit;
   }
 
-  /* The rate beside the total damage reads as part of the same figure, so it takes the row's size
-     and weight rather than a qualifier's smaller ones. Only the nowrap is its own: a rate broken
-     across two lines would be read as a second figure. */
-  .rotation-results-dps {
+  /* A rate sits in brackets after the total it is taken from, at that total's own size and weight.
+     Only the nowrap is its own: a rate broken across two lines reads as a second figure.
+
+     The space that separates it from the total is written outside this element, because a bracketed
+     rate that carries one of its own is a block-level flex item inside the tooltip's anchor, and
+     leading whitespace at the start of a block is not rendered. */
+  .rotation-results-rate {
     white-space: nowrap;
   }
 
   /* A rotation that is not active shows only how it differs, so the figures it is actually
      worth are one hover away rather than crowding the row beside its total damage. */
-  .rotation-results-dps-tooltip {
+  .rotation-results-rate-tooltip {
     display: grid;
     gap: 4px;
     min-inline-size: 14rem;
   }
 
-  .rotation-results-dps-tooltip .rotation-results-dps-row {
+  .rotation-results-rate-tooltip .rotation-results-rate-row {
     display: flex;
     gap: var(--space-sm);
     justify-content: space-between;
     align-items: baseline;
   }
 
-  .rotation-results-dps-tooltip .rotation-results-dps-row > span {
+  .rotation-results-rate-tooltip .rotation-results-rate-row > span {
     color: var(--text-muted);
   }
 
-  .rotation-results-dps-tooltip .rotation-results-dps-row > strong {
+  .rotation-results-rate-tooltip .rotation-results-rate-row > strong {
     color: var(--text);
     text-align: end;
   }
