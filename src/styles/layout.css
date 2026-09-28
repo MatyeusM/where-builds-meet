@@ -44,6 +44,27 @@
     padding-inline: var(--shell-gutter);
   }
 
+  /*
+   * The strip's rule is drawn inside its content box rather than as a border. A border paints
+   * along the element's own edges, so as a border it would run the width of the strip, which is
+   * the width of the page, and overhang everything above the footer. Drawing it inside keeps it
+   * aligned with the labels and with the header whatever the layout does to the strip's box,
+   * which the capped layouts change.
+   */
+  .page-shell > .main-tabs {
+    position: relative;
+    border-block-end: 0;
+  }
+
+  .page-shell > .main-tabs::after {
+    content: "";
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: var(--shell-gutter);
+    block-size: 1px;
+    background: var(--border);
+  }
+
   .viewport-page-shell {
     block-size: 100dvh;
     min-block-size: 0;
