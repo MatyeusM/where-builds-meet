@@ -46,10 +46,10 @@ import {
 } from "@/characterProfiles"
 import { innerWayEntriesForTag } from "@/data/innerWayDefinitions"
 import { attunementData, selectSetTier, type BuildSetup, type BuildSetupOverrides } from "@/gear"
-import { globalDebuffRows, globalDebuffStorageKey, loadGlobalDebuffs, type GlobalDebuffState } from "@/globalDebuffs"
+import { globalDebuffRows, type GlobalDebuffState } from "@/globalDebuffs"
 import { dataText, gameText, t } from "@/i18n"
 import { publishNotice, dismissNotice } from "@/notices"
-import { setPersistentItem } from "@/persistentStorage"
+import { useLoadoutStore } from "@/stores/loadoutStore"
 import { type CharacterStats } from "@/types"
 import { Button } from "@/ui/Button"
 import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
@@ -107,15 +107,13 @@ export function StatsTab({
   const showHealingStats = pathId === "silkbindDeluge"
   const breakthrough = breakthroughProfile(settings)
   const { food, script, divinecraft } = character.setupSelections
-  const [globalDebuffs, setGlobalDebuffs] = useState(loadGlobalDebuffs)
+  const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
   const [attunementDrafts, setAttunementDrafts] = useState<Partial<Record<keyof AttunementStats, string>>>({})
   const [newProfileName, setNewProfileName] = useState("")
   const profileDialogRef = useRef<HTMLDialogElement>(null)
   const profileImportInputRef = useRef<HTMLInputElement>(null)
   const graduationRate =
     rotationMetrics && graduationDps && graduationDps > 0 ? (rotationMetrics.dps / graduationDps) * 100 : undefined
-
-  useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs])
 
   const { arsenal, bowRingSet, innerWays } = buildSetup
   const currentProfileData = useMemo(
@@ -263,9 +261,7 @@ export function StatsTab({
   }
 
   function updateGlobalDebuff<K extends keyof GlobalDebuffState>(key: K, value: GlobalDebuffState[K]) {
-    const next = { ...globalDebuffs, [key]: value }
-    setPersistentItem(globalDebuffStorageKey, JSON.stringify(next))
-    setGlobalDebuffs(next)
+    useLoadoutStore.getState().setGlobalDebuffs(key, value)
     onInnerWayChange()
   }
 

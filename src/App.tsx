@@ -29,7 +29,6 @@ import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
 import { SkillEditorTab } from "./features/skills/SkillEditorTab"
-import { loadGlobalDebuffs } from "./globalDebuffs"
 import { Button } from "./ui/Button"
 import { Chip } from "./ui/Chip"
 import { Tab } from "./ui/Tab"
@@ -76,6 +75,7 @@ import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { useDpsStore } from "./stores/dpsStore"
+import { useLoadoutStore } from "./stores/loadoutStore"
 import { useRotationStore } from "./stores/rotationStore"
 import { useSettingsStore } from "./stores/settingsStore"
 import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
@@ -116,19 +116,22 @@ export default function App() {
   const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
   const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
-  // The settings store is a module singleton, so its persisted state is read during the first
-  // render rather than when its module happens to be imported. It has to be read before the
-  // first render reads the path, the build list is filtered by, or the editor picks a rotation.
-  const [settingsStoreRead, markSettingsStoreRead] = useState(false)
-  if (!settingsStoreRead) {
-    markSettingsStoreRead(true)
+  // Both stores are module singletons, so their persisted state is read during the first render
+  // rather than when their modules happen to be imported. It has to be read before the first render
+  // reads the path, the build list is filtered by, or the editor picks a rotation. Application
+  // settings boot first because the path a saved session resolves to depends on the dev toggle.
+  const [storesRead, markStoresRead] = useState(false)
+  if (!storesRead) {
+    markStoresRead(true)
     useSettingsStore.getState().initialise(compactViewport)
+    useLoadoutStore.getState().initialise(useSettingsStore.getState().devMode)
   }
   const devMode = useSettingsStore(state => state.devMode)
   const layoutPreview = useSettingsStore(state => state.layoutPreview)
-  const pathId = useSettingsStore(state => state.pathId)
-  const settings = useSettingsStore(state => state.settings)
-  const setupSelections = useSettingsStore(state => state.setupSelections)
+  const pathId = useLoadoutStore(state => state.pathId)
+  const settings = useLoadoutStore(state => state.settings)
+  const setupSelections = useLoadoutStore(state => state.setupSelections)
+  const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
   const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
   const [buildState, setBuildState] = useState<BuildState>(loadBuildState)
   const [activeBuildIdsByPath, setActiveBuildIdsByPath] = useState<PathSelectionIds>(() =>
@@ -195,15 +198,14 @@ export default function App() {
       buildSetupOverrides,
     ],
   )
-  const currentGlobalDebuffs = loadGlobalDebuffs()
   /**
    * What a build is measured against. Everything here belongs to the sheet or the environment
    * rather than to any build, so a build measured without being activated resolves against the
-   * same inputs the active one did.
+   * same inputs the active one did. The environment half of it is what `loadoutStore` owns.
    */
   const buildMeasurementContext = useMemo(
     () => ({
-      environment: { pathId, settings, setupSelections, skillOverrides, globalDebuffs: currentGlobalDebuffs, enemy },
+      environment: { pathId, settings, setupSelections, skillOverrides, globalDebuffs, enemy },
       statOverrides,
       attunementOverrides,
       buildSetupOverrides: { buildId: activeBuild?.id ?? "", overrides: buildSetupOverrides },
@@ -214,7 +216,7 @@ export default function App() {
       settings,
       setupSelections,
       skillOverrides,
-      currentGlobalDebuffs,
+      globalDebuffs,
       enemy,
       statOverrides,
       attunementOverrides,
@@ -355,8 +357,8 @@ export default function App() {
     setBuildState(current => ({ ...current, activeBuildId: selection.buildId }))
     // The path and the settings move together: the settings for a path are derived from it, so
     // storing one without the other would leave a session whose weapons do not fit its path.
-    useSettingsStore.getState().setSettings(nextSettings)
-    useSettingsStore.getState().setPath(nextPathId)
+    useLoadoutStore.getState().setSettings(nextSettings)
+    useLoadoutStore.getState().setPath(nextPathId)
     setInnerWayRevision(current => current + 1)
   }
   const selectPath = (nextPathId: PathId) => transitionPath(nextPathId)
@@ -537,7 +539,7 @@ export default function App() {
           onApplyCharacterProfile={applyCharacterProfile}
           onCharacterProfilesChange={setCharacterProfiles}
           onBreakthroughChange={breakthrough =>
-            useSettingsStore.getState().setSettings(current => ({ ...current, breakthrough }))
+            useLoadoutStore.getState().setSettings(current => ({ ...current, breakthrough }))
           }
           onBuildSetupChange={updateBuildSetupOverride}
           onBuildSetupReset={resetBuildSetupOverride}
@@ -546,7 +548,7 @@ export default function App() {
           activeBuildName={activeBuildDisplayName}
           activeRotationName={activeRotationDisplayName}
           onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
-          onSetupSelectionChange={(key, value) => useSettingsStore.getState().setSetupSelection(key, value)}
+          onSetupSelectionChange={(key, value) => useLoadoutStore.getState().setSetupSelection(key, value)}
         />
       ) : activeTab === "build" ? (
         <FeatureLoadBoundary>
@@ -584,7 +586,7 @@ export default function App() {
           pathId={pathId}
           devMode={devMode}
           layoutMode={layoutMode}
-          onSettingsChange={next => useSettingsStore.getState().setSettings(next)}
+          onSettingsChange={next => useLoadoutStore.getState().setSettings(next)}
           onLayoutChange={changeLayoutPreview}
         />
       ) : null}

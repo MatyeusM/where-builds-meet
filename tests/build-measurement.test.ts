@@ -1,9 +1,8 @@
-import { assert, describe, it } from "vitest"
+import { assert, describe, it, vi } from "vitest"
 
 import { breakthroughProfile } from "@/application/gameData/setup"
 import { buildMeasurement, type MeasurementContext } from "@/calculations/rotationCalculationBundle"
 import { defaultBuildPresets, type BuildEntry } from "@/gear"
-import { defaultGlobalDebuffs } from "@/globalDebuffs"
 
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
@@ -130,10 +129,71 @@ describe("measuring a build that is not the active one", () => {
   })
 })
 
+/** The store writes on load, so it needs somewhere durable to write to. */
+function createStorage() {
+  const values = new Map<string, string>()
+  return {
+    get length() {
+      return values.size
+    },
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    setItem: (key: string, value: string) => void values.set(key, String(value)),
+    removeItem: (key: string) => void values.delete(key),
+    clear: () => values.clear(),
+  }
+}
+
+async function loadoutStore(stored?: string) {
+  const previous = { window: globalThis.window, localStorage: globalThis.localStorage }
+  const localStorage = createStorage()
+  if (stored !== undefined) localStorage.setItem("wwm-global-debuffs-session-v1", stored)
+  globalThis.window = { localStorage, sessionStorage: createStorage() } as never
+  globalThis.localStorage = localStorage as never
+  globalThis.sessionStorage = createStorage() as never
+  vi.resetModules()
+  const store = await import("@/stores/loadoutStore.ts")
+  return {
+    ...store,
+    restore: () => {
+      globalThis.window = previous.window as never
+      globalThis.localStorage = previous.localStorage as never
+    },
+  }
+}
+
 describe("global debuff selection", () => {
-  it("is read as a stable value, so a re-render does not look like a changed selection", async () => {
-    const { loadGlobalDebuffs } = await import("@/globalDebuffs")
-    assert.equal(loadGlobalDebuffs(), loadGlobalDebuffs(), "Reading the selection twice produced two objects.")
-    assert.deepEqual(loadGlobalDebuffs(), defaultGlobalDebuffs)
+  /**
+   * The selection is part of the measurement's environment, so it has to reach the cache key: a
+   * build measured with a debuff on is not the same measurement as one measured without it. The
+   * second half is the reason `loadoutStore` holds it: the context holds the selection by
+   * reference and feeds it to dependency arrays, so re-reading it must not look like a change.
+   */
+  it("reaches the measurement key when it changes and not when it is merely re-read", async () => {
+    const { rotation, context, presets } = await fixture()
+    // A saved session, so the load path is covered as well as the mutator.
+    const { useLoadoutStore, restore } = await loadoutStore(JSON.stringify({ vulnerable: true }))
+    try {
+      useLoadoutStore.getState().initialise(false)
+      const read = () =>
+        buildMeasurement({
+          build: presetEntry(presets[0].id),
+          gearItems: [],
+          rotation,
+          context: {
+            ...context,
+            environment: { ...context.environment, globalDebuffs: useLoadoutStore.getState().globalDebuffs },
+          },
+        }).cacheKey
+
+      const loaded = read()
+      assert.equal(read(), loaded, "Re-reading the selection changed what a build measures to.")
+
+      useLoadoutStore.getState().setGlobalDebuffs("vulnerable", false)
+      const cleared = read()
+      assert.notEqual(cleared, loaded, "Turning a saved global debuff off did not change what a build measures to.")
+    } finally {
+      restore()
+    }
   })
 })

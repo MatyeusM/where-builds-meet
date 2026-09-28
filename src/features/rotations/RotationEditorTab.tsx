@@ -100,7 +100,6 @@ import {
   type TimelineRow,
 } from "@/calculations/rotationTimeline"
 import { sameEditorRevision, type EditorRevision } from "@/editorTimelinePreview"
-import { loadGlobalDebuffs } from "@/globalDebuffs"
 import { gameText, t } from "@/i18n"
 import { publishNotice, dismissNotice } from "@/notices"
 import { displayEntryKey, visibleTimelineEffects } from "@/rotationDisplay"
@@ -123,6 +122,7 @@ import {
 import { exportRotationEntries, mergeImportedRotationEntries, type RotationEntry } from "@/rotationTransfer"
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "@/skillOverrides"
 import { useDpsStore } from "@/stores/dpsStore"
+import { useLoadoutStore } from "@/stores/loadoutStore"
 import { useRotationStore } from "@/stores/rotationStore"
 import { type WeaponId } from "@/types"
 import { Button } from "@/ui/Button"
@@ -217,6 +217,7 @@ export function RotationEditorTab({
   const rotationEntries = useRotationStore(state => state.entries)
   const updateRotationEntries = useRotationStore(state => state.updateEntries)
   const persistEntries = useRotationStore(state => state.persistEntries)
+  const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
   const [initialState] = useState(() =>
     initialRotationEditorState(devMode, selectedRotationId || defaultRotationId, settings.weapons),
   )
@@ -306,7 +307,6 @@ export function RotationEditorTab({
   }, [activeRotationId])
   const rotationLocked = editingEntry?.isDefault === true
   const editingRotationDisplayName = (rotationLocked ? gameText(rotation.name) : rotation.name) || "Unnamed Rotation"
-  const currentGlobalDebuffs = loadGlobalDebuffs()
   const { food: currentFood, script: currentScript, divinecraft: currentDivinecraft } = setupSelections
   const calculationContextKey = useMemo(
     () =>
@@ -323,7 +323,7 @@ export function RotationEditorTab({
         food: currentFood,
         script: currentScript,
         divinecraft: currentDivinecraft,
-        globalDebuffs: currentGlobalDebuffs,
+        globalDebuffs,
         skillOverrides,
       }),
     [
@@ -339,7 +339,7 @@ export function RotationEditorTab({
       currentFood,
       currentScript,
       currentDivinecraft,
-      currentGlobalDebuffs,
+      globalDebuffs,
       skillOverrides,
     ],
   )
@@ -1380,7 +1380,7 @@ export function RotationEditorTab({
     pathId,
     settings,
     skillOverrides,
-    globalDebuffs: currentGlobalDebuffs,
+    globalDebuffs,
     enemy,
     rotation: rotationRecord,
     setupSelections,
@@ -1458,7 +1458,7 @@ export function RotationEditorTab({
       martialArts: [...settings.weapons],
       rotation: { ...rotationRecord, ping: resolvePing(rotationRecord.ping, settings.ping) },
       breakthrough: settings.breakthrough,
-      globalDebuffs: currentGlobalDebuffs,
+      globalDebuffs,
       food: currentFood,
       script: currentScript,
       divinecraft: currentDivinecraft,
