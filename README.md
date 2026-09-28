@@ -1,5 +1,7 @@
 # Where Builds Meet
 
+**Live site: <https://greydust.github.io/where-builds-meet/>** — the deployed app, published from the `release` branch via [the Pages workflow](.github/workflows/deploy.yml).
+
 Where Builds Meet is a browser-based build and rotation simulator for **Where Winds Meet**. It combines character stats, equipment, effects, and a timed combat rotation to calculate damage, DPS, and comparison metrics.
 
 The goal of this website is to simulate **Where Winds Meet** rotations as accurately as possible. Even a 1% damage discrepancy will be carefully investigated, so please report any difference you find.
