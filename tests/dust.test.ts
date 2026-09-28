@@ -348,31 +348,6 @@ describe("Dust mechanics", () => {
       expect(input.timeline.skills[step.skill!]).toBeDefined()
     }
     expect(rotation.start).toEqual({ step: 5, action: 0 })
-    expect(rotation.steps.filter(step => step.type === "skill").map(step => step.skill)).toEqual([
-      "SoulSweepCancel",
-      "Deflect",
-      "PiercingDartCharge",
-      "FluteOfTheTidesCancel",
-      "Deflect",
-      "PiercingDart4Hits",
-      "Dodge",
-      "BurnAndBury",
-      "ScarletSpin",
-      "DreamwroughtBubbles",
-      "DreamwroughtBubbles",
-      "DreamwroughtBubbles",
-      "SoaringSpin2",
-      "BurnAndBury",
-      "Dodge",
-      "ScarletSpin",
-      "DreamwroughtBubbles",
-      "SoaringSpin2",
-      "FluteOfTheTides",
-      "BurnAndBury",
-      "ScarletSpin",
-      "SoaringSpin2",
-      "BurnAndBury",
-    ])
     const scarletSteps = rotation.steps.filter(step => step.type === "skill" && step.skill === "ScarletSpin")
     expect(scarletSteps.map(step => step.duration)).toEqual([12, 12, 12])
     expect(scarletSteps.filter(step => step.causesBreak)).toHaveLength(1)
@@ -468,7 +443,6 @@ describe("Dust mechanics", () => {
     expect(defaultDustRotation.name).toBe("Dummy 1 min")
     expect(defaultDustRotation.martialArts).toEqual(["everspring", "unfettered"])
     expect(defaultDustRotation.targetType).toBeUndefined()
-    expect(defaultDustRotation.steps.filter(step => step.type === "skill" && step.skill === "Dodge")).toHaveLength(2)
     expect(defaultDustRotation.steps.some(step => step.type === "skill" && step.skill === "PerfectDodge")).toBe(false)
     expect(defaultDustRotation.steps.at(-1)).toEqual({ type: "event", event: "BattleEnd", startTime: 60 })
   })

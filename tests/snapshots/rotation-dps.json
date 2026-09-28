@@ -7,7 +7,7 @@
         "rotation": "dust-dummy-1-min",
         "martialArts": ["everspring", "unfettered"],
         "breakthrough": "17",
-        "ping": 20,
+        "ping": 35,
         "food": "SimmeringFishSlices",
         "divinecraft": "Fire",
         "script": "None",
@@ -21,8 +21,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 58334.43263058047,
-      "totalDamage": 3500065.957834828,
+      "dps": 58402.797934794915,
+      "totalDamage": 3504167.876087695,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality": {
