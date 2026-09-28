@@ -1301,6 +1301,16 @@ skill-static stat and derived-stat snapshot; numeric damage fields join the
 aggregate. State-dependent rules and non-stat residual fields remain in the
 per-hit list. Multi-action component tags therefore receive independent cache
 entries instead of inheriting the displayed parent skill's tags.
+Damage attunement matching uses a weak cache owned by the attunement input
+object, with a JSON signature of the complete effective skill-tag list inside
+each entry. It stores matching keys and static definitions in the input's
+original key order, including zero-valued entries. Hits still read current
+attunement values and perform each multiplication/addition in the original
+order; totals are not cached. In particular, Formless Penetration accumulation
+still starts from the hit's character-stat value. Input key sets are immutable
+within worker snapshots; replacement inputs and changed tag signatures get
+independent match lists. Weak ownership lets an input and its match lists be
+garbage-collected together.
 Derived remainder rows reconcile unclassified work without adding nested replay
 measurements twice under their listener parent. Timeline queue ordering,
 effect-trigger evaluation, and active-effect resolution retain their own call

@@ -158,3 +158,87 @@ This demonstrates the reuse benefit where Rodent was the only blocker. It does
 not represent the full preset or browser latency. Differential tests additionally
 cover attack, crit, and affinity stat variants; the accepted DPS snapshot guard
 passes without refreshing any snapshot.
+
+## Attunement matching cache follow-up
+
+The damage formula now reuses an ordered list of matching attunement keys and
+definitions, keyed by the immutable input object and complete effective tag
+signature. Values and numerical totals are not cached. Every hit retains the
+original multiplication/addition order, including its initial character-stat
+Formless Penetration contribution. Weak ownership allows discarded inputs and
+their cached lists to be collected together.
+
+A same-process benchmark used separate Vite SSR module graphs for the previous
+full-scan damage function and the cached function. Both used the full preset
+fixture above, alternated forward/reverse case order, discarded two warm-ups,
+and measured six samples. Medians in milliseconds:
+
+| Work                     | Morale before | Morale after | Fivefold before | Fivefold after |
+| ------------------------ | ------------: | -----------: | --------------: | -------------: |
+| Baseline                 |         90.61 |       106.73 |          435.75 |         345.27 |
+| 26 stat comparisons      |      1,594.39 |     1,667.87 |        6,710.41 |       6,318.05 |
+| 7 attunement comparisons |        440.28 |       411.99 |        1,757.22 |       1,702.92 |
+
+These initial measurements are confounded by the benchmark setup; see the
+controlled investigation below. They should not be treated as implementation
+speedup or regression estimates.
+
+Fivefold's baseline was about 21% faster and the sum of the comparison-group
+medians about 5% lower. Morale did not show an overall gain: its baseline was
+about 18% slower and its combined comparison medians about 2% higher. These
+local SSR measurements include runtime/GC variation and do not establish a
+uniform or browser-level speedup. The full preset still needs live combat
+resolution, so matching reuse does not remove the dominant repeated traversal.
+Both versions produced exactly the same baseline DPS and timeline row counts.
+
+Direct differential tests compare cached and uncached expected/sampled damage
+with inclusion/exclusion/alternative tags, multiple matching bonuses, reversed
+input orders, zero-to-nonzero values, changed tags, and replacement inputs.
+
+## Morale timing investigation (2026-09-28)
+
+The earlier 90.61 → 106.73 ms baseline result did not reproduce consistently
+when each implementation ran alone in a fresh Node process. Four processes ran
+in scan/cache/cache/scan order. Each used one Vite SSR module graph, 20 baseline
+warm-ups and 40 measured baselines. Comparison groups used two warm-ups and four
+measured samples. The full Morale fixture and calculations were unchanged.
+
+| Fresh process     | Baseline median | All 33 comparisons median |
+| ----------------- | --------------: | ------------------------: |
+| Full scan, first  |        80.23 ms |               1,951.89 ms |
+| Cache, first      |        83.38 ms |               1,883.13 ms |
+| Cache, second     |        82.32 ms |               1,751.96 ms |
+| Full scan, second |        88.47 ms |               2,028.57 ms |
+
+Separate phase-instrumented runs (ten baselines per process) measured the same
+906 attunement aggregations per baseline. Their median combined time was
+6.90/7.63 ms for the full scan and 1.34/1.25 ms for the cache. These instrumented
+times are diagnostic and are not substituted for the uninstrumented totals.
+
+An isolated aggregation benchmark used all 457 retained Morale damage-entry
+contexts, covering 16 tag signatures and 54 attunement keys. The cached list
+averaged 3.86 matching entries. Across 12 alternating sample pairs after eight
+warm-ups, 91,400 aggregations took a median 238.47 ms with the full scan and
+54.45 ms with the cache (about 4.4 times faster). Outputs matched exactly.
+
+The original four-case ordering was also unbalanced: in both forward and reverse
+order, cached Morale always followed a heavy Fivefold comparison workload.
+Uncached Morale followed another Morale case at alternate round boundaries.
+Reversing case order therefore did not balance the preceding allocation/workload
+history. The original comparison additionally shared a process between two
+separate module graphs and used only two warm-up pairs. Its single median
+difference is not reliable evidence of a Morale cache regression. The isolated
+measurements show that matching is faster, while the few milliseconds saved in
+that phase can be masked by variation in the rest of the calculation.
+
+An identical-code control repeated the original two-graph, four-case ordering,
+but loaded the same uncached damage implementation in both graphs. After two
+warm-ups and six measured samples, graph A/B baseline medians were 96.67/128.69 ms
+for Morale and 445.11/373.10 ms for Fivefold. The harness thus reported Morale
+33% slower and Fivefold 16% faster without any implementation difference.
+Morale's stat-comparison medians were 1,779.73/1,794.30 ms and attunement-comparison
+medians were 481.20/473.94 ms. This demonstrates that the original baseline
+comparison cannot isolate the cache's effect. It does not identify the exact
+runtime cause of the historical difference; GC alone was not established as
+the explanation. Future performance comparisons should isolate implementations
+in fresh processes, balance run order, and report repeated runs and phase costs.

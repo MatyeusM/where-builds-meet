@@ -1,3 +1,4 @@
+import attunementJson from "../../data/attunement.json"
 import type { AttunementStats } from "./damage"
 
 export type AttunementOverrides = Partial<AttunementStats>
@@ -6,6 +7,33 @@ export type AttunementTagFilter = {
   /** All entries must match; a nested array matches any one of its tags. */
   tags?: Array<string | string[]>
   excludeTags?: string[]
+}
+
+type AttunementDefinition = { effect?: AttunementTagFilter & { stat?: Record<string, number> } }
+const attunementDefinitions = attunementJson as Record<string, AttunementDefinition>
+type AttunementMatch = { key: keyof AttunementStats; stat: Record<string, number> | undefined }
+const attunementMatchCache = new WeakMap<AttunementStats, Map<string, readonly AttunementMatch[]>>()
+
+/** Worker attunement snapshots have immutable keys; values are read by the caller on every hit. */
+export function matchingAttunementEntries(
+  attunement: AttunementStats,
+  skillTags: string[],
+): readonly AttunementMatch[] {
+  let byTags = attunementMatchCache.get(attunement)
+  if (!byTags) {
+    byTags = new Map()
+    attunementMatchCache.set(attunement, byTags)
+  }
+  const signature = JSON.stringify(skillTags)
+  let matches = byTags.get(signature)
+  if (!matches) {
+    matches = (Object.keys(attunement) as Array<keyof AttunementStats>).flatMap(key => {
+      const effect = attunementDefinitions[key]?.effect
+      return attunementMatchesSkill(effect, skillTags) ? [{ key, stat: effect?.stat }] : []
+    })
+    byTags.set(signature, matches)
+  }
+  return matches
 }
 
 export function attunementMatchesSkill(filter: AttunementTagFilter | undefined, skillTags: string[]) {
