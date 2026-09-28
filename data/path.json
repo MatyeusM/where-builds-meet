@@ -7,7 +7,8 @@
     "defaultBuild": "empty",
     "graduated": ["empty"],
     "defaultRotation": "empty",
-    "lockedWeapons": ["namelessSword", "namelessSpear"]
+    "lockedWeapons": ["namelessSword", "namelessSpear"],
+    "arsenal": "Bellstrike"
   },
   "bellstrikeUmbra": {
     "name": "Umbra",
@@ -17,7 +18,8 @@
     "defaultBuild": "empty",
     "graduated": ["empty"],
     "defaultRotation": "empty",
-    "lockedWeapons": ["strategicSword", "heavenquakerSpear"]
+    "lockedWeapons": ["strategicSword", "heavenquakerSpear"],
+    "arsenal": "Bellstrike"
   },
   "stonesplitMight": {
     "name": "Might",
@@ -27,7 +29,8 @@
     "defaultBuild": "might-fully-relayed-max",
     "graduated": ["might-full-max"],
     "defaultRotation": "dummy-1-min",
-    "lockedWeapons": ["thundercry", "stormbreaker"]
+    "lockedWeapons": ["thundercry", "stormbreaker"],
+    "arsenal": "Stonesplit"
   },
   "stonesplitStrength": {
     "name": "Strength",
@@ -37,7 +40,8 @@
     "defaultBuild": "mixed-fully-relayed-min",
     "graduated": ["mixed-full-min", "pure-full-min"],
     "defaultRotation": "mixed-dummy-infinite-vitality-1-min",
-    "lockedWeapons": ["snowparting", "phalanxbane"]
+    "lockedWeapons": ["snowparting", "phalanxbane"],
+    "arsenal": "Stonesplit"
   },
   "silkbindJade": {
     "name": "Jade",
@@ -47,7 +51,8 @@
     "defaultBuild": "empty",
     "graduated": ["empty"],
     "defaultRotation": "empty",
-    "lockedWeapons": ["vernalUmbrella", "inkwellFan"]
+    "lockedWeapons": ["vernalUmbrella", "inkwellFan"],
+    "arsenal": "Silkbind"
   },
   "silkbindDeluge": {
     "name": "Deluge",
@@ -57,7 +62,8 @@
     "defaultBuild": "deluge-fully-relayed-min-ew",
     "graduated": ["deluge-full-min-ew"],
     "defaultRotation": "dummy-1-min-wts-team",
-    "lockedWeapons": ["panaceaFan", "soulshadeUmbrella"]
+    "lockedWeapons": ["panaceaFan", "soulshadeUmbrella"],
+    "arsenal": "Silkbind"
   },
   "bamboocutWind": {
     "name": "Wind",
@@ -67,7 +73,8 @@
     "defaultBuild": "wind-fully-relayed-min",
     "graduated": ["wind-full-min"],
     "defaultRotation": "wind-dummy-1-min-infinite-vitality",
-    "lockedWeapons": ["infernalTwinblades", "mortalRopeDart"]
+    "lockedWeapons": ["infernalTwinblades", "mortalRopeDart"],
+    "arsenal": "Bamboocut"
   },
   "bamboocutDust": {
     "name": "Dust",
@@ -77,7 +84,8 @@
     "defaultBuild": "dust-fully-relayed-min",
     "graduated": ["dust-full-min"],
     "defaultRotation": "dust-dummy-1-min",
-    "lockedWeapons": ["everspring", "unfettered"]
+    "lockedWeapons": ["everspring", "unfettered"],
+    "arsenal": "Bamboocut"
   },
   "bamboocutKite": {
     "name": "Kite",
@@ -87,7 +95,8 @@
     "defaultBuild": "kite-fully-relayed-min-bp",
     "graduated": ["kite-full-min-bp"],
     "defaultRotation": "dummy-1-min-iv-bp",
-    "lockedWeapons": ["heavenwill", "skygrasp"]
+    "lockedWeapons": ["heavenwill", "skygrasp"],
+    "arsenal": "Bamboocut"
   },
   "bamboocutDraught": {
     "name": "Draught",
@@ -97,7 +106,8 @@
     "defaultBuild": "empty",
     "graduated": ["empty"],
     "defaultRotation": "empty",
-    "lockedWeapons": ["skystrikeGauntlets", "rivenTwinblades"]
+    "lockedWeapons": ["skystrikeGauntlets", "rivenTwinblades"],
+    "arsenal": "Bamboocut"
   },
   "mixed": {
     "name": "Mixed",

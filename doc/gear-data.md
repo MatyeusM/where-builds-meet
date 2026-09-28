@@ -274,22 +274,49 @@ pair to a path in `data/path.json`, then uses the path's canonical left/right
 order and each imported item's physical gear definition to assign weapon slots.
 This supports dashboard exports whose main/sub order differs from the path order
 and martial arts such as Thundercry Blade that share a Mo Blade gear definition.
-`passiveSlots` contains the four ordered Inner Way IDs. The payload does not
-expose their tiers, so recognized complete four-slot selections import at T6 by
-policy; an incomplete or unknown selection retains the application's default
-Inner Ways. Bow slot 21 and ring slot 9 use suffix IDs `44`, `45`, and `46` for
+
+`passiveSlots` contains the four ordered Inner Way IDs. Those IDs are the Inner
+Way `id` values in `local/datamine/wwm-inner-way-normal.json`, so the Inner Way
+map covers all 57 of them, not only the ones seen in a dashboard export; only
+`651` Song of Harmony lacks an application definition and therefore an
+`innerWay` key. The payload does not expose tiers, so recognized complete
+four-slot selections import at T6 by policy. A slot holding an ID outside that
+table imports empty, which is also how a path-ineligible or unfilled (`0`) slot
+is represented; a payload without a four-entry `passiveSlots` retains the
+application's default Inner Ways.
+
+Bow slot 21 and ring slot 9 use suffix IDs `44`, `45`, and `46` for
 Precision, Critical, and Affinity respectively. Matching known suffixes select
 that bow/ring set; different suffixes explicitly select `None`. Missing or
 unknown suffix data retains the application's default selection. Recognized suffix IDs on
 Left Weapon, Right Weapon, Disc, and Pendant determine weapon-set piece counts:
 two recognized matching pieces select the two-piece tier and four select the
-four-piece tier. Official suffix `7` maps to Rainwhisper, suffix `50` maps to
-Cleftpeak, and suffix `56` maps to Etherwrath. Armor slots use the same piece-count
-rule through the armor-set map: suffix `2` maps to Formbend and suffix `24` maps to
-Calmwaters. Calmwaters remains importable but has no path eligibility; Moonflare is
-Deluge's only selectable armor set and has no confirmed official suffix mapping yet.
-Unknown weapon-set, armor-set, and arsenal data continues using the application's
-default setup values.
+four-piece tier. Armor slots use the same piece-count rule through the armor-set
+map. Both maps cover every official suffix ID found in
+`local/datamine/items/**/*.json`, where each item lists `sets` entries whose
+`https://wwmdb.vlt.fyi/sets/<id>` URL is that suffix ID. Every item lists only
+sets of its own category, so the suffix IDs already confirmed from dashboard
+exports label the rest of each category, and the application set names come
+from `local/datamine/wwm-item-sets-weapon.json` and
+`local/datamine/wwm-item-sets-armor.json`, whose entries are ordered by ascending
+suffix ID. The datamine spells some sets differently from the application
+(`Rainwhisper`, `Shattered Ridge`, `Agile Steps`, `Flawless Defense`,
+`Jade Embrace`, `Obsidian Armor`), so the generated map uses the application
+names. Weapon suffixes are `1` Jadeware, `3` Hawkwing, `7` RainWhisper, `9`
+SwiftGale, `11` SwayingHeights, `23` Swallowcall, `25` Mistwillow, `29`
+Ivorybloom, `34` Starweave, `50` Cleftpeak, and `56` Etherwrath. Armor suffixes
+are `2` Formbend, `4` Eaglerise, `8` Moonflare, `10` RippleStep, `12`
+FlawlessGuardian, `24` Calmwaters, `26` BeyondtheChill, `30` Whirlsnow, `35`
+Jadeclasp, and `51` Ebonward. Tiltrim, Honorbound, and Brimflow have no suffix
+ID in the snapshot. Calmwaters remains importable but has no path eligibility.
+A recognized suffix replaces the whole set selection, so an imported set never
+coexists with an application default set. Unknown weapon-set and armor-set data
+continues using the application's default setup values.
+
+The payload identifies no arsenal, so the imported build takes the `arsenal`
+recorded on the resolved path in `data/path.json`: the arsenal covering that
+path's attribute, such as Bamboocut for every `bamboocut*` path. The Mixed
+path has no attribute and keeps the application default.
 
 Tier 96 Stonesplit Might armor attunements use IDs `280201` through `280205`:
 Thundercry Blade Shield, Charged Skill DMG, and Special Skill DMG Boost followed

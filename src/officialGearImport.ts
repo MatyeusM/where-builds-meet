@@ -45,7 +45,7 @@ const officialImportMap = officialImportMapJson as {
 }
 const pathDefinitions = pathDefinitionsJson as unknown as Record<
   string,
-  { tag?: string; lockedWeapons?: [WeaponId, WeaponId] }
+  { tag?: string; lockedWeapons?: [WeaponId, WeaponId]; arsenal?: string }
 >
 
 const officialSlotMap: Record<string, GearSlot> = {
@@ -436,6 +436,7 @@ export function parseOfficialGearExport(value: unknown, weapons: [WeaponId, Weap
     ...(Object.keys(importedWeaponSets).length ? { weaponSets: importedWeaponSets } : {}),
     ...(Object.keys(importedArmorSets).length ? { armorSets: importedArmorSets } : {}),
     ...(bowRingSet ? { bowRingSet } : {}),
+    ...(categorizedPath?.arsenal ? { arsenal: categorizedPath.arsenal } : {}),
   })
   const buildId = createId("official-build")
   const gearItems = parsedGearItems.filter((item): item is GearItem => item !== undefined)
