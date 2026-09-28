@@ -80,7 +80,7 @@ data/
   debuff/         target effect and encounter-state definitions
   innerway/       cumulative tier rules and triggers
   martial-art/    weapon talent arrays
-  path.json       combat-path status, preset build group, eligibility tags, and optional weapon locks
+  path.json       combat-path status, preset build group, eligibility tags, arsenal, and optional weapon locks
   rotation/       bundled default rotations
   build/          bundled default build presets
   gear.json       gear slots, item bases, affix choices, and attunement source tags
@@ -1555,7 +1555,8 @@ source base attribute, for example `"power": { "minPhys": 0.22 }`.
 
 Add the path metadata to `data/path.json`. Every path declares an explicit
 `status` and `buildGroup`; the latter names its directory under `data/build/`.
-A path can also declare a shared `tag` and a fixed `[left, right]`
+A path can also declare a shared `tag`, the `arsenal` covering its attribute,
+and a fixed `[left, right]`
 `lockedWeapons` pair; paths without a weapon lock
 allow either martial art in either slot. New weapons still require changes to
 `WeaponId`, settings validation, martial-art imports, attunement matching, and

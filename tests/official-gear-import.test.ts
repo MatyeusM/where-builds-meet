@@ -212,6 +212,86 @@ describe("official-gear-import", () => {
         ]) && delugeTestingSetup.armorSets.Formbend === 4,
       "Official imports must preserve empty passive slots, clear path-ineligible Inner Ways, and derive armor sets.",
     )
+    for (const [label, parsed, arsenal] of [
+      ["Kite", kiteSetupShape, "Bamboocut"],
+      ["Deluge", delugeTestingSetupShape, "Silkbind"],
+    ]) {
+      assert(
+        parsed.exportValue.builds[0].setup.arsenal === arsenal,
+        `A ${label} import must select the ${arsenal} arsenal that covers its path's attribute.`,
+      )
+    }
+    const dustSetupShape = importer.parseOfficialGearExport(
+      {
+        roleName: "Dust Setup",
+        kongfuMain: 20603,
+        kongfuSub: 20702,
+        passiveSlots: [81, 501, 502, 42],
+        wearEquipsDetailed: {
+          1: detail({ MIN_W_ATK: 65, MAX_W_ATK: 151 }, [actualRow(9713002, 73.1)], { suffix: 34 }),
+          2: detail({ MIN_W_ATK: 65, MAX_W_ATK: 151 }, [actualRow(9713002, 57.6)], { suffix: 34 }),
+          3: detail({ W_DEF: 22, HP_MAX: 5774 }, [actualRow(9743004, 0.0846)], { suffix: 4 }),
+          4: detail({ W_DEF: 22, HP_MAX: 11547 }, [actualRow(9743004, 0.0846)], { suffix: 4 }),
+          5: detail({ W_DEF: 44, HP_MAX: 5774 }, [actualRow(9753004, 0.0846)], { suffix: 4 }),
+          8: detail({ W_DEF: 22, HP_MAX: 5774 }, [actualRow(9753004, 0.0842)], { suffix: 4 }),
+          10: detail({ MIN_W_ATK: 78 }, [actualRow(9732002, 77.7)], { suffix: 34 }),
+          11: detail({ MAX_W_ATK: 129 }, [actualRow(9733002, 72.7)], { suffix: 34 }),
+        },
+      },
+      ["everspring", "unfettered"],
+    )
+    const dustSetup = dustSetupShape.exportValue.builds[0].setup
+    const selectedWeaponSets = Object.entries(dustSetup.weaponSets).filter(([, tier]) => tier > 0)
+    const selectedArmorSets = Object.entries(dustSetup.armorSets).filter(([, tier]) => tier > 0)
+    assert(
+      JSON.stringify(dustSetup.innerWays) ===
+        JSON.stringify([
+          { innerWay: "MoraleChant", tier: "T6" },
+          { innerWay: "PhantomRally", tier: "T6" },
+          { innerWay: "TowlineSweep", tier: "T6" },
+          { innerWay: "BitterSeasons", tier: "T6" },
+        ]),
+      "Every recognized passive slot must import its Inner Way instead of leaving the slot empty.",
+    )
+    assert(
+      JSON.stringify(selectedWeaponSets) === JSON.stringify([["Starweave", 4]]) &&
+        JSON.stringify(selectedArmorSets) === JSON.stringify([["Eaglerise", 4]]),
+      "A four-piece official weapon or armor suffix must select only that set, never an application default.",
+    )
+    assert(
+      dustSetup.arsenal === "Bamboocut",
+      "A Dust import must select the Bamboocut arsenal that covers its path's attribute.",
+    )
+    // The official ID tables are only useful while every value they carry resolves.
+    const profileMap = (await import("../data/official/profile-map.json")).default
+    const { innerWayDefinitions } = await import("../src/data/innerWayDefinitions.ts")
+    const { typedPathDefinitions } = await import("../src/application/gameData/paths.ts")
+    const arsenals = Object.keys((await import("../data/arsenal.json")).default)
+    for (const [id, entry] of Object.entries(profileMap.innerWays)) {
+      if (!entry.innerWay) continue
+      assert.ok(
+        entry.innerWay in innerWayDefinitions,
+        `Official Inner Way ${id} must resolve to a registered definition, not ${entry.innerWay}.`,
+      )
+    }
+    for (const [table, field, definitions] of [
+      ["weaponSets", "weaponSet", gear.weaponSetDefinitions],
+      ["armorSets", "armorSet", gear.armorSetDefinitions],
+    ]) {
+      for (const [id, entry] of Object.entries(profileMap[table])) {
+        assert.ok(
+          entry[field] in definitions,
+          `Official ${table} ${id} must resolve to a registered set, not ${entry[field]}.`,
+        )
+      }
+    }
+    for (const [pathId, definition] of Object.entries(typedPathDefinitions)) {
+      if (!definition.arsenal) continue
+      assert.ok(
+        arsenals.includes(definition.arsenal),
+        `Path ${pathId} must name a registered arsenal, not ${definition.arsenal}.`,
+      )
+    }
     const mismatchedBowRingShape = importer.parseOfficialGearExport(
       {
         roleName: "Mismatched Bow Ring",

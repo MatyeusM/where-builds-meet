@@ -12,6 +12,8 @@ export type PathDefinition = {
   graduated: string[]
   defaultRotation: string
   lockedWeapons?: [WeaponId, WeaponId]
+  /** Arsenal covering this path's attribute; the Mixed path has none. */
+  arsenal?: string
 }
 
 export const typedPathDefinitions = pathDefinitions as Record<PathId, PathDefinition>
