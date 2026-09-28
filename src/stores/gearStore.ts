@@ -10,22 +10,12 @@ import {
   scopedItemIds,
   sharedGearScope,
   unplacedIds,
-  visibleBuilds,
-  visibleGearItems,
   type GearScope,
   type ScopeTarget,
-  type VisibleBuildsInput,
 } from "@/application/gearScope"
 import { activeBuildByPathStorageKey, activeBuildStorageKey } from "@/application/persistence/keys"
 import { loadPathSelectionIds, withPathSelection, type PathSelectionIds } from "@/application/persistence/pathSelection"
-import {
-  buildListStorageKey,
-  loadBuildState,
-  serializeBuildState,
-  type BuildEntry,
-  type BuildState,
-  type GearItem,
-} from "@/gear"
+import { buildListStorageKey, loadBuildState, serializeBuildState, type BuildState } from "@/gear"
 import { setPersistentItem } from "@/persistentStorage"
 
 /**
@@ -90,10 +80,6 @@ export type GearStore = {
   unshareGear: (target: ScopeTarget, placement: { target: "all" | "path"; pathId: PathId }) => void
   /** How many builds or items a sharing setting would have to ask about, which may be none. */
   unplacedCount: (target: ScopeTarget) => number
-  /** The builds one path can see, the single answer to "which builds are in the list". */
-  selectVisibleBuilds: (input: Omit<VisibleBuildsInput, "buildState" | "scope">) => BuildEntry[]
-  /** The gear one path can see, given the builds it can see. */
-  selectVisibleGearItems: (input: { pathId: PathId; builds: BuildEntry[] }) => GearItem[]
 }
 
 const emptyBuildState: BuildState = { entries: [], activeBuildId: "", gearItems: [] }
@@ -115,8 +101,6 @@ export const useGearStore = create<GearStore>()((set, get) => {
     shareGear: target => writeScope(api, sharedFlag(get().scope, target, true)),
     unshareGear: (target, placement) => unshare(api, target, placement),
     unplacedCount: target => unplacedIds(get().scope, target, scopedIds(get().buildState, target)).length,
-    selectVisibleBuilds: input => visibleBuilds({ ...input, ...records(api) }),
-    selectVisibleGearItems: ({ pathId, builds }) => visibleGearItems({ ...records(api), pathId, builds }),
   }
 })
 
@@ -165,10 +149,6 @@ function unshare(api: StoreApi, target: ScopeTarget, placement: { target: "all" 
   const unplaced = unplacedIds(current, target, scopedIds(get().buildState, target))
   const placed = unplaced.length > 0 ? gearScopeWithIds(current, target, unplaced, placement) : current
   writeScope(api, sharedFlag(placed, target, false))
-}
-
-function records({ get }: StoreApi) {
-  return { buildState: get().buildState, scope: get().scope }
 }
 
 /** The ids a scope has to account for. Presets are excluded, because they are never scoped. */

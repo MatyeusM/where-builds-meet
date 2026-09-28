@@ -38,6 +38,8 @@ const loadRotationEditorTab = () => import("./features/rotations/RotationEditorT
 const BuildTab = lazy(loadBuildTab)
 const SimulationTab = lazy(loadSimulationTab)
 const RotationEditorTab = lazy(() => loadRotationEditorTab().then(module => ({ default: module.RotationEditorTab })))
+import { visibleBuilds, visibleGearItems } from "@/application/gearScope"
+
 import {
   attunementOverrideStorageKey,
   buildSetupOverrideStorageKey,
@@ -56,14 +58,7 @@ import {
   type CharacterProfile,
 } from "./characterProfiles"
 import { useActiveRotationResult } from "./features/rotations/useActiveRotationResult"
-import {
-  buildEntryAvailableForPath,
-  buildEntryIsTestPreset,
-  resolveBuildSetup,
-  sameWeaponPair,
-  type BuildSetup,
-  type BuildSetupOverrides,
-} from "./gear"
+import { resolveBuildSetup, sameWeaponPair, type BuildSetup, type BuildSetupOverrides } from "./gear"
 import { gameText, getLocale, getLocaleDisplayName, getSupportedLocales, isLocaleWip, selectLocale, t } from "./i18n"
 import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
@@ -141,15 +136,24 @@ export default function App() {
     useRotationStore.getState().initialise(pathId)
   }
   const buildState = useGearStore(state => state.buildState)
+  const scope = useGearStore(state => state.scope)
   const activeBuildIdsByPath = useGearStore(state => state.activeBuildIdsByPath)
   const activeRotationIdsByPath = useRotationStore(state => state.activeRotationIdsByPath)
   const activeResult = useRotationStore(state => state.result)
   const breakthrough = breakthroughProfile(settings)
   const enemy: EnemyProfile = breakthrough
-  const availableBuildEntries = buildState.entries.filter(
-    entry =>
-      (devMode || !buildEntryIsTestPreset(entry)) &&
-      buildEntryAvailableForPath(entry, typedPathDefinitions[pathId].buildGroup, settings.weapons),
+  const pathBuildGroup = typedPathDefinitions[pathId].buildGroup
+  // Which builds and which gear this path may see is the store's rule, not this file's, and it
+  // is computed once here because both the active build and the gear that reaches the
+  // measurement come from the same answer. The list is filtered before the measurement rather
+  // than after, so a path cannot be measured with an item it is not meant to own.
+  const availableBuildEntries = useMemo(
+    () => visibleBuilds({ buildState, scope, pathId, buildGroup: pathBuildGroup, weapons: settings.weapons, devMode }),
+    [buildState, scope, pathId, pathBuildGroup, settings.weapons, devMode],
+  )
+  const visibleGear = useMemo(
+    () => visibleGearItems({ buildState, scope, pathId, builds: availableBuildEntries }),
+    [buildState, scope, pathId, availableBuildEntries],
   )
   const activeBuild =
     availableBuildEntries.find(entry => entry.id === activeBuildIdsByPath[pathId]) ??
@@ -171,7 +175,7 @@ export default function App() {
     () =>
       resolveBuildStatState({
         build: activeBuild,
-        gearItems: buildState.gearItems,
+        gearItems: visibleGear,
         settings,
         statOverrides,
         attunementOverrides,
@@ -181,7 +185,7 @@ export default function App() {
       }),
     [
       activeBuild,
-      buildState.gearItems,
+      visibleGear,
       settings,
       statOverrides,
       attunementOverrides,
@@ -235,7 +239,7 @@ export default function App() {
   useActiveRotationResult({
     pathId,
     build: activeBuild,
-    gearItems: buildState.gearItems,
+    gearItems: visibleGear,
     measurement: buildMeasurementContext,
     activeRotationId: selectedRotationId,
     defaultRotationId: defaultRotationIdForPath(pathId),
@@ -307,11 +311,14 @@ export default function App() {
       nextPathId === "mixed" && options.weapons
         ? { ...settingsForPath(settings, nextPathId), weapons: [...options.weapons] as [WeaponId, WeaponId] }
         : settingsForPath(settings, nextPathId)
-    const nextBuildEntries = buildState.entries.filter(
-      entry =>
-        (devMode || !buildEntryIsTestPreset(entry)) &&
-        buildEntryAvailableForPath(entry, typedPathDefinitions[nextPathId].buildGroup, nextSettings.weapons),
-    )
+    const nextBuildEntries = visibleBuilds({
+      buildState,
+      scope,
+      pathId: nextPathId,
+      buildGroup: typedPathDefinitions[nextPathId].buildGroup,
+      weapons: nextSettings.weapons,
+      devMode,
+    })
     const nextRotationEntries = loadRotationEntries().filter(
       entry => (devMode || !entry.test) && rotationAvailableForWeapons(entry, nextSettings.weapons),
     )
@@ -546,12 +553,12 @@ export default function App() {
             <div className="viewport-tab-content">
               <BuildTab
                 pathId={pathId}
+                builds={availableBuildEntries}
+                visibleItems={visibleGear}
                 weapons={settings.weapons}
                 martialArtTags={buildTabMartialArtTags}
                 pathTag={pathId === "mixed" ? undefined : typedPathDefinitions[pathId].tag}
-                buildGroup={typedPathDefinitions[pathId].buildGroup}
                 graduatedBuildIds={typedPathDefinitions[pathId].graduated}
-                devMode={devMode}
                 onActiveBuildChange={activateBuildForPath}
                 onSelectBuildWeapons={selectBuildWeapons}
                 measurement={buildMeasurementContext}

@@ -28,8 +28,6 @@ import {
   availableSetEntriesForTags,
   affixOptionsForGearDefinition,
   buildEntryAvailableForMartialArts,
-  buildEntryAvailableForPath,
-  buildEntryIsTestPreset,
   buildEntryMartialArts,
   exportBuildState,
   gearBaseStats,
@@ -91,12 +89,14 @@ function createBuildId() {
 
 type BuildTabProps = {
   pathId: PathId
+  /** The builds this path may see, already filtered by the store's rule. */
+  builds: BuildEntry[]
+  /** The gear this path may see, which is what the editor and the gear panel both resolve. */
+  visibleItems: GearItem[]
   weapons: [WeaponId, WeaponId]
   martialArtTags: string[]
   pathTag?: string
-  buildGroup: string
   graduatedBuildIds: string[]
-  devMode: boolean
   onActiveBuildChange: (id: string) => void
   onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean
   /** The sheet and environment a build is measured against, and the rotation it runs. */
@@ -268,12 +268,12 @@ function RelayedIndicator({ item }: { item?: GearItem }) {
 
 export default function BuildTab({
   pathId,
+  builds,
+  visibleItems,
   weapons,
   martialArtTags,
   pathTag,
-  buildGroup,
   graduatedBuildIds,
-  devMode,
   onActiveBuildChange,
   onSelectBuildWeapons,
   measurement,
@@ -307,13 +307,12 @@ export default function BuildTab({
     // React sanitizes javascript: href props; this trusted, generated bookmarklet must be assigned to the DOM.
     officialBookmarkletRef.current?.setAttribute("href", officialGearBookmarklet)
   }, [officialGearBookmarklet])
-  const listedEntries = buildState.entries
-    .filter(
-      entry =>
-        (devMode || !buildEntryIsTestPreset(entry)) &&
-        (!entry.isDefault || buildEntryAvailableForPath(entry, buildGroup, weapons)),
-    )
-    .sort((left, right) => Number(left.isDefault === true) - Number(right.isDefault === true))
+  // `builds` is already the list this path may see, filtered by the store's rule. Only the
+  // order is decided here, because a shipped preset belongs at the end of the list rather than
+  // wherever the records happen to be stored.
+  const listedEntries = [...builds].sort(
+    (left, right) => Number(left.isDefault === true) - Number(right.isDefault === true),
+  )
   const editingEntry = listedEntries.find(entry => entry.id === editingBuildId) ?? listedEntries[0]
   if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
@@ -370,10 +369,10 @@ export default function BuildTab({
     !isActiveBuild && editedThroughput && activeThroughput
       ? { delta: editedThroughput.dps - activeThroughput.dps, reading: editedThroughput }
       : undefined
-  const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons)
+  const inventory = resolveBuildInventory(editingEntry, visibleItems, weapons)
   const setup = resolveBuildSetup(editingEntry)
   const usageCounts = new Map<string, number>()
-  for (const entry of buildState.entries) {
+  for (const entry of listedEntries) {
     if (entry.isDefault) continue
     for (const itemId of new Set(Object.values(entry.equipped ?? {}))) {
       if (itemId) usageCounts.set(itemId, (usageCounts.get(itemId) ?? 0) + 1)
