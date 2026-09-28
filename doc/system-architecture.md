@@ -9,6 +9,29 @@ build time. User changes remain in browser storage. Deterministic calculation
 work runs in a persistent Web Worker, while requested Monte Carlo simulations
 run in their own disposable worker.
 
+## Spacing and sizing scale
+
+`src/styles/tokens.css` defines the scale: `--space-3xs` through `--space-xl`, at
+`0.125rem`, `0.25rem`, `0.5rem`, `0.75rem`, `1rem`, `1.5rem`, and `2rem`. Every step
+is a multiple of `0.25rem`, so a token and a bare multiple of that unit always
+agree, and the two can be adopted independently. `AGENTS.md` requires new values to
+come from this scale.
+
+**The scale is barely adopted.** Measured across the fifteen stylesheets, six
+declarations reference a `--space-*` token against roughly 314 spacing declarations
+written as bare lengths. The rhythm is not absent, it is just not on the scale: the
+commonest values are `8px`, `12px`, `16px`, and `4px`, which are the tokens
+`--space-sm`, `--space-sm`, `--space-md`, and `--space-2xs`. Alongside those sits a
+regular `4n + 2` sub-grid — `6px`, `10px`, `14px`, `18px`, `22px` — and then values
+with no pattern at all: `5px`, `7px`, `9px`, `13px`, `23px`, `37px`. That mixture,
+rather than any single wrong number, is what makes the interface read as uneven.
+
+Two conversions are different in kind and should not be bundled. Substituting a token
+for an equal raw length (`8px` to `var(--space-sm)`) cannot change layout, so it is
+mechanical and safe to do everywhere. Rounding an off-scale value to its nearest step
+does change layout, has no automated check — `test:dps` is bit-deterministic for damage
+and blind to pixels — and is verified by looking at it.
+
 ## Typography and resilient layout
 
 The UI self-hosts the variable Noto Sans family through Fontsource as its
