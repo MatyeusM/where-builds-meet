@@ -3,7 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState, useSyncExter
 
 import { resolveBuildStatState } from "./application/buildStatState"
 import { settingsForPath } from "./application/characterComposition"
-import type { CalculatorSettings, LayoutMode, PathId, SetupSelections } from "./application/contracts"
+import type { LayoutMode, PathId } from "./application/contracts"
 import { martialArtDefinitions } from "./application/gameData/martialArts"
 import { pathIcons } from "./application/gameData/pathIcons"
 import {
@@ -17,7 +17,6 @@ import {
 import { breakthroughProfile } from "./application/gameData/setup"
 import { loadAttunementOverrides } from "./application/persistence/attunements"
 import { loadRotationEntries } from "./application/persistence/rotations"
-import { loadSettings } from "./application/persistence/settings"
 import { loadBuildSetupOverrides, sameBuildSetupValue } from "./application/persistence/setupOverrides"
 import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence/skillOverrides"
 import { loadStatOverrides } from "./application/persistence/stats"
@@ -44,26 +43,13 @@ import {
   activeBuildByPathStorageKey,
   attunementOverrideStorageKey,
   buildSetupOverrideStorageKey,
-  divinecraftStorageKey,
-  foodStorageKey,
-  layoutPreviewStorageKey,
-  pathStorageKey,
-  scriptStorageKey,
-  settingsStorageKey,
   skillStorageKey,
   statOverrideStorageKey,
 } from "./application/persistence/keys"
 import { loadPathSelectionIds, withPathSelection, type PathSelectionIds } from "./application/persistence/pathSelection"
-import {
-  compactLayoutSnapshot,
-  loadDevMode,
-  loadDivinecraft,
-  loadFood,
-  loadLayoutPreview,
-  loadScript,
-  loadSelectedPath,
-  subscribeToCompactLayout,
-} from "./application/persistence/settings"
+// Only the live viewport query stays here; everything stored in settings moved to
+// `stores/settingsStore`, which is where those loaders and keys are read from now.
+import { compactLayoutSnapshot, subscribeToCompactLayout } from "./application/persistence/settings"
 import type { CharacterStatOverrides } from "./calculations/statEffects"
 import {
   characterProfileStorageKey,
@@ -85,21 +71,13 @@ import {
   type BuildSetupOverrides,
   type BuildState,
 } from "./gear"
-import {
-  developmentModeStorageKey as devModeStorageKey,
-  gameText,
-  getLocale,
-  getLocaleDisplayName,
-  getSupportedLocales,
-  isLocaleWip,
-  selectLocale,
-  t,
-} from "./i18n"
+import { gameText, getLocale, getLocaleDisplayName, getSupportedLocales, isLocaleWip, selectLocale, t } from "./i18n"
 import { resolvePathWorkspaceSelection } from "./pathWorkspace"
 import { removePersistentItem, setPersistentItem } from "./persistentStorage"
 import { serializeSkillOverrides, type SkillOverrides } from "./skillOverrides"
 import { useDpsStore } from "./stores/dpsStore"
 import { useRotationStore } from "./stores/rotationStore"
+import { useSettingsStore } from "./stores/settingsStore"
 import { type CharacterStats, type EnemyProfile, type WeaponId } from "./types"
 
 const tabSuspenseFallback = <div className="viewport-tab-content" />
@@ -135,22 +113,23 @@ export default function App() {
   const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides)
   const skillEditorModified = hasSkillOverrides(skillOverrides)
   const [innerWayRevision, setInnerWayRevision] = useState(0)
-  const [setupSelections, setSetupSelections] = useState<SetupSelections>(() => ({
-    food: loadFood(),
-    script: loadScript(),
-    divinecraft: loadDivinecraft(),
-  }))
-  useEffect(() => setPersistentItem(foodStorageKey, setupSelections.food), [setupSelections.food])
-  useEffect(() => setPersistentItem(scriptStorageKey, setupSelections.script), [setupSelections.script])
-  useEffect(() => setPersistentItem(divinecraftStorageKey, setupSelections.divinecraft), [setupSelections.divinecraft])
   const [statOverrides, setStatOverrides] = useState<CharacterStatOverrides>(loadStatOverrides)
   const [attunementOverrides, setAttunementOverrides] = useState<AttunementOverrides>(loadAttunementOverrides)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
-  const [devMode, setDevMode] = useState(loadDevMode)
-  const [layoutPreview, setLayoutPreview] = useState<LayoutMode>(() => loadLayoutPreview(compactViewport))
+  // The settings store is a module singleton, so its persisted state is read during the first
+  // render rather than when its module happens to be imported. It has to be read before the
+  // first render reads the path, the build list is filtered by, or the editor picks a rotation.
+  const [settingsStoreRead, markSettingsStoreRead] = useState(false)
+  if (!settingsStoreRead) {
+    markSettingsStoreRead(true)
+    useSettingsStore.getState().initialise(compactViewport)
+  }
+  const devMode = useSettingsStore(state => state.devMode)
+  const layoutPreview = useSettingsStore(state => state.layoutPreview)
+  const pathId = useSettingsStore(state => state.pathId)
+  const settings = useSettingsStore(state => state.settings)
+  const setupSelections = useSettingsStore(state => state.setupSelections)
   const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
-  const [pathId, setPathId] = useState<PathId>(() => loadSelectedPath(devMode))
-  const [settings, setSettings] = useState<CalculatorSettings>(() => settingsForPath(loadSettings(), pathId))
   const [buildState, setBuildState] = useState<BuildState>(loadBuildState)
   const [activeBuildIdsByPath, setActiveBuildIdsByPath] = useState<PathSelectionIds>(() =>
     loadPathSelectionIds(activeBuildByPathStorageKey, activeBuildStorageKey, pathId),
@@ -371,12 +350,13 @@ export default function App() {
     const nextRotationIds = withPathSelection(activeRotationIdsByPath, nextPathId, selection.rotationId)
     if (nextBuildIds !== activeBuildIdsByPath)
       setPersistentItem(activeBuildByPathStorageKey, JSON.stringify(nextBuildIds))
-    setPersistentItem(pathStorageKey, nextPathId)
     setActiveBuildIdsByPath(nextBuildIds)
     useRotationStore.getState().setRotationsByPath(nextRotationIds)
     setBuildState(current => ({ ...current, activeBuildId: selection.buildId }))
-    setPathId(nextPathId)
-    setSettings(nextSettings)
+    // The path and the settings move together: the settings for a path are derived from it, so
+    // storing one without the other would leave a session whose weapons do not fit its path.
+    useSettingsStore.getState().setSettings(nextSettings)
+    useSettingsStore.getState().setPath(nextPathId)
     setInnerWayRevision(current => current + 1)
   }
   const selectPath = (nextPathId: PathId) => transitionPath(nextPathId)
@@ -395,8 +375,7 @@ export default function App() {
   }
   const toggleDevMode = () => {
     const nextDevMode = !devMode
-    setPersistentItem(devModeStorageKey, String(nextDevMode))
-    setDevMode(nextDevMode)
+    useSettingsStore.getState().setDevMode(nextDevMode)
     if (!nextDevMode && pathRequiresDev(typedPathDefinitions[pathId])) selectPath("stonesplitStrength")
     if (!nextDevMode && isLocaleWip(locale)) void changeLocale("en")
   }
@@ -404,8 +383,7 @@ export default function App() {
     if (await selectLocale(nextLocale)) setLocale(getLocale())
   }
   const changeLayoutPreview = (nextLayout: LayoutMode) => {
-    setPersistentItem(layoutPreviewStorageKey, nextLayout)
-    setLayoutPreview(nextLayout)
+    useSettingsStore.getState().setLayoutPreview(nextLayout)
   }
   const updateSkillOverrides = (nextOverrides: SkillOverrides) => {
     setSkillOverrides(nextOverrides)
@@ -434,11 +412,6 @@ export default function App() {
     () => setPersistentItem(buildSetupOverrideStorageKey, JSON.stringify(buildSetupOverrides)),
     [buildSetupOverrides],
   )
-  useEffect(
-    () => setPersistentItem(settingsStorageKey, JSON.stringify({ weapons: settings.weapons, ping: settings.ping })),
-    [settings.weapons, settings.ping],
-  )
-  useEffect(() => setPersistentItem(pathStorageKey, pathId), [pathId])
 
   return (
     <main
@@ -563,7 +536,9 @@ export default function App() {
           onAttunementReset={resetAttunementOverride}
           onApplyCharacterProfile={applyCharacterProfile}
           onCharacterProfilesChange={setCharacterProfiles}
-          onBreakthroughChange={breakthrough => setSettings(current => ({ ...current, breakthrough }))}
+          onBreakthroughChange={breakthrough =>
+            useSettingsStore.getState().setSettings(current => ({ ...current, breakthrough }))
+          }
           onBuildSetupChange={updateBuildSetupOverride}
           onBuildSetupReset={resetBuildSetupOverride}
           rotationMetrics={activeResult?.metrics}
@@ -571,7 +546,7 @@ export default function App() {
           activeBuildName={activeBuildDisplayName}
           activeRotationName={activeRotationDisplayName}
           onInnerWayChange={() => setInnerWayRevision(current => current + 1)}
-          onSetupSelectionChange={(key, value) => setSetupSelections(current => ({ ...current, [key]: value }))}
+          onSetupSelectionChange={(key, value) => useSettingsStore.getState().setSetupSelection(key, value)}
         />
       ) : activeTab === "build" ? (
         <FeatureLoadBoundary>
@@ -609,7 +584,7 @@ export default function App() {
           pathId={pathId}
           devMode={devMode}
           layoutMode={layoutMode}
-          onSettingsChange={setSettings}
+          onSettingsChange={next => useSettingsStore.getState().setSettings(next)}
           onLayoutChange={changeLayoutPreview}
         />
       ) : null}
