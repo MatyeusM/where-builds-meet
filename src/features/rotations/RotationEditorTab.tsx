@@ -30,10 +30,12 @@ import { baselineMetricsWithPreviousComparisons } from "../../application/compar
 import type { CharacterState, PathId } from "../../application/contracts"
 import {
   formatThroughput,
+  formatThroughputDelta,
   formatNumber,
   formatResourceRange,
   skillCategoryLabel,
   skillDisplayName,
+  throughputDeltaClass,
 } from "../../application/formatting"
 import { martialArtDefinitions } from "../../application/gameData/martialArts"
 import { typedPathDefinitions } from "../../application/gameData/paths"
@@ -1675,6 +1677,17 @@ export function RotationEditorTab({
       )
     : (currentCachedResult?.metrics ?? localRotationCalculation)
 
+  // The rotation on screen is weighed against the active one the same way the build list weighs a
+  // build against the active build. The editor publishes into the store only while the rotation on
+  // screen is the active one, so whenever the two differ the store still holds the active
+  // rotation's own reading, and no further calculation is needed to compare them.
+  const editingIsActiveRotation = editingRotationId === activeRotationId
+  const activeRotationReading =
+    !editingIsActiveRotation && publishedResult?.rotationId === activeRotationId ? publishedResult : undefined
+  const dpsDelta = activeRotationReading
+    ? rotationCalculation.unscaledDps - activeRotationReading.metrics.unscaledDps
+    : undefined
+
   useEffect(() => {
     const requestSequence = ++editorPreviewRequestSequenceRef.current
     if (!editorTimelineReady) return
@@ -1998,21 +2011,44 @@ export function RotationEditorTab({
                   <>
                     <span>
                       {t("system.totalDamage")}: {formatThroughput(rotationCalculation.unscaledTotalDamage)}
+                      {dpsDelta === undefined ? (
+                        <small className="rotation-results-dps">
+                          {" "}
+                          ({formatThroughput(rotationCalculation.unscaledDps)} {t("system.dps")})
+                        </small>
+                      ) : (
+                        <Tooltip
+                          className="rotation-results-dps-tooltip"
+                          content={
+                            <>
+                              <span className="rotation-results-dps-row">
+                                <span>{t("ui.app.notActiveDps")}</span>
+                                <strong>{formatThroughput(rotationCalculation.unscaledDps)}</strong>
+                              </span>
+                              <span className="rotation-results-dps-row">
+                                <span>{t("ui.app.rotationUsed")}</span>
+                                <strong>{activeRotationReading?.rotationName ?? ""}</strong>
+                              </span>
+                            </>
+                          }
+                        >
+                          <small className={`rotation-results-dps ${throughputDeltaClass(dpsDelta, "damage")}`}>
+                            {" "}
+                            ({formatThroughputDelta(dpsDelta)} {t("system.dps")})
+                          </small>
+                        </Tooltip>
+                      )}
                     </span>
                     {rotationCalculation.totalHealing > 0 ? (
                       <span className="healing-value">
                         {t("system.totalHealing")}: +{formatThroughput(rotationCalculation.totalHealing)}
                       </span>
                     ) : null}
-                    <span>
-                      {t("system.dps")}: {formatThroughput(rotationCalculation.unscaledDps)}
-                      {rotationCalculation.hps > 0 ? (
-                        <span className="healing-value">
-                          {" / "}
-                          {t("system.hps")}: {formatThroughput(rotationCalculation.hps)}
-                        </span>
-                      ) : null}
-                    </span>
+                    {rotationCalculation.hps > 0 ? (
+                      <span className="healing-value">
+                        {t("system.hps")}: {formatThroughput(rotationCalculation.hps)}
+                      </span>
+                    ) : null}
                   </>
                 ) : null}
                 {rotationResultPending ? (

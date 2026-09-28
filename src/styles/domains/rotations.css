@@ -329,6 +329,37 @@
     font-size: inherit;
   }
 
+  /* The rate beside the total damage reads as part of the same figure, so it takes the row's size
+     and weight rather than a qualifier's smaller ones. Only the nowrap is its own: a rate broken
+     across two lines would be read as a second figure. */
+  .rotation-results-dps {
+    white-space: nowrap;
+  }
+
+  /* A rotation that is not active shows only how it differs, so the figures it is actually
+     worth are one hover away rather than crowding the row beside its total damage. */
+  .rotation-results-dps-tooltip {
+    display: grid;
+    gap: 4px;
+    min-inline-size: 14rem;
+  }
+
+  .rotation-results-dps-tooltip .rotation-results-dps-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .rotation-results-dps-tooltip .rotation-results-dps-row > span {
+    color: var(--text-muted);
+  }
+
+  .rotation-results-dps-tooltip .rotation-results-dps-row > strong {
+    color: var(--text);
+    text-align: end;
+  }
+
   /* Rotation Timeline Table */
   .rotation-table {
     min-inline-size: 0;
