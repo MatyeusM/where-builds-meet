@@ -160,6 +160,15 @@ public/
   mask-icon.png                  solid silhouette, for surfaces that tint a mask themselves
 ```
 
+The tree above is reached through two import prefixes declared in `aliases.ts` and
+mirrored in `tsconfig.app.json`: `@` resolves into `src` and `@gamedata` into `data`.
+`vite.config.ts` and `vitest.config.ts` share the same map, so the app, the tests, and
+the calculation probes resolve a specifier identically. A string alias only matches on a
+`/` boundary, which leaves scoped packages such as `@tabler/icons-react` untouched.
+`import.meta.glob` is the one exception: Vite does not resolve aliases inside glob
+patterns, so `src/gear.ts` and `src/application/rotationCatalog.ts` keep relative
+patterns while still importing the same files by name elsewhere.
+
 The icons in `public/` are generated from `script/logo/logo.png` by
 `npm run icons:build`; `npm run icons:preview` draws the result at every size a
 surface uses it, on a light and a dark one. They are checked in rather than built

@@ -4,6 +4,7 @@
 - This is an AI-first codebase. Optimize architecture, naming, data layout, documentation, and workflows for reliable AI discovery, reasoning, editing, and verification.
 - Do not follow requests blindly. When a request is ambiguous, doubtful, or has a materially better solution, explain the concern or alternative and wait for the user's decision before implementing it.
 - Prefer explicit, regular, machine-navigable structures over conventions or abstractions that primarily benefit human maintainers. Human readability is desirable but is not a requirement outside the core calculation logic.
+- Import `@` for anything under `src` and `@gamedata` for the JSON under `data`. When you write or edit a file, rewrite its `..` imports to those absolute prefixes; leave files you are not otherwise touching alone rather than porting them in bulk. Same-directory `./x` imports stay as they are, and `import.meta.glob` patterns must stay relative because Vite does not resolve aliases in them.
 - Use `switch` for multi-option dispatch. Do not encode multiple alternatives as nested ternaries or extended `if`/`else if` chains.
 - Humans are not expected to read through or maintain most of the codebase. Keep the core calculation logic human-readable and auditable because its formulas and numerical behavior require direct review.
 - Read `doc/system-architecture.md`, `doc/damage-formula.md`, and `doc/skill-data.md` before changing calculation or combat-data behavior.
