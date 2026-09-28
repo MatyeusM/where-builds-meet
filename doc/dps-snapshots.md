@@ -130,6 +130,18 @@ implementation, at the rotation's own 20 ms ping, with 3,500,065.96 total damage
 It is the path's only preset rotation, so promoting Dust from WIP to available
 changed no snapshot.
 
+Dust's Dummy 1 Min now uses its user-approved result at the rotation's own 35 ms
+ping: 57,947.14 DPS, replacing 58,402.80 DPS (-0.78%), with 3,476,828.22 total
+damage. Piercing Dart's seven sweep coefficients were corrected against the
+`20702104` `timings.hitCoefficients` curves at level 100, which lowers the
+seven-hit coefficient total from 9.5782 to 3.62181; the old values repeated one
+coefficient across hits 4-7. The measured seven-hit marker series and the
+four-hit release's cast time were also corrected, and the rotation's Qi steps
+re-anchored so the exhaust stays on the second Scarlet Spin's sixth forward hit.
+Timing and coefficients account for +0.085% and -0.843% respectively. Because
+Piercing Dart is a small share of this rotation's damage, a 62% coefficient
+correction moves total DPS by under 1%.
+
 ## Updating reviewed rotations
 
 Run `npm run test:dps`, explain each affected rotation's old/new result and cause,

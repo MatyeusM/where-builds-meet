@@ -56,7 +56,7 @@
   },
   "PiercingDart": {
     "name": "Piercing Dart",
-    "castTime": 1.967,
+    "castTime": 1.841,
     "action": [
       { "type": "consume", "target": "self", "value": "Soulbound", "stack": "all", "time": 0 },
       {
@@ -65,7 +65,7 @@
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -80,7 +80,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -95,7 +95,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -104,14 +104,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep1", "time": 0.233 },
+      { "type": "trigger", "value": "PiercingDartSweep1", "time": 0.099 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -126,7 +126,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -141,7 +141,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -150,14 +150,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep2", "time": 0.483 },
+      { "type": "trigger", "value": "PiercingDartSweep2", "time": 0.298 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -172,7 +172,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -187,7 +187,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -196,14 +196,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep3", "time": 0.7 },
+      { "type": "trigger", "value": "PiercingDartSweep3", "time": 0.498 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -218,7 +218,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -233,7 +233,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -242,14 +242,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep4", "time": 1.017 },
+      { "type": "trigger", "value": "PiercingDartSweep4", "time": 0.796 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 1.217,
+        "time": 1.02,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -264,7 +264,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.217,
+        "time": 1.02,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -279,7 +279,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.217,
+        "time": 1.02,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -288,14 +288,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep5", "time": 1.217 },
+      { "type": "trigger", "value": "PiercingDartSweep5", "time": 1.02 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 1.4,
+        "time": 1.268,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -310,7 +310,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.4,
+        "time": 1.268,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -325,7 +325,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.4,
+        "time": 1.268,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -334,14 +334,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep6", "time": 1.4 },
+      { "type": "trigger", "value": "PiercingDartSweep6", "time": 1.268 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 1.967,
+        "time": 1.841,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -356,7 +356,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.967,
+        "time": 1.841,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -371,7 +371,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.967,
+        "time": 1.841,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -380,7 +380,7 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep7", "time": 1.967 }
+      { "type": "trigger", "value": "PiercingDartSweep7", "time": 1.841 }
     ],
     "modifier": [],
     "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Heavy", "Charged", "PiercingDart"],
@@ -437,7 +437,7 @@
   },
   "PiercingDart4Hits": {
     "name": "Piercing Dart [4 Hits]",
-    "castTime": 1.017,
+    "castTime": 0.796,
     "action": [
       { "type": "consume", "target": "self", "value": "Soulbound", "stack": "all", "time": 0 },
       {
@@ -446,7 +446,7 @@
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -461,7 +461,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -476,7 +476,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.233,
+        "time": 0.099,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -485,14 +485,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep1", "time": 0.233 },
+      { "type": "trigger", "value": "PiercingDartSweep1", "time": 0.099 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -507,7 +507,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -522,7 +522,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.483,
+        "time": 0.298,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -531,14 +531,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep2", "time": 0.483 },
+      { "type": "trigger", "value": "PiercingDartSweep2", "time": 0.298 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -553,7 +553,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -568,7 +568,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 0.7,
+        "time": 0.498,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -577,14 +577,14 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep3", "time": 0.7 },
+      { "type": "trigger", "value": "PiercingDartSweep3", "time": 0.498 },
       {
         "type": "apply",
         "target": "target",
         "value": "SoulLoss",
         "stack": 2,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -599,7 +599,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -614,7 +614,7 @@
         "value": "SoulLoss",
         "stack": 1,
         "reapply": true,
-        "time": 1.017,
+        "time": 0.796,
         "requirement": {
           "resolveAt": "skillStart",
           "operand": [
@@ -623,7 +623,7 @@
           ]
         }
       },
-      { "type": "trigger", "value": "PiercingDartSweep4", "time": 1.017 }
+      { "type": "trigger", "value": "PiercingDartSweep4", "time": 0.796 }
     ],
     "modifier": [],
     "tags": ["MartialArts", "RopeDart", "UnfetteredRopeDart", "Heavy", "Charged", "PiercingDart"],
@@ -636,7 +636,7 @@
     "name": "Piercing Dart Sweep 1",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 1.11374, "attrCoef": 1.11374, "phyBonus": 309, "attrBonus": 168 }
+      { "type": "damage", "time": 0, "phyCoef": 0.334122, "attrCoef": 0.334122, "phyBonus": 92.7, "attrBonus": 50.4 }
     ],
     "tags": [
       "Triggered",
@@ -655,7 +655,7 @@
     "name": "Piercing Dart Sweep 2",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 0.78391, "attrCoef": 0.78391, "phyBonus": 218, "attrBonus": 119 }
+      { "type": "damage", "time": 0, "phyCoef": 0.334122, "attrCoef": 0.334122, "phyBonus": 92.7, "attrBonus": 50.4 }
     ],
     "tags": [
       "Triggered",
@@ -674,7 +674,7 @@
     "name": "Piercing Dart Sweep 3",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 0.78391, "attrCoef": 0.78391, "phyBonus": 218, "attrBonus": 119 }
+      { "type": "damage", "time": 0, "phyCoef": 0.445496, "attrCoef": 0.445496, "phyBonus": 123.6, "attrBonus": 67.2 }
     ],
     "tags": [
       "Triggered",
@@ -693,7 +693,7 @@
     "name": "Piercing Dart Sweep 4",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 1.72416, "attrCoef": 1.72416, "phyBonus": 478, "attrBonus": 260 }
+      { "type": "damage", "time": 0, "phyCoef": 0.313564, "attrCoef": 0.313564, "phyBonus": 87.2, "attrBonus": 47.6 }
     ],
     "tags": [
       "Triggered",
@@ -713,7 +713,7 @@
     "shortName": "RD Heavy 5",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 1.72416, "attrCoef": 1.72416, "phyBonus": 478, "attrBonus": 260 }
+      { "type": "damage", "time": 0, "phyCoef": 0.470346, "attrCoef": 0.470346, "phyBonus": 130.8, "attrBonus": 71.4 }
     ],
     "tags": [
       "Triggered",
@@ -733,7 +733,7 @@
     "shortName": "RD Heavy 6",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 1.72416, "attrCoef": 1.72416, "phyBonus": 478, "attrBonus": 260 }
+      { "type": "damage", "time": 0, "phyCoef": 0.689664, "attrCoef": 0.689664, "phyBonus": 191.2, "attrBonus": 104 }
     ],
     "tags": [
       "Triggered",
@@ -753,7 +753,7 @@
     "shortName": "RD Heavy 7",
     "castTime": 0,
     "action": [
-      { "type": "damage", "time": 0, "phyCoef": 1.72416, "attrCoef": 1.72416, "phyBonus": 478, "attrBonus": 260 }
+      { "type": "damage", "time": 0, "phyCoef": 1.034496, "attrCoef": 1.034496, "phyBonus": 286.8, "attrBonus": 156 }
     ],
     "tags": [
       "Triggered",
