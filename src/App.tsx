@@ -21,6 +21,7 @@ import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
+import logo from "./assets/logo.png?w=96&h=96&format=webp"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
@@ -395,7 +396,12 @@ export default function App() {
     >
       <header className="page-header">
         <div className="page-header-start">
-          <h1>{t("ui.app.whereBuildsMeet")}</h1>
+          <div className="page-title">
+            {/* The mark beside the heading, so it is decorative: the heading already names the
+                application, and an empty alt keeps a screen reader from reading it twice. */}
+            <img className="page-title-logo" src={logo} alt="" width={48} height={48} />
+            <h1>{t("ui.app.whereBuildsMeet")}</h1>
+          </div>
           <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
           <section className="path-selector" aria-label={t("ui.app.combatPath")}>
             <div className="path-selector-options">

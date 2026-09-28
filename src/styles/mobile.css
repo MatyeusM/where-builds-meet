@@ -7,7 +7,10 @@
     inline-size: min(100% - 1rem, 32rem);
     min-block-size: 100dvh;
     margin-inline: auto;
-    padding-block: 0.75rem 1rem;
+
+    /* No bottom padding, for the same reason the PC shell has none: the footer's own background
+       has to reach the bottom edge, and the footer is what stands the page off the window. */
+    padding-block: 0.75rem 0;
     overflow: visible;
   }
 
@@ -19,6 +22,13 @@
 
   .layout-mobile .page-header h1 {
     font-size: clamp(1.55rem, 7vw, 2rem);
+  }
+
+  /* The mark keeps its ratio to the heading, which the heading's smaller mobile size takes with
+     it. Left at the desktop size it would stand taller than the text it sits beside. */
+  .layout-mobile .page-title-logo {
+    inline-size: 2rem;
+    block-size: 2rem;
   }
 
   .layout-mobile .intro {
@@ -496,7 +506,6 @@
     align-items: flex-start;
     flex-flow: row wrap;
     gap: 0.35rem 1rem;
-    margin-block-start: 0.75rem;
   }
 
   .layout-mobile .page-footer > span:first-child {

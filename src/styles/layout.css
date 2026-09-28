@@ -1,15 +1,31 @@
 @layer layout {
+  /*
+   * The shell is a column that is at least one viewport tall, so a page whose content is shorter
+   * than the window still puts the footer on the bottom edge instead of leaving it stranded
+   * mid-page above a band of empty background. A minimum rather than a fixed height, so a page
+   * taller than the window still grows and scrolls.
+   *
+   * `flex` is on the shell rather than only on `.viewport-page-shell` because that variant used
+   * to be the only one pinning the footer, and it only applies to the two tabs that scroll their
+   * own content. Every tab now shares one mechanism, and the variant only has to add the fixed
+   * height and clipping that its internal scrolling needs.
+   */
   .page-shell {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 100dvh;
     inline-size: calc(100% - 28px);
     margin: 0 auto;
-    padding: 28px 0 32px;
+
+    /* No bottom padding: the footer carries the space below it, inside its own background, so the
+       bar meets the bottom edge instead of stopping short of it with a strip of bare gradient
+       below. The footer's own padding is what stands the page off the window. */
+    padding: 28px 0 0;
   }
 
   .viewport-page-shell {
-    display: flex;
     block-size: 100dvh;
     min-block-size: 0;
-    flex-direction: column;
     overflow: hidden;
   }
 
@@ -49,7 +65,11 @@
     flex: 0 0 auto;
     flex-wrap: wrap;
     margin-block-start: 12px;
-    padding-block: 10px 0;
+
+    /* Same reason the base rule's bottom padding is inside its background: the bar has to reach
+       the bottom edge. The top is tighter here because these two tabs fill the window and have no
+       slack to absorb. */
+    padding-block: 10px 32px;
   }
 
   .main-tabs {
@@ -153,6 +173,34 @@
     /* Title block owns the remaining width so the path switcher wraps, not the controls. */
     .page-header-start {
       flex: 1 1 0;
+    }
+
+    /*
+     * The mark and the heading are one row, centred on each other. The heading's line box grows
+     * with its fluid size and the glyphs stay centred inside it, so centring the mark against that
+     * box keeps the two aligned at every size, from the 1.75rem mobile case to the 2.625rem cap.
+     * Aligning to the top instead would leave the mark riding above the text it belongs to.
+     */
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+
+      /* The heading's own bottom margin is moved here. Margins do not collapse inside a flex
+         container, so leaving it on the heading would make the heading's box taller than its text
+         and pull the heading up off the mark's centre by half of it. */
+      margin-block-end: var(--space-xs);
+    }
+
+    .page-title h1 {
+      margin-block-end: 0;
+    }
+
+    .page-title-logo {
+      flex: 0 0 auto;
+      inline-size: 3rem;
+      block-size: 3rem;
+      object-fit: contain;
     }
 
     /* Controls stack above the project links, each sized by its own content. */
@@ -264,14 +312,31 @@
     gap: 12px;
   }
 
+  /*
+   * The footer's own translucent surface, so it reads as a bar that belongs to the page rather
+   * than a line drawn over the background. The body paints a gradient, so an opaque fill would
+   * have to pick one value for every position the footer can land at, and a transparent one
+   * leaves the gradient showing through instead. Nothing scrolls under the footer, because the
+   * column puts it at the end rather than over the content, so there is nothing to blur.
+   *
+   * The automatic block margin is what pins it. Each tab renders straight into the shell as a
+   * sibling of this footer, so there is no wrapper to grow; an auto margin on the last item
+   * absorbs whatever height the shell has to spare and needs no target to be named. The gap
+   * above the rule is padding rather than margin, because an auto margin resolves to nothing
+   * when the content is tall enough to leave no slack, and the gap has to survive that case.
+   *
+   * The bottom padding is inside the background on purpose, so the bar runs to the edge of the
+   * page. The shell has no bottom padding of its own for the same reason.
+   */
   .page-footer {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 16px;
-    margin-block-start: 24px;
-    padding: 16px 2px 6px;
+    margin-block-start: auto;
+    padding: 24px 2px 32px;
     border-block-start: 1px solid var(--border);
+    background: oklch(from var(--surface) l c h / 0.5);
     color: var(--text-muted);
   }
 
