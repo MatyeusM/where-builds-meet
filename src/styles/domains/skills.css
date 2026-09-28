@@ -165,6 +165,58 @@
     gap: 14px;
   }
 
+  .settings-share-row {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  /* The label is the target, not the switch: a 24px switch is the smallest control that clears
+     WCAG 2.2 AA, and the row is the size a pointer actually aims at. */
+  .settings-share {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-block-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .settings-share-dialog {
+    inline-size: min(34rem, calc(100dvw - 2rem));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-lg);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 70px var(--shadow-strong);
+  }
+
+  .settings-share-dialog h2 {
+    margin: 0 0 var(--space-xs);
+    font-size: 1.125rem;
+  }
+
+  .settings-share-dialog p {
+    margin: 0 0 var(--space-md);
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .settings-share-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xs);
+  }
+
+  .settings-share-answers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+  }
+
   .settings-weapon-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
