@@ -1,7 +1,6 @@
-import attunementJson from "../../data/attunement.json"
 import type { CharacterStats, EnemyProfile, WeaponId } from "../types"
 import { resolveActionStatContext } from "./actionStats"
-import { attunementMatchesSkill, type AttunementTagFilter } from "./attunementStats"
+import { matchingAttunementEntries } from "./attunementStats"
 import { finishCalculationPhase, startCalculationPhase } from "./calculationBenchmark"
 import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults"
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues"
@@ -14,9 +13,6 @@ import {
   type StatFormula,
 } from "./statEffects"
 import type { UnconditionalDamageEffects } from "./unconditionalDamageEffects"
-
-type AttunementDefinition = { effect?: AttunementTagFilter & { stat?: Record<string, number> } }
-const attunementDefinitions = attunementJson as Record<string, AttunementDefinition>
 
 export type AttunementStats = {
   driftcleaveDeepdazeBoost: number
@@ -331,10 +327,8 @@ function calculateDamageBreakdownInternal(
   let attunementBonus = 0
   let attunementPhysicalPenetration = 0
   let attunementFormlessPenetration = stats.formlessPenetration
-  for (const [key, value] of Object.entries(attunement)) {
-    const definition = attunementDefinitions[key]
-    if (!attunementMatchesSkill(definition?.effect, skillTags)) continue
-    const effectStats = definition?.effect?.stat
+  for (const { key, stat: effectStats } of matchingAttunementEntries(attunement, skillTags)) {
+    const value = attunement[key]
     const addAttunementStat = (target: string) => {
       const multiplier = effectStats?.[target]
       return typeof multiplier === "number" && Number.isFinite(multiplier) ? value * multiplier : 0

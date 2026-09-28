@@ -186,6 +186,11 @@ the same snapshot; they do not rescan active effects. Separate damage entries
 still resolve independently because their hit-time buffs, debuffs, resources,
 HP/Qi state, tags, or subaction modifiers may differ.
 
+Repeated damage entries reuse the ordered list of attunement definitions matching
+their effective tags. Only matching is cached: each hit reads the current values
+and repeats the original arithmetic, including starting Formless Penetration
+from that hit's character stats. No contribution is regrouped or reordered.
+
 Tracked buffs and debuffs move unconditional finite numeric damage fields into
 a timeline aggregate when the effect is applied, changes stack, is consumed, or
 expires. Each damage entry reads that aggregate directly instead of scanning
