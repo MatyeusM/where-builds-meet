@@ -412,7 +412,11 @@ describe("Dust mechanics", () => {
     const sixthOfSecondCast = timeline.filter(
       row => row.kind === "trigger" && isThrow(row) && row.sourceRowId === spins[1].id,
     )[5]
-    const forwardHit = sixthOfSecondCast.startTime + Number(sixthOfSecondCast.actions[1].time)
+    // A throw's forward hit is its first of the two damage actions, found by what it
+    // is so that authoring a throw's earlier non-damage actions cannot move it.
+    const forwardHitIndex = (row: TimelineRow) => row.actions.findIndex(action => action.type === "damage")
+    const forwardHit =
+      sixthOfSecondCast.startTime + Number(sixthOfSecondCast.actions[forwardHitIndex(sixthOfSecondCast)]?.time ?? 0)
     const qiRows = timeline
       .filter(row => row.step.type === "event" && row.step.event === "Qi")
       .sort((left, right) => left.startTime - right.startTime)
@@ -424,7 +428,7 @@ describe("Dust mechanics", () => {
     const exhaust = qiRows[2]
     expect(Math.abs(exhaust.startTime - forwardHit)).toBeLessThan(TIMELINE_TIME_EPSILON)
     // That hit is therefore resolved against an exhausted target.
-    expect(sixthOfSecondCast.actionStates[1]?.debuffs.has("Exhausted")).toBe(true)
+    expect(sixthOfSecondCast.actionStates[forwardHitIndex(sixthOfSecondCast)]?.debuffs.has("Exhausted")).toBe(true)
     // The window closes one Exhausted duration later, and the second ramp restarts
     // from there, reusing the first ramp's spacing.
     const expiry = [...timeline]
@@ -1004,6 +1008,52 @@ describe("Phantom Umbrella summons and Resonance", () => {
     expect(hits.length).toBeGreaterThan(1)
     expect(hits.every(row => row.skill?.tags?.includes("MartialArt"))).toBe(true)
     expect(hits.some(row => row.skill?.tags?.includes("PerfectCatch"))).toBe(false)
+  })
+
+  it("crits both of a Fragrant Song throw's Resonances and only those", () => {
+    // A throw spends Fragrant Song at its own start and the next throw starts on the same
+    // instant its catch fires, so neither "Fragrant Song is up" nor "the newest throw" can
+    // say which throw a Resonance belongs to. Each throw's own trigger times do: a throw
+    // has two Resonance sites, the returning umbrella and its catch, and a site that
+    // spawns nothing (the closing throw of a cast) must not be counted.
+    const result = run(6, [{ type: "skill", skill: "ScarletSpin", duration: 12 }])
+    const guaranteedCrit = (row: TimelineRow | undefined) =>
+      (row?.modifierEffects ?? []).some(effect => effect?.GuaranteedCrit === true)
+    const sites = result.timeline.filter(isThrow).flatMap(row =>
+      row.actions
+        .filter(action => action.type === "trigger")
+        .filter(action => ["EverspringPerfectCatch", "PhantomUmbrellaSummon"].includes(action.value ?? ""))
+        .map(action => {
+          const at = row.startTime + Number(action.time)
+          const spawned = result.timeline.filter(
+            candidate =>
+              candidate.step.skill === "Resonance" && Math.abs(candidate.startTime - at) < TIMELINE_TIME_EPSILON,
+          )
+          return { throwSpentSong: guaranteedCrit(row), spawned }
+        }),
+    )
+    const spawned = sites.filter(site => site.spawned.length > 0)
+    const songSites = spawned.filter(site => site.throwSpentSong)
+    const plainSites = spawned.filter(site => !site.throwSpentSong)
+    // Both states occur in one cast, so the comparison is not vacuous.
+    expect(songSites.length).toBeGreaterThan(0)
+    expect(plainSites.length).toBeGreaterThan(0)
+    // A Fragrant Song throw's sites both crit, and no other throw's site does.
+    for (const site of songSites) expect(site.spawned.map(row => guaranteedCrit(row))).toEqual([true])
+    for (const site of plainSites) expect(site.spawned.map(row => guaranteedCrit(row))).toEqual([false])
+    // Every critting Resonance belongs to a Fragrant Song site, so none leaked.
+    const crittedIds = new Set(songSites.flatMap(site => site.spawned.map(row => row.id)))
+    const actuallyCritted = result.timeline
+      .filter(row => row.step.skill === "Resonance" && guaranteedCrit(row))
+      .map(row => row.id)
+    expect(actuallyCritted).toHaveLength(crittedIds.size)
+    expect(new Set(actuallyCritted)).toEqual(crittedIds)
+    // A critting Resonance really does out-damage an uncritted one.
+    const average = (critted: boolean) => {
+      const group = result.timeline.filter(row => row.step.skill === "Resonance" && guaranteedCrit(row) === critted)
+      return group.reduce((sum, row) => sum + result.actionBreakdowns[`${row.id}:0`].total, 0) / group.length
+    }
+    expect(average(true)).toBeGreaterThan(average(false))
   })
 
   it("groups both Resonance routes while preserving their individual damage totals", () => {

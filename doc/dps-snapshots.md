@@ -153,6 +153,14 @@ the fifth forward hit of the second Scarlet Spin, which covers that spin's dense
 middle instead of its tail and replaced 58,899.96 DPS (+0.027%) with the approved
 value above.
 
+Both Dust rotations then moved together when a Scarlet Spin throw was made to crit
+the Resonances it summons, taking Dummy 1 Min to 59,450.02 DPS (3,567,001.03 total
+damage) and the 100% Phantom Chime rotation to 59,121.24 DPS (3,547,274.56), each
++0.35% with an unchanged 60-second duration. Every 3rd catch grants Fragrant Song
+and the throw that spends it summons two Resonances, so 12 throws per rotation
+own 24 sites and 21 of them resolve before the fight ends. See
+[skill-data.md](skill-data.md) for why the bonus needs a per-throw marker.
+
 ## Updating reviewed rotations
 
 Run `npm run test:dps`, explain each affected rotation's old/new result and cause,

@@ -190,6 +190,19 @@ identity tags. They share `skillBreakdownCategory: "Resonance"`.
 Saved skill overrides migrate the former shared Resonance and summon definitions
 to both routes, preserving customized damage and summon actions.
 
+A Scarlet Spin throw that spends Fragrant Song also crits the Resonances that throw
+summons, both the returning umbrella and its perfect catch. A throw spends the buff
+at its own start and the next throw starts on the same instant its catch fires, so
+neither "Fragrant Song is up" nor "the newest throw" identifies the owning throw:
+a nested trigger reports the cast as its source, and the spent buff is already
+gone. The throw therefore clears and re-primes the hidden `FragrantSongResonance`
+marker at its own start, gated on Fragrant Song at skill start, and `Resonance`
+carries the crit as a modifier on that marker. The clear scopes the bonus to one
+throw, so its duration only has to outlive that throw's own Resonances. It is
+causal, not timestamp-based: the catch trigger precedes the next throw's trigger in
+the action array, so the catch's Resonance resolves before the next throw clears
+the marker.
+
 Attack categories are independent, not exclusive. A charged attack carries `Charged`
 plus the attack it charges: `Charged` and `Heavy` for Avalanche, Burning Heart, and
 Piercing Dart; `Charged` and `Light` for Snowparting's charged light. `Charged` alone

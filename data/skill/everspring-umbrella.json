@@ -56,6 +56,16 @@
     "shortName": "Umbrella Q1",
     "castTime": 2.000769230769231,
     "action": [
+      { "type": "consume", "target": "self", "value": "FragrantSongResonance", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "FragrantSongResonance",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": { "resolveAt": "skillStart", "operand": [{ "target": "self", "value": "FragrantSong" }] }
+      },
       { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
       {
         "type": "damage",
@@ -128,6 +138,16 @@
     "castTime": 1.6675,
     "triggerPing": true,
     "action": [
+      { "type": "consume", "target": "self", "value": "FragrantSongResonance", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "FragrantSongResonance",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": { "resolveAt": "skillStart", "operand": [{ "target": "self", "value": "FragrantSong" }] }
+      },
       { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
       {
         "type": "damage",
@@ -200,6 +220,16 @@
     "castTime": 1.909090909090909,
     "triggerPing": true,
     "action": [
+      { "type": "consume", "target": "self", "value": "FragrantSongResonance", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "FragrantSongResonance",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": { "resolveAt": "skillStart", "operand": [{ "target": "self", "value": "FragrantSong" }] }
+      },
       { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
       {
         "type": "damage",
@@ -272,6 +302,16 @@
     "castTime": 1.5763636363636362,
     "triggerPing": true,
     "action": [
+      { "type": "consume", "target": "self", "value": "FragrantSongResonance", "stack": "all", "time": 0 },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "FragrantSongResonance",
+        "stack": 1,
+        "reapply": true,
+        "time": 0,
+        "requirement": { "resolveAt": "skillStart", "operand": [{ "target": "self", "value": "FragrantSong" }] }
+      },
       { "type": "consume", "target": "self", "value": "FragrantSong", "time": 0 },
       {
         "type": "damage",
@@ -342,6 +382,9 @@
     "name": "Resonance (Scarlet Spin)",
     "castTime": 0,
     "action": [{ "type": "damage", "time": 0, "phyCoef": 0.54, "attrCoef": 0.54, "phyBonus": 0, "attrBonus": 0 }],
+    "modifier": [
+      { "requirement": [{ "target": "self", "value": "FragrantSongResonance" }], "effect": { "GuaranteedCrit": true } }
+    ],
     "tags": [
       "Triggered",
       "DirectDamage",
