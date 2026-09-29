@@ -17,13 +17,69 @@
     "group": true,
     "castTime": 0.9125,
     "action": [
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 0.125, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 1.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 2.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 3.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 4.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 5.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 6.9, "silkbindCoef": 2.1705 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 0.125,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 1.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 2.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 3.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 4.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 5.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 6.9,
+        "silkbindCoef": 2.1705
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "HOT", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "CloudburstHealing"],
@@ -36,13 +92,69 @@
     "group": true,
     "castTime": 0,
     "action": [
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 0.125, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 1.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 2.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 3.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 4.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 5.9, "silkbindCoef": 2.1705 },
-      { "type": "heal", "phyCoef": 2.1705, "phyBonus": 600, "attrBonus": 327, "time": 6.9, "silkbindCoef": 2.1705 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 0.125,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 1.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 2.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 3.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 4.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 5.9,
+        "silkbindCoef": 2.1705
+      },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.1705,
+        "phyBonus": 600,
+        "attrBonus": 327,
+        "time": 6.9,
+        "silkbindCoef": 2.1705
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "HOT", "MartialArts", "MartialArt", "Fan", "PanaceaFan", "CloudburstHealing"],
@@ -57,6 +169,7 @@
     "action": [
       {
         "type": "heal",
+        "averageAttack": true,
         "phyCoef": 11.7766,
         "phyBonus": 3259,
         "attrBonus": 1776,
@@ -85,6 +198,7 @@
     "action": [
       {
         "type": "heal",
+        "averageAttack": true,
         "phyCoef": 11.7766,
         "phyBonus": 3259,
         "attrBonus": 1776,
@@ -152,7 +266,15 @@
     "shortName": "Fan H1",
     "castTime": 0.4,
     "action": [
-      { "type": "heal", "phyCoef": 1.8767, "phyBonus": 519, "attrBonus": 283, "time": 0.325, "silkbindCoef": 1.8767 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 1.8767,
+        "phyBonus": 519,
+        "attrBonus": 283,
+        "time": 0.325,
+        "silkbindCoef": 1.8767
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "MartialArts", "Heavy", "Fan", "PanaceaFan", "EmeraldDewtouch"],
@@ -164,7 +286,15 @@
     "shortName": "Fan H2",
     "castTime": 0.8,
     "action": [
-      { "type": "heal", "phyCoef": 2.4129, "phyBonus": 668, "attrBonus": 364, "time": 0.25, "silkbindCoef": 2.4129 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.4129,
+        "phyBonus": 668,
+        "attrBonus": 364,
+        "time": 0.25,
+        "silkbindCoef": 2.4129
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "MartialArts", "Heavy", "Fan", "PanaceaFan", "EmeraldDewtouch"],
@@ -176,7 +306,15 @@
     "shortName": "Fan H2 [Cancel]",
     "castTime": 0.25,
     "action": [
-      { "type": "heal", "phyCoef": 2.4129, "phyBonus": 668, "attrBonus": 364, "time": 0.25, "silkbindCoef": 2.4129 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 2.4129,
+        "phyBonus": 668,
+        "attrBonus": 364,
+        "time": 0.25,
+        "silkbindCoef": 2.4129
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "MartialArts", "Heavy", "Fan", "PanaceaFan", "EmeraldDewtouch"],
@@ -188,7 +326,15 @@
     "shortName": "Fan H3 [Cancel]",
     "castTime": 0.3375,
     "action": [
-      { "type": "heal", "phyCoef": 3.3512, "phyBonus": 928, "attrBonus": 506, "time": 0.3375, "silkbindCoef": 3.3512 }
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 3.3512,
+        "phyBonus": 928,
+        "attrBonus": 506,
+        "time": 0.3375,
+        "silkbindCoef": 3.3512
+      }
     ],
     "modifier": [],
     "tags": ["Heal", "MartialArts", "Heavy", "Fan", "PanaceaFan", "EmeraldDewtouch"],

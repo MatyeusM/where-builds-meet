@@ -109,6 +109,36 @@
     ],
     "refresh": true
   },
+  "DivinecraftFireEmber": {
+    "name": "Divinecraft - Fire Ember Count",
+    "hidden": true,
+    "description": "Counts direct hits since the last Solid Foundation. Five hits consume the count and grant Solid Foundation, which is re-granted at most once every 10 seconds.",
+    "duration": 5,
+    "maxStack": 5,
+    "refresh": true,
+    "onMaxStack": { "consume": "all", "trigger": "DivinecraftSolidFoundationGrant" }
+  },
+  "DivinecraftSolidFoundation": {
+    "name": "Divinecraft - Fire Solid Foundation",
+    "shortName": "SF",
+    "showCoverage": true,
+    "description": "The next direct hit unleashes Solid Foundation. Re-granted at most once every 10 seconds.",
+    "duration": 5,
+    "cooldown": 10,
+    "maxStack": 1,
+    "refresh": true,
+    "trigger": {
+      "event": "damage",
+      "requirement": [
+        { "target": "battleStarted" },
+        { "operator": "not", "operand": [[{ "target": "skillTag", "value": "DOT" }]] }
+      ],
+      "action": [
+        { "type": "consume", "target": "self", "value": "DivinecraftSolidFoundation", "stack": "all" },
+        { "type": "trigger", "value": "DivinecraftSolidFoundationStrike" }
+      ]
+    }
+  },
   "YiRiver": {
     "name": "Yi River",
     "shortName": "Yi",

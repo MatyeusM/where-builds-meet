@@ -39,7 +39,7 @@ import {
   mergeComparisonCategory,
   type ComparisonVariantRequest,
 } from "../../application/comparison"
-import type { CharacterState, PathId } from "../../application/contracts"
+import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
 import {
   formatDamageNumber,
   formatNumber,
@@ -145,6 +145,7 @@ import { innerWayDefinitions } from "../../data/innerWayDefinitions"
 import { setupSelectionChangesTimeline } from "../../data/scriptDefinitions"
 import { allStatDefinitions } from "../../data/statDefinitions"
 import { sameEditorRevision, type EditorRevision } from "../../editorTimelinePreview"
+import type { BuildSetup } from "../../gear"
 import { attunementData, maxGearRoll, selectSetTier, setSelectionChangesTimeline, statRollsForLevel } from "../../gear"
 import {
   globalDebuffRows,
@@ -1459,11 +1460,22 @@ export function RotationEditorTab({
       setReadableCopyStatus(t("ui.app.manualCopyInstruction"))
     }
   }
+  // Every setup variant compared for a rotation inherits that rotation's
+  // Divinecraft damage flag, so a comparison delta isolates the varying option.
+  function setupEffectsForRotation(
+    rotationRecord: RotationRecord,
+    overrides: Partial<BuildSetup & SetupSelections> = {},
+  ) {
+    return selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
+      ...overrides,
+      divinecraftDamage: rotationRecord.divinecraftDamage,
+    })
+  }
   function makeTimelineInput(
     rotationRecord: RotationRecord,
     conditions = innerWayConditions,
     rules = innerWayEffectRules,
-    setupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId),
+    setupEffects = setupEffectsForRotation(rotationRecord),
     globalDebuffs = currentGlobalDebuffs,
   ): TimelineBuildInput {
     return {
@@ -1481,9 +1493,17 @@ export function RotationEditorTab({
       ),
       initialBuffs: globalBuffTimelineEffects(globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(globalDebuffs),
-      initialResources: { ...typedSystemStats.initialResources, Vitality: displayedCharacterStats.maxVitality },
+      initialResources: {
+        ...typedSystemStats.initialResources,
+        Vitality: displayedCharacterStats.maxVitality,
+        Endurance: displayedCharacterStats.maxEndurance,
+      },
       resourceRegeneration: { HeavensWill: displayedCharacterStats.heavensWillRegen },
-      resourceMaximums: { ...typedSystemStats.resourceMaximums, Vitality: displayedCharacterStats.maxVitality },
+      resourceMaximums: {
+        ...typedSystemStats.resourceMaximums,
+        Vitality: displayedCharacterStats.maxVitality,
+        Endurance: displayedCharacterStats.maxEndurance,
+      },
       resourceEvents: typedSystemStats.resourceEvents,
       maxHP: displayedCharacterStats.maxHp,
     }
@@ -1493,7 +1513,7 @@ export function RotationEditorTab({
       const rotationAnchor = rotationRecord.start
         ? { rowId: `rotation-${rotationRecord.start.step}`, actionIndex: rotationRecord.start.action }
         : { rowId: "rotation-0" }
-      const baselineSetupEffects = selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId)
+      const baselineSetupEffects = setupEffectsForRotation(rotationRecord)
       const setComparisonGroups = includeDiffs
         ? Object.fromEntries(
             (
@@ -1510,14 +1530,7 @@ export function RotationEditorTab({
                     .filter(tier => tier !== buildSetup[key][setName])
                     .map(tier => {
                       const selections = selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions)
-                      const setupEffects = selectedSetupEffects(
-                        settings,
-                        gearStatEffect,
-                        buildSetup,
-                        setupSelections,
-                        pathId,
-                        { [key]: selections },
-                      )
+                      const setupEffects = setupEffectsForRotation(rotationRecord, { [key]: selections })
                       const rebuildTimeline = setSelectionChangesTimeline(buildSetup[key], selections, definitions)
                       return Object.assign(
                         { label: String(tier), setupEffects },
@@ -1597,37 +1610,24 @@ export function RotationEditorTab({
                 .filter(value => value !== buildSetup.arsenal)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
-                    arsenal: value,
-                  }),
+                  setupEffects: setupEffectsForRotation(rotationRecord, { arsenal: value }),
                 })),
               bowRingSet: Object.keys(typedBowRingSetDefinitions)
                 .filter(value => value !== buildSetup.bowRingSet)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
-                    bowRingSet: value,
-                  }),
+                  setupEffects: setupEffectsForRotation(rotationRecord, { bowRingSet: value }),
                 })),
               food: Object.keys(typedFoodDefinitions)
                 .filter(value => value !== selectedFood)
                 .map(value => ({
                   label: value,
-                  setupEffects: selectedSetupEffects(settings, gearStatEffect, buildSetup, setupSelections, pathId, {
-                    food: value,
-                  }),
+                  setupEffects: setupEffectsForRotation(rotationRecord, { food: value }),
                 })),
               script: Object.entries(typedScriptDefinitions)
                 .filter(([value]) => value !== selectedScript)
                 .map(([value]) => {
-                  const setupEffects = selectedSetupEffects(
-                    settings,
-                    gearStatEffect,
-                    buildSetup,
-                    setupSelections,
-                    pathId,
-                    { script: value },
-                  )
+                  const setupEffects = setupEffectsForRotation(rotationRecord, { script: value })
                   const rebuildTimeline = setupSelectionChangesTimeline(selectedScript, value, typedScriptDefinitions)
                   return Object.assign(
                     { label: value, setupEffects },
@@ -1646,14 +1646,7 @@ export function RotationEditorTab({
               divinecraft: Object.entries(typedDivinecraftDefinitions)
                 .filter(([value, definition]) => definition.available !== false && value !== selectedDivinecraft)
                 .map(([value]) => {
-                  const setupEffects = selectedSetupEffects(
-                    settings,
-                    gearStatEffect,
-                    buildSetup,
-                    setupSelections,
-                    pathId,
-                    { divinecraft: value },
-                  )
+                  const setupEffects = setupEffectsForRotation(rotationRecord, { divinecraft: value })
                   const rebuildTimeline = setupSelectionChangesTimeline(
                     selectedDivinecraft,
                     value,
@@ -2300,6 +2293,20 @@ export function RotationEditorTab({
                     disabled={rotationLocked}
                     onCommit={ping => updateRotationCalculationSetting(current => ({ ...current, ping }))}
                   />
+                  <label className="rotation-option-toggle">
+                    <input
+                      type="checkbox"
+                      disabled={rotationLocked}
+                      checked={rotation.divinecraftDamage !== false}
+                      onChange={event =>
+                        updateRotationCalculationSetting(current => ({
+                          ...current,
+                          divinecraftDamage: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>{t("ui.app.divinecraftDamage")}</span>
+                  </label>
                 </div>
               </div>
               <div className="detail-active-actions">

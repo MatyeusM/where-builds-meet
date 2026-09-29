@@ -21,8 +21,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 57947.136992477084,
-      "totalDamage": 3476828.219548625,
+      "dps": 59243.50330576136,
+      "totalDamage": 3554610.1983456817,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality": {
@@ -45,8 +45,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 54487.59580544786,
-      "totalDamage": 3269255.7483268715,
+      "dps": 55757.95023356205,
+      "totalDamage": 3345477.014013723,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp": {
@@ -69,8 +69,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 60168.91227541458,
-      "totalDamage": 3610134.736524875,
+      "dps": 61486.47899350167,
+      "totalDamage": 3689188.7396101,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality": {
@@ -93,8 +93,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 67544.2331265345,
-      "totalDamage": 4052653.9875920704,
+      "dps": 69361.6838347396,
+      "totalDamage": 4161701.0300843767,
       "duration": 60.00000000000001
     },
     "silkbindDeluge/dummy-1-min-regular-fire": {
@@ -117,8 +117,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 28889.610741655633,
-      "totalDamage": 1733376.644499338,
+      "dps": 30231.42797466753,
+      "totalDamage": 1813885.678480052,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder": {
@@ -141,8 +141,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 34951.21251674617,
-      "totalDamage": 2097072.7510047702,
+      "dps": 36642.220387931746,
+      "totalDamage": 2198533.2232759045,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts": {
@@ -165,8 +165,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 34392.626290849854,
-      "totalDamage": 2063557.5774509911,
+      "dps": 36078.207131889874,
+      "totalDamage": 2164692.4279133924,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team": {
@@ -189,8 +189,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 37958.7336928474,
-      "totalDamage": 2277524.021570844,
+      "dps": 39687.73214483704,
+      "totalDamage": 2381263.9286902226,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min": {
@@ -213,8 +213,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 78121.61111103461,
-      "totalDamage": 4687296.6666620765,
+      "dps": 79335.15205387062,
+      "totalDamage": 4760109.123232237,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-1-min": {
@@ -237,8 +237,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66309.24559508955,
-      "totalDamage": 3978554.7357053724,
+      "dps": 67538.46084077001,
+      "totalDamage": 4052307.6504462007,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab": {
@@ -261,8 +261,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 65564.25140226183,
-      "totalDamage": 3933855.084135709,
+      "dps": 66803.18293242397,
+      "totalDamage": 4008190.9759454373,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min": {
@@ -285,8 +285,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66557.15557583928,
-      "totalDamage": 3993429.3345503574,
+      "dps": 67809.4104414281,
+      "totalDamage": 4068564.6264856863,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min": {
@@ -309,8 +309,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66371.50250018727,
-      "totalDamage": 3982290.150011236,
+      "dps": 67694.11345516535,
+      "totalDamage": 4061646.8073099204,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/pure-dummy-1-min": {
@@ -333,8 +333,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 64778.96536070183,
-      "totalDamage": 3886737.92164211,
+      "dps": 66043.86711951188,
+      "totalDamage": 3962632.027170713,
       "duration": 60
     }
   }

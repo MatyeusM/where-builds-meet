@@ -18,7 +18,8 @@ export type SetupEffect = StatEffectContainer &
   EffectiveStatEffectContainer & {
     condition?: string
     requirement?: unknown
-    trigger?: EditableObject
+    /** One reactive rule, or several that each react to their own event. */
+    trigger?: EditableObject | EditableObject[]
     buffDurationBonus?: number
     target?: string
     modify?: EditableObject
@@ -116,8 +117,32 @@ export function bowRingSetEffectFor(value: string) {
   return typedBowRingSetDefinitions[value]?.effect ?? {}
 }
 
-export function divinecraftEffectFor(value: string) {
-  return typedDivinecraftDefinitions[value]?.effect ?? {}
+type DivinecraftEffect = SetupEffect & { trigger?: EditableObject | EditableObject[] }
+
+/**
+ * The burn, poison, and Solid Foundation are the only Divinecraft rules that add
+ * damage over time; they all react to a direct hit. Stripping just those lets the
+ * Settings toggle exclude Divinecraft damage while the HP DMG bonus and the
+ * healing trigger keep working.
+ */
+function withoutDivinecraftDamage(effect: DivinecraftEffect): DivinecraftEffect {
+  const rules = effect.trigger
+  const wasArray = Array.isArray(rules)
+  const declared: EditableObject[] = wasArray ? (rules as EditableObject[]) : rules ? [rules] : []
+  const isDamageRule = (rule: EditableObject) => rule.event === "damage"
+  if (!declared.some(isDamageRule)) return effect
+  const kept = declared.filter(rule => !isDamageRule(rule))
+  if (!kept.length) {
+    const { trigger: _removed, ...rest } = effect
+    return rest
+  }
+  return { ...effect, trigger: wasArray ? kept : kept[0] }
+}
+
+export function divinecraftEffectFor(value: string, damage = true) {
+  const effect = typedDivinecraftDefinitions[value]?.effect
+  if (!effect) return {}
+  return damage ? effect : withoutDivinecraftDamage(effect as DivinecraftEffect)
 }
 
 export function scriptEffectFor(value: string) {

@@ -427,6 +427,17 @@ would exclude both dummies. Write such a mechanic unconditionally, exactly as
 distinguish one practice target from another, such as a target that attacks or a
 target with a different resistance profile.
 
+The fight-start anchor is also the boundary for anything put on the target. An
+`apply` or `extend` action with `target: "target"` is rejected while its resolved
+row is still a prepull step, and a trigger-driven target application is rejected
+the same way. Prepull is decided by rotation position rather than timestamp, so a
+prepull step that shares the anchor's timestamp is still prepull. When the anchor
+names one action inside a step, that step's earlier actions are prepull too, and
+the anchored action itself is not. Prepull damage and self effects are
+unaffected; only the target is unreachable. A `battleStarted` requirement is
+available to data that needs the same distinction for a self effect, such as a
+hit counter, because a self effect is not gated automatically.
+
 A target's `attackPattern` array declares its generated Take Damage events. Each
 entry is `{ firstDelay, interval, count, damage }`: the first occurrence lands
 `firstDelay` seconds after battle start, repeats every `interval` seconds, and
@@ -457,6 +468,14 @@ recipient count, while only one copy enters the tracked Self HP state. A
 `target: "player"` application instead allocates one independently expiring
 effect copy to self first and then to teammates. Once every represented player
 has a copy, reapplication replaces the copy with the least remaining duration.
+
+Every normalized rotation also stores `divinecraftDamage`, a boolean exposed in
+the editor as a checkbox after Ping. Unchecked, the selected Divinecraft
+contributes only its stat bonus and healing trigger; omitted records mean damage
+applies. The flag is passed to `selectedSetupEffects` as an override rather than
+being read from the timeline, so every setup comparison variant built for that
+rotation inherits it. The rotation participates in the worker fingerprint as a
+whole, so toggling it invalidates cached results.
 
 Timeline construction records an auditable numeric-resource ledger alongside
 the first sorted row. The worker uses the ledger's consumed and final Vitality

@@ -3,7 +3,7 @@
   "altersTimeline": true,
   "tags": ["BellstrikeSplendor"],
   "effect": {
-    "MountainsMightT0": {},
+    "MountainsMightT0": { "effect": [{ "target": "EndlessGale", "modify": { "duration": 10 } }] },
     "MountainsMightT1": {},
     "MountainsMightT2": {
       "effect": [
@@ -66,7 +66,9 @@
       ]
     },
     "MountainsMightT3": {},
-    "MountainsMightT4": {},
+    "MountainsMightT4": {
+      "effect": [{ "requirement": [{ "target": "self", "value": "EndlessGale" }], "stat": { "directAffinity": 0.03 } }]
+    },
     "MountainsMightT5": { "effect": [{ "rawStat": { "bellstrikePenetration": 6 } }] },
     "MountainsMightT6": {}
   }

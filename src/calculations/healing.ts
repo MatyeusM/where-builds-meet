@@ -5,6 +5,7 @@ import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults"
 import { weaponArtBonus, type DamageAction, type DamageContext } from "./damage"
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues"
 import { mainAttributeForWeapons } from "./effectiveStats"
+import { restrictedOutcomeRates, restrictedRateRouteFor } from "./rateRoutes"
 import { resolveFormulaValue, type StatFormula } from "./statEffects"
 
 type AttunementDefinition = { effect?: AttunementTagFilter & { stat?: Record<string, number> } }
@@ -123,10 +124,10 @@ function calculateHealingBreakdownInternal(
     (averageSilkbindAttack * silkbindCoefficient + numberValue(action.attrBonus)) *
     (1 + silkbindPenetration / 200) *
     (1 + stats.silkbindHealingBonus)
-  const criticalRate = Math.min(
-    1,
-    Math.max(0, (derivedStats.effectiveCrit + derivedStats.directCrit) * derivedStats.effectivePrecision),
-  )
+  // A healing action always resolves at the average of its attack range; the shared
+  // route keeps that fact in one place instead of repeating the rates here.
+  const rates = restrictedOutcomeRates(restrictedRateRouteFor(action.rateRoute) ?? "healing", derivedStats)
+  const criticalRate = rates.critRate
   const outcome = random && random() < criticalRate ? "critical" : "normal"
   let criticalMultiplier = 1 + criticalRate * (stats.criticalHealingBonus + criticalHealingBonus)
   if (random) criticalMultiplier = outcome === "critical" ? 1 + stats.criticalHealingBonus + criticalHealingBonus : 1
@@ -143,7 +144,7 @@ function calculateHealingBreakdownInternal(
     physical: Math.max(0, physical * finalMultiplier),
     silkbind: Math.max(0, silkbind * finalMultiplier),
     total: Math.max(0, (physical + silkbind) * finalMultiplier),
-    normalRate: 1 - criticalRate,
+    normalRate: rates.normalRate,
     criticalRate,
     ...(random ? { outcome } : {}),
   }

@@ -345,11 +345,14 @@ describe("hp-and-manual-events", () => {
         eventTimeReference: "battleStart",
         steps: [
           { type: "event", event: "Buff", before: { action: "start" }, buff: "Flute" },
+          // The fight starts on the debuffing event, so Controlled is applied
+          // in-combat. A prepull Debuff event would be rejected: nothing reaches
+          // the target before the fight-start anchor.
           { type: "event", event: "Debuff", before: { action: "start" }, debuff: "Controlled" },
           { type: "event", event: "Qi", after: { action: 0 }, targetQiRatio: 0 },
           { type: "skill", skill: "Probe" },
         ],
-        start: { step: 3 },
+        start: { step: 1 },
       },
       skills: { Probe: durationProbe },
     })

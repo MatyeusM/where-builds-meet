@@ -1,0 +1,11 @@
+{
+  "EndlessGale": {
+    "name": "Endless Gale",
+    "shortName": "Gale",
+    "description": "Applied by Nameless Spear's Martial Art Skill Qiankun's Lock. Mountain's Might T0 sets its duration to 10 seconds and T4 grants Direct Affinity Rate while it is active.",
+    "duration": 10,
+    "maxStack": 1,
+    "effect": [],
+    "refresh": true
+  }
+}

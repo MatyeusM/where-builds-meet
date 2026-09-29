@@ -93,6 +93,7 @@ export function buildPresetRotationBundle(
     buildSetup,
     { food: environment.food, divinecraft: environment.divinecraft, script: environment.script },
     pathId,
+    { divinecraftDamage: environment.rotation.divinecraftDamage },
   )
   const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId)
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId)
@@ -141,9 +142,17 @@ export function buildPresetRotationBundle(
       ),
       initialBuffs: globalBuffTimelineEffects(environment.globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(environment.globalDebuffs),
-      initialResources: { ...typedSystemStats.initialResources, Vitality: statState.stats.maxVitality },
+      initialResources: {
+        ...typedSystemStats.initialResources,
+        Vitality: statState.stats.maxVitality,
+        Endurance: statState.stats.maxEndurance,
+      },
       resourceRegeneration: { HeavensWill: statState.stats.heavensWillRegen },
-      resourceMaximums: { ...typedSystemStats.resourceMaximums, Vitality: statState.stats.maxVitality },
+      resourceMaximums: {
+        ...typedSystemStats.resourceMaximums,
+        Vitality: statState.stats.maxVitality,
+        Endurance: statState.stats.maxEndurance,
+      },
       resourceEvents: typedSystemStats.resourceEvents,
       maxHP: statState.stats.maxHp,
     },

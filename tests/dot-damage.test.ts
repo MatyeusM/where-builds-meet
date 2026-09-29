@@ -116,4 +116,49 @@ describe("dot-damage", () => {
       ).toBeTruthy()
     }
   })
+
+  it("resolves DOT flat physical and attribute bonuses exactly like a direct hit", async () => {
+    const { calculateDamageBreakdown, calculateSimulatedDamageBreakdown } =
+      await import("../src/calculations/damage.ts")
+    const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
+    const { emptyStats } = await import("../src/data/statDefinitions.ts")
+    const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, minBellstrike: 100, maxBellstrike: 100, precision: 1 }
+    const context = {
+      stats,
+      attunement: {},
+      skillTags: [],
+      weapons: ["strategicSword"],
+      buffs: [],
+      enemy: {
+        name: "Probe",
+        level: 96,
+        defense: 0,
+        physicalResistance: 0,
+        bellstrikeResistance: 0,
+        stonesplitResistance: 0,
+        silkbindResistance: 0,
+        bamboocutResistance: 0,
+        judgementResistance: 0,
+      },
+      derivedStats: calculateDerivedStats(stats, 0),
+      effects: [],
+    }
+    const tick = { phyCoef: 0.3, attrCoef: 0.3, phyBonus: 40, attrBonus: 10 }
+    const bonusless = { phyCoef: 0.3, attrCoef: 0.3 }
+    const expectedPhysical = 0.3 * 100 + 40
+    const expectedBellstrike = (0.3 * 100 + 10) * 1.5
+
+    for (const isDot of [false, true]) {
+      const result = calculateDamageBreakdown(tick, { ...context, isDot })
+      expect(result.physical).toBeCloseTo(expectedPhysical, 9)
+      expect(result.bellstrike).toBeCloseTo(expectedBellstrike, 9)
+
+      const withoutBonus = calculateDamageBreakdown(bonusless, { ...context, isDot })
+      expect(result.physical).toBeGreaterThan(withoutBonus.physical)
+      expect(result.bellstrike).toBeGreaterThan(withoutBonus.bellstrike)
+
+      const rolled = calculateSimulatedDamageBreakdown(tick, { ...context, isDot }, () => 0.5)
+      expect(rolled.total).toBeCloseTo(expectedPhysical + expectedBellstrike, 9)
+    }
+  })
 })

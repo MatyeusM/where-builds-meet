@@ -61,6 +61,7 @@ export function pendingEditorTimeline(
       targetHPRatio: 1,
       targetQiRatio: 1,
       resources: {},
+      enduranceLost: 0,
       buffs: new Map(),
       debuffs: new Map(),
       actions: [],

@@ -69,6 +69,7 @@ export function normalizeRotation(rotation: RotationRecord): RotationRecord {
       typeof rotation.infiniteVitality === "boolean"
         ? rotation.infiniteVitality
         : /\bIV\b|infinite vitality/i.test(rotation.name),
+    ...(typeof rotation.divinecraftDamage === "boolean" ? { divinecraftDamage: rotation.divinecraftDamage } : {}),
     start,
     ...(rotation.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
   }

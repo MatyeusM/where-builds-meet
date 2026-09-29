@@ -166,6 +166,18 @@ Kite, Wind, and Draught.
 
 ## Damage outcomes
 
+An action's `rateRoute` selects which of these outcomes it can roll. The
+`normal` route, used when the field is absent, keeps all four. The `healing`
+route drops abrasion and affinity, leaving only Normal and Critical. The
+`divinecraft` route drops all three, leaving only Normal. Because the restricted
+routes are single-outcome, their damage is the same in expected and sampled
+calculations.
+
+An action's `averageAttack` field pins the attack to the average of its effective
+range. Expected damage already uses that average for Normal and Critical, so the
+field only changes sampled calculations, where it replaces the uniform roll
+inside the range. Every `heal` action and every Divinecraft damage action sets it.
+
 Every damage action is evaluated as four possible outcomes and then rate weighted:
 
 | Outcome  | Physical attack   | Attribute attack  | Outcome bonus      |
@@ -385,7 +397,11 @@ chance estimates.
 
 All DOTs deal their authored damage once per active tick, regardless of stack count.
 Stacks can still determine effect transitions, including Weeping Blood's five-stack
-consumption, but do not multiply tick damage. For expected chance DOTs the timeline
+consumption, but do not multiply tick damage. DOT tick rows resolve through the
+ordinary per-outcome damage formula with no separate rules: the row's coefficients,
+flat `phyBonus` and `attrBonus`, attacks, penetration, path multiplier, active
+effects, and outcome rates are all calculated exactly as for a direct hit. For
+expected chance DOTs the timeline
 supplies `damageScale` equal to the probability of a tick. This multiplies every
 damage channel after ordinary formula resolution; `hitProbability` carries the same
 probability for hit counts and outcome triggers. A multi-stack tick is one hit.
@@ -422,6 +438,62 @@ after all event processing and metrics are complete. Their channel damage and hi
 weights are additive; no combined hit is fed back into triggers or outcome-state
 trackers. Exact event timelines remain authoritative for calculation and simulation.
 
+## Divinecraft damage
+
+| Divinecraft  | Divinecraft damage        |
+| ------------ | ------------------------- |
+| Fire         | Burn and Solid Foundation |
+| Fire-Water   | Burn and Solid Foundation |
+| Fire-Poison  | Burn and Solid Foundation |
+| Poison-Fire  | Poison                    |
+| Poison-Water | Poison                    |
+| Water-Fire   | none                      |
+| Water-Poison | none                      |
+| None         | none                      |
+
+`data/divinecraft.json` selects which of them each Divinecraft applies. Both DOTs
+are one stack, refreshable, tick every second starting 0.5 seconds after
+application, and use the `divinecraft` rate route with `averageAttack`, so each
+tick is
+`(average physical attack - enemy defense) x physical coefficient` at a single
+fixed value in both expected and sampled calculations.
+
+| DOT                 | Element | Duration | `phyCoef` |
+| ------------------- | ------- | -------- | --------- |
+| `DivinecraftFire`   | Fire    | 4s       | 0.26      |
+| `DivinecraftPoison` | Poison  | 8s       | 0.16      |
+
+Neither has an attribute coefficient or a flat bonus, so only the physical
+component is produced.
+
+Fire, Fire-Water, and Fire-Poison apply the burn and also build
+`DivinecraftFireEmber`; Poison-Fire and Poison-Water apply the poison. A
+Water-first pairing carries no Divinecraft damage: Water-Fire and Water-Poison
+keep only their existing bonuses and healing trigger. Each application is a
+`damage` event trigger that requires a non-`DOT` hit, so a Divinecraft DOT never
+refreshes or sustains itself.
+
+No target effect is applied before the fight-start anchor, so a prepull hit never
+puts a Divinecraft DOT on the target. The Solid Foundation counter additionally
+requires the fight to have started, so prepull hits do not count toward it.
+
+`RotationRecord.divinecraftDamage` is a per-rotation checkbox in the rotation
+editor, next to Ping. Unchecking it strips the `damage` event rules from the
+selected effect, which is exactly the burn, the poison, and the Solid Foundation
+counter, and leaves the HP DMG bonus and the healing trigger intact. Omitted
+records mean damage applies, so rotations saved before the checkbox existed keep
+their current numbers. Every setup comparison variant for a rotation inherits
+that rotation's flag, so a comparison delta measures only the option that
+varies.
+
+The Fire Divinecrafts build `DivinecraftFireEmber`, a hidden five-stack counter
+with the same direct-damage requirement. Reaching five stacks consumes the count
+and triggers `DivinecraftSolidFoundationGrant`, which applies
+`DivinecraftSolidFoundation`: a five-second buff with a ten-second re-application
+cooldown. Its next qualifying direct hit triggers
+`DivinecraftSolidFoundationStrike`, a direct hit with `phyCoef` 0.4 and the same
+`divinecraft` route, which consumes the buff so it fires once.
+
 ## Healing
 
 Healing actions share the hit-time stat and effect snapshot used by damage
@@ -444,7 +516,7 @@ Silkbind Healing =
   × (1 + Silkbind Healing Bonus)
 ```
 
-Healing uses `phyCoef` for Physical and `silkbindCoef` for Silkbind, with omitted coefficients treated as zero. It does not use `attrCoef` or other attribute attacks.
+Healing uses `phyCoef` for Physical and `silkbindCoef` for Silkbind, with omitted coefficients treated as zero. It does not use `attrCoef` or other attribute attacks. It always resolves at the average of each attack range, which its `averageAttack` field records.
 
 Calculation-time Physical and Silkbind Attack Bonus effects multiply their
 respective average attack before the coefficient. Matching healing attunements
@@ -458,7 +530,7 @@ contributions once, then converts to the equipped
 path's primary attribute before healing is resolved, so it contributes to
 Silkbind Healing when Silkbind is the primary attribute.
 
-Healing has only Normal and Critical outcomes:
+Healing has only Normal and Critical outcomes, which is the `healing` rate route:
 
 ```text
 Healing Critical Rate =
@@ -612,10 +684,10 @@ index in `param3`, and values beyond every matching bound use its extra final en
 `phyCoef` and `attrCoef` use the same resolver and the action's distance snapshot,
 including in sampled damage calculations.
 
-The selected Divinecraft contributes its `hpDMGBonus` through this category.
-Divinecraft `qiDMGBonus` and healing-triggered Vitality gain are retained in
-`data/divinecraft.json` as future-facing data, but neither mechanic is currently
-evaluated by the simulator.
+The selected Divinecraft contributes its `hpDMGBonus` through this category and
+healing-triggered Vitality gain through the shared heal event trigger. Divinecraft
+`qiDMGBonus` is retained in `data/divinecraft.json` as future-facing data and is
+not currently evaluated by the simulator.
 
 Script requirements are evaluated from each damage action's target HP and Qi
 snapshot. When a rotation declares target Max HP, target-HP requirements are
@@ -824,10 +896,6 @@ Expected Component =
 ```
 
 The action total is the sum of expected Physical, Bellstrike, Stonesplit, Silkbind, and Bamboocut damage. Rotation total damage includes resolved damage at or after the selected start anchor and within the combat window, including triggered skills and DOT ticks. Pre-start actions remain visible but are omitted from damage, hit count, and outcome-rate aggregation; actions after combat ends are not resolved. Battle End precedes damage at the same timestamp, so an equal-time hit does not count. Actions at the starting timestamp still use timeline order to omit earlier actions in the starting skill. DPS is total damage divided by the time from the selected start anchor to Battle End, or to completion of the final ordered cast/Delay when Battle End is absent. Final-cast same-time actions count; later DOTs and replays do not extend the duration.
-
-## Damage-over-time exception
-
-DOT damage ignores the action's flat Physical Bonus and Attribute Bonus. Its coefficient, attacks, penetration, path bonus, active effects, and outcome rates are otherwise calculated normally.
 
 ## Replayed damage
 
