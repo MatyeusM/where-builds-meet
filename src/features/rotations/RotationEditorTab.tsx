@@ -59,7 +59,6 @@ import {
   type GraduationPresetEnvironment,
 } from "@/application/graduation"
 import { initialRotationEditorState } from "@/application/persistence/rotations"
-import { resolveComparisonMetrics } from "@/application/resolveRotationMetrics"
 import { calculationStatusLabel } from "@/application/results/calculationStatusLabel"
 import { RotationActionBreakdownValue } from "@/application/results/DamageBreakdownValue"
 import { RotationSkillName } from "@/application/results/RotationSkillName"
@@ -82,13 +81,12 @@ import {
   type TargetType,
 } from "@/calculations/combatDefaults"
 import type { EditorTimelineResult } from "@/calculations/editorTimeline"
-import { type CalculationSubject } from "@/calculations/rotationCalculationBundle"
+import { buildRotationCalculationBundle, type CalculationSubject } from "@/calculations/rotationCalculationBundle"
 import {
   type RotationActionBreakdown,
   type RotationSimulationBundle,
   type RotationSimulationResult,
 } from "@/calculations/rotationCalculator"
-import { buildRotationComparisonBundle } from "@/calculations/rotationComparisonBundle"
 import { emptyRotationBreakdown, type RotationMetrics, type RotationPriority } from "@/calculations/rotationMetrics"
 import {
   editableCastTimeMaximum,
@@ -250,9 +248,7 @@ export function RotationEditorTab({
   >({})
   const rotationResultsRef = useRef(rotationResults)
   const editorPreviewRequestSequenceRef = useRef(0)
-  const diffRequestSequenceRef = useRef(0)
-  const scheduledRefreshTargetRef = useRef<string | null>(null)
-  const runningRefreshTargetRef = useRef<string | null>(null)
+  const baselineRequestSequenceRef = useRef(0)
   const graduationFingerprintRef = useRef<string | null>(null)
   const [readableDialogOpen, setReadableDialogOpen] = useState(false)
   const [readableCopyStatus, setReadableCopyStatus] = useState("")
@@ -275,32 +271,22 @@ export function RotationEditorTab({
   useEffect(
     () => () => {
       editorPreviewRequestSequenceRef.current += 1
-      diffRequestSequenceRef.current += 1
-      scheduledRefreshTargetRef.current = null
-      runningRefreshTargetRef.current = null
+      baselineRequestSequenceRef.current += 1
     },
     [],
   )
   const listedRotationEntries = useMemo(
     () =>
       rotationEntries
-        .filter(
-          entry =>
-            (devMode || !entry.test) && (!entry.isDefault || rotationAvailableForWeapons(entry, settings.weapons)),
-        )
+        .filter(entry => (devMode || !entry.test) && rotationAvailableForWeapons(entry, settings.weapons))
         .sort((left, right) => Number(left.isDefault === true) - Number(right.isDefault === true)),
     [devMode, rotationEntries, settings.weapons],
   )
-  const compatibleRotationEntries = useMemo(
-    () => listedRotationEntries.filter(entry => rotationAvailableForWeapons(entry, settings.weapons)),
-    [listedRotationEntries, settings.weapons],
-  )
-  const editingEntry =
-    listedRotationEntries.find(entry => entry.id === editingRotationId) ?? compatibleRotationEntries[0]
+  const editingEntry = listedRotationEntries.find(entry => entry.id === editingRotationId) ?? listedRotationEntries[0]
   const activeRotationId =
-    compatibleRotationEntries.find(entry => entry.id === selectedRotationId)?.id ??
-    compatibleRotationEntries.find(entry => entry.id === defaultRotationId)?.id ??
-    compatibleRotationEntries[0]?.id
+    listedRotationEntries.find(entry => entry.id === selectedRotationId)?.id ??
+    listedRotationEntries.find(entry => entry.id === defaultRotationId)?.id ??
+    listedRotationEntries[0]?.id
   const resolvedActiveRotationIdRef = useRef(activeRotationId)
   useEffect(() => {
     resolvedActiveRotationIdRef.current = activeRotationId
@@ -401,7 +387,6 @@ export function RotationEditorTab({
     })
   }
   function updateRotationCalculationSetting(value: SetStateAction<RotationRecord>) {
-    scheduledRefreshTargetRef.current = null
     setRotation(value)
   }
   function selectRotationItem(index: number, value: string, control: HTMLSelectElement) {
@@ -1394,9 +1379,8 @@ export function RotationEditorTab({
     },
   })
 
-  const calculationBundleFor = useEffectEvent(
-    (rotationRecord: RotationRecord, includeDiffs: boolean): RotationSimulationBundle =>
-      buildRotationComparisonBundle(calculationSubjectFor(rotationRecord), includeDiffs),
+  const calculationBundleFor = useEffectEvent((rotationRecord: RotationRecord): RotationSimulationBundle =>
+    buildRotationCalculationBundle(calculationSubjectFor(rotationRecord)),
   )
 
   /**
@@ -1422,7 +1406,7 @@ export function RotationEditorTab({
           .ensure({
             kind: "editorTimeline",
             cacheKey: editorTimelineKey(requested.id),
-            build: () => calculationBundleFor(requested.rotation, false),
+            build: () => calculationBundleFor(requested.rotation),
             priority: 450,
           })
         if (!current()) return
@@ -1449,7 +1433,7 @@ export function RotationEditorTab({
   }, [calculationContextKey, editingRotationId, rotation, editorTimelineReady])
 
   const prepareBaselineCalculation = useEffectEvent((rotationRecord: RotationRecord) => {
-    const bundle = calculationBundleFor(rotationRecord, false)
+    const bundle = calculationBundleFor(rotationRecord)
     return { bundle, fingerprint: rotationBundleFingerprint(bundle) }
   })
   const prepareGraduationCalculation = useEffectEvent((rotationRecord: RotationRecord) => {
@@ -1510,8 +1494,6 @@ export function RotationEditorTab({
     async (id: string, rotationRecord: RotationRecord, requestSequence: number) => {
       const prepared = prepareBaselineCalculation(rotationRecord)
       const resultKey = prepared.fingerprint
-      const refreshTarget = `${id}:${resultKey}`
-      if (runningRefreshTargetRef.current === refreshTarget) return
       const result = await useDpsStore
         .getState()
         .ensure({ kind: "baseline", cacheKey: resultKey, build: () => prepared.bundle, priority: 200 })
@@ -1549,7 +1531,7 @@ export function RotationEditorTab({
    *
    * Unsaved edits to the active rotation have always moved the headline, so while that is the
    * rotation on screen the editor is the authority on it. The application publishes the stored
-   * record otherwise, and stands down while a draft here disagrees with it. Publishing happens
+   * record otherwise, and keeps this draft as its subject after leaving the editor. Publishing happens
    * where the numbers arrive rather than in an effect watching them, because the metrics are a
    * fresh object each render and an effect depending on one would republish on every render.
    */
@@ -1559,7 +1541,9 @@ export function RotationEditorTab({
     if (!entry) return
     const graduation = prepareGraduationCalculation(rotationRecord)
     graduationFingerprintRef.current = graduation?.fingerprint ?? null
-    const bundle = calculationBundleFor(rotationRecord, false)
+    const bundle = calculationBundleFor(rotationRecord)
+    const bundleKey = `${id}:${rotationBundleFingerprint(bundle)}`
+    const held = useRotationStore.getState().result
     useRotationStore
       .getState()
       .publish({
@@ -1569,8 +1553,11 @@ export function RotationEditorTab({
         rotationIsDefault: entry.isDefault === true,
         rotation: rotationRecord,
         bundle,
-        bundleKey: `${id}:${rotationBundleFingerprint(bundle)}`,
-        metrics,
+        bundleKey,
+        metrics: baselineMetricsWithPreviousComparisons(
+          metrics,
+          held?.bundleKey === bundleKey ? held.metrics : undefined,
+        ),
         draft: true,
         graduation: graduation
           ? { fingerprint: graduation.fingerprint, dps: cachedGraduationDps(graduation) }
@@ -1579,20 +1566,16 @@ export function RotationEditorTab({
   })
 
   /**
-   * Resolves the edited rotation's metrics: its baseline, then every comparison category.
-   *
-   * The category sweep this replaces ran one variant at a time and republished after each
-   * category, which is why the resolution needs no accumulating state and no per-step staleness
-   * checks — the store sequences every request by key, so a resolve that is overtaken simply
-   * resolves against inputs nothing reads any more.
+   * Resolves the active rotation's baseline without comparison variants. The baseline carries
+   * the complete timeline and per-action results the editor displays; Main requests variants
+   * separately when its comparison panels are visible.
    */
   const resolveRotationForEditor = useEffectEvent(
     async (id: string, rotationRecord: RotationRecord, prepared = prepareBaselineCalculation(rotationRecord)) => {
-      const requestSequence = ++diffRequestSequenceRef.current
+      const requestSequence = ++baselineRequestSequenceRef.current
       const contextKey = calculationContextKey
-      const resultKey = prepared.fingerprint
       const current = () =>
-        diffRequestSequenceRef.current === requestSequence &&
+        baselineRequestSequenceRef.current === requestSequence &&
         calculationContextKeyRef.current === contextKey &&
         resolvedActiveRotationIdRef.current === id
       const store = useRotationStore.getState()
@@ -1614,37 +1597,9 @@ export function RotationEditorTab({
           })
         })
 
-        // The store resolves the active rotation's comparisons for every surface, so the editor
-        // only asks for the ones it has no published answer for: a rotation being edited that is
-        // not the active one. Otherwise two callers would drive the same category, and the second
-        // would be answered entirely from the cache.
-        const published = useRotationStore.getState().result
-        const metrics =
-          published && !published.draft && published.rotationId === id
-            ? baseline.metrics
-            : await resolveComparisonMetrics({
-                bundle: calculationBundleFor(rotationRecord, true),
-                baselineKey: resultKey,
-                baseline: () => baseline,
-                onCategoryStarted: category => {
-                  if (current()) useRotationStore.getState().startCategory(category)
-                },
-                onCategoryProgress: (category, progress) => {
-                  if (current()) useRotationStore.getState().progressCategory(category, progress)
-                },
-                onCategoryResolved: (merged, category) => {
-                  if (!current()) return
-                  storeBaselineResult(id, resultKey, { ...baseline, metrics: merged })
-                  useRotationStore.getState().settleCategory(category)
-                  publishDraft(id, rotationRecord, merged)
-                },
-              })
-        if (!current()) return "superseded" as const
-        storeBaselineResult(id, resultKey, { ...baseline, metrics })
-        publishDraft(id, rotationRecord, metrics)
         return "published" as const
       } catch (calculationError) {
-        if (diffRequestSequenceRef.current !== requestSequence) return "superseded" as const
+        if (baselineRequestSequenceRef.current !== requestSequence) return "superseded" as const
         publishNotice({
           id: "rotation-calculation",
           error: true,
@@ -1669,14 +1624,7 @@ export function RotationEditorTab({
     setupComparisons,
   }
   const publishedResult = useRotationStore(state => state.result)
-  const storeHasComparisons =
-    publishedResult !== null && !publishedResult.draft && publishedResult.rotationId === editingRotationId
-  const rotationCalculation = storeHasComparisons
-    ? baselineMetricsWithPreviousComparisons(
-        currentCachedResult?.metrics ?? localRotationCalculation,
-        publishedResult.metrics,
-      )
-    : (currentCachedResult?.metrics ?? localRotationCalculation)
+  const rotationCalculation = currentCachedResult?.metrics ?? localRotationCalculation
 
   // The rotation on screen is weighed against the active one the same way the build list weighs a
   // build against the active build. The editor publishes into the store only while the rotation on
@@ -1719,8 +1667,6 @@ export function RotationEditorTab({
     if (activeEntry.id === editingRotationId && !editorTimelineReady) return
     const activeRotation = activeEntry.id === editingRotationId ? rotation : rotationRecordForEntry(activeEntry)
     const prepared = prepareBaselineCalculation(activeRotation)
-    const refreshTarget = `${activeEntry.id}:${prepared.fingerprint}`
-    if (scheduledRefreshTargetRef.current === refreshTarget) return
     void (async () => {
       const outcome = await resolveRotationForEditor(activeEntry.id, activeRotation, prepared)
       if (outcome !== "published") return
@@ -2033,7 +1979,8 @@ export function RotationEditorTab({
                           }
                         >
                           <small className={`rotation-results-rate ${throughputDeltaClass(dpsDelta, "damage")}`}>
-                            ({formatThroughputDelta(dpsDelta)} {t("system.dps")})
+                            ({formatThroughput(rotationCalculation.unscaledDps)}, {formatThroughputDelta(dpsDelta)}{" "}
+                            {t("system.dps")})
                           </small>
                         </Tooltip>
                       )}

@@ -207,17 +207,18 @@ export function gearScopeReconciled(
   // and must return the same scope value so the store does not store it again.
   const freshBuilds = scope.sharedBuilds ? [] : afterBuilds.filter(id => !beforeBuilds.includes(id))
   const freshItems = scope.sharedInventory ? [] : afterItems.filter(id => !beforeItems.includes(id))
-  const pruned = gearScopeWithoutIds(scope, {
+  let reconciled = gearScopeWithoutIds(scope, {
     buildIds: beforeBuilds.filter(id => !afterBuilds.includes(id)),
     itemIds: beforeItems.filter(id => !afterItems.includes(id)),
   })
+  // Imports and duplication can add both records in one update; neither placement may skip the other.
   if (freshBuilds.length > 0) {
-    return gearScopeWithIds(pruned, "builds", freshBuilds, { target: "path", pathId })
+    reconciled = gearScopeWithIds(reconciled, "builds", freshBuilds, { target: "path", pathId })
   }
   if (freshItems.length > 0) {
-    return gearScopeWithIds(pruned, "inventory", freshItems, { target: "path", pathId })
+    reconciled = gearScopeWithIds(reconciled, "inventory", freshItems, { target: "path", pathId })
   }
-  return pruned
+  return reconciled
 }
 
 function allPathIds(): PathId[] {

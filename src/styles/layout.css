@@ -203,34 +203,6 @@
       flex: 1 1 0;
     }
 
-    /*
-     * The mark and the heading are one row, centred on each other. The heading's line box grows
-     * with its fluid size and the glyphs stay centred inside it, so centring the mark against that
-     * box keeps the two aligned at every size, from the 1.75rem mobile case to the 2.625rem cap.
-     * Aligning to the top instead would leave the mark riding above the text it belongs to.
-     */
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-
-      /* The heading's own bottom margin is moved here. Margins do not collapse inside a flex
-         container, so leaving it on the heading would make the heading's box taller than its text
-         and pull the heading up off the mark's centre by half of it. */
-      margin-block-end: var(--space-xs);
-    }
-
-    .page-title h1 {
-      margin-block-end: 0;
-    }
-
-    .page-title-logo {
-      flex: 0 0 auto;
-      inline-size: 3rem;
-      block-size: 3rem;
-      object-fit: contain;
-    }
-
     /* Controls stack above the project links, each sized by its own content. */
     .page-header-end {
       display: flex;
@@ -315,14 +287,14 @@
 
   .app-layout {
     display: grid;
-    grid-template-columns: 44rem 27rem minmax(22rem, 44rem);
+    grid-template-columns: 44rem 30rem minmax(22rem, 44rem);
     align-items: start;
     justify-content: start;
     gap: 16px;
   }
 
   .app-layout:has(.results-column-with-healing) {
-    grid-template-columns: 44rem 27rem 45.25rem;
+    grid-template-columns: 44rem 30rem 45.25rem;
   }
 
   .app-layout > * {
@@ -336,7 +308,7 @@
   .middle-stats-column {
     display: grid;
     inline-size: 100%;
-    max-inline-size: 27rem;
+    max-inline-size: 30rem;
     gap: 12px;
   }
 

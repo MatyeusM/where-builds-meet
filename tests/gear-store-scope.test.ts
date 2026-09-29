@@ -64,6 +64,43 @@ const withItems =
   (state: BuildState) => ({ ...state, gearItems: [...state.gearItems, ...ids.map(gear)] })
 
 describe("gear store scope", () => {
+  it("keeps imported gear on its path after deleting the imported build and reloading", async () => {
+    const { useGearStore, restore } = await gearStore()
+    const { exportBuildState, mergeImportedBuildState } = await import("@/gear")
+    const { visibleGearItems } = await import("@/application/gearScope")
+    try {
+      const store = useGearStore.getState()
+      store.unshareGear("builds", { target: "path", pathId: pathA })
+      store.unshareGear("inventory", { target: "path", pathId: pathA })
+      const exported = exportBuildState({
+        entries: [{ ...build("imported-build"), equipped: { leftWeapon: "imported-weapon" } }],
+        gearItems: [{ ...gear("imported-weapon"), baseAffix: { key: "minPhys", value: 50 } }],
+        activeBuildId: "imported-build",
+      })
+      const imported = mergeImportedBuildState(useGearStore.getState().buildState, JSON.parse(exported))
+      assert.equal(imported.state.gearItems.length, 1)
+      assert.equal(imported.importedBuildIds.length, 1)
+      store.updateBuildState(pathA, () => imported.state)
+      assert.equal(store.unplacedCount("builds"), 0)
+      assert.equal(store.unplacedCount("inventory"), 0)
+
+      store.updateBuildState(pathA, state => ({
+        ...state,
+        entries: state.entries.filter(entry => !imported.importedBuildIds.includes(entry.id)),
+      }))
+      store.initialise(pathA)
+      const { buildState, scope } = useGearStore.getState()
+      assert.equal(buildState.gearItems.length, 1)
+      assert.deepEqual(
+        visibleGearItems({ buildState, scope, pathId: pathA, builds: [] }).map(item => item.id),
+        ["imported-weapon"],
+      )
+      assert.deepEqual(visibleGearItems({ buildState, scope, pathId: pathB, builds: [] }), [])
+    } finally {
+      restore()
+    }
+  })
+
   it("puts a new build on the path it was made on once builds are private, and on no path while they are shared", async () => {
     const { useGearStore, restore } = await gearStore()
     try {

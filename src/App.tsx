@@ -21,7 +21,6 @@ import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
-import logo from "./assets/logo.png?w=96&h=96&format=webp"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
@@ -74,7 +73,7 @@ export default function App() {
   // Remounting would cancel its worker and discard progress/results on every tab switch.
   const [simulationMounted, setSimulationMounted] = useState(false)
   // The rotation editor is deferred for a different reason: it is the largest module in the
-  // application, and it is only needed to read comparisons, which nothing else displays. It is
+  // application, and its timeline editing UI is only needed on that tab. It is
   // deliberately absent from the idle preload below, which would give back what deferring it
   // saves. The active rotation's own totals are resolved by the application, so the headline
   // number does not wait for it.
@@ -230,6 +229,7 @@ export default function App() {
     [activeStatState, settings, enemy, innerWayRevision, setupSelections],
   )
   useActiveRotationResult({
+    comparisonsActive: activeTab === "main",
     pathId,
     build: activeBuild,
     gearItems: visibleGear,
@@ -397,12 +397,7 @@ export default function App() {
       <div className="page-content">
         <header className="page-header">
           <div className="page-header-start">
-            <div className="page-title">
-              {/* The mark beside the heading, so it is decorative: the heading already names the
-                application, and an empty alt keeps a screen reader from reading it twice. */}
-              <img className="page-title-logo" src={logo} alt="" width={48} height={48} />
-              <h1>{t("ui.app.whereBuildsMeet")}</h1>
-            </div>
+            <h1>{t("ui.app.whereBuildsMeet")}</h1>
             <p className="intro">{t("ui.app.buildSimulateAndOptimizeForWhereWindsMeet")}</p>
             <section className="path-selector" aria-label={t("ui.app.combatPath")}>
               <div className="path-selector-options">

@@ -679,7 +679,8 @@ export default function BuildTab({
                   }
                 >
                   <small className={`build-detail-dps ${throughputDeltaClass(comparison.delta, "damage")}`}>
-                    ({formatThroughputDelta(comparison.delta, 0)} {t("system.dps")})
+                    ({formatThroughput(comparison.reading.dps, 0)}, {formatThroughputDelta(comparison.delta, 0)}{" "}
+                    {t("system.dps")})
                   </small>
                 </Tooltip>
               )}
@@ -909,7 +910,7 @@ function BuildSetupPanel({
             <h2>{t("ui.buildTab.bowRingSet")}</h2>
           </div>
         </PanelHeading>
-        <ButtonGroup>
+        <ButtonGroup columns={4}>
           {Object.entries(bowRingSetDefinitions).map(([value, definition]) => (
             <ButtonGroupOption
               key={value}

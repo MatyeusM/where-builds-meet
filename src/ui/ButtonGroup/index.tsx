@@ -12,6 +12,8 @@ type ButtonGroupProps = {
    * begins.
    */
   cellWidth?: string
+  /** Keep this many options per row instead of wrapping by minimum cell width. */
+  columns?: number
   className?: string
 } & Omit<HTMLAttributes<HTMLDivElement>, "className" | "children">
 
@@ -20,10 +22,15 @@ type ButtonGroupProps = {
  * separate buttons: options share a single border, and each is separated from its
  * neighbour by one line instead of two.
  */
-export function ButtonGroup({ children, cellWidth, className, style, ...rest }: ButtonGroupProps) {
+export function ButtonGroup({ children, cellWidth, columns, className, style, ...rest }: ButtonGroupProps) {
   const groupStyle = useMemo(
-    () => (cellWidth ? ({ "--button-group-cell": cellWidth, ...style } as CSSProperties) : style),
-    [cellWidth, style],
+    () =>
+      ({
+        "--button-group-cell": cellWidth,
+        gridTemplateColumns: columns ? `repeat(${columns}, minmax(0, 1fr))` : undefined,
+        ...style,
+      }) as CSSProperties,
+    [cellWidth, columns, style],
   )
   const groupClass = className ? `${styles.group} ${className}` : styles.group
   return (

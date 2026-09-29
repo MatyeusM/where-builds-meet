@@ -110,3 +110,5 @@ The bundled Tabler Icons React package is licensed under the [MIT License](publi
 - **Royal**, for help with the Stonesplit Might rotation
 - **Yu Seol-ha**, for translating the Chinese spreadsheet and providing insights
 - **Sasha**, for data mining and providing insights into system data
+- **JubTse**, for help with the Wind rotation
+- **Kale**, for help with the Dust rotation

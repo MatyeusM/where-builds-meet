@@ -495,8 +495,8 @@ have settled, counting a dispatched variant as part-settled by the progress it
 reports, so a category does not read as stalled while its first variants run. Both are the same primitive, given a progress or not given one, and the
 wording is shared by every caller, so a status reads identically wherever it
 appears. The stats tab and the rotation toolbar therefore describe the same
-pending baseline the same way. Editor previews never request comparison variants;
-active-rotation comparisons remain tied to save, activation, or setup changes.
+pending baseline the same way. The editor never requests comparison variants;
+active-rotation comparisons are requested only while the Main tab is visible.
 Manual event rows expose their authored start time as an input. Entering a time
 switches the event to explicit battle-relative timing while retaining its old
 anchor only for editor navigation; the previous/next event controls remove that
@@ -1614,10 +1614,13 @@ cached baseline can seed a fresh worker when some variants are still missing.
 These caches are intentionally not written to browser storage.
 
 Only the active rotation publishes to the central module store. Its baseline is
-published as soon as it completes, replacing DPS, total damage, and breakdowns
-while retaining the previous comparison rows. Comparison categories then run
-sequentially and replace only their own rows. An active-rotation Save and Make
-Active request comparisons; saving an inactive rotation does not. The central
+published as soon as it completes, replacing DPS, total damage, breakdowns, and
+the simulation bundle after gear or build edits on any tab. Comparison rows are
+retained only for the same baseline fingerprint; a changed baseline clears them.
+Comparison categories run only while Main is visible and replace their own rows
+as they finish. Save and Make Active in the editor request a baseline without
+comparison variants. Returning to Main resolves the current rotation's variants,
+including an unsaved active draft, from cached results or new worker requests. The central
 store publishes independent progress for baseline, stat priority, attunement
 priority, weapon sets, armor sets, bow/ring, arsenal, global buffs/debuffs,
 Inner Ways, Script, Divinecraft, and food. Superseded requests cannot update or
@@ -1807,27 +1810,28 @@ order. The categories own disjoint metric fields, so they need no ordering
 between them either, and one landing never disturbs another.
 
 A rotation's result is therefore the same wherever it is read, and the
-application resolves all of it: the baseline every surface shows, and the
-comparisons the character sheet's priority panels weigh. Those panels used to
+application resolves the baseline every surface shows on every build, gear,
+rotation, or environment change. It resolves comparisons only while the Main
+tab's priority panels are visible. Those panels used to
 say the rotation editor had to be opened, which was true only while a sweep
 inside the editor produced them.
 
-That is also what makes the editor deferrable. It resolves a rotation's
-comparisons only when the rotation being edited is not the active one, because
-the active rotation's are already published; it contributes a baseline and an
+That is also what makes the editor deferrable. It never resolves comparison
+variants; it contributes a baseline and an
 editor timeline for what is on screen, and a draft of its own when the active
 rotation carries unsaved edits. It mounts on the first visit to its tab, after
 which it stays mounted so its scroll offset survives.
 
 The comparison variants are built from the calculation subject and the static
 definitions, in `rotationComparisonBundle.ts`, so producing them needs no
-component. A bundle's fingerprint is what both callers agree on, so the
-application's comparisons and the editor's are the same cache entries.
+component. The shared baseline and editor use the same bundle fingerprint, so
+Main's comparisons reuse the baseline already measured for the editor. An editor
+draft remains the active calculation subject when returning to Main or changing
+gear; it is rebuilt against current equipment rather than blocking shared refreshes.
 
 Editing any rotation calculates and caches only that rotation's baseline
 timeline, expected damage, DPS, and action breakdowns. Making an inactive rotation
-active reuses its valid baseline cache and requests comparisons. An editor
-preview never requests comparison variants.
+active reuses its valid baseline cache. Comparisons wait until Main is visible.
 
 When character stats, attunements, Inner Ways, food, Divinecraft, build,
 breakthrough, or settings change, the inputs are part of the bundle, so their
@@ -1836,8 +1840,7 @@ fingerprints change and the next pull finds nothing held. The category order is
 `bowRingSet`, `arsenal`, `globalDebuffs`, `innerWays`, `script`, `divinecraft`,
 `food`. The Rotation Editor keeps the last completed timeline for each rotation
 during its replacement calculation so scroll position and focused controls
-survive the refresh, and Main keeps each category's previous rows until that
-category completes.
+survive the refresh. Main never displays comparison rows from a different baseline.
 
 Staleness is the store's problem, not the caller's. A request is keyed by what
 it computes, so work overtaken by newer inputs resolves against inputs nothing

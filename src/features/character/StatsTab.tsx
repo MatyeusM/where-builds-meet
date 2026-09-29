@@ -866,7 +866,7 @@ export function StatsTab({
                 ))}
                 <div className="global-debuff-row">
                   <span>{t("ui.app.draughtDebuffs")}</span>
-                  <ButtonGroup>
+                  <ButtonGroup columns={3}>
                     {(["none", "strayhunt", "both"] as const).map(value => {
                       const active = globalDebuffs.draught === value
                       const labels = {
@@ -891,7 +891,7 @@ export function StatsTab({
                   <span>
                     {gameText("Floating Grace")} ({t("system.path.deluge")})
                   </span>
-                  <ButtonGroup>
+                  <ButtonGroup columns={3}>
                     {(["none", "mixed", "deluge"] as const).map(value => {
                       const active = globalDebuffs.floatingGrace === value
                       return (
@@ -909,7 +909,7 @@ export function StatsTab({
                 </div>
                 <div className="global-debuff-row">
                   <span>{t("system.innerWay.bitterSeasons")}</span>
-                  <ButtonGroup>
+                  <ButtonGroup columns={3}>
                     {(["none", "T1", "T6"] as const).map(value => {
                       const active = globalDebuffs.qingyisCharm === value
                       return (
@@ -1064,7 +1064,7 @@ export function StatsTab({
                 </button>
               )}
             </PanelHeading>
-            <ButtonGroup>
+            <ButtonGroup columns={4}>
               {Object.entries(typedBowRingSetDefinitions).map(([value, definition]) => (
                 <ButtonGroupOption
                   key={value}

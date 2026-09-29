@@ -29,13 +29,6 @@
     font-size: clamp(1.55rem, 7vw, 2rem);
   }
 
-  /* The mark keeps its ratio to the heading, which the heading's smaller mobile size takes with
-     it. Left at the desktop size it would stand taller than the text it sits beside. */
-  .layout-mobile .page-title-logo {
-    inline-size: 2rem;
-    block-size: 2rem;
-  }
-
   .layout-mobile .intro {
     margin-block-start: 0.25rem;
     font-size: 0.9rem;
@@ -269,6 +262,7 @@
 
   .layout-mobile .build-editor-content {
     padding: 0.75rem;
+    padding-block-start: 0;
   }
 
   .layout-mobile .build-detail-heading {

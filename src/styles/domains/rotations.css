@@ -76,6 +76,7 @@
   }
 
   .rotation-list-item {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -90,11 +91,10 @@
     text-align: start;
   }
 
-  .rotation-list-item.active {
-    background: var(--primary-soft);
+  .rotation-list-item:hover {
+    background: color-mix(in oklab, var(--primary-soft) 50%, transparent);
   }
 
-  .rotation-list-item:hover,
   .rotation-list-item.editing {
     background: var(--primary-soft);
   }
@@ -121,6 +121,13 @@
     cursor: pointer;
   }
 
+  /* Extend selection across the row's padding and gaps; keep removal above it. */
+  .rotation-select-button::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+
   .active-rotation-icon {
     display: inline-block;
     margin-inline-end: 6px;
@@ -135,6 +142,8 @@
   }
 
   .rotation-remove-button {
+    position: relative;
+    z-index: 1;
     display: inline-grid;
     inline-size: 23px;
     block-size: 23px;

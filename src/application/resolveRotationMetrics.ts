@@ -21,8 +21,8 @@ import {
  * dispatched. Nothing needs to stay alive between the parts, which is what lets the rotation
  * editor be a view over the store rather than the thing that owns the calculation.
  *
- * A baseline is asked for on its own, because that is all the rest of the application displays.
- * The comparison categories are asked for by the editor, because nothing outside it reads them.
+ * A baseline is requested on every relevant input change. Only the Main tab requests comparison
+ * categories; the Build tab and Rotation Editor do not need those variants.
  */
 
 /** The headline number every other surface shows, so it outranks the editor's own work. */

@@ -66,6 +66,7 @@
   }
 
   .build-list-item {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -77,12 +78,11 @@
     cursor: pointer;
   }
 
-  .build-list-item:hover,
-  .build-list-item.editing {
-    background: var(--primary-soft);
+  .build-list-item:hover {
+    background: color-mix(in oklab, var(--primary-soft) 50%, transparent);
   }
 
-  .build-list-item.active {
+  .build-list-item.editing {
     background: var(--primary-soft);
   }
 
@@ -112,6 +112,13 @@
     cursor: pointer;
   }
 
+  /* Extend selection across the row's padding and gaps; keep removal above it. */
+  .build-select-button::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+
   .build-list-item strong,
   .build-list-item small {
     display: block;
@@ -131,6 +138,8 @@
   }
 
   .build-remove-button {
+    position: relative;
+    z-index: 1;
     display: inline-grid;
 
     /* 24px is the smallest target that clears WCAG 2.2 AA's 24×24 minimum, and it gives a 1em
@@ -197,10 +206,16 @@
   .build-editor-content {
     min-inline-size: 0;
     padding: 20px;
+    padding-block-start: 0;
   }
 
   .build-detail-heading {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
     display: flex;
+    padding-block: var(--space-xs);
+    background: var(--surface);
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
@@ -218,6 +233,10 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 8px;
+  }
+
+  .build-detail-title:has(.build-name-input) {
+    flex-wrap: nowrap;
   }
 
   /*
@@ -280,6 +299,7 @@
 
   .build-name-input {
     display: block;
+    min-inline-size: 0;
     inline-size: min(100%, 420px);
     margin-block-start: 4px;
     border: 1px solid var(--primary);
@@ -937,6 +957,7 @@
 
     .build-editor-content {
       padding: 14px;
+      padding-block-start: 0;
     }
 
     .build-detail-heading {
