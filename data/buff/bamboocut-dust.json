@@ -165,6 +165,15 @@
   },
   "FragrantSong": { "name": "Fragrant Song", "duration": 10, "maxStack": 1 },
   "FragrantSongDelicate": { "name": "Fragrant Song - Delicate", "shortName": "FSD", "duration": 10, "maxStack": 4 },
+  "FragrantSongResonance": {
+    "name": "Fragrant Song - Resonance",
+    "shortName": "FSR",
+    "hidden": true,
+    "description": "Marks the Scarlet Spin throw that spent Fragrant Song, so the Resonances that throw summons crit with it. Every throw clears and re-primes this at its own start, which scopes it to one throw even though the next throw starts before this one's Resonances land. The duration only has to outlive the throw's own Resonances; scoping comes from the clear, not the expiry.",
+    "duration": 2,
+    "maxStack": 1,
+    "refresh": false
+  },
   "SoulReturn": { "name": "Soul Return", "shortName": "SR", "maxStack": 1, "refresh": true, "duration": 12 },
   "FlowerBurial": { "name": "Flower Burial", "duration": 12, "maxStack": 1, "refresh": false },
   "PhantomUmbrella": {
