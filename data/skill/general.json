@@ -308,6 +308,29 @@
     ],
     "tags": ["Triggered", "Deflect"]
   },
+  "DivinecraftSolidFoundationGrant": {
+    "name": "Solid Foundation (Grant)",
+    "castTime": 0,
+    "action": [
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "DivinecraftSolidFoundation",
+        "stack": 1,
+        "reapply": true,
+        "time": 0
+      }
+    ],
+    "modifier": [],
+    "tags": ["Triggered", "Divinecraft"]
+  },
+  "DivinecraftSolidFoundationStrike": {
+    "name": "Solid Foundation",
+    "castTime": 0,
+    "action": [{ "type": "damage", "phyCoef": 0.4, "rateRoute": "divinecraft", "averageAttack": true, "time": 0 }],
+    "modifier": [],
+    "tags": ["Triggered", "DirectDamage", "Divinecraft"]
+  },
   "DefenseSuccess": {
     "name": "Defense (Successful)",
     "castTime": 0,

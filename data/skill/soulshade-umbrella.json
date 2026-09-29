@@ -69,7 +69,15 @@
     "castTime": 1.15,
     "action": [
       { "type": "consume", "target": "self", "value": "EchoesOfAThousandPlants", "stack": "all", "time": 0 },
-      { "type": "heal", "phyCoef": 4.912, "phyBonus": 1363, "attrBonus": 743, "time": 0.975, "silkbindCoef": 4.912 },
+      {
+        "type": "heal",
+        "averageAttack": true,
+        "phyCoef": 4.912,
+        "phyBonus": 1363,
+        "attrBonus": 743,
+        "time": 0.975,
+        "silkbindCoef": 4.912
+      },
       {
         "type": "apply",
         "target": "self",

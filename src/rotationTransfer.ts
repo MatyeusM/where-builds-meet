@@ -272,6 +272,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
     enemyCount?: unknown
     ping?: unknown
     infiniteVitality?: unknown
+    divinecraftDamage?: unknown
     start?: unknown
     eventTimeReference?: unknown
   }
@@ -327,6 +328,7 @@ function parseRotation(value: unknown): RotationRecord | undefined {
           : /\bIV\b|infinite vitality/i.test(candidate.name)
             ? { infiniteVitality: true }
             : {}),
+        ...(typeof candidate.divinecraftDamage === "boolean" ? { divinecraftDamage: candidate.divinecraftDamage } : {}),
         ...(boundedStart ? { start: boundedStart } : {}),
         ...(candidate.eventTimeReference === "battleStart" ? { eventTimeReference: "battleStart" as const } : {}),
       }),

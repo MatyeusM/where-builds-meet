@@ -189,6 +189,11 @@ export type RotationRecord = {
   /** Optional per-rotation latency override, in milliseconds. */
   ping?: number
   infiniteVitality?: boolean
+  /**
+   * Whether the selected Divinecraft contributes its burn, poison, and Solid
+   * Foundation to this rotation. Omitted means damage applies.
+   */
+  divinecraftDamage?: boolean
   start?: { step: number; action?: number }
   eventTimeReference?: "battleStart"
 }
@@ -498,8 +503,12 @@ export type EffectDefinition = {
   hidden?: boolean
   /** Internal counter lifetime and attribution follow this self buff. */
   parentEffect?: string
-  /** Reactive actions while this buff is active; uses the shared setup-trigger contract. */
-  trigger?: EditableObject
+  /**
+   * Reactive actions while this buff is active; uses the shared setup-trigger contract.
+   * A definition always supplies the event and requirement here, so only `action`
+   * may be an array, and that array is resolved by the timeline rather than indexed.
+   */
+  trigger?: EditableObject & { action?: EditableObject | EditableObject[] }
   refresh?: boolean
   duration?: number
   cooldown?: number
@@ -609,6 +618,8 @@ export type RequirementState = {
   currentMartialArt?: WeaponId
   currentWeapon?: WeaponFamily
   targetType?: TargetType
+  /** False until the fight-start anchor, so a rule can exclude prepull hits. */
+  battleStarted?: boolean
 }
 
 function resolveSkillCastTime(skill: SkillRecord | undefined, state: RequirementState = {}): number {
@@ -844,6 +855,7 @@ export function requirementsPass(
     if (item.operator === "or" && Array.isArray(item.operand)) return item.operand.some(evaluate)
     if (item.operator === "not" && Array.isArray(item.operand) && item.operand.length === 1)
       return !evaluate(item.operand[0])
+    if (item.target === "battleStarted") return state.battleStarted === true
     if (item.target === "skillCooldown") {
       if (typeof item.value !== "string" || item.comparison !== "ready") return false
       const cooldownIdentity = state.skillCooldownGroups?.[item.value] ?? item.value
@@ -1679,16 +1691,20 @@ export function buildRotationTimeline(
     string,
     Array<{ triggerIndex: number; trigger: EditableObject; owner?: string }>
   >()
-  setupEffects.forEach((setup, triggerIndex) => {
-    const trigger =
-      setup.trigger && typeof setup.trigger === "object" && !Array.isArray(setup.trigger)
-        ? (setup.trigger as EditableObject)
-        : undefined
-    if (typeof trigger?.event !== "string") return
-    effectTriggersByEvent.set(trigger.event, [
-      ...(effectTriggersByEvent.get(trigger.event) ?? []),
-      { triggerIndex, trigger },
-    ])
+  // One setup effect may declare several reactive triggers, so each gets its own index.
+  let setupTriggerIndex = 0
+  setupEffects.forEach(setup => {
+    const declared = Array.isArray(setup.trigger) ? setup.trigger : [setup.trigger]
+    for (const candidate of declared) {
+      if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) continue
+      const trigger = candidate as EditableObject
+      if (typeof trigger.event !== "string") continue
+      const triggerIndex = setupTriggerIndex++
+      effectTriggersByEvent.set(trigger.event, [
+        ...(effectTriggersByEvent.get(trigger.event) ?? []),
+        { triggerIndex, trigger },
+      ])
+    }
   })
   const innerWayTriggersByEvent = new Map<string, InnerWayEffectRule[]>()
   Object.entries(effectDefinitions).forEach(([owner, definition], index) => {
@@ -1696,7 +1712,7 @@ export function buildRotationTimeline(
     if (typeof trigger?.event !== "string") return
     effectTriggersByEvent.set(trigger.event, [
       ...(effectTriggersByEvent.get(trigger.event) ?? []),
-      { triggerIndex: setupEffects.length + index, trigger, owner },
+      { triggerIndex: setupEffects.length + setupTriggerIndex + index, trigger, owner },
     ])
   })
   const innerWayTriggerStates = new Map<InnerWayEffectRule, { hits: number[]; readyAt: number }>()
@@ -1711,6 +1727,32 @@ export function buildRotationTimeline(
       .map(([skillId, skill]) => [skillId, skill.cooldownGroup]),
   )
   let currentTimelineTime = 0
+  // The encounter begins at the fight-start anchor, so nothing can be put on the
+  // target before it: a prepull hit does not apply a debuff or DOT. The anchored
+  // row is created in step order, so while it is still missing the event is
+  // necessarily prepull, and once it exists its own start time is the boundary.
+  // Prepull is a question of rotation position, not of timestamps. A step before
+  // the anchor is prepull, and so are the anchored step's own actions ahead of the
+  // anchored action. A generated row inherits its source row's position.
+  const rotationIndexFor = (row: TimelineRow): number | undefined => {
+    let current: TimelineRow | undefined = row
+    for (let depth = 0; current && depth < 16; depth++) {
+      if (current.rotationIndex !== undefined) return current.rotationIndex
+      current = rows.find(candidate => candidate.id === current!.sourceRowId)
+    }
+    return undefined
+  }
+  const targetAcceptsApplications = (row: TimelineRow | undefined, actionIndex?: number) => {
+    if (!hasUsableStart) return true
+    const index = row ? rotationIndexFor(row) : undefined
+    if (index === undefined || index > startStepIndex) return true
+    if (index < startStepIndex) return false
+    // The anchored step: only actions at or after the anchored one are in-combat.
+    if (startAction === undefined) return true
+    return actionIndex === undefined || actionIndex >= startAction
+  }
+  // The row and action index currently resolving, used by the battle-start gate.
+  let requirementRow: () => [TimelineRow | undefined, number | undefined] = () => [undefined, undefined]
   const requirementState = (): RequirementState => ({
     enemyCount: normalizeEnemyCount(rotation.enemyCount),
     distance,
@@ -1723,6 +1765,7 @@ export function buildRotationTimeline(
     currentMartialArt,
     currentWeapon,
     targetType: resolveTargetType(rotation),
+    battleStarted: targetAcceptsApplications(requirementRow()[0], requirementRow()[1]),
     ...responseContext,
   })
   const applicationDuration = (
@@ -3114,6 +3157,10 @@ export function buildRotationTimeline(
           return event.row.actions[event.actionIndex ?? -1]
       }
     }
+    // The battle-start gate reads the row resolving right now, so publish it first.
+    const activeRow = event.row
+    const activeActionIndex = event.actionIndex
+    requirementRow = () => [activeRow, activeActionIndex]
     const action: EditableObject | undefined = lifecycleAction()
     if (!action) continue
     if (event.row.kind === "dot" && event.row.step.type === "skill" && event.row.step.skill) {
@@ -3596,7 +3643,8 @@ export function buildRotationTimeline(
       if (
         triggerAction.type !== "apply" ||
         typeof triggerAction.value !== "string" ||
-        (cooldowns[triggerAction.value] ?? 0) > event.time
+        (cooldowns[triggerAction.value] ?? 0) > event.time ||
+        (triggerAction.target === "target" && targetAcceptsApplications(event.row, event.actionIndex) === false)
       )
         return
       const targetEffects = triggerAction.target === "target" ? debuffs : buffs
@@ -3871,8 +3919,17 @@ export function buildRotationTimeline(
           )
         )
           return
-        if (trigger.action && typeof trigger.action === "object" && !Array.isArray(trigger.action)) {
-          applyTriggerAction(trigger.action as EditableObject, "setup")
+        // A trigger's actions run in order in this one pass, so a `consume` ahead of a
+        // `trigger` completes before the triggered row is queued. Ordering by
+        // timestamp cannot do that: two damage actions sharing a timestamp would both
+        // see the buff before either queued row removed it.
+        const declaredActions = trigger.action
+        const actions = Array.isArray(declaredActions) ? declaredActions : [declaredActions]
+        const runnable = actions.filter(
+          (action): action is EditableObject => Boolean(action) && typeof action === "object" && !Array.isArray(action),
+        )
+        if (runnable.length) {
+          for (const triggerAction of runnable) applyTriggerAction(triggerAction, "setup")
           if (typeof trigger.cooldown === "number" && trigger.cooldown > 0)
             effectTriggerCooldowns.set(triggerIndex, event.time + trigger.cooldown)
         }
@@ -4144,6 +4201,8 @@ export function buildRotationTimeline(
     }
     if (action.type === "emitEvent" && typeof action.value === "string") emitCustomEvent(action.value)
     if ((action.type === "apply" || action.type === "extend") && typeof action.value === "string") {
+      // Nothing reaches the target before the fight starts.
+      if (action.target === "target" && targetAcceptsApplications(event.row, event.actionIndex) === false) continue
       const targetEffects = action.target === "target" ? debuffs : buffs
       const periodicTarget = action.target === "target" ? "target" : action.target === "player" ? "player" : "self"
       const playerRecipientIndex =

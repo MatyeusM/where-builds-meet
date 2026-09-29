@@ -20,6 +20,7 @@ import innerWayDebuffs from "../../../data/debuff/innerway.json"
 import mysticDebuffs from "../../../data/debuff/mystic.json"
 import stonesplitMightDebuffs from "../../../data/debuff/stonesplit-might.json"
 import stonesplitStrengthDebuffs from "../../../data/debuff/stonesplit-strength.json"
+import divinecraftDots from "../../../data/dot/divinecraft.json"
 import innerWayDots from "../../../data/dot/innerway.json"
 import mysticDots from "../../../data/dot/mystic.json"
 import everspringSkills from "../../../data/skill/everspring-umbrella.json"
@@ -87,7 +88,7 @@ export const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
     ...innerWayDebuffs,
     ...generalDebuffs,
   } as SkillMap,
-  DOT: { ...mysticDots, ...innerWayDots } as SkillMap,
+  DOT: { ...mysticDots, ...innerWayDots, ...divinecraftDots } as SkillMap,
 }
 export const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   snowparting: "Snowparting",
@@ -156,7 +157,7 @@ export const rotationEventOptionIds = [
   "__event:Buff",
   "__event:Debuff",
 ]
-export const dotDefinitions = { ...mysticDots, ...innerWayDots } as Record<string, SkillRecord>
+export const dotDefinitions = { ...mysticDots, ...innerWayDots, ...divinecraftDots } as Record<string, SkillRecord>
 export const dotEffectIds = new Set(Object.keys(dotDefinitions))
 export const effectDefinitions = {
   ...bamboocutDustBuffs,

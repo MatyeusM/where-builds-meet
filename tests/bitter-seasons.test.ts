@@ -140,14 +140,14 @@ describe("Bitter Seasons", () => {
   })
 
   it("clips maximum-stack probability to the combat window after a partial-stack ramp", () => {
+    // The fight starts on the first hit, so all five apply: a prepull hit could
+    // not put the debuff on the target. Five stacks at 4s inside a 6s window.
     const input = inputFor([0, 1, 2, 3, 4])
     input.skills.Hits.castTime = 6
-    input.rotation.start = { step: 0, action: 2 }
-    const bundle = { ...bundleFor(input), startAnchor: { rowId: "rotation-0", actionIndex: 2 } }
-    const coverage = calculateRotationBaseline(bundle).metrics.breakdown.debuffCoverage.find(
+    const coverage = calculateRotationBaseline(bundleFor(input)).metrics.breakdown.debuffCoverage.find(
       row => row.id === "QingyisCharmT0",
     )!
-    expect(coverage.maxStackCoverage).toBeCloseTo((100 * 0.1 ** 5 * 2) / 4, 12)
+    expect(coverage.maxStackCoverage).toBeCloseTo((100 * 0.1 ** 5 * 2) / 6, 12)
   })
 
   it("reports permanent global Bitter Seasons as five stacks and full uptime", () => {

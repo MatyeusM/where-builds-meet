@@ -26,7 +26,9 @@ describe("Morale Chant T6", () => {
       delete bundle.rawStats
       delete bundle.baseStats
       bundle.enemy = { ...bundle.enemy, defense: 0, physicalResistance: 0, judgementResistance: 0 }
-      bundle.startAnchor = { rowId: "rotation-1" }
+      // Anchored on the preparing step, so Controlled is applied once the fight has
+      // started: nothing may be put on the target during prepull.
+      bundle.startAnchor = { rowId: "rotation-0" }
       bundle.timeline = {
         ...bundle.timeline,
         initialBuffs: [],

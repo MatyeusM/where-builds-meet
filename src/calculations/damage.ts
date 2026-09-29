@@ -6,6 +6,7 @@ import { DEFAULT_TARGET_HP_RATIO } from "./combatDefaults"
 import { resolveMultiplyValue, resolveSegmentValue } from "./dynamicValues"
 import { calculateRates, mainAttributeForWeapons } from "./effectiveStats"
 import type { DerivedStats } from "./effectiveStats"
+import { restrictedOutcomeRates, restrictedRateRouteFor } from "./rateRoutes"
 import {
   applyStatConversions,
   resolveFormulaValue,
@@ -79,6 +80,14 @@ export type DamageAction = {
   phyCoef?: unknown
   attrCoef?: unknown
   silkbindCoef?: unknown
+  /**
+   * Resolve the attack at the average of its effective range. Expected damage already
+   * uses that average for the Normal and Critical outcomes; this also removes the
+   * simulation's uniform roll inside the range, making the sampled hit deterministic.
+   */
+  averageAttack?: unknown
+  /** Outcome-rate route. Omitted actions use the normal route's four outcomes. */
+  rateRoute?: unknown
   /** Runtime periodic stack/probability weight, applied after resolving attack channels. */
   damageScale?: unknown
   hitProbability?: unknown
@@ -206,8 +215,8 @@ function calculateDamageBreakdownInternal(
   }
   const coefficient = effectValue(action.phyCoef)
   const attributeCoefficient = effectValue(action.attrCoef)
-  const physicalBonus = context.isDot ? 0 : numberValue(action.phyBonus)
-  const attributeBonus = context.isDot ? 0 : numberValue(action.attrBonus)
+  const physicalBonus = numberValue(action.phyBonus)
+  const attributeBonus = numberValue(action.attrBonus)
   const path = mainAttributeForWeapons(weapons)
   const effectFieldAggregationStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
   const accumulatorStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
@@ -438,13 +447,18 @@ function calculateDamageBreakdownInternal(
   const calculatedRates = calculateRates(convertedRateStats, { GuaranteedCrit, SteadfastGuaranteedCrit })
   const convertedRates =
     conversionEffects.length > 0 ? applyStatConversions(calculatedRates, conversionEffects) : calculatedRates
-  const rates = GuaranteedCrit
+  const normalRates = GuaranteedCrit
     ? { ...convertedRates, finalCrit: 1, critRate: 1, abrasionRate: 0, normalRate: 0, affinityRate: 0 }
     : convertedRates
+  // The healing and Divinecraft routes cannot roll every outcome, so they replace the normal rates.
+  const rateRoute = restrictedRateRouteFor(action.rateRoute)
+  const rates = rateRoute ? restrictedOutcomeRates(rateRoute, rateStats) : normalRates
   if (import.meta.env.DEV) finishCalculationPhase("damageRateResolution", rateResolutionStartedAt)
   if (random) {
     const outcomeSelectionStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0
     const outcomeRoll = randomUnit()
+    // `averageAttack` replaces the sampled roll inside the attack range with its average.
+    const sampledAttack: AttackRollMode = action.averageAttack === true ? "average" : "simulate"
     let outcome: DamageOutcome
     switch (true) {
       case outcomeRoll < rates.abrasionRate:
@@ -469,10 +483,13 @@ function calculateDamageBreakdownInternal(
         selectedDamage = calculateVariant("max", stats.affinityDmgBonus + resolvedEffects.affinityDmgBonus)
         break
       case "critical":
-        selectedDamage = calculateVariant("simulate", derivedStats.effectiveCritDmgBonus + resolvedEffects.critDmgBonus)
+        selectedDamage = calculateVariant(
+          sampledAttack,
+          derivedStats.effectiveCritDmgBonus + resolvedEffects.critDmgBonus,
+        )
         break
       case "normal":
-        selectedDamage = calculateVariant("simulate", 0)
+        selectedDamage = calculateVariant(sampledAttack, 0)
         break
     }
     const outcomeAssemblyStartedAt = import.meta.env.DEV ? startCalculationPhase() : 0

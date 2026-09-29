@@ -11,7 +11,15 @@
       "firstTick": 1,
       "resetOnRefresh": true,
       "action": [
-        { "type": "heal", "phyCoef": 0.7721, "phyBonus": 214, "attrBonus": 116, "time": 0, "silkbindCoef": 0.7721 }
+        {
+          "type": "heal",
+          "averageAttack": true,
+          "phyCoef": 0.7721,
+          "phyBonus": 214,
+          "attrBonus": 116,
+          "time": 0,
+          "silkbindCoef": 0.7721
+        }
       ]
     },
     "effect": [{ "effect": { "healingBonus": 0.15 } }],
@@ -30,7 +38,15 @@
       "firstTick": 0,
       "resetOnRefresh": true,
       "action": [
-        { "type": "heal", "phyCoef": 1.69, "phyBonus": 470, "attrBonus": 256, "time": 0, "silkbindCoef": 1.69 }
+        {
+          "type": "heal",
+          "averageAttack": true,
+          "phyCoef": 1.69,
+          "phyBonus": 470,
+          "attrBonus": 256,
+          "time": 0,
+          "silkbindCoef": 1.69
+        }
       ]
     },
     "modifier": [],

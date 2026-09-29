@@ -220,21 +220,38 @@ describe("damage-recording", () => {
       0,
       "Battle End excludes a settlement at its timestamp",
     )
-    const precombat = bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Rodent"), delay(21)])
+    // A prepull cast cannot put Hunt on the target, so the anchoring cast is the
+    // one that opens the window. The Rodents it then records still pay out, and
+    // the anchor must not change the settled amount.
+    const anchoredSteps = [
+      cast("Rodent"),
+      delay(5),
+      cast("Rodent"),
+      cast("BladeboundThreadCancel"),
+      cast("Rodent"),
+      delay(21),
+    ]
+    const precombat = bundle(anchoredSteps)
     precombat.startAnchor = { rowId: "rotation-3" }
     const anchored = calculateRotationBaseline(precombat)
-    const full = calculateRotationBaseline(bundle(precombat.timeline.rotation.steps))
+    const full = calculateRotationBaseline(bundle(anchoredSteps))
+    assert.equal(payouts(anchored).length, 1, "A Hunt opened at the anchor still settles one window")
+    assert.equal(
+      recordedHits(anchored, payouts(anchored)[0]).length,
+      2,
+      "Hunt records the Rodent at the anchor and the one after it",
+    )
     close(
       damage(anchored, payouts(anchored)),
       damage(full, payouts(full)),
-      "Payout retains recorded damage from before the selected anchor",
+      "Payout is unchanged by where the fight is anchored",
     )
     const precombatSample = calculateSimulatedRotationRun(precombat, () => 0.7)
-    const fullSample = calculateSimulatedRotationRun(bundle(precombat.timeline.rotation.steps), () => 0.7)
+    const fullSample = calculateSimulatedRotationRun(bundle(anchoredSteps), () => 0.7)
     close(
       precombatSample.resolvedSequence.find(item => item.entry.replay).breakdown.total,
       fullSample.resolvedSequence.find(item => item.entry.replay).breakdown.total,
-      "Sampled payout retains precombat source hits",
+      "Sampled payout retains its source hits",
     )
     const disabled = bundle(steps)
     disabled.timeline.innerWayConditions = []

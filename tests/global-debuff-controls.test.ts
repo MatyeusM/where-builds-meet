@@ -66,16 +66,17 @@ describe("global-debuff-controls", () => {
       nextStats = stats,
       setupEffects = [],
     ) => {
+      // Exhausted is a target debuff, so the fight has to start on the event
+      // that applies it. Nothing reaches the target during prepull.
       const steps = exhausted
         ? [
-            { type: "event", event: "Exhausted", startTime: 0 },
             { type: "skill", skill: "Hit" },
+            { type: "event", event: "Exhausted", startTime: 0 },
           ]
         : [{ type: "skill", skill: "Hit" }]
-      const skillIndex = exhausted ? 1 : 0
       return calculateRotationBaseline({
         timeline: {
-          rotation: { name: "Probe", steps, start: { step: skillIndex } },
+          rotation: { name: "Probe", steps, start: { step: 0 } },
           skills: { Hit: hit(tags, appliesFearful) },
           eventDefinitions: { Exhausted: exhaustedEvent },
           dots: {},
@@ -87,7 +88,7 @@ describe("global-debuff-controls", () => {
           initialDebuffs,
           initialBuffs,
         },
-        startAnchor: { rowId: `rotation-${skillIndex}` },
+        startAnchor: { rowId: "rotation-0" },
         stats: nextStats,
         attunement: {},
         enemy,

@@ -76,6 +76,9 @@ export function deserializeSkillOverrides(value: unknown): SkillOverrides {
         if (!currentCoefficients && record.attrCoef === undefined) record.attrCoef = record.phyCoef ?? 0
         break
       case "heal":
+        // Healing has always resolved at the average of its attack range; stored
+        // overrides written before the field existed inherit that contract.
+        if (record.averageAttack === undefined) record.averageAttack = true
         if (!currentCoefficients && record.silkbindCoef === undefined) record.silkbindCoef = record.phyCoef ?? 0
         break
     }

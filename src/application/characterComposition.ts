@@ -172,7 +172,7 @@ export function selectedSetupEffects(
   buildSetup: BuildSetup,
   selections: SetupSelections,
   pathId: PathId,
-  overrides: Partial<BuildSetup & SetupSelections> = {},
+  overrides: Partial<BuildSetup & SetupSelections> & { divinecraftDamage?: boolean } = {},
 ) {
   const selectedBuildSetup = {
     ...buildSetup,
@@ -181,7 +181,10 @@ export function selectedSetupEffects(
     armorSets: overrides.armorSets ?? buildSetup.armorSets,
   }
   const foodEffect = typedFoodDefinitions[overrides.food ?? selections.food]?.effect ?? {}
-  const divinecraftEffect = divinecraftEffectFor(overrides.divinecraft ?? selections.divinecraft)
+  const divinecraftEffect = divinecraftEffectFor(
+    overrides.divinecraft ?? selections.divinecraft,
+    overrides.divinecraftDamage ?? true,
+  )
   const scriptEffect = scriptEffectFor(overrides.script ?? selections.script)
   return [
     ...globalEffectDefinitions.flatMap(definition =>

@@ -47,7 +47,11 @@ resource units, or mode-specific behavior from a damage baseline alone.
 - Skill `byLevel` arrays use **level minus one**, including leading nulls.
   `aggregated` contains level-independent values. Implemented offensive
   Mystics use level 71; Smolder, Dragon Head - Tide, and Ghostly Step - Umbra
-  use `enlightenmentCurves`. Derive physical coefficient, attribute coefficient,
+  use `enlightenmentCurves`. Martial-art coefficients resolve from the normal
+  curve's `SKILL_POWER_PRO_ATK` / `SKILL_POWER_PRO_HEAL`, with
+  `SKILL_ADD_W_ATK` as `phyBonus` and `SKILL_ADD_WX_PRO_ATK` as `attrBonus`,
+  read at **level 100** (array index 99) unless the value is `aggregated`.
+  Derive physical coefficient, attribute coefficient,
   and flat physical bonus independently. Preserve source precision, retaining
   derived values to 12 decimal places rather than tooltip rounding.
 - Runtime Inner Way `bySoloLevel` arrays use **the actual Solo Level**; slot 0
@@ -240,9 +244,9 @@ use `resolveAt: "skillStart"`.
 
 | Type                                            | Important semantics                                                                                                                                                                                                                                                                        |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute.                                                                                                                                                                    |
-| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. `HOT` identifies healing over time.                                                                                                                                                                 |
-| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration.                                                                                                                         |
+| `damage`                                        | Independent `phyCoef` and `attrCoef`; omitted coefficients are zero. `attrBonus` applies only to the primary attribute. `rateRoute` selects the outcome set and `averageAttack` pins the attack to the range average; see [damage formula](damage-formula.md#per-outcome-damage).          |
+| `heal`                                          | Uses `phyCoef` and `silkbindCoef`; restores Self HP and reports excess as overhealing. Always resolves at the average of each attack range and rolls the healing route. `HOT` identifies healing over time.                                                                                |
+| `apply`                                         | `value` is an effect ID; `target` is `self`, `target`, or `player`. Default stack is one, capped by the definition. Action duration overrides definition duration. A `target` application before the fight-start anchor is rejected.                                                       |
 | `consume`                                       | Removes one stack by default, or all with `stack: "all"`. `value: { operator: "first", operand: [...] }` selects the first available effect.                                                                                                                                               |
 | `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                                                                                                                                               |
 | `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies. `sourceEffect` names a self effect whose application source must match the trigger row's source, preventing a delayed chain from attaching to a later refresh. |
@@ -370,9 +374,19 @@ their response rewards resolve at cast start when no incoming attack is selected
 incoming attack. When a following attack is available, the normal attack-aligned
 response is preserved.
 
-A trigger's `cooldown` is independent of the cooldown of its actions.
-An active self-buff may declare `trigger` with the same event, requirement, and
-single-action contract as a setup trigger. Buff triggers run after the ordinary
+A trigger's `cooldown` is independent of the cooldown of its actions. A setup
+effect's `trigger` may be a single rule or an array of rules that each react to
+their own event; each rule keeps its own cooldown. An active self-buff may
+declare `trigger` with the same event and requirement contract as a setup trigger.
+
+A trigger's `action` may be one action or an ordered array. Array actions run in
+order within the single pass that fires the trigger, so a `consume` placed before
+a `trigger` completes before the triggered row is queued. Timestamp ordering
+cannot express this: two damage actions sharing a timestamp both resolve before
+either queued row runs, so a buff consumed inside the triggered skill would still
+be present for the second action. The cooldown is stamped once after the whole
+pass. `DivinecraftSolidFoundation` uses this to spend the buff on the hit that
+unleashes it, so a multi-hit skill cannot trigger it twice. Buff triggers run after the ordinary
 Inner Way triggers on damage/heal/take-damage events. `oncePerSkill: true` on a
 setup or buff trigger accepts only the first damage action of each stage,
 including composite components; it excludes probability-weighted expected proc
@@ -428,7 +442,10 @@ combat cutoff. Resource `amountPerTick` adds to `amount` by zero-based tick inde
 Consuming/removing the last stack cancels future periodic actions. A DOT deals
 one copy per active tick, independent of stack count, and ignores flat bonuses.
 Use ordinary expiry actions for delayed non-DOT attacks. Future ticks inherit
-the cast that refreshes or extends the effect.
+the cast that refreshes or extends the effect. A DOT row still counts as a
+`damage` event for `trigger` rules, so a rule that reapplies the same DOT must
+require a non-`DOT` hit; `data/dot/divinecraft.json` does this so its burns
+cannot sustain themselves.
 
 `onMaxStack: { consume: "all", trigger: "SkillId", triggerTags?: [...] }`
 consumes the effect and cancels pending ticks before spawning the threshold

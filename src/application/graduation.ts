@@ -93,6 +93,7 @@ export function buildPresetRotationBundle(
     buildSetup,
     { food: environment.food, divinecraft: environment.divinecraft, script: environment.script },
     pathId,
+    { divinecraftDamage: environment.rotation.divinecraftDamage },
   )
   const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId)
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId)
