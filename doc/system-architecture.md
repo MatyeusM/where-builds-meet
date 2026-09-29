@@ -432,8 +432,11 @@ The fight-start anchor is also the boundary for anything put on the target. An
 row is still a prepull step, and a trigger-driven target application is rejected
 the same way. Prepull is decided by rotation position rather than timestamp, so a
 prepull step that shares the anchor's timestamp is still prepull. When the anchor
-names one action inside a step, that step's earlier actions are prepull too, and
-the anchored action itself is not. Prepull damage and self effects are
+names one action inside a step, the boundary is that action's own resolved time, so
+the anchored step's actions are prepull only while they resolve before it. A
+release that applies a debuff and lands its first hit in one timestamp slot is
+therefore fully in combat when the anchor names that hit, and the fight opens
+before any of them runs. Prepull damage and self effects are
 unaffected; only the target is unreachable. A `battleStarted` requirement is
 available to data that needs the same distinction for a self effect, such as a
 hit counter, because a self effect is not gated automatically.

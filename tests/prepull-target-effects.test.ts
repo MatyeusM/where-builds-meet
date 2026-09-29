@@ -8,7 +8,7 @@ import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 // prepull cast is a real rotation step that produces its own damage, so this is
 // about effect application rather than about suppressing prepull actions.
 describe("prepull target effects", () => {
-  const build = (start: { step: number; action?: number }) =>
+  const build = (start: { step: number; action?: number }, extraSkills: Record<string, unknown> = {}) =>
     buildRotationTimeline({
       rotation: {
         name: "Prepull probe",
@@ -35,6 +35,7 @@ describe("prepull target effects", () => {
           castTime: 1,
           action: [{ type: "apply", target: "target", value: "FearfulBlade", stack: 1, time: 0 }],
         },
+        ...extraSkills,
       },
       eventDefinitions: rotationEventDefinitions,
       dots: {},
@@ -80,6 +81,34 @@ describe("prepull target effects", () => {
     expect(timeline[0].battleStartTime).toBeGreaterThan(timeline[0].startTime)
     // The first step's target effect never lands.
     expect(timeline.some(row => debuffNames(row).includes("FearfulBlade"))).toBeTruthy()
+  })
+
+  it("admits an application sharing the anchored action's instant", () => {
+    // A charged release applies its debuff and lands its first hit in one timestamp
+    // slot, so anchoring on the hit opens the fight on that instant. The debuff belongs
+    // to the anchored hit, while an action strictly earlier in the same step is prepull.
+    const timeline = build(
+      { step: 0, action: 2 },
+      {
+        PrepullHit: {
+          name: "Anchored Hit",
+          castTime: 1,
+          tags: ["DirectDamage"],
+          action: [
+            { type: "apply", target: "target", value: "FearfulBlade", stack: 1, time: 0.2 },
+            { type: "apply", target: "target", value: "Candlelight", stack: 1, time: 0.5 },
+            { type: "damage", phyCoef: 1, time: 0.5 },
+          ],
+        },
+      },
+    )
+    const anchored = timeline.find(row => row.id === "rotation-0")!
+    // The fight opens on the anchored hit, not on the cast start and not on the earlier action.
+    expect(timeline[0].battleStartTime).toBeCloseTo(anchored.startTime + 0.5, 8)
+    // Row snapshots capture state at row start, so the following row shows what landed.
+    const after = timeline.find(row => row.id === "rotation-1")!
+    expect(debuffNames(after)).toContain("Candlelight")
+    expect(debuffNames(after)).not.toContain("FearfulBlade")
   })
 
   it("keeps a self effect from a prepull step", () => {
