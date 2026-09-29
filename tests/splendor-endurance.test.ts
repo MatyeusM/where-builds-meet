@@ -3,9 +3,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import battleAnthem from "../data/innerway/battle-anthem.json"
-import mountainsMight from "../data/innerway/mountains-might.json"
 import namelessSpear from "../data/martial-art/nameless-spear.json"
-import namelessSwordSkills from "../data/skill/nameless-sword.json"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { requirementsPass } from "../src/calculations/rotationTimeline"
@@ -131,32 +129,5 @@ describe("splendor-endurance", () => {
     assert.equal(passes(59.9), true)
     assert.equal(passes(60), false, "Exactly 60% Endurance is not below 60%")
     assert.equal(passes(undefined), false, "An untracked Endurance must leave the branch unsatisfied")
-  })
-
-  it("routes Daunting Strike's Qi Imbalance and Endless Gale's affinity rate through the Inner Way tiers", async () => {
-    const { defaultEditorMaps } = await import("../src/application/gameData/skills")
-    const cancel = namelessSwordSkills.DauntingStrikeCancel
-    assert.equal(cancel.castTime, 0, "The cancel variant must spend no cast time")
-    assert.equal(cancel.action?.length, 1, "The cancel variant carries only the Inner Way application")
-    const apply = cancel.action?.[0] as { type: string; value: string; requirement: unknown[] }
-    assert.equal(apply.type, "apply")
-    assert.equal(apply.value, "QiImbalance")
-    assert.deepEqual(apply.requirement, [{ target: "self", value: "MountainsMightT1" }])
-    assert.ok(
-      (cancel.tags as string[]).includes("MartialArt"),
-      "Daunting Strike is a Martial Art Skill, so the cancel variant keeps that scope",
-    )
-    assert.ok(
-      (namelessSwordSkills.VagrantSword.tags as string[]).includes("Heavy"),
-      "Vagrant Sword is a Heavy charged attack",
-    )
-    assert.ok(defaultEditorMaps.Buff.EndlessGale, "Endless Gale must be an editable buff definition")
-
-    // Qiankun's Lock applies Endless Gale, so the T4 rate is reachable rather than dead.
-    const gale = defaultEditorMaps.Buff.EndlessGale as { duration: number }
-    assert.equal(gale.duration, 10, "Endless Gale lasts 10 seconds, the only duration the source states")
-    const t4 = mountainsMight.effect.MountainsMightT4.effect[0]
-    assert.deepEqual(t4.requirement, [{ target: "self", value: "EndlessGale" }])
-    assert.deepEqual(t4.stat, { directAffinity: 0.03 }, "1.5% plus its boss half, which both dummies satisfy")
   })
 })

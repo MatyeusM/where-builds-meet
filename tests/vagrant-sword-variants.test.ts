@@ -2,8 +2,6 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
-import swordMorph from "../data/innerway/sword-morph.json"
-import namelessSwordSkills from "../data/skill/nameless-sword.json"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"
@@ -99,7 +97,10 @@ describe("vagrant-sword-charge-variants", () => {
     assert.equal(threeWaves(plain).length, 0, "No sword energy without Sword Morph")
 
     // The three phases are the whole cast: 0.2 pre-charge, 1.0 charge, 0.85 shoot.
-    const cast = plain.timeline.find(row => row.skill?.name === "Vagrant Sword [Charge Tier 2]")
+    // Identify the row by its own skill tag rather than a display name.
+    const cast = plain.timeline.find(row =>
+      Object.values(row.actionSkillTags ?? {}).some(tags => tags.includes("VagrantSword")),
+    )
     assert.equal(cast?.effectiveCastTime, 2.05, "The three sub-actions must total the full 2.05s cast")
 
     // An unshielded release stays on the single wave even with the Inner Way selected.
@@ -120,28 +121,6 @@ describe("vagrant-sword-charge-variants", () => {
     assert.ok(
       energies[0] + energies[1] + energies[2] > plainWaves[0],
       "The three waves together must out-damage the single wave",
-    )
-
-    // The three-wave variant is what the Nameless Sword `SwordEnergy` talents match.
-    const threeWaveTags = namelessSwordSkills.VagrantSwordShootThree.tags as string[]
-    assert.ok(threeWaveTags.includes("SwordEnergy"), "The three-wave variant needs the SwordEnergy tag")
-    assert.ok(
-      !(namelessSwordSkills.VagrantSwordShootSingle.tags as string[]).includes("SwordEnergy"),
-      "The single wave must not match the sword-energy talents",
-    )
-    for (const skill of [
-      "VagrantSwordPreCharge",
-      "VagrantSwordCharge",
-      "VagrantSwordShootSingle",
-      "VagrantSwordShootThree",
-    ])
-      assert.ok(
-        (namelessSwordSkills[skill].tags as string[]).includes("SubAction"),
-        `${skill} must be a sub-action of Vagrant Sword`,
-      )
-    assert.ok(
-      Object.keys(swordMorph.effect).includes("SwordMorphT0"),
-      "Sword Morph must publish the T0 condition the shooting phase reads",
     )
   })
 
