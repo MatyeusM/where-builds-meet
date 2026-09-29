@@ -11,6 +11,7 @@ import towline from "../data/innerway/towline-sweep.json"
 import umbrellaArt from "../data/martial-art/everspring-umbrella.json"
 import ropeArt from "../data/martial-art/unfettered-rope-dart.json"
 import pathData from "../data/path.json"
+import dustPhantomChimeRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min-100pc.json"
 import defaultDustRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min.json"
 import umbrella from "../data/skill/everspring-umbrella.json"
 import general from "../data/skill/general.json"
@@ -438,13 +439,16 @@ describe("Dust mechanics", () => {
     expect(qiRows).toHaveLength(5)
   })
 
-  it("registers the Dust Dummy 1 Min rotation as the path default", () => {
-    expect(pathData.bamboocutDust.defaultRotation).toBe("dust-dummy-1-min")
-    expect(defaultDustRotation.name).toBe("Dummy 1 min")
-    expect(defaultDustRotation.martialArts).toEqual(["everspring", "unfettered"])
-    expect(defaultDustRotation.targetType).toBeUndefined()
-    expect(defaultDustRotation.steps.some(step => step.type === "skill" && step.skill === "PerfectDodge")).toBe(false)
-    expect(defaultDustRotation.steps.at(-1)).toEqual({ type: "event", event: "BattleEnd", startTime: 60 })
+  it("registers the Dust 100% Phantom Chime rotation as the path default", () => {
+    expect(pathData.bamboocutDust.defaultRotation).toBe("dust-dummy-1-min-100pc")
+    expect(dustPhantomChimeRotation.name).toBe("Dummy 1 min 100% PC")
+    expect(dustPhantomChimeRotation.martialArts).toEqual(["everspring", "unfettered"])
+    expect(dustPhantomChimeRotation.ping).toBe(40)
+    expect(dustPhantomChimeRotation.steps.at(-1)).toEqual({ type: "event", event: "BattleEnd", startTime: 60 })
+    // The default opens the fight on the four-hit release's first hit, so the
+    // release's own applications are in combat and the opener breaks Soul Loss.
+    expect(dustPhantomChimeRotation.start).toEqual({ step: 4, action: 4 })
+    expect(dustPhantomChimeRotation.steps[4]).toEqual({ type: "skill", skill: "PiercingDart4Hits" })
   })
 
   it("limits Starweave to two stacks per second, caps at five, and drops one when hit", () => {

@@ -142,14 +142,16 @@ Timing and coefficients account for +0.085% and -0.843% respectively. Because
 Piercing Dart is a small share of this rotation's damage, a 62% coefficient
 correction moves total DPS by under 1%.
 
-Dust's second rotation, `dust-dummy-1-min-100pc`, uses its user-approved result at
-its own 40 ms ping: 58,899.96 DPS with 3,533,997.35 total damage over 60 seconds.
-It anchors battle start on the four-hit release's first hit, which depends on the
-anchored action's own resolved time rather than its position in the action array,
-so the release's own Soul Loss applications land in combat and the opener breaks
-Soul Loss. Its exhaust sits on the second Scarlet Spin's seventh forward hit, and
-its whole sequence fits the window, so unlike the first rotation it has no
-unreachable trailing step.
+Dust's second rotation, `dust-dummy-1-min-100pc`, is the path default and uses its
+user-approved result at its own 40 ms ping: 58,915.82 DPS with 3,534,949.26 total
+damage over 60 seconds. It anchors battle start on the four-hit release's first
+hit, which depends on the anchored action's own resolved time rather than its
+position in the action array, so the release's own Soul Loss applications land in
+combat and the opener breaks Soul Loss. Its whole sequence fits the window, so
+unlike the first rotation it has no unreachable trailing step. Its exhaust sits on
+the fifth forward hit of the second Scarlet Spin, which covers that spin's denser
+middle instead of its tail and replaced 58,899.96 DPS (+0.027%) with the approved
+value above.
 
 ## Updating reviewed rotations
 
