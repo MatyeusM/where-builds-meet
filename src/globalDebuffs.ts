@@ -1,11 +1,12 @@
-import floatingGraceDefinitions from "../data/buff/silkbind-deluge.json"
-import strayhuntDefinitions from "../data/debuff/bamboocut-draught.json"
-import phantomChimeDefinitions from "../data/debuff/bamboocut-dust.json"
-import qiImbalanceDefinitions from "../data/debuff/bellstrike-splendor.json"
-import soulShakenDefinitions from "../data/debuff/bellstrike-umbra.json"
-import qingyisCharmDefinitions from "../data/debuff/innerway.json"
-import vulnerableDefinitions from "../data/debuff/stonesplit-might.json"
-import fearfulBladeDefinitions from "../data/debuff/stonesplit-strength.json"
+import floatingGraceDefinitions from "@gamedata/buff/silkbind-deluge.json"
+import strayhuntDefinitions from "@gamedata/debuff/bamboocut-draught.json"
+import phantomChimeDefinitions from "@gamedata/debuff/bamboocut-dust.json"
+import qiImbalanceDefinitions from "@gamedata/debuff/bellstrike-splendor.json"
+import soulShakenDefinitions from "@gamedata/debuff/bellstrike-umbra.json"
+import qingyisCharmDefinitions from "@gamedata/debuff/innerway.json"
+import vulnerableDefinitions from "@gamedata/debuff/stonesplit-might.json"
+import fearfulBladeDefinitions from "@gamedata/debuff/stonesplit-strength.json"
+
 import { globalDebuffStorageKey } from "./application/persistence/keys"
 import type { TrackedEffect } from "./calculations/rotationTimeline"
 import { getPersistentItem } from "./persistentStorage"
@@ -86,9 +87,18 @@ export function normalizeGlobalDebuffs(value: unknown): GlobalDebuffState {
   }
 }
 
+/**
+ * Read the stored selection.
+ *
+ * The result is a fresh object per call, so it must not be read during a render. `loadoutStore`
+ * holds one for the session and is the only caller, which is what keeps the selection's identity
+ * stable: the measurement context holds it by reference and hands it to dependency arrays, so a
+ * new object per read would make every consumer's inputs look changed on each render.
+ */
 export function loadGlobalDebuffs(): GlobalDebuffState {
+  const source = getPersistentItem(globalDebuffStorageKey) ?? "null"
   try {
-    return normalizeGlobalDebuffs(JSON.parse(getPersistentItem(globalDebuffStorageKey) ?? "null"))
+    return normalizeGlobalDebuffs(JSON.parse(source) as unknown)
   } catch {
     return { ...defaultGlobalDebuffs }
   }

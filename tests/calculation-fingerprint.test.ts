@@ -1,28 +1,14 @@
 import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-calculation-fingerprint-cache.mjs.
-describe("calculation-fingerprint-cache", () => {
-  it("Calculation fingerprint cache probe passed", async () => {
-    const { calculationFingerprint, rotationBundleFingerprint, RotationCalculationCache } =
-      await import("../src/calculations/rotationCalculationCache.ts")
-    const cache = new RotationCalculationCache()
+describe("calculation-fingerprint", () => {
+  it("Fingerprint probe passed", async () => {
+    const { calculationFingerprint, rotationBundleFingerprint } =
+      await import("@/calculations/calculationFingerprint.ts")
     const setupA = calculationFingerprint({ stats: { minPhys: 1 }, selector: "A", rotation: ["SkillA"] })
     const setupB = calculationFingerprint({ stats: { minPhys: 2 }, selector: "B", rotation: ["SkillA"] })
     const setupC = calculationFingerprint({ stats: { minPhys: 3 }, selector: "C", rotation: ["SkillA"] })
-    const baselineA = { metrics: { dps: 100 } }
-    const baselineB = { metrics: { dps: 200 } }
-    const baselineC = { metrics: { dps: 300 } }
-    const variant = calculationFingerprint({ category: "food", value: "Fish" })
-    const variantA = { dps: 101 }
 
-    cache.storeBaseline(setupA, baselineA)
-    cache.storeVariant(setupA, variant, variantA)
-    cache.storeBaseline(setupB, baselineB)
-    cache.storeBaseline(setupC, baselineC)
-
-    assert(cache.baseline(setupA) === baselineA, "Returning to setup A did not restore its baseline.")
-    assert(cache.variant(setupA, variant) === variantA, "Setup A did not restore its cached variant.")
-    assert(cache.variant(setupB, variant) === undefined, "A cached variant leaked into a different setup fingerprint.")
     assert(new Set([setupA, setupB, setupC]).size === 3, "Distinct setup inputs produced duplicate fingerprints.")
 
     const namedRotationBundle = (name, skill, weapons = ["snowparting", "phalanxbane"]) => ({

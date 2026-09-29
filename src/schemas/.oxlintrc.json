@@ -27,9 +27,17 @@
               "**/main",
               "**/main.*",
               "**/application",
-              "**/application/*",
+              "**/application/**",
               "**/features",
-              "**/features/*"
+              "**/features/**",
+              "@/App",
+              "@/App.*",
+              "@/main",
+              "@/main.*",
+              "@/application",
+              "@/application/**",
+              "@/features",
+              "@/features/**"
             ],
             "message": "Schemas must remain independent of application and feature modules."
           }

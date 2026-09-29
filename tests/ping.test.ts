@@ -1,20 +1,20 @@
+import mysticBuffs from "@gamedata/buff/mystic.json"
+import general from "@gamedata/skill/general.json"
+import heavenwill from "@gamedata/skill/heavenwill-gauntlets.json"
+import infernal from "@gamedata/skill/infernal-twinblades.json"
+import mystic from "@gamedata/skill/mystic.json"
+import phalanxbane from "@gamedata/skill/phalanxbane-blade.json"
 import { assert, describe, expect, it } from "vitest"
 
-import mysticBuffs from "../data/buff/mystic.json"
-import general from "../data/skill/general.json"
-import heavenwill from "../data/skill/heavenwill-gauntlets.json"
-import infernal from "../data/skill/infernal-twinblades.json"
-import mystic from "../data/skill/mystic.json"
-import phalanxbane from "../data/skill/phalanxbane-blade.json"
-import { normalizePing, resolvePing } from "../src/calculations/combatDefaults"
-import { rotationBundleFingerprint } from "../src/calculations/rotationCalculationCache"
+import { rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
+import { normalizePing, resolvePing } from "@/calculations/combatDefaults"
 import {
   buildRotationTimeline,
   type SkillRecord,
   type TimelineBuildInput,
   type RotationStep,
-} from "../src/calculations/rotationTimeline"
-import { exportRotationEntries, mergeImportedRotationEntries, serializeRotationEntries } from "../src/rotationTransfer"
+} from "@/calculations/rotationTimeline"
+import { exportRotationEntries, mergeImportedRotationEntries, serializeRotationEntries } from "@/rotationTransfer"
 
 const hit: SkillRecord = { castTime: 1, action: [{ type: "damage", time: 1, phyCoef: 1 }] }
 const step = (skill: string): RotationStep => ({ type: "skill", skill })

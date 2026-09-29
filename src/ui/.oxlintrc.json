@@ -20,7 +20,10 @@
       "error",
       {
         "patterns": [
-          { "group": ["^../"], "message": "UI primitives must not import application, feature, or domain modules." }
+          {
+            "group": ["../**", "@/**"],
+            "message": "UI primitives must not import application, feature, or domain modules. A primitive is reached through its consumer."
+          }
         ]
       }
     ]

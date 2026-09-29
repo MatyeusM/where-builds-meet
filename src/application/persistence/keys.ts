@@ -25,6 +25,7 @@ export const activeRotationByPathStorageKey = "wwm-active-rotation-by-path-v1"
 export const activeBuildByPathStorageKey = "wwm-active-build-by-path-v1"
 export const legacyGearStorageKey = "wwm-gear-inventory-v1"
 export const buildListStorageKey = "wwm-build-list-v1"
+export const gearScopeStorageKey = "wwm-gear-scope-v1"
 export const activeBuildStorageKey = "wwm-active-build-v1"
 export const characterProfileStorageKey = "wwm-character-profiles-v1"
 export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
@@ -58,6 +59,7 @@ export const applicationStorageKeys = new Set([
   activeBuildByPathStorageKey,
   legacyGearStorageKey,
   buildListStorageKey,
+  gearScopeStorageKey,
   activeBuildStorageKey,
   characterProfileStorageKey,
   globalDebuffStorageKey,

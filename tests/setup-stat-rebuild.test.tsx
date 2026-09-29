@@ -3,35 +3,38 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-import english from "../public/locales/en.json"
-import App from "../src/App"
-import { calculateEditorTimeline, type EditorTimelineResult } from "../src/calculations/editorTimeline"
-import { rotationBundleFingerprint } from "../src/calculations/rotationCalculationCache"
-import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
-import { getRotationMetrics } from "../src/calculations/rotationMetrics"
-import { requestRotationBaseline } from "../src/calculations/rotationWorkerClient"
-import type { ResolvedStats } from "../src/calculations/statEffects"
-import { initializeI18n } from "../src/i18n"
+import App from "@/App"
+import { rotationBundleFingerprint } from "@/calculations/calculationFingerprint"
+import { calculateEditorTimeline } from "@/calculations/editorTimeline"
+import { calculateRotationBaseline } from "@/calculations/rotationCalculator"
+import type { ResolvedStats } from "@/calculations/statEffects"
+import { initializeI18n } from "@/i18n"
+import { useRotationStore } from "@/stores/rotationStore"
 
-vi.mock("../src/calculations/rotationWorkerClient", () => ({
-  requestRotationBaseline: vi.fn<typeof requestRotationBaseline>(async bundle => {
-    if (bundle.timeline.rotation.name !== "Setup regression") return new Promise<never>(() => {})
-    return calculateRotationBaseline(bundle)
-  }),
-  requestRotationComparisons: vi.fn<() => Promise<never>>(() => new Promise(() => {})),
-  requestEditorTimeline: vi.fn<(bundle: RotationSimulationBundle) => Promise<EditorTimelineResult>>(async bundle => ({
-    ...calculateEditorTimeline(bundle.timeline),
-    fingerprint: rotationBundleFingerprint(bundle),
-  })),
-  cancelEditorTimelineRequest: vi.fn<() => void>(),
-  supersedeRotationCalculationRequests: vi.fn<() => void>(),
-}))
+import english from "../public/locales/en.json"
+import { dpsDispatches, dpsResolves, resetDpsMock } from "./helpers/dpsStoreMock"
+
+vi.mock("@/stores/dpsStore", async () => {
+  const { mockDpsStore } = await import("./helpers/dpsStoreMock")
+  return mockDpsStore()
+})
+
+dpsResolves("baseline", async request => {
+  const bundle = request.build()
+  if (bundle.timeline.rotation.name !== "Setup regression") return new Promise<never>(() => {})
+  return calculateRotationBaseline(bundle)
+})
+dpsResolves("editorTimeline", async request => {
+  const bundle = request.build()
+  return { ...calculateEditorTimeline(bundle.timeline), fingerprint: rotationBundleFingerprint(bundle) }
+})
 
 let container: HTMLDivElement
 let root: Root
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(async () => {
+  resetDpsMock()
   localStorage.clear()
   sessionStorage.clear()
   localStorage.setItem("wwm-path-session-v1", "silkbindDeluge")
@@ -79,33 +82,46 @@ async function settle() {
   await act(async () => vi.advanceTimersByTimeAsync(300))
 }
 
-async function choose(selector: string, name: string) {
-  const button = [...container.querySelectorAll<HTMLButtonElement>(`${selector} button`)].find(node =>
-    node.textContent?.startsWith(name),
+/**
+ * Chooses an option by the panel it belongs to and the option's own name, rather than by a
+ * styling class, so a group can be restyled or replaced without rewriting every choice. An
+ * option only has to be a button: the panels that show an image rather than a name and a
+ * note render their own options, and both kinds have to be choosable the same way.
+ */
+async function choose(panelName: string, optionName: string) {
+  const panel = [...container.querySelectorAll<HTMLElement>("[data-panel]")].find(
+    node => node.querySelector("h2")?.textContent?.trim() === panelName,
   )
-  expect(button).toBeDefined()
-  await act(async () => button!.click())
+  expect(panel, `no panel headed ${panelName}`).toBeDefined()
+  const option = [...panel!.querySelectorAll<HTMLButtonElement>("button")].find(node =>
+    node.textContent?.startsWith(optionName),
+  )
+  expect(option, `no option ${optionName} in ${panelName}`).toBeDefined()
+  await act(async () => option!.click())
   await settle()
 }
 
+/**
+ * The bundle for the rotation this test drives. Graduation also calculates baselines
+ * for the same rotation, but builds them without the user's stat overrides, so they
+ * are excluded by their own key prefix rather than by anything in the bundle.
+ */
 function latestBundle() {
-  const calls = vi
-    .mocked(requestRotationBaseline)
-    .mock.calls.filter(
-      ([, , options]) => options?.key === "baseline:setup-regression" || options?.key === "preview:setup-regression",
-    )
-  expect(calls.length).toBeGreaterThan(0)
-  return calls.at(-1)![0]
+  const bundles = dpsDispatches("baseline")
+    .filter(request => !request.cacheKey.startsWith("graduation:"))
+    .map(request => request.build())
+  expect(bundles.length).toBeGreaterThan(0)
+  return bundles.at(-1)!
 }
 
 it("rebuilds food stats before publishing DPS and restores the cached original on a round trip", async () => {
   await act(async () => root.render(<App />))
   await settle()
   const fishBundle = latestBundle()
-  const fishDps = getRotationMetrics()!.dps
+  const fishDps = useRotationStore.getState().result!.metrics.dps
   expect(fishDps).toBeGreaterThan(0)
 
-  await choose(".setup-option-list-food", "None")
+  await choose("Food", "None")
   const noneBundle = latestBundle()
   expect(rotationBundleFingerprint(noneBundle)).not.toBe(rotationBundleFingerprint(fishBundle))
   expect(noneBundle.stats.minPhys).toBe(fishBundle.stats.minPhys)
@@ -115,31 +131,31 @@ it("rebuilds food stats before publishing DPS and restores the cached original o
   expect((noneBundle.stats as ResolvedStats).effectiveMaxPhys).toBeLessThan(
     (fishBundle.stats as ResolvedStats).effectiveMaxPhys,
   )
-  expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeLessThan(fishDps)
   expect(localStorage.getItem("wwm-food-session-v1")).toBe("None")
 
-  const requestsBeforeReturn = vi.mocked(requestRotationBaseline).mock.calls.length
-  await choose(".setup-option-list-food", "Simmering Fish Slices")
-  expect(vi.mocked(requestRotationBaseline).mock.calls).toHaveLength(requestsBeforeReturn)
-  expect(getRotationMetrics()!.dps).toBeCloseTo(fishDps, 8)
+  const dispatchesBeforeReturn = dpsDispatches("baseline").length
+  await choose("Food", "Simmering Fish Slices")
+  expect(dpsDispatches("baseline")).toHaveLength(dispatchesBeforeReturn)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(fishDps, 8)
 })
 
 it("keeps Script and Divinecraft selections in the same calculation as the character sheet", async () => {
   await act(async () => root.render(<App />))
   await settle()
   const originalStats = latestBundle().stats
-  const fireDps = getRotationMetrics()!.dps
-  await choose(".divinecraft-option-list", "None")
-  const noneDps = getRotationMetrics()!.dps
+  const fireDps = useRotationStore.getState().result!.metrics.dps
+  await choose("Divinecraft", "None")
+  const noneDps = useRotationStore.getState().result!.metrics.dps
   expect(noneDps).toBeLessThan(fireDps)
   expect(latestBundle().stats).toEqual(originalStats)
-  await choose(".script-option-list", "Insight Script")
-  expect(getRotationMetrics()!.dps).toBeGreaterThan(noneDps)
+  await choose("Script", "Insight Script")
+  expect(useRotationStore.getState().result!.metrics.dps).toBeGreaterThan(noneDps)
   expect(latestBundle().stats).toEqual(originalStats)
-  await choose(".script-option-list", "None")
-  expect(getRotationMetrics()!.dps).toBeCloseTo(noneDps, 8)
-  await choose(".divinecraft-option-list", "Fire")
-  expect(getRotationMetrics()!.dps).toBeCloseTo(fireDps, 8)
+  await choose("Script", "None")
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(noneDps, 8)
+  await choose("Divinecraft", "Fire")
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(fireDps, 8)
 })
 
 it.each([
@@ -149,7 +165,7 @@ it.each([
   await act(async () => root.render(<App />))
   await settle()
   const before = latestBundle()
-  const beforeDps = getRotationMetrics()!.dps
+  const beforeDps = useRotationStore.getState().result!.metrics.dps
   const select = container.querySelector<HTMLSelectElement>(selector)!
   const original = select.value
   expect(original).not.toBe(value)
@@ -159,19 +175,19 @@ it.each([
   })
   await settle()
   expect(latestBundle().stats).not.toEqual(before.stats)
-  expect(getRotationMetrics()!.dps).not.toBe(beforeDps)
+  expect(useRotationStore.getState().result!.metrics.dps).not.toBe(beforeDps)
   await act(async () => {
     select.value = original
     select.dispatchEvent(new Event("change", { bubbles: true }))
   })
   await settle()
-  expect(getRotationMetrics()!.dps).toBeCloseTo(beforeDps, 8)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeCloseTo(beforeDps, 8)
 })
 
 it("rebuilds edited stats and preserves final-value overrides across food changes", async () => {
   await act(async () => root.render(<App />))
   await settle()
-  const beforeDps = getRotationMetrics()!.dps
+  const beforeDps = useRotationStore.getState().result!.metrics.dps
   const beforeStats = latestBundle().stats
   const input = [...container.querySelectorAll<HTMLLabelElement>("label.field")]
     .find(label => label.textContent?.startsWith("Min Physical Attack"))!
@@ -184,10 +200,10 @@ it("rebuilds edited stats and preserves final-value overrides across food change
   await act(async () => input.dispatchEvent(new FocusEvent("focusout", { bubbles: true })))
   await settle()
   expect(latestBundle().stats.minPhys).toBe(target)
-  expect(getRotationMetrics()!.dps).toBeGreaterThan(beforeDps)
-  const fishDps = getRotationMetrics()!.dps
-  await choose(".setup-option-list-food", "None")
+  expect(useRotationStore.getState().result!.metrics.dps).toBeGreaterThan(beforeDps)
+  const fishDps = useRotationStore.getState().result!.metrics.dps
+  await choose("Food", "None")
   expect(latestBundle().stats.minPhys).toBe(target)
-  expect(getRotationMetrics()!.dps).toBeLessThan(fishDps)
+  expect(useRotationStore.getState().result!.metrics.dps).toBeLessThan(fishDps)
   expect(JSON.parse(localStorage.getItem("wwm-stat-overrides-v1")!).minPhys).toBe(target)
 })

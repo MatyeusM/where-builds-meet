@@ -66,6 +66,7 @@
   }
 
   .build-list-item {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -77,12 +78,11 @@
     cursor: pointer;
   }
 
-  .build-list-item:hover,
-  .build-list-item.editing {
-    background: var(--primary-soft);
+  .build-list-item:hover {
+    background: color-mix(in oklab, var(--primary-soft) 50%, transparent);
   }
 
-  .build-list-item.active {
+  .build-list-item.editing {
     background: var(--primary-soft);
   }
 
@@ -112,6 +112,13 @@
     cursor: pointer;
   }
 
+  /* Extend selection across the row's padding and gaps; keep removal above it. */
+  .build-select-button::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+
   .build-list-item strong,
   .build-list-item small {
     display: block;
@@ -131,12 +138,22 @@
   }
 
   .build-remove-button {
+    position: relative;
+    z-index: 1;
     display: inline-grid;
-    inline-size: 23px;
-    block-size: 23px;
+
+    /* 24px is the smallest target that clears WCAG 2.2 AA's 24×24 minimum, and it gives a 1em
+       icon 4px of breathing room on each side rather than 3.5px, which read as cramped. */
+    inline-size: 24px;
+    block-size: 24px;
     flex: 0 0 auto;
     place-items: center;
     border: 0;
+
+    /* The user agent gives a button 1px 6px of padding, which this rule never cancels. Inside a
+       24px box that leaves 12px of content width, narrower than a 1em icon, so the icon overflows
+       to the right and `place-items` cannot recentre it. Same reset `.icon-only` uses. */
+    padding-inline: 0;
     border-radius: var(--radius-2xs);
     background: transparent;
     color: var(--text-muted);
@@ -189,10 +206,16 @@
   .build-editor-content {
     min-inline-size: 0;
     padding: 20px;
+    padding-block-start: 0;
   }
 
   .build-detail-heading {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
     display: flex;
+    padding-block: var(--space-xs);
+    background: var(--surface);
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
@@ -212,17 +235,48 @@
     gap: 8px;
   }
 
+  .build-detail-title:has(.build-name-input) {
+    flex-wrap: nowrap;
+  }
+
+  /*
+   * The active build's own rate is a headline figure and takes the accent colour. A build
+   * being compared is coloured by whether it is ahead of or behind the active one instead, so
+   * the accent is not set here: a rule that always set one would win over the delta's own
+   * colour and a worse build would read as an improvement.
+   */
   .build-detail-dps {
-    color: var(--primary);
     font-size: 0.85rem;
     font-weight: 700;
     white-space: nowrap;
   }
 
-  .build-duplicate-button {
-    display: inline-grid;
-    inline-size: 2.25rem;
-    place-items: center;
+  .build-detail-dps-active {
+    color: var(--primary);
+  }
+
+  /* A build that is not active shows only how it differs, so the figures it is actually
+     worth are one hover away rather than crowding the row beside the build's name. */
+  .build-detail-dps-tooltip {
+    display: grid;
+    gap: 4px;
+    min-inline-size: 14rem;
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row > span {
+    color: var(--text-muted);
+  }
+
+  .build-detail-dps-tooltip .build-detail-dps-row > strong {
+    color: var(--text);
+    text-align: end;
   }
 
   .detail-active-button {
@@ -245,6 +299,7 @@
 
   .build-name-input {
     display: block;
+    min-inline-size: 0;
     inline-size: min(100%, 420px);
     margin-block-start: 4px;
     border: 1px solid var(--primary);
@@ -902,6 +957,7 @@
 
     .build-editor-content {
       padding: 14px;
+      padding-block-start: 0;
     }
 
     .build-detail-heading {

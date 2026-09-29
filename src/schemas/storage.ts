@@ -5,6 +5,18 @@ const stringMap = v.record(v.string(), v.string())
 const numberMap = v.record(v.string(), finiteNumber)
 
 export const pathSelectionSchema = stringMap
+/**
+ * One record holding both sharing settings and the per-path maps. The maps are keyed by path and
+ * hold ids rather than records, so a record is never duplicated per path; an id absent from a
+ * path's array is simply one that path cannot see. Loose, because the record is written by
+ * earlier versions that knew only some of these fields.
+ */
+export const gearScopeSchema = v.looseObject({
+  sharedInventory: v.optional(v.boolean()),
+  sharedBuilds: v.optional(v.boolean()),
+  itemIdsByPath: v.optional(v.record(v.string(), v.array(v.string()))),
+  buildIdsByPath: v.optional(v.record(v.string(), v.array(v.string()))),
+})
 export const settingsSchema = v.looseObject({
   weapons: v.optional(v.array(v.string())),
   ping: v.optional(finiteNumber),

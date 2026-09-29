@@ -4,12 +4,15 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { imagetools } from "vite-imagetools"
 
+import { alias } from "./aliases.js"
+
 const buildVersion = randomUUID()
 
 export default defineConfig(({ command }) => ({
   // Calculation probes create separate Vite servers with the default cache path.
   cacheDir: "node_modules/.vite-app",
   optimizeDeps: { entries: ["index.html"] },
+  resolve: { alias },
   plugins: [
     react(),
     imagetools(),

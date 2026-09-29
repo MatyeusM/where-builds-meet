@@ -2,7 +2,7 @@ import { assert, describe, it } from "vitest"
 
 // Ported from script/probe/check-worker-batch-supersession.mjs.
 describe("worker-batch-supersession", () => {
-  it("Worker batch supersession probe passed", async () => {
+  it("runs independent batches in parallel and keeps each worker's baseline cache separate", async () => {
     const metrics = {
       totalDamage: 100,
       dps: 10,
@@ -13,11 +13,14 @@ describe("worker-batch-supersession", () => {
       setupComparisons: {},
     }
 
-    const workers = []
+    const workers: FakeWorker[] = []
+    // A request whose bundle is marked `hold` stays in flight, which is how a test
+    // keeps one worker busy while another picks up the next request.
+    let respondWhen: (message: any) => boolean = () => true
 
-    class BatchWorker {
+    class FakeWorker {
       listeners = new Map()
-      messages = []
+      messages: any[] = []
       terminated = false
 
       constructor() {
@@ -32,11 +35,14 @@ describe("worker-batch-supersession", () => {
 
       postMessage(message) {
         this.messages.push(message)
-        if (workers.length === 1) return
-        queueMicrotask(() => {
-          if (this.terminated) return
-          for (const listener of this.listeners.get("message") ?? []) listener({ data: { id: message.id, metrics } })
-        })
+        const settle = () => {
+          if (this.terminated || !respondWhen(message)) return
+          for (const listener of this.listeners.get("message") ?? []) {
+            listener({ data: { id: message.id, metrics } })
+          }
+        }
+        if (respondWhen(message)) queueMicrotask(settle)
+        else held.push(settle)
       }
 
       terminate() {
@@ -44,7 +50,8 @@ describe("worker-batch-supersession", () => {
       }
     }
 
-    globalThis.Worker = BatchWorker
+    const held: Array<() => void> = []
+    globalThis.Worker = FakeWorker as unknown as typeof Worker
 
     const bundle = {
       duration: 1,
@@ -54,45 +61,73 @@ describe("worker-batch-supersession", () => {
       innerWayPriority: [],
       setupComparisons: {},
     }
+    const holdingBundle = { ...bundle, hold: true }
+    const cachedBaseline = { metrics, timeline: [], anchorTime: 0, duration: 1, actionBreakdowns: {}, baseline: [] }
+    const sent = (predicate: (message: any) => boolean) => workers.flatMap(worker => worker.messages).filter(predicate)
 
     try {
-      const {
-        disposeRotationCalculationWorker,
-        requestRotationCalculation,
-        requestRotationComparisons,
-        supersedeRotationCalculationRequests,
-      } = await import("../src/calculations/rotationWorkerClient.ts")
+      const { disposeCalculationWorkers, dispatchCalculation } =
+        await import("@/calculations/rotationWorkerTransport.ts")
+      const baseline = (cacheKey: string, key: string) =>
+        dispatchCalculation({ mode: "baseline", bundle, cacheKey, key })
+      const comparisons = (cacheKey: string, key: string, baseline?: unknown) =>
+        dispatchCalculation({ mode: "comparisons", bundle, cacheKey, key, baseline } as never)
+      const calculation = (key: string, held = bundle) =>
+        dispatchCalculation({ mode: "baseline", bundle: held, key } as never)
 
-      const running = requestRotationCalculation(bundle, { key: "old-running" })
-      const pending = requestRotationCalculation(bundle, { key: "old-pending" })
-      supersedeRotationCalculationRequests()
-      const oldResults = await Promise.allSettled([running, pending])
-      const replacement = await requestRotationCalculation(bundle, { key: "replacement" })
-
-      assert(workers[0]?.terminated, "The superseded batch worker was not terminated.")
+      // Two independent batches are dispatched at once rather than queued behind one worker.
+      const settled = await Promise.all([calculation("first"), calculation("second")])
+      assert(workers.length === 2, `Expected the pool to run two batches at once, but made ${workers.length} workers.`)
       assert(
-        !oldResults.some(result => result.status !== "rejected" || !result.reason.message.includes("superseded")),
-        "The superseded batch did not reject all running and pending work.",
-      )
-      assert(workers.length === 2, `Expected a fresh replacement worker, but created ${workers.length}.`)
-      assert(replacement.dps === metrics.dps, "The replacement batch did not complete.")
-
-      const cachedBaseline = { metrics, timeline: [], anchorTime: 0, duration: 1, actionBreakdowns: {}, baseline: [] }
-      await requestRotationComparisons(bundle, "setup-a", cachedBaseline, { key: "variant-a" })
-      await requestRotationComparisons(bundle, "setup-a", cachedBaseline, { key: "variant-b" })
-      const comparisonMessages = workers[1].messages.filter(message => message.mode === "comparisons")
-      assert(
-        comparisonMessages[0]?.baseline === cachedBaseline,
-        "A fresh worker was not seeded from the main-thread baseline cache.",
-      )
-      assert(
-        comparisonMessages[1]?.baseline === undefined,
-        "The cached baseline was redundantly sent after the worker had been seeded.",
+        settled.every(result => (result as { metrics: { dps: number } }).metrics.dps === metrics.dps),
+        "Both parallel batches did not complete.",
       )
 
-      disposeRotationCalculationWorker()
+      disposeCalculationWorkers()
+
+      // A worker caches the baseline for a key. While that same worker is busy, a request
+      // for the key can only go to a different worker, which has no such cache. The worker
+      // throws rather than recomputing one, so the client must send the baseline it was
+      // handed even though another worker already holds that key. Affinity routing only
+      // avoids this while the holding worker is free, so the case has to be built.
+      await baseline("shared-key", "seed")
+      respondWhen = message => !message.bundle?.hold
+      const occupying = calculation("occupy", holdingBundle)
+      const onOtherWorker = comparisons("shared-key", "elsewhere", cachedBaseline)
+      respondWhen = () => true
+      held.splice(0).forEach(settle => settle())
+      await Promise.all([occupying, onOtherWorker])
+
+      const carriers = sent(message => message.cacheKey === "shared-key" && message.mode === "comparisons")
+      assert(carriers.length === 1, `Expected one comparisons batch for the key, sent ${carriers.length}.`)
+      const baselineWorker = workers[workers.findIndex(worker => worker.messages.some(m => m.mode === "baseline"))]
+      const comparisonWorker = workers[workers.findIndex(worker => worker.messages.includes(carriers[0]))]
+      assert(
+        baselineWorker !== comparisonWorker,
+        "The batch was routed back to the worker holding the baseline, so the cross-worker case went untested.",
+      )
+      assert(
+        carriers[0]?.baseline === cachedBaseline,
+        "A comparisons batch was sent to a worker with no cached baseline and without the caller's copy.",
+      )
+
+      // A key no worker has must always be seeded from the caller's baseline.
+      await comparisons("unseen-key", "unseen", cachedBaseline)
+      const unseen = sent(message => message.cacheKey === "unseen-key")
+      assert(unseen[0]?.baseline === cachedBaseline, "A comparisons batch for an uncached key was not seeded.")
+
+      // Once nothing is in flight, a worker holding the key can serve a repeat request
+      // from its own cache, so the baseline must not be cloned across the wire again.
+      await comparisons("shared-key", "rerouted", cachedBaseline)
+      const rerouted = sent(message => message.cacheKey === "shared-key" && message.mode === "comparisons").find(
+        message => message !== carriers[0],
+      )
+      assert(rerouted !== undefined, "The repeat comparisons batch was never sent.")
+      assert(rerouted?.baseline === undefined, "A worker that already cached the baseline was sent it again.")
+
+      disposeCalculationWorkers()
     } finally {
-      delete globalThis.Worker
+      delete (globalThis as { Worker?: unknown }).Worker
     }
   })
 })

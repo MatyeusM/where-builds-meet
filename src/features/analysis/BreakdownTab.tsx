@@ -1,8 +1,8 @@
 import { Fragment, useState } from "react"
 
-import type { PathId } from "../../application/contracts"
-import { formatDamageNumber, formatNumber, skillDisplayName } from "../../application/formatting"
-import { allSkillDefinitions, effectDefinitions } from "../../application/gameData/skills"
+import type { PathId } from "@/application/contracts"
+import { formatThroughput, formatNumber, skillDisplayName } from "@/application/formatting"
+import { allSkillDefinitions, effectDefinitions } from "@/application/gameData/skills"
 import {
   type RotationEffectCoverage,
   type RotationGroupBreakdown,
@@ -10,10 +10,10 @@ import {
   type RotationHealingSkillBreakdown,
   type RotationMetrics,
   type RotationSkillBreakdown,
-} from "../../calculations/rotationMetrics"
-import type { SkillBreakdownGroup } from "../../calculations/skillBreakdownCategories"
-import { gameText, t } from "../../i18n"
-import { Panel, PanelHeading } from "../../ui/Panel"
+} from "@/calculations/rotationMetrics"
+import type { SkillBreakdownGroup } from "@/calculations/skillBreakdownCategories"
+import { gameText, t } from "@/i18n"
+import { Panel, PanelHeading } from "@/ui/Panel"
 
 function BreakdownGroupTable({
   title,
@@ -44,7 +44,7 @@ function BreakdownGroupTable({
         {rows.map(row => (
           <div className="breakdown-table-row" key={row.id}>
             <span className={colored ? `damage-${row.id}` : ""}>{gameText(row.name)}</span>
-            <strong>{formatDamageNumber(row.damage)}</strong>
+            <strong>{formatThroughput(row.damage)}</strong>
             <strong>{formatNumber(row.percentage)}%</strong>
           </div>
         ))}
@@ -63,7 +63,7 @@ function BreakdownGroupTable({
               .map(row => (
                 <div className="breakdown-table-row" key={row.id}>
                   <span className={colored ? `healing-${row.id}` : ""}>{gameText(row.name)}</span>
-                  <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
+                  <strong className="healing-value">+{formatThroughput(row.healing)}</strong>
                   <strong>{formatNumber(row.percentage)}%</strong>
                 </div>
               ))}
@@ -83,12 +83,12 @@ function CastBreakdownComparison({
   valueWithBuff: number | undefined
   stacked: boolean
 }) {
-  if (valueWithBuff === undefined) return value === undefined ? "—" : formatDamageNumber(value)
-  if (!stacked) return `${formatDamageNumber(value ?? 0)} (${formatDamageNumber(valueWithBuff)})`
+  if (valueWithBuff === undefined) return value === undefined ? "—" : formatThroughput(value)
+  if (!stacked) return `${formatThroughput(value ?? 0)} (${formatThroughput(valueWithBuff)})`
   return (
     <span className="breakdown-stacked-value">
-      <span>{formatDamageNumber(value ?? 0)}</span>
-      <span>({formatDamageNumber(valueWithBuff)})</span>
+      <span>{formatThroughput(value ?? 0)}</span>
+      <span>({formatThroughput(valueWithBuff)})</span>
     </span>
   )
 }
@@ -162,7 +162,7 @@ function SkillBreakdownRows({
           <strong>{formatNumber(row.normalRate)}%</strong>
           <strong>{formatNumber(row.criticalRate)}%</strong>
           <strong>{formatNumber(row.affinityRate)}%</strong>
-          <strong>{formatDamageNumber(row.damage)}</strong>
+          <strong>{formatThroughput(row.damage)}</strong>
           <strong>{formatNumber(row.percentage)}%</strong>
         </div>
       ) : (
@@ -174,7 +174,7 @@ function SkillBreakdownRows({
           <strong>{row.heals || ""}</strong>
           <strong>{formatNumber(row.normalRate)}%</strong>
           <strong>{formatNumber(row.criticalRate)}%</strong>
-          <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
+          <strong className="healing-value">+{formatThroughput(row.healing)}</strong>
           <strong>{formatNumber(row.percentage)}%</strong>
         </div>
       )}
@@ -194,7 +194,7 @@ export function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; p
     return (
       <Panel className="breakdown-empty">
         <h2>{t("ui.app.dpsBreakdown", { dps: t("system.dps") })}</h2>
-        <p>{t("ui.app.openTheRotationEditorToCalculateTheActive")}</p>
+        <p>{t("ui.app.recalculating")}</p>
       </Panel>
     )
   const { breakdown } = metrics
@@ -220,19 +220,19 @@ export function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; p
           </div>
           <div className="breakdown-totals">
             <span>
-              {t("system.totalDamage")} <strong>{formatDamageNumber(metrics.totalDamage)}</strong>
+              {t("system.totalDamage")} <strong>{formatThroughput(metrics.totalDamage)}</strong>
             </span>
             <span>
-              {t("system.dps")} <strong>{formatDamageNumber(metrics.dps)}</strong>
+              {t("system.dps")} <strong>{formatThroughput(metrics.dps)}</strong>
             </span>
             {hasHealing ? (
               <>
                 <span>
                   {t("system.totalHealing")}{" "}
-                  <strong className="healing-value">+{formatDamageNumber(metrics.totalHealing)}</strong>
+                  <strong className="healing-value">+{formatThroughput(metrics.totalHealing)}</strong>
                 </span>
                 <span>
-                  {t("system.hps")} <strong className="healing-value">{formatDamageNumber(metrics.hps)}</strong>
+                  {t("system.hps")} <strong className="healing-value">{formatThroughput(metrics.hps)}</strong>
                 </span>
               </>
             ) : null}
@@ -368,10 +368,10 @@ export function BreakdownTab({ metrics, pathId }: { metrics?: RotationMetrics; p
                     {t("ui.app.s")}
                   </strong>
                   <strong className="healing-value">
-                    {row.averageHps === undefined ? "—" : formatDamageNumber(row.averageHps)}
+                    {row.averageHps === undefined ? "—" : formatThroughput(row.averageHps)}
                   </strong>
-                  <strong className="healing-value">+{formatDamageNumber(row.averageHealing)}</strong>
-                  <strong className="healing-value">+{formatDamageNumber(row.healing)}</strong>
+                  <strong className="healing-value">+{formatThroughput(row.averageHealing)}</strong>
+                  <strong className="healing-value">+{formatThroughput(row.healing)}</strong>
                   <strong>{formatNumber(row.percentage)}%</strong>
                 </div>
               ))}

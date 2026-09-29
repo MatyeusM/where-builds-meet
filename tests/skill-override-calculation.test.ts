@@ -3,8 +3,8 @@ import { assert, describe, it } from "vitest"
 // Ported from script/probe/check-skill-override-calculation.mjs.
 describe("skill-override-calculation", () => {
   it("Skill override calculation and fingerprint checks passed", async () => {
-    const { resolveSkillCalculationDefinitions } = await import("../src/skillOverrides.ts")
-    const { deserializeSkillOverrides, serializeSkillOverrides } = await import("../src/skillOverrides.ts")
+    const { resolveSkillCalculationDefinitions } = await import("@/skillOverrides.ts")
+    const { deserializeSkillOverrides, serializeSkillOverrides } = await import("@/skillOverrides.ts")
     const migrated = deserializeSkillOverrides({
       General: {
         Legacy: {
@@ -45,8 +45,8 @@ describe("skill-override-calculation", () => {
       ),
       "Old stack-damage overrides must preserve expiration behavior and physical-only coefficients, but drop stack scaling.",
     )
-    const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
-    const { rotationBundleFingerprint } = await import("../src/calculations/rotationCalculationCache.ts")
+    const { buildRotationTimeline } = await import("@/calculations/rotationTimeline.ts")
+    const { rotationBundleFingerprint } = await import("@/calculations/calculationFingerprint.ts")
     const defaults = {
       Snowparting: { Attack: { name: "Attack", castTime: 1, action: [{ type: "damage", time: 1 }] } },
       Phalanxbane: {},

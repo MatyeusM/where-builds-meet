@@ -46,20 +46,22 @@ describe("worker-recovery", () => {
     globalThis.Worker = RecoveringWorker
 
     try {
-      const { disposeRotationCalculationWorker, requestRotationCalculation } = await probeLoad(
-        "/src/calculations/rotationWorkerClient.ts",
+      const { disposeCalculationWorkers, dispatchCalculation } = await probeLoad(
+        "/src/calculations/rotationWorkerTransport.ts",
       )
-      const result = await requestRotationCalculation({
+      const result = (await dispatchCalculation({
+        mode: "baseline",
+        key: "recovery",
         duration: 1,
         baseline: [],
         statPriority: [],
         attunementPriority: [],
         innerWayPriority: [],
         setupComparisons: {},
-      })
-      assert(result.dps === metrics.dps, "The interrupted calculation did not recover.")
+      } as never)) as { metrics: { dps: number } }
+      assert(result.metrics.dps === metrics.dps, "The interrupted calculation did not recover.")
       assert(workersCreated === 2, `Expected one replacement worker, but created ${workersCreated}.`)
-      disposeRotationCalculationWorker()
+      disposeCalculationWorkers()
     } finally {
       delete globalThis.Worker
     }

@@ -1,3 +1,5 @@
+import arsenalDefinitions from "@gamedata/arsenal.json"
+import bowRingSetDefinitions from "@gamedata/bow-ring-set.json"
 import { IconArrowUp, IconCopy, IconEdit, IconPlus, IconPointFilled, IconX } from "@tabler/icons-react"
 import { nanoid } from "nanoid"
 import {
@@ -12,9 +14,11 @@ import {
   type SetStateAction,
 } from "react"
 
-import arsenalDefinitions from "../../../data/arsenal.json"
-import bowRingSetDefinitions from "../../../data/bow-ring-set.json"
-import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
+import type { PathId } from "@/application/contracts"
+import { formatThroughput, formatThroughputDelta, throughputDeltaClass } from "@/application/formatting"
+import type { MeasurementContext } from "@/calculations/rotationCalculationBundle"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
+import { innerWayEntriesForTag } from "@/data/innerWayDefinitions"
 import {
   defaultBuildSetup,
   duplicateBuildState,
@@ -24,8 +28,6 @@ import {
   availableSetEntriesForTags,
   affixOptionsForGearDefinition,
   buildEntryAvailableForMartialArts,
-  buildEntryAvailableForPath,
-  buildEntryIsTestPreset,
   buildEntryMartialArts,
   exportBuildState,
   gearBaseStats,
@@ -44,19 +46,22 @@ import {
   type BuildSetup,
   type GearAffixSummary,
   type BuildEntry,
-  type BuildState,
   type GearInventory,
   type GearItem,
   type GearLevel,
   type GearSlot,
-} from "../../gear"
-import { dataText, gameText, t } from "../../i18n"
-import { publishNotice, dismissNotice } from "../../notices"
-import { createOfficialGearBookmarklet } from "../../officialGearBookmarklet"
-import type { WeaponId } from "../../types"
-import { Button } from "../../ui/Button"
-import { Dialog } from "../../ui/Dialog"
-import { Panel, PanelHeading } from "../../ui/Panel"
+} from "@/gear"
+import { dataText, gameText, t } from "@/i18n"
+import { publishNotice, dismissNotice } from "@/notices"
+import { createOfficialGearBookmarklet } from "@/officialGearBookmarklet"
+import { useGearStore } from "@/stores/gearStore"
+import type { WeaponId } from "@/types"
+import { Button } from "@/ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
+import { Dialog } from "@/ui/Dialog"
+import { Panel, PanelHeading } from "@/ui/Panel"
+import { Tooltip } from "@/ui/Tooltip"
+
 import {
   GearEditor,
   capAndFilterGearDraft,
@@ -68,6 +73,7 @@ import {
   normalizeDraftValue,
   type GearDraft,
 } from "./GearEditor"
+import { useBuildThroughput } from "./useBuildThroughput"
 
 function gearSlotLabel(slot: GearSlot) {
   return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
@@ -82,17 +88,21 @@ function createBuildId() {
 }
 
 type BuildTabProps = {
+  pathId: PathId
+  /** The builds this path may see, already filtered by the store's rule. */
+  builds: BuildEntry[]
+  /** The gear this path may see, which is what the editor and the gear panel both resolve. */
+  visibleItems: GearItem[]
   weapons: [WeaponId, WeaponId]
   martialArtTags: string[]
   pathTag?: string
-  buildGroup: string
   graduatedBuildIds: string[]
-  devMode: boolean
-  activeBuildDps?: number
-  buildState: BuildState
-  onBuildStateChange: Dispatch<SetStateAction<BuildState>>
   onActiveBuildChange: (id: string) => void
   onSelectBuildWeapons: (weapons: [WeaponId, WeaponId]) => boolean
+  /** The sheet and environment a build is measured against, and the rotation it runs. */
+  measurement: MeasurementContext
+  activeRotation?: RotationRecord
+  activeRotationName?: string
 }
 
 type BuildManagementProps = {
@@ -257,18 +267,24 @@ function RelayedIndicator({ item }: { item?: GearItem }) {
 }
 
 export default function BuildTab({
+  pathId,
+  builds,
+  visibleItems,
   weapons,
   martialArtTags,
   pathTag,
-  buildGroup,
   graduatedBuildIds,
-  devMode,
-  activeBuildDps,
-  buildState,
-  onBuildStateChange,
   onActiveBuildChange,
   onSelectBuildWeapons,
+  measurement,
+  activeRotation,
+  activeRotationName,
 }: BuildTabProps) {
+  // The build list and the shared gear inventory are one stored record, held by `gearStore`
+  // rather than handed in: this component is where they are created, renamed, duplicated,
+  // deleted and equipped, so it is also where they are stored.
+  const buildState = useGearStore(state => state.buildState)
+  const updateBuildState = useGearStore(state => state.updateBuildState)
   const [editingBuildId, setEditingBuildId] = useState(buildState.activeBuildId)
   const [editingName, setEditingName] = useState(false)
   const [officialImportText, setOfficialImportText] = useState("")
@@ -291,18 +307,17 @@ export default function BuildTab({
     // React sanitizes javascript: href props; this trusted, generated bookmarklet must be assigned to the DOM.
     officialBookmarkletRef.current?.setAttribute("href", officialGearBookmarklet)
   }, [officialGearBookmarklet])
-  const listedEntries = buildState.entries
-    .filter(
-      entry =>
-        (devMode || !buildEntryIsTestPreset(entry)) &&
-        (!entry.isDefault || buildEntryAvailableForPath(entry, buildGroup, weapons)),
-    )
-    .sort((left, right) => Number(left.isDefault === true) - Number(right.isDefault === true))
+  // `builds` is already the list this path may see, filtered by the store's rule. Only the
+  // order is decided here, because a shipped preset belongs at the end of the list rather than
+  // wherever the records happen to be stored.
+  const listedEntries = [...builds].sort(
+    (left, right) => Number(left.isDefault === true) - Number(right.isDefault === true),
+  )
   const editingEntry = listedEntries.find(entry => entry.id === editingBuildId) ?? listedEntries[0]
   if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
     const id = createBuildId()
-    onBuildStateChange(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: [
         ...current.entries,
@@ -334,12 +349,30 @@ export default function BuildTab({
         </div>
       </Panel>
     )
-  const showActiveBuildDps =
-    editingEntry.id === buildState.activeBuildId && activeBuildDps !== undefined && activeBuildDps > 0
-  const inventory = resolveBuildInventory(editingEntry, buildState.gearItems, weapons)
+  const isActiveBuild = editingEntry.id === buildState.activeBuildId
+  const activeEntry = listedEntries.find(entry => entry.id === buildState.activeBuildId)
+  // The build on screen, and the active one it is weighed against. When they are the same build
+  // both hooks ask for the same key, so the store answers the second from the first.
+  const editedThroughput = useBuildThroughput({
+    build: editingEntry,
+    gearItems: buildState.gearItems,
+    context: measurement,
+    rotation: activeRotation,
+  })
+  const activeThroughput = useBuildThroughput({
+    build: activeEntry,
+    gearItems: buildState.gearItems,
+    context: measurement,
+    rotation: activeRotation,
+  })
+  const comparison =
+    !isActiveBuild && editedThroughput && activeThroughput
+      ? { delta: editedThroughput.dps - activeThroughput.dps, reading: editedThroughput }
+      : undefined
+  const inventory = resolveBuildInventory(editingEntry, visibleItems, weapons)
   const setup = resolveBuildSetup(editingEntry)
   const usageCounts = new Map<string, number>()
-  for (const entry of buildState.entries) {
+  for (const entry of listedEntries) {
     if (entry.isDefault) continue
     for (const itemId of new Set(Object.values(entry.equipped ?? {}))) {
       if (itemId) usageCounts.set(itemId, (usageCounts.get(itemId) ?? 0) + 1)
@@ -348,7 +381,7 @@ export default function BuildTab({
 
   function updateInventory(update: SetStateAction<GearInventory>) {
     if (editingEntry.isDefault) return
-    onBuildStateChange(current => {
+    updateBuildState(pathId, current => {
       const currentEntry = current.entries.find(entry => entry.id === editingEntry.id)
       if (!currentEntry || currentEntry.isDefault) return current
       const currentInventory = { items: current.gearItems, equipped: currentEntry.equipped ?? {} }
@@ -374,7 +407,7 @@ export default function BuildTab({
   }
 
   function renameBuild(name: string) {
-    onBuildStateChange(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id && !entry.isDefault ? { ...entry, name } : entry,
@@ -389,14 +422,14 @@ export default function BuildTab({
   function duplicateBuild() {
     const id = createBuildId()
     const name = t("ui.buildTab.copyOfNamedBuild", { name: buildEntryDisplayName(editingEntry) })
-    onBuildStateChange(current => duplicateBuildState(current, editingEntry.id, { id, name }))
+    updateBuildState(pathId, current => duplicateBuildState(current, editingEntry.id, { id, name }))
     setEditingBuildId(id)
     setEditingName(false)
   }
 
   function updateSetup(nextSetup: BuildSetup) {
     if (editingEntry.isDefault) return
-    onBuildStateChange(current => ({
+    updateBuildState(pathId, current => ({
       ...current,
       entries: current.entries.map(entry =>
         entry.id === editingEntry.id ? { ...entry, setup: normalizeBuildSetup(nextSetup) } : entry,
@@ -414,7 +447,10 @@ export default function BuildTab({
       return
     const remaining = listedEntries.filter(candidate => candidate.id !== id)
     const fallback = remaining.find(candidate => candidate.isDefault) ?? remaining[0]
-    onBuildStateChange(current => ({ ...current, entries: current.entries.filter(candidate => candidate.id !== id) }))
+    updateBuildState(pathId, current => ({
+      ...current,
+      entries: current.entries.filter(candidate => candidate.id !== id),
+    }))
     if (buildState.activeBuildId === id && fallback) onActiveBuildChange(fallback.id)
     if (editingBuildId === id) setEditingBuildId(fallback?.id ?? "")
   }
@@ -439,7 +475,7 @@ export default function BuildTab({
     dismissNotice("build-import")
     try {
       const result = mergeImportedBuildState(buildState, JSON.parse(await file.text()) as unknown)
-      onBuildStateChange(result.state)
+      updateBuildState(pathId, () => result.state)
       if (result.importedBuildIds[0]) {
         setEditingBuildId(result.importedBuildIds[0])
         setEditingName(false)
@@ -462,13 +498,13 @@ export default function BuildTab({
   async function importFromOfficial() {
     dismissNotice("official-import")
     try {
-      const { parseOfficialGearExport } = await import("../../officialGearImport")
+      const { parseOfficialGearExport } = await import("@/officialGearImport")
       const official = parseOfficialGearExport(JSON.parse(officialImportText), weapons)
       const result = mergeImportedBuildState(buildState, official.exportValue, { reuseIdenticalGear: true })
       if (result.importedGearCount + result.reusedGearCount !== official.gearCount || result.importedBuildCount !== 1)
         throw new Error(t("ui.buildTab.dashboardValidationError"))
       if (official.warnings.length) publishNotice({ id: "official-import", message: official.warnings.join("\n") })
-      onBuildStateChange(result.state)
+      updateBuildState(pathId, () => result.state)
       setEditingBuildId(result.importedBuildIds[0])
       setEditingName(false)
       officialImportDialogRef.current?.close()
@@ -612,19 +648,50 @@ export default function BuildTab({
                   ) : null}
                 </h3>
               )}
-              {showActiveBuildDps ? (
-                <small className="build-detail-dps">
-                  ({formatNumber(Math.round(activeBuildDps))} {t("system.dps")})
-                </small>
-              ) : null}
+              {isActiveBuild ? (
+                activeThroughput ? (
+                  <small className="build-detail-dps build-detail-dps-active">
+                    ({formatThroughput(activeThroughput.dps, 0)} {t("system.dps")}
+                    {activeThroughput.hps > 0
+                      ? ` / ${formatThroughput(activeThroughput.hps, 0)} ${t("system.hps")}`
+                      : ""}
+                    )
+                  </small>
+                ) : null
+              ) : !comparison ? null : (
+                <Tooltip
+                  className="build-detail-dps-tooltip"
+                  content={
+                    <>
+                      <span className="build-detail-dps-row">
+                        <span>{t("ui.buildTab.notActiveDps")}</span>
+                        <strong>{formatThroughput(comparison.reading.dps, 0)}</strong>
+                      </span>
+                      <span className="build-detail-dps-row">
+                        <span>{t("ui.buildTab.rotationUsed")}</span>
+                        <strong>{activeRotationName ?? ""}</strong>
+                      </span>
+                      <span className="build-detail-dps-row">
+                        <span>{t("system.totalDamage")}</span>
+                        <strong>{formatThroughput(comparison.reading.totalDamage)}</strong>
+                      </span>
+                    </>
+                  }
+                >
+                  <small className={`build-detail-dps ${throughputDeltaClass(comparison.delta, "damage")}`}>
+                    ({formatThroughput(comparison.reading.dps, 0)}, {formatThroughputDelta(comparison.delta, 0)}{" "}
+                    {t("system.dps")})
+                  </small>
+                </Tooltip>
+              )}
             </div>
             <div className="detail-active-actions">
               <Button
-                className="build-duplicate-button"
                 aria-label={t("ui.app.duplicate")}
                 title={t("ui.app.duplicate")}
                 variant="secondary"
                 size="small"
+                iconOnly
                 type="button"
                 onClick={duplicateBuild}
               >
@@ -752,12 +819,12 @@ function BuildSetupPanel({
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
-                <div className="setup-option-list">
+                <ButtonGroup cellWidth="5rem">
                   {[0, 2, 4].map(tier => (
-                    <button
-                      className={selectedTier === tier ? "selected" : ""}
-                      type="button"
+                    <ButtonGroupOption
                       key={tier}
+                      label={t(`system.setPieces.${tier}`)}
+                      selected={selectedTier === tier}
                       disabled={locked}
                       title={lockedTitle}
                       onClick={() =>
@@ -766,11 +833,9 @@ function BuildSetupPanel({
                           [key]: selectSetTier(setup[key], setName, tier as 0 | 2 | 4, definitions),
                         })
                       }
-                    >
-                      {t(`system.setPieces.${tier}`)}
-                    </button>
+                    />
                   ))}
-                </div>
+                </ButtonGroup>
               </div>
             </div>
           )
@@ -845,20 +910,18 @@ function BuildSetupPanel({
             <h2>{t("ui.buildTab.bowRingSet")}</h2>
           </div>
         </PanelHeading>
-        <div className="setup-option-list setup-option-list-wide">
+        <ButtonGroup columns={4}>
           {Object.entries(bowRingSetDefinitions).map(([value, definition]) => (
-            <button
-              className={setup.bowRingSet === value ? "selected" : ""}
-              type="button"
+            <ButtonGroupOption
               key={value}
+              label={gameText(definition.name)}
+              selected={setup.bowRingSet === value}
               disabled={locked}
               title={lockedTitle}
               onClick={() => onChange({ ...setup, bowRingSet: value })}
-            >
-              {gameText(definition.name)}
-            </button>
+            />
           ))}
-        </div>
+        </ButtonGroup>
       </Panel>
       <Panel className="setup-placeholder-panel build-setup-panel">
         <PanelHeading>
@@ -866,20 +929,18 @@ function BuildSetupPanel({
             <h2>{t("ui.buildTab.arsenal")}</h2>
           </div>
         </PanelHeading>
-        <div className="setup-option-list setup-option-list-arsenal">
+        <ButtonGroup>
           {Object.entries(arsenalDefinitions).map(([value, definition]) => (
-            <button
-              className={setup.arsenal === value ? "selected" : ""}
-              type="button"
+            <ButtonGroupOption
               key={value}
+              label={gameText(definition.name)}
+              selected={setup.arsenal === value}
               disabled={locked}
               title={lockedTitle}
               onClick={() => onChange({ ...setup, arsenal: value })}
-            >
-              {gameText(definition.name)}
-            </button>
+            />
           ))}
-        </div>
+        </ButtonGroup>
       </Panel>
       <Panel className="setup-placeholder-panel build-setup-panel build-affix-summary-panel">
         <PanelHeading>

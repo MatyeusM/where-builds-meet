@@ -1,9 +1,9 @@
-import { IconRotate } from "@tabler/icons-react"
+import { IconRestore } from "@tabler/icons-react"
 import { useState } from "react"
 
-import { formatNumber } from "../../application/formatting"
-import { gameText, t } from "../../i18n"
-import type { CharacterStats, StatDefinition } from "../../types"
+import { formatNumber } from "@/application/formatting"
+import { gameText, t } from "@/i18n"
+import type { CharacterStats, StatDefinition } from "@/types"
 
 export function StatField({
   definition,
@@ -74,7 +74,7 @@ export function StatField({
               onReset?.()
             }}
           >
-            <IconRotate size="1em" aria-hidden />
+            <IconRestore size="1em" aria-hidden />
           </button>
         )}
       </span>

@@ -76,6 +76,7 @@
   }
 
   .rotation-list-item {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -90,11 +91,10 @@
     text-align: start;
   }
 
-  .rotation-list-item.active {
-    background: var(--primary-soft);
+  .rotation-list-item:hover {
+    background: color-mix(in oklab, var(--primary-soft) 50%, transparent);
   }
 
-  .rotation-list-item:hover,
   .rotation-list-item.editing {
     background: var(--primary-soft);
   }
@@ -121,6 +121,13 @@
     cursor: pointer;
   }
 
+  /* Extend selection across the row's padding and gaps; keep removal above it. */
+  .rotation-select-button::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+
   .active-rotation-icon {
     display: inline-block;
     margin-inline-end: 6px;
@@ -135,6 +142,8 @@
   }
 
   .rotation-remove-button {
+    position: relative;
+    z-index: 1;
     display: inline-grid;
     inline-size: 23px;
     block-size: 23px;
@@ -321,6 +330,48 @@
     font-weight: 700;
   }
 
+  /* Sits in the results row, so it takes that row's weight and aligns to it. */
+  .rotation-results-status {
+    min-block-size: 0;
+    margin-block-start: 0;
+    align-self: center;
+    font-size: inherit;
+  }
+
+  /* A rate sits in brackets after the total it is taken from, at that total's own size and weight.
+     Only the nowrap is its own: a rate broken across two lines reads as a second figure.
+
+     The space that separates it from the total is written outside this element, because a bracketed
+     rate that carries one of its own is a block-level flex item inside the tooltip's anchor, and
+     leading whitespace at the start of a block is not rendered. */
+  .rotation-results-rate {
+    white-space: nowrap;
+  }
+
+  /* A rotation that is not active shows only how it differs, so the figures it is actually
+     worth are one hover away rather than crowding the row beside its total damage. */
+  .rotation-results-rate-tooltip {
+    display: grid;
+    gap: 4px;
+    min-inline-size: 14rem;
+  }
+
+  .rotation-results-rate-tooltip .rotation-results-rate-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .rotation-results-rate-tooltip .rotation-results-rate-row > span {
+    color: var(--text-muted);
+  }
+
+  .rotation-results-rate-tooltip .rotation-results-rate-row > strong {
+    color: var(--text);
+    text-align: end;
+  }
+
   /* Rotation Timeline Table */
   .rotation-table {
     min-inline-size: 0;
@@ -489,22 +540,18 @@
   }
 
   .damage-breakdown-wrap {
-    position: relative;
     display: inline-block;
     min-inline-size: 0;
     max-inline-size: 100%;
     cursor: help;
   }
 
+  /* The box is portalled out of the trigger, so its contents are laid out here while the
+     primitive owns showing it. A reveal rule keyed on the trigger could no longer match. */
   .damage-breakdown-tooltip {
-    display: none;
+    display: flex;
     gap: var(--space-sm);
     color: inherit;
-  }
-
-  .damage-breakdown-wrap:hover .damage-breakdown-tooltip,
-  .damage-breakdown-wrap:focus-within .damage-breakdown-tooltip {
-    display: flex;
   }
 
   .rotation-action-result {
@@ -827,14 +874,9 @@
   }
 
   .effect-plate-tooltip {
-    display: none;
+    display: block;
     font-weight: 500;
     line-height: 1.35;
-  }
-
-  .effect-plate:hover .effect-plate-tooltip,
-  .effect-plate:focus-within .effect-plate-tooltip {
-    display: block;
   }
 
   .effect-plate-tooltip strong,

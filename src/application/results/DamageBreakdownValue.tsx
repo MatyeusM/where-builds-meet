@@ -1,8 +1,8 @@
-import { formatDamageNumber } from "../../application/formatting"
-import type { DamageBreakdown } from "../../calculations/damage"
-import type { RotationActionBreakdown } from "../../calculations/rotationCalculator"
-import { gameText } from "../../i18n"
-import { Tooltip } from "../../ui/Tooltip"
+import { formatThroughput } from "@/application/formatting"
+import type { DamageBreakdown } from "@/calculations/damage"
+import type { RotationActionBreakdown } from "@/calculations/rotationCalculator"
+import { gameText } from "@/i18n"
+import { Tooltip } from "@/ui/Tooltip"
 
 const damageTooltipParts: Array<[keyof DamageBreakdown, string]> = [
   ["physical", "Physical"],
@@ -16,7 +16,7 @@ function damageTooltipContent(breakdown: DamageBreakdown) {
   return damageTooltipParts.map(([key, label]) => (
     <span className={`damage-breakdown-part damage-${key}`} key={key}>
       <i>{label}</i>
-      {formatDamageNumber(breakdown[key] as number)}
+      {formatThroughput(breakdown[key] as number)}
     </span>
   ))
 }
@@ -31,7 +31,7 @@ export function DamageBreakdownValue({
   return (
     <span className={`damage-breakdown-wrap ${className}`}>
       <Tooltip className="damage-breakdown-tooltip" content={damageTooltipContent(breakdown)}>
-        <span>{formatDamageNumber(breakdown.total)}</span>
+        <span>{formatThroughput(breakdown.total)}</span>
       </Tooltip>
     </span>
   )
@@ -52,16 +52,16 @@ export function HealingBreakdownValue({
           <>
             <span className="damage-breakdown-part healing-physical">
               <i>{gameText("Physical")}</i>
-              {formatDamageNumber(breakdown.physical)}
+              {formatThroughput(breakdown.physical)}
             </span>
             <span className="damage-breakdown-part healing-silkbind">
               <i>{gameText("Silkbind")}</i>
-              {formatDamageNumber(breakdown.silkbind)}
+              {formatThroughput(breakdown.silkbind)}
             </span>
           </>
         }
       >
-        <span>+{formatDamageNumber(breakdown.total)}</span>
+        <span>+{formatThroughput(breakdown.total)}</span>
       </Tooltip>
     </span>
   )
