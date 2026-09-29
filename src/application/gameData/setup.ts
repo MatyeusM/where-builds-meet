@@ -46,6 +46,8 @@ export function breakthroughProfile(settings: CalculatorSettings) {
 export type SystemStatsDefinition = {
   initialResources: Record<string, number>
   resourceMaximums: Record<string, number>
+  resourceRegeneration?: Record<string, number>
+  resourceSpendRegenDelay?: Record<string, number>
   resourceEvents: ResourceEventRule[]
   baseStats: SetupEffect
   enhancementStats: Array<SetupEffect & { id: string }>

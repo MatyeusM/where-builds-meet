@@ -16,7 +16,7 @@ short explanation only when it prevents a likely misinterpretation.
 | Cumulative Inner Way tiers                            | `data/innerway/`                 |
 | Complete talent selection at each rank                | `data/martial-art/`              |
 | Resource defaults, caps, and universal event gains    | `data/system.json`               |
-| Cast-relative resource rate overrides                 | `endurance` on the skill record  |
+| Cast-scoped resource rate overrides                   | `endurance` on the skill record  |
 | Preset sequences, attachments, and encounter settings | `data/rotation/`                 |
 | Practice target names, types, and attack patterns     | `data/boss.json`                 |
 | Martial-art numeric IDs and persisted weapon IDs      | `data/official/profile-map.json` |
@@ -639,13 +639,13 @@ proof that any timing is verified.
 
 Only the skills the Inner Ways reference are authored, at the user's direction:
 
-| Skill                  | ID        | Scope                                                       |
-| ---------------------- | --------- | ----------------------------------------------------------- |
-| `QiankunsLock`         | 20102101  | Nameless Spear Martial Art Skill; applies Endless Gale      |
-| `VagrantSword`         | 20201102  | Nameless Sword charge tier 1; Charged **and Heavy**         |
-| `VagrantSword2`        | 202011021 | Nameless Sword charge tier 2; single or three-wave release  |
-| `SwordEnergy1`–`3`     | —         | Charge tier 2 sword-energy waves                            |
-| `DauntingStrikeCancel` | 20201101  | Nameless Sword Martial Art Skill, zero cast time, no damage |
+| Skill                                    | ID        | Scope                                                         |
+| ---------------------------------------- | --------- | ------------------------------------------------------------- |
+| `QiankunsLock`                           | 20102101  | Nameless Spear Martial Art Skill; applies Endless Gale        |
+| `VagrantSword`                           | 20201102  | Nameless Sword charge tier 1; Charged **and Heavy**           |
+| `VagrantSword2`                          | 202011021 | Nameless Sword charge tier 2; three phases, two shot variants |
+| `VagrantSwordShootSingle` / `ShootThree` | —         | The two charge-tier-2 release variants                        |
+| `DauntingStrikeCancel`                   | 20201101  | Nameless Sword Martial Art Skill, zero cast time, no damage   |
 
 The remaining Sword and Spear actions are deliberately absent. Author them when
 a Splendor rotation exists, not before.
@@ -662,50 +662,53 @@ multiplier against the tier-2 baseline of `3.2664` / `904` / `493`:
 | `three waves` | 3     | `0.4`, `0.48`, `0.56` | `0.101`, `0.267`, `0.755`  |
 
 The waves **replace** each other rather than stacking, so the release selects
-one route: Sword Morph T0 with the Qi shield active takes the three-wave route
-and suppresses the single wave. Each wave repeats the parent's `Charged` and
-`Heavy` tags so attunement matching resolves on the component that deals the
-hit, and carries `SwordEnergy` because that is the skill tag the Nameless Sword
-talents match on.
+one route. Both variants repeat the parent's `Charged` and `Heavy` tags so
+attunement matching resolves on the component that deals the hit.
 
-The cast is the charge: `castTime` is `1.2`, the `releaseCharge.threshold`, and
-the three waves are `subAction` components with no cast time of their own, so
-their markers land at `1.2 + marker` on the attack animation. The single wave
-lives on the parent at `1.4023076923076923`, which is past the cast end and so
-only survives because an action may occur after cast completion. Suppressing it
-needs `not Shield` **or** `not SwordMorphT0`, not a `not` over both: `not`
-accepts exactly one operand, so the negated conjunction has to be written as a
-disjunction. Charge tier 1 has no `timings` block at all, so its cast time stays 0.
+The cast is three sub-actions that the timing and the Endurance rates both fall
+out of: a 0.2s pre-charge with no Endurance setting, a 1.0s charging phase, and
+a 0.85s shooting phase, totalling the 2.05s cast. The shooting sub-action is
+itself a `value`/`fallback` choice between the two release variants, so there is
+no wrapper between the cast and its phases. Sword Morph T0 with the Qi shield
+active picks the three-wave variant; otherwise the single wave runs. Only the
+three-wave variant carries `SwordEnergy`, which is the skill tag the Nameless
+Sword talents match on, so the single wave must not carry it. Charge tier 1 has
+no `timings` block at all, so its cast time stays 0.
 
 ### Endurance rates
 
 Endurance regenerates at 10/s from `system.json.resourceRegeneration`. A skill
-holds rate overrides for windows measured from its own cast start:
+may hold rates for the span of its own cast:
 
 ```json
-"endurance": {
-  "regeneration": { "rate": 0.001, "from": 0.2, "to": 2.05 },
-  "consumption": { "rate": 20, "from": 0.2, "to": 1.2 }
-}
+"endurance": { "regeneration": 0.001, "consumption": 20 }
 ```
+
+There are no authored start or end times. A skill's rates cover exactly its
+cast, and a composite carries none itself: each sub-action owns the phase it
+covers, so a charge's timings and its Endurance follow from the same structure. A
+`value`/`fallback` variant carries its own rates, so whichever release variant is
+selected holds the shooting phase's regeneration.
 
 `regeneration` replaces the base rate and `consumption` drains on top of it, so
 the two never merge into one net figure. `system.json.resourceSpendRegenDelay`
 suppresses regeneration for a fixed delay after a **direct** spend, which is a
-`consumeResource` action. A windowed consumption rate is not a direct spend and
-does not suppress anything. Suppression stops regeneration only; a windowed
-consumption rate keeps draining.
+`consumeResource` action. A consumption rate is not a direct spend and does not
+suppress anything. Suppression stops regeneration only; a consumption rate keeps
+draining.
 
-The timeline splits each advance at every window boundary and every suppression
-deadline, so a rate change lands exactly where it is authored instead of being
-smeared across the gap. Both boundary kinds are event-aligned by construction:
-windows are cast-relative, and a spend happens at an event.
+The timeline splits each advance at every rate-window boundary and every
+suppression deadline, so a change lands exactly where the owning cast ends
+rather than being smeared across the gap. Both are event-aligned by
+construction: a window starts and ends at a sub-action boundary, and a spend
+happens at an event.
 
-Vagrant Sword's charge tier 2 is the only authored consumer. Its 0.2s opening
-pre-charge ends at 0.2, the charge drains 20/s until the charge finishes at 1.2,
-the 0.001/s override holds until 2.05, and the base 10/s returns afterwards.
-Sword Morph spends 20 more at release, and that direct spend is what suppresses
-the 10/s regeneration for the following 1.2 seconds.
+Vagrant Sword's charge tier 2 is the only authored consumer. The pre-charge
+has no setting; charging drains 20/s for its 1.0s; whichever release variant runs
+holds 0.001/s for its 0.85s; and the base 10/s returns after 2.05s. Both release
+variants declare the Sword Morph spend, which only resolves on the three-wave
+route, and that direct spend is what suppresses the 10/s for the following 1.2
+seconds.
 
 Two source gaps block the remaining mechanics:
 

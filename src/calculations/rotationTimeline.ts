@@ -83,14 +83,12 @@ export type SkillRecord = {
   editableCastTime?: EditableCastTimeOptions | boolean
   castTime?: number | SwitchValue
   /**
-   * Resource rate overrides held for windows of this cast, measured from cast
-   * start. Regeneration replaces the base rate and consumption drains on top of
-   * it; a direct spend suspends regeneration without stopping consumption.
+   * Resource rates held for this skill's own cast. Regeneration replaces the
+   * base rate and consumption drains on top of it; a direct spend suspends
+   * regeneration without stopping consumption. A composite skill carries no
+   * rates here — each sub-skill owns the phase it covers.
    */
-  endurance?: {
-    regeneration?: { rate: number; from: number; to: number }
-    consumption?: { rate: number; from: number; to: number }
-  }
+  endurance?: { regeneration?: number; consumption?: number }
   cooldown?: number
   cooldownGroup?: string
   cooldownUses?: number
@@ -1721,25 +1719,28 @@ export function buildRotationTimeline(
     if (typeof maximum !== "number" || maximum <= 0) return 0
     return Math.max(0, maximum - (resources.Endurance ?? 0))
   }
-  /** Register a cast's rate overrides as absolute-time windows. */
-  const registerResourceRateWindows = (skill: SkillRecord | undefined, startTime: number) => {
-    const windows = skill?.endurance
-    if (!windows) return
-    for (const [field, resource] of [
-      ["regeneration", "Endurance"],
-      ["consumption", "Endurance"],
-    ] as const) {
-      const window = field === "regeneration" ? windows.regeneration : windows.consumption
-      if (!window) continue
-      const rate = window.rate
-      if (typeof rate !== "number" || !Number.isFinite(rate) || window.to <= window.from) continue
-      resourceRateWindows.push({
-        resource,
-        from: startTime + window.from,
-        to: startTime + window.to,
-        ...(field === "regeneration" ? { regeneration: rate } : { consumption: rate }),
-      })
-    }
+  /**
+   * Register a cast's Endurance rates for the span the cast itself covers. A
+   * composite skill's phases are separate sub-skills, each of which registers its
+   * own span, so the window needs no authored start or end.
+   */
+  const registerEnduranceRates = (skill: SkillRecord | undefined, startTime: number, duration: number) => {
+    const rates = skill?.endurance
+    if (!rates || duration <= 0) return
+    const regeneration = rates.regeneration
+    const consumption = rates.consumption
+    if (
+      (typeof regeneration !== "number" || !Number.isFinite(regeneration)) &&
+      (typeof consumption !== "number" || !Number.isFinite(consumption))
+    )
+      return
+    resourceRateWindows.push({
+      resource: "Endurance",
+      from: startTime,
+      to: startTime + duration,
+      ...(typeof regeneration === "number" && Number.isFinite(regeneration) ? { regeneration } : {}),
+      ...(typeof consumption === "number" && Number.isFinite(consumption) ? { consumption } : {}),
+    })
   }
   const regenerateResources = (time: number) => {
     const from = lastResourceRegenerationTime
@@ -3146,6 +3147,7 @@ export function buildRotationTimeline(
       segment.skillId = selectedId ?? segment.skillId
       segment.skill = selectedSkill ?? { name: "Inactive sub-action", castTime: 0, action: [], tags: ["SubAction"] }
       segment.baseCastTime = resolveSkillCastTime(selectedSkill, requirementState())
+      registerEnduranceRates(segment.skill, event.time, segment.baseCastTime)
       segment.localActionTimes = segment.actionIndexes.map((_, localIndex) => {
         const action = selectedActions[localIndex]
         return action && typeof action.time === "number" ? action.time : segment.baseCastTime
@@ -3213,7 +3215,10 @@ export function buildRotationTimeline(
     if (event.kind === "start") {
       const skillId = event.row.step.type === "skill" ? (event.row.step.skill ?? "") : ""
       const skillModifiers = event.row.step.type === "skill" ? modifiersFor(event.row.skill, event.time) : []
-      registerResourceRateWindows(event.row.skill, event.time)
+      // A composite casts each phase as its own segment, so only standalone
+      // skills take their span from the cast-start event.
+      if (!multiActionSegments.has(event.row.id))
+        registerEnduranceRates(event.row.skill, event.time, resolveSkillCastTime(event.row.skill))
       const cooldownDuration = event.row.skill ? skillCooldownDuration(event.row.skill, skillModifiers) : undefined
       const cooldownUses = Math.max(1, Math.floor(event.row.skill?.cooldownUses ?? 1))
       const cooldownKey = skillCooldownKey(skillId, event.row.skill)

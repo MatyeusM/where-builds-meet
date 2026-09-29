@@ -1498,7 +1498,11 @@ export function RotationEditorTab({
         Vitality: displayedCharacterStats.maxVitality,
         Endurance: displayedCharacterStats.maxEndurance,
       },
-      resourceRegeneration: { HeavensWill: displayedCharacterStats.heavensWillRegen },
+      resourceRegeneration: {
+        HeavensWill: displayedCharacterStats.heavensWillRegen,
+        ...typedSystemStats.resourceRegeneration,
+      },
+      resourceSpendRegenDelay: typedSystemStats.resourceSpendRegenDelay,
       resourceMaximums: {
         ...typedSystemStats.resourceMaximums,
         Vitality: displayedCharacterStats.maxVitality,
