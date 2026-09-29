@@ -117,8 +117,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 28889.610741655633,
-      "totalDamage": 1733376.644499338,
+      "dps": 29131.157794556293,
+      "totalDamage": 1747869.4676733776,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder": {
@@ -141,8 +141,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 34951.21251674617,
-      "totalDamage": 2097072.7510047702,
+      "dps": 35147.04378564767,
+      "totalDamage": 2108822.62713886,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts": {
@@ -165,8 +165,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 34392.626290849854,
-      "totalDamage": 2063557.5774509911,
+      "dps": 34589.1208768272,
+      "totalDamage": 2075347.252609632,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team": {
@@ -189,8 +189,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 37958.7336928474,
-      "totalDamage": 2277524.021570844,
+      "dps": 38155.228278824725,
+      "totalDamage": 2289313.6967294835,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min": {
@@ -213,8 +213,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 78121.61111103461,
-      "totalDamage": 4687296.6666620765,
+      "dps": 78182.75963233344,
+      "totalDamage": 4690965.577940007,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-1-min": {
@@ -309,8 +309,8 @@
           "floatingGrace": "none"
         }
       },
-      "dps": 66371.50250018727,
-      "totalDamage": 3982290.150011236,
+      "dps": 66465.14167260905,
+      "totalDamage": 3987908.500356543,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/pure-dummy-1-min": {
