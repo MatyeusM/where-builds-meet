@@ -83,7 +83,7 @@
     "buildGroup": "bamboocut-dust",
     "defaultBuild": "dust-fully-relayed-min",
     "graduated": ["dust-full-min"],
-    "defaultRotation": "dust-dummy-1-min",
+    "defaultRotation": "dust-dummy-1-min-100pc",
     "lockedWeapons": ["everspring", "unfettered"],
     "arsenal": "Bamboocut"
   },

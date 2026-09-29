@@ -750,10 +750,9 @@ without Flamelash remains an invalid state to investigate.
 
 Dust implements only the skills its rotations cast. The rotations live at
 `data/rotation/bamboocut-dust/`, and each is the subject of its own DPS snapshot,
-so they are the reference rather than a separate draft. `dust-dummy-1-min` remains
-the path default; `dust-dummy-1-min-100pc` is the 100% Phantom Chime variant and
-anchors battle start on the four-hit release's first hit, which is why its opener
-break lands in combat.
+so they are the reference rather than a separate draft. `dust-dummy-1-min-100pc`
+is the path default and the 100% Phantom Chime variant; it anchors battle start on
+the four-hit release's first hit, which is why its opener break lands in combat.
 
 Unmeasured damage hits use **0 seconds**, as requested. Unmeasured buff
 applications use **cast end**, except user-confirmed applications at 0 and Soul
@@ -783,7 +782,7 @@ the exhaust moves its steps twice: once by the exhaust's own shift and once by
 whatever change the first ramp's shape took. Shortening the four-hit release
 moved the whole downstream timeline 0.2209835277 s earlier, so the first ramp
 shifted by that much and the second by twice it. The 100% Phantom Chime variant
-places its own exhaust on the seventh forward hit of its second Scarlet Spin and
+places its own exhaust on the fifth forward hit of its second Scarlet Spin and
 stops there; it keeps the same two ramp gaps so the exhaust lands on that hit.
 
 Out of scope by user instruction: Fading Crimson, Tokens of Gratitude, Song of
