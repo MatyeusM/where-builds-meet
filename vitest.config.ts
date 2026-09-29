@@ -1,14 +1,18 @@
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vitest/config"
 
-// Test conventions: direct relative imports (no Vite server boilerplate);
-// `import data from "../data/<path>.json"` works out of the box. DOM tests
-// opt in per file with `// @vitest-environment jsdom`. Helpers live in
+import { alias } from "./aliases.js"
+
+// Test conventions: direct imports with no Vite server boilerplate; tests resolve the
+// same prefixes as the app, so `import buff from "@gamedata/buff/general.json"` and
+// `import { allStatDefinitions } from "@/data/statDefinitions"` both work out of the box.
+// DOM tests opt in per file with `// @vitest-environment jsdom`. Helpers live in
 // tests/helpers/; DPS baselines in tests/snapshots/. The remaining
 // script/probe/*.mjs files are benchmarks, not checks.
 // Keep observable-behavior assertions; do not restate literal source values.
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias },
   test: {
     environment: "node",
     include: ["tests/**/*.test.{ts,tsx}"],

@@ -1,12 +1,16 @@
-import { useMemo, useSyncExternalStore, type CSSProperties } from "react"
+import type { RotationCalculationCategory } from "@/calculations/rotationMetrics"
+import { useRotationStore } from "@/stores/rotationStore"
+import { CalculationStatus as CalculationStatusView } from "@/ui/CalculationStatus"
 
-import {
-  getRotationCalculationStatus,
-  subscribeToRotationCalculationStatus,
-  type RotationCalculationCategory,
-} from "../../calculations/rotationMetrics"
-import { t } from "../../i18n"
+import { calculationStatusLabel } from "./calculationStatusLabel"
 
+/**
+ * Binds one category of the rotation calculation to the shared status primitive. A category
+ * the calculation reports no progress for is described without a percentage.
+ *
+ * Reading the status by way of the store rather than through a subscription of its own means
+ * only this component re-renders when its category's progress moves, however many are on screen.
+ */
 export function CalculationStatus({
   category,
   className = "",
@@ -14,27 +18,9 @@ export function CalculationStatus({
   category: RotationCalculationCategory
   className?: string
 }) {
-  const statuses = useSyncExternalStore(
-    subscribeToRotationCalculationStatus,
-    getRotationCalculationStatus,
-    getRotationCalculationStatus,
-  )
-  const { recalculating, progress } = statuses[category]
-  const percentage = Math.round(progress * 100)
-  const progressStyle = useMemo(() => ({ "--calculation-progress": `${percentage}%` }) as CSSProperties, [percentage])
+  const status = useRotationStore(state => state.status[category])
+  const label = calculationStatusLabel(status.recalculating, status.progress)
   return (
-    <div
-      className={`calculation-status ${className} ${recalculating ? "" : "idle"}`}
-      style={progressStyle}
-      aria-live="polite"
-    >
-      <progress
-        className="visually-hidden"
-        max={100}
-        value={recalculating ? percentage : 100}
-        aria-label={t("ui.app.recalculatingProgress", { percentage })}
-      />
-      {recalculating ? t("ui.app.recalculatingProgress", { percentage }) : t("ui.app.upToDate")}
-    </div>
+    <CalculationStatusView busy={status.recalculating} progress={status.progress} label={label} className={className} />
   )
 }

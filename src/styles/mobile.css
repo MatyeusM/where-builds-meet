@@ -4,11 +4,19 @@
    * rule under .layout-mobile preserves the established PC layout verbatim.
    */
   .layout-mobile {
-    inline-size: min(100% - 1rem, 32rem);
+    --shell-gutter: 0.5rem;
+
     min-block-size: 100dvh;
-    margin-inline: auto;
-    padding-block: 0.75rem 1rem;
+
+    /* No bottom padding, for the same reason the PC shell has none: the footer's own background
+       has to reach the bottom edge, and the footer is what stands the page off the window. */
+    padding-block: 0.75rem 0;
     overflow: visible;
+  }
+
+  /* The cap the mobile shell used to carry as its own width, now on the content area it holds. */
+  .layout-mobile .page-content {
+    max-inline-size: calc(32rem + var(--shell-gutter) * 2);
   }
 
   .layout-mobile .page-header {
@@ -192,26 +200,9 @@
     min-inline-size: 39.625rem;
   }
 
-  .layout-mobile .setup-option-list-wide,
-  .layout-mobile .setup-option-list-food,
-  .layout-mobile .setup-option-list-arsenal,
-  .layout-mobile .bow-ring-option-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .layout-mobile .script-option-list,
   .layout-mobile .divinecraft-option-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .layout-mobile .global-debuff-options,
-  .layout-mobile .global-debuff-options.qingyi-options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .layout-mobile .global-debuff-options > button,
-  .layout-mobile .global-debuff-options.qingyi-options > button {
-    grid-column: auto;
   }
 
   .layout-mobile .dps-value {
@@ -271,6 +262,7 @@
 
   .layout-mobile .build-editor-content {
     padding: 0.75rem;
+    padding-block-start: 0;
   }
 
   .layout-mobile .build-detail-heading {
@@ -513,7 +505,6 @@
     align-items: flex-start;
     flex-flow: row wrap;
     gap: 0.35rem 1rem;
-    margin-block-start: 0.75rem;
   }
 
   .layout-mobile .page-footer > span:first-child {

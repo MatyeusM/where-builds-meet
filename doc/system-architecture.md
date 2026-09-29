@@ -9,6 +9,29 @@ build time. User changes remain in browser storage. Deterministic calculation
 work runs in a persistent Web Worker, while requested Monte Carlo simulations
 run in their own disposable worker.
 
+## Spacing and sizing scale
+
+`src/styles/tokens.css` defines the scale: `--space-3xs` through `--space-xl`, at
+`0.125rem`, `0.25rem`, `0.5rem`, `0.75rem`, `1rem`, `1.5rem`, and `2rem`. Every step
+is a multiple of `0.25rem`, so a token and a bare multiple of that unit always
+agree, and the two can be adopted independently. `AGENTS.md` requires new values to
+come from this scale.
+
+**The scale is barely adopted.** Measured across the fifteen stylesheets, six
+declarations reference a `--space-*` token against roughly 314 spacing declarations
+written as bare lengths. The rhythm is not absent, it is just not on the scale: the
+commonest values are `8px`, `12px`, `16px`, and `4px`, which are the tokens
+`--space-sm`, `--space-sm`, `--space-md`, and `--space-2xs`. Alongside those sits a
+regular `4n + 2` sub-grid — `6px`, `10px`, `14px`, `18px`, `22px` — and then values
+with no pattern at all: `5px`, `7px`, `9px`, `13px`, `23px`, `37px`. That mixture,
+rather than any single wrong number, is what makes the interface read as uneven.
+
+Two conversions are different in kind and should not be bundled. Substituting a token
+for an equal raw length (`8px` to `var(--space-sm)`) cannot change layout, so it is
+mechanical and safe to do everywhere. Rounding an off-scale value to its nearest step
+does change layout, has no automated check — `test:dps` is bit-deterministic for damage
+and blind to pixels — and is verified by looking at it.
+
 ## Typography and resilient layout
 
 The UI self-hosts the variable Noto Sans family through Fontsource as its
@@ -130,7 +153,7 @@ src/
     Panel/                        panel and panel-heading shells
     Select/                       native select shell
     Tab/                          selectable button state shell
-    Tooltip/                      layout-neutral hover/focus tooltip
+    Tooltip/                      portalled hover/focus floating box
   i18n.ts                         locale resolution, message loading, and UI translation
   gear.ts                         persisted gear model and equipped effects
   readableRotation.ts             pure readable-sequence formatter
@@ -142,18 +165,46 @@ src/
     damage.ts                    per-action expected damage
     rotationTimeline.ts          event simulation and state tracking
     rotationCalculator.ts        baseline, variants, metrics, and breakdowns
+    rotationComparisonBundle.ts  the comparison variants a subject is measured against
     rotationWorker.ts            worker entry point
-    rotationWorkerClient.ts      persistent worker and request coalescing
+    rotationWorkerTransport.ts   worker pool, queue policy, and request coalescing
     simulationCalculator.ts      Monte Carlo run aggregation and percentiles
     simulationWorker.ts          isolated Monte Carlo worker entry point
     simulationWorkerClient.ts    per-run worker lifecycle and cancellation
-    rotationMetrics.ts           central published result store
+    rotationMetrics.ts           result types and the category list
 
 public/
+  apple-touch-icon.png           home-screen icon, opaque, 180px
   divinecraft/                   static selector images copied into the build
+  favicon.ico                    multi-size icon for the automatic root request
+  favicon.svg                    the icon, drawn on a plate, for surfaces that take vectors
   licenses/                      third-party notices copied into the build
   locales/                       generated per-locale runtime message JSON
+  mask-icon.png                  solid silhouette, for surfaces that tint a mask themselves
 ```
+
+The tree above is reached through two import prefixes declared in `aliases.ts` and
+mirrored in `tsconfig.app.json`: `@` resolves into `src` and `@gamedata` into `data`.
+`vite.config.ts` and `vitest.config.ts` share the same map, so the app, the tests, and
+the calculation probes resolve a specifier identically. A string alias only matches on a
+`/` boundary, which leaves scoped packages such as `@tabler/icons-react` untouched.
+`import.meta.glob` is the one exception: Vite does not resolve aliases inside glob
+patterns, so `src/gear.ts` and `src/application/rotationCatalog.ts` keep relative
+patterns while still importing the same files by name elsewhere.
+
+The icons in `public/` are generated from `script/logo/logo.png` by
+`npm run icons:build`; `npm run icons:preview` draws the result at every size a
+surface uses it, on a light and a dark one. They are checked in rather than built
+during a deploy because they are part of the site's identity, not of a build.
+
+The emblem is gold line art whose pale highlight measures 1.12:1 against a light
+browser tab, where it is not visible, and no browser recolours an icon to
+compensate. Every icon is therefore drawn on a plate of the same `#11131a` the
+`theme-color` meta declares: that puts each tone of the artwork between 5.7:1 and
+14.9:1, and because the plate matches a dark tab it disappears on one rather than
+framing the emblem. The source is cropped to its ink first, which is most of the
+emblem's apparent size, and each embed is palette-quantised, which is worth about
+two thirds of the remaining bytes.
 
 Combat-path icons live under `src/assets/path-icons/` and are imported with
 `vite-imagetools` using `?w=56&h=56&format=webp`; production builds emit
@@ -191,11 +242,40 @@ component and consumes shared custom properties from the globally loaded
 `src/styles/tokens.css`. Reusable appearance options are explicit primitive
 props and local module classes rather than recreated global classes. For
 example, `Button` owns primary, secondary, and danger variants, their hover
-states, and the small size. Its `data-button` marker exists only so domain
+states, the small size, and an icon-only presentation that takes its block size
+from the size it is combined with and centres itself, so an icon-only action
+stands as tall as a labelled button of the same size. An icon-only button carries
+its wording in `aria-label` and `title` rather than in text. A reset offered
+beside a label of its own keeps the small circular dot of `stat-reset-button`,
+because a bordered control the height of a labelled one would crowd that label. Its `data-button` marker exists only so domain
 layout rules can target primitive instances; it does not provide a global
 button-style fallback. `Panel` and `PanelHeading` expose the corresponding
 `data-panel` and `data-panel-heading` hooks for stable application selectors
-while their generated module classes remain private.
+while their generated module classes remain private. `ButtonGroup` owns a set of
+mutually exclusive options: it draws the divider colour as its own background
+showing through a one-pixel gap, so neighbours are separated by a single line
+however the grid wraps, and it gives every option an equal share of the available
+width via `auto-fit` tracks with an `fr` maximum rather than a fixed column count.
+`ButtonGroupOption` takes the option's name as its label and anything else as a
+note beneath it, so the name carries the weight and the note steps down in size and
+luminance; the two are never rendered as peers. Panels that present an image per
+option instead of a name and a note are not option groups and keep their own
+presentation.
+
+`Tooltip` renders its floating box through a portal onto `document.body`, which
+is what lets it escape a trigger's scrolling or clipping ancestors — a build
+editor, a rotation table, a panel that scrolls on one axis — where a box left in
+the trigger's own tree would be cut off at the region's edge or would escape over
+whatever follows it. The box is `position: fixed` and placed against the
+trigger's viewport rectangle, preferring above and falling below when there is no
+room, and it is measured again whenever the page scrolls or resizes. Because
+measuring needs the box to exist, it is rendered invisible for the frame before it
+is placed. The anchor is a real inline-flex box rather than a `display: contents`
+one: an element that generates nothing has no rectangle to measure and no pointer
+events of its own to hang the reveal on, and the box is rendered only while the
+trigger is hovered or focused. A consumer class may lay the box's contents out,
+but it must not own the box's display or reveal: a rule keyed on the trigger can no
+longer reach a box that is not inside it.
 
 Domain-specific classes one layer above a primitive may still adjust layout
 or context-specific appearance with the same design tokens. Primitives do not
@@ -236,6 +316,27 @@ calculation bundles, cache identities, stored builds, stored rotations, and
 game-data IDs never contain localized values. See `localization.md` for the
 catalog workflow and validation rules.
 
+Damage, healing, and the per-second rates taken from them are presented by
+`formatThroughput` and `formatThroughputDelta` in
+`src/application/formatting.ts`, which take the active locale from
+`getLocale()` and hand the digits to `Intl.NumberFormat`. Two rules are the
+module's own rather than `Intl`'s. A thousand separator appears only once a
+magnitude reaches `10000`, because a number already short enough to count at a
+glance is not made easier to read by being split, and two figures of similar size
+stop occupying the same width. The threshold is judged on the rounded magnitude,
+so a value that rounds up across it is grouped like the number it becomes. And
+a difference of nothing is written `0` rather than `+0.00`, because a sign on an
+absent value is noise and would claim a direction the colour reads as no change.
+
+A magnitude is shown to two decimals unless a call site asks for another, which
+`BuildTab` does for a build's headline rate. Percentages, stat values, and
+durations are not magnitudes a reader weighs against one another and stay on
+`formatNumber`, which is not locale-aware. The distinction that matters is that
+`Intl` rounds the shortest decimal representation of a value where `toFixed` does
+not — `1.005` is `1.00` to one and `1.01` to the other — so the rounding a
+difference is coloured by is read back out of a formatter rather than computed
+separately, and it is read back in a fixed locale so the text stays parseable.
+
 ## Application and UI state
 
 `App.tsx` owns the shared character state:
@@ -275,11 +376,17 @@ It renders seven tabs:
 6. Skill Editor
 7. Settings
 
-The Rotation Editor subtree remains mounted when another tab is selected and is
-hidden with CSS. This preserves its local state and lets its worker calculation
-continue. Main and DPS Breakdown subscribe to `rotationMetrics.ts` with
-`useSyncExternalStore`; they render the latest published immutable metrics rather
-than calculating independently.
+The Rotation Editor is loaded on demand, on the first visit to its tab, and stays
+mounted and hidden with CSS after that, which preserves its local state. It is
+deferred because it is the largest module in the application and, once the
+application resolves the active rotation's comparisons itself, has nothing left
+to do that the rest of the interface does not already have. It is absent from the
+idle preload of the other deferred tabs, which would hand back what deferring it
+saves.
+
+Main, DPS Breakdown, and the simulation tab read the published rotation from
+`rotationStore`, which is a zustand store read with selectors. They render the
+latest published immutable metrics rather than calculating independently.
 
 In PC mode, Build or Rotation Editor constrains the page shell to the visible
 viewport. The header, tabs, and footer remain visible while the build manager
@@ -352,14 +459,20 @@ Build and rotation activation are stored independently for every combat path.
 A single parent-owned path transition resolves the destination path's compatible
 build and rotation before changing any visible state. A missing or incompatible
 saved selection falls back to that path's configured default. The transition
-invalidates the previous calculation batch, installs the path, martial arts,
-build, and rotation together, then lets the normal fingerprint schedule restore
-a cached result or start one replacement batch. The Rotation Editor remounts at
-this path boundary but shares the application-level calculation cache; it does
-not reconcile the new path through a later child effect. Calculation
-fingerprints explicitly contain the ordered pair of equipped martial arts, so
-otherwise identical rotations from different martial-art selections cannot
-share cached results.
+invalidates the previous calculation batch, forgets every cached calculation,
+installs the path, martial arts, build, and rotation together, then lets the
+normal fingerprint schedule start a replacement batch. Forgetting reaches the
+store and the workers, because a worker's baseline and editor-timeline caches
+exist only inside the worker holding them, so terminating the pool is the only
+way to release that memory. A fingerprint covers the whole bundle, so another
+path's results can never be read as this path's, and nothing reaches for them
+once the path has changed; keeping them would only spend memory. A transition
+resolving to the path already selected, as choosing that path's martial arts
+does, changes no fingerprint and so forgets nothing. The Rotation Editor remounts
+at this path boundary; it does not reconcile the new path through a later child
+effect. Calculation fingerprints explicitly contain the ordered pair of equipped
+martial arts, so otherwise identical rotations from different martial-art
+selections cannot share cached results.
 
 Rotation editing uses a separate baseline-preview schedule. Input changes render
 immediately while a short debounce coalesces rapid edits before constructing and
@@ -367,8 +480,23 @@ fingerprinting the worker bundle. A matching main-thread baseline cache entry is
 published without recalculation; a cache miss is queued as low-priority worker
 work. Results enter the cache when completed, but only the latest requested
 fingerprint may replace the editor preview. The previous completed preview stays
-visible while newer work runs. Editor previews never request comparison variants;
-active-rotation comparisons remain tied to save, activation, or setup changes.
+visible while newer work runs. A previewed result records the calculation context
+it was produced under, so the toolbar can tell a result that still describes the
+current inputs from one a pending calculation is about to replace. Until such a
+result exists the toolbar reports the calculation rather than a zeroed result,
+because a total of zero reads as an answer where there is not one yet; once a
+result exists it stays on screen while its replacement is calculated.
+
+A calculation status is reported in two variants: with the fraction it measured,
+or without a percentage when the calculation publishes no intermediate steps. A
+baseline reports no steps, so it is described as under way rather than as stalled
+at zero percent; a comparison category reports the fraction of its variants that
+have settled, counting a dispatched variant as part-settled by the progress it
+reports, so a category does not read as stalled while its first variants run. Both are the same primitive, given a progress or not given one, and the
+wording is shared by every caller, so a status reads identically wherever it
+appears. The stats tab and the rotation toolbar therefore describe the same
+pending baseline the same way. The editor never requests comparison variants;
+active-rotation comparisons are requested only while the Main tab is visible.
 Manual event rows expose their authored start time as an input. Entering a time
 switches the event to explicit battle-relative timing while retaining its old
 anchor only for editor navigation; the previous/next event controls remove that
@@ -1047,7 +1175,7 @@ rotation.
 
 The application resolves inherited ping into each immutable worker rotation
 before fingerprinting. Active calculations, editor previews, comparison timelines,
-graduation baselines, and Monte Carlo snapshots therefore use the same latency.
+graduation runs, and Monte Carlo snapshots therefore use the same latency.
 The low-level timeline accepts explicit milliseconds; omitted ping there is zero
 for callers without application settings. DPS regression fixtures explicitly
 record their configured ping.
@@ -1150,7 +1278,8 @@ same baseline inputs plus all variants, but the worker consumes an already
 cached baseline instead of rebuilding its timeline or recalculating its DPS.
 The main thread does not run the rotation simulation.
 
-`rotationWorkerClient.ts` owns one persistent module worker. Its queue policy is:
+`rotationWorkerTransport.ts` owns a small pool of persistent module workers. Its
+queue policy is:
 
 1. If idle, dispatch immediately.
 2. If a job is running, retain pending requests in priority order.
@@ -1159,19 +1288,14 @@ The main thread does not run the rotation simulation.
    comparisons and then inactive baselines.
 5. Equal-priority work remains first-in, first-out.
 
-Every full recalculation starts a new batch. Starting that batch terminates the
-worker executing the previous batch and rejects all of its pending requests,
-then schedules a fresh baseline followed by the new comparison categories.
-This batch boundary takes precedence over keyed pending-request replacement and
-also clears the worker's baseline cache, so comparisons cannot use a baseline
-from a superseded state. The main thread can explicitly reseed a cached baseline
-into the replacement worker before its first missing variant. Keyed replacement
-still coalesces requests scheduled within the same batch.
+Switching path supersedes the batch, which terminates the workers and rejects
+their pending requests, so a comparison cannot resolve against a baseline from a
+superseded state. Each slot keeps its own baseline cache, because a shared set
+would let one slot's cached baseline answer another's comparison.
 
-`rotationWorker.ts` has no React or browser-storage dependency. It owns a
-bounded in-memory baseline cache keyed by rotation ID, calculation context, and
-rotation content. A comparison job reads that exact entry and posts only the
-completed metrics.
+`rotationWorker.ts` has no React, browser-storage, or zustand dependency. It owns
+a bounded in-memory baseline cache keyed by the bundle's fingerprint. A
+comparison job reads that exact entry and posts only the completed metrics.
 
 The Simulation tab receives an immutable baseline-only snapshot for the active
 rotation. Starting a simulation creates a separate `simulationWorker.ts`
@@ -1421,12 +1545,26 @@ The Main-tab DPS panel derives Graduation Rate from the current DPS divided by
 the highest DPS among the path's `graduated` build presets under the same
 rotation, breakthrough, food, Divinecraft, Script, and global buff/debuff
 state. Every configured preset is calculated through the ordinary deterministic
-worker pipeline, and the maximum completed baseline becomes the denominator. A
+worker pipeline, and the maximum completed throughput becomes the denominator. A
 fingerprint of that environment, the path, the graduate preset IDs, and active
-skill overrides keys the existing bounded baseline cache. A new environment
-schedules the required baseline calculations; build-only changes reuse the
-cached denominators. No Monte Carlo simulation is involved.
-`data/path.json` declares `defaultBuild` and a `graduated` preset array
+skill overrides keys a bounded cache. A new environment schedules the required
+calculations; build-only changes reuse the cached denominators. No Monte Carlo
+simulation is involved.
+
+A throughput reading is a request kind of its own, neither a baseline nor a
+comparison. It runs the same calculation, because only a full run yields a damage
+pipeline to measure, but it keeps nothing but the numbers it is weighed by: the
+worker returns DPS, HPS and total damage and nothing else, so the megabytes of a
+timeline are never copied back to the main thread for a figure that is only ever
+compared. A graduated preset is read this way to be weighed against the best
+graduated preset, and a build against the active one.
+
+A reading names the baseline whose key it shares, so it is routed to the worker
+already holding that baseline and answered from it without running anything. That
+is what makes reading the active build free: its baseline is already calculated
+for the rotation editor, and the identical bundle produces the identical key. A
+reading writes nothing back, so it never occupies a place in a baseline cache
+either. `data/path.json` declares `defaultBuild` and a `graduated` preset array
 separately so the build loaded by default does not have to be one of the builds
 used as graduation denominators.
 
@@ -1476,10 +1614,13 @@ cached baseline can seed a fresh worker when some variants are still missing.
 These caches are intentionally not written to browser storage.
 
 Only the active rotation publishes to the central module store. Its baseline is
-published as soon as it completes, replacing DPS, total damage, and breakdowns
-while retaining the previous comparison rows. Comparison categories then run
-sequentially and replace only their own rows. An active-rotation Save and Make
-Active request comparisons; saving an inactive rotation does not. The central
+published as soon as it completes, replacing DPS, total damage, breakdowns, and
+the simulation bundle after gear or build edits on any tab. Comparison rows are
+retained only for the same baseline fingerprint; a changed baseline clears them.
+Comparison categories run only while Main is visible and replace their own rows
+as they finish. Save and Make Active in the editor request a baseline without
+comparison variants. Returning to Main resolves the current rotation's variants,
+including an unsaved active draft, from cached results or new worker requests. The central
 store publishes independent progress for baseline, stat priority, attunement
 priority, weapon sets, armor sets, bow/ring, arsenal, global buffs/debuffs,
 Inner Ways, Script, Divinecraft, and food. Superseded requests cannot update or
@@ -1651,55 +1792,121 @@ from data.
   Any difference beyond 4 ULPs in DPS, total damage, or duration, in either direction, requires review
   before release; see [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
 
-### Rotation editor calculation lifecycle
+### Rotation calculation as a pull
+
+A rotation's result is a derivation, not a computation that has to be run in
+order. Every part of it is a cache entry keyed by the fingerprint of the bundle
+it came from, and every merge of those parts is a pure function of them, so
+nothing needs to stay alive between the parts. `resolveComparisonMetrics`
+expresses that: it asks the store for the baseline, then for each category's
+variants, and folds the pure merges. A caller asks for the categories it
+displays, the store answers the ones it already holds, and the rest are
+dispatched.
+
+The variants of a category are dispatched together and each is written into its
+own slot rather than appended in the order the workers finish, because combining
+a category sorts its rows and a sort only reproduces against a fixed input
+order. The categories own disjoint metric fields, so they need no ordering
+between them either, and one landing never disturbs another.
+
+A rotation's result is therefore the same wherever it is read, and the
+application resolves the baseline every surface shows on every build, gear,
+rotation, or environment change. It resolves comparisons only while the Main
+tab's priority panels are visible. Those panels used to
+say the rotation editor had to be opened, which was true only while a sweep
+inside the editor produced them.
+
+That is also what makes the editor deferrable. It never resolves comparison
+variants; it contributes a baseline and an
+editor timeline for what is on screen, and a draft of its own when the active
+rotation carries unsaved edits. It mounts on the first visit to its tab, after
+which it stays mounted so its scroll offset survives.
+
+The comparison variants are built from the calculation subject and the static
+definitions, in `rotationComparisonBundle.ts`, so producing them needs no
+component. The shared baseline and editor use the same bundle fingerprint, so
+Main's comparisons reuse the baseline already measured for the editor. An editor
+draft remains the active calculation subject when returning to Main or changing
+gear; it is rebuilt against current equipment rather than blocking shared refreshes.
 
 Editing any rotation calculates and caches only that rotation's baseline
-timeline, expected damage, DPS, and action breakdowns. Saving requests
-comparisons only when the edited rotation is active. Making an inactive rotation
-active reuses its valid baseline cache and requests comparisons.
+timeline, expected damage, DPS, and action breakdowns. Making an inactive rotation
+active reuses its valid baseline cache. Comparisons wait until Main is visible.
 
-When character stats, attunements, Inner Ways, food, Divinecraft, build, breakthrough,
-or settings change, the refresh order is: active baseline; stat priority;
-attunement priority; weapon sets; armor sets; bow/ring; arsenal; global
-buffs/debuffs; Inner Ways; Script; Divinecraft; food; then every inactive
-baseline. A context key prevents an older result from being treated as current
-or published after a newer refresh begins. The Rotation Editor keeps the last
-completed timeline for each rotation mounted during its replacement calculation
-so scroll position and focused controls survive the refresh. Main retains each
-category's previous rows until that category completes, then publishes the
-replacement rows immediately. Each panel subscribes to its own category status,
-whose reserved layout space prevents progress text from shifting the panel.
+When character stats, attunements, Inner Ways, food, Divinecraft, build,
+breakthrough, or settings change, the inputs are part of the bundle, so their
+fingerprints change and the next pull finds nothing held. The category order is
+`baseline`, `statPriority`, `attunementPriority`, `weaponSets`, `armorSets`,
+`bowRingSet`, `arsenal`, `globalDebuffs`, `innerWays`, `script`, `divinecraft`,
+`food`. The Rotation Editor keeps the last completed timeline for each rotation
+during its replacement calculation so scroll position and focused controls
+survive the refresh. Main never displays comparison rows from a different baseline.
 
-The refresh identity combines the resolved active rotation ID with the complete
-baseline fingerprint. Scheduling records that identity immediately. A later
-different identity always supersedes the running batch, even if it was
-calculated earlier in the session; cached results are restored through the same
-publication path instead of suppressing the schedule. Path filtering can
-replace an incompatible active rotation while a request is running without
-allowing a discarded transitional request to suppress its replacement.
-Requests superseded by a newer full calculation do not schedule another retry;
-the newer request is already their replacement. This distinction prevents
-development effect replays and rapid context changes from forming a retry loop.
+Staleness is the store's problem, not the caller's. A request is keyed by what
+it computes, so work overtaken by newer inputs resolves against inputs nothing
+reads any more, and the puller discards a result whose own request is no longer
+its current one. An editor preview is the exception that proves the rule: it is
+neither held nor shared, because a timeline for an earlier revision is worse than
+none, since the revision check would accept it as current. Each preview is
+therefore its own request.
 
-Completed full calculations publish directly when their request is still the
-latest request for the resolved active rotation. Publication does not wait for a
-second effect to reconcile the stored active and editing IDs during a path
-transition. If the persistent worker fails while loading or processing a
-request, the client discards it and retries the interrupted request once on a
-fresh worker instead of leaving later work attached to a dead worker.
+A category's status is reported as the fraction of its variants that have
+settled, counting a dispatched variant as part-settled by the progress it
+reports, so a category does not read as stalled while its first variants run. A
+baseline reports no steps, so it is described as under way rather than as stalled
+at zero percent. Progress is stored apart from metrics in `rotationStore`, and
+each status component subscribes to its own category, so a progress report
+rerenders that component rather than the application tree.
 
-Each comparison category reports deterministic variant progress independently.
-Before a category begins, all category indicators enter a pending zero-percent
-state. Each worker comparison request calculates one variant. A variant is
-complete only after its timeline entries and final damage total have both been
-calculated and cached. Cache hits count as immediately completed work. The
-displayed percentage is exactly `completed category variants / total category
-variants`. The baseline is one
-separate unit that moves from zero to complete when its metrics publish.
-Categories with no variants complete immediately without a worker request.
-Progress is stored separately from metrics; status components subscribe through
-the external calculation-status store rather than causing the application tree
-to rerender on every worker update.
+### What the calculation cache holds
+
+The cache keeps a fixed number of finished results per kind, and the sizes differ by orders of
+magnitude because the kinds differ in size and in how many a session actually has. Measured by
+driving the application through a session, with the store's own instrumentation:
+
+| state                            | baselines | readings | comparisons |
+| -------------------------------- | --------- | -------- | ----------- |
+| on load                          | 1         | 2        | 78          |
+| editor opened                    | 1         | 2        | 78          |
+| five rotations activated in turn | 5         | 10       | 390         |
+
+A baseline is the expensive kind, because it carries a whole timeline, and also the most redundant:
+the application resolves the active rotation and the editor resolves the one on screen, which are
+the same rotation nearly always. Four are held, so flipping between rotations is free and a longer
+tour costs one rotation run rather than the memory of dozens of timelines. Readings are asked for by
+name to be weighed against something else and only their throughput is read, so they are cheap; a
+couple exist at rest and a couple more arrive per rotation visited, which is why they are the kind
+that is culled last and held longest. Comparisons are metrics only, one per variant, so the limit is
+set in rotations' worth rather than in entries. An editor timeline is a preview of one revision
+under a key per request, and holding one is never right: a timeline for an earlier revision is
+worse than none, because the caller would accept it as current.
+
+Note that two rotations differing only in name are one calculation, not two, because a bundle's
+fingerprint deliberately excludes the display name.
+
+### The two stores
+
+`dpsStore` is a cache and is read non-reactively, through `getState()`. Its
+entries are the output of dispatched work, so a component that subscribed to one
+would rerender whenever a calculation it never asked for reported progress.
+Nothing subscribes, and a selector on it returns nothing for that reason.
+
+`rotationStore` is published state and is read with selectors. What it holds is
+what the interface mirrors: a headline number, a rotation name, a progress bar,
+the rotation list and the per-path selection. It owns the rotations themselves
+and persists them, so writing a rotation and storing it are one act, and a
+rotation is still resolvable when the editor is not mounted. It is a module
+singleton, so its persisted state is read during the first render of the
+application rather than when its module is imported, which a deferred editor
+decides.
+
+`overrideStore` holds the character sheet's stat and attunement overrides. An
+absent key means the value is inherited from the game data, which is why
+resetting one removes the key rather than storing a zero, and why the sheet can
+mark a modified field by key presence alone. Its records are still written when
+every key is gone, because their loaders fall back to the pre-override keys when
+a record is missing: removing the record to mean "nothing overridden" would
+resurrect the values an older session stored there.
 
 ## Development and deployment
 
@@ -1759,7 +1966,7 @@ The exported `buildPresetRotationBundle` in `src/application/graduation.ts` buil
 using the same setup, gear, stats, definitions, and timeline inputs as the
 Graduation comparison. `buildGraduationBundleSet` resolves every preset in the
 path's `graduated` array, and `selectHighestGraduationResult` chooses the
-highest DPS result as the denominator. The headless DPS snapshot runner instead
+highest DPS throughput as the denominator. The headless DPS snapshot runner instead
 supplies its default build ID and explicit environment settings. Both use the
 centralized rotation calculator. The Pages
 workflow runs `npm run test:dps` before deployment; ordinary build, test, and

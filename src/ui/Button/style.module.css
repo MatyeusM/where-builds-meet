@@ -1,5 +1,8 @@
 @layer ui {
   .button {
+    /* The block size an icon-only button of this size takes. See `.icon-only`. */
+    --button-block-size: calc(1.2em + 20px);
+
     max-inline-size: 100%;
     min-inline-size: 0;
     border: 1px solid transparent;
@@ -26,6 +29,8 @@
   }
 
   .small {
+    --button-block-size: calc(1.2em + 10px);
+
     padding: 5px 9px;
     border-color: var(--border);
     background: var(--surface-alt);
@@ -35,6 +40,26 @@
 
   .small:hover:not(:disabled) {
     border-color: var(--primary);
+  }
+
+  /*
+   * An icon-only button is square: it has no label to give it an intrinsic inline size, so it
+   * takes the block size of the size variant it is combined with. The size is written out as
+   * the padding plus the line box rather than taken from `aspect-ratio`, because the box is
+   * centre-aligned and therefore has a content-derived block size, which leaves a ratio with
+   * no definite axis to resolve from and collapses the button to the width of its glyph.
+   *
+   * The em is the same line box a labelled button of this size gets, so the two stay the same
+   * height in whatever context they are used.
+   */
+  .icon-only {
+    display: inline-grid;
+    flex: 0 0 auto;
+    align-self: center;
+    padding-inline: 0;
+    place-items: center;
+    block-size: var(--button-block-size);
+    inline-size: var(--button-block-size);
   }
 
   .primary {

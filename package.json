@@ -9,12 +9,14 @@
     "build": "npm run i18n:check && npm run test && tsc -b && vite build",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "lint": "oxlint && oxlint -c src/ui/.oxlintrc.json src/ui && stylelint \"src/**/*.css\"",
-    "lint:fix": "oxlint --fix && oxlint -c src/ui/.oxlintrc.json --fix src/ui && stylelint --fix \"src/**/*.css\"",
+    "lint": "oxlint && oxlint -c src/ui/.oxlintrc.json src/ui && oxlint -c src/features/simulation/.oxlintrc.json src/features/simulation && stylelint \"src/**/*.css\"",
+    "lint:fix": "oxlint --fix && oxlint -c src/ui/.oxlintrc.json --fix src/ui && oxlint -c src/features/simulation/.oxlintrc.json --fix src/features/simulation && stylelint --fix \"src/**/*.css\"",
     "test": "vitest run --exclude tests/dps-snapshots.test.ts",
     "test:watch": "vitest --exclude tests/dps-snapshots.test.ts",
     "typecheck": "tsc -b",
     "prepare": "husky",
+    "icons:build": "node script/logo/make-icons.mjs",
+    "icons:preview": "node script/logo/preview.mjs",
     "i18n:extract": "node script/i18n/extract.mjs",
     "i18n:check": "node script/i18n/extract.mjs --check",
     "validate:presets": "vitest run tests/preset-eligibility.test.ts",
@@ -34,7 +36,8 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tesseract.js": "^7.0.0",
-    "valibot": "^1.5.0"
+    "valibot": "^1.5.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

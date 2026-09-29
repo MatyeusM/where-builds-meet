@@ -21,7 +21,20 @@
       {
         "patterns": [
           {
-            "group": ["**/features", "**/features/*", "**/App", "**/App.*", "**/main", "**/main.*"],
+            "group": [
+              "**/features",
+              "**/features/**",
+              "**/App",
+              "**/App.*",
+              "**/main",
+              "**/main.*",
+              "@/features",
+              "@/features/**",
+              "@/App",
+              "@/App.*",
+              "@/main",
+              "@/main.*"
+            ],
             "message": "Application services must not import feature UI or the application entrypoint."
           }
         ]

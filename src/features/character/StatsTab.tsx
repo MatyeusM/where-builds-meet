@@ -1,15 +1,21 @@
-import { IconRotate, IconX } from "@tabler/icons-react"
+import { IconRestore, IconX } from "@tabler/icons-react"
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 
 import {
   attunementAvailableForSettings,
   availableSetEntriesForSettings,
   innerWayAvailableForPath,
-} from "../../application/characterComposition"
-import type { CharacterState, PathId, SetupSelections } from "../../application/contracts"
-import { deltaPrefix, formatDelta, formatNumber, throughputDeltaClass } from "../../application/formatting"
-import { artStatByWeaponFamily, martialArtDefinitions } from "../../application/gameData/martialArts"
-import { typedPathDefinitions } from "../../application/gameData/paths"
+} from "@/application/characterComposition"
+import type { CharacterState, PathId, SetupSelections } from "@/application/contracts"
+import {
+  deltaPrefix,
+  formatNumber,
+  formatThroughput,
+  formatThroughputDelta,
+  throughputDeltaClass,
+} from "@/application/formatting"
+import { artStatByWeaponFamily, martialArtDefinitions } from "@/application/gameData/martialArts"
+import { typedPathDefinitions } from "@/application/gameData/paths"
 import {
   breakthroughProfile,
   scriptDisplayOrder,
@@ -23,35 +29,32 @@ import {
   typedScriptDefinitions,
   typedWeaponSetDefinitions,
   type GearSetDefinition,
-} from "../../application/gameData/setup"
-import { percentageAttunementKeys } from "../../application/persistence/attunements"
-import { statDefinition } from "../../application/persistence/stats"
-import { CalculationStatus } from "../../application/results/CalculationStatus"
-import { emptyPriorityRows, PriorityPanel } from "../../application/results/PriorityPanel"
-import { type AttunementOverrides } from "../../calculations/attunementStats"
-import { type AttunementStats } from "../../calculations/damage"
-import { type RotationMetrics } from "../../calculations/rotationMetrics"
-import { type CharacterStatOverrides } from "../../calculations/statEffects"
+} from "@/application/gameData/setup"
+import { percentageAttunementKeys } from "@/application/persistence/attunements"
+import { statDefinition } from "@/application/persistence/stats"
+import { CalculationStatus } from "@/application/results/CalculationStatus"
+import { emptyPriorityRows, PriorityPanel } from "@/application/results/PriorityPanel"
+import { type AttunementOverrides } from "@/calculations/attunementStats"
+import { type AttunementStats } from "@/calculations/damage"
+import { type RotationMetrics } from "@/calculations/rotationMetrics"
+import { type CharacterStatOverrides } from "@/calculations/statEffects"
 import {
   characterProfileMatches,
   exportCharacterProfiles,
   mergeImportedCharacterProfiles,
   type CharacterProfile,
-} from "../../characterProfiles"
-import { innerWayEntriesForTag } from "../../data/innerWayDefinitions"
-import { attunementData, selectSetTier, type BuildSetup, type BuildSetupOverrides } from "../../gear"
-import {
-  globalDebuffRows,
-  globalDebuffStorageKey,
-  loadGlobalDebuffs,
-  type GlobalDebuffState,
-} from "../../globalDebuffs"
-import { dataText, gameText, t } from "../../i18n"
-import { publishNotice, dismissNotice } from "../../notices"
-import { setPersistentItem } from "../../persistentStorage"
-import { type CharacterStats } from "../../types"
-import { Button } from "../../ui/Button"
-import { Panel, PanelHeading } from "../../ui/Panel"
+} from "@/characterProfiles"
+import { innerWayEntriesForTag } from "@/data/innerWayDefinitions"
+import { attunementData, selectSetTier, type BuildSetup, type BuildSetupOverrides } from "@/gear"
+import { globalDebuffRows, type GlobalDebuffState } from "@/globalDebuffs"
+import { dataText, gameText, t } from "@/i18n"
+import { publishNotice, dismissNotice } from "@/notices"
+import { useLoadoutStore } from "@/stores/loadoutStore"
+import { type CharacterStats } from "@/types"
+import { Button } from "@/ui/Button"
+import { ButtonGroup, ButtonGroupOption } from "@/ui/ButtonGroup"
+import { Panel, PanelHeading } from "@/ui/Panel"
+
 import { CalculatedStatField } from "./CalculatedStatField"
 import { StatPair } from "./StatPair"
 
@@ -104,15 +107,13 @@ export function StatsTab({
   const showHealingStats = pathId === "silkbindDeluge"
   const breakthrough = breakthroughProfile(settings)
   const { food, script, divinecraft } = character.setupSelections
-  const [globalDebuffs, setGlobalDebuffs] = useState(loadGlobalDebuffs)
+  const globalDebuffs = useLoadoutStore(state => state.globalDebuffs)
   const [attunementDrafts, setAttunementDrafts] = useState<Partial<Record<keyof AttunementStats, string>>>({})
   const [newProfileName, setNewProfileName] = useState("")
   const profileDialogRef = useRef<HTMLDialogElement>(null)
   const profileImportInputRef = useRef<HTMLInputElement>(null)
   const graduationRate =
     rotationMetrics && graduationDps && graduationDps > 0 ? (rotationMetrics.dps / graduationDps) * 100 : undefined
-
-  useEffect(() => setPersistentItem(globalDebuffStorageKey, JSON.stringify(globalDebuffs)), [globalDebuffs])
 
   const { arsenal, bowRingSet, innerWays } = buildSetup
   const currentProfileData = useMemo(
@@ -260,9 +261,7 @@ export function StatsTab({
   }
 
   function updateGlobalDebuff<K extends keyof GlobalDebuffState>(key: K, value: GlobalDebuffState[K]) {
-    const next = { ...globalDebuffs, [key]: value }
-    setPersistentItem(globalDebuffStorageKey, JSON.stringify(next))
-    setGlobalDebuffs(next)
+    useLoadoutStore.getState().setGlobalDebuffs(key, value)
     onInnerWayChange()
   }
 
@@ -314,33 +313,31 @@ export function StatsTab({
   const availableWeaponSets = availableSetEntriesForSettings(typedWeaponSetDefinitions, settings, pathId)
   const availableArmorSets = availableSetEntriesForSettings(typedArmorSetDefinitions, settings, pathId)
   const setupStatus = (group: string, value: string, active: boolean) => {
-    if (active) return <small className="setup-active-label">{t("ui.app.active")}</small>
+    if (active) return <span className="setup-active-label">{t("ui.app.active")}</span>
     const comparison = rotationMetrics?.setupComparisons[group]?.find(row => row.label === value)
     return comparison ? (
-      <small className="setup-delta-label">
+      <span className="setup-delta-label">
         <span className={throughputDeltaClass(comparison.dpsDifference, "damage")}>
-          {deltaPrefix(comparison.dpsDifference)}
-          {formatDelta(comparison.dpsDifference)} {t("system.dps")}
+          {formatThroughputDelta(comparison.dpsDifference)} {t("system.dps")}
         </span>
         <span className={throughputDeltaClass(comparison.increase, "damage")}>
           ({deltaPrefix(comparison.increase)}
-          {formatDelta(comparison.increase)}%)
+          {formatNumber(comparison.increase)}%)
         </span>
         {rotationMetrics && rotationMetrics.hps > 0 ? (
           <>
             <span className={throughputDeltaClass(comparison.hpsDifference, "healing")}>
-              {deltaPrefix(comparison.hpsDifference)}
-              {formatDelta(comparison.hpsDifference)} {t("system.hps")}
+              {formatThroughputDelta(comparison.hpsDifference)} {t("system.hps")}
             </span>
             <span className={throughputDeltaClass(comparison.healingIncrease, "healing")}>
               ({deltaPrefix(comparison.healingIncrease)}
-              {formatDelta(comparison.healingIncrease)}%)
+              {formatNumber(comparison.healingIncrease)}%)
             </span>
           </>
         ) : null}
-      </small>
+      </span>
     ) : (
-      <small className="setup-inactive-label">—</small>
+      <span className="setup-inactive-label">—</span>
     )
   }
   const setPanel = (
@@ -363,7 +360,7 @@ export function StatsTab({
             title={t("ui.app.resetToBuildValue")}
             onClick={() => onBuildSetupReset(key)}
           >
-            <IconRotate size="1em" aria-hidden />
+            <IconRestore size="1em" aria-hidden />
           </button>
         )}
       </PanelHeading>
@@ -374,21 +371,20 @@ export function StatsTab({
             <div className="setup-field" key={setName}>
               <span>{gameText(definition.name)}</span>
               <div className="setup-option-control">
-                <div className="setup-option-list">
+                <ButtonGroup cellWidth="5rem">
                   {[0, 2, 4].map(tier => (
-                    <button
-                      className={selectedTier === tier ? "selected" : ""}
-                      type="button"
+                    <ButtonGroupOption
                       key={tier}
+                      label={t(`system.setPieces.${tier}`)}
+                      selected={selectedTier === tier}
                       onClick={() =>
                         onBuildSetupChange(key, selectSetTier(buildSetup[key], setName, tier as 0 | 2 | 4, definitions))
                       }
                     >
-                      {t(`system.setPieces.${tier}`)}
-                      <span>{setupStatus(`${key}:${setName}`, String(tier), selectedTier === tier)}</span>
-                    </button>
+                      {setupStatus(`${key}:${setName}`, String(tier), selectedTier === tier)}
+                    </ButtonGroupOption>
                   ))}
-                </div>
+                </ButtonGroup>
               </div>
             </div>
           )
@@ -400,15 +396,14 @@ export function StatsTab({
     const active = globalDebuffs[key] === value
     const optionValue = value ? "on" : "off"
     return (
-      <button
-        className={active ? "selected" : ""}
-        type="button"
+      <ButtonGroupOption
         key={optionValue}
+        label={label}
+        selected={active}
         onClick={() => updateGlobalDebuff(key, value)}
       >
-        {label}
-        <span>{setupStatus(`debuff:${key}`, optionValue, active)}</span>
-      </button>
+        {setupStatus(`debuff:${key}`, optionValue, active)}
+      </ButtonGroupOption>
     )
   }
   const floatingGraceOptionLabel = (value: GlobalDebuffState["floatingGrace"]) => {
@@ -462,8 +457,18 @@ export function StatsTab({
                 >
                   {t("ui.app.profiles")}
                 </Button>
-                <Button variant="secondary" type="button" onClick={() => selectProfile()}>
-                  {t("ui.app.reset")}
+                <Button
+                  variant="secondary"
+                  iconOnly
+                  type="button"
+                  // A stable hook, because the primitive's icon-only class is a hashed module
+                  // name and this row has to state a width the row's own height does not give.
+                  className="profile-reset-button"
+                  aria-label={t("ui.app.reset")}
+                  title={t("ui.app.reset")}
+                  onClick={() => selectProfile()}
+                >
+                  <IconRestore size="1em" aria-hidden />
                 </Button>
               </div>
             </PanelHeading>
@@ -813,7 +818,7 @@ export function StatsTab({
                             resetAttunement(key)
                           }}
                         >
-                          <IconRotate size="1em" aria-hidden />
+                          <IconRestore size="1em" aria-hidden />
                         </button>
                       )}
                     </span>
@@ -853,15 +858,15 @@ export function StatsTab({
                       {gameText(name)}
                       {path && <> ({gameText(path)})</>}
                     </span>
-                    <div className="setup-option-list global-debuff-options">
+                    <ButtonGroup cellWidth="5rem">
                       {globalDebuffOption(key, false, t("ui.app.off"))}
                       {globalDebuffOption(key, true, t("ui.app.on"))}
-                    </div>
+                    </ButtonGroup>
                   </div>
                 ))}
                 <div className="global-debuff-row">
                   <span>{t("ui.app.draughtDebuffs")}</span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup columns={3}>
                     {(["none", "strayhunt", "both"] as const).map(value => {
                       const active = globalDebuffs.draught === value
                       const labels = {
@@ -870,58 +875,55 @@ export function StatsTab({
                         both: t("ui.app.both"),
                       }
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={labels[value]}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("draught", value)}
                         >
-                          {labels[value]}
-                          <span>{setupStatus("debuff:draught", value, active)}</span>
-                        </button>
+                          {setupStatus("debuff:draught", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
                 <div className="global-debuff-row">
                   <span>
                     {gameText("Floating Grace")} ({t("system.path.deluge")})
                   </span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup columns={3}>
                     {(["none", "mixed", "deluge"] as const).map(value => {
                       const active = globalDebuffs.floatingGrace === value
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={floatingGraceOptionLabel(value)}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("floatingGrace", value)}
                         >
-                          {floatingGraceOptionLabel(value)}
-                          <span>{setupStatus("buff:floatingGrace", value, active)}</span>
-                        </button>
+                          {setupStatus("buff:floatingGrace", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
                 <div className="global-debuff-row">
                   <span>{t("system.innerWay.bitterSeasons")}</span>
-                  <div className="setup-option-list global-debuff-options qingyi-options">
+                  <ButtonGroup columns={3}>
                     {(["none", "T1", "T6"] as const).map(value => {
                       const active = globalDebuffs.qingyisCharm === value
                       return (
-                        <button
-                          className={active ? "selected" : ""}
-                          type="button"
+                        <ButtonGroupOption
                           key={value}
+                          label={value === "none" ? t("ui.app.none") : value}
+                          selected={active}
                           onClick={() => updateGlobalDebuff("qingyisCharm", value)}
                         >
-                          {value === "none" ? t("ui.app.none") : value}
-                          <span>{setupStatus("debuff:qingyisCharm", value, active)}</span>
-                        </button>
+                          {setupStatus("debuff:qingyisCharm", value, active)}
+                        </ButtonGroupOption>
                       )
                     })}
-                  </div>
+                  </ButtonGroup>
                 </div>
               </div>
             </Panel>
@@ -991,7 +993,7 @@ export function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("innerWays")}
                 >
-                  <IconRotate size="1em" aria-hidden />
+                  <IconRestore size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
@@ -1044,7 +1046,7 @@ export function StatsTab({
           {setPanel(t("ui.app.weaponSet"), "weaponSets", typedWeaponSetDefinitions, availableWeaponSets)}
           {availableArmorSets.length > 0 &&
             setPanel(t("ui.app.armorSet"), "armorSets", typedArmorSetDefinitions, availableArmorSets)}
-          <Panel className="setup-placeholder-panel bow-ring-panel">
+          <Panel className="setup-placeholder-panel">
             <PanelHeading>
               <div>
                 <h2>{t("ui.app.bowRingSet")}</h2>
@@ -1058,23 +1060,22 @@ export function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("bowRingSet")}
                 >
-                  <IconRotate size="1em" aria-hidden />
+                  <IconRestore size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-wide bow-ring-option-list">
+            <ButtonGroup columns={4}>
               {Object.entries(typedBowRingSetDefinitions).map(([value, definition]) => (
-                <button
-                  className={bowRingSet === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={bowRingSet === value}
                   onClick={() => onBuildSetupChange("bowRingSet", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("bowRingSet", value, bowRingSet === value)}</span>
-                </button>
+                  {setupStatus("bowRingSet", value, bowRingSet === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
@@ -1090,23 +1091,22 @@ export function StatsTab({
                   title={t("ui.app.resetToBuildValue")}
                   onClick={() => onBuildSetupReset("arsenal")}
                 >
-                  <IconRotate size="1em" aria-hidden />
+                  <IconRestore size="1em" aria-hidden />
                 </button>
               )}
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-arsenal">
+            <ButtonGroup>
               {Object.entries(typedArsenalDefinitions).map(([value, definition]) => (
-                <button
-                  className={arsenal === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={arsenal === value}
                   onClick={() => onBuildSetupChange("arsenal", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("arsenal", value, arsenal === value)}</span>
-                </button>
+                  {setupStatus("arsenal", value, arsenal === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
@@ -1115,19 +1115,18 @@ export function StatsTab({
                 <CalculationStatus category="food" />
               </div>
             </PanelHeading>
-            <div className="setup-option-list setup-option-list-food">
+            <ButtonGroup>
               {Object.entries(typedFoodDefinitions).map(([value, definition]) => (
-                <button
-                  className={food === value ? "selected" : ""}
-                  type="button"
+                <ButtonGroupOption
                   key={value}
+                  label={gameText(definition.name)}
+                  selected={food === value}
                   onClick={() => onSetupSelectionChange("food", value)}
                 >
-                  {gameText(definition.name)}
-                  <span>{setupStatus("food", value, food === value)}</span>
-                </button>
+                  {setupStatus("food", value, food === value)}
+                </ButtonGroupOption>
               ))}
-            </div>
+            </ButtonGroup>
           </Panel>
           <Panel className="setup-placeholder-panel">
             <PanelHeading>
@@ -1247,11 +1246,11 @@ export function StatsTab({
             <div className="dps-value">
               {rotationMetrics ? (
                 <>
-                  <span>{formatNumber(rotationMetrics.dps)}</span>
+                  <span>{formatThroughput(rotationMetrics.dps)}</span>
                   {rotationMetrics.hps > 0 ? (
                     <>
                       <span className="throughput-separator">/</span>
-                      <span className="healing-value">{formatNumber(rotationMetrics.hps)}</span>
+                      <span className="healing-value">{formatThroughput(rotationMetrics.hps)}</span>
                     </>
                   ) : null}
                 </>

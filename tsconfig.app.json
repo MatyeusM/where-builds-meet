@@ -26,6 +26,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Import aliases. `@` reaches src, `@gamedata` reaches the JSON game data.
+       vite.config.ts maps the same two prefixes for the bundler and test runs. */
+    "paths": { "@/*": ["./src/*"], "@gamedata/*": ["./data/*"] },
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
