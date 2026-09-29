@@ -18,6 +18,7 @@ describe("Morale Chant T6", () => {
           martialArts: ["infernalTwinblades", "mortalRopeDart"],
           rotation: { name: "Morale", steps: [] },
           skillOverrides: {},
+          previewId: null,
         },
         "wind-fully-relayed-min",
       )!

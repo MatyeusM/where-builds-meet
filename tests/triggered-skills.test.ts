@@ -19,9 +19,17 @@ describe("triggered-skills", () => {
         Object.values(value).forEach(item => walk(item, visit))
       }
     }
+    // A preview may introduce the triggered skill a previewed trigger names, so a preview's
+    // own `skill` folder defines records exactly as the shipped folder does. Both are merged,
+    // and because a preview's triggers are walked below, a preview-only `Triggered` record is
+    // still required to be referenced.
+    const skillDefinitionFiles = [
+      ...jsonFiles(path.join("data", "skill")),
+      ...jsonFiles(path.join("data", "preview")).filter(file => path.basename(path.dirname(file)) === "skill"),
+    ]
     const definitions = Object.assign(
       {},
-      ...jsonFiles(path.join("data", "skill")).map(file => JSON.parse(fs.readFileSync(file, "utf8"))),
+      ...skillDefinitionFiles.map(file => JSON.parse(fs.readFileSync(file, "utf8"))),
     )
     const triggeredIds = new Set()
 

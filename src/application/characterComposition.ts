@@ -1,29 +1,27 @@
-import type { InnerWayEffectRule, EditableObject } from "../calculations/rotationTimeline"
+import type { InnerWayEffectRule, EditableObject } from "@/calculations/rotationTimeline"
 import {
   calculateStatsWithOverrides,
   requirementIsUnconditional,
   type CharacterStatOverrides,
   type StatEffectContainer,
-} from "../calculations/statEffects"
-import {
-  innerWayAvailableForTag,
-  innerWayDefinitions,
-  innerWayDefinitionForSoloLevel,
-} from "../data/innerWayDefinitions"
-import { martialArtEffectsForRank } from "../data/martialArtTalents"
-import { emptyStats } from "../data/statDefinitions"
+} from "@/calculations/statEffects"
+import { innerWayAvailableForTag, innerWayDefinitionForSoloLevel } from "@/data/innerWayDefinitions"
+import { martialArtEffectsForRank } from "@/data/martialArtTalents"
+import { emptyStats } from "@/data/statDefinitions"
 import {
   attunementData,
   availableSetEntriesForTags,
   setAvailableForTags,
   type BuildSetup,
   type SetSelections,
-} from "../gear"
-import type { SkillCategory } from "../skillOverrides"
-import type { CharacterStats, WeaponId } from "../types"
+} from "@/gear"
+import type { SkillCategory } from "@/skillOverrides"
+import type { CharacterStats, WeaponId } from "@/types"
+
 import type { CalculatorSettings, PathId, SetupSelections } from "./contracts"
 import { artStatByWeaponFamily, martialArtDefinitions } from "./gameData/martialArts"
 import { typedPathDefinitions } from "./gameData/paths"
+import { currentCombatDefinitions, type CombatDefinitions } from "./gameData/previews"
 import {
   arsenalEffectFor,
   breakthroughProfile,
@@ -97,14 +95,15 @@ export function innerWayEffectRulesFor(
   selectedInnerWays: BuildSetup["innerWays"],
   soloLevel: number,
   pathId = loadSelectedPath(),
+  definitions: CombatDefinitions = currentCombatDefinitions,
 ): InnerWayEffectRule[] {
   const selected = selectedInnerWays.filter(({ innerWay }) => innerWayAvailableForPath(innerWay, pathId))
   return selected.flatMap(({ innerWay, tier }) => {
-    if (!innerWay || !innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions]) return []
-    const definition = innerWayDefinitionForSoloLevel(
-      innerWayDefinitions[innerWay as keyof typeof innerWayDefinitions],
-      soloLevel,
-    ) as { effect?: Record<string, { effect?: unknown[]; trigger?: unknown[]; listen?: unknown[] }> }
+    const innerWayDefinition = innerWay ? definitions.innerWayDefinitions[innerWay] : undefined
+    if (!innerWay || !innerWayDefinition) return []
+    const definition = innerWayDefinitionForSoloLevel(innerWayDefinition, soloLevel) as {
+      effect?: Record<string, { effect?: unknown[]; trigger?: unknown[]; listen?: unknown[] }>
+    }
     const tierNumber = Number(tier.slice(1))
     return Array.from({ length: tierNumber + 1 }, (_, currentTier) => {
       const tierDefinition = definition.effect?.[`${innerWay}T${currentTier}`]
@@ -158,9 +157,12 @@ export function innerWayEffectRulesFor(
   })
 }
 
-export function selectedMartialArtEffects(settings: CalculatorSettings) {
+export function selectedMartialArtEffects(
+  settings: CalculatorSettings,
+  definitions: CombatDefinitions = currentCombatDefinitions,
+) {
   return martialArtEffectsForRank(
-    martialArtDefinitions,
+    definitions.martialArtDefinitions,
     settings.weapons,
     breakthroughProfile(settings).martialArtTalentRank,
   )
@@ -173,6 +175,7 @@ export function selectedSetupEffects(
   selections: SetupSelections,
   pathId: PathId,
   overrides: Partial<BuildSetup & SetupSelections> & { divinecraftDamage?: boolean } = {},
+  definitions: CombatDefinitions = currentCombatDefinitions,
 ) {
   const selectedBuildSetup = {
     ...buildSetup,
@@ -195,7 +198,7 @@ export function selectedSetupEffects(
     ),
     ...systemStatEffects,
     breakthroughProfile(settings).levelBonusStats,
-    ...selectedMartialArtEffects(settings),
+    ...selectedMartialArtEffects(settings, definitions),
     arsenalEffectFor(selectedBuildSetup.arsenal),
     bowRingSetEffectFor(selectedBuildSetup.bowRingSet),
     ...setEffectsFor(selectedBuildSetup.weaponSets, typedWeaponSetDefinitions, settings, pathId),
@@ -213,11 +216,13 @@ export function globalStatEffects(
   buildSetup: BuildSetup,
   selections: SetupSelections,
   pathId: PathId,
+  definitions: CombatDefinitions = currentCombatDefinitions,
 ) {
   const innerWayStatEffects = innerWayEffectRulesFor(
     buildSetup.innerWays,
     breakthroughProfile(settings).soloLevel,
     pathId,
+    definitions,
   )
     .filter(
       rule =>
@@ -231,6 +236,8 @@ export function globalStatEffects(
     buildSetup,
     selections,
     pathId,
+    {},
+    definitions,
   ).filter(effect => !("requirement" in effect) || requirementIsUnconditional(effect.requirement))
   return [...unconditionalSetupEffects, ...innerWayStatEffects]
 }
@@ -242,11 +249,12 @@ export function calculateGlobalStatState(
   buildSetup: BuildSetup,
   selections: SetupSelections,
   pathId: PathId,
+  definitions: CombatDefinitions = currentCombatDefinitions,
 ) {
   const breakthrough = breakthroughProfile(settings)
   return calculateStatsWithOverrides(
     emptyStats,
-    globalStatEffects(settings, gearStatEffect, buildSetup, selections, pathId),
+    globalStatEffects(settings, gearStatEffect, buildSetup, selections, pathId, definitions),
     breakthrough.judgementResistance,
     overrides,
     settings.weapons,

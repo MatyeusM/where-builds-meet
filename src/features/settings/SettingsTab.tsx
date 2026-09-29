@@ -3,6 +3,7 @@ import { useState, type Dispatch, type ReactNode, type SetStateAction } from "re
 import type { CalculatorSettings, LayoutMode, PathId } from "@/application/contracts"
 import { martialArtDefinitions, weaponFamilyNames } from "@/application/gameData/martialArts"
 import { productionWeaponIds, typedPathDefinitions } from "@/application/gameData/paths"
+import { previewCatalog, type PreviewId } from "@/application/gameData/previews"
 import type { ScopeTarget } from "@/application/gearScope"
 import { gameText, t } from "@/i18n"
 import { useGearStore } from "@/stores/gearStore"
@@ -108,15 +109,19 @@ export function SettingsTab({
   pathId,
   devMode,
   layoutMode,
+  previewId,
   onSettingsChange,
   onLayoutChange,
+  onPreviewChange,
 }: {
   settings: CalculatorSettings
   pathId: PathId
   devMode: boolean
   layoutMode: LayoutMode
+  previewId: PreviewId | null
   onSettingsChange: Dispatch<SetStateAction<CalculatorSettings>>
   onLayoutChange: (layout: LayoutMode) => void
+  onPreviewChange: (preview: PreviewId | null) => void
 }) {
   const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons)
 
@@ -174,6 +179,19 @@ export function SettingsTab({
           <ShareToggle target="builds" pathId={pathId}>
             {t("ui.app.shareBuilds")}
           </ShareToggle>
+        </div>
+        <div className="settings-layout-row">
+          <label className="editor-field">
+            <span>{t("ui.app.preview")}</span>
+            <select value={previewId ?? ""} onChange={event => onPreviewChange(event.target.value || null)}>
+              <option value="">{t("ui.app.previewCurrent")}</option>
+              {previewCatalog.map(preview => (
+                <option key={preview.id} value={preview.id}>
+                  {preview.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className="settings-layout-row">
           <label className="editor-field">

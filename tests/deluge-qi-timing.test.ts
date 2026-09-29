@@ -36,6 +36,7 @@ describe("Deluge Qi timing", () => {
           floatingGrace: "none",
         },
         skillOverrides: {},
+        previewId: null,
       },
       paths.silkbindDeluge.defaultBuild,
     )

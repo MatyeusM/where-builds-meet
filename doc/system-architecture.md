@@ -104,6 +104,7 @@ data/
   innerway/       cumulative tier rules and triggers
   martial-art/    weapon talent arrays
   path.json       combat-path status, preset build group, eligibility tags, arsenal, and optional weapon locks
+  preview/        selectable alternate game records, one folder per preview, plus the preview manifest
   rotation/       bundled default rotations
   build/          bundled default build presets
   gear.json       gear slots, item bases, affix choices, and attunement source tags
@@ -130,7 +131,7 @@ doc/
 src/
   App.tsx                         application composition shell and cross-feature state
   application/                    cross-feature contracts, game data, persistence, and services
-    gameData/                     path, skill, setup, and martial-art registries
+    gameData/                     path, skill, setup, martial-art, and preview registries
     persistence/                  storage keys, migrations, and application loaders
     results/                      shared calculation result presentation
     shell/                        eager notice and feature-boundary components
@@ -769,6 +770,40 @@ calculated group-owned rows as authoritative so structural rows cannot restore
 discarded contributions or replace summed weights. This reduces result/display
 work, not the cost of constructing the original probability event timeline.
 
+## Data previews
+
+A preview is a named set of alternate game records the user can select, letting a
+build be measured against a different tuning of the same skills rather than only
+against the tuning that ships in `data/`. `data/preview/<id>/` mirrors the folders
+under `data/`, and `data/preview/previews.json` lists which previews exist and the
+name each is offered under.
+
+`gameData/previews.ts` owns the resolution. `combatDefinitionsFor` returns the
+shipped data for no selection, and otherwise lays the preview over it, caching one
+result per id. Merge depth follows how each registry is keyed:
+
+| Registry             | Key                 | What a preview supplies              |
+| -------------------- | ------------------- | ------------------------------------ |
+| Skills               | Skill category      | Whole records within that category   |
+| Buffs, debuffs, DOTs | Record id           | The whole record                     |
+| Inner Ways           | Definition and tier | Individual tiers within a definition |
+| Martial arts         | Weapon id           | The whole definition                 |
+
+A preview supplies a version of a record rather than a delta, so a previewed
+record reads exactly as it would in `data/` and an omitted field is genuinely
+absent rather than inherited. A preview cannot introduce an Inner Way the shipped
+data does not define, which keeps the selectors enumerating the same names.
+
+Records resolve in one order: shipped data, then the preview, then the user's own
+Skill Editor overrides. The preview therefore sets the baseline a user edits
+against, and an explicit user override still wins over it.
+
+The resolved set is passed to the calculation bundle, the graduation bundles, and
+the Skill Editor rather than being read from module state, so every consumer sees
+the same records. Because the resolved records are part of the worker bundle and of
+the graduation and editor fingerprints, changing the selection invalidates cached
+results rather than reusing a baseline calculated under another preview.
+
 ## Browser persistence
 
 All user settings and editable records use `localStorage`, so they persist across
@@ -787,6 +822,7 @@ same-origin session keys are left untouched.
 | Build list, shared gear, and per-build loadouts | `localStorage`, `wwm-build-list-v1`              |
 | Active build IDs by combat path                 | `localStorage`, `wwm-active-build-by-path-v1`    |
 | Skill editor overrides                          | `localStorage`, `wwm-skill-editor-session-v1`    |
+| Selected data preview                           | `localStorage`, `wwm-preview-selection-v1`       |
 | Combat path                                     | `localStorage`, `wwm-path-session-v1`            |
 | Dev layout preview                              | `localStorage`, `wwm-layout-preview-session-v1`  |
 | Attunement overrides                            | `localStorage`, `wwm-attunement-overrides-v1`    |
@@ -1773,14 +1809,28 @@ from data.
   requirements and object-valued effects. Effective definitions participate in
   calculation fingerprints, so saving or resetting an override cannot reuse a
   stale baseline or comparison result.
-  The existing storage key now contains a `{ version: 3, overrides }` envelope. Older segment thresholds migrate from
+  The existing storage key now contains a `{ version: 4, overrides }` envelope. Older segment thresholds migrate from
   inclusive to exclusive bounds using the next representable number, preserving
   saved calculation behavior. Authored tables default to `LowerBoundInclusive` (exclusive upper bounds);
   `mode: "UpperBoundInclusive"` selects inclusive upper bounds explicitly.
-  Version-3 overrides preserve either mode without threshold migration.
+  Overrides at version 3 or later preserve either mode without threshold migration.
   Legacy unwrapped overrides copy `phyCoef` into missing damage `attrCoef` or
   healing `silkbindCoef` fields on load. Versions 2 and 3 preserve intentionally omitted
   coefficients as zero, including physical-only damage actions.
+- A selected data preview supplies alternate tuning layered under the Skill
+  Editor's own overrides, so a version of the game that changed a handful of
+  records can be measured without editing the shipped data. `data/preview/<id>/`
+  mirrors the game-data folders; each file holds whole records, except an Inner Way
+  file, which supplies individual tiers. `combatDefinitionsFor` resolves the
+  selection once per id and is passed down to the calculator, the graduation
+  bundles, and the Skill Editor, so a previewed record is what every one of them
+  reads and the editor's Default control means "this preview's value."
+  `data/preview/previews.json` lists the selectable previews; `Current` is the
+  absence of a selection, and a stored id this build does not ship resolves to the
+  shipped data rather than failing. The precedence is shipped data, then the
+  preview, then the user's own overrides. The selection is part of the worker
+  bundle, so switching previews cannot reuse a baseline calculated under another
+  one. See [Data previews](#data-previews).
 - Manual event definitions and supported weapons are hard-coded.
 - Primary-attribute damage resolution supports the registered Stonesplit and
   Bamboocut martial arts, but Void/Formless Attack folding currently remains

@@ -889,6 +889,8 @@
   "ui.app.physicalResistance": "外功抗性：",
   "ui.app.plannerOnly": "僅配裝",
   "ui.app.precision": "精準率：",
+  "ui.app.preview": "預覽版本",
+  "ui.app.previewCurrent": "目前版本",
   "ui.app.priorityModeBoth": "最大值 + 承音",
   "ui.app.priorityModeMax": "最大值",
   "ui.app.priorityModeSwitch": "{current} — 切換至 {next}",

@@ -153,7 +153,13 @@ for (const [key, english] of statLabels) {
   if (!canonicalKeysByEnglish.has(english)) canonicalKeysByEnglish.set(english, key)
 }
 
-const dataFiles = await filesUnder(path.join(root, "data"), candidate => candidate.endsWith(".json"))
+// A preview supplies another version of a record that already owns its translation row, and
+// the runtime resolves display names through the shipped registries, so a key derived from a
+// preview path would never be read. Its files are walked for validation but not scanned.
+const dataFiles = await filesUnder(
+  path.join(root, "data"),
+  candidate => candidate.endsWith(".json") && !candidate.startsWith(path.join(root, "data", "preview")),
+)
 const dataSources = await Promise.all(dataFiles.map(async file => [file, await readFile(file, "utf8")]))
 for (const [file, source] of dataSources) {
   const relative = path.relative(path.join(root, "data"), file).split(path.sep).map(normalizeSegment).join(".")

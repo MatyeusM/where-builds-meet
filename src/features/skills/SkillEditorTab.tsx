@@ -2,13 +2,14 @@ import { IconChevronDown, IconChevronUp, IconX } from "@tabler/icons-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { skillCategoryLabel, skillDisplayName } from "../../application/formatting"
+import { currentCombatDefinitions, type CombatDefinitions } from "../../application/gameData/previews"
 import { defaultEditorMaps, editorSkillIds, skillCategoryByWeapon } from "../../application/gameData/skills"
 import { hasSkillOverrides } from "../../application/persistence/skillOverrides"
 import { baseSkillCastTime } from "../../application/rotationCatalog"
 import { type EditableObject, type SkillRecord } from "../../calculations/rotationTimeline"
 import { t } from "../../i18n"
 import { publishNotice, dismissNotice } from "../../notices"
-import { type EditorCategory, type SkillOverrides } from "../../skillOverrides"
+import { type EditorCategory, type SkillMap, type SkillOverrides } from "../../skillOverrides"
 import { type WeaponId } from "../../types"
 import { Button } from "../../ui/Button"
 import { NumberInput } from "../../ui/NumberInput"
@@ -1151,22 +1152,48 @@ function StackEffectsEditor({
 export function SkillEditorTab({
   weapons,
   overrides,
+  preview = currentCombatDefinitions,
   onOverridesChange,
 }: {
   weapons: [WeaponId, WeaponId]
   overrides: SkillOverrides
+  /**
+   * The registries the selected preview resolved to. The editor edits what is being
+   * calculated, so its Default control means "this preview's value" rather than the
+   * shipped one, and a record a preview adds appears here like any other.
+   */
+  preview?: CombatDefinitions
   onOverridesChange: (overrides: SkillOverrides) => void
 }) {
   const [category, setCategory] = useState<EditorCategory>("Snowparting")
-  const [selectedSkill, setSelectedSkill] = useState(Object.keys(defaultEditorMaps.Snowparting)[0])
-  const [draft, setDraft] = useState(() => skillToDraft(defaultEditorMaps.Snowparting[selectedSkill]))
+  /**
+   * The editor's records, resolved against the selected preview. Only records the shipped
+   * data already defines are listed: a preview supplies a version of a record, and the records
+   * it introduces alongside one are its own sub-actions, which are not independently editable.
+   */
+  const editorMaps = useMemo(() => {
+    const maps = {} as Record<EditorCategory, SkillMap>
+    for (const [mapCategory, records] of Object.entries(defaultEditorMaps) as Array<[EditorCategory, SkillMap]>) {
+      const resolved =
+        mapCategory === "Buff" || mapCategory === "Debuff" || mapCategory === "DOT"
+          ? preview.effectDefinitions
+          : preview.skillMaps[mapCategory]
+      maps[mapCategory] = Object.fromEntries(
+        Object.entries(records).map(([id, record]) => [id, (resolved[id] ?? record) as SkillRecord]),
+      )
+    }
+    return maps
+  }, [preview])
+
+  const [selectedSkill, setSelectedSkill] = useState(Object.keys(editorMaps.Snowparting)[0])
+  const [draft, setDraft] = useState(() => skillToDraft(editorMaps.Snowparting[selectedSkill]))
   const [error, setError] = useState("")
   const setStatus = (message: string) => {
     if (message) publishNotice({ id: "skill-save", message })
     else dismissNotice("skill-save")
   }
 
-  const skills = useMemo(() => ({ ...defaultEditorMaps[category], ...overrides[category] }), [category, overrides])
+  const skills = useMemo(() => ({ ...editorMaps[category], ...overrides[category] }), [editorMaps, category, overrides])
   const skillIds = useMemo(() => Object.keys(skills), [skills])
   const editorModified = hasSkillOverrides(overrides)
   const visibleCategories = useMemo<EditorCategory[]>(() => {
@@ -1183,7 +1210,7 @@ export function SkillEditorTab({
   const [prevSkillCategory, setPrevSkillCategory] = useState(category)
   if (prevSkillCategory !== category) {
     setPrevSkillCategory(category)
-    setSelectedSkill(Object.keys(defaultEditorMaps[category])[0])
+    setSelectedSkill(Object.keys(editorMaps[category])[0])
   }
   const [draftSkillSource, setDraftSkillSource] = useState<{
     selectedSkill: string
@@ -1285,7 +1312,7 @@ export function SkillEditorTab({
         }
       }
       const nextCategoryOverrides = { ...overrides[category] }
-      if (JSON.stringify(updatedSkill) === JSON.stringify(defaultEditorMaps[category][selectedSkill])) {
+      if (JSON.stringify(updatedSkill) === JSON.stringify(editorMaps[category][selectedSkill])) {
         delete nextCategoryOverrides[selectedSkill]
       } else {
         nextCategoryOverrides[selectedSkill] = updatedSkill
@@ -1312,14 +1339,14 @@ export function SkillEditorTab({
     if (Object.keys(nextCategoryOverrides).length > 0) nextOverrides[category] = nextCategoryOverrides
     else delete nextOverrides[category]
     onOverridesChange(nextOverrides)
-    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]))
+    setDraft(skillToDraft(editorMaps[category][selectedSkill]))
     setError("")
     setStatus("")
   }
 
   function restoreAllDefaults() {
     onOverridesChange({})
-    setDraft(skillToDraft(defaultEditorMaps[category][selectedSkill]))
+    setDraft(skillToDraft(editorMaps[category][selectedSkill]))
     setError("")
     setStatus("")
   }

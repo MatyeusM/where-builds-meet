@@ -45,6 +45,7 @@ async function fixture() {
         divinecraft: dpsSnapshotEnvironment.divinecraft,
       },
       skillOverrides: {},
+      previewId: null,
       // The snapshot environment predates the draught row, so the state is spelled out here
       // rather than borrowed. This test reads the bundle, and a missing key is one of the
       // ways to have it read the wrong thing.

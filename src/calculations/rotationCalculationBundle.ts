@@ -6,10 +6,9 @@ import {
   setupConditionsFor,
 } from "@/application/characterComposition"
 import type { CalculatorSettings, PathId, SetupSelections } from "@/application/contracts"
-import { martialArtDefinitions } from "@/application/gameData/martialArts"
+import { combatDefinitionsFor, type PreviewId } from "@/application/gameData/previews"
 import { rotationEventDefinitions } from "@/application/gameData/rotationEffects"
 import { breakthroughProfile, typedSystemStats } from "@/application/gameData/setup"
-import { defaultSkillMaps, dotDefinitions, effectDefinitions } from "@/application/gameData/skills"
 import type { BuildEntry, BuildSetupOverrides, GearItem } from "@/gear"
 import { globalBuffTimelineEffects, globalDebuffTimelineEffects, type GlobalDebuffState } from "@/globalDebuffs"
 import { resolveSkillCalculationDefinitions, type SkillOverrides } from "@/skillOverrides"
@@ -44,6 +43,7 @@ export type CalculationSubject = {
   pathId: PathId
   settings: CalculatorSettings
   skillOverrides: SkillOverrides
+  previewId: PreviewId | null
   globalDebuffs: GlobalDebuffState
   enemy: EnemyProfile
   rotation: RotationRecord
@@ -76,40 +76,48 @@ export function buildRotationTimeline(
   subject: CalculationSubject,
   overrides: TimelineOverrides = {},
 ): TimelineBuildInput {
-  const { pathId, settings, skillOverrides, setupSelections, build } = subject
+  const { pathId, settings, skillOverrides, previewId, setupSelections, build } = subject
   const weapons = settings.weapons
+  const definitions = combatDefinitionsFor(previewId)
   const { innerWays } = build.buildSetup
   const innerWayConditions = overrides.innerWayConditions ?? innerWayConditionsFor(innerWays, undefined, pathId)
   const innerWayEffectRules =
-    overrides.innerWayRules ?? innerWayEffectRulesFor(innerWays, breakthroughProfile(settings).soloLevel, pathId)
+    overrides.innerWayRules ??
+    innerWayEffectRulesFor(innerWays, breakthroughProfile(settings).soloLevel, pathId, definitions)
   // A rotation carries its own Divinecraft damage flag, so a variant that changes a setup
   // option is measured against the flag it is being compared under.
   const setupEffects =
     overrides.setupEffects ??
-    selectedSetupEffects(settings, build.gearStatEffect, build.buildSetup, setupSelections, pathId, {
-      divinecraftDamage: subject.rotation.divinecraftDamage,
-    })
+    selectedSetupEffects(
+      settings,
+      build.gearStatEffect,
+      build.buildSetup,
+      setupSelections,
+      pathId,
+      { divinecraftDamage: subject.rotation.divinecraftDamage },
+      definitions,
+    )
   const globalDebuffs = overrides.globalDebuffs ?? subject.globalDebuffs
-  const definitions = resolveSkillCalculationDefinitions(
-    defaultSkillMaps,
-    effectDefinitions,
-    dotDefinitions,
+  const overridden = resolveSkillCalculationDefinitions(
+    definitions.skillMaps,
+    definitions.effectDefinitions,
+    definitions.dotDefinitions,
     skillOverrides,
   )
   const rotation = { ...subject.rotation, ping: resolvePing(subject.rotation.ping, settings.ping) }
 
   return {
     rotation,
-    skills: definitions.skills,
+    skills: overridden.skills,
     eventDefinitions: rotationEventDefinitions,
-    dots: definitions.dots,
-    effectDefinitions: definitions.effectDefinitions,
+    dots: overridden.dots,
+    effectDefinitions: overridden.effectDefinitions,
     innerWayConditions: [...innerWayConditions, ...setupConditionsFor(setupEffects)],
     innerWayRules: innerWayEffectRules,
     setupEffects,
     weapons,
     martialArtState: Object.fromEntries(
-      weapons.map(martialArt => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
+      weapons.map(martialArt => [martialArt, { weapon: definitions.martialArtDefinitions[martialArt].weapon }]),
     ),
     initialBuffs: globalBuffTimelineEffects(globalDebuffs),
     initialDebuffs: globalDebuffTimelineEffects(globalDebuffs),

@@ -393,6 +393,7 @@ describe("Dust mechanics", () => {
         divinecraft: "Fire",
         script: "None",
         skillOverrides: {},
+        previewId: null,
         globalDebuffs: {
           phantomChime: false,
           qiImbalance: false,

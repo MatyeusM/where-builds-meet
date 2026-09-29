@@ -32,6 +32,7 @@ async function fixture() {
         divinecraft: dpsSnapshotEnvironment.divinecraft,
       },
       skillOverrides: {},
+      previewId: null,
       globalDebuffs: dpsSnapshotEnvironment.globalDebuffs,
       enemy: breakthroughProfile(settings),
     },

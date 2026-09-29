@@ -39,13 +39,11 @@ import {
 } from "@/application/formatting"
 import { martialArtDefinitions } from "@/application/gameData/martialArts"
 import { typedPathDefinitions } from "@/application/gameData/paths"
+import { combatDefinitionsFor, type PreviewId } from "@/application/gameData/previews"
 import { rotationEventDisplayName } from "@/application/gameData/rotationEffects"
 import { breakthroughProfile, typedSystemStats } from "@/application/gameData/setup"
 import {
-  defaultSkillMaps,
-  dotDefinitions,
   dotEffectIds,
-  effectDefinitions,
   manualBuffDefinitions,
   manualDebuffDefinitions,
   rotationActionOptionIds,
@@ -160,6 +158,7 @@ export function RotationEditorTab({
   defaultRotationId,
   selectedRotationId,
   skillOverrides,
+  previewId,
   onSelectRotationWeapons,
   onActiveRotationChange,
 }: {
@@ -171,6 +170,7 @@ export function RotationEditorTab({
   defaultRotationId: string
   selectedRotationId: string
   skillOverrides: SkillOverrides
+  previewId: PreviewId | null
   onSelectRotationWeapons: (weapons: [WeaponId, WeaponId], rotationId: string) => boolean
   onActiveRotationChange: (id: string) => void
 }) {
@@ -193,13 +193,20 @@ export function RotationEditorTab({
     [buildSetup.innerWays, pathId],
   )
   const soloLevel = breakthroughProfile(settings).soloLevel
+  const preview = useMemo(() => combatDefinitionsFor(previewId), [previewId])
   const innerWayEffectRules = useMemo(
-    () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel, pathId),
-    [buildSetup.innerWays, soloLevel, pathId],
+    () => innerWayEffectRulesFor(buildSetup.innerWays, soloLevel, pathId, preview),
+    [buildSetup.innerWays, soloLevel, pathId, preview],
   )
   const calculationDefinitions = useMemo(
-    () => resolveSkillCalculationDefinitions(defaultSkillMaps, effectDefinitions, dotDefinitions, skillOverrides),
-    [skillOverrides],
+    () =>
+      resolveSkillCalculationDefinitions(
+        preview.skillMaps,
+        preview.effectDefinitions,
+        preview.dotDefinitions,
+        skillOverrides,
+      ),
+    [preview, skillOverrides],
   )
   const manualEffectMaxStacks = useMemo(() => {
     const maxStacks = new Map<string, number>()
@@ -311,6 +318,7 @@ export function RotationEditorTab({
         divinecraft: currentDivinecraft,
         globalDebuffs,
         skillOverrides,
+        previewId,
       }),
     [
       rawCharacterStats,
@@ -327,6 +335,7 @@ export function RotationEditorTab({
       currentDivinecraft,
       globalDebuffs,
       skillOverrides,
+      previewId,
     ],
   )
   const calculationContextKeyRef = useRef(calculationContextKey)
@@ -1365,6 +1374,7 @@ export function RotationEditorTab({
     pathId,
     settings,
     skillOverrides,
+    previewId,
     globalDebuffs,
     enemy,
     rotation: rotationRecord,
@@ -1448,6 +1458,7 @@ export function RotationEditorTab({
       divinecraft: currentDivinecraft,
       graduatedBuildIds: typedPathDefinitions[pathId].graduated,
       skillOverrides,
+      previewId,
     }
     return buildGraduationBundleSet(environment)
   })

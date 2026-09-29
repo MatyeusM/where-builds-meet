@@ -14,7 +14,9 @@ import {
   typedPathDefinitions,
   type PathDefinition,
 } from "./application/gameData/paths"
+import { combatDefinitionsFor, type PreviewId } from "./application/gameData/previews"
 import { breakthroughProfile } from "./application/gameData/setup"
+import { loadPreviewSelection, persistPreviewSelection } from "./application/persistence/previewSelection"
 import { loadRotationEntries } from "./application/persistence/rotations"
 import { loadBuildSetupOverrides, sameBuildSetupValue } from "./application/persistence/setupOverrides"
 import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence/skillOverrides"
@@ -93,6 +95,7 @@ export default function App() {
 
   const [skillOverrides, setSkillOverrides] = useState<SkillOverrides>(loadSkillOverrides)
   const skillEditorModified = hasSkillOverrides(skillOverrides)
+  const [previewId, setPreviewId] = useState<PreviewId | null>(loadPreviewSelection)
   const [innerWayRevision, setInnerWayRevision] = useState(0)
   const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>(loadCharacterProfiles)
   // The stores are module singletons, so their persisted state is read during the first render
@@ -193,7 +196,7 @@ export default function App() {
    */
   const buildMeasurementContext = useMemo(
     () => ({
-      environment: { pathId, settings, setupSelections, skillOverrides, globalDebuffs, enemy },
+      environment: { pathId, settings, setupSelections, skillOverrides, previewId, globalDebuffs, enemy },
       statOverrides,
       attunementOverrides,
       buildSetupOverrides: { buildId: activeBuild?.id ?? "", overrides: buildSetupOverrides },
@@ -204,6 +207,7 @@ export default function App() {
       settings,
       setupSelections,
       skillOverrides,
+      previewId,
       globalDebuffs,
       enemy,
       statOverrides,
@@ -363,6 +367,10 @@ export default function App() {
     setSkillOverrides(nextOverrides)
     if (hasSkillOverrides(nextOverrides)) setPersistentItem(skillStorageKey, serializeSkillOverrides(nextOverrides))
     else removePersistentItem(skillStorageKey)
+  }
+  const changePreview = (nextPreview: PreviewId | null) => {
+    setPreviewId(nextPreview)
+    persistPreviewSelection(nextPreview)
   }
 
   useEffect(
@@ -554,6 +562,7 @@ export default function App() {
           <SkillEditorTab
             weapons={settings.weapons}
             overrides={skillOverrides}
+            preview={combatDefinitionsFor(previewId)}
             onOverridesChange={updateSkillOverrides}
           />
         ) : activeTab === "settings" ? (
@@ -562,8 +571,10 @@ export default function App() {
             pathId={pathId}
             devMode={devMode}
             layoutMode={layoutMode}
+            previewId={previewId}
             onSettingsChange={next => useLoadoutStore.getState().setSettings(next)}
             onLayoutChange={changeLayoutPreview}
+            onPreviewChange={changePreview}
           />
         ) : null}
         {rotationsMounted && (
@@ -579,6 +590,7 @@ export default function App() {
                   defaultRotationId={defaultRotationIdForPath(pathId)}
                   selectedRotationId={selectedRotationId}
                   skillOverrides={skillOverrides}
+                  previewId={previewId}
                   onSelectRotationWeapons={selectBuildWeapons}
                   onActiveRotationChange={activateRotationForPath}
                 />

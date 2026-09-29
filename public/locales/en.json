@@ -1287,6 +1287,8 @@
   "ui.app.pingInherit": "Leave blank to use the ping from Settings.",
   "ui.app.plannerOnly": "Planner Only",
   "ui.app.precision": "Precision:",
+  "ui.app.preview": "Preview",
+  "ui.app.previewCurrent": "Current",
   "ui.app.priorityModeBoth": "Max + Relayed",
   "ui.app.priorityModeMax": "Max",
   "ui.app.priorityModeSwitch": "{current} — switch to {next}",

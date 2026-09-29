@@ -127,6 +127,7 @@ export function useActiveRotationResult(input: ActiveRotationInput) {
       divinecraft: measurement.environment.setupSelections.divinecraft,
       graduatedBuildIds: typedPathDefinitions[pathId].graduated,
       skillOverrides: measurement.environment.skillOverrides,
+      previewId: measurement.environment.previewId,
     })
 
     const publish = (metrics: ActiveRotationResult["metrics"], dps?: number) => {

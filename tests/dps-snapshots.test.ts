@@ -40,7 +40,7 @@ describe("dps-snapshots", () => {
     > = {}
     for (const { id, pathId, rotation, fixture } of cases) {
       const bundle = buildPresetRotationBundle(
-        { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {} },
+        { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {}, previewId: null },
         fixture.build,
       )
       assert(bundle, id + ": failed to build the production calculation bundle.")

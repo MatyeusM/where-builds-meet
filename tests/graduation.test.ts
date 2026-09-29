@@ -33,6 +33,7 @@ describe("graduation", () => {
         divinecraft: fixture.fixture.divinecraft,
         graduatedBuildIds: path.graduated,
         skillOverrides: {},
+        previewId: null,
       }
       const prepared = buildGraduationBundleSet(environment)
       assert(prepared, `${scenario.rotationId} must resolve its graduate builds.`)

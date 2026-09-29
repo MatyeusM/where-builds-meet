@@ -14,6 +14,7 @@ it("Might holds Defense through the intended dummy pairs and stores two Cadence 
       martialArts: ["thundercry", "stormbreaker"],
       rotation: preset as RotationRecord,
       skillOverrides: {},
+      previewId: null,
     },
     paths.stonesplitMight.defaultBuild,
   )!

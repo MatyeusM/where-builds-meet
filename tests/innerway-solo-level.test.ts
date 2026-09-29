@@ -104,6 +104,7 @@ describe("innerway-solo-level", () => {
           script: "None",
           globalDebuffs: {},
           skillOverrides: {},
+          previewId: null,
         },
         path.defaultBuild,
       )

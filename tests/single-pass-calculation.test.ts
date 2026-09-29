@@ -33,6 +33,7 @@ async function windBundle(way: "MoraleChant" | "FivefoldBleed" = "MoraleChant") 
         martialArts: fixture.rotation.martialArts,
         rotation: fixture.rotation,
         skillOverrides: {},
+        previewId: null,
       },
       fixture.fixture.build,
     )!

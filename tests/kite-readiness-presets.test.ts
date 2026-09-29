@@ -26,6 +26,7 @@ export function calculateKite(rotation: RotationRecord, build: string) {
         floatingGrace: "none",
       },
       skillOverrides: {},
+      previewId: null,
     },
     build,
   )

@@ -19,6 +19,7 @@ function bundleFor(full = false) {
       martialArts: ["infernalTwinblades", "mortalRopeDart"],
       rotation: preset,
       skillOverrides: {},
+      previewId: null,
     },
     "wind-fully-relayed-min",
   )
@@ -36,6 +37,7 @@ describe("Wind dummy preset", () => {
         martialArts: ["heavenwill", "skygrasp"],
         rotation: { name: "Equipment scope", steps: [] },
         skillOverrides: {},
+        previewId: null,
       },
       "kite-fully-relayed-min",
     )!

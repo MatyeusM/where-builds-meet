@@ -600,6 +600,28 @@ changes and imports produce custom records. Skill overrides replace records in
 the worker's resolved maps and must participate in calculation fingerprints.
 Use existing import/migration code rather than restating export schemas here.
 
+## Data previews
+
+`data/preview/<id>/` mirrors the folders under `data/` and supplies alternate
+versions of records, selected from Settings. A preview file holds whole records
+under the same ids the shipped file uses, so a previewed record reads exactly as it
+would in `data/` and an omitted field is genuinely absent rather than inherited. The
+one exception is an Inner Way file, which supplies individual `<Id>T<n>` tiers so a
+version that changed one tier does not restate the whole definition and its
+`bySoloLevel` tables.
+
+A preview may introduce records the shipped data does not define, which is how a
+version adds a sub-action beside the record it replaces; it may not introduce a new
+Inner Way, because the selectors enumerate the shipped set. Name a new sub-action
+for what it is, keep `SubAction` or `Triggered` so it stays out of the castable
+list, and repeat the parent's damage-identity tags so attunement and set matching
+resolve on the component that deals the hit.
+
+A preview is layered under the user's own skill overrides, so it sets the baseline
+they edit against rather than competing with them. Resolved preview records are
+part of the worker bundle, so a previewed coefficient, duration, or tier reaches
+every result and invalidates the caches computed without it.
+
 ## WIP and evidence gaps
 
 An empty record is preferable to invented mechanics. Treat tests using synthetic

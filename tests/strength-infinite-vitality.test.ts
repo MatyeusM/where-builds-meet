@@ -9,7 +9,7 @@ it("Infinite Vitality starts on Fleeting Trace's final hit and dodges the second
     entry => entry.id === "stonesplitStrength/mixed-dummy-infinite-vitality-1-min",
   )!
   const bundle = buildPresetRotationBundle(
-    { pathId: fixture.pathId, ...fixture.fixture, rotation: fixture.rotation, skillOverrides: {} },
+    { pathId: fixture.pathId, ...fixture.fixture, rotation: fixture.rotation, skillOverrides: {}, previewId: null },
     fixture.fixture.build,
   )!
   const result = calculateRotationBaseline(bundle)

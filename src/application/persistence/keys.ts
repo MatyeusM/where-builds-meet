@@ -30,6 +30,7 @@ export const activeBuildStorageKey = "wwm-active-build-v1"
 export const characterProfileStorageKey = "wwm-character-profiles-v1"
 export const globalDebuffStorageKey = "wwm-global-debuffs-session-v1"
 export const customPercentileStorageKey = "wwm-simulation-percentiles-v1"
+export const previewSelectionStorageKey = "wwm-preview-selection-v1"
 
 export const applicationStorageKeys = new Set([
   localeStorageKey,
@@ -64,6 +65,7 @@ export const applicationStorageKeys = new Set([
   characterProfileStorageKey,
   globalDebuffStorageKey,
   customPercentileStorageKey,
+  previewSelectionStorageKey,
 ])
 
 export function isApplicationStorageKey(key: string) {

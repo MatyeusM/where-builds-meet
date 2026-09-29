@@ -20,11 +20,10 @@ import {
   setupConditionsFor,
 } from "./characterComposition"
 import type { CalculatorSettings, PathId } from "./contracts"
-import { martialArtDefinitions } from "./gameData/martialArts"
 import { typedPathDefinitions } from "./gameData/paths"
+import { combatDefinitionsFor, type PreviewId } from "./gameData/previews"
 import { rotationEventDefinitions } from "./gameData/rotationEffects"
 import { typedSystemStats, breakthroughProfile } from "./gameData/setup"
-import { defaultSkillMaps, dotDefinitions, effectDefinitions } from "./gameData/skills"
 import { defaultAttunementStats } from "./persistence/attunements"
 
 export type GraduationEnvironment = {
@@ -37,6 +36,7 @@ export type GraduationEnvironment = {
   script: string
   divinecraft: string
   skillOverrides: SkillOverrides
+  previewId: PreviewId | null
 }
 
 export type GraduationPresetEnvironment = GraduationEnvironment & { graduatedBuildIds: string[] }
@@ -57,6 +57,7 @@ export function graduationEnvironmentFingerprint(
     divinecraft: environment.divinecraft,
     graduatedBuildIds,
     skillOverrides: environment.skillOverrides,
+    previewId: environment.previewId,
   })
 }
 
@@ -88,6 +89,7 @@ export function buildPresetRotationBundle(
   const buildSetup = normalizeBuildSetup(build.setup)
   const equippedGear = calculateEquippedGearEffects(buildPresetInventory(build), weapons, false)
   const gearStatEffect: StatEffectContainer = { rawStat: equippedGear.stats }
+  const preview = combatDefinitionsFor(environment.previewId)
   const setupEffects = selectedSetupEffects(
     settings,
     gearStatEffect,
@@ -95,8 +97,14 @@ export function buildPresetRotationBundle(
     { food: environment.food, divinecraft: environment.divinecraft, script: environment.script },
     pathId,
     { divinecraftDamage: environment.rotation.divinecraftDamage },
+    preview,
   )
-  const innerWayRules = innerWayEffectRulesFor(buildSetup.innerWays, breakthroughProfile(settings).soloLevel, pathId)
+  const innerWayRules = innerWayEffectRulesFor(
+    buildSetup.innerWays,
+    breakthroughProfile(settings).soloLevel,
+    pathId,
+    preview,
+  )
   const innerWayConditions = innerWayConditionsFor(buildSetup.innerWays, undefined, pathId)
   const innerWayStatEffects = innerWayRules
     .filter(
@@ -117,9 +125,9 @@ export function buildPresetRotationBundle(
     weapons,
   )
   const definitions = resolveSkillCalculationDefinitions(
-    defaultSkillMaps,
-    effectDefinitions,
-    dotDefinitions,
+    preview.skillMaps,
+    preview.effectDefinitions,
+    preview.dotDefinitions,
     environment.skillOverrides,
   )
   const rotation = { ...environment.rotation, ping: resolvePing(environment.rotation.ping) }
@@ -139,7 +147,7 @@ export function buildPresetRotationBundle(
       setupEffects,
       weapons,
       martialArtState: Object.fromEntries(
-        weapons.map(martialArt => [martialArt, { weapon: martialArtDefinitions[martialArt].weapon }]),
+        weapons.map(martialArt => [martialArt, { weapon: preview.martialArtDefinitions[martialArt].weapon }]),
       ),
       initialBuffs: globalBuffTimelineEffects(environment.globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(environment.globalDebuffs),
