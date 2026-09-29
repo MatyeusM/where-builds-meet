@@ -25,6 +25,30 @@
       "totalDamage": 3554610.1983456817,
       "duration": 60
     },
+    "bamboocutDust/dust-dummy-1-min-100pc": {
+      "fixture": {
+        "build": "dust-fully-relayed-min",
+        "rotation": "dust-dummy-1-min-100pc",
+        "martialArts": ["everspring", "unfettered"],
+        "breakthrough": "17",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none"
+        }
+      },
+      "dps": 58899.95585191519,
+      "totalDamage": 3533997.3511149115,
+      "duration": 60
+    },
     "bamboocutKite/dummy-1-min-infinite-vitality": {
       "fixture": {
         "build": "kite-fully-relayed-min",

@@ -16,6 +16,7 @@ short explanation only when it prevents a likely misinterpretation.
 | Cumulative Inner Way tiers                            | `data/innerway/`                 |
 | Complete talent selection at each rank                | `data/martial-art/`              |
 | Resource defaults, caps, and universal event gains    | `data/system.json`               |
+| Cast-relative resource rate overrides                 | `endurance` on the skill record  |
 | Preset sequences, attachments, and encounter settings | `data/rotation/`                 |
 | Practice target names, types, and attack patterns     | `data/boss.json`                 |
 | Martial-art numeric IDs and persisted weapon IDs      | `data/official/profile-map.json` |
@@ -211,7 +212,8 @@ least that many stacks; `"max"` means its resolved maximum.
 `battleStarted` is true only at or after the fight-start anchor, so a rule can
 exclude prepull. Target debuffs and DOTs are already rejected during prepull; use
 this for a self effect that should only accumulate in-combat, such as a hit
-counter.
+counter. An action-level anchor opens the fight on its own resolved time, so an
+action sharing that instant with the anchored hit is already in combat.
 
 Numeric targets include `resource`, `distance`, `enemyCount`, `selfHPPercentage`,
 `targetHPPercentage`, `targetQiPercentage`, and `endurancePercentage`.
@@ -260,7 +262,7 @@ use `resolveAt: "skillStart"`.
 | `extend`                                        | Adds `duration` to an existing expiry; missing, expired, or permanent states are unchanged. Use `duration`, not `extension`.                                                                                                                                                               |
 | `trigger`                                       | Starts another skill at the event time without spending sequential cast time. The triggered skill's cooldown still applies. `sourceEffect` names a self effect whose application source must match the trigger row's source, preventing a delayed chain from attaching to a later refresh. |
 | `clearCD`                                       | Resets the named skill/application cooldown. Optional positive integer `charges` restores only that many spent skill uses; `seconds` instead reduces pending recovery timestamps by that duration, clamped to the current time. Do not combine `seconds` and `charges`.                    |
-| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`.                                                                                                                                                                                                          |
+| `setResource`, `addResource`, `consumeResource` | Replace, add, or subtract numeric resource `amount`; consumption accepts `"all"`. A consumption that actually reduces a resource with a `resourceSpendRegenDelay` also suppresses its regeneration for that delay.                                                                         |
 | `setHP`, `takeDamage`                           | Set absolute Self HP or subtract absolute incoming damage.                                                                                                                                                                                                                                 |
 | `setTargetHP`, `setQi`                          | Set target ratios. Qi reaching zero applies Exhausted; its expiry restores Qi through data.                                                                                                                                                                                                |
 | `emitEvent`                                     | Dispatches a named targeted accumulator check, not a general combat-event broadcast.                                                                                                                                                                                                       |
@@ -521,6 +523,11 @@ a resource, so `endurancePercentage` and `enduranceLost` resolve for every
 character. No authored skill currently spends Endurance, so `enduranceLost`
 reads 0 and low-Endurance conditions are inactive until costs exist.
 
+Endurance also regenerates at 10/s and can be spent. Regeneration and
+consumption are separate rates held over cast-relative windows, and a direct
+spend suppresses regeneration for `system.json.resourceSpendRegenDelay`. See
+[Endurance rates](#endurance-rates).
+
 `enduranceLost` is a net measure, not an accumulator. Cumulative spending has no
 general parameter: `row.resourceConsumption` is per-cast, and the final
 `timelineResourceSummary` carries gross totals. A mechanic that needs its own
@@ -661,11 +668,44 @@ and suppresses the single wave. Each wave repeats the parent's `Charged` and
 hit, and carries `SwordEnergy` because that is the skill tag the Nameless Sword
 talents match on.
 
-Timing is the one judgement here. The route markers are
-`timeReference: "attack animation"`, and `releaseCharge.threshold` is `1.2`, so
-markers are placed at `threshold + marker` from cast start and the cast time is
-`1.955`, the last marker, following the Piercing Dart precedent. Charge tier 1
-has no `timings` block at all, so its cast time stays 0.
+The cast is the charge: `castTime` is `1.2`, the `releaseCharge.threshold`, and
+the three waves are `subAction` components with no cast time of their own, so
+their markers land at `1.2 + marker` on the attack animation. The single wave
+lives on the parent at `1.4023076923076923`, which is past the cast end and so
+only survives because an action may occur after cast completion. Suppressing it
+needs `not Shield` **or** `not SwordMorphT0`, not a `not` over both: `not`
+accepts exactly one operand, so the negated conjunction has to be written as a
+disjunction. Charge tier 1 has no `timings` block at all, so its cast time stays 0.
+
+### Endurance rates
+
+Endurance regenerates at 10/s from `system.json.resourceRegeneration`. A skill
+holds rate overrides for windows measured from its own cast start:
+
+```json
+"endurance": {
+  "regeneration": { "rate": 0.001, "from": 0.2, "to": 2.05 },
+  "consumption": { "rate": 20, "from": 0.2, "to": 1.2 }
+}
+```
+
+`regeneration` replaces the base rate and `consumption` drains on top of it, so
+the two never merge into one net figure. `system.json.resourceSpendRegenDelay`
+suppresses regeneration for a fixed delay after a **direct** spend, which is a
+`consumeResource` action. A windowed consumption rate is not a direct spend and
+does not suppress anything. Suppression stops regeneration only; a windowed
+consumption rate keeps draining.
+
+The timeline splits each advance at every window boundary and every suppression
+deadline, so a rate change lands exactly where it is authored instead of being
+smeared across the gap. Both boundary kinds are event-aligned by construction:
+windows are cast-relative, and a spend happens at an event.
+
+Vagrant Sword's charge tier 2 is the only authored consumer. Its 0.2s opening
+pre-charge ends at 0.2, the charge drains 20/s until the charge finishes at 1.2,
+the 0.001/s override holds until 2.05, and the base 10/s returns afterwards.
+Sword Morph spends 20 more at release, and that direct spend is what suppresses
+the 10/s regeneration for the following 1.2 seconds.
 
 Two source gaps block the remaining mechanics:
 
@@ -708,9 +748,12 @@ without Flamelash remains an invalid state to investigate.
 
 ### Bamboocut Dust definitions
 
-Dust implements only the skills its default rotation casts. The rotation itself
-lives at `data/rotation/bamboocut-dust/dust-dummy-1-min.json` and is the subject
-of the DPS snapshot, so it is the reference rather than a separate draft.
+Dust implements only the skills its rotations cast. The rotations live at
+`data/rotation/bamboocut-dust/`, and each is the subject of its own DPS snapshot,
+so they are the reference rather than a separate draft. `dust-dummy-1-min` remains
+the path default; `dust-dummy-1-min-100pc` is the 100% Phantom Chime variant and
+anchors battle start on the four-hit release's first hit, which is why its opener
+break lands in combat.
 
 Unmeasured damage hits use **0 seconds**, as requested. Unmeasured buff
 applications use **cast end**, except user-confirmed applications at 0 and Soul
@@ -739,7 +782,9 @@ The second ramp's spacing is measured from the exhaust's expiry, so re-authoring
 the exhaust moves its steps twice: once by the exhaust's own shift and once by
 whatever change the first ramp's shape took. Shortening the four-hit release
 moved the whole downstream timeline 0.2209835277 s earlier, so the first ramp
-shifted by that much and the second by twice it.
+shifted by that much and the second by twice it. The 100% Phantom Chime variant
+places its own exhaust on the seventh forward hit of its second Scarlet Spin and
+stops there; it keeps the same two ramp gaps so the exhaust lands on that hit.
 
 Out of scope by user instruction: Fading Crimson, Tokens of Gratitude, Song of
 Tang HP drain, and Tenacity damage. These are exclusions rather than gaps, so

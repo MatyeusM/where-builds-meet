@@ -82,6 +82,15 @@ export type SkillRecord = {
    */
   editableCastTime?: EditableCastTimeOptions | boolean
   castTime?: number | SwitchValue
+  /**
+   * Resource rate overrides held for windows of this cast, measured from cast
+   * start. Regeneration replaces the base rate and consumption drains on top of
+   * it; a direct spend suspends regeneration without stopping consumption.
+   */
+  endurance?: {
+    regeneration?: { rate: number; from: number; to: number }
+    consumption?: { rate: number; from: number; to: number }
+  }
   cooldown?: number
   cooldownGroup?: string
   cooldownUses?: number
@@ -582,6 +591,8 @@ export type TimelineBuildInput = {
   initialDebuffs?: TrackedEffect[]
   initialResources?: ResourceState
   resourceRegeneration?: ResourceState
+  /** Seconds that a direct spend suppresses regeneration, per resource. */
+  resourceSpendRegenDelay?: ResourceState
   resourceMaximums?: ResourceState
   infiniteResources?: string[]
   resourceEvents?: ResourceEventRule[]
@@ -1596,6 +1607,21 @@ export function buildRotationTimeline(
       ([, rate]) => typeof rate === "number" && Number.isFinite(rate) && rate > 0,
     ),
   )
+  const resourceSpendRegenDelay = Object.fromEntries(
+    Object.entries(input.resourceSpendRegenDelay ?? {}).filter(
+      ([, delay]) => typeof delay === "number" && Number.isFinite(delay) && delay > 0,
+    ),
+  )
+  /** Absolute-time rate overrides contributed by casts currently in progress. */
+  const resourceRateWindows: Array<{
+    resource: string
+    from: number
+    to: number
+    regeneration?: number
+    consumption?: number
+  }> = []
+  /** Resource regeneration stays at zero until this time after a direct spend. */
+  const regenSuppressedUntil = new Map<string, number>()
   const resourceEventParameters = Object.fromEntries([...innerWayConditions].map(condition => [condition, true]))
   const resourceEventRules = (input.resourceEvents ?? [])
     .map(rule =>
@@ -1673,6 +1699,11 @@ export function buildRotationTimeline(
       resources[action.value],
       action.type === "consumeResource" ? "consume" : "regenerate",
     )
+    // A direct spend suppresses regeneration for the configured delay. Only the
+    // spend matters here: a windowed consumption rate drains on its own schedule.
+    const spendDelay = resourceSpendRegenDelay[action.value]
+    if (typeof spendDelay === "number" && resources[action.value] < current)
+      regenSuppressedUntil.set(action.value, currentTimelineTime + spendDelay)
     return true
   }
   // Pre-fight actions can change resources, but passive regeneration begins only
@@ -1690,19 +1721,69 @@ export function buildRotationTimeline(
     if (typeof maximum !== "number" || maximum <= 0) return 0
     return Math.max(0, maximum - (resources.Endurance ?? 0))
   }
+  /** Register a cast's rate overrides as absolute-time windows. */
+  const registerResourceRateWindows = (skill: SkillRecord | undefined, startTime: number) => {
+    const windows = skill?.endurance
+    if (!windows) return
+    for (const [field, resource] of [
+      ["regeneration", "Endurance"],
+      ["consumption", "Endurance"],
+    ] as const) {
+      const window = field === "regeneration" ? windows.regeneration : windows.consumption
+      if (!window) continue
+      const rate = window.rate
+      if (typeof rate !== "number" || !Number.isFinite(rate) || window.to <= window.from) continue
+      resourceRateWindows.push({
+        resource,
+        from: startTime + window.from,
+        to: startTime + window.to,
+        ...(field === "regeneration" ? { regeneration: rate } : { consumption: rate }),
+      })
+    }
+  }
   const regenerateResources = (time: number) => {
-    const elapsed = Math.max(0, time - lastResourceRegenerationTime)
-    if (elapsed > 0) {
-      resources = Object.entries(resourceRegeneration).reduce(
-        (next, [name, rate]) => {
-          if (infiniteResources.has(name)) return next
-          const before = next[name] ?? 0
-          const after = clampResource(name, before + rate * elapsed)
-          recordResourceChange(name, before, after, "regenerate")
-          return Object.assign(next, { [name]: after })
-        },
-        Object.assign({}, resources),
-      )
+    const from = lastResourceRegenerationTime
+    if (from !== Infinity && time > from) {
+      // Split the span at every window boundary so a rate change lands exactly
+      // where it is authored rather than being smeared across the gap. A spend's
+      // suppression deadline is an event time, so it splits too and the
+      // suppression test below is exact within each piece.
+      const boundaries = new Set<number>()
+      for (const window of resourceRateWindows) {
+        if (window.from > from && window.from < time) boundaries.add(window.from)
+        if (window.to > from && window.to < time) boundaries.add(window.to)
+      }
+      for (const deadline of regenSuppressedUntil.values())
+        if (deadline > from && deadline < time) boundaries.add(deadline)
+      const names = new Set([
+        ...Object.keys(resourceRegeneration),
+        ...resourceRateWindows.map(window => window.resource),
+      ])
+      const stops = [from, ...[...boundaries].toSorted((a, b) => a - b), time]
+      for (let index = 0; index < stops.length - 1; index += 1) {
+        const spanStart = stops[index]
+        const elapsed = stops[index + 1] - spanStart
+        if (elapsed <= 0) continue
+        resources = [...names].reduce(
+          (next, name) => {
+            if (infiniteResources.has(name)) return next
+            const active = resourceRateWindows.filter(
+              window => window.resource === name && window.from <= spanStart && spanStart < window.to,
+            )
+            const override = active.findLast(window => window.regeneration !== undefined)?.regeneration
+            const drain = active.reduce((total, window) => total + (window.consumption ?? 0), 0)
+            const rate = override ?? resourceRegeneration[name] ?? 0
+            const suppressed = (regenSuppressedUntil.get(name) ?? Number.NEGATIVE_INFINITY) > spanStart
+            if (rate <= 0 && drain <= 0) return next
+            const before = next[name] ?? 0
+            const after = clampResource(name, before + ((suppressed ? 0 : rate) - drain) * elapsed)
+            if (after > before) recordResourceChange(name, before, after, "regenerate")
+            if (after < before) recordResourceChange(name, before, after, "consume")
+            return Object.assign(next, { [name]: after })
+          },
+          Object.assign({}, resources),
+        )
+      }
     }
     lastResourceRegenerationTime = Math.max(lastResourceRegenerationTime, time)
   }
@@ -1759,9 +1840,11 @@ export function buildRotationTimeline(
   // target before it: a prepull hit does not apply a debuff or DOT. The anchored
   // row is created in step order, so while it is still missing the event is
   // necessarily prepull, and once it exists its own start time is the boundary.
-  // Prepull is a question of rotation position, not of timestamps. A step before
-  // the anchor is prepull, and so are the anchored step's own actions ahead of the
-  // anchored action. A generated row inherits its source row's position.
+  // Prepull is a question of rotation position, not of timestamps: a step before
+  // the anchor is prepull in full. Inside the anchored step the boundary is the
+  // anchored action's own time, so an action ordered ahead of it still counts when
+  // it resolves at that same instant. A generated row inherits its source row's
+  // position.
   const rotationIndexFor = (row: TimelineRow): number | undefined => {
     let current: TimelineRow | undefined = row
     for (let depth = 0; current && depth < 16; depth++) {
@@ -1770,14 +1853,64 @@ export function buildRotationTimeline(
     }
     return undefined
   }
+  /**
+   * The instant the fight starts, once the anchored row exists. The anchor names an
+   * action, but the boundary is its time: an action ordered before it that resolves
+   * at the same instant belongs to the anchored hit rather than to prepull. The
+   * requirement path reads this per action, so the row is searched once and the
+   * resolved instant is cached against the row data that produces it.
+   */
+  let anchoredRow: TimelineRow | undefined
+  let anchoredRowSearched = false
+  let anchoredInstant: { startTime: number; actions: readonly EditableObject[]; time: number } | undefined
+  const anchoredActionTime = (): number | undefined => {
+    if (!hasUsableStart) return undefined
+    if (!anchoredRowSearched) {
+      anchoredRowSearched = true
+      anchoredRow = rows.find(candidate => candidate.rotationIndex === startStepIndex)
+    }
+    const anchored = anchoredRow
+    if (!anchored) return undefined
+    if (startAction === undefined) return anchored.startTime
+    const action = anchored.actions[startAction]
+    if (!action) return undefined
+    if (anchoredInstant?.startTime !== anchored.startTime || anchoredInstant.actions !== anchored.actions)
+      anchoredInstant = {
+        startTime: anchored.startTime,
+        actions: anchored.actions,
+        time: anchored.startTime + Number(action.time ?? 0),
+      }
+    return anchoredInstant.time
+  }
+  /**
+   * Whether a queued event opens the fight. The anchor names an action, but the
+   * boundary is that action's resolved time: an action ordered ahead of it that
+   * resolves at the same instant belongs to the anchored hit rather than to prepull,
+   * so the fight opens before any of them runs. Readiness and cast-start events are
+   * not that instant; a step-level anchor opens on the anchored row's start event.
+   */
+  const opensBattleStart = (event: TimelineEvent | undefined): boolean => {
+    if (!hasUsableStart || !event || event.row.rotationIndex !== startStepIndex) return false
+    if (startAction === undefined) return event.kind === "start"
+    if (event.kind !== "action") return false
+    if (event.actionIndex === startAction) return true
+    if ((event.actionIndex ?? 0) > startAction) return false
+    const anchoredTime = anchoredActionTime()
+    return anchoredTime !== undefined && event.time >= anchoredTime
+  }
   const targetAcceptsApplications = (row: TimelineRow | undefined, actionIndex?: number) => {
     if (!hasUsableStart) return true
     const index = row ? rotationIndexFor(row) : undefined
     if (index === undefined || index > startStepIndex) return true
     if (index < startStepIndex) return false
     // The anchored step: only actions at or after the anchored one are in-combat.
-    if (startAction === undefined) return true
-    return actionIndex === undefined || actionIndex >= startAction
+    if (startAction === undefined || actionIndex === undefined || row === undefined) return true
+    if (actionIndex >= startAction) return true
+    const anchoredTime = anchoredActionTime()
+    const action = row.actions[actionIndex]
+    return (
+      anchoredTime !== undefined && action !== undefined && row.startTime + Number(action.time ?? 0) >= anchoredTime
+    )
   }
   const requirementState = (): RequirementState => ({
     enemyCount: normalizeEnemyCount(rotation.enemyCount),
@@ -2677,14 +2810,10 @@ export function buildRotationTimeline(
     const anchorEvent = events.peek()
     if (
       battleStartTime < 0 &&
-      hasUsableStart &&
-      anchorEvent?.row.rotationIndex === startStepIndex &&
-      (startAction === undefined
-        ? anchorEvent.kind === "start"
-        : anchorEvent.kind === "action" && anchorEvent.actionIndex === startAction) &&
-      anchorEvent.time <= (nextTimedEvent()?.time ?? Infinity)
+      opensBattleStart(anchorEvent) &&
+      (anchorEvent?.time ?? Infinity) <= (nextTimedEvent()?.time ?? Infinity)
     ) {
-      startBattle(anchorEvent.time)
+      startBattle(anchorEvent!.time)
       continue
     }
     if (pendingCharge) {
@@ -3084,6 +3213,7 @@ export function buildRotationTimeline(
     if (event.kind === "start") {
       const skillId = event.row.step.type === "skill" ? (event.row.step.skill ?? "") : ""
       const skillModifiers = event.row.step.type === "skill" ? modifiersFor(event.row.skill, event.time) : []
+      registerResourceRateWindows(event.row.skill, event.time)
       const cooldownDuration = event.row.skill ? skillCooldownDuration(event.row.skill, skillModifiers) : undefined
       const cooldownUses = Math.max(1, Math.floor(event.row.skill?.cooldownUses ?? 1))
       const cooldownKey = skillCooldownKey(skillId, event.row.skill)

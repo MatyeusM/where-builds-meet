@@ -21,6 +21,7 @@ describe("preset Qi event attachments", () => {
     "/data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json",
     "/data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json",
     "/data/rotation/bamboocut-dust/dust-dummy-1-min.json",
+    "/data/rotation/bamboocut-dust/dust-dummy-1-min-100pc.json",
   ]
   it.each(rotationPaths)("resolves authored Qi attachments using production inputs: %s", async rotationPath => {
     const rotation = (await probeLoad(rotationPath)).default
