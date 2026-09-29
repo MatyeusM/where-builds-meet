@@ -1493,9 +1493,17 @@ export function RotationEditorTab({
       ),
       initialBuffs: globalBuffTimelineEffects(globalDebuffs),
       initialDebuffs: globalDebuffTimelineEffects(globalDebuffs),
-      initialResources: { ...typedSystemStats.initialResources, Vitality: displayedCharacterStats.maxVitality },
+      initialResources: {
+        ...typedSystemStats.initialResources,
+        Vitality: displayedCharacterStats.maxVitality,
+        Endurance: displayedCharacterStats.maxEndurance,
+      },
       resourceRegeneration: { HeavensWill: displayedCharacterStats.heavensWillRegen },
-      resourceMaximums: { ...typedSystemStats.resourceMaximums, Vitality: displayedCharacterStats.maxVitality },
+      resourceMaximums: {
+        ...typedSystemStats.resourceMaximums,
+        Vitality: displayedCharacterStats.maxVitality,
+        Endurance: displayedCharacterStats.maxEndurance,
+      },
       resourceEvents: typedSystemStats.resourceEvents,
       maxHP: displayedCharacterStats.maxHp,
     }

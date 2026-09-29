@@ -2,7 +2,7 @@
   "bellstrikeSplendor": {
     "name": "Splendor",
     "tag": "BellstrikeSplendor",
-    "status": "plannerOnly",
+    "status": "wip",
     "buildGroup": "bellstrike-splendor",
     "defaultBuild": "empty",
     "graduated": ["empty"],

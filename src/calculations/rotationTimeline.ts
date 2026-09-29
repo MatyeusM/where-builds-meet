@@ -265,6 +265,8 @@ export type TimelineRow = {
   targetHPRatio: number
   targetQiRatio: number
   resources: ResourceState
+  /** Current Endurance below its maximum, for the `enduranceLost` damage parameter. */
+  enduranceLost: number
   /** Gross resource costs from accepted actions on this resolved row. */
   resourceConsumption?: ResourceState
   resourceRanges?: ResourceRangeState
@@ -290,6 +292,7 @@ export type TimelineRow = {
       targetHPRatio: number
       targetQiRatio: number
       resources: ResourceState
+      enduranceLost?: number
       resourceRanges?: ResourceRangeState
       currentMartialArt?: WeaponId
       currentWeapon?: WeaponFamily
@@ -612,6 +615,8 @@ export type RequirementState = {
   selfHPPercentage?: number
   targetHPPercentage?: number
   targetQiPercentage?: number
+  /** Endurance as a percentage of the current maximum; absent while Endurance is not a tracked resource. */
+  endurancePercentage?: number
   skillCooldowns?: Record<string, number>
   skillCooldownGroups?: Record<string, string>
   currentTime?: number
@@ -867,7 +872,8 @@ export function requirementsPass(
       item.target === "enemyCount" ||
       item.target === "selfHPPercentage" ||
       item.target === "targetHPPercentage" ||
-      item.target === "targetQiPercentage"
+      item.target === "targetQiPercentage" ||
+      item.target === "endurancePercentage"
     ) {
       let current = 0
       switch (item.target) {
@@ -889,6 +895,12 @@ export function requirementsPass(
         case "targetQiPercentage":
           current = state.targetQiPercentage ?? 100
           break
+        case "endurancePercentage":
+          // An untracked Endurance has no meaningful percentage, so the condition
+          // stays unsatisfied rather than defaulting to a full meter.
+          if (state.endurancePercentage === undefined) return false
+          current = state.endurancePercentage
+          break
       }
       let comparedValue: number | undefined
       if (typeof item.amount === "number" && Number.isFinite(item.amount)) comparedValue = item.amount
@@ -902,6 +914,9 @@ export function requirementsPass(
             break
           case "targetQiPercentage":
             comparedValue = state.targetQiPercentage ?? 100
+            break
+          case "endurancePercentage":
+            comparedValue = state.endurancePercentage
             break
         }
       }
@@ -1182,6 +1197,7 @@ export function buildRotationTimeline(
       targetHPRatio: 1,
       targetQiRatio: 1,
       resources: {},
+      enduranceLost: 0,
       effectiveCastTime: castTime,
       skill,
       actions,
@@ -1662,6 +1678,18 @@ export function buildRotationTimeline(
   // Pre-fight actions can change resources, but passive regeneration begins only
   // when the live event loop detects battle start.
   let lastResourceRegenerationTime = Infinity
+  /** Current Endurance against its own maximum, for the `endurancePercentage` requirement target. */
+  const endurancePercentage = () => {
+    const maximum = resourceMaximums.Endurance
+    if (typeof maximum !== "number" || maximum <= 0) return undefined
+    return ((resources.Endurance ?? 0) / maximum) * 100
+  }
+  /** Current Endurance below its maximum. Recovered Endurance counts as un-lost again. */
+  const enduranceLost = () => {
+    const maximum = resourceMaximums.Endurance
+    if (typeof maximum !== "number" || maximum <= 0) return 0
+    return Math.max(0, maximum - (resources.Endurance ?? 0))
+  }
   const regenerateResources = (time: number) => {
     const elapsed = Math.max(0, time - lastResourceRegenerationTime)
     if (elapsed > 0) {
@@ -1751,14 +1779,13 @@ export function buildRotationTimeline(
     if (startAction === undefined) return true
     return actionIndex === undefined || actionIndex >= startAction
   }
-  // The row and action index currently resolving, used by the battle-start gate.
-  let requirementRow: () => [TimelineRow | undefined, number | undefined] = () => [undefined, undefined]
   const requirementState = (): RequirementState => ({
     enemyCount: normalizeEnemyCount(rotation.enemyCount),
     distance,
     selfHPPercentage: currentHPRatio * 100,
     targetHPPercentage: targetHPRatio * 100,
     targetQiPercentage: targetQiRatio * 100,
+    endurancePercentage: endurancePercentage(),
     skillCooldowns: cooldowns,
     skillCooldownGroups,
     currentTime: currentTimelineTime,
@@ -1768,6 +1795,8 @@ export function buildRotationTimeline(
     battleStarted: targetAcceptsApplications(requirementRow()[0], requirementRow()[1]),
     ...responseContext,
   })
+  // The row and action index currently resolving, used by the battle-start gate.
+  let requirementRow: () => [TimelineRow | undefined, number | undefined] = () => [undefined, undefined]
   const applicationDuration = (
     duration: number | undefined,
     target: unknown,
@@ -2126,6 +2155,7 @@ export function buildRotationTimeline(
         targetHPRatio,
         targetQiRatio,
         resources: { ...resources },
+        enduranceLost: enduranceLost(),
         currentMartialArt,
         currentWeapon,
         effectiveCastTime: 0,
@@ -2273,6 +2303,7 @@ export function buildRotationTimeline(
       targetHPRatio,
       targetQiRatio,
       resources: { ...resources },
+      enduranceLost: enduranceLost(),
       currentMartialArt,
       currentWeapon,
       effectiveCastTime: 0,
@@ -2468,6 +2499,7 @@ export function buildRotationTimeline(
           targetHPRatio,
           targetQiRatio,
           resources: { ...resources },
+          enduranceLost: enduranceLost(),
           currentMartialArt,
           currentWeapon,
           buffs,
@@ -3181,6 +3213,7 @@ export function buildRotationTimeline(
         targetHPRatio,
         targetQiRatio,
         resources: { ...resources },
+        enduranceLost: enduranceLost(),
         currentMartialArt: requirementState().currentMartialArt,
         currentWeapon: requirementState().currentWeapon,
         unconditionalDamageEffects,
@@ -3340,6 +3373,7 @@ export function buildRotationTimeline(
         targetHPRatio,
         targetQiRatio,
         resources: { ...resources },
+        enduranceLost: enduranceLost(),
         currentMartialArt,
         currentWeapon,
         effectiveCastTime: resolveSkillCastTime(triggeredSkill, requirementState()),

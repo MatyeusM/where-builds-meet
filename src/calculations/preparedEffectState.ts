@@ -19,6 +19,7 @@ export function createPreparedEffectState(requirements: unknown[]) {
       case "selfHPPercentage":
       case "targetHPPercentage":
       case "targetQiPercentage":
+      case "endurancePercentage":
         if (!numericKeys.has(JSON.stringify(condition))) {
           numericKeys.add(JSON.stringify(condition))
           numericRequirements.push(condition)

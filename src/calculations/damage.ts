@@ -125,6 +125,8 @@ export type DamageContext = {
   distance?: number
   currentHPRatio?: number
   targetHPRatio?: number
+  /** Current Endurance below its maximum, exposed to the `enduranceLost` dynamic value. */
+  enduranceLost?: number
   isDot?: boolean
   expectedEffects?: Array<Array<{ probability: number; effects: Record<string, unknown>[] }>>
 }
@@ -194,6 +196,7 @@ function calculateDamageBreakdownInternal(
       missingHPPercentage: (1 - (context.currentHPRatio ?? 1)) * 100,
       targetHPPercentage: (context.targetHPRatio ?? DEFAULT_TARGET_HP_RATIO) * 100,
       missingTargetHPPercentage: (1 - (context.targetHPRatio ?? DEFAULT_TARGET_HP_RATIO)) * 100,
+      enduranceLost: context.enduranceLost,
     }
     const multiplied = resolveMultiplyValue(value, dynamicParameters)
     if (multiplied !== undefined) {

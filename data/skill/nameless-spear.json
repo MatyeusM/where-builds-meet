@@ -1,0 +1,15 @@
+{
+  "QiankunsLock": {
+    "name": "Qiankun's Lock",
+    "shortName": "Spear Q",
+    "castTime": 0,
+    "action": [
+      { "type": "damage", "phyCoef": 0.57317, "attrCoef": 0.57317, "phyBonus": 160, "attrBonus": 87, "time": 0 },
+      { "type": "apply", "target": "self", "value": "EndlessGale", "stack": 1, "reapply": true, "time": 0 }
+    ],
+    "modifier": [],
+    "tags": ["DirectDamage", "MartialArts", "MartialArt", "Spear", "NamelessSpear", "QiankunsLock"],
+    "martialArt": "namelessSpear",
+    "weapon": "Spear"
+  }
+}

@@ -208,20 +208,29 @@ works against a boss, because that would exclude `Dummy` and `DummyAttack`.
 Express those unconditionally, as `vsBossDmg` is. Tracked-effect `stack` means at
 least that many stacks; `"max"` means its resolved maximum.
 
+`battleStarted` is true only at or after the fight-start anchor, so a rule can
+exclude prepull. Target debuffs and DOTs are already rejected during prepull; use
+this for a self effect that should only accumulate in-combat, such as a hit
+counter.
+
 Numeric targets include `resource`, `distance`, `enemyCount`, `selfHPPercentage`,
-`targetHPPercentage`, and `targetQiPercentage`. Comparisons support `>=`, `>`,
-`<=`, `<`, `==`, and `!=`. Use `amount` for a constant or `compareTo` for another
-numeric runtime state. HP/Qi percentage parameters use percentage points,
-whereas stored HP/Qi ratios use 0–1.
+`targetHPPercentage`, `targetQiPercentage`, and `endurancePercentage`.
+Comparisons support `>=`, `>`, `<=`, `<`, `==`, and `!=`. Use `amount` for a
+constant or `compareTo` for another numeric runtime state. HP/Qi percentage
+parameters use percentage points, whereas stored HP/Qi ratios use 0–1.
+`endurancePercentage` is current Endurance against its own maximum; it is absent
+while Endurance has no tracked maximum, and an absent value never satisfies a
+comparison.
 
 Supported dynamic-value contracts include:
 
-| Function   | Contract                                                                                                                                               |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `segment`  | `param1` is the input, `param2` the ordered thresholds, `param3` the results; results have one more entry than thresholds.                             |
-| `switch`   | `param1` selects a key in `param2`; `fallback` covers initial expansion or an unmatched key. Tier/setup conditions can supply boolean keys.            |
-| `multiply` | Multiply parameter `param1` by scalar `param2`; numeric strings are accepted.                                                                          |
-| `byStack`  | `param1` names the tracked effect, `param2` is the per-stack amount, and `target` defaults to `self`. In a modifier, the value is frozen for the cast. |
+| Function                     | Contract                                                                                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `segment`                    | `param1` is the input, `param2` the ordered thresholds, `param3` the results; results have one more entry than thresholds.                                                                              |
+| `switch`                     | `param1` selects a key in `param2`; `fallback` covers initial expansion or an unmatched key. Tier/setup conditions can supply boolean keys.                                                             |
+| `multiply`                   | Multiply parameter `param1` by scalar `param2`; numeric strings are accepted.                                                                                                                           |
+| `byStack`                    | `param1` names the tracked effect, `param2` is the per-stack amount, and `target` defaults to `self`. In a modifier, the value is frozen for the cast.                                                  |
+| `segment` on `enduranceLost` | `enduranceLost` is Endurance **currently below its maximum**, snapshotted per damage action: at 50 of 120 it reads 70. Recovered Endurance counts as un-lost again. It is not a running total of spend. |
 
 `segment.mode` is `LowerBoundInclusive` by default: equality enters the next
 interval (`[lower, upper)`). `UpperBoundInclusive` keeps equality in the preceding
@@ -506,6 +515,18 @@ at battle start, not prepull. `infiniteResources` skips gains, costs, and regen
 for those resources. Universal gains belong in `system.json.resourceEvents`.
 Apply direct Mystic costs once; triggered follow-ups must not pay them again.
 
+Vitality and Endurance both seed from their own maximum stat at full, in the
+preset bundle and the rotation editor. Endurance is therefore always present as
+a resource, so `endurancePercentage` and `enduranceLost` resolve for every
+character. No authored skill currently spends Endurance, so `enduranceLost`
+reads 0 and low-Endurance conditions are inactive until costs exist.
+
+`enduranceLost` is a net measure, not an accumulator. Cumulative spending has no
+general parameter: `row.resourceConsumption` is per-cast, and the final
+`timelineResourceSummary` carries gross totals. A mechanic that needs its own
+running threshold, such as Wildfire Spark T3's "after consuming a total of 50
+Endurance", needs a dedicated accumulator rather than either of those.
+
 Skill steps and explicit Delays are sequential. Attached events are stored
 immediately before their anchor and reference zero-based action indexes or
 `"start"`; optional `trigger` selects the declared trigger-action ordinal.
@@ -568,8 +589,11 @@ below keeps cross-cutting blockers and outstanding skill evidence.
 
 ### Model limitations
 
-- Qi damage bonuses are data-only. Endurance percentage/loss is not simulated,
-  leaving dependent talent conditions and Battle Anthem T6 inactive.
+- Qi damage bonuses are data-only. Endurance is a tracked resource seeded from
+  `maxEndurance`, so `endurancePercentage` and `enduranceLost` both resolve, but
+  no authored skill spends Endurance yet. Those effects therefore read zero:
+  Battle Anthem T6, and every Wildfire Spark tier. Wildfire Spark T3 additionally
+  needs a dedicated cumulative accumulator, which is not a general parameter.
 - Damage-based HP drain/leech remains unmodeled, including Insightful Strike
   and Wind attacks. Song of Tang HP drain is intentionally ignored by user instruction.
 - Blade Momentum and Battle Will retain confirmed starting values but no
@@ -599,6 +623,80 @@ below keeps cross-cutting blockers and outstanding skill evidence.
   Qi bonuses do not affect calculated HP damage.
 - Rodent's raw-distance unit mapping needs verification. Preserve the confirmed
   PvE route while investigating it.
+
+### Bellstrike Splendor
+
+Splendor is `wip`, not `available`: it has talent, Inner Way, attunement, and
+skill data, but no build, rotation, or DPS snapshot. Its path status is not
+proof that any timing is verified.
+
+Only the skills the Inner Ways reference are authored, at the user's direction:
+
+| Skill                  | ID        | Scope                                                       |
+| ---------------------- | --------- | ----------------------------------------------------------- |
+| `QiankunsLock`         | 20102101  | Nameless Spear Martial Art Skill; applies Endless Gale      |
+| `VagrantSword`         | 20201102  | Nameless Sword charge tier 1; Charged **and Heavy**         |
+| `VagrantSword2`        | 202011021 | Nameless Sword charge tier 2; single or three-wave release  |
+| `SwordEnergy1`–`3`     | —         | Charge tier 2 sword-energy waves                            |
+| `DauntingStrikeCancel` | 20201101  | Nameless Sword Martial Art Skill, zero cast time, no damage |
+
+The remaining Sword and Spear actions are deliberately absent. Author them when
+a Splendor rotation exists, not before.
+
+### Vagrant Sword charge tiers
+
+The export describes charge tier 2 (`202011021`) as two mutually exclusive
+"Full charge" routes, and `normalDescriptions.terms` supplies each wave's
+multiplier against the tier-2 baseline of `3.2664` / `904` / `493`:
+
+| Route         | Waves | Multipliers           | Markers (attack animation) |
+| ------------- | ----- | --------------------- | -------------------------- |
+| `single wave` | 1     | `1`                   | `0.2023076923076923`       |
+| `three waves` | 3     | `0.4`, `0.48`, `0.56` | `0.101`, `0.267`, `0.755`  |
+
+The waves **replace** each other rather than stacking, so the release selects
+one route: Sword Morph T0 with the Qi shield active takes the three-wave route
+and suppresses the single wave. Each wave repeats the parent's `Charged` and
+`Heavy` tags so attunement matching resolves on the component that deals the
+hit, and carries `SwordEnergy` because that is the skill tag the Nameless Sword
+talents match on.
+
+Timing is the one judgement here. The route markers are
+`timeReference: "attack animation"`, and `releaseCharge.threshold` is `1.2`, so
+markers are placed at `threshold + marker` from cast start and the cast time is
+`1.955`, the last marker, following the Piercing Dart precedent. Charge tier 1
+has no `timings` block at all, so its cast time stays 0.
+
+Two source gaps block the remaining mechanics:
+
+- **No Endurance costs exist anywhere in the export.** Wildfire Spark and
+  Battle Anthem T6 scale off consumed Endurance, so they resolve to zero, and
+  nothing can test a low-Endurance state. Supply costs before treating those
+  tiers as verified.
+- Sword Morph's per-tier additions cannot be evaluated. T1 and T4 relax the
+  trigger with being out of combat or a five-second window after Shadow Step's
+  sword energy, neither of which is a modelled state. T3 needs the third wave
+  to be a guaranteed Affinity hit and there is no `GuaranteedAffinity`
+  equivalent to `GuaranteedCrit`. T6's Energy Surge needs a cooldown reduced by
+  a first-hit count. Only T0's release route and T5's Direct Affinity Rate are
+  live; T0's extra-Endurance damage scaling also waits on costs.
+
+### Endless Gale naming
+
+The export renders one buff under two names: `Endless Gale` in the Nameless
+Spear talent and Mountain's Might T0, and `Long Wind` in Mountain's Might T4. The
+correct name is **Endless Gale**, it is the buff Qiankun's Lock applies, and the
+user confirmed `Long Wind` is a mistranslation of that same buff rather than a
+second effect. Store it as `EndlessGale` only; do not add a `LongWind` alias. T4
+is therefore reachable and grants 3% Direct Affinity Rate while it is active —
+the source splits that into 1.5% plus 1.5% against bosses, and the boss role is
+implicit because both dummies count as a boss.
+
+Mountain's Might T1's Qi Imbalance rides on the no-op `DauntingStrike [Cancel]`
+rather than a trigger, because a trigger needs a damage action and the cancel
+variant deliberately deals none. This matches the existing QQ pattern, where
+skill actions carry `requirement: [{ target: "self", value: "<InnerWay>T<n>" }]`
+and the Inner Way tier stays an empty condition key.
 
 ### Wind dummy rotation behavior
 

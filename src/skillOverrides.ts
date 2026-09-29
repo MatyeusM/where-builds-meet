@@ -17,6 +17,8 @@ export type SkillCategory =
   | "Mortal"
   | "Everspring"
   | "Unfettered"
+  | "NamelessSword"
+  | "NamelessSpear"
   | "Mystic"
   | "General"
   | "Mechanism"

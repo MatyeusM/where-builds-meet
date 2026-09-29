@@ -2,6 +2,7 @@ import bamboocutDraughtBuffs from "../../../data/buff/bamboocut-draught.json"
 import bamboocutDustBuffs from "../../../data/buff/bamboocut-dust.json"
 import bamboocutKiteBuffs from "../../../data/buff/bamboocut-kite.json"
 import bamboocutWindBuffs from "../../../data/buff/bamboocut-wind.json"
+import bellstrikeSplendorBuffs from "../../../data/buff/bellstrike-splendor.json"
 import bellstrikeUmbraBuffs from "../../../data/buff/bellstrike-umbra.json"
 import generalBuffs from "../../../data/buff/general.json"
 import mechanismBuffs from "../../../data/buff/mechanism.json"
@@ -30,6 +31,8 @@ import infernalSkills from "../../../data/skill/infernal-twinblades.json"
 import mechanismSkills from "../../../data/skill/mechanism.json"
 import mortalSkills from "../../../data/skill/mortal-rope-dart.json"
 import mysticSkills from "../../../data/skill/mystic.json"
+import namelessSpearSkills from "../../../data/skill/nameless-spear.json"
+import namelessSwordSkills from "../../../data/skill/nameless-sword.json"
 import panaceaSkills from "../../../data/skill/panacea-fan.json"
 import phalanxbaneSkills from "../../../data/skill/phalanxbane-blade.json"
 import skygraspSkills from "../../../data/skill/skygrasp-rope-dart.json"
@@ -55,6 +58,8 @@ export const defaultSkillMaps: Record<SkillCategory, SkillMap> = {
   Mortal: mortalSkills as SkillMap,
   Everspring: everspringSkills as SkillMap,
   Unfettered: unfetteredSkills as SkillMap,
+  NamelessSword: namelessSwordSkills as SkillMap,
+  NamelessSpear: namelessSpearSkills as SkillMap,
   Mystic: mysticSkills as SkillMap,
   General: generalSkills as SkillMap,
   Mechanism: mechanismSkills as SkillMap,
@@ -72,6 +77,7 @@ export const defaultEditorMaps: Record<EditorCategory, SkillMap> = {
       ...bamboocutDustBuffs,
       ...bamboocutKiteBuffs,
       ...silkbindDelugeBuffs,
+      ...bellstrikeSplendorBuffs,
       ...bellstrikeUmbraBuffs,
       ...mechanismBuffs,
     } as Record<string, EffectDefinition>).filter(([, definition]) => !definition.global),
@@ -103,6 +109,8 @@ export const skillCategoryByWeapon: Partial<Record<WeaponId, SkillCategory>> = {
   mortalRopeDart: "Mortal",
   everspring: "Everspring",
   unfettered: "Unfettered",
+  namelessSword: "NamelessSword",
+  namelessSpear: "NamelessSpear",
 }
 export const allSkillDefinitions = Object.assign({}, ...Object.values(defaultSkillMaps)) as SkillMap
 export const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
@@ -118,6 +126,8 @@ export const skillDataNamespaceByCategory: Record<SkillCategory, string> = {
   Mortal: "mortalRopeDart",
   Everspring: "everspringUmbrella",
   Unfettered: "unfetteredRopeDart",
+  NamelessSword: "namelessSword",
+  NamelessSpear: "namelessSpear",
   Mystic: "mystic",
   General: "general",
   Mechanism: "mechanism",

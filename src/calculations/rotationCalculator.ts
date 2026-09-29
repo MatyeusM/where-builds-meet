@@ -1591,6 +1591,7 @@ function createTimelineEntryBuilder(
       targetHPRatio: row.targetHPRatio,
       targetQiRatio: row.targetQiRatio,
       resources: row.resources,
+      enduranceLost: row.enduranceLost,
       unconditionalDamageEffects: row.unconditionalDamageEffects,
     }
     const buffs = trackedEffectMetadata(actionState.buffs).self
@@ -1747,6 +1748,7 @@ function createTimelineEntryBuilder(
       distance: actionState.distance,
       currentHPRatio: actionState.currentHPRatio,
       targetHPRatio: actionState.targetHPRatio,
+      enduranceLost: actionState.enduranceLost ?? row.enduranceLost,
       isDot: row.kind === "dot",
       expectedEffects: "expectedEffects" in actionState ? actionState.expectedEffects : undefined,
     }
