@@ -1557,7 +1557,23 @@ pipeline to measure, but it keeps nothing but the numbers it is weighed by: the
 worker returns DPS, HPS and total damage and nothing else, so the megabytes of a
 timeline are never copied back to the main thread for a figure that is only ever
 compared. A graduated preset is read this way to be weighed against the best
-graduated preset, and a build against the active one.
+graduated preset, a build against the active one, and a gear item against the item
+the same slot already has equipped.
+
+That last one measures a build whose loadout names a different item in one slot.
+It is a full reading rather than a comparison variant because a swap re-resolves the
+sheet, including the armour set tiers whose four points the swapped piece competes
+for, and a variant that only patched the stats would be measuring a sheet the game
+cannot produce. The swap is written the way equipping an item is written, so the
+predicted difference is the difference clicking Equip reaches. Because a reading is
+a whole rotation, the inventory asks only for the cards a reader can see: each card
+observes itself against the viewport and reports when it is on screen, and the set of
+on-screen candidates bounds what opening a slot costs. A candidate that scrolls away
+stops being asked for but is not recalled if it is already running, because two cards
+can resolve to the same measurement and cancelling on un-observe would tear down a
+reading something else is waiting for. Readings are held in the dozens, which is enough to cover
+a slot's candidates and the builds the list shows, and which the bound evicts in insertion order
+once a reader has moved on.
 
 A reading names the baseline whose key it shares, so it is routed to the worker
 already holding that baseline and answered from it without running anything. That

@@ -1,8 +1,9 @@
 import arsenalDefinitions from "@gamedata/arsenal.json"
 import bowRingSetDefinitions from "@gamedata/bow-ring-set.json"
-import { IconArrowUp, IconCopy, IconEdit, IconPlus, IconPointFilled, IconX } from "@tabler/icons-react"
+import { IconCopy, IconEdit, IconPlus, IconPointFilled, IconX } from "@tabler/icons-react"
 import { nanoid } from "nanoid"
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -30,7 +31,6 @@ import {
   buildEntryAvailableForMartialArts,
   buildEntryMartialArts,
   exportBuildState,
-  gearBaseStats,
   gearData,
   gearDefinitionForSlot,
   gearItemSupportsSlot,
@@ -62,18 +62,19 @@ import { Dialog } from "@/ui/Dialog"
 import { Panel, PanelHeading } from "@/ui/Panel"
 import { Tooltip } from "@/ui/Tooltip"
 
+import { AvailableGearCard, EquippedGearCard } from "./GearCard"
+import { GearDelta } from "./GearDelta"
 import {
   GearEditor,
   capAndFilterGearDraft,
   createGearId,
-  formatNumber,
-  gearRarityLabel,
   itemToDraft,
   newDraft,
   normalizeDraftValue,
   type GearDraft,
 } from "./GearEditor"
-import { useBuildThroughput } from "./useBuildThroughput"
+import { useBuildThroughputs } from "./useBuildThroughputs"
+import { useGearComparison } from "./useGearComparison"
 
 function gearSlotLabel(slot: GearSlot) {
   return dataText(`system.gearSlot.${slot}`, gearData.slots[slot])
@@ -115,6 +116,11 @@ type BuildManagementProps = {
   locked: boolean
   onInventoryChange: Dispatch<SetStateAction<GearInventory>>
   onSetupChange: (setup: BuildSetup) => void
+  /** The build on screen, which a candidate item is measured against the equipped item of. */
+  build: BuildEntry | undefined
+  /** The sheet and environment the candidates are measured in, and the rotation they run. */
+  measurement: MeasurementContext
+  activeRotation?: RotationRecord
 }
 
 const stackedBuildLayoutQuery = "(max-width: 80em)"
@@ -137,6 +143,9 @@ function ResponsiveBuildOverview({ children }: { children: [ReactElement, ReactE
 
 const noGearOptions: string[] = []
 
+/** The shared empty set, so clearing visibility is a state change rather than a new identity. */
+const emptySet: ReadonlySet<string> = new Set()
+
 const attunementOptionCache = new Map<string, string[]>()
 function cachedAttunementOptions(
   definitionId: string,
@@ -154,116 +163,6 @@ function cachedAttunementOptions(
   })
   attunementOptionCache.set(cacheKey, options)
   return options
-}
-
-function displayValue(value: number, definition?: { percentage?: boolean }) {
-  return `${formatNumber(definition?.percentage ? value * 100 : value)}${definition?.percentage ? "%" : ""}`
-}
-
-function itemAttributes(item: GearItem) {
-  const rows: Array<{ label: string; value: string; kind: string }> = []
-  const baseDefinition = gearData.affixes[item.baseAffix.key]
-  rows.push({
-    label: gameText(baseDefinition?.name ?? item.baseAffix.key),
-    value: displayValue(item.baseAffix.value, baseDefinition),
-    kind: "Base affix",
-  })
-  for (const affix of item.additionalAffixes) {
-    const definition = gearData.affixes[affix.key]
-    rows.push({
-      label: gameText(definition?.name ?? affix.key),
-      value: displayValue(affix.value, definition),
-      kind: "Affix",
-    })
-  }
-  if (item.attunement) {
-    const attunementDefinition = attunementData[item.attunement.key]
-    rows.push({
-      label: gameText(attunementDefinition?.name ?? item.attunement.key),
-      value: displayValue(item.attunement.value, attunementDefinition),
-      kind: "Attunement",
-    })
-  }
-  return rows
-}
-
-function GearBaseStatSummary({ item }: { item: GearItem }) {
-  const stats = gearBaseStats(item)
-  if (typeof stats.minPhys === "number" && typeof stats.maxPhys === "number") {
-    return (
-      <span className="gear-base-stats">
-        <span className="gear-base-stat">
-          {t("ui.buildTab.physicalAttack")}{" "}
-          <strong>
-            {formatNumber(stats.minPhys)}~{formatNumber(stats.maxPhys)}
-          </strong>
-        </span>
-      </span>
-    )
-  }
-  if (typeof stats.minPhys === "number")
-    return (
-      <span className="gear-base-stats">
-        <span className="gear-base-stat">
-          {t("stat.minPhys")} <strong>{formatNumber(stats.minPhys)}</strong>
-        </span>
-      </span>
-    )
-  if (typeof stats.maxPhys === "number")
-    return (
-      <span className="gear-base-stats">
-        <span className="gear-base-stat">
-          {t("stat.maxPhys")} <strong>{formatNumber(stats.maxPhys)}</strong>
-        </span>
-      </span>
-    )
-  if (typeof stats.maxHp === "number" || typeof stats.physicalDefense === "number")
-    return (
-      <span className="gear-base-stats">
-        {typeof stats.maxHp === "number" && (
-          <span className="gear-base-stat">
-            {t("stat.maxHp")} <strong>{formatNumber(stats.maxHp)}</strong>
-          </span>
-        )}
-        {typeof stats.physicalDefense === "number" && (
-          <span className="gear-base-stat">
-            {t("stat.physicalDefense")} <strong>{formatNumber(stats.physicalDefense)}</strong>
-          </span>
-        )}
-      </span>
-    )
-  return null
-}
-
-function GearAttributes({ item, compact = false }: { item: GearItem; compact?: boolean }) {
-  return (
-    <div className={`gear-attribute-list ${compact ? "compact" : ""}`}>
-      {itemAttributes(item).map(row => (
-        <div
-          className={`gear-attribute ${row.kind === "Attunement" ? "gear-attunement-attribute" : ""}`}
-          key={`${row.kind}-${row.label}-${row.value}`}
-        >
-          <span>
-            {row.kind === "Attunement" && <small>{t("ui.buildTab.attunement")}</small>}
-            {row.label}
-          </span>
-          <strong>{row.value}</strong>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function RelayedIndicator({ item }: { item?: GearItem }) {
-  return item?.relayed ? (
-    <span
-      className="gear-relayed-indicator"
-      aria-label={t("ui.buildTab.relayedGear")}
-      title={t("ui.buildTab.relayedGear")}
-    >
-      <IconArrowUp size="1em" aria-hidden />
-    </span>
-  ) : null
 }
 
 export default function BuildTab({
@@ -310,10 +209,12 @@ export default function BuildTab({
   // `builds` is already the list this path may see, filtered by the store's rule. Only the
   // order is decided here, because a shipped preset belongs at the end of the list rather than
   // wherever the records happen to be stored.
-  const listedEntries = [...builds].sort(
-    (left, right) => Number(left.isDefault === true) - Number(right.isDefault === true),
+  const listedEntries = useMemo(
+    () => [...builds].sort((left, right) => Number(left.isDefault === true) - Number(right.isDefault === true)),
+    [builds],
   )
   const editingEntry = listedEntries.find(entry => entry.id === editingBuildId) ?? listedEntries[0]
+  const activeEntry = listedEntries.find(entry => entry.id === buildState.activeBuildId)
   if (editingEntry && editingEntry.id !== editingBuildId) setEditingBuildId(editingEntry.id)
   function addBuild() {
     const id = createBuildId()
@@ -333,6 +234,25 @@ export default function BuildTab({
     setEditingBuildId(id)
     setEditingName(true)
   }
+  // The build on screen, and the active one it is weighed against. When they are the same build
+  // both targets measure the same bundle, so the store answers the second from the first.
+  // Measured before the empty-build return below, because a hook cannot sit behind one.
+  const buildTargets = useMemo(
+    () => [
+      { key: "viewed", build: editingEntry },
+      { key: "active", build: activeEntry },
+    ],
+    [editingEntry, activeEntry],
+  )
+  const throughputs = useBuildThroughputs({
+    targets: buildTargets,
+    gearItems: buildState.gearItems,
+    context: measurement,
+    rotation: activeRotation,
+  })
+  const editedThroughput = throughputs.viewed
+  const activeThroughput = throughputs.active
+
   if (!editingEntry)
     return (
       <Panel className="build-manager-panel">
@@ -350,21 +270,6 @@ export default function BuildTab({
       </Panel>
     )
   const isActiveBuild = editingEntry.id === buildState.activeBuildId
-  const activeEntry = listedEntries.find(entry => entry.id === buildState.activeBuildId)
-  // The build on screen, and the active one it is weighed against. When they are the same build
-  // both hooks ask for the same key, so the store answers the second from the first.
-  const editedThroughput = useBuildThroughput({
-    build: editingEntry,
-    gearItems: buildState.gearItems,
-    context: measurement,
-    rotation: activeRotation,
-  })
-  const activeThroughput = useBuildThroughput({
-    build: activeEntry,
-    gearItems: buildState.gearItems,
-    context: measurement,
-    rotation: activeRotation,
-  })
   const comparison =
     !isActiveBuild && editedThroughput && activeThroughput
       ? { delta: editedThroughput.dps - activeThroughput.dps, reading: editedThroughput }
@@ -721,6 +626,9 @@ export default function BuildTab({
             locked={editingEntry.isDefault === true}
             onInventoryChange={updateInventory}
             onSetupChange={updateSetup}
+            build={editingEntry}
+            measurement={measurement}
+            activeRotation={activeRotation}
           />
         </div>
       </div>
@@ -976,6 +884,9 @@ function BuildManagement({
   locked,
   onInventoryChange,
   onSetupChange,
+  build,
+  measurement,
+  activeRotation,
 }: BuildManagementProps) {
   const [selectedSlot, setSelectedSlot] = useState<GearSlot>("leftWeapon")
   const [editing, setEditing] = useState(false)
@@ -983,10 +894,26 @@ function BuildManagement({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [draft, setDraft] = useState<GearDraft>(newDraft)
   const [error, setError] = useState("")
+  // The candidates currently on screen. Each card reports its own, so the set is what bounds how
+  // much measuring a slot asks for, and an empty set means a slot costs nothing to look at.
+  const [visibleItemIds, setVisibleItemIds] = useState<ReadonlySet<string>>(() => new Set())
   const selected = gearDefinitionForSlot(selectedSlot, weapons)
-  const availableItems = inventory.items.filter(
-    item => item.definitionId === selected.definitionId && gearItemSupportsSlot(item, selectedSlot),
+  const availableItems = useMemo(
+    () =>
+      inventory.items.filter(
+        item => item.definitionId === selected.definitionId && gearItemSupportsSlot(item, selectedSlot),
+      ),
+    [inventory.items, selected.definitionId, selectedSlot],
   )
+  const reportVisibility = useCallback((itemId: string, visible: boolean) => {
+    setVisibleItemIds(previous => {
+      if (previous.has(itemId) === visible) return previous
+      const next = new Set(previous)
+      if (visible) next.add(itemId)
+      else next.delete(itemId)
+      return next
+    })
+  }, [])
   const equippedItems = useMemo(
     () =>
       Object.fromEntries(
@@ -1002,6 +929,18 @@ function BuildManagement({
   )
   const affixSummary = useMemo(() => summarizeGearAffixes(gearSlots.map(slot => equippedItems[slot])), [equippedItems])
 
+  const equippedItemId = inventory.equipped[selectedSlot]
+  const { reference, readingFor } = useGearComparison({
+    build,
+    slot: selectedSlot,
+    candidates: availableItems,
+    equippedId: equippedItemId,
+    visibleItemIds,
+    gearItems: inventory.items,
+    context: measurement,
+    rotation: activeRotation,
+  })
+
   function selectSlot(slot: GearSlot) {
     setSelectedSlot(slot)
     setEditing(false)
@@ -1009,6 +948,8 @@ function BuildManagement({
     setPendingDeleteId(null)
     setDraft(newDraft())
     setError("")
+    // Another slot's cards report their own visibility, so what this one measured is dropped with it.
+    setVisibleItemIds(emptySet)
   }
 
   function beginAdd() {
@@ -1169,36 +1110,23 @@ function BuildManagement({
                 </p>
               </div>
             </PanelHeading>
-            <div className="equipped-gear-grid">
+            <div className="gear-card-grid">
               {gearSlots.map(slot => {
                 const item = equippedItems[slot]
                 const definition = item
                   ? gearData.gear[item.definitionId]
                   : gearDefinitionForSlot(slot, weapons).definition
                 return (
-                  <button
-                    className={`equipped-gear-card ${!locked && selectedSlot === slot ? "selected" : ""}`}
-                    type="button"
+                  <EquippedGearCard
                     key={slot}
+                    slot={slot}
+                    slotLabel={gearSlotLabel(slot)}
+                    item={item}
+                    name={item ? gameText(definition?.name) : undefined}
+                    selected={!locked && selectedSlot === slot}
                     disabled={locked}
-                    onClick={() => selectSlot(slot)}
-                    data-testid={`equipped-${slot}`}
-                  >
-                    <RelayedIndicator item={item} />
-                    <span className="gear-slot-name">{gearSlotLabel(slot)}</span>
-                    {item ? (
-                      <>
-                        <strong>{gameText(definition?.name)}</strong>
-                        <small>
-                          {item.level} {gearRarityLabel(item.rarity)}
-                        </small>
-                        <GearBaseStatSummary item={item} />
-                        <GearAttributes item={item} compact />
-                      </>
-                    ) : (
-                      <span className="gear-empty">{t("ui.buildTab.noGearEquipped")}</span>
-                    )}
-                  </button>
+                    onSelect={() => selectSlot(slot)}
+                  />
                 )
               })}
             </div>
@@ -1215,63 +1143,29 @@ function BuildManagement({
                   </p>
                 </div>
               </PanelHeading>
-              <div className="available-gear-grid">
-                {availableItems.map(item => (
-                  <article
-                    className={`available-gear-card ${inventory.equipped[selectedSlot] === item.id ? "equipped" : ""} ${item.relayed ? "relayed" : ""}`}
-                    key={item.id}
-                  >
-                    <RelayedIndicator item={item} />
-                    <div className="available-gear-heading">
-                      <div>
-                        <strong>{gameText(selected.definition?.name)}</strong>
-                        <small>
-                          {item.level} {gearRarityLabel(item.rarity)}
-                        </small>
-                        <GearBaseStatSummary item={item} />
-                      </div>
-                      <div className="available-gear-status">
-                        {inventory.equipped[selectedSlot] === item.id && (
-                          <span>{t("ui.buildTab.equippedGearStatus")}</span>
-                        )}
-                        <small>
-                          {t("ui.buildTab.usedIn")} {usageCounts.get(item.id) ?? 0}{" "}
-                          {(usageCounts.get(item.id) ?? 0) === 1
-                            ? t("ui.buildTab.build")
-                            : t("ui.buildTab.buildCountNoun")}
-                        </small>
-                      </div>
-                    </div>
-                    <GearAttributes item={item} />
-                    <div className="gear-card-actions">
-                      <Button
-                        variant="primary"
-                        size="small"
-                        type="button"
-                        disabled={inventory.equipped[selectedSlot] === item.id}
-                        onClick={() => equip(item)}
-                      >
-                        {inventory.equipped[selectedSlot] === item.id
-                          ? t("ui.buildTab.equippedGearStatus")
-                          : t("ui.buildTab.equip")}
-                      </Button>
-                      <Button variant="secondary" size="small" type="button" onClick={() => beginEdit(item)}>
-                        {t("ui.buildTab.edit")}
-                      </Button>
-                      <Button
-                        variant={pendingDeleteId === item.id ? "danger" : "secondary"}
-                        size="small"
-                        type="button"
-                        aria-label={
-                          pendingDeleteId === item.id ? t("ui.buildTab.confirmDeleteGear") : t("ui.buildTab.deleteGear")
-                        }
-                        onClick={() => remove(item)}
-                      >
-                        {pendingDeleteId === item.id ? t("ui.buildTab.confirmDelete") : t("ui.buildTab.delete")}
-                      </Button>
-                    </div>
-                  </article>
-                ))}
+              <div className="gear-card-grid">
+                {availableItems.map(item => {
+                  const equipped = inventory.equipped[selectedSlot] === item.id
+                  // The equipped card states that it is equipped, which is the whole reading; a
+                  // candidate's difference from it goes in the same column as its usage count.
+                  let status
+                  if (!equipped) status = <GearDelta reading={readingFor(item.id)} reference={reference} />
+                  return (
+                    <AvailableGearCard
+                      key={item.id}
+                      item={item}
+                      name={gameText(selected.definition?.name)}
+                      equipped={equipped}
+                      usageCount={usageCounts.get(item.id) ?? 0}
+                      onEquip={() => equip(item)}
+                      onEdit={() => beginEdit(item)}
+                      onDelete={() => remove(item)}
+                      deleting={pendingDeleteId === item.id}
+                      onVisibilityChange={visible => reportVisibility(item.id, visible)}
+                      status={status}
+                    />
+                  )
+                })}
                 <button
                   className="add-gear-card"
                   type="button"

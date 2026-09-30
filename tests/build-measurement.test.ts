@@ -2,7 +2,7 @@ import { assert, describe, it, vi } from "vitest"
 
 import { breakthroughProfile } from "@/application/gameData/setup"
 import { buildMeasurement, type MeasurementContext } from "@/calculations/rotationCalculationBundle"
-import { defaultBuildPresets, type BuildEntry } from "@/gear"
+import { buildPresetInventory, defaultBuildPresets, type BuildEntry } from "@/gear"
 
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
@@ -110,6 +110,44 @@ describe("measuring a build that is not the active one", () => {
     const missing = buildMeasurement({ build: undefined, gearItems: [], context, rotation })
     const aBuild = buildMeasurement({ build: presetEntry(presets[0].id), gearItems: [], context, rotation })
     assert.notEqual(missing.cacheKey, aBuild.cacheKey, "A missing build was measured as a real one.")
+  })
+
+  it("cannot answer a swapped slot from the reading of the gear it replaced", async () => {
+    const { rotation, context, presets } = await fixture()
+    // A preset's own gear, so the loadout is a real one to swap rather than an empty sheet.
+    const base = presetEntry(presets[0].id)
+    const equipped = buildPresetInventory(defaultBuildPresets[0])
+    const helmet = equipped.equipped.helmet
+    assert(helmet, "The preset must equip a helmet for this slot to be swappable.")
+    const item = equipped.items.find(candidate => candidate.id === helmet)
+    assert(item, "The preset's helmet must be in its inventory.")
+
+    const withSlot = (equippedId: string | undefined) =>
+      buildMeasurement({
+        build: { ...base, isDefault: false, equipped: { ...equipped.equipped, helmet: equippedId } },
+        gearItems: equipped.items,
+        context,
+        rotation,
+      })
+
+    const worn = withSlot(helmet)
+    const empty = withSlot(undefined)
+    const swapped = withSlot("some-other-helmet")
+
+    assert.notEqual(empty.cacheKey, worn.cacheKey, "Emptying a slot did not change what the build measures to.")
+    assert.notEqual(
+      swapped.cacheKey,
+      worn.cacheKey,
+      "A swapped slot read as the gear it replaced, so a stale reading could be served as the new one.",
+    )
+    // The key has to move because the sheet does. A key that moved on its own would mean the
+    // fingerprint is reading something cosmetic, and the assertion above would pass for the
+    // wrong reason.
+    assert.notDeepEqual(
+      swapped.bundle.stats,
+      worn.bundle.stats,
+      "The swapped and worn sheets are identical, so the key difference above was not the gear.",
+    )
   })
 
   it("leaves the sheet's own overrides out of the bundle key when nothing is overridden", async () => {
