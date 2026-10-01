@@ -20,6 +20,14 @@ const equippedKey = "equipped"
  *
  * The swap is written the way `equip` writes it, because that is the state clicking Equip reaches.
  * An item is never in two slots, so moving one has to take it out of wherever it was.
+ *
+ * That equivalence holds for a build whose `equipped` map is what the sheet is read from, which is
+ * every build a reader can equip gear on. A preset is the exception and not a near miss:
+ * `resolveBuildInventory` reads the preset's own gear rather than the map, so the swap resolves to
+ * the same sheet as the reference and every candidate would read `0` — a number, where the honest
+ * answer for an unmeasured candidate is nothing. The inventory is closed on those builds, so no card
+ * is ever asked about one; the precondition is stated here so that closing them stays a deliberate
+ * rule rather than something that would break silently if a panel were opened on a preset.
  */
 function buildWithSwappedItem(build: BuildEntry, slot: GearSlot, item: GearItem): BuildEntry {
   return {
@@ -38,6 +46,9 @@ function buildWithSwappedItem(build: BuildEntry, slot: GearSlot, item: GearItem)
  * inventory: opening a slot asks only about the cards in view. Scrolling brings the next ones in.
  * The equipped item is never a candidate of itself; it is the reading everything else is weighed
  * against, and the card says so in words instead of showing it a difference of zero.
+ *
+ * The build has to be one whose `equipped` map names the gear it wears. A preset does not, and a
+ * preset therefore has nothing here to compare; see `buildWithSwappedItem` for why.
  */
 export function useGearComparison(input: {
   build: BuildEntry | undefined

@@ -1565,7 +1565,12 @@ It is a full reading rather than a comparison variant because a swap re-resolves
 sheet, including the armour set tiers whose four points the swapped piece competes
 for, and a variant that only patched the stats would be measuring a sheet the game
 cannot produce. The swap is written the way equipping an item is written, so the
-predicted difference is the difference clicking Equip reaches. Because a reading is
+predicted difference is the difference clicking Equip reaches. That holds where the
+build's `equipped` map names the gear it wears, which is every build a reader can
+equip on; a preset's gear is the game's and is read from the preset rather than the
+map, so a swap on one resolves to the reference's own sheet and would read `0` on every
+card. The inventory is closed on those builds, which is what keeps that unreachable
+rather than merely unlikely. Because a reading is
 a whole rotation, the inventory asks only for the cards a reader can see: each card
 observes itself against the viewport and reports when it is on screen, and the set of
 on-screen candidates bounds what opening a slot costs. A candidate that scrolls away
