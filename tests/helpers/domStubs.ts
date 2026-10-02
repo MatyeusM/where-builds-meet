@@ -1,7 +1,11 @@
+import assert from "node:assert/strict"
+
 /**
- * The persistence specs only need storage, so they stand in a window carrying
- * just that. A full `Window` is not buildable by hand in a spec, and the app
- * reads nothing else off it.
+ * Stand-ins for the browser globals a spec drives directly.
+ *
+ * A full `Window` or `Document` is not buildable by hand in a spec and the app
+ * reads only a few members off each, so these name the members a spec needs and
+ * leave the rest to the cast at the boundary.
  */
 export function windowWithStorage(storage: {
   localStorage: Storage
@@ -44,4 +48,99 @@ export function readOnlyStorage(read: (key: string) => string | null): Storage {
     clear: () => {},
   }
   return { ...inert, getItem: read } as Storage
+}
+
+/** The URL a `fetch` or `Request` input names, however it was spelled. */
+export function urlOf(input: RequestInfo | URL): string {
+  if (input instanceof URL) return input.href
+  if (typeof input === "string") return input
+  return input.url
+}
+
+/**
+ * A window carrying the timers, location and events a browser-lifecycle spec
+ * drives. The interval callback is recorded rather than scheduled, so the spec
+ * decides when the app's periodic check runs.
+ */
+export function windowWithLifecycle(options: { href: string; onNavigate: (url: string) => void; intervalMs: number }): {
+  window: Window & typeof globalThis
+  events: EventTarget
+  /** Run the app's recorded periodic check. */
+  runPeriodicCheck: () => void
+  /** Whether the app still holds a live interval callback. */
+  hasPeriodicCheck: () => boolean
+  /** Restore the real globals the spec replaced. */
+  restore: () => void
+} {
+  const events = new EventTarget()
+  let periodicCheck: (() => void) | undefined
+  const navigations: string[] = []
+  const { href } = new URL(options.href)
+  const win = Object.assign(events, {
+    location: {
+      origin: new URL(href).origin,
+      href,
+      replace: (url: string) => {
+        navigations.push(url)
+        options.onNavigate(url)
+      },
+    },
+    setInterval: (callback: () => void, delay: number) => {
+      assert.equal(delay, options.intervalMs, "The deployment poll must run on its configured interval.")
+      periodicCheck = callback
+      return 1
+    },
+    clearInterval: () => {
+      periodicCheck = undefined
+    },
+  }) as unknown as Window & typeof globalThis
+  const originalWindow = globalThis.window
+  globalThis.window = win
+  return {
+    window: win,
+    events,
+    runPeriodicCheck: () => {
+      assert(periodicCheck, "Expected the app to have registered its periodic check.")
+      periodicCheck()
+    },
+    hasPeriodicCheck: () => periodicCheck !== undefined,
+    restore: () => {
+      if (originalWindow === undefined) Reflect.deleteProperty(globalThis, "window")
+      else globalThis.window = originalWindow
+    },
+  }
+}
+
+/**
+ * A document whose visibility a spec toggles.
+ *
+ * `Document.visibilityState` is readonly on the real type, so the spec assigns
+ * through this holder rather than fighting the declaration.
+ */
+export function documentWithVisibility(initial: DocumentVisibilityState = "visible"): {
+  document: Document
+  events: EventTarget
+  setVisibility: (state: DocumentVisibilityState) => void
+  restore: () => void
+} {
+  const events = new EventTarget()
+  const holder = { visibilityState: initial }
+  const doc = Object.assign(events, {
+    get visibilityState() {
+      return holder.visibilityState
+    },
+  }) as unknown as Document
+  const originalDocument = globalThis.document
+  globalThis.document = doc
+  return {
+    document: doc,
+    events,
+    setVisibility: state => {
+      holder.visibilityState = state
+    },
+    restore: () => {
+      if (originalDocument === undefined) Reflect.deleteProperty(globalThis, "document")
+      else globalThis.document = originalDocument
+    },
+  }
 }
