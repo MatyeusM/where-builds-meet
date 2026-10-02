@@ -366,7 +366,14 @@ describe("official-gear-import", () => {
         reversedMightItems.get(reversedMightBuild.equipped.rightWeapon!)?.definitionId === "spear",
       "Official Might imports must classify the path before assigning reversed main/sub weapons to canonical slots.",
     )
-    for (const [statId, expectedKey] of [[280205, "stormbreakerSpecialBoost"]] as Array<[number, string]>) {
+    const mightAttunementIds: Array<[number, string]> = [
+      [280201, "thundercryShieldBoost"],
+      [280202, "thundercryChargedBoost"],
+      [280203, "thundercrySpecialBoost"],
+      [280204, "stormbreakerChargedBoost"],
+      [280205, "stormbreakerSpecialBoost"],
+    ]
+    for (const [statId, expectedKey] of mightAttunementIds) {
       const parsedAttunement = importer.parseOfficialGearExport(
         {
           roleName: `Might Attunement ${statId}`,

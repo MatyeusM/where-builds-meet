@@ -102,16 +102,19 @@ describe("preview definitions", () => {
   })
 
   it("keeps Frost-Clad Night T4's Inner Passion gate and adds the soldier as an alternative tag", () => {
-    // The T4 effect's requirement groups, which is what carries the Inner Passion gate.
-    const t4Requirement = (definitions: typeof shipped) => {
+    // The T4 entry's effect sheet and requirement groups, which is what carries the Inner Passion gate.
+    const t4Entry = (definitions: typeof shipped) => {
       const tier = definitions.innerWayDefinitions.FrostCladNight?.effect.FrostCladNightT4
       const [entry] = tier?.effect ?? []
       const gate = entry?.requirement as { operand?: unknown[] }[] | undefined
       assert(gate, "Frost-Clad Night T4 must declare its Inner Passion gate.")
-      return gate
+      return entry
     }
-    const shippedGate = t4Requirement(shipped)
-    const previewGate = t4Requirement(preview)
+    const shippedT4 = t4Entry(shipped)
+    const previewT4 = t4Entry(preview)
+    expect(previewT4.effect).toEqual(shippedT4.effect)
+    const shippedGate = shippedT4.requirement as { operand?: unknown[] }[]
+    const previewGate = previewT4.requirement as { operand?: unknown[] }[]
     expect(previewGate[0]?.operand).toEqual([
       { target: "skillTag", value: "SnowbreakSpring" },
       { target: "skillTag", value: "AnxiSoldierSnowbreakSpring" },
