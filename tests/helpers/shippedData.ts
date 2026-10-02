@@ -43,6 +43,18 @@ export type TalentEffect = EditableObject &
   StatEffectContainer &
   EffectiveStatEffectContainer & { effect?: EditableObject; requirement?: unknown }
 
-export function asTalentEffects(effects: unknown[]): TalentEffect[] {
+export function asTalentEffects(effects: unknown): TalentEffect[] {
   return effects as TalentEffect[]
+}
+
+/**
+ * One rank of a martial art's talent effects, as a single list.
+ *
+ * A rank is a list of talents whose effect lists each carry a different shape, so
+ * TypeScript infers the rank as a union of array types and no `flatMap` overload
+ * reconciles them. Specs that read a whole rank use this to get one list first.
+ */
+export function rankTalentEffects(rank: unknown): TalentEffect[] {
+  const talents = rank as Array<{ effect?: unknown[] }>
+  return asTalentEffects(talents.flatMap(talent => talent.effect ?? []))
 }

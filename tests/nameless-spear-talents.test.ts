@@ -1,9 +1,13 @@
 import { describe, it } from "vitest"
 
+import { martialArtDefinitions } from "@/application/gameData/martialArts"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { DamageContext } from "@/calculations/damage"
+import type { CharacterStats } from "@/types"
 
 import { effectState } from "../src/calculations/trackedEffectState"
 import { assertClose } from "./helpers/floatEquality"
+import { rankTalentEffects } from "./helpers/shippedData"
 
 // Ported from script/probe/check-nameless-spear-talents.mjs.
 describe("nameless-spear-talents", () => {
@@ -15,12 +19,9 @@ describe("nameless-spear-talents", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
-    const effects = namelessSpear.talent[13].flatMap(talent =>
-      (talent.effect ?? []).map(effect => Object.assign({}, effect, { statStage: "talent" })),
-    )
     const statResult = calculateStatsWithEffects(
       { ...emptyStats, momentum: 280, affinity: 0.25744, maxBellstrike: 459 },
-      effects,
+      martialArtDefinitions.namelessSpear.talent[13].flatMap(talent => talent.effect ?? []),
       0,
     )
     assertClose(statResult.stats.affinity, 0.3, 1e-9, "Momentum scaling must grant at most 4.256% Affinity Rate.")
@@ -39,8 +40,11 @@ describe("nameless-spear-talents", () => {
       "Bellstrike DMG Bonus must reach its cap at 655 Max Bellstrike Attack.",
     )
 
-    const affinityRule = effects.find(rule => rule.effect?.affinityDmgBonus)
-    if (!affinityRule) throw new Error("Nameless Spear Affinity damage talent rule was not found.")
+    // The conditional damage sheet the app's declared talent type does not model.
+    const affinityRule = rankTalentEffects(namelessSpear.talent[13]).find(
+      rule => rule.effect && "affinityDmgBonus" in rule.effect,
+    )
+    if (!affinityRule?.effect) throw new Error("Nameless Spear Affinity damage talent rule was not found.")
     if (
       !requirementsPass(
         affinityRule.requirement,
@@ -65,7 +69,7 @@ describe("nameless-spear-talents", () => {
     )
       throw new Error("Affinity DMG Up must work with Endless Gale while low Endurance remains unsimulated.")
 
-    const damageStats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, affinity: 1 }
+    const damageStats: CharacterStats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1, affinity: 1 }
     const enemy = {
       name: "Probe",
       level: 96,
@@ -77,12 +81,13 @@ describe("nameless-spear-talents", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const context = {
+    const context: DamageContext = {
       stats: damageStats,
       attunement: emptyAttunementStats,
       skillTags: [],
       weapons: ["namelessSword", "namelessSpear"],
-      buffs: [{ name: "EndlessGale" }],
+      buffs: ["EndlessGale"],
+      effects: [],
       enemy,
       derivedStats: calculateDerivedStats(damageStats, 0),
     }
@@ -93,7 +98,7 @@ describe("nameless-spear-talents", () => {
     )
     assertClose(
       enhanced.physical / baseline.physical,
-      1 + baseline.outcomeRates.affinity * 0.18,
+      1 + (baseline.outcomeRates?.affinity ?? 0) * 0.18,
       1e-9,
       "Affinity DMG Up must cap at 18% above 30% Affinity Rate.",
     )
