@@ -1,6 +1,7 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationStep, SkillRecord } from "@/calculations/rotationTimeline"
 
 import { isClose } from "./helpers/floatEquality"
 
@@ -33,15 +34,15 @@ describe("snowbreak-hit-effect", () => {
       modifier: [],
       tags: ["SnowbreakSpring"],
     }
-    const exhausted = {
+    const exhausted: SkillRecord = {
       name: "Exhausted",
       castTime: 0,
       action: [{ type: "apply", target: "target", value: "Exhausted", time: 0 }],
       tags: ["Event"],
     }
 
-    const damage = ({ exhaustedAt, innerPassion = false } = {}) => {
-      const steps = [{ type: "skill", skill: "Hit" }]
+    const damage = ({ exhaustedAt, innerPassion = false }: { exhaustedAt?: number; innerPassion?: boolean } = {}) => {
+      const steps: RotationStep[] = [{ type: "skill", skill: "Hit" }]
       if (exhaustedAt !== undefined) steps.push({ type: "event", event: "Exhausted", startTime: exhaustedAt })
       return calculateRotationBaseline({
         timeline: {
