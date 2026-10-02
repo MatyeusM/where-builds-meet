@@ -1,4 +1,5 @@
 import type { EditableObject, EffectDefinition, SkillRecord } from "@/calculations/rotationTimeline"
+import type { EffectiveStatEffectContainer, StatEffectContainer } from "@/calculations/statEffects"
 
 /**
  * Narrow a shipped data file to the type the calculation takes.
@@ -27,4 +28,21 @@ export function asEffectDefinitions(file: unknown): Record<string, EffectDefinit
  */
 export function skillActions(record: SkillRecord): EditableObject[] {
   return (record.action ?? []) as EditableObject[]
+}
+
+/**
+ * One talent effect, which is a stat sheet, a damage-bonus sheet, or both.
+ *
+ * `MartialArtDefinition.talent` declares a talent effect as a stat sheet only,
+ * so a damage-bonus sheet — the `hpDMGBonus` and `affinityDmgBonus` shape the
+ * damage pipeline reads — has no declared type and neither pipeline can be handed
+ * the declared table. Both halves are named here because the rank's effects go to
+ * one pipeline or the other depending on which one the entry carries.
+ */
+export type TalentEffect = EditableObject &
+  StatEffectContainer &
+  EffectiveStatEffectContainer & { effect?: EditableObject; requirement?: unknown }
+
+export function asTalentEffects(effects: unknown[]): TalentEffect[] {
+  return effects as TalentEffect[]
 }

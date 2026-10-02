@@ -1,6 +1,9 @@
 import { describe, it } from "vitest"
 
+import { martialArtDefinitions } from "@/application/gameData/martialArts"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { DamageContext } from "@/calculations/damage"
+import type { CharacterStats } from "@/types"
 
 import { effectState } from "../src/calculations/trackedEffectState"
 import { assertClose } from "./helpers/floatEquality"
@@ -18,8 +21,11 @@ describe("nameless-sword-talents", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
-    const effects = namelessSword.talent[13].flatMap(talent => talent.effect ?? [])
-    const statResult = calculateStatsWithEffects({ ...emptyStats, momentum: 280, maxBellstrike: 459 }, effects, 0)
+    const statResult = calculateStatsWithEffects(
+      { ...emptyStats, momentum: 280, maxBellstrike: 459 },
+      martialArtDefinitions.namelessSword.talent[13].flatMap(talent => talent.effect ?? []),
+      0,
+    )
     assertClose(
       statResult.stats.maxPhys,
       73.92,
@@ -35,8 +41,18 @@ describe("nameless-sword-talents", () => {
       "Bellstrike penetration must reach its cap at 655 Max Bellstrike Attack.",
     )
 
-    const hpRule = effects.find(rule => rule.effect?.hpDMGBonus)
-    const affinityRule = effects.find(rule => rule.effect?.affinityDmgBonus)
+    const rank = namelessSword.talent[13].flatMap(talent =>
+      (talent.effect ?? []).flatMap(entry =>
+        "effect" in entry
+          ? [{ effect: entry.effect, requirement: "requirement" in entry ? entry.requirement : undefined }]
+          : [],
+      ),
+    )
+    // Rank 13's conditional damage sheets. The app declares a talent effect as a
+    // stat sheet, so these have no declared shape and are read as the untyped
+    // objects the damage pipeline already reads them as.
+    const hpRule = rank.find(rule => "hpDMGBonus" in rule.effect)
+    const affinityRule = rank.find(rule => "affinityDmgBonus" in rule.effect)
     if (!hpRule || !affinityRule) throw new Error("Nameless Sword conditional damage talent rules were not found.")
 
     if (
@@ -73,7 +89,7 @@ describe("nameless-sword-talents", () => {
     )
       throw new Error("Sword Qi Affinity Enhancement must require sub-40% Qi or Qi Imbalance at hit time.")
 
-    const damageStats = { ...emptyStats, minPhys: 1500, maxPhys: 1500, precision: 1, affinity: 1 }
+    const damageStats: CharacterStats = { ...emptyStats, minPhys: 1500, maxPhys: 1500, precision: 1, affinity: 1 }
     const enemy = {
       name: "Probe",
       level: 96,
@@ -85,7 +101,7 @@ describe("nameless-sword-talents", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const context = {
+    const context: DamageContext = {
       stats: damageStats,
       attunement: emptyAttunementStats,
       skillTags: ["SwordEnergy"],
@@ -93,6 +109,7 @@ describe("nameless-sword-talents", () => {
       buffs: [],
       enemy,
       derivedStats: calculateDerivedStats(damageStats, 0),
+      effects: [],
     }
     const baseline = calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...context, effects: [] })
     const hpEnhanced = calculateDamageBreakdown(
@@ -106,7 +123,7 @@ describe("nameless-sword-talents", () => {
     assertClose(hpEnhanced.physical / baseline.physical, 1.2, 1e-9, "Sword Energy HP damage must cap at 20%.")
     assertClose(
       affinityEnhanced.physical / baseline.physical,
-      1 + baseline.outcomeRates.affinity * 0.18,
+      1 + (baseline.outcomeRates?.affinity ?? 0) * 0.18,
       1e-9,
       "Sword Energy Affinity damage must cap at 18% at 1500 Max Physical Attack.",
     )
