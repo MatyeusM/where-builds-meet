@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 
+import type { RotationRecord, SkillRecord, TimelineBuildInput } from "@/calculations/rotationTimeline"
+
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
-import { rowCasting } from "./helpers/timelineRows"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
+import { actionStateAt, rowCasting } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-etherwrath.mjs.
 describe("etherwrath", () => {
@@ -47,7 +50,7 @@ describe("etherwrath", () => {
       modifier: [],
       tags: ["DirectDamage"],
     }
-    const timelineInput = (rotation, skills) => ({
+    const timelineInput = (rotation: RotationRecord, skills: Record<string, SkillRecord>): TimelineBuildInput => ({
       rotation,
       skills: withImmediateAttacks(skills),
       eventDefinitions: {},
@@ -63,7 +66,7 @@ describe("etherwrath", () => {
     )
     const stackingRow = rowCasting(stackingTimeline, "Hit")
     expect(
-      stackingRow.actionStates[5].buffs.get("Etherwrath")?.stack === 5,
+      actionStateAt(stackingRow, 5).buffs.get("Etherwrath")?.stack === 5,
       "The sixth damage action must see the five stacks granted by the previous five hits.",
     ).toBeTruthy()
     const dodgeTimeline = buildRotationTimeline(
@@ -110,8 +113,8 @@ describe("etherwrath", () => {
       },
       { Start: directAndDot, Watch: watch },
     )
-    dotInput.dots = dots
-    dotInput.effectDefinitions = { ...kiteBuffs, ...dots }
+    dotInput.dots = asSkillRecords(dots)
+    dotInput.effectDefinitions = asEffectDefinitions({ ...kiteBuffs, ...dots })
     const dotTimeline = buildRotationTimeline(dotInput)
     const watched = rowCasting(dotTimeline, "Watch")
     const activeStack = watched.actionStates[0].buffs.get("Etherwrath")
@@ -120,7 +123,7 @@ describe("etherwrath", () => {
       "A DOT tick must neither add nor refresh Etherwrath stacks.",
     ).toBeTruthy()
     expect(
-      !watched.actionStates[1].buffs.has("Etherwrath"),
+      !actionStateAt(watched, 1).buffs.has("Etherwrath"),
       "DOT and untagged damage must not keep Etherwrath alive.",
     ).toBeTruthy()
     const dotOnly = buildRotationTimeline({
