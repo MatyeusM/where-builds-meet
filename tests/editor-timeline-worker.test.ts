@@ -118,7 +118,7 @@ describe("editor-timeline-worker", () => {
       }
       assert.ok(calculateRotationBaseline(bundle).duration > 0)
 
-      const workers = []
+      const workers: ControlledWorker[] = []
       class ControlledWorker {
         listeners = new Map()
         constructor() {
