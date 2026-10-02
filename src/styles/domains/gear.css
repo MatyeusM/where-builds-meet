@@ -416,44 +416,61 @@
     color: var(--text-muted);
   }
 
-  /* Equipped Gear Grid */
-  .equipped-gear-grid {
+  /* Gear Card: one card shape, filled differently by the equipped grid and the inventory. */
+  .gear-card-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
   }
 
-  .equipped-gear-card {
+  .gear-card {
     position: relative;
     display: flex;
-    min-block-size: 210px;
+    min-block-size: 16.25rem;
     min-inline-size: 0;
     flex-direction: column;
-    gap: 5px;
+    padding: var(--space-sm);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
-    padding: 12px;
     background: var(--surface-alt);
     color: var(--text);
+  }
+
+  /* The equipped grid is one row of slots, so its cards are shorter and denser. */
+  .gear-card--select {
+    min-block-size: 13.25rem;
     cursor: pointer;
     font: inherit;
     text-align: start;
   }
 
-  .equipped-gear-card:hover,
-  .equipped-gear-card.selected {
+  .gear-card--select:hover,
+  .gear-card--selected {
     border-color: var(--primary);
     background: var(--primary-soft);
   }
 
-  .equipped-gear-card:disabled {
+  .gear-card--select:disabled {
     cursor: default;
     opacity: 1;
   }
 
-  .equipped-gear-card:disabled:hover {
+  .gear-card--select:disabled:hover {
     border-color: var(--border);
     background: var(--surface-alt);
+  }
+
+  .gear-card--equipped {
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 1px oklch(from var(--primary) l c h / 0.25);
+  }
+
+  .gear-card-body {
+    display: flex;
+    min-inline-size: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-2xs);
   }
 
   .gear-slot-name {
@@ -466,7 +483,7 @@
   .gear-base-stats {
     display: grid;
     grid-template-rows: repeat(2, minmax(1.25em, auto));
-    gap: 0.125rem;
+    gap: var(--space-3xs);
     min-block-size: 2.625em;
   }
 
@@ -474,7 +491,7 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-xs);
     color: var(--text-muted);
     line-height: 1.25;
     white-space: nowrap;
@@ -493,9 +510,9 @@
 
   .gear-attribute-list {
     display: grid;
-    gap: 4px;
+    gap: var(--space-2xs);
     margin-block-start: 10px;
-    padding-block-start: 9px;
+    padding-block-start: var(--space-xs);
     border-block-start: 1px solid var(--border-muted);
   }
 
@@ -508,7 +525,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-xs);
     color: var(--text-muted);
   }
 
@@ -530,84 +547,72 @@
     color: var(--text);
   }
 
+  /* The attunement row is a separate kind of stat from the affixes above it, and it says so
+     with its own label. The list gap alone leaves the two looking like one run of numbers, so
+     the row takes a gap of its own on top: 12px, which with the list's 4px puts 16px between
+     it and the affix above, against 4px between affixes. */
+  .gear-attunement-attribute {
+    margin-block-start: var(--space-sm);
+  }
+
   .gear-attunement-attribute > strong {
     align-self: flex-end;
   }
 
-  /* Available Gear Grid */
-  .available-gear-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .available-gear-card,
-  .add-gear-card {
-    min-block-size: 260px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--surface-alt);
-  }
-
-  .available-gear-card {
-    position: relative;
-    display: flex;
-    min-inline-size: 0;
-    flex-direction: column;
-    padding: 13px;
-  }
-
-  .available-gear-card.equipped {
-    border-color: var(--primary);
-    box-shadow: inset 0 0 0 1px oklch(from var(--primary) l c h / 0.25);
-  }
-
-  .available-gear-heading {
+  .gear-card-heading {
     display: flex;
     min-inline-size: 0;
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-xs);
   }
 
-  .available-gear-heading div {
+  /* Both header columns are grids. Neither declares its own gap here, because a rule that set
+     one for both would out-specify the per-column rules below and silently fix them at one
+     value, which is what the shared `> div` selector used to do. */
+  .gear-card-heading > * {
     display: grid;
     min-inline-size: 0;
-    gap: 2px;
   }
 
-  .available-gear-status {
-    display: grid;
+  .gear-card-identity {
+    gap: var(--space-3xs);
+  }
+
+  .gear-card-status {
     justify-items: end;
-    gap: 3px;
+    gap: var(--space-2xs);
     text-align: end;
   }
 
-  .available-gear-status > span {
+  .gear-card-status > span {
     color: var(--primary);
     font-weight: 750;
     text-transform: uppercase;
   }
 
-  .available-gear-status > small {
+  .gear-card-status > small {
     color: var(--text-muted);
     overflow-wrap: anywhere;
   }
 
-  .available-gear-card.relayed .available-gear-status {
+  /* The relayed badge sits in the corner the status column would otherwise occupy. */
+  .gear-card--item:has(.gear-relayed-indicator) .gear-card-status {
     margin-block-start: 18px;
   }
 
   .gear-card-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: var(--space-xs);
     margin-block-start: auto;
     padding-block-start: 14px;
   }
 
-  .gear-card-actions [data-button] {
+  /* Only the labelled action shares the row's width. The icon actions take their square
+     footprint from the glyph, so the primitive's own size applies and this leaves them be. */
+  .gear-card-actions .gear-card-equip {
     min-inline-size: min(100%, 5rem);
     flex: 1 1 5rem;
     padding-inline: 6px;
@@ -615,8 +620,12 @@
 
   .add-gear-card {
     display: grid;
+    min-block-size: 16.25rem;
     place-content: center;
-    gap: 5px;
+    gap: var(--space-2xs);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface-alt);
     color: var(--text-muted);
     cursor: pointer;
     font: inherit;
@@ -683,7 +692,9 @@
     text-shadow: 0 0 8px oklch(from var(--primary) l c h / 0.45);
   }
 
-  .equipped-gear-card .gear-relayed-indicator {
+  /* The badge is decorative on a card whose whole surface is the control, so it must not
+     intercept the click that opens the slot. */
+  .gear-card--select .gear-relayed-indicator {
     pointer-events: none;
   }
 
@@ -930,8 +941,7 @@
 
   /* Gear Responsive Breakpoints */
   @media (max-width: 115em) {
-    .equipped-gear-grid,
-    .available-gear-grid {
+    .gear-card-grid {
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
     }
   }
@@ -984,8 +994,7 @@
   }
 
   @media (max-width: 37.5em) {
-    .equipped-gear-grid,
-    .available-gear-grid,
+    .gear-card-grid,
     .gear-additional-affixes,
     .gear-ocr-grid {
       grid-template-columns: 1fr;

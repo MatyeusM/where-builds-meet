@@ -29,7 +29,7 @@
     border: 0;
     border-radius: 0;
     box-shadow: 0 0 0 1px var(--border);
-    padding: 6px 8px;
+    padding: var(--space-2xs);
     background: var(--surface-alt);
     color: inherit;
     cursor: pointer;

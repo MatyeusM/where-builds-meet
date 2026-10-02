@@ -282,8 +282,7 @@
     grid-template-columns: 1fr;
   }
 
-  .layout-mobile .equipped-gear-grid,
-  .layout-mobile .available-gear-grid {
+  .layout-mobile .gear-card-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   }
 
@@ -293,9 +292,9 @@
     white-space: normal;
   }
 
-  .layout-mobile .equipped-gear-card {
+  .layout-mobile .gear-card--select {
     min-block-size: 0;
-    padding: 0.65rem;
+    padding: var(--space-xs);
   }
 
   .layout-mobile .gear-additional-affixes,
@@ -308,10 +307,6 @@
   .layout-mobile .gear-value-editor,
   .layout-mobile .attunement-field {
     grid-template-columns: minmax(0, 1fr) 6rem;
-  }
-
-  .layout-mobile .gear-card-actions {
-    flex-wrap: wrap;
   }
 
   /* Rotation: chooser becomes horizontal and each timeline row becomes a card. */
