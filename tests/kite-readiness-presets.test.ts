@@ -1,5 +1,7 @@
 import { assert, describe, expect, it } from "vitest"
 
+import { defaultGlobalDebuffs } from "@/globalDebuffs"
+
 import regular from "../data/rotation/bamboocut-kite/dummy-1-min-infinite-vitality.json"
 import bp from "../data/rotation/bamboocut-kite/dummy-1-min-iv-bp.json"
 import { buildPresetRotationBundle } from "../src/application/graduation"
@@ -17,15 +19,7 @@ export function calculateKite(rotation: RotationRecord, build: string) {
       food: "SimmeringFishSlices",
       divinecraft: "Fire",
       script: "None",
-      globalDebuffs: {
-        phantomChime: false,
-        qiImbalance: false,
-        soulShaken: false,
-        vulnerable: false,
-        fearfulBlade: false,
-        qingyisCharm: "none",
-        floatingGrace: "none",
-      },
+      globalDebuffs: { ...defaultGlobalDebuffs },
       skillOverrides: {},
       previewId: null,
     },

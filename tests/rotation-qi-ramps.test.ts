@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { defaultGlobalDebuffs } from "@/globalDebuffs"
+
 import paths from "../data/path.json"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
@@ -38,15 +40,7 @@ describe("preset Qi event attachments", () => {
         script: "None",
         skillOverrides: {},
         previewId: null,
-        globalDebuffs: {
-          phantomChime: false,
-          qiImbalance: false,
-          soulShaken: false,
-          vulnerable: false,
-          fearfulBlade: false,
-          qingyisCharm: "none",
-          floatingGrace: "none",
-        },
+        globalDebuffs: { ...defaultGlobalDebuffs },
       },
       path.defaultBuild,
     )

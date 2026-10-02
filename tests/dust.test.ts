@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import { defaultGlobalDebuffs } from "@/globalDebuffs"
 
 import buffs from "../data/buff/bamboocut-dust.json"
 import mysticBuffs from "../data/buff/mystic.json"
@@ -403,15 +404,7 @@ describe("Dust mechanics", () => {
         script: "None",
         skillOverrides: {},
         previewId: null,
-        globalDebuffs: {
-          phantomChime: false,
-          qiImbalance: false,
-          soulShaken: false,
-          vulnerable: false,
-          fearfulBlade: false,
-          qingyisCharm: "none",
-          floatingGrace: "none",
-        },
+        globalDebuffs: { ...defaultGlobalDebuffs },
       },
       path.defaultBuild,
     )
