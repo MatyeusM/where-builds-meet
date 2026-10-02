@@ -1,13 +1,37 @@
+import assert from "node:assert/strict"
+
 import { describe, expect, it } from "vitest"
 
 import { defaultGlobalDebuffs } from "@/globalDebuffs"
 
-import paths from "../data/path.json"
+import type { PathId } from "../src/application/contracts"
+import { typedPathDefinitions, type PathDefinition } from "../src/application/gameData/paths"
 import { buildPresetRotationBundle } from "../src/application/graduation"
-import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
+import {
+  buildRotationTimeline,
+  canAnchorAttachedEvent,
+  type AttachedEventTarget,
+  type RotationRecord,
+  type RotationStep,
+  type TimelineRow,
+} from "../src/calculations/rotationTimeline"
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { probeLoad } from "./helpers/probe-loader"
-import { rowCasting, rowWithId } from "./helpers/timelineRows"
+import { rowCasting } from "./helpers/timelineRows"
+
+/**
+ * The three Qi step shapes: anchored before an action, anchored after one, or
+ * positioned at an authored battle time. Each field lives on a different member,
+ * so each is read through a check that says which shape it is.
+ */
+type QiStep = Extract<RotationStep, { type: "event" }> & { event: "Qi" }
+const qiStepOf = (row: TimelineRow): QiStep | undefined =>
+  row.step.type === "event" && row.step.event === "Qi" ? row.step : undefined
+/** The action this Qi step attaches to, or undefined when it carries an authored time. */
+const attachmentOf = (step: QiStep): AttachedEventTarget | undefined =>
+  "before" in step ? step.before : "after" in step ? step.after : undefined
+/** The authored battle time this Qi step is positioned at, if it has one. */
+const authoredTimeOf = (step: QiStep): number | undefined => ("startTime" in step ? step.startTime : undefined)
 
 describe("preset Qi event attachments", () => {
   const rotationPaths = [
@@ -27,12 +51,18 @@ describe("preset Qi event attachments", () => {
     "/data/rotation/bamboocut-dust/dust-dummy-1-min-100pc.json",
   ]
   it.each(rotationPaths)("resolves authored Qi attachments using production inputs: %s", async rotationPath => {
-    const rotation = (await probeLoad(rotationPath)).default
-    const [pathId, path] = Object.entries(paths).find(([, path]) => rotationPath.includes("/" + path.buildGroup + "/"))!
+    const rotation = (await probeLoad<{ default: RotationRecord }>(rotationPath)).default
+    const match = Object.entries(typedPathDefinitions).find(([, entry]) =>
+      rotationPath.includes("/" + entry.buildGroup + "/"),
+    ) as [PathId, PathDefinition] | undefined
+    assert(match, `No shipped path builds rotations under ${rotationPath}`)
+    const [pathId, path] = match
+    const lockedWeapons = path.lockedWeapons
+    assert(lockedWeapons, `${rotationPath}'s path must lock its two martial arts.`)
     const bundle = buildPresetRotationBundle(
       {
-        pathId,
-        martialArts: path.lockedWeapons,
+        pathId: pathId as PathId,
+        martialArts: lockedWeapons,
         rotation,
         breakthrough: "17",
         food: "None",
@@ -47,24 +77,26 @@ describe("preset Qi event attachments", () => {
     expect(bundle).toBeDefined()
     const timeline = buildRotationTimeline(bundle!.timeline)
     const battleStart = timeline.find(row => row.battleStartTime !== undefined)?.battleStartTime ?? 0
-    const qiRows = timeline.filter(row => row.step.type === "event" && row.step.event === "Qi")
+    const qiRows = timeline.filter(row => qiStepOf(row) !== undefined)
+    // The step of a Qi row, which the shape helpers read.
+    const stepOf = (row: TimelineRow) => qiStepOf(row)!
     expect(qiRows.length).toBeGreaterThan(0)
     for (const row of qiRows) {
       const setIndex = row.actions.findIndex(action => action.type === "setQi")
       expect(setIndex).toBeGreaterThanOrEqual(0)
       const nextState = row.actionStates[setIndex + 1]
       expect(nextState).toBeDefined()
-      expect(nextState.targetQiRatio).toBeCloseTo(row.step.targetQiRatio, 8)
+      expect(nextState.targetQiRatio).toBeCloseTo(stepOf(row).targetQiRatio, 8)
     }
     // An attached Qi step must land on the action it names. A fixed-time Qi step
     // carries no attachment and instead lands at its authored battle time, offset
     // by when the battle actually started.
-    const attachedQiRows = qiRows.filter(row => (row.step.before ?? row.step.after) !== undefined)
-    const fixedTimeQiRows = qiRows.filter(row => (row.step.before ?? row.step.after) === undefined)
+    const attachedQiRows = qiRows.filter(row => attachmentOf(stepOf(row)) !== undefined)
+    const fixedTimeQiRows = qiRows.filter(row => attachmentOf(stepOf(row)) === undefined)
     for (const row of attachedQiRows) {
-      const attachment = row.step.before ?? row.step.after!
-      const source = timeline.find(candidate => candidate.id === row.sourceRowId)!
-      expect(source).toBeDefined()
+      const attachment = attachmentOf(stepOf(row)) as AttachedEventTarget
+      const source = timeline.find(candidate => candidate.id === row.sourceRowId)
+      assert(source, `The Qi step at ${row.startTime} must name a source row.`)
       const trigger =
         attachment.trigger === undefined
           ? undefined
@@ -79,31 +111,33 @@ describe("preset Qi event attachments", () => {
                 candidate.sourceRowId === source.id &&
                 candidate.step.skill === trigger?.value,
             )
-      expect(target).toBeDefined()
+      assert(target, `The attachment at ${row.startTime} must resolve to a timeline row.`)
       const expectedTime =
-        target!.startTime + (attachment.action === "start" ? 0 : Number(target!.actions[attachment.action].time ?? 0))
+        target.startTime + (attachment.action === "start" ? 0 : Number(target.actions[attachment.action].time ?? 0))
       expect(row.startTime).toBeCloseTo(expectedTime, 8)
     }
     for (const row of fixedTimeQiRows) {
-      expect(typeof row.step.startTime).toBe("number")
-      expect(row.startTime).toBeCloseTo(battleStart + Number(row.step.startTime), 8)
+      const authored = authoredTimeOf(stepOf(row))
+      expect(typeof authored).toBe("number")
+      expect(row.startTime).toBeCloseTo(battleStart + Number(authored), 8)
     }
     // Every attachment to an executed in-window action must resolve, irrespective of preset ramp counts.
     for (const [index, step] of rotation.steps.entries()) {
       if (step.type !== "event" || step.event !== "Qi") continue
-      const attachment = step.before ?? step.after
+      const attachment = attachmentOf(step)
       // Fixed-time steps are positioned by their authored time, not by an anchor.
       if (!attachment) continue
       const nextIndex = rotation.steps.findIndex(
         (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
       )
-      const target = rowWithId(timeline, `rotation-${nextIndex}`)
+      const target = timeline.find(row => row.id === `rotation-${nextIndex}`)
       if (!target || target.skipped) continue
-      const action = target.actions[attachment.action]
-      if (attachment.action !== "start" && (!action || action.type === "inactive")) continue
+      const anchor = attachment.action
+      const action = anchor === "start" ? undefined : target.actions[anchor]
+      if (anchor !== "start" && (!action || action.type === "inactive")) continue
       expect(
         qiRows.some(row => row.id === `rotation-${index}`),
-        `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${attachment.action} must retain its Qi event`,
+        `Executed attachment ${index} to ${target.id}/${target.step.skill} action ${anchor} must retain its Qi event`,
       ).toBe(true)
     }
   })
@@ -121,7 +155,7 @@ describe("preset Qi ramp coverage", () => {
     expect(cases.length).toBeGreaterThan(0)
     for (const { id, pathId, rotation, fixture } of cases) {
       const bundle = buildPresetRotationBundle(
-        { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {} },
+        { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {}, previewId: null },
         fixture.build,
       )
       expect(bundle, `${id}: failed to build the production calculation bundle.`).toBeDefined()
@@ -151,16 +185,20 @@ describe("preset Qi ramp coverage", () => {
   })
 })
 
+/** The Qi step anchored on the selected side of an action. */
+function qiPlacementStep(placement: "before" | "after"): RotationStep {
+  switch (placement) {
+    case "before":
+      return { type: "event", event: "Qi", before: { action: 0 }, targetQiRatio: 0 }
+    case "after":
+      return { type: "event", event: "Qi", after: { action: 0 }, targetQiRatio: 0 }
+  }
+}
+
 describe("Qi attachment ordering", () => {
-  it.each(["before", "after"])("applies %s the selected hit and expires independently", placement => {
+  it.each(["before", "after"] as const)("applies %s the selected hit and expires independently", placement => {
     const timeline = buildRotationTimeline({
-      rotation: {
-        name: "Attachment ordering",
-        steps: [
-          { type: "event", event: "Qi", [placement]: { action: 0 }, targetQiRatio: 0 },
-          { type: "skill", skill: "Probe" },
-        ],
-      },
+      rotation: { name: "Attachment ordering", steps: [qiPlacementStep(placement), { type: "skill", skill: "Probe" }] },
       skills: {
         Probe: {
           name: "Probe",
