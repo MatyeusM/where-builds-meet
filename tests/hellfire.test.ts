@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest"
 
-import buffs from "../data/buff/bamboocut-wind.json"
+import buffsJson from "../data/buff/bamboocut-wind.json"
+const buffs = asEffectDefinitions(buffsJson)
 import events from "../data/event.json"
 import echoes from "../data/innerway/echoes-of-oblivion.json"
-import skills from "../data/skill/infernal-twinblades.json"
+import skillsJson from "../data/skill/infernal-twinblades.json"
+const skills = asSkillRecords(skillsJson)
 import { buildRotationTimeline, type TimelineBuildInput, type RotationStep } from "../src/calculations/rotationTimeline"
 import { exportRotationEntries, mergeImportedRotationEntries, serializeRotationEntries } from "../src/rotationTransfer"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowCasting } from "./helpers/timelineRows"
 
 const cast = (skill: string): RotationStep => ({ type: "skill", skill })

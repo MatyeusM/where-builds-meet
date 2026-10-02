@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import generalBuffs from "../data/buff/general.json"
-import general from "../data/skill/general.json"
+import generalBuffsJson from "../data/buff/general.json"
+const generalBuffs = asEffectDefinitions(generalBuffsJson)
+import generalJson from "../data/skill/general.json"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
+const general = asSkillRecords(generalJson)
 import { buildRotationTimeline, type RotationStep, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
 
 function input(steps: RotationStep[], targetType?: "Dummy" | "DummyAttack" | "Boss"): TimelineBuildInput {

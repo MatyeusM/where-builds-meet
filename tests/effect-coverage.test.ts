@@ -2,8 +2,10 @@ import { assert, describe, expect, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
-import dustDebuffs from "../data/debuff/bamboocut-dust.json"
+import dustDebuffsJson from "../data/debuff/bamboocut-dust.json"
+const dustDebuffs = asEffectDefinitions(dustDebuffsJson)
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { asEffectDefinitions } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-effect-coverage.mjs.
