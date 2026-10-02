@@ -34,3 +34,12 @@ export function rowWithId<T extends { id: string }>(rows: readonly T[], id: stri
   assert(row, `Expected a row with id ${id}.`)
   return row
 }
+
+/** A resolved action carrying the numeric field `key`, such as `damageScale`. */
+export function actionNumber(row: TimelineRow, key: string): number {
+  const action = row.actions[0]
+  assert(action, `Expected the row at ${row.startTime} to carry its first action.`)
+  const value = action[key]
+  assert(typeof value === "number", `Expected the action at ${row.startTime} to carry a numeric ${key}.`)
+  return value
+}
