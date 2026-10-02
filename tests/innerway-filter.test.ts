@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import type { InnerWayDefinition } from "@/data/innerWayDefinitions"
+
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-innerway-filter.mjs.
@@ -8,17 +10,19 @@ describe("innerway-filter", () => {
     const { innerWayDefinitions, innerWayEntriesForTag } = await probeLoad<
       typeof import("../src/data/innerWayDefinitions")
     >("/src/data/innerWayDefinitions.ts")
-    const allTags = new Set(Object.values(innerWayDefinitions).flatMap(definition => definition.tags ?? []))
+    // Every tag any Inner Way declares, so each filter is checked against the whole table.
+    const definitions: Record<string, InnerWayDefinition> = innerWayDefinitions
+    const allTags = new Set<string>(Object.values(definitions).flatMap(definition => definition.tags ?? []))
 
     for (const tag of allTags) {
       const filtered = innerWayEntriesForTag(tag)
       assert(filtered.length > 0, `The ${tag} filter must return at least one Inner Way.`)
+      const eligible = Object.entries(definitions).filter(([, definition]) => definition.tags?.includes(tag))
       assert(
-        filtered.every(([, definition]) => definition.tags?.includes(tag)),
+        filtered.every(([id]) => eligible.some(([eligibleId]) => eligibleId === id)),
         `The ${tag} filter returned an Inner Way without that tag.`,
       )
-      for (const [id, definition] of Object.entries(innerWayDefinitions)) {
-        if (!definition.tags?.includes(tag)) continue
+      for (const [id] of eligible) {
         assert(
           filtered.some(([filteredId]) => filteredId === id),
           `The ${tag} filter omitted eligible Inner Way ${id}.`,
