@@ -1,6 +1,7 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
 
 // Ported from script/probe/check-cast-breakdown.mjs.
 describe("cast-breakdown", () => {
@@ -98,8 +99,9 @@ describe("cast-breakdown", () => {
     const moraleRows = result.timeline.filter(row => row.step.type === "skill" && row.step.skill === "MoraleChant")
     const baseCast = result.metrics.breakdown.casts.find(row => row.skillId === "Base")
     const moraleCast = result.metrics.breakdown.casts.find(row => row.skillId === "MoraleChant")
-    const damage = row => (row ? (result.actionBreakdowns[`${row.id}:0`]?.total ?? 0) : 0)
-    const damageSum = rows => rows.reduce((total, row) => total + damage(row), 0)
+    const damage = (row: { id?: string } | undefined) =>
+      row ? (result.actionBreakdowns[`${row.id ?? ""}:0`]?.total ?? 0) : 0
+    const damageSum = (rows: Array<{ id?: string }>) => rows.reduce((total, row) => total + damage(row), 0)
     assert(
       result.metrics.breakdown.casts.length === 2,
       "Repeated casts must group into one skill row, with Inner Way triggers in their own group.",
@@ -133,7 +135,7 @@ describe("cast-breakdown", () => {
       "Grouped cast rows must be sorted by average DPS descending.",
     )
 
-    const attributionBundle = withFluteEffect => ({
+    const attributionBundle = (withFluteEffect: boolean): RotationSimulationBundle => ({
       timeline: {
         rotation: {
           name: "Flute attribution probe",
@@ -206,7 +208,7 @@ describe("cast-breakdown", () => {
       "Flute's inclusive average DPS must include its attributed buff damage.",
     )
 
-    const ghostlyAttributionBundle = withGhostlyEffect => ({
+    const ghostlyAttributionBundle = (withGhostlyEffect: boolean): RotationSimulationBundle => ({
       timeline: {
         rotation: {
           name: "Ghostly attribution probe",
