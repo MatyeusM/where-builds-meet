@@ -3,27 +3,33 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { EditableObject, InnerWayEffectRule, RotationStep } from "@/calculations/rotationTimeline"
+import type { WeaponId } from "@/types"
 
 import type {
+  ResolvedRotationDamage,
   RotationDamageEntry,
   RotationSimulationBaseline,
   RotationSimulationBundle,
 } from "../src/calculations/rotationCalculator.ts"
-import type { RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
-import { rowWithId } from "./helpers/timelineRows"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 
 // Ported from script/probe/check-damage-recording.mjs.
 describe("damage-recording", () => {
   it("Rodent Hunt recording, reapply/expiry, boundary, cutoff, HP, and sampled-damage checks passed", async () => {
     const close = (actual: number | undefined, expected: number, message: string) =>
       assertClose(actual, expected, 1e-7, message)
-    const mortal = await import("../data/skill/mortal-rope-dart.json")
-    const infernal = await import("../data/skill/infernal-twinblades.json")
-    const buffs = await import("../data/buff/bamboocut-wind.json")
-    const debuffs = await import("../data/debuff/bamboocut-wind.json")
-    const vendetta = await import("../data/innerway/vendetta.json")
+    const mortal = asSkillRecords((await import("../data/skill/mortal-rope-dart.json")).default)
+    const infernal = asSkillRecords((await import("../data/skill/infernal-twinblades.json")).default)
+    const buffs = asEffectDefinitions((await import("../data/buff/bamboocut-wind.json")).default)
+    const debuffs = asEffectDefinitions((await import("../data/debuff/bamboocut-wind.json")).default)
+    const vendettaTiers = Object.entries((await import("../data/innerway/vendetta.json")).default.effect).sort(
+      ([left], [right]) => Number(left.slice("VendettaT".length)) - Number(right.slice("VendettaT".length)),
+    ) as Array<[string, { effect?: EditableObject[] }]>
+    // An empty literal is not assignable to Record<string, unknown>, so the no-op effect is named.
+    const noEffect: EditableObject = {}
     const { calculateRotationBaseline, calculateSimulatedRotationRun, calculateRotationComparisons } =
       await import("../src/calculations/rotationCalculator.ts")
     const { simulateRotation } = await import("../src/calculations/simulationCalculator.ts")
@@ -38,7 +44,7 @@ describe("damage-recording", () => {
       precision: 1,
       criticalRate: 0.4,
     }
-    const weapons = ["mortalRopeDart", "infernalTwinblades"]
+    const weapons: WeaponId[] = ["mortalRopeDart", "infernalTwinblades"]
     const bundle = (steps: RotationStep[]): RotationSimulationBundle => ({
       timeline: {
         rotation: { name: "Rodent Hunt probe", targetHP: 100000, steps },
@@ -57,8 +63,8 @@ describe("damage-recording", () => {
         weapons,
         innerWayConditions: ["VendettaT3", "Flamelash", "EchoesOfOblivionT6"],
         innerWayRules: [0, 1].flatMap(tier =>
-          vendetta.effect["VendettaT" + tier].effect.map(effect =>
-            Object.assign({ effect: {} }, effect, { source: "Vendetta", tier }),
+          (vendettaTiers[tier]?.[1].effect ?? []).map((effect): InnerWayEffectRule =>
+            Object.assign({ effect: noEffect }, effect, { source: "Vendetta", tier }),
           ),
         ),
         setupEffects: [],
@@ -84,21 +90,31 @@ describe("damage-recording", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
+    const at = (entry: RotationDamageEntry) => {
+      assert(entry.id, "A resolved damage action must have an id.")
+      return entry.id
+    }
+    const timeOf = (entry: RotationDamageEntry) => {
+      assert(typeof entry.timelineTime === "number", "A resolved damage action must carry its timeline time.")
+      return entry.timelineTime
+    }
     const payouts = (result: RotationSimulationBaseline) => result.baseline.filter(entry => entry.replay)
     const rodents = (result: RotationSimulationBaseline) =>
       result.baseline.filter(entry => entry.context.skillTags.includes("Rodent"))
     const damage = (result: RotationSimulationBaseline, entries: RotationDamageEntry[]) =>
-      entries.reduce((sum, entry) => sum + result.actionBreakdowns[entry.id].total, 0)
+      entries.reduce((sum, entry) => sum + result.actionBreakdowns[at(entry)].total, 0)
     const recordedHits = (result: RotationSimulationBaseline, payout: RotationDamageEntry) => {
       const index = payouts(result).indexOf(payout)
-      const start = index > 0 ? payouts(result)[index - 1].timelineTime : -Infinity
-      return rodents(result).filter(hit => hit.timelineTime >= start && hit.timelineTime < payout.timelineTime)
+      const previous = index > 0 ? payouts(result)[index - 1] : undefined
+      const start = previous ? timeOf(previous) : -Infinity
+      return rodents(result).filter(hit => timeOf(hit) >= start && timeOf(hit) < timeOf(payout))
     }
     const checkPayouts = (result: RotationSimulationBaseline) => {
       for (const entry of payouts(result)) {
         const expected = damage(result, recordedHits(result, entry)) * 0.3
-        close(result.actionBreakdowns[entry.id].total, expected, "Payout copies the final damage of recorded hits")
-        assert.equal(result.actionBreakdowns[entry.id].outcomeRates, undefined, "Payout cannot roll a new outcome")
+        const breakdown = result.actionBreakdowns[at(entry)]
+        close(breakdown.total, expected, "Payout copies the final damage of recorded hits")
+        assert.equal(breakdown.outcomeRates, undefined, "Payout cannot roll a new outcome")
       }
     }
     const steps = [
@@ -138,8 +154,9 @@ describe("damage-recording", () => {
     )
     checkPayouts(enhanced)
     assert.ok(damage(enhanced, rodents(enhanced)) > 0, "Automatic Rodents contribute calculated damage")
-    const later = rowWithId(result.baseline, "rotation-5:0")
-    const earlier = result.baseline.filter(entry => entry.timelineTime < later.timelineTime)
+    const later = result.baseline.find(entry => at(entry) === "rotation-5:0")
+    assert(later, "The baseline must record the anchored hit.")
+    const earlier = result.baseline.filter(entry => timeOf(entry) < timeOf(later))
     close(
       later.context.targetHPRatio,
       1 - damage(result, earlier) / 100000,
@@ -278,11 +295,16 @@ describe("damage-recording", () => {
       damage(full, payouts(full)),
       "Payout is unchanged by where the fight is anchored",
     )
+    const resolvedPayoutTotal = (run: { resolvedSequence: ResolvedRotationDamage[] }) => {
+      const payout = run.resolvedSequence.find(item => item.entry.replay)
+      assert(payout, "The sampled run must resolve at least one payout.")
+      return payout.breakdown.total
+    }
     const precombatSample = calculateSimulatedRotationRun(precombat, () => 0.7)
     const fullSample = calculateSimulatedRotationRun(bundle(anchoredSteps), () => 0.7)
     close(
-      precombatSample.resolvedSequence.find(item => item.entry.replay).breakdown.total,
-      fullSample.resolvedSequence.find(item => item.entry.replay).breakdown.total,
+      resolvedPayoutTotal(precombatSample),
+      resolvedPayoutTotal(fullSample),
       "Sampled payout retains its source hits",
     )
     const disabled = bundle(steps)
@@ -297,9 +319,7 @@ describe("damage-recording", () => {
         close(
           breakdown.total,
           sampled.resolvedSequence
-            .filter(
-              item => item.entry.context.skillTags.includes("Rodent") && item.entry.timelineTime < entry.timelineTime,
-            )
+            .filter(item => item.entry.context.skillTags.includes("Rodent") && timeOf(item.entry) < timeOf(entry))
             .reduce((sum, item) => sum + item.breakdown.total, 0) * 0.3,
           "Sampled payout uses this run's source outcomes",
         )
