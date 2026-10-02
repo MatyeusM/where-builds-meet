@@ -4,6 +4,8 @@ import { build } from "esbuild"
 import ts from "typescript-classic"
 import { assert, describe, it } from "vitest"
 
+import { rowWithId } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-gear.mjs.
 describe("gear", () => {
   it("Gear inventory, equipped-effect, and persistence checks passed", async () => {
@@ -27,6 +29,16 @@ describe("gear", () => {
     const gear = await import("../src/gear.ts")
     const damage = await loadBundledModule("./src/calculations/damage.ts")
     const statDefinitions = await loadBundledModule("./src/data/statDefinitions.ts")
+    const maxRoll = (...args: Parameters<typeof gear.maxGearRoll>) => {
+      const roll = gear.maxGearRoll(...args)
+      assert(roll !== undefined, `No affix or attunement cap for ${String(args[0])}.`)
+      return roll
+    }
+    const clampRoll = (...args: Parameters<typeof gear.clampGearRoll>) => {
+      const clamped = gear.clampGearRoll(...args)
+      assert(clamped !== undefined, `No clamped roll for ${String(args[0])}.`)
+      return clamped
+    }
     const breakthroughProfiles = (await import("../data/breakthrough.json")).default
 
     const gearAffixSummary = gear.summarizeGearAffixes([
@@ -92,7 +104,7 @@ describe("gear", () => {
         .every(
           ([, definition]) =>
             (definition.effect.stat.attunementDMGBonus === 1 || definition.effect.stat.healingBonus === 1) &&
-            definition.effect.tags.length > 0,
+            (definition.effect.tags?.length ?? 0) > 0,
         ),
       "Active armor attunements must target tagged damage or healing bonuses.",
     )
@@ -195,10 +207,11 @@ describe("gear", () => {
       preset.id,
       { id: "preset-copy", name: "Preset Copy" },
     )
-    const presetCopy = presetDuplicateState.entries.find(entry => entry.id === "preset-copy")
+    const presetCopy = rowWithId(presetDuplicateState.entries, "preset-copy")
     assert(
       presetCopy &&
         !presetCopy.isDefault &&
+        presetCopy.equipped &&
         presetCopy.equipped.leftWeapon === matchingPresetItem.id &&
         presetDuplicateState.gearItems.length === presetInventory.items.length &&
         JSON.stringify(presetCopy.setup) === JSON.stringify(gear.resolveBuildSetup(presetEntry)),
@@ -208,16 +221,17 @@ describe("gear", () => {
       id: "custom-copy",
       name: "Custom Copy",
     })
-    const customCopy = customDuplicateState.entries.find(entry => entry.id === "custom-copy")
+    const customCopy = rowWithId(customDuplicateState.entries, "custom-copy")
     assert(
       customCopy &&
+        customCopy.equipped &&
         JSON.stringify(customCopy.equipped) === JSON.stringify(presetCopy.equipped) &&
         JSON.stringify(customCopy.setup) === JSON.stringify(presetCopy.setup) &&
         customDuplicateState.gearItems.length === presetDuplicateState.gearItems.length,
       "Duplicating a custom build must reuse every equipped item and copy all setup selections without adding gear.",
     )
     assert(
-      Math.abs(gear.maxGearRoll("minPhys", "affix", true) - gear.maxGearRoll("minPhys", "affix", false) * 0.94) < 1e-9,
+      Math.abs(maxRoll("minPhys", "affix", true) - maxRoll("minPhys", "affix", false) * 0.94) < 1e-9,
       "Level 96 Relayed Max must use 94% of the affix roll.",
     )
     const normalWeaponAffixes = gear.affixOptionsForGearDefinition(
@@ -243,30 +257,26 @@ describe("gear", () => {
       "Tier 96 relayed weapons must expose every min/max attribute attack.",
     )
     assert(
-      gear.maxGearRoll("maxBellstrike", "affix", true, 96) === gear.maxGearRoll("maxVoidAttack", "affix", true, 96),
+      maxRoll("maxBellstrike", "affix", true, 96) === maxRoll("maxVoidAttack", "affix", true, 96),
       "Relayed attribute attack must share the Tier 96 Void Attack roll.",
     )
     assert(
-      gear.clampGearRoll("minPhys", 1e6, "affix", false) === gear.maxGearRoll("minPhys", "affix", false),
+      clampRoll("minPhys", 1e6, "affix", false) === maxRoll("minPhys", "affix", false),
       "Normal affix input must clamp to its level roll.",
     )
     assert(
       Math.abs(
-        gear.clampGearRoll("minPhys", gear.maxGearRoll("minPhys", "affix", false), "affix", true) -
-          gear.maxGearRoll("minPhys", "affix", true),
+        clampRoll("minPhys", maxRoll("minPhys", "affix", false), "affix", true) - maxRoll("minPhys", "affix", true),
       ) < 1e-9,
       "Enabling Relayed must clamp an existing affix to 94%.",
     )
     assert(
-      gear.clampGearRoll("physicalPenetration", 1e6, "attunement", true) ===
-        gear.maxGearRoll("physicalPenetration", "attunement", true),
+      clampRoll("physicalPenetration", 1e6, "attunement", true) === maxRoll("physicalPenetration", "attunement", true),
       "Relayed attunement input must retain its full cap.",
     )
-    assert(gear.clampGearRoll("minPhys", 60, "affix", true) === 60, "Values below the cap must remain unchanged.")
+    assert(clampRoll("minPhys", 60, "affix", true) === 60, "Values below the cap must remain unchanged.")
     assert(
-      Math.abs(
-        gear.maxGearRoll("minPhys", "affix", true, 91) - gear.maxGearRoll("minPhys", "affix", false, 91) * 0.94,
-      ) < 1e-9,
+      Math.abs(maxRoll("minPhys", "affix", true, 91) - maxRoll("minPhys", "affix", false, 91) * 0.94) < 1e-9,
       "Level 91 relayed affixes must use 94% of the level 91 roll.",
     )
     const emptyPreset = gear.defaultBuildPresets.find(candidate => candidate.id === "empty")
@@ -418,7 +428,7 @@ describe("gear", () => {
     )
     assert(
       migratedBuildState.gearItems.length === 1 &&
-        migratedBuildState.entries.find(entry => entry.id === "migrated-build")?.equipped.leftWeapon === hengBlade.id,
+        migratedBuildState.entries.find(entry => entry.id === "migrated-build")?.equipped?.leftWeapon === hengBlade.id,
       "Legacy single-inventory gear must migrate into shared storage.",
     )
     assert(!("slot" in migratedBuildState.gearItems[0]), "Legacy weapon slots must be removed during migration.")
@@ -461,15 +471,15 @@ describe("gear", () => {
             : null,
     }
     const migratedPerBuildState = gear.loadBuildState()
-    const migratedA = migratedPerBuildState.entries.find(entry => entry.id === "legacy-a")
-    const migratedB = migratedPerBuildState.entries.find(entry => entry.id === "legacy-b")
+    const migratedA = rowWithId(migratedPerBuildState.entries, "legacy-a")
+    const migratedB = rowWithId(migratedPerBuildState.entries, "legacy-b")
     assert(
       migratedPerBuildState.gearItems.length === 2,
       "Every legacy per-build item must be preserved in shared storage.",
     )
     assert(
-      migratedA?.equipped.leftWeapon &&
-        migratedB?.equipped.leftWeapon &&
+      migratedA?.equipped?.leftWeapon &&
+        migratedB?.equipped?.leftWeapon &&
         migratedA.equipped.leftWeapon !== migratedB.equipped.leftWeapon,
       "Legacy gear ID collisions must be remapped without changing either loadout.",
     )
@@ -501,12 +511,12 @@ describe("gear", () => {
             : null,
     }
     const sharedBuildState = gear.loadBuildState()
-    const sharedA = sharedBuildState.entries.find(entry => entry.id === "shared-a")
-    const sharedB = sharedBuildState.entries.find(entry => entry.id === "shared-b")
+    const sharedA = rowWithId(sharedBuildState.entries, "shared-a")
+    const sharedB = rowWithId(sharedBuildState.entries, "shared-b")
     assert(
       sharedBuildState.gearItems.length === 1 &&
-        sharedA?.equipped.leftWeapon === hengBlade.id &&
-        sharedB?.equipped.leftWeapon === hengBlade.id &&
+        sharedA?.equipped?.leftWeapon === hengBlade.id &&
+        sharedB?.equipped?.leftWeapon === hengBlade.id &&
         sharedA?.martialArts.join(",") === "snowparting,phalanxbane" &&
         !("weapons" in sharedA),
       "Shared gear must remain reusable while legacy build weapon tags migrate to martialArts.",
@@ -555,8 +565,8 @@ describe("gear", () => {
     const firstImportedBuild = mergedImport.state.entries.find(entry => entry.id === mergedImport.importedBuildIds[0])
     const secondImportedBuild = mergedImport.state.entries.find(entry => entry.id === mergedImport.importedBuildIds[1])
     assert(
-      firstImportedBuild?.equipped.leftWeapon &&
-        firstImportedBuild.equipped.leftWeapon === secondImportedBuild?.equipped.leftWeapon &&
+      firstImportedBuild?.equipped?.leftWeapon &&
+        firstImportedBuild.equipped.leftWeapon === secondImportedBuild?.equipped?.leftWeapon &&
         firstImportedBuild.equipped.leftWeapon !== hengBlade.id,
       "Imported builds must share the same remapped gear without colliding with existing IDs.",
     )
@@ -577,10 +587,9 @@ describe("gear", () => {
     assert(
       migratedTransfer.importedGearCount === 1 &&
         !("slot" in migratedTransfer.state.gearItems.at(-1)) &&
-        migratedTransfer.state.entries.find(entry => entry.id === migratedTransfer.importedBuildIds[0]).martialArts
-          .length === 2 &&
-        migratedTransfer.state.entries.find(entry => entry.id === migratedTransfer.importedBuildIds[0]).setup
-          .arsenal === gear.defaultBuildSetup.arsenal,
+        rowWithId(migratedTransfer.state.entries, migratedTransfer.importedBuildIds[0]!).martialArts!.length === 2 &&
+        rowWithId(migratedTransfer.state.entries, migratedTransfer.importedBuildIds[0]!).setup!.arsenal ===
+          gear.defaultBuildSetup.arsenal,
       "Version 1 exports must migrate weapon gear, legacy weapons eligibility, and missing setup data.",
     )
     let invalidImportRejected = false

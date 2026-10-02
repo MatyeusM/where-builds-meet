@@ -12,6 +12,7 @@ import type {
 import type { RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-damage-recording.mjs.
 describe("damage-recording", () => {
@@ -137,7 +138,7 @@ describe("damage-recording", () => {
     )
     checkPayouts(enhanced)
     assert.ok(damage(enhanced, rodents(enhanced)) > 0, "Automatic Rodents contribute calculated damage")
-    const later = result.baseline.find(entry => entry.id === "rotation-5:0")
+    const later = rowWithId(result.baseline, "rotation-5:0")
     const earlier = result.baseline.filter(entry => entry.timelineTime < later.timelineTime)
     close(
       later.context.targetHPRatio,
