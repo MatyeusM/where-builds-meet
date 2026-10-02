@@ -5,6 +5,7 @@ import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-martial-art-talents.mjs.
 describe("martial-art-talents", () => {
@@ -257,8 +258,6 @@ describe("martial-art-talents", () => {
       1000,
       "Iron Guard absence removes bonus",
     )
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const timeline = (setupEffects, steps, skills, extra = {}) =>
       buildRotationTimeline({
         rotation: { name: "Talent triggers", steps },
@@ -275,7 +274,7 @@ describe("martial-art-talents", () => {
     const observe = { castTime: 0, action: [{ type: "damage", phyCoef: 1, time: 0 }] }
     const startingResourceRows = timeline(
       [],
-      [cast("Observe"), delay(60), cast("Observe")],
+      [castStep("Observe"), delayStep(60), castStep("Observe")],
       { Observe: observe },
       { initialResources: system.initialResources },
     ).filter(row => row.step.skill === "Observe")
@@ -288,7 +287,7 @@ describe("martial-art-talents", () => {
         ...talentEffects("rivenTwinblades", "Increased Binge Point Gain"),
         ...talentEffects("skystrikeGauntlets", "Inebriate Dodge Enhancement"),
       ],
-      [cast("Carouse"), cast("Dodge"), cast("Dodge"), delay(1), cast("Dodge"), cast("Observe")],
+      [castStep("Carouse"), castStep("Dodge"), castStep("Dodge"), delayStep(1), castStep("Dodge"), castStep("Observe")],
       {
         Carouse: { castTime: 0, tags: ["HeroesBlood"], action: [] },
         Dodge: { castTime: 0, tags: ["PerfectDodge"], action: [] },
@@ -300,7 +299,7 @@ describe("martial-art-talents", () => {
     close(final.buffs.get("Carouse").expiresAt, 20, "Carouse lasts twenty seconds")
     const soulRows = timeline(
       talentEffects("heavenquakerSpear", "Damage Over Time Enhancement"),
-      [...Array.from({ length: 6 }, () => cast("Charged")), cast("Observe")],
+      [...Array.from({ length: 6 }, () => castStep("Charged")), castStep("Observe")],
       { Charged: { ...observe, tags: ["HeavenQuakerSpear", "Charged"] }, Observe: observe },
     )
     close(soulRows.at(-1).debuffs.get("SoulShaken").stack, 5, "Heavenquaker trigger applies capped Soul-Shaken stacks")
@@ -328,21 +327,21 @@ describe("martial-art-talents", () => {
         Observe: observe,
       }
       const graceSteps = [
-        cast("Grace"),
-        cast("Observe"),
-        cast("Exhaust"),
-        cast("Observe"),
-        delay(1.1),
-        cast("Observe"),
-        cast("LongExhaust"),
-        delay(5.1),
-        cast("Observe"),
-        cast("ConsumeGrace"),
-        cast("Observe"),
-        cast("Grace"),
-        cast("Observe"),
-        delay(12.1),
-        cast("Observe"),
+        castStep("Grace"),
+        castStep("Observe"),
+        castStep("Exhaust"),
+        castStep("Observe"),
+        delayStep(1.1),
+        castStep("Observe"),
+        castStep("LongExhaust"),
+        delayStep(5.1),
+        castStep("Observe"),
+        castStep("ConsumeGrace"),
+        castStep("Observe"),
+        castStep("Grace"),
+        castStep("Observe"),
+        delayStep(12.1),
+        castStep("Observe"),
       ]
       const graceRun = (enabled, extra = {}) =>
         run("soulshadeUmbrella", "Buff Enhancement", [], {
@@ -375,7 +374,7 @@ describe("martial-art-talents", () => {
         "The talent must not create a separate visible buff",
       )
       const permanent = {
-        rotation: { name: "Permanent Floating Grace", steps: [cast("Observe")] },
+        rotation: { name: "Permanent Floating Grace", steps: [castStep("Observe")] },
         initialBuffs: [{ name: grace, stack: 1, persistent: true }],
         initialDebuffs: [{ name: "Exhausted", stack: 1 }],
       }

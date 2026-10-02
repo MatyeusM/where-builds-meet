@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-mortal-rope-dart-talents.mjs.
 describe("mortal-rope-dart-talents", () => {
@@ -145,21 +146,19 @@ describe("mortal-rope-dart-talents", () => {
       "Infernal's Agility-to-attack talent does not feed Rodent scaling",
     )
     const debuffs = JSON.parse(await readFile("data/debuff/bamboocut-wind.json", "utf8"))
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const rows = buildRotationTimeline({
       rotation: {
         name: "Bone Corrosion refresh",
         steps: [
-          cast("Apply"),
-          cast("Observe"),
-          delay(4),
-          cast("Apply"),
-          cast("Observe"),
-          delay(1),
-          cast("Observe"),
-          delay(4),
-          cast("Observe"),
+          castStep("Apply"),
+          castStep("Observe"),
+          delayStep(4),
+          castStep("Apply"),
+          castStep("Observe"),
+          delayStep(1),
+          castStep("Observe"),
+          delayStep(4),
+          castStep("Observe"),
         ],
       },
       skills: {

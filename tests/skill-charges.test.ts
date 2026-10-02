@@ -4,12 +4,11 @@ import { readFile } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-skill-charges.mjs.
 describe("skill-charges", () => {
   it("Independent charge recovery, partial/full resets, shared groups, readiness, triggered casts, talent cooldown, and editor waits passed", async () => {
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const clear = charges => ({
       type: "clearCD",
       value: "AddledMind",
@@ -61,48 +60,54 @@ describe("skill-charges", () => {
     })
     const build = (steps, extra) => buildRotationTimeline(input(steps, extra))
     const times = rows => rows.filter(row => row.step.skill === "AddledMind" && !row.skipped).map(row => row.startTime)
-    const staggered = [cast("AddledMind"), delay(2), cast("AddledMind"), delay(2), cast("AddledMind")]
-    const more = Array.from({ length: 3 }, () => cast("AddledMind"))
+    const staggered = [
+      castStep("AddledMind"),
+      delayStep(2),
+      castStep("AddledMind"),
+      delayStep(2),
+      castStep("AddledMind"),
+    ]
+    const more = Array.from({ length: 3 }, () => castStep("AddledMind"))
     assert.deepEqual(
       times(build([...staggered, ...more])),
       [0, 2, 4, 15, 17, 19],
       "Each spent charge recovers 15 seconds after its own cast",
     )
 
-    const restoredSteps = [...staggered, delay(1), cast("RestoreOne"), ...more]
+    const restoredSteps = [...staggered, delayStep(1), castStep("RestoreOne"), ...more]
     assert.deepEqual(
       times(build(restoredSteps)),
       [0, 2, 4, 5, 17, 19],
       "Restoring one charge preserves both other timers and consumes the next recovering charge",
     )
     assert.deepEqual(
-      times(build([...staggered, delay(1), cast("RestoreAll"), ...more, cast("AddledMind")])),
+      times(build([...staggered, delayStep(1), castStep("RestoreAll"), ...more, castStep("AddledMind")])),
       [0, 2, 4, 5, 5, 5, 20],
       "Unqualified clearCD restores every charge and new uses start new timers",
     )
     assert.deepEqual(
-      times(build([cast("RestoreOne"), cast("RestoreOne"), ...more, cast("AddledMind")])),
+      times(build([castStep("RestoreOne"), castStep("RestoreOne"), ...more, castStep("AddledMind")])),
       [0, 0, 0, 15],
       "Restoring at full capacity cannot bank extra charges",
     )
     assert.deepEqual(
-      times(build([...staggered, delay(11), cast("RestoreOne"), ...more])),
+      times(build([...staggered, delayStep(11), castStep("RestoreOne"), ...more])),
       [0, 2, 4, 15, 15, 19],
       "Recovery at the reset boundary happens naturally before an additional charge is restored",
     )
 
     const readyRows = build([
-      cast("AddledMind"),
-      cast("CheckReady"),
-      cast("Observe"),
-      delay(0.2),
-      cast("AddledMind"),
-      cast("AddledMind"),
-      cast("CheckReady"),
-      cast("Observe"),
-      cast("RestoreOne"),
-      cast("CheckReady"),
-      cast("Observe"),
+      castStep("AddledMind"),
+      castStep("CheckReady"),
+      castStep("Observe"),
+      delayStep(0.2),
+      castStep("AddledMind"),
+      castStep("AddledMind"),
+      castStep("CheckReady"),
+      castStep("Observe"),
+      castStep("RestoreOne"),
+      castStep("CheckReady"),
+      castStep("Observe"),
     ])
     assert.deepEqual(
       readyRows.filter(row => row.step.skill === "Observe").map(row => row.buffs.has("Ready")),
@@ -118,15 +123,15 @@ describe("skill-charges", () => {
     }
     const groupedRows = build(
       [
-        cast("AddledMind"),
-        delay(2),
-        cast("Variant"),
-        delay(2),
-        cast("AddledMind"),
-        delay(1),
-        cast("RestoreOne"),
-        cast("Variant"),
-        cast("AddledMind"),
+        castStep("AddledMind"),
+        delayStep(2),
+        castStep("Variant"),
+        delayStep(2),
+        castStep("AddledMind"),
+        delayStep(1),
+        castStep("RestoreOne"),
+        castStep("Variant"),
+        castStep("AddledMind"),
       ],
       { skills: grouped },
     )
@@ -137,7 +142,7 @@ describe("skill-charges", () => {
     )
 
     const trigger = time => ({ type: "trigger", value: "AddledMind", time })
-    const triggeredRows = build([cast("Driver")], {
+    const triggeredRows = build([castStep("Driver")], {
       skills: {
         ...skills,
         Driver: {
@@ -160,12 +165,12 @@ describe("skill-charges", () => {
       [0, 2, 4, 6, 17],
       "Triggers consume the same independent charges and are rejected instead of waiting",
     )
-    const mixedRows = build([cast("Driver"), ...more], {
+    const mixedRows = build([castStep("Driver"), ...more], {
       skills: { ...skills, Driver: { castTime: 4, action: [trigger(0), trigger(2)] } },
     })
     assert.deepEqual(times(mixedRows), [0, 2, 4, 15, 17], "Explicit casts share the pool consumed by triggers")
 
-    const waiting = build([...more, cast("AddledMind"), cast("AddledMind")], {
+    const waiting = build([...more, castStep("AddledMind"), castStep("AddledMind")], {
       skills: {
         ...skills,
         AddledMind: { ...charged, action: [{ type: "trigger", value: "DelayedReset", time: 0 }] },
@@ -177,24 +182,24 @@ describe("skill-charges", () => {
       [0, 0, 0, 5, 15],
       "A partial reset wakes one waiting cast without duplicating it or restoring a second charge",
     )
-    const skipped = build([...more, cast("AddledMind")], { cooldownPolicy: "skip" })
+    const skipped = build([...more, castStep("AddledMind")], { cooldownPolicy: "skip" })
     assert.equal(skipped.at(-1).skipped, true, "Skip policy remains available for depleted charges")
 
     const talentEffects = talent.talent[13].flatMap(entry => entry.effect ?? [])
     const dodgeSteps = [
       ...more,
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
-      delay(15),
-      cast("AddledMind"),
-      cast("AddledMind"),
-      cast("AddledMind"),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
+      delayStep(15),
+      castStep("AddledMind"),
+      castStep("AddledMind"),
+      castStep("AddledMind"),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
     ]
     for (const procRoll of [undefined, () => 0.2]) {
       assert.deepEqual(

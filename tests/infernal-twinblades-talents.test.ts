@@ -5,13 +5,12 @@ import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-infernal-twinblades-talents.mjs.
 describe("infernal-twinblades-talents", () => {
   it("Infernal Twinblades: rank-13 stat scaling, conditional Flamelash damage, status lifecycle, attribute channels, dodge durations, and charge reset passed", async () => {
     const readJson = async path => JSON.parse(await readFile(path, "utf8"))
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
@@ -89,7 +88,9 @@ describe("infernal-twinblades-talents", () => {
 
     for (const dodge of ["PerfectDodge", "PerfectDodgeCancel"]) {
       for (const enabled of [false, true]) {
-        const [row] = observed(build([cast(dodge), cast("Observe")], { setupEffects: enabled ? setupEffects : [] }))
+        const [row] = observed(
+          build([castStep(dodge), castStep("Observe")], { setupEffects: enabled ? setupEffects : [] }),
+        )
         for (const name of ["Etherwrath", "Disintegration", "MysteryDMGBoost"]) {
           close(buff(row, name).expiresAt, effects[name].duration * (enabled ? 1.4 : 1), `${dodge} ${name} duration`)
         }
@@ -98,15 +99,15 @@ describe("infernal-twinblades-talents", () => {
     for (const procRoll of [undefined, () => 0.25]) {
       const rows = build(
         [
-          cast("Ordinary"),
-          delay(1),
-          cast("ProbeDodge"),
-          delay(1),
-          cast("Observe"),
-          cast("Extend"),
-          cast("Observe"),
-          delay(11),
-          cast("Observe"),
+          castStep("Ordinary"),
+          delayStep(1),
+          castStep("ProbeDodge"),
+          delayStep(1),
+          castStep("Observe"),
+          castStep("Extend"),
+          castStep("Observe"),
+          delayStep(11),
+          castStep("Observe"),
         ],
         {
           procRoll,
@@ -148,18 +149,18 @@ describe("infernal-twinblades-talents", () => {
     }
 
     const resetRows = build([
-      cast("AddledMind"),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
-      delay(29),
-      cast("PerfectDodge"),
-      cast("Observe"),
-      delay(0.5),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
-      delay(1),
-      cast("PerfectDodgeCancel"),
-      cast("AddledMind"),
+      castStep("AddledMind"),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
+      delayStep(29),
+      castStep("PerfectDodge"),
+      castStep("Observe"),
+      delayStep(0.5),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
+      delayStep(1),
+      castStep("PerfectDodgeCancel"),
+      castStep("AddledMind"),
     ])
     assert.deepEqual(
       resetRows.filter(row => row.step.skill === "AddledMind").map(row => row.startTime),
@@ -171,16 +172,18 @@ describe("infernal-twinblades-talents", () => {
       29 + effects.Etherwrath.duration * 1.4,
       "Duration bonus remains active during reset cooldown",
     )
-    const unenhanced = build([cast("AddledMind"), cast("PerfectDodgeCancel"), cast("AddledMind")], { setupEffects: [] })
+    const unenhanced = build([castStep("AddledMind"), castStep("PerfectDodgeCancel"), castStep("AddledMind")], {
+      setupEffects: [],
+    })
     assert.equal(unenhanced.at(-1).startTime, 100, "Without talent a dodge cannot reset the skill")
-    const empty = build([cast("AddledMind"), cast("EmptyDodge"), cast("AddledMind")])
+    const empty = build([castStep("AddledMind"), castStep("EmptyDodge"), castStep("AddledMind")])
     assert.equal(empty.at(-1).startTime, 0, "Success trigger restores a charge when the incoming hit is avoided")
     assert.deepEqual(
       empty.find(row => row.step.skill === "EmptyDodge").actions,
       [{ type: "takeDamage", damage: 0, time: 0 }],
       "Only the fixture incoming hit is displayed; the response event stays internal",
     )
-    const waiting = build([cast("AddledMind"), cast("AddledMind")], {
+    const waiting = build([castStep("AddledMind"), castStep("AddledMind")], {
       skills: withImmediateAttacks({
         ...skills,
         AddledMind: { ...skills.AddledMind, action: [{ type: "trigger", value: "DelayedDodge", time: 0 }] },
@@ -240,7 +243,7 @@ describe("infernal-twinblades-talents", () => {
             name: "Flamelash",
             steps: [
               ...(active ? [{ type: "event", event: "Buff", before: { action: "start" }, buff: "Flamelash" }] : []),
-              cast("Hit"),
+              castStep("Hit"),
             ],
           },
           skills: {
@@ -298,15 +301,15 @@ describe("infernal-twinblades-talents", () => {
         rotation: {
           name: "Flamelash lifecycle",
           steps: [
-            cast("Hit"),
-            cast("Enter"),
-            cast("Hit"),
-            delay(1),
-            cast("Hit"),
-            cast("Enter"),
-            cast("Hit"),
-            cast("Exit"),
-            cast("Hit"),
+            castStep("Hit"),
+            castStep("Enter"),
+            castStep("Hit"),
+            delayStep(1),
+            castStep("Hit"),
+            castStep("Enter"),
+            castStep("Hit"),
+            castStep("Exit"),
+            castStep("Hit"),
           ],
         },
         skills: {

@@ -3,12 +3,11 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-damage-recording.mjs.
 describe("damage-recording", () => {
   it("Rodent Hunt recording, reapply/expiry, boundary, cutoff, HP, and sampled-damage checks passed", async () => {
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const close = (actual: number | undefined, expected: number, message: string) =>
       assertClose(actual, expected, 1e-7, message)
     const mortal = await import("../data/skill/mortal-rope-dart.json")
@@ -92,15 +91,15 @@ describe("damage-recording", () => {
       }
     }
     const steps = [
-      cast("BladeboundThreadCancel"),
-      cast("RodentRampage"),
-      cast("InfernalLight1"),
-      cast("InfernalFlamelashLight5"),
+      castStep("BladeboundThreadCancel"),
+      castStep("RodentRampage"),
+      castStep("InfernalLight1"),
+      castStep("InfernalFlamelashLight5"),
       // Land a direct Rodent after Hunt expires at 20.385s.
       // Its delayed hit lands after Rampage expiry, outside the recording window.
-      delay(17.5),
-      cast("Rodent"),
-      delay(0.5),
+      delayStep(17.5),
+      castStep("Rodent"),
+      delayStep(0.5),
     ]
     const result = calculateRotationBaseline(bundle(steps))
     assert.equal(payouts(result).length, 1, "Expiry settles one window")
@@ -113,7 +112,12 @@ describe("damage-recording", () => {
     checkPayouts(result)
     assert.equal(rodents(result).length, 5, "A later Rodent still attacks but is outside the recording window")
     const enhanced = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("RodentsResilienceCharge"), cast("RodentRampage"), delay(20)]),
+      bundle([
+        castStep("BladeboundThreadCancel"),
+        castStep("RodentsResilienceCharge"),
+        castStep("RodentRampage"),
+        delayStep(20),
+      ]),
     )
     assert.equal(rodents(enhanced).length, 15, "Vendetta ERR supplies fifteen automatic Rodents")
     assert.equal(
@@ -151,11 +155,11 @@ describe("damage-recording", () => {
 
     const reapply = calculateRotationBaseline(
       bundle([
-        cast("BladeboundThreadCancel"),
-        cast("Rodent"),
-        cast("BladeboundThreadCancel"),
-        cast("Rodent"),
-        delay(20),
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        delayStep(20),
       ]),
     )
     assert.equal(payouts(reapply).length, 2, "Reapply settles old hits and expiry settles new hits once")
@@ -169,12 +173,12 @@ describe("damage-recording", () => {
 
     const boundary = calculateRotationBaseline(
       bundle([
-        cast("BladeboundThreadCancel"),
-        cast("Rodent"),
-        delay(19.615),
-        cast("BladeboundThreadCancel"),
-        cast("Rodent"),
-        delay(21),
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        delayStep(19.615),
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        delayStep(21),
       ]),
     )
     assert.equal(payouts(boundary).length, 2, "Same-time expiry and reapplication settle each activation once")
@@ -182,7 +186,13 @@ describe("damage-recording", () => {
     close(payouts(boundary)[1].timelineTime, 40.385, "New activation retains its full window")
     checkPayouts(boundary)
     const exact = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(19.5), cast("Rodent"), delay(1)]),
+      bundle([
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        delayStep(19.5),
+        castStep("Rodent"),
+        delayStep(1),
+      ]),
     )
     assert.equal(
       recordedHits(exact, payouts(exact)[0]).length,
@@ -191,15 +201,22 @@ describe("damage-recording", () => {
     )
     checkPayouts(exact)
     const fixed = calculateRotationBaseline(
-      bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(5), cast("Extend"), cast("Token"), delay(21)]),
+      bundle([
+        castStep("BladeboundThreadCancel"),
+        castStep("Rodent"),
+        delayStep(5),
+        castStep("Extend"),
+        castStep("Token"),
+        delayStep(21),
+      ]),
     )
     close(payouts(fixed)[0].timelineTime, 20.385, "Extension and Token refresh do not delay settlement")
     assert.equal(
-      payouts(calculateRotationBaseline(bundle([cast("BladeboundThreadCancel"), delay(21)]))).length,
+      payouts(calculateRotationBaseline(bundle([castStep("BladeboundThreadCancel"), delayStep(21)]))).length,
       0,
       "Empty window emits no damage",
     )
-    const zeroBundle = bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(21)])
+    const zeroBundle = bundle([castStep("BladeboundThreadCancel"), castStep("Rodent"), delayStep(21)])
     zeroBundle.timeline.skills.Rodent = {
       castTime: 0,
       tags: ["Rodent"],
@@ -208,12 +225,14 @@ describe("damage-recording", () => {
     const zero = calculateRotationBaseline(zeroBundle)
     assert.equal(payouts(zero).length, 1, "Matched zero-damage hits still settle")
     close(damage(zero, payouts(zero)), 0, "Zero source damage produces a zero payout")
-    const short = calculateRotationBaseline(bundle([cast("BladeboundThreadCancel"), cast("Rodent"), delay(1)]))
+    const short = calculateRotationBaseline(
+      bundle([castStep("BladeboundThreadCancel"), castStep("Rodent"), delayStep(1)]),
+    )
     assert.equal(payouts(short).length, 0, "Recording does not extend combat")
     close(short.duration, 1.385, "Combat ends at the final explicit Delay")
     const ended = bundle([
-      cast("BladeboundThreadCancel"),
-      cast("Rodent"),
+      castStep("BladeboundThreadCancel"),
+      castStep("Rodent"),
       { type: "event", event: "BattleEnd", startTime: 20.385 },
     ])
     ended.timeline.eventDefinitions.BattleEnd = { name: "Battle End", action: [] }
@@ -226,12 +245,12 @@ describe("damage-recording", () => {
     // one that opens the window. The Rodents it then records still pay out, and
     // the anchor must not change the settled amount.
     const anchoredSteps = [
-      cast("Rodent"),
-      delay(5),
-      cast("Rodent"),
-      cast("BladeboundThreadCancel"),
-      cast("Rodent"),
-      delay(21),
+      castStep("Rodent"),
+      delayStep(5),
+      castStep("Rodent"),
+      castStep("BladeboundThreadCancel"),
+      castStep("Rodent"),
+      delayStep(21),
     ]
     const precombat = bundle(anchoredSteps)
     precombat.startAnchor = { rowId: "rotation-3" }

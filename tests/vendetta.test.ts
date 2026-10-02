@@ -3,12 +3,11 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-vendetta.mjs.
 describe("vendetta", () => {
   it("Vendetta cumulative tiers, extended Rodent triggers, exact expiry, refresh, and expected/sampled checks passed", async () => {
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const vendetta = await import("../data/innerway/vendetta.json")
     const buffs = await import("../data/buff/bamboocut-wind.json")
     const debuffs = await import("../data/debuff/bamboocut-wind.json")
@@ -35,7 +34,7 @@ describe("vendetta", () => {
         roll,
       )
     const rodent = rows => rows.filter(row => row.step.skill === "Rodent")
-    const lateAttack = [cast("RodentRampage"), delay(14), cast("InfernalLight1")]
+    const lateAttack = [castStep("RodentRampage"), delayStep(14), castStep("InfernalLight1")]
     assert.equal(
       rodent(build(-1, lateAttack)).length,
       0,
@@ -58,7 +57,7 @@ describe("vendetta", () => {
         ]) {
           const boundary = build(
             tier,
-            [cast("RodentRampage"), delay(duration - 0.339 + offset), cast("InfernalLight1")],
+            [castStep("RodentRampage"), delayStep(duration - 0.339 + offset), castStep("InfernalLight1")],
             roll,
           )
           assert.equal(rodent(boundary).length, expected, "Rodent attacks stop at the selected tier's exact expiry")
@@ -66,16 +65,16 @@ describe("vendetta", () => {
       }
     }
     assert.equal(
-      rodent(build(0, [cast("RodentRampage"), delay(15 - 0.339), cast("InfernalLight1")])).length,
+      rodent(build(0, [castStep("RodentRampage"), delayStep(15 - 0.339), castStep("InfernalLight1")])).length,
       0,
       "Extended buff expires at the exact 15-second boundary",
     )
     const refresh = build(0, [
-      cast("RodentRampage"),
-      delay(14),
-      cast("RodentRampage"),
-      delay(14),
-      cast("InfernalLight1"),
+      castStep("RodentRampage"),
+      delayStep(14),
+      castStep("RodentRampage"),
+      delayStep(14),
+      castStep("InfernalLight1"),
     ])
     assert.equal(rodent(refresh).length, 1, "Recasting refreshes the full extended lifetime")
     const refreshed = Array.from(
@@ -108,10 +107,10 @@ describe("vendetta", () => {
           rotation: {
             name: "Vendetta Token damage",
             steps: [
-              cast("RodentRampage"),
-              cast(withToken ? "BladeboundThreadCancel" : "Wait"),
-              cast("InfernalLight1"),
-              delay(0.5),
+              castStep("RodentRampage"),
+              castStep(withToken ? "BladeboundThreadCancel" : "Wait"),
+              castStep("InfernalLight1"),
+              delayStep(0.5),
             ],
           },
           skills: { ...mortal, ...infernal, Wait: { castTime: 0.385, action: [] } },
@@ -163,7 +162,7 @@ describe("vendetta", () => {
     for (const roll of [undefined, () => 0.5]) {
       const rows = build(
         -1,
-        [cast("BladeboundThreadCancel"), cast("BladeboundThreadCancel"), cast("InfernalLight1")],
+        [castStep("BladeboundThreadCancel"), castStep("BladeboundThreadCancel"), castStep("InfernalLight1")],
         roll,
       )
       const casts = rows.filter(row => row.step.skill === "BladeboundThreadCancel")
@@ -189,7 +188,7 @@ describe("vendetta", () => {
       ]) {
         const lifetime = build(
           tier,
-          [cast("BladeboundThreadCancel"), delay(duration - 0.339), cast("InfernalLight1")],
+          [castStep("BladeboundThreadCancel"), delayStep(duration - 0.339), castStep("InfernalLight1")],
           roll,
         )
         const hit = lifetime.find(row => row.step.skill === "InfernalLight1")
@@ -197,7 +196,7 @@ describe("vendetta", () => {
           !hit.actionStates[0].debuffs.has("VendettaToken"),
           "Token expires at its exact tier-adjusted boundary",
         )
-        const before = build(tier, [cast("BladeboundThreadCancel"), cast("InfernalLight1")], roll).find(
+        const before = build(tier, [castStep("BladeboundThreadCancel"), castStep("InfernalLight1")], roll).find(
           row => row.step.skill === "InfernalLight1",
         )
         close(
@@ -211,7 +210,10 @@ describe("vendetta", () => {
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     for (const rank of [12, 13]) {
       const rows = buildRotationTimeline({
-        rotation: { name: "Bladebound talent", steps: [cast("BladeboundThreadCancel"), cast("InfernalLight1")] },
+        rotation: {
+          name: "Bladebound talent",
+          steps: [castStep("BladeboundThreadCancel"), castStep("InfernalLight1")],
+        },
         skills: { ...mortal, ...infernal },
         effectDefinitions: { ...buffs, ...debuffs },
         dots: {},

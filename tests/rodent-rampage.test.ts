@@ -3,12 +3,11 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { assertClose } from "./helpers/floatEquality"
+import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-rodent-rampage.mjs.
 describe("rodent-rampage", () => {
   it("Infernal stage timing, Rodent cadence/lifetime, T6 gating, dynamic damage, and expected/sampled checks passed", async () => {
-    const cast = skill => ({ type: "skill", skill })
-    const delay = duration => ({ type: "event", event: "Delay", duration })
     const close = (a: number | undefined, b: number, message: string) => assertClose(a, b, 1e-9, message)
     const infernal = await import("../data/skill/infernal-twinblades.json")
     const mortal = await import("../data/skill/mortal-rope-dart.json")
@@ -66,10 +65,10 @@ describe("rodent-rampage", () => {
     const rodentRows = rows => rows.filter(row => row.step.skill === "Rodent")
     const build = (steps, extra = {}, roll) => buildRotationTimeline(input(steps, extra), roll)
     for (const id of Object.keys(infernal).filter(id => id.endsWith("Rodent"))) {
-      const active = build([cast("RodentRampage"), cast(id)])
+      const active = build([castStep("RodentRampage"), castStep(id)])
       assert.equal(rodentRows(active).length, 1, `${id} launches one Rodent before its light attack hits`)
       assert.equal(active.find(row => row.step.skill === id).effectiveCastTime, 0)
-      assert.equal(rodentRows(build([cast(id)], { initialBuffs: [] })).length, 0, `${id} requires Rampage`)
+      assert.equal(rodentRows(build([castStep(id)], { initialBuffs: [] })).length, 0, `${id} requires Rampage`)
     }
     const ids = [
       "InfernalLight1",
@@ -83,7 +82,7 @@ describe("rodent-rampage", () => {
       "InfernalFlamelashLight5",
     ]
     for (const roll of [undefined, () => 0.5]) {
-      const rows = build([cast("RodentRampage"), ...ids.map(cast)], {}, roll)
+      const rows = build([castStep("RodentRampage"), ...ids.map(castStep)], {}, roll)
       assert.equal(
         rodentRows(rows).length,
         11,
@@ -123,38 +122,43 @@ describe("rodent-rampage", () => {
         offset += duration
       }
     }
-    assert.equal(rodentRows(build([cast("InfernalFlamelashLight5")])).length, 0, "FA5 requires the active Rodent buff")
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("InfernalFlamelashLight5")], { innerWayConditions: [] })).length,
+      rodentRows(build([castStep("InfernalFlamelashLight5")])).length,
+      0,
+      "FA5 requires the active Rodent buff",
+    )
+    assert.equal(
+      rodentRows(build([castStep("RodentRampage"), castStep("InfernalFlamelashLight5")], { innerWayConditions: [] }))
+        .length,
       1,
       "Without T6 FA5 triggers one Rodent",
     )
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("InfernalFlamelashLight5")], { initialBuffs: [] })).length,
+      rodentRows(build([castStep("RodentRampage"), castStep("InfernalFlamelashLight5")], { initialBuffs: [] })).length,
       1,
       "The T6 extras require Flamelash",
     )
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("MortalLight"), cast("MortalLight")])).length,
+      rodentRows(build([castStep("RodentRampage"), castStep("MortalLight"), castStep("MortalLight")])).length,
       2,
       "Mortal triggers every stage",
     )
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("Slow")])).length,
+      rodentRows(build([castStep("RodentRampage"), castStep("Slow")])).length,
       0,
       "A multi-hit stage from another art is only one count",
     )
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("Slow"), cast("Heavy"), cast("Slow")])).length,
+      rodentRows(build([castStep("RodentRampage"), castStep("Slow"), castStep("Heavy"), castStep("Slow")])).length,
       1,
       "Other arts trigger every two stages and heavy hits do not advance progress",
     )
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), cast("Combo")])).length,
+      rodentRows(build([castStep("RodentRampage"), castStep("Combo")])).length,
       1,
       "Multi-action components count as separate stages",
     )
-    const refreshed = build([cast("RodentRampage"), cast("Slow"), cast("RodentRampage"), cast("Slow")])
+    const refreshed = build([castStep("RodentRampage"), castStep("Slow"), castStep("RodentRampage"), castStep("Slow")])
     assert.equal(rodentRows(refreshed).length, 1, "Refresh preserves the half-complete counter")
     const applications = refreshed.filter(row => row.kind === "rotation" && row.step.skill === "RodentRampage")
     close(applications[1].startTime, 1.041, "Rodent Rampage has no cooldown")
@@ -165,22 +169,22 @@ describe("rodent-rampage", () => {
     assert.equal(latest[0].stack, 1, "The buff stays capped at one stack")
     close(latest[0].expiresAt, 11.582, "Refresh gives ten seconds from the new application time")
     const expired = build([
-      cast("RodentRampage"),
-      cast("Slow"),
-      delay(10),
-      cast("RodentRampage"),
-      cast("Slow"),
-      cast("Slow"),
+      castStep("RodentRampage"),
+      castStep("Slow"),
+      delayStep(10),
+      castStep("RodentRampage"),
+      castStep("Slow"),
+      castStep("Slow"),
     ])
     assert.equal(rodentRows(expired).length, 1, "Expiry resets progress before the next activation")
     assert.ok(rodentRows(expired)[0].startTime > 12, "Only the second new stage triggers after reapplication")
     assert.equal(
-      rodentRows(build([cast("RodentRampage"), delay(9.9), cast("MortalLight")])).length,
+      rodentRows(build([castStep("RodentRampage"), delayStep(9.9), castStep("MortalLight")])).length,
       0,
       "Buff is inactive at its exact expiry",
     )
     assert.equal(
-      rodentRows(build([cast("LateDriver"), cast("RodentRampage"), delay(1)])).length,
+      rodentRows(build([castStep("LateDriver"), castStep("RodentRampage"), delayStep(1)])).length,
       0,
       "Applying the buff mid-stage cannot turn a later hit into another stage",
     )
@@ -226,7 +230,9 @@ describe("rodent-rampage", () => {
       }
     }
     const bundle = conditions => ({
-      timeline: input([cast("RodentRampage"), cast("InfernalFlamelashLight5")], { innerWayConditions: conditions }),
+      timeline: input([castStep("RodentRampage"), castStep("InfernalFlamelashLight5")], {
+        innerWayConditions: conditions,
+      }),
       startAnchor: { rowId: "rotation-0" },
       stats,
       derivedStats: context.derivedStats,

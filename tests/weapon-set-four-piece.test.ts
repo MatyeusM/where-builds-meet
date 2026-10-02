@@ -4,9 +4,7 @@ import { describe, it } from "vitest"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader"
-
-const cast = skill => ({ type: "skill", skill })
-const delay = duration => ({ type: "event", event: "Delay", duration })
+import { castStep, delayStep } from "./helpers/rotationSteps"
 const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
 describe("weapon-set-four-piece", () => {
@@ -56,7 +54,7 @@ describe("weapon-set-four-piece", () => {
         tags = ["DirectDamage"],
         prep = [],
         action = { type: "damage", phyCoef: 1, attrCoef: 1 },
-        steps = [cast("Probe")],
+        steps = [castStep("Probe")],
         stats: override = {},
         castTime = 1,
       } = {},
@@ -178,8 +176,8 @@ describe("weapon-set-four-piece", () => {
     }
     const deflectOptions = {
       steps: [
-        cast("DeflectSuccessful"),
-        cast("Probe"),
+        castStep("DeflectSuccessful"),
+        castStep("Probe"),
         { type: "event", event: "TakeDamage", startTime: 0.1, damage: 200 },
       ],
     }
@@ -192,7 +190,7 @@ describe("weapon-set-four-piece", () => {
         [4, "Deflect"],
       ]) {
         const rows = buildRotationTimeline(
-          bundle("Cleftpeak", tier, { steps: [cast(skill), cast("Probe")] }).timeline,
+          bundle("Cleftpeak", tier, { steps: [castStep(skill), castStep("Probe")] }).timeline,
           roll,
         )
         assert.ok(
@@ -203,9 +201,9 @@ describe("weapon-set-four-piece", () => {
       const expired = buildRotationTimeline(
         bundle("Cleftpeak", 4, {
           steps: [
-            cast("DeflectSuccessful"),
-            delay(5),
-            cast("Probe"),
+            castStep("DeflectSuccessful"),
+            delayStep(5),
+            castStep("Probe"),
             { type: "event", event: "TakeDamage", startTime: 0.1, damage: 200 },
           ],
         }).timeline,
