@@ -1,7 +1,9 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationRecord } from "@/calculations/rotationTimeline"
 
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-smolder-poet-rotation.mjs.
@@ -25,8 +27,8 @@ describe("smolder-poet-rotation", () => {
       Array.from({ length: 7 }, (_, tier) => `${name}T${tier}`),
     )
     const timeline = buildRotationTimeline({
-      rotation,
-      skills: { ...snowparting, ...phalanxbane, ...mystic, ...general },
+      rotation: rotation as RotationRecord,
+      skills: asSkillRecords({ ...snowparting, ...phalanxbane, ...mystic, ...general }),
       eventDefinitions: {
         Qi: {
           name: "Event: Qi",
@@ -44,8 +46,14 @@ describe("smolder-poet-rotation", () => {
           tags: ["Event"],
         },
       },
-      dots,
-      effectDefinitions: { ...mysticBuffs, ...generalBuffs, ...stonesplitBuffs, ...generalDebuffs, ...dots },
+      dots: asSkillRecords(dots),
+      effectDefinitions: asEffectDefinitions({
+        ...mysticBuffs,
+        ...generalBuffs,
+        ...stonesplitBuffs,
+        ...generalDebuffs,
+        ...dots,
+      }),
       innerWayConditions: conditions,
       innerWayRules: [],
       setupEffects: [],
