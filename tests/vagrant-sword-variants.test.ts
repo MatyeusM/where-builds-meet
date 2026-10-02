@@ -127,6 +127,9 @@ describe("vagrant-sword-charge-variants", () => {
     )
   })
 
+  // Every float check below asserts through the shared assertClose helper, which the
+  // rule cannot see from outside this callback.
+  // oxlint-disable-next-line vitest/expect-expect
   it("drains and regenates Endurance across the authored charge phases", async () => {
     const { defaultSkillMaps, defaultEditorMaps } = await import("../src/application/gameData/skills")
     const endurance = (tiers: string[], shielded: boolean) => {

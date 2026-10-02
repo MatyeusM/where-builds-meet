@@ -86,15 +86,16 @@ export function urlOf(input: RequestInfo | URL): string {
 export function windowWithLifecycle(options: { href: string; onNavigate: (url: string) => void; intervalMs: number }): {
   window: Window & typeof globalThis
   events: EventTarget
-  /** Run the app's recorded periodic check. */
-  runPeriodicCheck: () => void
+  /** Run the app's recorded periodic check, awaiting it when it is async. */
+  runPeriodicCheck: () => unknown
   /** Whether the app still holds a live interval callback. */
   hasPeriodicCheck: () => boolean
   /** Restore the real globals the spec replaced. */
   restore: () => void
 } {
   const events = new EventTarget()
-  let periodicCheck: (() => void) | undefined
+  // The app's poll is async, so the recorded callback's result is what a spec awaits.
+  let periodicCheck: (() => unknown) | undefined
   const navigations: string[] = []
   const { href } = new URL(options.href)
   const win = Object.assign(events, {
@@ -106,7 +107,7 @@ export function windowWithLifecycle(options: { href: string; onNavigate: (url: s
         options.onNavigate(url)
       },
     },
-    setInterval: (callback: () => void, delay: number) => {
+    setInterval: (callback: () => unknown, delay: number) => {
       assert.equal(delay, options.intervalMs, "The deployment poll must run on its configured interval.")
       periodicCheck = callback
       return 1
@@ -122,7 +123,7 @@ export function windowWithLifecycle(options: { href: string; onNavigate: (url: s
     events,
     runPeriodicCheck: () => {
       assert(periodicCheck, "Expected the app to have registered its periodic check.")
-      periodicCheck()
+      return periodicCheck()
     },
     hasPeriodicCheck: () => periodicCheck !== undefined,
     restore: () => {
@@ -146,10 +147,12 @@ export function documentWithVisibility(initial: DocumentVisibilityState = "visib
 } {
   const events = new EventTarget()
   const holder = { visibilityState: initial }
-  const doc = Object.assign(events, {
-    get visibilityState() {
-      return holder.visibilityState
-    },
+  // Defined rather than assigned: `Object.assign` reads a getter and copies the
+  // value it returns, which would freeze visibility at its initial state and make
+  // `setVisibility` inert.
+  const doc = Object.defineProperty(events, "visibilityState", {
+    get: () => holder.visibilityState,
+    configurable: true,
   }) as unknown as Document
   const originalDocument = globalThis.document
   globalThis.document = doc

@@ -11,17 +11,24 @@ import { rankTalentEffects } from "./helpers/shippedData"
 
 // Ported from script/probe/check-nameless-spear-talents.mjs.
 describe("nameless-spear-talents", () => {
+  // Every float check below asserts through the shared assertClose helper, which the
+  // rule cannot see from outside this callback.
+  // oxlint-disable-next-line vitest/expect-expect
   it("Nameless Spear talent calculation checks passed", async () => {
     const namelessSpear = (await import("../data/martial-art/nameless-spear.json")).default
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
+    const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
+    // Rank 13's effects, tagged as a talent stage so their formulas resolve against the raw
+    // sheet rather than the action sheet, which is what the shipped builder's rank read does.
+    const effects = martialArtEffectsForRank(martialArtDefinitions, ["namelessSpear"], 13)
     const statResult = calculateStatsWithEffects(
       { ...emptyStats, momentum: 280, affinity: 0.25744, maxBellstrike: 459 },
-      martialArtDefinitions.namelessSpear.talent[13].flatMap(talent => talent.effect ?? []),
+      effects,
       0,
     )
     assertClose(statResult.stats.affinity, 0.3, 1e-9, "Momentum scaling must grant at most 4.256% Affinity Rate.")

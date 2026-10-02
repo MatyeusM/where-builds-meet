@@ -11,6 +11,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-nameless-sword-talents.mjs.
 describe("nameless-sword-talents", () => {
+  // Every float check below asserts through the shared assertClose helper, which the
+  // rule cannot see from outside this callback.
+  // oxlint-disable-next-line vitest/expect-expect
   it("Nameless Sword talent calculation checks passed", async () => {
     const namelessSword = (await import("../data/martial-art/nameless-sword.json")).default
     const { calculateStatsWithEffects, resolveRawStatFormulas } = await probeLoad<

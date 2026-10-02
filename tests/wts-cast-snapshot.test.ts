@@ -6,7 +6,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 import { weaponSetDefinitions } from "@/gear"
 
 import type { RotationSimulationBaseline, RotationSimulationBundle } from "../src/calculations/rotationCalculator.ts"
-import type { EditableObject, EffectDefinition, RotationStep } from "../src/calculations/rotationTimeline.ts"
+import type { EditableObject, RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-wts-cast-snapshot.mjs.
@@ -268,15 +268,18 @@ describe("wts-cast-snapshot", () => {
       ...base.timeline.skills,
       ApplyHOT: { name: "Apply HOT", castTime: 0, action: [{ type: "apply", target: "self", value: "HOT", time: 0 }] },
     }
-    periodicFixture.timeline.effectDefinitions = {
-      ...base.timeline.effectDefinitions,
-      HOT: {
-        name: "HOT",
-        duration: 3,
-        maxStack: 1,
-        periodic: { interval: 1, firstTick: 1, action: [{ type: "heal", phyBonus: 2200, time: 0 }] },
-      } satisfies EffectDefinition,
+    // `tags` is load-bearing on a shipped effect definition — ten of them carry one —
+    // but the declared effect definition omits it, so the entry is named here rather
+    // than written inline: an inline literal is checked against the declared fields
+    // and would silently lose the tag.
+    const hot = {
+      name: "HOT",
+      duration: 3,
+      maxStack: 1,
+      tags: ["Heal"],
+      periodic: { interval: 1, firstTick: 1, action: [{ type: "heal", phyBonus: 2200, time: 0 }] },
     }
+    periodicFixture.timeline.effectDefinitions = { ...base.timeline.effectDefinitions, HOT: hot }
     const periodic = calculateRotationBaseline(periodicFixture)
     assert.equal(
       periodic.metrics.breakdown.skills.find(skill => skill.id === "QiBlade")?.triggers,

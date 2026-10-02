@@ -16,7 +16,15 @@ import { rowCasting } from "./helpers/timelineRows"
 // Ported from script/probe/check-vendetta.mjs.
 describe("vendetta", () => {
   it("Vendetta cumulative tiers, extended Rodent triggers, exact expiry, refresh, and expected/sampled checks passed", async () => {
-    const weapons: WeaponId[] = ["mortalRopeDart", "infernalTwinblades"]
+    /**
+     * The two weapon orders this spec uses, which are deliberately different.
+     *
+     * The timeline is built with Infernal leading and Mortal following, while the
+     * Mortal talent table is read with Mortal leading. Weapon order decides which
+     * martial art is the main one, so each use keeps the order it was written with.
+     */
+    const weapons: WeaponId[] = ["infernalTwinblades", "mortalRopeDart"]
+    const talentOrder: WeaponId[] = ["mortalRopeDart", "infernalTwinblades"]
     const vendetta = await import("../data/innerway/vendetta.json")
     const buffs = asEffectDefinitions((await import("../data/buff/bamboocut-wind.json")).default)
     const debuffs = asEffectDefinitions((await import("../data/debuff/bamboocut-wind.json")).default)
@@ -250,7 +258,11 @@ describe("vendetta", () => {
         weapons,
         innerWayRules: [],
         innerWayConditions: [],
-        setupEffects: martialArtEffectsForRank({ mortalRopeDart: martialArtDefinitions.mortalRopeDart }, weapons, rank),
+        setupEffects: martialArtEffectsForRank(
+          { mortalRopeDart: martialArtDefinitions.mortalRopeDart },
+          talentOrder,
+          rank,
+        ),
       })
       const corrosion = rowCasting(rows, "InfernalLight1").actionStates[0].debuffs.get("BoneCorrosion")
       assert.equal(Boolean(corrosion), rank === 13, "Bladebound Thread activates Bone Corrosion only with the talent")
