@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import type { RotationStep, TimelineBuildInput, TimelineRow } from "@/calculations/rotationTimeline"
+
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
@@ -46,7 +48,7 @@ describe("skill-charges", () => {
       },
       Observe: { castTime: 0, action: [] },
     }
-    const input = (steps, extra = {}) => ({
+    const input = (steps: RotationStep[], extra: Partial<TimelineBuildInput> = {}): TimelineBuildInput => ({
       rotation: { name: "Independent charge probe", steps },
       skills: withImmediateAttacks(skills),
       eventDefinitions: {},
@@ -58,8 +60,10 @@ describe("skill-charges", () => {
       weapons: [],
       ...extra,
     })
-    const build = (steps, extra) => buildRotationTimeline(input(steps, extra))
-    const times = rows => rows.filter(row => row.step.skill === "AddledMind" && !row.skipped).map(row => row.startTime)
+    const build = (steps: RotationStep[], extra?: Partial<TimelineBuildInput>): TimelineRow[] =>
+      buildRotationTimeline(input(steps, extra))
+    const times = (rows: TimelineRow[]) =>
+      rows.filter(row => row.step.skill === "AddledMind" && !row.skipped).map(row => row.startTime)
     const staggered = [
       castStep("AddledMind"),
       delayStep(2),

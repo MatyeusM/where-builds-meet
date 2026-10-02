@@ -3,6 +3,9 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { DamageContext } from "@/calculations/damage"
+import type { RotationSimulationBaseline } from "@/calculations/rotationCalculator"
+import type { CharacterStats, WeaponId } from "@/types"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
@@ -46,7 +49,7 @@ describe("innerway-catalog", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const context = (resolvedStats, weapons) => ({
+    const context = (resolvedStats: CharacterStats, weapons: WeaponId[]): DamageContext => ({
       stats: resolvedStats,
       derivedStats: calculateDerivedStats(resolvedStats, 0, weapons),
       enemy,
@@ -216,12 +219,12 @@ describe("innerway-catalog", () => {
       "Cancelled Perfect Dodge must also grant Samsara",
     )
 
-    const markStates = result => {
-      const row = result.timeline.find(row => row.skill?.name === "Probe")
+    const markStates = (result: RotationSimulationBaseline) => {
+      const row = result.timeline.find(row => row.skill?.name === "Probe")!
       return row.actions.flatMap((action, index) => (action.type === "heal" ? [row.actionStates[index]] : []))
     }
     const lightTags = ["DirectDamage", "InfernalTwinblades", "Light"]
-    const markSequence = (tier, flamelash, tags = lightTags) =>
+    const markSequence = (tier: number, flamelash: boolean, tags: string[] = lightTags) =>
       run(tier, {
         tags,
         actions: [

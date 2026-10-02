@@ -3,15 +3,16 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { TimelineBuildInput, TimelineRow } from "@/calculations/rotationTimeline"
 
-import type { TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-fivefold-bleed-tiers.mjs.
 describe("fivefold-bleed-tiers", () => {
   it("Fivefold Bleed T1/T2 scaling and T3 expiration, refresh, removal, duplicate-schedule, and exhaustive probability checks passed", async () => {
-    const load = file => probeLoad(file)
+    const load = (file: string) => probeLoad(file)
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
     const { calculateRotationBaseline, calculateSimulatedRotationRun } = await load(
       "/src/calculations/rotationCalculator.ts",
@@ -69,7 +70,7 @@ describe("fivefold-bleed-tiers", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const bundleFor = timeline => ({
+    const bundleFor = (timeline: TimelineBuildInput): RotationSimulationBundle => ({
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,

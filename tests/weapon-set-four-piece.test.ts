@@ -3,6 +3,8 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationSimulationBaseline } from "@/calculations/rotationCalculator"
+import type { EditableObject } from "@/calculations/rotationTimeline"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader"
@@ -46,7 +48,7 @@ describe("weapon-set-four-piece", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const effectsFor = (name, tier) => {
+    const effectsFor = (name: string, tier: number) => {
       const value = sets[name].options[tier].effect
       return Array.isArray(value) ? value : [value]
     }
@@ -97,9 +99,10 @@ describe("weapon-set-four-piece", () => {
         setupComparisons: {},
       }
     }
-    const run = (name, tier, options) => calculateRotationBaseline(bundle(name, tier, options))
-    const damage = result => Object.values(result.actionBreakdowns).at(-1)
-    const hp = ratio => ({ type: "setTargetHP", targetHPRatio: ratio, time: 0 })
+    const run = (name: string, tier: number, options?: unknown): RotationSimulationBaseline =>
+      calculateRotationBaseline(bundle(name, tier, options))
+    const damage = (result: RotationSimulationBaseline) => Object.values(result.actionBreakdowns).at(-1)
+    const hp = (ratio: number): EditableObject => ({ type: "setTargetHP", targetHPRatio: ratio, time: 0 })
     const qi = ratio => ({ type: "setQi", targetQiRatio: ratio, time: 0 })
     const debuff = value => ({ type: "apply", target: "target", value, time: 0 })
     for (const [ratio, bonus] of [

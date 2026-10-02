@@ -2,7 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
-import type { TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
+import type { TimelineBuildInput, TimelineRow } from "@/calculations/rotationTimeline"
+
 import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-fivefold-bleed-loops.mjs.
@@ -49,7 +50,7 @@ describe("fivefold-bleed-loops", () => {
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     })
-    const tickRows = rows => rows.filter(row => row.kind === "dot")
+    const tickRows = (rows: TimelineRow[]) => rows.filter(row => row.kind === "dot")
     const bursts = (rows: TimelineRow[]) => rows.filter(row => row.step.skill === "PiercingDamage")
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const input = inputFor(Array(5).fill(0))
@@ -129,7 +130,7 @@ describe("fivefold-bleed-loops", () => {
 
     // Explore the concrete random decision tree, including decisions caused by
     // earlier procs. This independently checks correlation and expiration renewal.
-    const verifyProbabilityHistories = input => {
+    const verifyProbabilityHistories = (input: TimelineBuildInput) => {
       const oracle = new Map()
       const explore = (decisions, mass) => {
         let index = 0

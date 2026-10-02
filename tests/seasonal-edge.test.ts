@@ -1,6 +1,7 @@
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { InnerWayEffectRule } from "@/calculations/rotationTimeline"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
@@ -24,7 +25,7 @@ describe("seasonal-edge", () => {
 
     const trigger = seasonalDefinition.effect.SeasonalEdgeT0.trigger[0]
     const rule = { source: "SeasonalEdge", tier: 0, effect: {}, trigger }
-    const rulesThroughTier = tier => [
+    const rulesThroughTier = (tier: number): InnerWayEffectRule[] => [
       rule,
       ...Array.from({ length: tier }, (_, index) => index + 1).flatMap(currentTier =>
         (seasonalDefinition.effect[`SeasonalEdgeT${currentTier}`].effect ?? []).map(effect => ({
