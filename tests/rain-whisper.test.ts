@@ -1,6 +1,9 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { EditableObject, RotationRecord } from "@/calculations/rotationTimeline"
+
+import { asEffectDefinitions } from "./helpers/shippedData"
 
 // Ported from script/probe/check-rain-whisper.mjs.
 describe("rain-whisper", () => {
@@ -25,10 +28,14 @@ describe("rain-whisper", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const calculate = (shielded, setupEffects) => {
-      const rotation = {
+    /** The probe's total damage, so two runs can be compared directly. */
+    const calculate = (shielded: boolean, setupEffects: EditableObject[]): number => {
+      const rotation: RotationRecord = {
         name: "Rain Whisper probe",
-        steps: [...(shielded ? [{ type: "skill", skill: "ApplyShield" }] : []), { type: "skill", skill: "Hit" }],
+        steps: [
+          ...(shielded ? [{ type: "skill", skill: "ApplyShield" } as const] : []),
+          { type: "skill", skill: "Hit" },
+        ],
       }
       const hitIndex = rotation.steps.length - 1
       return calculateRotationBaseline({
@@ -52,7 +59,7 @@ describe("rain-whisper", () => {
           },
           eventDefinitions: {},
           dots: {},
-          effectDefinitions: generalBuffs,
+          effectDefinitions: asEffectDefinitions(generalBuffs),
           innerWayConditions: [],
           innerWayRules: [],
           setupEffects,

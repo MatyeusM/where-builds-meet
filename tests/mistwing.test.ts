@@ -3,9 +3,12 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { EditableObject, InnerWayEffectRule, TrackedEffect } from "@/calculations/rotationTimeline"
+import type { WeaponId } from "@/types"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { asEffectDefinitions } from "./helpers/shippedData"
 
 describe("mistwing", () => {
   it("Mistwing missing-HP penetration, enhancement tiers, all-type T4/T6, and path eligibility passed", async () => {
@@ -31,7 +34,7 @@ describe("mistwing", () => {
     assert.ok(innerWayAvailableForTag("EmpiricalEdge", "BamboocutWind"), "Empirical Edge must be selectable on Wind.")
     assert.ok(innerWayAvailableForTag("EmpiricalEdge", "BamboocutKite"), "Empirical Edge must stay selectable on Kite.")
 
-    const weapons = ["infernalTwinblades", "mortalRopeDart"]
+    const weapons: WeaponId[] = ["infernalTwinblades", "mortalRopeDart"]
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, minBamboocut: 1000, maxBamboocut: 1000, precision: 1 }
     const enemy = {
       name: "Mistwing target",
@@ -76,16 +79,16 @@ describe("mistwing", () => {
             HP: { name: "Target HP", castTime: 0, action: [{ type: "setTargetHP", time: 0 }], tags: ["Event"] },
           },
           dots: {},
-          effectDefinitions: windBuffs,
+          effectDefinitions: asEffectDefinitions(windBuffs),
           weapons,
           innerWayConditions: Array.from({ length: tier + 1 }, (_, currentTier) => `MistwingT${currentTier}`),
           innerWayRules: Array.from({ length: tier + 1 }, (_, currentTier) =>
-            (definition.effect[`MistwingT${currentTier}`].effect ?? []).flatMap(item => {
+            (definition.effect[`MistwingT${currentTier}`].effect ?? []).flatMap((item): InnerWayEffectRule[] => {
               if (!damageRules && Object.keys(statEffectFor(item)).length === 0) return []
               return [
                 {
                   requirement: item.requirement,
-                  effect: item.effect ?? statEffectFor(item),
+                  effect: (item.effect as EditableObject | undefined) ?? statEffectFor(item),
                   source: "Mistwing",
                   tier: currentTier,
                 },
@@ -93,7 +96,7 @@ describe("mistwing", () => {
             }),
           ).flat(),
           setupEffects: [],
-          initialBuffs: buffs.map(name => ({ name, stack: 1 })),
+          initialBuffs: buffs.map((name): TrackedEffect => ({ name, stack: 1 })),
         },
         startAnchor: { rowId: "rotation-1" },
         stats,
