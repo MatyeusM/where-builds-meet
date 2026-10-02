@@ -4,13 +4,14 @@ import { readFile, readdir } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
+import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-martial-art-talents.mjs.
 describe("martial-art-talents", () => {
   it("All martial arts: conversions, raw attributes, thresholds, tag isolation, conditional damage, and talent triggers passed", async () => {
     const read = async path => JSON.parse(await readFile(path, "utf8"))
-    const close = (actual, expected, label) =>
-      assert(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-8, `${label}: ${actual} != ${expected}`)
+    const close = (actual: number | undefined, expected: number, label: string) =>
+      assertClose(actual, expected, 1e-8, label)
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")

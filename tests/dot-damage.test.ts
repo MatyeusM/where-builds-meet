@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { effectState } from "../src/calculations/trackedEffectState"
+import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-dot-damage.mjs.
 describe("dot-damage", () => {
@@ -11,7 +12,7 @@ describe("dot-damage", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const soulShaken = (await import("../data/debuff/bellstrike-umbra.json")).default.SoulShaken
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number | undefined, expected: number) => isClose(actual, expected, 1e-9)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, minBellstrike: 100, maxBellstrike: 100, precision: 1 }
     const enemy = {
       name: "Probe",

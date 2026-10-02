@@ -1,15 +1,13 @@
-import assert from "node:assert/strict"
-
 import { describe, it } from "vitest"
 
 import { effectState } from "../src/calculations/trackedEffectState"
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-deluge-martial-talents.mjs.
 describe("deluge-martial-talents", () => {
   it("Deluge talents: datamined stats, healing caps/tag gating, Mystic bonus, and conditional Mystic Precision passed", async () => {
-    const close = (actual, expected, message) =>
-      assert(Math.abs(actual - expected) < 1e-9, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-9, message)
     const panacea = (await import("../data/martial-art/panacea-fan.json")).default
     const soulshade = (await import("../data/martial-art/soulshade-umbrella.json")).default
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")

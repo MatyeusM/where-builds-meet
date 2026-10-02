@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-fivefold-bleed-loops.mjs.
 describe("fivefold-bleed-loops", () => {
   it("fivefold-bleed-loops checks", async () => {
@@ -48,8 +50,7 @@ describe("fivefold-bleed-loops", () => {
     })
     const tickRows = rows => rows.filter(row => row.kind === "dot")
     const bursts = rows => rows.filter(row => row.step.skill === "PiercingDamage")
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const input = inputFor(Array(5).fill(0))
     const allSuccess = buildRotationTimeline(input, () => 0)
     assert.deepEqual(

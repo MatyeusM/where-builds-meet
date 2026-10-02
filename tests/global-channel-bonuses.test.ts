@@ -1,12 +1,14 @@
 import { assert, describe, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-global-channel-bonuses.mjs.
 describe("global-channel-bonuses", () => {
   it("Global HP and Bellstrike channel bonus formula checks passed", async () => {
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const stats = {
       ...emptyStats,
       minPhys: 100,

@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-fivefold-bleed.mjs.
@@ -29,8 +30,7 @@ describe("fivefold-bleed", () => {
       tags: piercingDefinition.tags.filter(tag => tag !== "DirectDamage"),
     }
     const rule = { source: "FivefoldBleed", tier: 0, effect: {}, trigger: way.effect.FivefoldBleedT0.trigger[0] }
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const inputFor = (times, tags = ["DirectDamage"]) => ({
       rotation: { name: "Bleed probe", steps: [{ type: "skill", skill: "Hits" }] },
       skills: {

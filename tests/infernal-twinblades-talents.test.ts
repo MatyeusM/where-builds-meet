@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
+import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-infernal-twinblades-talents.mjs.
 describe("infernal-twinblades-talents", () => {
@@ -11,8 +12,7 @@ describe("infernal-twinblades-talents", () => {
     const readJson = async path => JSON.parse(await readFile(path, "utf8"))
     const cast = skill => ({ type: "skill", skill })
     const delay = duration => ({ type: "event", event: "Delay", duration })
-    const close = (actual, expected, message) =>
-      assert(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")

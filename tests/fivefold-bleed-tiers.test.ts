@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-fivefold-bleed-tiers.mjs.
@@ -78,8 +79,7 @@ describe("fivefold-bleed-tiers", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const bursts = rows => rows.filter(row => row.step.skill === "PiercingDamage")
     const criticalStats = { ...stats, crit: 0.4, critDmgBonus: 0.5 }
     const criticalBaseline = tier =>

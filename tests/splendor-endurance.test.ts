@@ -9,6 +9,7 @@ import { calculateRotationBaseline } from "../src/calculations/rotationCalculato
 import { requirementsPass } from "../src/calculations/rotationTimeline"
 import { effectState } from "../src/calculations/trackedEffectState"
 import { emptyStats } from "../src/data/statDefinitions"
+import { assertClose } from "./helpers/floatEquality"
 
 const weaponIds = ["namelessSword", "namelessSpear"] as never[]
 
@@ -92,8 +93,7 @@ describe("splendor-endurance", () => {
 
     // Endurance is seeded from its maximum, so T6's spending segment resolves 0
     // rather than failing to resolve at all.
-    const close = (actual: number, expected: number, message: string) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     // T0 and T4 are both cumulative flat Charged bonuses, so T6 adds its segment on top.
     // The segment reads Endurance currently below its maximum, not a running total of spend.
     close(run(6, 0).metrics.totalDamage, 115, "A full meter leaves only the flat T0 and T4 bonuses")

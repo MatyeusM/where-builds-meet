@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-vendetta.mjs.
 describe("vendetta", () => {
   it("Vendetta cumulative tiers, extended Rodent triggers, exact expiry, refresh, and expected/sampled checks passed", async () => {
@@ -136,7 +138,7 @@ describe("vendetta", () => {
         innerWayPriority: [],
         setupComparisons: {},
       })
-    const close = (a, b, message) => assert.ok(Math.abs(a - b) < 1e-8, message + ": " + a + " vs " + b)
+    const close = (a: number | undefined, b: number, message: string) => assertClose(a, b, 1e-8, message)
     const procDamage = result => {
       const row = result.timeline.find(row => row.step.skill === "Rodent")
       return result.actionBreakdowns[row.id + ":0"].total

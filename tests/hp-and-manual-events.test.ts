@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-hp-and-manual-events.mjs.
@@ -20,7 +21,7 @@ describe("hp-and-manual-events", () => {
       mysticBuffs.DragonHeadTide.global === true,
       "Dragon Head - Tide must remain an always-active rule from the Mystic buff definitions.",
     ).toBeTruthy()
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const eventDefinitions = {
       SelfHP: { name: "Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], tags: ["Event"] },
       TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }], tags: ["Event"] },

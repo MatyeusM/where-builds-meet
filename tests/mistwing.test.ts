@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 describe("mistwing", () => {
@@ -111,8 +112,7 @@ describe("mistwing", () => {
       const baseline = run(tier, targetHPRatio, buffs, false)[channel]
       return (run(tier, targetHPRatio, buffs, true)[channel] / baseline - 1) * 200
     }
-    const close = (actual: number, expected: number, message: string) =>
-      assert.ok(Math.abs(actual - expected) < 1e-6, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-6, message)
 
     // T0 grants one Physical Penetration per completed 20% of missing target HP, capped at four.
     for (const [targetHPRatio, expected] of [

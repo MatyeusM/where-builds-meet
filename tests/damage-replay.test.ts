@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-damage-replay.mjs.
 describe("damage-replay", () => {
   it("Damage-event replay checks passed", async () => {
@@ -7,7 +9,7 @@ describe("damage-replay", () => {
     const { simulateRotation } = await import("../src/calculations/simulationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-7
+    const closeTo = (actual: number | undefined, expected: number) => isClose(actual, expected, 1e-7)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Replay probe",

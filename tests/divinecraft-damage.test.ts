@@ -10,8 +10,9 @@ import { restrictedOutcomeRates } from "../src/calculations/rateRoutes"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { resolveSkillCalculationDefinitions } from "../src/skillOverrides"
+import { isClose } from "./helpers/floatEquality"
 
-const closeTo = (actual: number, expected: number) => Math.abs(actual - expected) < 1e-9
+const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
 
 // A flat physical/attribute range makes the average attack observable: it is the
 // midpoint, and the simulator's uniform roll inside the range is visible without it.

@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-vitality-damage-scaling.mjs.
 describe("vitality-damage-scaling", () => {
   it("Vitality resource ledger and final Mystic damage scaling checks passed", async () => {
@@ -8,9 +10,7 @@ describe("vitality-damage-scaling", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const mysticSkills = (await import("../data/skill/mystic.json")).default
     const mysticBuffs = (await import("../data/buff/mystic.json")).default
-    const closeTo = (actual, expected, message) => {
-      assert(Math.abs(actual - expected) <= 1e-8, `${message} (${actual} !== ${expected})`)
-    }
+    const closeTo = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Vitality probe",

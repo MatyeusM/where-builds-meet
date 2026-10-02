@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-hawkwing.mjs.
 describe("hawkwing", () => {
   it("Hawkwing probability, expiry, damage, and display-metric checks passed", async () => {
@@ -10,9 +12,8 @@ describe("hawkwing", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { ExpectedHawkwingTracker } = await import("../src/calculations/hawkwing.ts")
     const { outcomeBuffTick } = await import("../src/calculations/outcomeTriggeredBuffs.ts")
-    const closeTo = (actual, expected, message) => {
-      if (Math.abs(actual - expected) > 1e-9) throw new Error(`${message}: expected ${expected}, received ${actual}`)
-    }
+    const closeTo = (actual: number | undefined, expected: number, message: string) =>
+      assertClose(actual, expected, 1e-9, message)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1, affinity: 0.2 }
     const enemy = {
       name: "Hawkwing probe",

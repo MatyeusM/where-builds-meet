@@ -1,5 +1,7 @@
 import { assert, describe, expect, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-attunement.mjs.
 describe("attunement", () => {
   it("Attunement tag and standalone multiplier checks passed", async () => {
@@ -8,7 +10,7 @@ describe("attunement", () => {
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const thundercrySkills = (await import("../data/skill/thundercry-blade.json")).default
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Attunement probe",

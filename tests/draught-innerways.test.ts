@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-draught-innerways.mjs.
@@ -48,8 +49,7 @@ describe("draught-innerways", () => {
         judgementResistance: 0,
       },
     })
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const draught = new Map(
       innerWayEntriesForTag("BamboocutDraught").map(([id, definition]) => [
         id,

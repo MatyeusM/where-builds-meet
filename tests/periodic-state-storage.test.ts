@@ -10,6 +10,7 @@ import {
   mergeTinyPeriodicEntries,
   periodicStateListFactory,
 } from "../src/calculations/periodicStateLists"
+import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-periodic-state-storage.mjs. The reference
 // model is committed source loaded from git history; shallow checkouts
@@ -26,7 +27,7 @@ function referenceAvailable() {
   }
 }
 
-const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-11, `${a} != ${b}`)
+const close = (a: number, b: number) => assertClose(a, b, 1e-11)
 const threshold = { consume: "all", trigger: "Burst" }
 let seed = 20260908
 const random = () => {

@@ -5,6 +5,7 @@ import { describe, it } from "vitest"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"
+import { assertClose } from "./helpers/floatEquality"
 
 const weaponIds = ["namelessSword", "namelessSpear"] as never[]
 
@@ -173,10 +174,7 @@ describe("vagrant-sword-charge-variants", () => {
       return { end: result.timeline[0].timelineResourceSummary?.Endurance }
     }
     const close = (actual: number | undefined, expected: number, message: string) =>
-      assert.ok(
-        typeof actual === "number" && Math.abs(actual - expected) < 0.05,
-        `${message}: ${actual} !== ${expected}`,
-      )
+      assertClose(actual, expected, 0.05, message)
 
     // Only the charging phase drains, at 20/s for its 1.0s cast. Nothing else
     // spends Endurance, so the meter refills at the base 10/s from 2.05s.

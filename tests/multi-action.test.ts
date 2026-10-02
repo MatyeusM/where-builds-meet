@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json" with { type: "json" }
+import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-multi-action.mjs.
 describe("multi-action", () => {
@@ -8,7 +9,7 @@ describe("multi-action", () => {
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
-    const closeTo = (left, right) => Math.abs(left - right) < 1e-6
+    const closeTo = (left: number | undefined, right: number) => isClose(left, right, 1e-6)
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
     const enemy = {
       name: "Probe",

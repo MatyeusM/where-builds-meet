@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
+import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-innerway-catalog.mjs.
 describe("innerway-catalog", () => {
@@ -53,8 +54,7 @@ describe("innerway-catalog", () => {
       skillTags: [],
       attunement: {},
     })
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const boosted = calculateStatsWithEffects(
       stats,
       [{ rawStat: { physicalHealingBonus: 0.025, formlessPenetration: 6 } }],

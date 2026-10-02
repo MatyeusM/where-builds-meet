@@ -2,12 +2,14 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-rodent-rampage.mjs.
 describe("rodent-rampage", () => {
   it("Infernal stage timing, Rodent cadence/lifetime, T6 gating, dynamic damage, and expected/sampled checks passed", async () => {
     const cast = skill => ({ type: "skill", skill })
     const delay = duration => ({ type: "event", event: "Delay", duration })
-    const close = (a, b, message) => assert.ok(Math.abs(a - b) < 1e-9, message + ": " + a + " vs " + b)
+    const close = (a: number | undefined, b: number, message: string) => assertClose(a, b, 1e-9, message)
     const infernal = await import("../data/skill/infernal-twinblades.json")
     const mortal = await import("../data/skill/mortal-rope-dart.json")
     const buffs = await import("../data/buff/bamboocut-wind.json")

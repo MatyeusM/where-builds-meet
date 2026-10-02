@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-innerway-solo-level.mjs.
@@ -13,8 +14,7 @@ describe("innerway-solo-level", () => {
     )
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const definition = {
       name: "Level probe",
       tags: [],

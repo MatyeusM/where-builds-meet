@@ -2,12 +2,12 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader"
 
 const cast = skill => ({ type: "skill", skill })
 const delay = duration => ({ type: "event", event: "Delay", duration })
-const close = (actual, expected, message) =>
-  assert.ok(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} !== ${expected}`)
+const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
 describe("weapon-set-four-piece", () => {
   it("checks conditional set behavior and simulation", async () => {

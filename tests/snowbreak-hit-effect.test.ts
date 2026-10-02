@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-snowbreak-hit-effect.mjs.
 describe("snowbreak-hit-effect", () => {
   it("Snowbreak Spring hit-time Frost-Clad Night checks passed", async () => {
@@ -7,7 +9,7 @@ describe("snowbreak-hit-effect", () => {
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const frostCladNight = (await import("../data/innerway/frost-clad-night.json")).default
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 }
     const enemy = {
       name: "Probe",

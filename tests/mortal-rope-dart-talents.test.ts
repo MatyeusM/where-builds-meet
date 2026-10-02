@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-mortal-rope-dart-talents.mjs.
 describe("mortal-rope-dart-talents", () => {
   it("Mortal Rope Dart: rank-13 stats, Rodent damage, raw-stat isolation, and Bone Corrosion refresh/expiration passed", async () => {
-    const close = (actual, expected, message) =>
-      assert(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")

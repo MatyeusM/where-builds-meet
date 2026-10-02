@@ -1,5 +1,6 @@
 import { assert, describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-stat-conversion.mjs.
@@ -10,30 +11,27 @@ describe("stat-conversion", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const soaringHigh = (await import("../data/innerway/soaring-high.json")).default
     const breakthroughProfiles = (await import("../data/breakthrough.json")).default
-    const assertClose = (actual, expected, message) => {
-      assert(Math.abs(actual - expected) <= 1e-9, `${message} Expected ${expected}, received ${actual}.`)
-    }
 
     const generic = applyStatConversions({ source: 0.2, target: 0.05, untouched: 3 }, [
       { convert: { from: "source", to: "target", ratio: 2, max: 0.1 } },
     ])
-    assertClose(generic.source, 0.1, "Conversion must subtract the capped amount from its named source.")
-    assertClose(generic.target, 0.25, "Conversion must add the ratio-adjusted amount to its named target.")
-    assertClose(generic.untouched, 3, "Conversion must preserve unrelated stats.")
+    assertClose(generic.source, 0.1, 1e-9, "Conversion must subtract the capped amount from its named source.")
+    assertClose(generic.target, 0.25, 1e-9, "Conversion must add the ratio-adjusted amount to its named target.")
+    assertClose(generic.untouched, 3, 1e-9, "Conversion must preserve unrelated stats.")
 
     const cappedDirectCrit = applyStatConversions({ finalAffinity: 0.2, directCrit: 0.15 }, [
       { convert: { from: "finalAffinity", to: "directCrit", ratio: 1, max: 0.12 } },
     ])
-    assertClose(cappedDirectCrit.finalAffinity, 0.15, "Conversion must leave unconverted Affinity in its source.")
-    assertClose(cappedDirectCrit.directCrit, 0.2, "Conversion must stop at the 20% Direct Critical cap.")
+    assertClose(cappedDirectCrit.finalAffinity, 0.15, 1e-9, "Conversion must leave unconverted Affinity in its source.")
+    assertClose(cappedDirectCrit.directCrit, 0.2, 1e-9, "Conversion must stop at the 20% Direct Critical cap.")
 
     const cappedCharacter = calculateStatsWithEffects(
       { ...emptyStats, directCrit: 0.18 },
       [{ stat: { directCrit: 0.05 } }],
       breakthroughProfiles["16"].judgementResistance,
     )
-    assertClose(cappedCharacter.stats.directCrit, 0.2, "Character Direct Critical must stop at its 20% cap.")
-    assertClose(cappedCharacter.derivedStats.directCrit, 0.2, "Derived Direct Critical must preserve the cap.")
+    assertClose(cappedCharacter.stats.directCrit, 0.2, 1e-9, "Character Direct Critical must stop at its 20% cap.")
+    assertClose(cappedCharacter.derivedStats.directCrit, 0.2, 1e-9, "Derived Direct Critical must preserve the cap.")
 
     const t4Rule = soaringHigh.effect.SoaringHighT4.effect[0]
     const conversion = t4Rule.effect.convert
@@ -87,9 +85,10 @@ describe("stat-conversion", () => {
     assertClose(
       breakdown.outcomeRates.affinity,
       0.1,
+      1e-9,
       "T4 must leave Affinity that cannot fit under the Direct Critical cap.",
     )
-    assertClose(breakdown.outcomeRates.critical, 0.6, "T4 must stop converted Direct Critical at 20%.")
-    assertClose(breakdown.outcomeRates.normal, 0.3, "T4 must preserve the remaining outcome probability.")
+    assertClose(breakdown.outcomeRates.critical, 0.6, 1e-9, "T4 must stop converted Direct Critical at 20%.")
+    assertClose(breakdown.outcomeRates.normal, 0.3, 1e-9, "T4 must preserve the remaining outcome probability.")
   })
 })

@@ -2,12 +2,14 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-periodic-branch-isolation.mjs.
 describe("periodic-branch-isolation", () => {
   it("Periodic branch isolation passed: independent owners, cadences, expiry, global attacks, conditional masses, release and conservation", async () => {
     const { ExpectedPeriodicTracker } = await import("../src/calculations/outcomeTriggeredBuffs.ts")
     const threshold = { consume: "all", trigger: "Burst" }
-    const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} != ${expected}`)
+    const close = (actual: number, expected: number) => assertClose(actual, expected, 1e-12)
     const fork = origin => {
       const tracker = new ExpectedPeriodicTracker(1, 1.01, origin)
       // Two mutually exclusive burst histories, with absolute masses .6 and .4.

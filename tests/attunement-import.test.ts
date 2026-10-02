@@ -2,11 +2,12 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-attunement-import.mjs.
 describe("attunement-import", () => {
   it("attunement-import checks", async () => {
-    const close = (actual, expected, label) =>
-      assert(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-9, `${label}: ${actual} != ${expected}`)
+    const close = (actual: number, expected: number, label: string) => assertClose(actual, expected, 1e-9, label)
     const { parseOfficialGearExport } = await import("../src/officialGearImport.ts")
     const { mergeImportedBuildState, calculateEquippedGearEffects, maxGearRoll } = await import("../src/gear.ts")
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")

@@ -1,5 +1,6 @@
-import { assert, describe, it } from "vitest"
+import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-seasonal-edge.mjs.
@@ -16,9 +17,8 @@ describe("seasonal-edge", () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const generalBuffs = (await import("../data/buff/general.json")).default
     const seasonalDefinition = (await import("../data/innerway/seasonal-edge.json")).default
-    const closeTo = (actual, expected, message, tolerance = 1e-8) => {
-      assert(Math.abs(actual - expected) <= tolerance, `${message}: expected ${expected}, received ${actual}`)
-    }
+    const closeTo = (actual: number, expected: number, message: string, tolerance = 1e-8) =>
+      assertClose(actual, expected, tolerance, message)
 
     const trigger = seasonalDefinition.effect.SeasonalEdgeT0.trigger[0]
     const rule = { source: "SeasonalEdge", tier: 0, effect: {}, trigger }

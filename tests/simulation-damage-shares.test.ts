@@ -1,10 +1,9 @@
 import { assert, describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
-const closeTo = (actual: number, expected: number, message: string) => {
-  assert(Math.abs(actual - expected) <= 1e-8, `${message} (${actual} !== ${expected})`)
-}
+const closeTo = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
 const enemy = {
   name: "Damage share probe",

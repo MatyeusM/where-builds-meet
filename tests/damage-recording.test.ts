@@ -2,13 +2,15 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-damage-recording.mjs.
 describe("damage-recording", () => {
   it("Rodent Hunt recording, reapply/expiry, boundary, cutoff, HP, and sampled-damage checks passed", async () => {
     const cast = skill => ({ type: "skill", skill })
     const delay = duration => ({ type: "event", event: "Delay", duration })
-    const close = (actual, expected, message) =>
-      assert.ok(Math.abs(actual - expected) < 1e-7, `${message}: ${actual} vs ${expected}`)
+    const close = (actual: number | undefined, expected: number, message: string) =>
+      assertClose(actual, expected, 1e-7, message)
     const mortal = await import("../data/skill/mortal-rope-dart.json")
     const infernal = await import("../data/skill/infernal-twinblades.json")
     const buffs = await import("../data/buff/bamboocut-wind.json")

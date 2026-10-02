@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import mysticBuffs from "../data/buff/mystic.json"
 import mysticSkills from "../data/skill/mystic.json"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-drunken-poet-composites.mjs.
 describe("drunken-poet-composites", () => {
@@ -12,7 +13,7 @@ describe("drunken-poet-composites", () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
     const { migrateDrunkenPoetSequences } = await import("../src/rotationEditing.ts")
     const { normalizeStartAction } = await import("../src/application/rotationCatalog.ts")
-    const closeTo = (actual, expected) => Math.abs((actual ?? Number.NaN) - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const componentTimes = [0.58, 0.436, 0.55, 0.6, 0.5382]
     const compositeIds = [
       "DrunkenPoet1Hit",

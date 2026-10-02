@@ -1,5 +1,6 @@
 import { assert, describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-insightful-strike.mjs.
@@ -20,9 +21,8 @@ describe("insightful-strike", () => {
     const concentration = (await import("../data/buff/bellstrike-umbra.json")).default.Concentration
     const insightfulStrikeDefinition = (await import("../data/innerway/insightful-strike.json")).default
 
-    const closeTo = (actual, expected, message, tolerance = 1e-9) => {
-      assert(Math.abs(actual - expected) <= tolerance, `${message}: expected ${expected}, received ${actual}`)
-    }
+    const closeTo = (actual: number, expected: number, message: string, tolerance = 1e-9) =>
+      assertClose(actual, expected, tolerance, message)
     const rule = {
       source: "InsightfulStrike",
       tier: 0,

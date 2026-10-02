@@ -14,6 +14,9 @@
   ],
   "categories": { "correctness": "error", "perf": "error" },
   "rules": {
+    // A spec that only checks float equality asserts through the shared helper in
+    // tests/helpers/floatEquality.ts, so the rule has to count it as an assertion.
+    "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "assert", "assertClose"] }],
     // react-in-jsx-scope must stay disabled.
     // oxlint does not respect React 19's automatic JSX scope insertion, unlike eslint.
     "react/react-in-jsx-scope": "off",

@@ -15,10 +15,11 @@ import {
 } from "../src/calculations/rotationCalculator"
 import { buildRotationTimeline, mergeCalculatedTimelineState } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
+import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-healing.mjs. The probe stops at the first
 // failure, so this port keeps the same fail-fast order inside one test.
-const closeTo = (actual: number, expected: number) => Math.abs(actual - expected) < 1e-8
+const closeTo = (actual: number | undefined, expected: number) => isClose(actual, expected, 1e-8)
 
 describe("healing", () => {
   it("verifies healing formula, self-HP restoration, World to Sword overheal, periodic healing, Royal Remedy, totals, HPS, and breakdown sorting", () => {

@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { isClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-global-debuff-controls.mjs.
 describe("global-debuff-controls", () => {
   it("Global debuff control and conditional-effect checks passed", async () => {
@@ -29,7 +31,7 @@ describe("global-debuff-controls", () => {
       ...dustDebuffs,
       ...innerWayDebuffs,
     }
-    const closeTo = (actual, expected) => Math.abs(actual - expected) < 1e-9
+    const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
     const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, precision: 1 }
     const enemy = {
       name: "Probe",

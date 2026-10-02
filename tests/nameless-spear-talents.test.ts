@@ -1,6 +1,7 @@
-import { assert, describe, it } from "vitest"
+import { describe, it } from "vitest"
 
 import { effectState } from "../src/calculations/trackedEffectState"
+import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-nameless-spear-talents.mjs.
 describe("nameless-spear-talents", () => {
@@ -12,12 +13,6 @@ describe("nameless-spear-talents", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
-    const assertClose = (actual, expected, message) => {
-      assert(
-        Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9,
-        `${message} Expected ${expected}, received ${actual}.`,
-      )
-    }
     const effects = namelessSpear.talent[13].flatMap(talent =>
       (talent.effect ?? []).map(effect => Object.assign({}, effect, { statStage: "talent" })),
     )
@@ -26,17 +21,19 @@ describe("nameless-spear-talents", () => {
       effects,
       0,
     )
-    assertClose(statResult.stats.affinity, 0.3, "Momentum scaling must grant at most 4.256% Affinity Rate.")
+    assertClose(statResult.stats.affinity, 0.3, 1e-9, "Momentum scaling must grant at most 4.256% Affinity Rate.")
     assertClose(
       statResult.stats.maxEndurance,
       17,
+      1e-9,
       "Max Endurance Up must use raw Affinity before the talent's Affinity conversion.",
     )
-    assertClose(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
-    assertClose(statResult.stats.maxBellstrike, 655, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
+    assertClose(statResult.stats.minBellstrike, 98, 1e-9, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
+    assertClose(statResult.stats.maxBellstrike, 655, 1e-9, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
     assertClose(
       statResult.stats.bellstrikeDmgBonus,
       0.11,
+      1e-9,
       "Bellstrike DMG Bonus must reach its cap at 655 Max Bellstrike Attack.",
     )
 
@@ -95,6 +92,7 @@ describe("nameless-spear-talents", () => {
     assertClose(
       enhanced.physical / baseline.physical,
       1 + baseline.outcomeRates.affinity * 0.18,
+      1e-9,
       "Affinity DMG Up must cap at 18% above 30% Affinity Rate.",
     )
   })

@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { assertClose } from "./helpers/floatEquality"
+
 // Ported from script/probe/check-fivefold-bleed-grid.mjs.
 describe("fivefold-bleed-grid", () => {
   it("Battle-grid probabilities, boundaries, fight anchor, bounded row count, and unchanged sampled timing verified", async () => {
@@ -55,7 +57,7 @@ describe("fivefold-bleed-grid", () => {
       weapons: [],
     })
     const ticks = rows => rows.filter(row => row.kind === "dot")
-    const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`)
+    const close = (a: number | undefined, b: number) => assertClose(a, b, 1e-9)
     const shared = new ExpectedPeriodicTracker(1, 1.01, 0)
     shared.apply(0.2, 0.4, 5, 5, 1, "first")
     shared.apply(1, 0.5, 5, 5, 1, "boundary")

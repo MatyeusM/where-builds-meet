@@ -1,6 +1,7 @@
-import { assert, describe, it } from "vitest"
+import { describe, it } from "vitest"
 
 import { effectState } from "../src/calculations/trackedEffectState"
+import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-nameless-sword-talents.mjs.
@@ -13,20 +14,20 @@ describe("nameless-sword-talents", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
-    const assertClose = (actual, expected, message) => {
-      assert(
-        Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9,
-        `${message} Expected ${expected}, received ${actual}.`,
-      )
-    }
     const effects = namelessSword.talent[13].flatMap(talent => talent.effect ?? [])
     const statResult = calculateStatsWithEffects({ ...emptyStats, momentum: 280, maxBellstrike: 459 }, effects, 0)
-    assertClose(statResult.stats.maxPhys, 73.92, "Momentum scaling must grant the capped Max Physical Attack bonus.")
-    assertClose(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
-    assertClose(statResult.stats.maxBellstrike, 655, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
+    assertClose(
+      statResult.stats.maxPhys,
+      73.92,
+      1e-9,
+      "Momentum scaling must grant the capped Max Physical Attack bonus.",
+    )
+    assertClose(statResult.stats.minBellstrike, 98, 1e-9, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
+    assertClose(statResult.stats.maxBellstrike, 655, 1e-9, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
     assertClose(
       statResult.stats.bellstrikePenetration,
       22,
+      1e-9,
       "Bellstrike penetration must reach its cap at 655 Max Bellstrike Attack.",
     )
 
@@ -98,10 +99,11 @@ describe("nameless-sword-talents", () => {
       { phyCoef: 1, attrCoef: 1 },
       { ...context, effects: [affinityRule.effect] },
     )
-    assertClose(hpEnhanced.physical / baseline.physical, 1.2, "Sword Energy HP damage must cap at 20%.")
+    assertClose(hpEnhanced.physical / baseline.physical, 1.2, 1e-9, "Sword Energy HP damage must cap at 20%.")
     assertClose(
       affinityEnhanced.physical / baseline.physical,
       1 + baseline.outcomeRates.affinity * 0.18,
+      1e-9,
       "Sword Energy Affinity damage must cap at 18% at 1500 Max Physical Attack.",
     )
   })
