@@ -1,8 +1,12 @@
+import nodeAssert from "node:assert/strict"
+
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { TimelineBuildInput } from "@/calculations/rotationTimeline"
 
 import { assertClose } from "./helpers/floatEquality"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-vitality-damage-scaling.mjs.
 describe("vitality-damage-scaling", () => {
@@ -25,7 +29,7 @@ describe("vitality-damage-scaling", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const timeline = {
+    const timeline: TimelineBuildInput = {
       rotation: {
         name: "Vitality deficit probe",
         steps: [
@@ -105,12 +109,12 @@ describe("vitality-damage-scaling", () => {
       mysticDamage,
       "The Mystic action breakdown must retain its unscaled damage",
     )
-    closeTo(
-      result.metrics.totalHealing,
-      result.actionBreakdowns["rotation-0:2"].healing.total,
-      "Vitality deficits must not scale healing",
-    )
-    const resourceSummary = result.timeline[0].timelineResourceSummary.Vitality
+    const thirdHealing = result.actionBreakdowns["rotation-0:2"].healing
+    nodeAssert(thirdHealing, "The third action must resolve a healing breakdown.")
+    closeTo(result.metrics.totalHealing, thirdHealing.total, "Vitality deficits must not scale healing")
+    const vitalityLedger = rowWithId(result.timeline, "rotation-0").timelineResourceSummary?.Vitality
+    assert(vitalityLedger, "The rotation must carry a Vitality resource ledger.")
+    const resourceSummary = vitalityLedger
     closeTo(resourceSummary.initial, 20, "The resource ledger must retain initial Vitality")
     closeTo(resourceSummary.consumed, 30, "The resource ledger must total accepted Vitality consumption")
     closeTo(resourceSummary.regenerated, 0, "The resource ledger must not invent Vitality regeneration")
