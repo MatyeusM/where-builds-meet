@@ -10,9 +10,9 @@ describe("calculation-benchmark", () => {
     const originalGroupEnd = console.groupEnd
 
     try {
-      const { finishCalculationPhase, startCalculationPhase, withCalculationBenchmark } = await probeLoad(
-        "/src/calculations/calculationBenchmark.ts",
-      )
+      const { finishCalculationPhase, startCalculationPhase, withCalculationBenchmark } = await probeLoad<
+        typeof import("../src/calculations/calculationBenchmark")
+      >("/src/calculations/calculationBenchmark.ts")
       let groupLabel = ""
       let rows = []
       console.groupCollapsed = label => {

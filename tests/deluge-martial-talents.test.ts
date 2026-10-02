@@ -13,7 +13,9 @@ describe("deluge-martial-talents", () => {
     const panacea = (await import("../data/martial-art/panacea-fan.json")).default
     const soulshade = (await import("../data/martial-art/soulshade-umbrella.json")).default
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
-    const { calculateStatsWithEffects, resolveFormulaValue } = await probeLoad("/src/calculations/statEffects.ts")
+    const { calculateStatsWithEffects, resolveFormulaValue } = await probeLoad<
+      typeof import("../src/calculations/statEffects")
+    >("/src/calculations/statEffects.ts")
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")

@@ -5,7 +5,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-innerway-filter.mjs.
 describe("innerway-filter", () => {
   it("Inner Way filter behavior checks passed", async () => {
-    const { innerWayDefinitions, innerWayEntriesForTag } = await probeLoad("/src/data/innerWayDefinitions.ts")
+    const { innerWayDefinitions, innerWayEntriesForTag } = await probeLoad<
+      typeof import("../src/data/innerWayDefinitions")
+    >("/src/data/innerWayDefinitions.ts")
     const allTags = new Set(Object.values(innerWayDefinitions).flatMap(definition => definition.tags ?? []))
 
     for (const tag of allTags) {

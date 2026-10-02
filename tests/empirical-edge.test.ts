@@ -9,7 +9,9 @@ describe("empirical-edge", () => {
     const empiricalEdge = (await import("../data/innerway/empirical-edge.json")).default
     const kiteBuffs = (await import("../data/buff/bamboocut-kite.json")).default
     const { innerWayDefinitions } = await import("../src/data/innerWayDefinitions.ts")
-    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
+    const { buildRotationTimeline, requirementsPass } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
 
     expect(
       innerWayDefinitions.EmpiricalEdge === empiricalEdge,

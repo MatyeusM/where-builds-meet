@@ -28,7 +28,9 @@ describe("setup timeline selection", () => {
 
 describe("script", () => {
   it("Script thresholds, absolute self HP, Take Damage, and Revelry checks passed", async () => {
-    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
+    const { buildRotationTimeline, requirementsPass } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")

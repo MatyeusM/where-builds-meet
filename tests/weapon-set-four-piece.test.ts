@@ -14,18 +14,24 @@ const close = (actual: number, expected: number, message: string) => assertClose
 
 describe("weapon-set-four-piece", () => {
   it("checks conditional set behavior and simulation", async () => {
-    const load = async path => (await probeLoad(path)).default
+    const load = async <M>(path: string): Promise<M> => (await probeLoad<M>(path)).default
     const sets = await load("/data/gear-set.json")
     const general = await load("/data/skill/general.json")
     const generalBuffs = await load("/data/buff/general.json")
     const strengthBuffs = await load("/data/buff/stonesplit-strength.json")
-    const { calculateRotationBaseline, calculateSimulatedRotationRun } = await probeLoad(
-      "/src/calculations/rotationCalculator.ts",
+    const { calculateRotationBaseline, calculateSimulatedRotationRun } = await probeLoad<
+      typeof import("../src/calculations/rotationCalculator")
+    >("/src/calculations/rotationCalculator.ts")
+    const { buildRotationTimeline } = await probeLoad<typeof import("../src/calculations/rotationTimeline")>(
+      "/src/calculations/rotationTimeline.ts",
     )
-    const { buildRotationTimeline } = await probeLoad("/src/calculations/rotationTimeline.ts")
-    const { calculateStatsWithEffects } = await probeLoad("/src/calculations/statEffects.ts")
-    const { calculateDerivedStats } = await probeLoad("/src/calculations/effectiveStats.ts")
-    const { emptyStats } = await probeLoad("/src/data/statDefinitions.ts")
+    const { calculateStatsWithEffects } = await probeLoad<typeof import("../src/calculations/statEffects")>(
+      "/src/calculations/statEffects.ts",
+    )
+    const { calculateDerivedStats } = await probeLoad<typeof import("../src/calculations/effectiveStats")>(
+      "/src/calculations/effectiveStats.ts",
+    )
+    const { emptyStats } = await probeLoad<typeof import("../src/data/statDefinitions")>("/src/data/statDefinitions.ts")
     const weapons = ["infernalTwinblades", "mortalRopeDart"]
     const baseStats = {
       ...emptyStats,

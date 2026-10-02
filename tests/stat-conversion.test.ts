@@ -8,7 +8,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-stat-conversion.mjs.
 describe("stat-conversion", () => {
   it("Generic stat conversion and Soaring High T4 checks passed", async () => {
-    const { applyStatConversions, calculateStatsWithEffects } = await probeLoad("/src/calculations/statEffects.ts")
+    const { applyStatConversions, calculateStatsWithEffects } = await probeLoad<
+      typeof import("../src/calculations/statEffects")
+    >("/src/calculations/statEffects.ts")
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const soaringHigh = (await import("../data/innerway/soaring-high.json")).default

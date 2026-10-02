@@ -15,9 +15,9 @@ describe("insightful-strike", () => {
       insightfulStrikeDirectAffinityBonus,
       insightfulStrikeEffectFor,
     } = await import("../src/calculations/insightfulStrike.ts")
-    const { calculateRotationBaseline, calculateRotationDamageSequence } = await probeLoad(
-      "/src/calculations/rotationCalculator.ts",
-    )
+    const { calculateRotationBaseline, calculateRotationDamageSequence } = await probeLoad<
+      typeof import("../src/calculations/rotationCalculator")
+    >("/src/calculations/rotationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { outcomeBuffTick } = await import("../src/calculations/outcomeTriggeredBuffs.ts")

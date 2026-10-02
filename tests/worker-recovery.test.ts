@@ -46,9 +46,9 @@ describe("worker-recovery", () => {
     globalThis.Worker = RecoveringWorker
 
     try {
-      const { disposeCalculationWorkers, dispatchCalculation } = await probeLoad(
-        "/src/calculations/rotationWorkerTransport.ts",
-      )
+      const { disposeCalculationWorkers, dispatchCalculation } = await probeLoad<
+        typeof import("../src/calculations/rotationWorkerTransport")
+      >("/src/calculations/rotationWorkerTransport.ts")
       const result = (await dispatchCalculation({
         mode: "baseline",
         key: "recovery",

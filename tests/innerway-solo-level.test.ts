@@ -8,10 +8,12 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-innerway-solo-level.mjs.
 describe("innerway-solo-level", () => {
   it("Inner Way Solo Level selection, raw-stat formulas, overrides, and production worker bundle checks passed", async () => {
-    const { innerWayDefinitionForSoloLevel, innerWayDefinitions } = await probeLoad("/src/data/innerWayDefinitions.ts")
-    const { calculateStatsWithEffects, calculateStatsWithOverrides } = await probeLoad(
-      "/src/calculations/statEffects.ts",
-    )
+    const { innerWayDefinitionForSoloLevel, innerWayDefinitions } = await probeLoad<
+      typeof import("../src/data/innerWayDefinitions")
+    >("/src/data/innerWayDefinitions.ts")
+    const { calculateStatsWithEffects, calculateStatsWithOverrides } = await probeLoad<
+      typeof import("../src/calculations/statEffects")
+    >("/src/calculations/statEffects.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)

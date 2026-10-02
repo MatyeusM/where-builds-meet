@@ -8,7 +8,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-resource-requirement.mjs.
 describe("resource-requirement", () => {
   it("Numeric resource action and requirement checks passed", async () => {
-    const { buildRotationTimeline, requirementsPass } = await probeLoad("/src/calculations/rotationTimeline.ts")
+    const { buildRotationTimeline, requirementsPass } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const system = JSON.parse(await readFile("data/system.json", "utf8"))

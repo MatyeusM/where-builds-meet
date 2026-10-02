@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationSimulationBaseline, RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { EffectiveStatEffectContainer, StatEffectContainer } from "@/calculations/statEffects"
 
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -49,18 +51,24 @@ describe("stat-stages", () => {
 
   it("Stat stages passed: raw talent inputs, order independence, food retention, global baseline, expiration, caps, overrides, cache reuse, comparison deltas, healing and actual Kite talents", async () => {
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
-    const { calculateStatsWithEffects, calculateStatsWithOverrides, calculateActionStats } = await probeLoad(
-      "/src/calculations/statEffects.ts",
-    )
-    const { calculateRotationBaseline, calculateRotationComparisons } = await probeLoad(
-      "/src/calculations/rotationCalculator.ts",
-    )
+    const { calculateStatsWithEffects, calculateStatsWithOverrides, calculateActionStats } = await probeLoad<
+      typeof import("../src/calculations/statEffects")
+    >("/src/calculations/statEffects.ts")
+    const { calculateRotationBaseline, calculateRotationComparisons } = await probeLoad<
+      typeof import("../src/calculations/rotationCalculator")
+    >("/src/calculations/rotationCalculator.ts")
     const { resolveActionStatContext } = await import("../src/calculations/actionStats.ts")
     const { calculateHealingAttackSnapshot } = await import("../src/calculations/healing.ts")
-    const food = { effectiveStat: { minPhys: 120, maxPhys: 240 }, statStage: "food" }
-    const talent = { statStage: "talent", stat: { minPhys: { formula: { source: "minPhys", multiplier: 0.1 } } } }
+    const food: StatEffectContainer & EffectiveStatEffectContainer = {
+      effectiveStat: { minPhys: 120, maxPhys: 240 },
+      statStage: "food",
+    }
+    const talent: StatEffectContainer = {
+      statStage: "talent",
+      stat: { minPhys: { formula: { source: "minPhys", multiplier: 0.1 } } },
+    }
     const base = { ...emptyStats, minPhys: 1000, maxPhys: 2000, precision: 1 }
-    const rawBonus = { rawStat: { minPhys: 100 } }
+    const rawBonus: StatEffectContainer = { rawStat: { minPhys: 100 } }
     const rawFirst = calculateStatsWithEffects(base, [talent, food, rawBonus], 0, [])
     assert.equal(rawFirst.rawStats.minPhys, 1100)
     assert.equal(rawFirst.stats.minPhys, 1210, "Raw bonus feeds the talent without food changing ordinary stats")
@@ -143,7 +151,7 @@ describe("stat-stages", () => {
       { requirement: [{ target: "skillTag", value: "Charged" }], stat: { minPhys: 10, maxPhys: 10 } },
     ]
     const plainSheet = calculateStatsWithEffects(base, [food], 0, [])
-    const bundle = {
+    const bundle: RotationSimulationBundle = {
       stats: plainSheet.stats,
       rawStats: plainSheet.rawStats,
       baseStats: base,
@@ -205,7 +213,7 @@ describe("stat-stages", () => {
     const compared = calculateRotationComparisons(variants, result)
     const rawSetup = [talent, rawBonus]
     const rawSheet = calculateStatsWithEffects(base, rawSetup, 0, [])
-    const rawBundle = {
+    const rawBundle: RotationSimulationBundle = {
       ...bundle,
       stats: rawSheet.stats,
       rawStats: rawSheet.rawStats,
@@ -222,7 +230,7 @@ describe("stat-stages", () => {
       timeline: { ...rawBundle.timeline, setupEffects: [talent] },
       setupComparisons: {},
     })
-    const totalDamage = output =>
+    const totalDamage = (output: RotationSimulationBaseline) =>
       output.baseline
         .filter(entry => entry.action.type === "damage")
         .reduce((sum, entry) => sum + output.actionBreakdowns[entry.id].total, 0)

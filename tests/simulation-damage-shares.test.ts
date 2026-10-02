@@ -69,7 +69,9 @@ const createBundle = async (tags: string[] = []) => {
 
 describe("simulation damage shares", () => {
   it("Outcome shares must measure damage rather than hit count", async () => {
-    const { simulateRotation } = await probeLoad("/src/calculations/simulationCalculator.ts")
+    const { simulateRotation } = await probeLoad<typeof import("../src/calculations/simulationCalculator")>(
+      "/src/calculations/simulationCalculator.ts",
+    )
     const bundle = await createBundle()
     let draws = 0
     const run = simulateRotation(bundle, 1, () => {
@@ -92,7 +94,9 @@ describe("simulation damage shares", () => {
   })
 
   it("A Mystic Vitality deficit must scale the shares and their denominator together", async () => {
-    const { simulateRotation } = await probeLoad("/src/calculations/simulationCalculator.ts")
+    const { simulateRotation } = await probeLoad<typeof import("../src/calculations/simulationCalculator")>(
+      "/src/calculations/simulationCalculator.ts",
+    )
     const bundle = await createBundle(["Mystic"])
     bundle.timeline.skills.Hit.action = [
       { type: "consumeResource", value: "Vitality", amount: 20, time: 0 },

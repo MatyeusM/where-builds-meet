@@ -8,9 +8,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-draught-innerways.mjs.
 describe("draught-innerways", () => {
   it("Draught tier progression, damage/healing channels, and attunement override checks passed", async () => {
-    const { innerWayEntriesForTag, innerWayDefinitionForSoloLevel } = await probeLoad(
-      "/src/data/innerWayDefinitions.ts",
-    )
+    const { innerWayEntriesForTag, innerWayDefinitionForSoloLevel } = await probeLoad<
+      typeof import("../src/data/innerWayDefinitions")
+    >("/src/data/innerWayDefinitions.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")

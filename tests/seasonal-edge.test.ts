@@ -9,14 +9,16 @@ import { probeLoad } from "./helpers/probe-loader.js"
 // Ported from script/probe/check-seasonal-edge.mjs.
 describe("seasonal-edge", () => {
   it("Seasonal Edge chance branches, proc window, damage, simulation, and Vitality range checks passed", async () => {
-    const { calculateRotationBaseline, calculateRotationDamageSequence } = await probeLoad(
-      "/src/calculations/rotationCalculator.ts",
-    )
+    const { calculateRotationBaseline, calculateRotationDamageSequence } = await probeLoad<
+      typeof import("../src/calculations/rotationCalculator")
+    >("/src/calculations/rotationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
-    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad(
-      "/src/calculations/rotationTimeline.ts",
-    )
-    const { seasonalEdgeEffectFor, seasonalEdgeWindows } = await probeLoad("/src/calculations/seasonalEdge.ts")
+    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
+    const { seasonalEdgeEffectFor, seasonalEdgeWindows } = await probeLoad<
+      typeof import("../src/calculations/seasonalEdge")
+    >("/src/calculations/seasonalEdge.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const generalBuffs = (await import("../data/buff/general.json")).default
     const seasonalDefinition = (await import("../data/innerway/seasonal-edge.json")).default

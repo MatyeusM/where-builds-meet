@@ -10,9 +10,9 @@ import { rowWithId } from "./helpers/timelineRows"
 describe("hp-and-manual-events", () => {
   it("Self HP, target HP, Qi exhaustion, and manual effect duration checks passed", async () => {
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
-    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad(
-      "/src/calculations/rotationTimeline.ts",
-    )
+    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const generalBuffs = (await import("../data/buff/general.json")).default

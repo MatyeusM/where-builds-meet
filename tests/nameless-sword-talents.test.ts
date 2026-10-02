@@ -10,7 +10,9 @@ import { probeLoad } from "./helpers/probe-loader.js"
 describe("nameless-sword-talents", () => {
   it("Nameless Sword talent calculation checks passed", async () => {
     const namelessSword = (await import("../data/martial-art/nameless-sword.json")).default
-    const { calculateStatsWithEffects, resolveRawStatFormulas } = await probeLoad("/src/calculations/statEffects.ts")
+    const { calculateStatsWithEffects, resolveRawStatFormulas } = await probeLoad<
+      typeof import("../src/calculations/statEffects")
+    >("/src/calculations/statEffects.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")

@@ -18,9 +18,9 @@ import { rowWithId } from "./helpers/timelineRows"
 describe("fivefold-bleed", () => {
   it("Fivefold Bleed chance, atomic threshold bursts, fresh cadence, generic application rules, exhaustive expected-state and simulation checks passed", async () => {
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
-    const { calculateRotationBaseline, calculateSimulatedRotationRun } = await probeLoad(
-      "/src/calculations/rotationCalculator.ts",
-    )
+    const { calculateRotationBaseline, calculateSimulatedRotationRun } = await probeLoad<
+      typeof import("../src/calculations/rotationCalculator")
+    >("/src/calculations/rotationCalculator.ts")
     const { simulateRotation } = await import("../src/calculations/simulationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")

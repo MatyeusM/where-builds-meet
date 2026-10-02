@@ -13,7 +13,9 @@ describe("mistwing", () => {
     const windBuffs = (await import("../data/buff/bamboocut-wind.json")).default
     const { innerWayAvailableForTag, innerWayDefinitions, innerWayDefinitionForSoloLevel } =
       await import("../src/data/innerWayDefinitions.ts")
-    const { calculateRotationBaseline } = await probeLoad("/src/calculations/rotationCalculator.ts")
+    const { calculateRotationBaseline } = await probeLoad<typeof import("../src/calculations/rotationCalculator")>(
+      "/src/calculations/rotationCalculator.ts",
+    )
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 

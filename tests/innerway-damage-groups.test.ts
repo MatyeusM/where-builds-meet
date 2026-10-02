@@ -14,9 +14,9 @@ describe("innerway-damage-groups", () => {
   it("Inner Way ownership, unchanged damage/timing, grouped totals, zero-proc headers, expansion isolation, and sampled ownership verified", async () => {
     const { calculateRotationBaseline, calculateSimulatedRotationRun, calculateRotationComparisons } =
       await import("../src/calculations/rotationCalculator.ts")
-    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad(
-      "/src/calculations/rotationTimeline.ts",
-    )
+    const { buildRotationTimeline, mergeCalculatedTimelineState } = await probeLoad<
+      typeof import("../src/calculations/rotationTimeline")
+    >("/src/calculations/rotationTimeline.ts")
     const { buildTimelineDisplayEntries } = await import("../src/rotationDisplay.ts")
     const { compactInnerWayResults } = await import("../src/calculations/compactInnerWayResults.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")

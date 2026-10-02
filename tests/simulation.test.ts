@@ -11,9 +11,9 @@ describe("simulation", () => {
       await import("../src/calculations/damage.ts")
     const { calculateHealingBreakdown, calculateSimulatedHealingBreakdown } =
       await import("../src/calculations/healing.ts")
-    const { selectSimulationPercentile, simulateRotation } = await probeLoad(
-      "/src/calculations/simulationCalculator.ts",
-    )
+    const { selectSimulationPercentile, simulateRotation } = await probeLoad<
+      typeof import("../src/calculations/simulationCalculator")
+    >("/src/calculations/simulationCalculator.ts")
     const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 200, precision: 1 }

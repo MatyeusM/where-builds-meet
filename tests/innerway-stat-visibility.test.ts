@@ -14,7 +14,9 @@ describe("innerway-stat-visibility", () => {
     const { calculateDamageBreakdown } = await import("../src/calculations/damage.ts")
     const { calculateHealingBreakdown } = await import("../src/calculations/healing.ts")
     const { resolveAttunementStats } = await import("../src/calculations/attunementStats.ts")
-    const { innerWayDefinitions, innerWayDefinitionForSoloLevel } = await probeLoad("/src/data/innerWayDefinitions.ts")
+    const { innerWayDefinitions, innerWayDefinitionForSoloLevel } = await probeLoad<
+      typeof import("../src/data/innerWayDefinitions")
+    >("/src/data/innerWayDefinitions.ts")
     const visibleStats = new Set(allStatDefinitions.map(({ key }) => key))
     const innerWayFiles = (await readdir("data/innerway")).filter(fileName => fileName.endsWith(".json"))
 
