@@ -2,6 +2,15 @@ import { readFile } from "node:fs/promises"
 
 import { assert, describe, it } from "vitest"
 
+import type {
+  InnerWayEffectRule,
+  TimelineBuildInput,
+  TimelineRow,
+  TrackedEffect,
+} from "../src/calculations/rotationTimeline.ts"
+import type { RotationStep } from "../src/calculations/rotationTimeline.ts"
+import { rowCasting } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-vile-condemned.mjs.
 describe("vile-condemned", () => {
   it("Vile Condemned branch, cooldown status, start-bound requirement, and consumption checks passed", async () => {
@@ -30,15 +39,21 @@ describe("vile-condemned", () => {
       tags: ["Falcon"],
     }
     const build = (
-      steps,
+      steps: RotationStep[],
       {
         initialResources = {},
         resourceRegeneration = {},
         innerWayConditions = [],
         innerWayRules = [],
         initialDebuffs = [],
+      }: {
+        initialResources?: TimelineBuildInput["initialResources"]
+        resourceRegeneration?: TimelineBuildInput["resourceRegeneration"]
+        innerWayConditions?: string[]
+        innerWayRules?: InnerWayEffectRule[]
+        initialDebuffs?: TrackedEffect[]
       },
-    ) =>
+    ): TimelineRow[] =>
       buildRotationTimeline({
         rotation: { name: "Vile Condemned probe", steps },
         skills: { ...heavenwillSkills, ObserveHeavensWill: observer, RestoreHeavensWill: restore, FalconProbe: falcon },
@@ -57,8 +72,8 @@ describe("vile-condemned", () => {
         resourceMaximums: { HeavensWill: 4 },
         initialDebuffs,
       })
-    const damageAction = row => row.actions.find(action => action.type === "damage")
-    const damageModifierEffects = row => {
+    const damageAction = (row: TimelineRow) => row.actions.find(action => action.type === "damage")
+    const damageModifierEffects = (row: TimelineRow) => {
       const actionIndex = row.actions.findIndex(action => action.type === "damage")
       return row.actionModifierEffects[actionIndex] ?? []
     }
@@ -70,8 +85,8 @@ describe("vile-condemned", () => {
       ],
       { initialResources: { HeavensWill: 2 } },
     )
-    const weakCast = weakTimeline.find(row => row.step.skill === "VileCondemned")
-    const weakObserver = weakTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const weakCast = rowCasting(weakTimeline, "VileCondemned")
+    const weakObserver = rowCasting(weakTimeline, "ObserveHeavensWill")
     assert(
       weakCast.effectiveCastTime ===
         heavenwillSkills.VileCondemnedCharge.castTime + heavenwillSkills.VileCondemnedHit.castTime,
@@ -90,8 +105,8 @@ describe("vile-condemned", () => {
       ],
       { initialResources: { HeavensWill: 3.5 } },
     )
-    const fractionalFallbackCast = fractionalFallbackTimeline.find(row => row.step.skill === "VileCondemned")
-    const fractionalFallbackObserver = fractionalFallbackTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const fractionalFallbackCast = rowCasting(fractionalFallbackTimeline, "VileCondemned")
+    const fractionalFallbackObserver = rowCasting(fractionalFallbackTimeline, "ObserveHeavensWill")
     assert(
       damageAction(fractionalFallbackCast).phyCoef === 7.2178,
       "Vile Condemned without Soaring High T0 must use the normal release.",
@@ -108,8 +123,8 @@ describe("vile-condemned", () => {
       ],
       { initialResources: { HeavensWill: 3.5 }, innerWayConditions: ["SoaringHighT0"] },
     )
-    const fractionalEndCast = fractionalEndTimeline.find(row => row.step.skill === "VileCondemned")
-    const fractionalEndObserver = fractionalEndTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const fractionalEndCast = rowCasting(fractionalEndTimeline, "VileCondemned")
+    const fractionalEndObserver = rowCasting(fractionalEndTimeline, "ObserveHeavensWill")
     assert(
       damageAction(fractionalEndCast).phyCoef === 11.7527,
       "Vile Condemned with Soaring High T0 must select End Hit at 3.5 Heaven's Will.",
@@ -137,7 +152,7 @@ describe("vile-condemned", () => {
         ],
       },
     )
-    const endCast = endTimeline.find(row => row.step.skill === "VileCondemned")
+    const endCast = rowCasting(endTimeline, "VileCondemned")
     assert(
       damageAction(endCast).phyCoef === 11.7527,
       "The release-start resource snapshot must select Vile Condemned End Hit at three Heaven's Will.",
@@ -154,8 +169,8 @@ describe("vile-condemned", () => {
         innerWayConditions: ["SoaringHighT0"],
       },
     )
-    const cappedCast = cappedTimeline.find(row => row.step.skill === "VileCondemned")
-    const cappedObserver = cappedTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const cappedCast = rowCasting(cappedTimeline, "VileCondemned")
+    const cappedObserver = rowCasting(cappedTimeline, "ObserveHeavensWill")
     assert(
       cappedCast.actionStates[0].resources.HeavensWill === 4,
       "Heaven's Will regeneration must respect the four-point cap.",
@@ -187,8 +202,8 @@ describe("vile-condemned", () => {
         ],
       },
     )
-    const t6Cast = t6Timeline.find(row => row.step.skill === "VileCondemned")
-    const t6Observer = t6Timeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const t6Cast = rowCasting(t6Timeline, "VileCondemned")
+    const t6Observer = rowCasting(t6Timeline, "ObserveHeavensWill")
     assert(
       damageModifierEffects(t6Cast).some(effect => effect.baseDMGBonus === 0.3 && effect.critDmgBonus === 0.1),
       "Four Heaven's Will with Soaring High T6 must lock the 30% base-damage and 10% Critical Damage bonuses.",
@@ -217,8 +232,8 @@ describe("vile-condemned", () => {
         ],
       },
     )
-    const regeneratedToFourCast = regeneratedToFourTimeline.find(row => row.step.skill === "VileCondemned")
-    const regeneratedToFourObserver = regeneratedToFourTimeline.find(row => row.step.skill === "ObserveHeavensWill")
+    const regeneratedToFourCast = rowCasting(regeneratedToFourTimeline, "VileCondemned")
+    const regeneratedToFourObserver = rowCasting(regeneratedToFourTimeline, "ObserveHeavensWill")
     assert(
       !damageModifierEffects(regeneratedToFourCast).some(
         effect => effect.baseDMGBonus === 0.3 || effect.critDmgBonus === 0.1,
@@ -248,7 +263,7 @@ describe("vile-condemned", () => {
     const noSoaringHighTimeline = build([{ type: "skill", skill: "VileCondemned" }], {
       initialResources: { HeavensWill: 3 },
     })
-    const noSoaringHighCast = noSoaringHighTimeline.find(row => row.step.skill === "VileCondemned")
+    const noSoaringHighCast = rowCasting(noSoaringHighTimeline, "VileCondemned")
     assert(
       damageAction(noSoaringHighCast).phyCoef === 7.2178,
       "Vile Condemned End Hit must remain disabled without Soaring High T0.",

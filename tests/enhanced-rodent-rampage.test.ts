@@ -6,6 +6,7 @@ import vendetta from "../data/innerway/vendetta.json"
 import infernal from "../data/skill/infernal-twinblades.json"
 import mortal from "../data/skill/mortal-rope-dart.json"
 import { buildRotationTimeline, type RotationStep, type TimelineBuildInput } from "../src/calculations/rotationTimeline"
+import { rowCasting } from "./helpers/timelineRows"
 
 const cast = (skill: string): RotationStep => ({ type: "skill", skill })
 const delay = (duration: number): RotationStep => ({ type: "event", event: "Delay", duration })
@@ -59,7 +60,7 @@ for (const sampled of [false, true]) {
       const coordinated = rows.filter(row => row.step.skill === "Rodent" && row.startTime < 0.4)
       expect(coordinated).toHaveLength(1)
       expect(coordinated[0].startTime).toBeCloseTo(0.25)
-      expect(coordinated[0].sourceRowId).toBe(rows.find(row => row.step.skill === "Second")!.id)
+      expect(coordinated[0].sourceRowId).toBe(rowCasting(rows, "Second")!.id)
     })
 
     it("preserves partial progress beyond the old expiry when the parent refreshes", () => {
@@ -165,7 +166,7 @@ for (const sampled of [false, true]) {
         action: infernal.InfernalFlamelashLight5Cancel.action.filter(action => action.type === "trigger"),
       }
       const rows = build(data)
-      const returnedAt = rows.find(row => row.step.skill === "MoveIn")!.startTime
+      const returnedAt = rowCasting(rows, "MoveIn")!.startTime
       const times = rodentTimes(rows)
       expect(times).toHaveLength(2)
       expect(times[0]).toBeCloseTo(returnedAt + 0.5)

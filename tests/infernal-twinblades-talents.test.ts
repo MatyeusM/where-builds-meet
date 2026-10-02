@@ -8,6 +8,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { rowCasting } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-infernal-twinblades-talents.mjs.
 describe("infernal-twinblades-talents", () => {
@@ -144,7 +145,7 @@ describe("infernal-twinblades-talents", () => {
         "Extended indirect buffs remain active past base expiry",
       )
       assert.deepEqual(
-        rows.find(row => row.step.skill === "NestedHelper").skill.tags,
+        rowCasting(rows, "NestedHelper").skill.tags,
         ["Triggered"],
         "Buff origin does not alter damage tags",
       )
@@ -181,7 +182,7 @@ describe("infernal-twinblades-talents", () => {
     const empty = build([castStep("AddledMind"), castStep("EmptyDodge"), castStep("AddledMind")])
     assert.equal(empty.at(-1).startTime, 0, "Success trigger restores a charge when the incoming hit is avoided")
     assert.deepEqual(
-      empty.find(row => row.step.skill === "EmptyDodge").actions,
+      rowCasting(empty, "EmptyDodge").actions,
       [{ type: "takeDamage", damage: 0, time: 0 }],
       "Only the fixture incoming hit is displayed; the response event stays internal",
     )

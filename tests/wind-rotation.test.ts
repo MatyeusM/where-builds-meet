@@ -8,6 +8,7 @@ import { calculateRotationBaseline } from "../src/calculations/rotationCalculato
 import type { RotationRecord } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { dpsSnapshotEnvironment } from "./helpers/dps-snapshot-fixtures"
+import { rowCasting } from "./helpers/timelineRows"
 
 function bundleFor(full = false) {
   const preset = structuredClone(rotation) as RotationRecord
@@ -157,7 +158,7 @@ describe("Wind dummy preset", () => {
 
   it("depletes Qi before the first break and toward a second break beyond Battle End", () => {
     const { timeline } = calculateRotationBaseline(bundleFor())
-    const firstQ = timeline.find(row => row.step.skill === "BladeboundThreadCancel")!
+    const firstQ = rowCasting(timeline, "BladeboundThreadCancel")!
     const fightStart = firstQ.startTime + Number(firstQ.actions[0].time)
     const qiRows = timeline.filter(row => row.step.type === "event" && row.step.event === "Qi")
     expect(qiRows).toHaveLength(5)

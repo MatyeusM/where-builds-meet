@@ -6,6 +6,7 @@ import echoes from "../data/innerway/echoes-of-oblivion.json"
 import skills from "../data/skill/infernal-twinblades.json"
 import { buildRotationTimeline, type TimelineBuildInput, type RotationStep } from "../src/calculations/rotationTimeline"
 import { exportRotationEntries, mergeImportedRotationEntries, serializeRotationEntries } from "../src/rotationTransfer"
+import { rowCasting } from "./helpers/timelineRows"
 
 const cast = (skill: string): RotationStep => ({ type: "skill", skill })
 function input(steps: RotationStep[], initial = 0, times: number[] = []): TimelineBuildInput {
@@ -127,9 +128,9 @@ describe("Hellfire", () => {
       "InfernalFlamelashLight4Rodent",
     ]
     const rows = buildRotationTimeline(input([...stages.map(cast), cast("End")]))
-    expect(rows.find(row => row.step.skill === "End")!.resources.Hellfire).toBeCloseTo(5 + 6.25 + 12)
+    expect(rowCasting(rows, "End")!.resources.Hellfire).toBeCloseTo(5 + 6.25 + 12)
     const capped = buildRotationTimeline(input([cast("AddledMind"), cast("End")], 75))
-    expect(capped.find(row => row.step.skill === "End")!.resources.Hellfire).toBe(80)
+    expect(rowCasting(capped, "End")!.resources.Hellfire).toBe(80)
     expect(capped[0].timelineResourceSummary!.Hellfire.regenerated).toBe(5)
   })
   it("grants only landed hits before Battle End", () => {
@@ -158,9 +159,9 @@ describe("Hellfire", () => {
   })
   it("allows editor casts below 80, ends a zero-resource activation, and never extends the rotation", () => {
     const zero = buildRotationTimeline(input([cast("Flamelash"), cast("End")]))
-    expect(active(zero.find(row => row.step.skill === "End")!)).toBe(false)
+    expect(active(rowCasting(zero, "End")!)).toBe(false)
     const partial = buildRotationTimeline(input([cast("Flamelash"), cast("End")], 20))
-    expect(active(partial.find(row => row.step.skill === "End")!)).toBe(true)
+    expect(active(rowCasting(partial, "End")!)).toBe(true)
     const alone = buildRotationTimeline(input([cast("Flamelash")], 80))
     expect(alone.every(row => row.startTime <= 0.85)).toBe(true)
   })

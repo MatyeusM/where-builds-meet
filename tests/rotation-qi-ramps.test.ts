@@ -5,6 +5,7 @@ import { buildPresetRotationBundle } from "../src/application/graduation"
 import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { probeLoad } from "./helpers/probe-loader"
+import { rowCasting } from "./helpers/timelineRows"
 
 describe("preset Qi event attachments", () => {
   const rotationPaths = [
@@ -197,7 +198,7 @@ describe("Qi attachment ordering", () => {
       setupEffects: [],
       weapons: [],
     })
-    const row = timeline.find(row => row.step.skill === "Probe")!
+    const row = rowCasting(timeline, "Probe")!
     const states = row.actions.map((_, index) => row.actionStates[index])
     expect(states.map(state => state.debuffs.has("Depleted"))).toEqual([placement === "before", true, false])
     expect(states[0].targetQiRatio).toBe(placement === "before" ? 0 : 1)

@@ -7,6 +7,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { rowCasting } from "./helpers/timelineRows"
 const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
 
 describe("weapon-set-four-piece", () => {
@@ -185,7 +186,7 @@ describe("weapon-set-four-piece", () => {
     }
     for (const roll of [undefined, () => 0.5]) {
       const selected = buildRotationTimeline(bundle("Cleftpeak", 4, deflectOptions).timeline, roll)
-      const hit = selected.find(row => row.step.skill === "Probe").actionStates[0]
+      const hit = rowCasting(selected, "Probe").actionStates[0]
       assert.equal(hit.buffs.get("Cleftpeak").stack, 5, "Successful Deflect immediately grants five stacks")
       for (const [tier, skill] of [
         [2, "DeflectSuccessful"],
@@ -196,7 +197,7 @@ describe("weapon-set-four-piece", () => {
           roll,
         )
         assert.ok(
-          !rows.find(row => row.step.skill === "Probe").actionStates[0].buffs.has("Cleftpeak"),
+          !rowCasting(rows, "Probe").actionStates[0].buffs.has("Cleftpeak"),
           "Ordinary Deflect and two-piece selection grant no stacks before damage",
         )
       }
@@ -212,7 +213,7 @@ describe("weapon-set-four-piece", () => {
         roll,
       )
       assert.ok(
-        !expired.find(row => row.step.skill === "Probe").actionStates[0].buffs.has("Cleftpeak"),
+        !rowCasting(expired, "Probe").actionStates[0].buffs.has("Cleftpeak"),
         "Deflect stacks expire after five seconds",
       )
     }

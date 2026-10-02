@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
+import { rowCasting } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-etherwrath.mjs.
 describe("etherwrath", () => {
@@ -60,7 +61,7 @@ describe("etherwrath", () => {
     const stackingTimeline = buildRotationTimeline(
       timelineInput({ name: "Stacking probe", steps: [{ type: "skill", skill: "Hit" }] }, { Hit: hit }),
     )
-    const stackingRow = stackingTimeline.find(row => row.step.skill === "Hit")
+    const stackingRow = rowCasting(stackingTimeline, "Hit")
     expect(
       stackingRow.actionStates[5].buffs.get("Etherwrath")?.stack === 5,
       "The sixth damage action must see the five stacks granted by the previous five hits.",
@@ -77,7 +78,7 @@ describe("etherwrath", () => {
         { PerfectDodgeCancel: generalSkills.PerfectDodgeCancel, Observe: observe },
       ),
     )
-    const dodgeObserver = dodgeTimeline.find(row => row.step.skill === "Observe")
+    const dodgeObserver = rowCasting(dodgeTimeline, "Observe")
     expect(
       dodgeObserver.actionStates[0].buffs.get("Etherwrath")?.stack === 5,
       "Perfect Dodge must apply five Etherwrath stacks directly.",
@@ -112,7 +113,7 @@ describe("etherwrath", () => {
     dotInput.dots = dots
     dotInput.effectDefinitions = { ...kiteBuffs, ...dots }
     const dotTimeline = buildRotationTimeline(dotInput)
-    const watched = dotTimeline.find(row => row.step.skill === "Watch")
+    const watched = rowCasting(dotTimeline, "Watch")
     const activeStack = watched.actionStates[0].buffs.get("Etherwrath")
     expect(
       activeStack?.stack === 1 && activeStack.expiresAt === 8,

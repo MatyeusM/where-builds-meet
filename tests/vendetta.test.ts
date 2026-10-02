@@ -6,6 +6,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { rowCasting } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-vendetta.mjs.
 describe("vendetta", () => {
@@ -47,7 +48,7 @@ describe("vendetta", () => {
         const duration = tier < 4 ? 15 : 20
         const rows = build(tier, lateAttack, roll)
         assert.equal(rodent(rows).length, 1, "Every Vendetta tier retains T0 and enables attacks after ten seconds")
-        const buff = rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.get("RodentRampage")
+        const buff = rowCasting(rows, "InfernalLight1").actionStates[0].buffs.get("RodentRampage")
         assert.ok(
           Math.abs(buff.expiresAt - (duration + 0.541)) < 1e-9,
           "Vendetta sets the total duration to 15 seconds, upgraded to 20 at T4",
@@ -79,9 +80,9 @@ describe("vendetta", () => {
       castStep("InfernalLight1"),
     ])
     assert.equal(rodent(refresh).length, 1, "Recasting refreshes the full extended lifetime")
-    const refreshed = Array.from(
-      refresh.find(row => row.step.skill === "InfernalLight1").actionStates[0].buffs.values(),
-    ).filter(buff => buff.name === "RodentRampage")
+    const refreshed = Array.from(rowCasting(refresh, "InfernalLight1").actionStates[0].buffs.values()).filter(
+      buff => buff.name === "RodentRampage",
+    )
     assert.equal(refreshed.length, 1, "Refresh still produces one buff")
     assert.ok(
       Math.abs(refreshed[0].expiresAt - 30.082) < 1e-9,
@@ -141,7 +142,7 @@ describe("vendetta", () => {
       })
     const close = (a: number | undefined, b: number, message: string) => assertClose(a, b, 1e-8, message)
     const procDamage = result => {
-      const row = result.timeline.find(row => row.step.skill === "Rodent")
+      const row = rowCasting(result.timeline, "Rodent")
       return result.actionBreakdowns[row.id + ":0"].total
     }
     const unbuffed = damageRun(false)
@@ -172,9 +173,9 @@ describe("vendetta", () => {
       close(casts[0].actions[0].time, 0.385, "Cancel hit uses the supplied local time")
       assert.ok(!casts[0].actionStates[0].debuffs.has("VendettaToken"), "Token is applied after the initial damage")
       close(casts[1].startTime, 8, "Repeated cancel casts honor the eight-second cooldown")
-      const active = Array.from(
-        rows.find(row => row.step.skill === "InfernalLight1").actionStates[0].debuffs.values(),
-      ).filter(buff => buff.name === "VendettaToken")
+      const active = Array.from(rowCasting(rows, "InfernalLight1").actionStates[0].debuffs.values()).filter(
+        buff => buff.name === "VendettaToken",
+      )
       assert.equal(active.length, 1, "Reapplication refreshes one Token debuff")
       assert.ok(
         rows.every(row => !row.buffs.has("VendettaToken")),
@@ -193,7 +194,7 @@ describe("vendetta", () => {
           [castStep("BladeboundThreadCancel"), delayStep(duration - 0.339), castStep("InfernalLight1")],
           roll,
         )
-        const hit = lifetime.find(row => row.step.skill === "InfernalLight1")
+        const hit = rowCasting(lifetime, "InfernalLight1")
         assert.ok(
           !hit.actionStates[0].debuffs.has("VendettaToken"),
           "Token expires at its exact tier-adjusted boundary",
@@ -225,9 +226,7 @@ describe("vendetta", () => {
         innerWayConditions: [],
         setupEffects: martialArtEffectsForRank({ mortalRopeDart: mortalTalents }, weapons, rank),
       })
-      const corrosion = rows
-        .find(row => row.step.skill === "InfernalLight1")
-        .actionStates[0].debuffs.get("BoneCorrosion")
+      const corrosion = rowCasting(rows, "InfernalLight1").actionStates[0].debuffs.get("BoneCorrosion")
       assert.equal(Boolean(corrosion), rank === 13, "Bladebound Thread activates Bone Corrosion only with the talent")
       if (corrosion) close(corrosion.expiresAt, 5.385, "Bone Corrosion starts its five-second lifetime at the hit")
     }
