@@ -1,9 +1,21 @@
+import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 
 import { describe, expect, it } from "vitest"
 
+import type { TimelineRow } from "@/calculations/rotationTimeline"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { actionStateAt } from "./helpers/timelineRows"
+
+/** Heaven's Will left on the final scheduled action, named when none was scheduled. */
+function lastHeavensWill(rows: TimelineRow[]) {
+  const last = rows.at(-1)
+  assert(last, "The Mandate probe must schedule a final action.")
+  const state = actionStateAt(last, 0)
+  return state.resources.HeavensWill
+}
 
 // Ported from script/probe/check-resource-requirement.mjs.
 describe("resource-requirement", () => {
@@ -171,7 +183,7 @@ describe("resource-requirement", () => {
         rotation: {
           name: `Celestial Mandate ${withUnity ? "with" : "without"} Heaven's Unity`,
           steps: [
-            ...(withUnity ? [{ type: "skill", skill: "ApplyHeavensUnity" }] : []),
+            ...(withUnity ? [{ type: "skill", skill: "ApplyHeavensUnity" } as const] : []),
             { type: "skill", skill: "CelestialMandate" },
             { type: "skill", skill: "ObserveHeavensWill" },
           ],
@@ -202,9 +214,9 @@ describe("resource-requirement", () => {
         weapons: ["heavenwill", "skygrasp"],
       })
 
-    const withoutUnity = buildMandateTimeline(false).at(-1).actionStates[0].resources.HeavensWill
+    const withoutUnity = lastHeavensWill(buildMandateTimeline(false))
     const unityTimeline = buildMandateTimeline(true)
-    const withUnity = unityTimeline.at(-1).actionStates[0].resources.HeavensWill
+    const withUnity = lastHeavensWill(unityTimeline)
     expect(
       withoutUnity === 0.1,
       "Celestial Mandate must generate 0.1 Heaven's Will without Heaven's Unity.",

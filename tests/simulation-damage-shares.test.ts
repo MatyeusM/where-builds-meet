@@ -1,6 +1,9 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { RotationStep } from "@/calculations/rotationTimeline"
+import type { CharacterStats } from "@/types"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
@@ -38,13 +41,13 @@ const shareStats = {
   affinityDmgBonus: 1,
 }
 
-const createBundle = async (tags: string[] = []) => {
-  const { calculateDerivedStats } = await import("../src/calculations/effectiveStats.ts")
-  const { emptyStats } = await import("../src/data/statDefinitions.ts")
-  const stats = { ...emptyStats, ...shareStats }
+const createBundle = async (tags: string[] = []): Promise<RotationSimulationBundle> => {
+  const { calculateDerivedStats } = await import("@/calculations/effectiveStats")
+  const { emptyStats } = await import("@/data/statDefinitions")
+  const stats: CharacterStats = { ...emptyStats, ...shareStats }
   return {
     timeline: {
-      rotation: { name: "Damage share probe", steps: rolls.map(() => ({ type: "skill", skill: "Hit" })) },
+      rotation: { name: "Damage share probe", steps: rolls.map((): RotationStep => ({ type: "skill", skill: "Hit" })) },
       skills: { Hit: { name: "Hit", castTime: 1, tags, action: [{ type: "damage", time: 1, phyCoef: 1 }] } },
       eventDefinitions: {},
       dots: {},
@@ -98,10 +101,15 @@ describe("simulation damage shares", () => {
       "/src/calculations/simulationCalculator.ts",
     )
     const bundle = await createBundle(["Mystic"])
-    bundle.timeline.skills.Hit.action = [
-      { type: "consumeResource", value: "Vitality", amount: 20, time: 0 },
-      { type: "damage", time: 1, phyCoef: 1 },
-    ]
+    bundle.timeline.skills.Hit = {
+      name: "Hit",
+      castTime: 1,
+      tags: ["Mystic"],
+      action: [
+        { type: "consumeResource", value: "Vitality", amount: 20, time: 0 },
+        { type: "damage", time: 1, phyCoef: 1 },
+      ],
+    }
     bundle.timeline.initialResources = { Vitality: 40 }
     let draws = 0
     const run = simulateRotation(bundle, 1, () => rolls[draws++] ?? 0).results.best
