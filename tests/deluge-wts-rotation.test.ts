@@ -2,6 +2,8 @@ import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import { rowWithId } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-deluge-wts-rotation.mjs.
 describe("deluge-wts-rotation", () => {
   it("Deluge WTS sequence and standard dummy-attack schedule verified", async () => {
@@ -44,7 +46,7 @@ describe("deluge-wts-rotation", () => {
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     }
     const timeline = buildRotationTimeline(timelineInput)
-    const anchorRow = timeline.find(row => row.id === `rotation-${rotation.start.step}`)!
+    const anchorRow = rowWithId(timeline, `rotation-${rotation.start.step}`)!
     const anchorTime = anchorRow.startTime + Number(anchorRow.actions[rotation.start.action]?.time ?? 0)
     for (const preset of [
       rotation,

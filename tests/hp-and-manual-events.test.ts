@@ -4,6 +4,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import { isClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-hp-and-manual-events.mjs.
 describe("hp-and-manual-events", () => {
@@ -149,8 +150,8 @@ describe("hp-and-manual-events", () => {
       setupComparisons: {},
     })
     const firstTargetHit = targetHPResult.actionBreakdowns["rotation-0:0"].total
-    const targetHPRow = targetHPResult.timeline.find(row => row.id === "rotation-0")
-    const noDamageRow = targetHPResult.timeline.find(row => row.id === "rotation-1")
+    const targetHPRow = rowWithId(targetHPResult.timeline, "rotation-0")
+    const noDamageRow = rowWithId(targetHPResult.timeline, "rotation-1")
     const finalTargetHPRatio = Math.max(0, 1 - (firstTargetHit * 2) / 10000)
     expect(
       closeTo(targetHPRow.actionStates[1].targetHPRatio, Math.max(0, 1 - firstTargetHit / 10000)),
@@ -174,8 +175,8 @@ describe("hp-and-manual-events", () => {
       skills: { Hit: hit, NoDamage: noDamage },
     })
     const displayedTargetHPTimeline = mergeCalculatedTimelineState(structuralTargetHPTimeline, targetHPResult.timeline)
-    const displayedHitRow = displayedTargetHPTimeline.find(row => row.id === "rotation-0")
-    const displayedNoDamageRow = displayedTargetHPTimeline.find(row => row.id === "rotation-1")
+    const displayedHitRow = rowWithId(displayedTargetHPTimeline, "rotation-0")
+    const displayedNoDamageRow = rowWithId(displayedTargetHPTimeline, "rotation-1")
     expect(
       closeTo(displayedHitRow.actionStates[1].targetHPRatio, Math.max(0, 1 - firstTargetHit / 10000)) &&
         closeTo(displayedNoDamageRow.targetHPRatio, finalTargetHPRatio),
@@ -191,7 +192,7 @@ describe("hp-and-manual-events", () => {
         Object.values(implicitTargetHPTimeline[0].actionStates).every(state => state.targetHPRatio === 0.99),
       "A rotation without preset target HP must expose the implicit 99% target state to every hit.",
     ).toBeTruthy()
-    const hpHitRow = hpResult.timeline.find(row => row.id === "rotation-1")
+    const hpHitRow = rowWithId(hpResult.timeline, "rotation-1")
     expect(
       hpHitRow.actionStates[0].currentHPRatio === 1 && hpHitRow.actionStates[1].currentHPRatio === 0.8,
       "The attached HP event must change only its target and subsequent action snapshots.",
@@ -212,8 +213,8 @@ describe("hp-and-manual-events", () => {
       setupEffects: [scripts.Revelry.effect],
       maxHP: 100,
     })
-    const timedDamageRow = timedDamageTimeline.find(row => row.id === "rotation-1")
-    const timedDamageHitRow = timedDamageTimeline.find(row => row.id === "rotation-0")
+    const timedDamageRow = rowWithId(timedDamageTimeline, "rotation-1")
+    const timedDamageHitRow = rowWithId(timedDamageTimeline, "rotation-0")
     expect(
       closeTo(timedDamageRow.startTime, 1),
       "Take Damage must resolve at its fight-relative start time.",
@@ -259,10 +260,10 @@ describe("hp-and-manual-events", () => {
       ],
       maxHP: 100,
     })
-    const successfulDeflectDamage = avoidedDamageTimeline.find(row => row.id === "rotation-1")
-    const perfectDodgeDamage = avoidedDamageTimeline.find(row => row.id === "rotation-3")
-    const ordinaryDeflectDamage = avoidedDamageTimeline.find(row => row.id === "rotation-5")
-    const afterAvoidance = avoidedDamageTimeline.find(row => row.id === "rotation-6")
+    const successfulDeflectDamage = rowWithId(avoidedDamageTimeline, "rotation-1")
+    const perfectDodgeDamage = rowWithId(avoidedDamageTimeline, "rotation-3")
+    const ordinaryDeflectDamage = rowWithId(avoidedDamageTimeline, "rotation-5")
+    const afterAvoidance = rowWithId(avoidedDamageTimeline, "rotation-6")
     expect(
       successfulDeflectDamage.actions[0].damage === 0 && perfectDodgeDamage.actions[0].damage === 0,
       "Take Damage inside Successful Deflect or Perfect Dodge cast time must resolve to zero.",
@@ -291,8 +292,8 @@ describe("hp-and-manual-events", () => {
       skills: { Hit: hit },
       maxHP: 100,
     })
-    const attachedQiRow = takeDamageAttachmentTimeline.find(row => row.id === "rotation-0")
-    const takeDamageAnchorRow = takeDamageAttachmentTimeline.find(row => row.id === "rotation-1")
+    const attachedQiRow = rowWithId(takeDamageAttachmentTimeline, "rotation-0")
+    const takeDamageAnchorRow = rowWithId(takeDamageAttachmentTimeline, "rotation-1")
     expect(
       attachedQiRow.sourceRowId === takeDamageAnchorRow.id &&
         closeTo(attachedQiRow.startTime, takeDamageAnchorRow.startTime),
@@ -318,8 +319,8 @@ describe("hp-and-manual-events", () => {
       skills: { Hit: hit },
       maxHP: 100,
     })
-    const skillAttachedQiRow = skillAttachmentPastTakeDamageTimeline.find(row => row.id === "rotation-0")
-    const skillAnchorPastTakeDamageRow = skillAttachmentPastTakeDamageTimeline.find(row => row.id === "rotation-2")
+    const skillAttachedQiRow = rowWithId(skillAttachmentPastTakeDamageTimeline, "rotation-0")
+    const skillAnchorPastTakeDamageRow = rowWithId(skillAttachmentPastTakeDamageTimeline, "rotation-2")
     expect(
       skillAttachedQiRow.sourceRowId === skillAnchorPastTakeDamageRow.id &&
         closeTo(skillAttachedQiRow.startTime, skillAnchorPastTakeDamageRow.startTime + 1),
@@ -359,7 +360,7 @@ describe("hp-and-manual-events", () => {
       },
       skills: { Probe: durationProbe },
     })
-    const probeRow = manualTimeline.find(row => row.id === "rotation-3")
+    const probeRow = rowWithId(manualTimeline, "rotation-3")
     expect(
       probeRow.actionStates[1].debuffs.has("Controlled"),
       "A manual Debuff event must use Controlled's default duration.",

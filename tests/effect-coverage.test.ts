@@ -4,6 +4,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import dustDebuffs from "../data/debuff/bamboocut-dust.json"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-effect-coverage.mjs.
 describe("effect-coverage", () => {
@@ -132,9 +133,9 @@ describe("effect-coverage", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const buff = result.metrics.breakdown.buffCoverage.find(row => row.id === "ShortBuff")
-    const debuff = result.metrics.breakdown.debuffCoverage.find(row => row.id === "ShortDebuff")
-    const privateDebuff = result.metrics.breakdown.debuffCoverage.find(row => row.id === "PrivateDebuff")
+    const buff = rowWithId(result.metrics.breakdown.buffCoverage, "ShortBuff")
+    const debuff = rowWithId(result.metrics.breakdown.debuffCoverage, "ShortDebuff")
+    const privateDebuff = rowWithId(result.metrics.breakdown.debuffCoverage, "PrivateDebuff")
     assert(buff?.averageStacks === 0.5, "Buff average stacks must include only damage and healing actions.")
     assert(
       debuff?.averageStacks === 0.5 && debuff.maxStackCoverage === 75,

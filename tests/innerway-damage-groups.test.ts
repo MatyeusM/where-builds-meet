@@ -4,7 +4,10 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type { RotationSimulationBundle } from "../src/calculations/rotationCalculator.ts"
+import type { SkillRecord } from "../src/calculations/rotationTimeline.ts"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-innerway-damage-groups.mjs.
 describe("innerway-damage-groups", () => {
@@ -55,7 +58,7 @@ describe("innerway-damage-groups", () => {
       weapons: [],
     }
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
-    const bundle = {
+    const bundle: RotationSimulationBundle = {
       timeline,
       stats,
       attunement: emptyAttunementStats,
@@ -110,7 +113,7 @@ describe("innerway-damage-groups", () => {
         )
       assert.ok(Math.abs(cast.damage - sum) < 1e-8, `${id} totals match its actions exactly once`)
     }
-    const strip = definitions =>
+    const strip = (definitions: Record<string, SkillRecord>) =>
       Object.fromEntries(
         Object.entries(definitions).map(([id, { damageGroup: _damageGroup, ...definition }]) => [id, definition]),
       )
@@ -141,7 +144,7 @@ describe("innerway-damage-groups", () => {
     )
     assert.ok(burst)
     const fixture = structuredClone(result)
-    const fixtureRow = fixture.timeline.find(row => row.id === burst.id)
+    const fixtureRow = rowWithId(fixture.timeline, burst.id)
     const fixtureEntry = fixture.baseline.find(entry => entry.id === `${burst.id}:0`)
     const duplicate = structuredClone(fixtureRow)
     duplicate.id = "equivalent-burst"
@@ -166,13 +169,10 @@ describe("innerway-damage-groups", () => {
       !displayed.some(row => row.id === duplicate.id),
       "Structural rows cannot reintroduce merged contributions",
     )
-    assert.deepEqual(
-      displayed.find(row => row.id === burst.id).actions,
-      combined.timeline.find(row => row.id === burst.id).actions,
-    )
+    assert.deepEqual(rowWithId(displayed, burst.id).actions, rowWithId(combined.timeline, burst.id).actions)
     for (const change of ["time", "context"]) {
       const distinct = structuredClone(fixture)
-      if (change === "time") distinct.timeline.find(row => row.id === duplicate.id).startTime += 0.1
+      if (change === "time") rowWithId(distinct.timeline, duplicate.id).startTime += 0.1
       else distinct.baseline.find(entry => entry.id === `${duplicate.id}:0`).context.distance = 99
       assert.ok(
         compactInnerWayResults(distinct).timeline.some(row => row.id === duplicate.id),

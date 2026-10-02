@@ -2,6 +2,8 @@ import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import { rowWithId } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-smolder-poet-rotation.mjs.
 describe("smolder-poet-rotation", () => {
   it("Final composite hit snapshots and consumes stacks without transferring its bonus to triggered explosions", async () => {
@@ -52,7 +54,7 @@ describe("smolder-poet-rotation", () => {
     const poet5RotationIndex = rotation.steps.findIndex(
       step => step.type === "skill" && step.skill === "DrunkenPoet5HitsCancel",
     )
-    const poet5Row = timeline.find(row => row.id === `rotation-${poet5RotationIndex}`)
+    const poet5Row = rowWithId(timeline, `rotation-${poet5RotationIndex}`)
     const poet5DamageIndex = poet5Row?.actions.findLastIndex(action => action.type === "damage")
     const poet5ModifierEffects = poet5Row?.actionModifierEffects?.[poet5DamageIndex ?? -1] ?? []
     assert(

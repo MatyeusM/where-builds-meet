@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { rowWithId } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-editor-timeline-worker.mjs.
 describe("editor-timeline-worker", () => {
   it("Editor timeline worker probe passed: live cooldown waits, stable authored input, anchors, pending edits, stale-result rejection, and baseline reuse", async () => {
@@ -53,8 +55,8 @@ describe("editor-timeline-worker", () => {
         pending.some(row => row.step.automatic === "cooldown"),
         "Generated waits remain mounted",
       )
-      assert.equal(pending.find(row => row.id === "rotation-0").rotationIndex, 2)
-      assert.equal(pending.find(row => row.id === "rotation-1").rotationIndex, 0)
+      assert.equal(rowWithId(pending, "rotation-0").rotationIndex, 2)
+      assert.equal(rowWithId(pending, "rotation-1").rotationIndex, 0)
       assert.ok(
         pending.every(row => !row.pendingCalculation),
         "Keep chronological display order",
@@ -71,20 +73,16 @@ describe("editor-timeline-worker", () => {
         replacements,
       )
       assert.equal(
-        edited.find(row => row.id === "rotation-0").rotationIndex,
+        rowWithId(edited, "rotation-0").rotationIndex,
         0,
         "Repeated edits keep targeting the same draft step",
       )
       assert.equal(
-        edited.find(row => row.id === "rotation-1").rotationIndex,
+        rowWithId(edited, "rotation-1").rotationIndex,
         undefined,
         "Deleted rows cannot edit a different step",
       )
-      assert.equal(
-        edited.find(row => row.id === "rotation-0").step.skill,
-        "Hit",
-        "Display changes atomically on completion",
-      )
+      assert.equal(rowWithId(edited, "rotation-0").step.skill, "Hit", "Display changes atomically on completion")
       const initial = pendingEditorTimeline({ ...input, rotation: draft })
       assert.ok(initial.every(row => row.pendingCalculation && row.actions.length === 0))
       const revision = { id: "a", context: "build", rotation }

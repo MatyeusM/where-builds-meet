@@ -4,6 +4,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-script.mjs.
 describe("setup timeline selection", () => {
@@ -94,8 +95,8 @@ describe("script", () => {
       weapons: [],
       maxHP: 1000,
     })
-    const hit = timeline.find(row => row.id === "rotation-2")
-    const takeDamageRow = timeline.find(row => row.id === "rotation-1")
+    const hit = rowWithId(timeline, "rotation-2")
+    const takeDamageRow = rowWithId(timeline, "rotation-1")
     expect(
       takeDamageRow?.sourceRowId === hit?.id && takeDamageRow?.startTime === 1,
       "Take Damage must remain attached to its selected skill action.",

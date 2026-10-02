@@ -12,6 +12,7 @@ import type {
 } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-fivefold-bleed.mjs.
 describe("fivefold-bleed", () => {
@@ -201,7 +202,7 @@ describe("fivefold-bleed", () => {
     const manual = buildRotationTimeline(manualInput)
     assert.equal(bursts(manual).length, 1, "Ordinary apply actions use the same threshold rule")
     assert.equal(ticks(manual).length, 0, "Ordinary applications cancel pending DOT ticks atomically")
-    assert.ok(manual.find(row => row.id === "rotation-0").actionStates[2].debuffs.has("WeepingBlood") === false)
+    assert.ok(rowWithId(manual, "rotation-0").actionStates[2].debuffs.has("WeepingBlood") === false)
     const generic = {
       ...manualInput,
       skills: {
@@ -227,7 +228,7 @@ describe("fivefold-bleed", () => {
       1,
       "Thresholds use the data-defined cap and skill, including overflow",
     )
-    assert.ok(genericRows.find(row => row.id === "rotation-0").actionStates[2].buffs.has("ThresholdBuff") === false)
+    assert.ok(rowWithId(genericRows, "rotation-0").actionStates[2].buffs.has("ThresholdBuff") === false)
     const uncappedInput = inputFor([0, 0.1, 0.2, 0.3, 0.4, 4.5])
     const { onMaxStack: _threshold, ...ordinaryDot } = dots.WeepingBlood
     uncappedInput.dots = { WeepingBlood: ordinaryDot }

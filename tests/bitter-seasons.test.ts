@@ -18,6 +18,7 @@ import {
 } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { defaultGlobalDebuffs, globalDebuffTimelineEffects } from "../src/globalDebuffs"
+import { rowWithId } from "./helpers/timelineRows"
 
 function inputFor(times: number[], tier = 0): TimelineBuildInput {
   const conditions = Array.from({ length: tier + 1 }, (_, index) => `BitterSeasonsT${index}`)
@@ -83,7 +84,7 @@ describe("Bitter Seasons", () => {
       for (const state of Object.values(row.actionStates)) delete state.expectedDebuffStacks
     }
     const displayed = mergeCalculatedTimelineState(structural, result.timeline)
-    const cast = displayed.find(row => row.id === "rotation-0")!
+    const cast = rowWithId(displayed, "rotation-0")!
     const name = ({ 0: "QingyisCharmT0", 1: "QingyisCharmT1", 6: "QingyisCharmT6" } as Record<number, string>)[tier]
     const platesAt = (index: number) => {
       const state = cast.actionStates[index]
@@ -108,7 +109,7 @@ describe("Bitter Seasons", () => {
 
   it("reports expected debuff stacks and uptime, including expiration after the final damage tick", () => {
     const result = calculateRotationBaseline(bundleFor(inputFor([0])))
-    const coverage = result.metrics.breakdown.debuffCoverage.find(row => row.id === "QingyisCharmT0")!
+    const coverage = rowWithId(result.metrics.breakdown.debuffCoverage, "QingyisCharmT0")!
     // One application cannot reach the five-stack maximum.
     expect(coverage.maxStackCoverage).toBeCloseTo(0, 10)
     // Triggering hit precedes the proc; the five possible DOT output rows each see 0.1 expected stacks.
@@ -234,7 +235,7 @@ describe("Bitter Seasons", () => {
     expect(ticks.map(row => row.startTime)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
     expect(ticks.every(row => row.actions[0].phyCoef === 0.02)).toBe(true)
     expect(ticks.every(row => row.actionStates[0].debuffs.get("QingyisCharmT6")?.stack === 5)).toBe(true)
-    const cast = rows.find(row => row.id === "rotation-0")!
+    const cast = rowWithId(rows, "rotation-0")!
     expect(cast.actionStates[6].debuffs.has("QingyisPoison")).toBe(false)
     expect(cast.actionStates[6].debuffs.get("QingyisCharmT6")?.stack).toBe(5)
     expect(cast.actionStates[7].debuffs.has("QingyisCharmT6")).toBe(false)

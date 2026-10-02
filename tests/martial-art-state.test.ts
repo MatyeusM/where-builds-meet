@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises"
 
 import { assert, describe, it } from "vitest"
 
+import { rowWithId } from "./helpers/timelineRows"
+
 // Ported from script/probe/check-martial-art-state.mjs.
 describe("martial-art-state", () => {
   it("Current martial-art and weapon state checks passed", async () => {
@@ -70,8 +72,8 @@ describe("martial-art-state", () => {
       "Perfect Dodge must dispatch Ghostly Step from the current weapon after automatic and manual switches.",
     )
     assert(
-      timeline.find(row => row.id === "rotation-2")?.currentMartialArt === "phalanxbane" &&
-        timeline.find(row => row.id === "rotation-4")?.currentMartialArt === "snowparting",
+      rowWithId(timeline, "rotation-2")?.currentMartialArt === "phalanxbane" &&
+        rowWithId(timeline, "rotation-4")?.currentMartialArt === "snowparting",
       "Timeline rows must snapshot the current martial art.",
     )
     assert(
@@ -115,10 +117,10 @@ describe("martial-art-state", () => {
       martialArtState: { snowparting: { weapon: "HengBlade" }, phalanxbane: { weapon: "MoBlade" } },
     })
     assert(
-      switchedTimingTimeline.find(row => row.id === "rotation-0")?.effectiveCastTime === 0.25 &&
-        switchedTimingTimeline.find(row => row.id === "rotation-1")?.startTime === 0.25 &&
-        switchedTimingTimeline.find(row => row.id === "rotation-2")?.startTime === 0.25 &&
-        switchedTimingTimeline.find(row => row.id === "rotation-2")?.effectiveCastTime === 0.75,
+      rowWithId(switchedTimingTimeline, "rotation-0")?.effectiveCastTime === 0.25 &&
+        rowWithId(switchedTimingTimeline, "rotation-1")?.startTime === 0.25 &&
+        rowWithId(switchedTimingTimeline, "rotation-2")?.startTime === 0.25 &&
+        rowWithId(switchedTimingTimeline, "rotation-2")?.effectiveCastTime === 0.75,
       "A switched cast time must use the current weapon and shift subsequent casts at each skill start.",
     )
   })

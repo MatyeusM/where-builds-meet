@@ -21,6 +21,7 @@ import {
 import { buildRotationTimeline, mergeCalculatedTimelineState } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { isClose } from "./helpers/floatEquality"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-healing.mjs. The probe stops at the first
 // failure, so this port keeps the same fail-fast order inside one test.
@@ -236,7 +237,7 @@ describe("healing", () => {
       "Healing casts must be grouped and sorted independently by average HPS.",
     ).toBeTruthy()
     const healingBySkill = (calculation: RotationSimulationBaseline, skillId: string) =>
-      calculation.metrics.breakdown.healingSkills.find(row => row.id === skillId)?.healing ?? 0
+      rowWithId(calculation.metrics.breakdown.healingSkills, skillId)?.healing ?? 0
     expect(
       closeTo(healingBySkill(royalRemedyResult, "SmallerHeal"), healingBySkill(result, "SmallerHeal") * 1.1) &&
         closeTo(healingBySkill(royalRemedyResult, "LargerHeal"), healingBySkill(result, "LargerHeal")),
@@ -656,7 +657,7 @@ describe("healing", () => {
         closeTo(raidGroupHealing.metrics.totalHealing, soloGroupHealing.metrics.totalHealing * 10),
       "A group heal must report one healing copy for every recipient in the rotation group.",
     ).toBeTruthy()
-    const groupHealCount = result => result.metrics.breakdown.healingSkills.find(row => row.id === "GroupHeal")?.heals
+    const groupHealCount = result => rowWithId(result.metrics.breakdown.healingSkills, "GroupHeal")?.heals
     expect(
       groupHealCount(soloGroupHealing) === 1 &&
         groupHealCount(teamGroupHealing) === 5 &&

@@ -4,6 +4,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import fluteDefinitions from "../data/buff/mystic.json" with { type: "json" }
 import { isClose } from "./helpers/floatEquality"
+import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-distance-flute.mjs.
 describe("distance-flute", () => {
@@ -48,8 +49,8 @@ describe("distance-flute", () => {
       setupEffects: [],
       weapons: [],
     })
-    const firstSkill = timeline.find(row => row.id === "rotation-0")
-    const secondSkill = timeline.find(row => row.id === "rotation-2")
+    const firstSkill = rowWithId(timeline, "rotation-0")
+    const secondSkill = rowWithId(timeline, "rotation-2")
     assert(firstSkill?.distance === 1, "Distance must start at 1m.")
     assert(firstSkill?.actionStates[0]?.distance === 1, "Damage before Move must use 1m.")
     assert(
@@ -78,7 +79,7 @@ describe("distance-flute", () => {
       setupEffects: [],
       weapons: [],
     })
-    const equalTimestampSkill = equalTimestampTimeline.find(row => row.id === "rotation-1")
+    const equalTimestampSkill = rowWithId(equalTimestampTimeline, "rotation-1")
     assert(
       equalTimestampSkill?.distance === 7,
       "An appended Move event must resolve before a skill at the same displayed timestamp despite floating-point noise.",

@@ -5,7 +5,7 @@ import { buildPresetRotationBundle } from "../src/application/graduation"
 import { buildRotationTimeline, canAnchorAttachedEvent } from "../src/calculations/rotationTimeline"
 import { loadDpsSnapshotFixtures } from "./helpers/dps-snapshot-fixtures"
 import { probeLoad } from "./helpers/probe-loader"
-import { rowCasting } from "./helpers/timelineRows"
+import { rowCasting, rowWithId } from "./helpers/timelineRows"
 
 describe("preset Qi event attachments", () => {
   const rotationPaths = [
@@ -103,7 +103,7 @@ describe("preset Qi event attachments", () => {
       const nextIndex = rotation.steps.findIndex(
         (candidate, candidateIndex) => candidateIndex > index && canAnchorAttachedEvent(candidate, attachment),
       )
-      const target = timeline.find(row => row.id === `rotation-${nextIndex}`)
+      const target = rowWithId(timeline, `rotation-${nextIndex}`)
       if (!target || target.skipped) continue
       const action = target.actions[attachment.action]
       if (attachment.action !== "start" && (!action || action.type === "inactive")) continue
