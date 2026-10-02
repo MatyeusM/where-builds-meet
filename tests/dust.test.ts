@@ -1,6 +1,13 @@
+import assert from "node:assert/strict"
+
 import { describe, expect, it } from "vitest"
 
+import type { PathId } from "@/application/contracts"
+import { martialArtDefinitions } from "@/application/gameData/martialArts"
+import { typedPathDefinitions } from "@/application/gameData/paths"
+import type { PathDefinition } from "@/application/gameData/paths"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import { weaponSetDefinitions } from "@/gear"
 import { defaultGlobalDebuffs } from "@/globalDebuffs"
 
 import buffsJson from "../data/buff/bamboocut-dust.json"
@@ -9,13 +16,11 @@ import mysticBuffsJson from "../data/buff/mystic.json"
 const mysticBuffs = asEffectDefinitions(mysticBuffsJson)
 import debuffsJson from "../data/debuff/bamboocut-dust.json"
 const debuffs = asEffectDefinitions(debuffsJson)
-import gearSets from "../data/gear-set.json"
+
 import light from "../data/innerway/light-anew.json"
 import phantom from "../data/innerway/phantom-rally.json"
 import song from "../data/innerway/song-of-tang.json"
 import towline from "../data/innerway/towline-sweep.json"
-import umbrellaArt from "../data/martial-art/everspring-umbrella.json"
-import ropeArt from "../data/martial-art/unfettered-rope-dart.json"
 import pathData from "../data/path.json"
 import dustPhantomChimeRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min-100pc.json"
 import defaultDustRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min.json"
@@ -29,35 +34,39 @@ import ropeJson from "../data/skill/unfettered-rope-dart.json"
 const rope = asSkillRecords(ropeJson)
 import { innerWayConditionsFor, innerWayEffectRulesFor } from "../src/application/characterComposition"
 import { buildPresetRotationBundle } from "../src/application/graduation"
-import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
+import {
+  calculateRotationBaseline,
+  type RotationDamageEntry,
+  type RotationSimulationBundle,
+} from "../src/calculations/rotationCalculator"
 import {
   buildRotationTimeline,
   TIMELINE_TIME_EPSILON,
   type InnerWayEffectRule,
   type EditableObject,
 } from "../src/calculations/rotationTimeline"
-import type { RotationRecord, RotationStep, TimelineRow } from "../src/calculations/rotationTimeline"
+import type { RotationRecord, RotationStep, SkillRecord, TimelineRow } from "../src/calculations/rotationTimeline"
 import { martialArtEffectsForRank } from "../src/data/martialArtTalents"
 import { emptyStats } from "../src/data/statDefinitions"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 // Select the stage rows separately from their Resonance attacks.
+const rotationRecord = defaultDustRotation as RotationRecord
+// A skill step's own fields, so a rotation's cast durations and break flags read
+// off the steps the spec filtered to casts.
+const castsOf = (steps: RotationStep[], skill: string) =>
+  steps.filter(
+    (step): step is Extract<RotationStep, { type: "skill" }> => step.type === "skill" && step.skill === skill,
+  )
 const isThrow = (row: TimelineRow) => /^ScarletSpinStage\d$/.test(row.step.skill ?? "")
 const isCatch = (row: TimelineRow) => row.step.skill === "EverspringPerfectCatch"
+// A skill record carries its actions untyped; the specs read them as editable objects.
+const skillActions = (record: SkillRecord): EditableObject[] => (record.action ?? []) as EditableObject[]
 // Resolve the action state that observes an effect by name, so adding actions does
 // not shift assertions. Row.actionStates holds pre-action snapshots, so the state
 // that sees the effect applied is the one after its action.
-const stateAfterEffect = (
-  row: {
-    actions: readonly { type?: string; value?: string }[]
-    actionStates?: Record<number, { buffs: Map<string, { expiresAt?: number }> }>
-  },
-  skill: string,
-  effect: string,
-) => {
-  const index = umbrella[skill as keyof typeof umbrella].action.findIndex(
-    (action: EditableObject) => action.value === effect && action.type !== "consume",
-  )
+const stateAfterEffect = (row: TimelineRow, skill: string, effect: string) => {
+  const index = skillActions(umbrella[skill]).findIndex(action => action.value === effect && action.type !== "consume")
   expect(index).toBeGreaterThanOrEqual(0)
   return row.actionStates?.[index + 1]
 }
@@ -201,7 +210,10 @@ describe("Dust mechanics", () => {
   it.each([false, true])("applies Towline stacks per hit in the four-hit opener, Soulbound=%s", soulbound => {
     const input = bundle({ TowlineSweep: 0 })
     input.timeline.initialBuffs = soulbound ? [{ name: "Soulbound", stack: 1 }] : []
-    const opener = defaultDustRotation.steps[defaultDustRotation.start.step]
+    const anchor = rotationRecord.start
+    assert(anchor, "The rotation must declare its start anchor.")
+    const opener = rotationRecord.steps[anchor.step]
+    assert(opener, "The rotation's start anchor must name an existing step.")
     input.timeline.rotation.steps = [opener, castStep("Hit")]
     const result = calculateRotationBaseline(input)
     const release = result.timeline.find(
@@ -356,18 +368,23 @@ describe("Dust mechanics", () => {
     expect(hit.actionStates[0].debuffs.has("Soulbreak")).toBe(false)
   })
   it("resolves the registered rotation's movement attachments and 60-second cutoff", () => {
-    const rotation = defaultDustRotation as RotationRecord
+    const rotation = rotationRecord
     const input = bundle()
     input.timeline.skills = { ...input.timeline.skills, ...general, ...mystic }
     input.timeline.effectDefinitions = { ...input.timeline.effectDefinitions, ...mysticBuffs }
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.rotation = rotation
+    assert(rotation.start, "The rotation must declare its start anchor.")
     input.startAnchor = { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action }
     for (const step of rotation.steps.filter(step => step.type === "skill")) {
       expect(input.timeline.skills[step.skill!]).toBeDefined()
     }
     expect(rotation.start).toEqual({ step: 5, action: 0 })
-    const scarletSteps = rotation.steps.filter(step => step.type === "skill" && step.skill === "ScarletSpin")
+    const scarletSteps = castsOf(rotation.steps, "ScarletSpin")
     expect(scarletSteps.map(step => step.duration)).toEqual([12, 12, 12])
     expect(scarletSteps.filter(step => step.causesBreak)).toHaveLength(1)
     expect(scarletSteps.findIndex(step => step.causesBreak)).toBe(1)
@@ -377,8 +394,12 @@ describe("Dust mechanics", () => {
     const battleEnd = result.timeline.find(
       row => row.kind === "rotation" && row.step.type === "event" && row.step.event === "BattleEnd",
     )!
-    expect(result.baseline.every(entry => entry.timelineTime < battleEnd.startTime)).toBe(true)
-    expect(result.baseline.every(entry => entry.timelineTime - result.anchorTime < 60)).toBe(true)
+    const timed = (entry: RotationDamageEntry) => {
+      assert(typeof entry.timelineTime === "number", "Every resolved action must carry a timeline time.")
+      return entry.timelineTime
+    }
+    expect(result.baseline.every(entry => timed(entry) < battleEnd.startTime)).toBe(true)
+    expect(result.baseline.every(entry => timed(entry) - result.anchorTime < 60)).toBe(true)
     // The rotation ends on Burn and Bury: the closing Soul Sweep and seven-hit
     // Piercing Dart were dropped, so the four-hit opener is the only Dart cast.
     expect(rotation.steps.some(step => step.type === "skill" && step.skill === "PiercingDart")).toBe(false)
@@ -400,12 +421,16 @@ describe("Dust mechanics", () => {
     // Qi steps are authored at absolute times, so the engine honouring them proves
     // nothing about the values. What has to hold is the moment they were authored
     // for, which is only meaningful against the path's real build.
-    const [pathId, path] = Object.entries(pathData).find(([, entry]) => entry.buildGroup === "bamboocut-dust")!
+    const [pathId, path] = Object.entries(typedPathDefinitions).find(
+      ([, entry]) => entry.buildGroup === "bamboocut-dust",
+    ) as [PathId, PathDefinition]
+    const lockedWeapons = path.lockedWeapons
+    assert(lockedWeapons, "The bamboocut-dust path must lock its two martial arts.")
     const bundleFor = buildPresetRotationBundle(
       {
         pathId,
-        martialArts: path.lockedWeapons,
-        rotation: defaultDustRotation,
+        martialArts: lockedWeapons,
+        rotation: rotationRecord,
         breakthrough: "17",
         food: "SimmeringFishSlices",
         divinecraft: "Fire",
@@ -491,7 +516,7 @@ describe("Dust mechanics", () => {
         ...input.timeline.eventDefinitions,
         TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }] },
       }
-      const effect = gearSets.Starweave.options[tier].effect
+      const effect = weaponSetDefinitions.Starweave.options[tier].effect
       const setupEffects = Array.isArray(effect) ? effect : [effect]
       input.timeline.setupEffects = setupEffects
       input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
@@ -542,7 +567,7 @@ describe("Dust mechanics", () => {
           action: [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 0.5 }],
         },
       }
-      const effect = gearSets.Starweave.options[tier].effect
+      const effect = weaponSetDefinitions.Starweave.options[tier].effect
       const setupEffects = Array.isArray(effect) ? effect : [effect]
       input.timeline.setupEffects = setupEffects
       input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
@@ -560,12 +585,16 @@ describe("Dust mechanics", () => {
       const input = bundle()
       input.timeline.skills = { ...input.timeline.skills, ...general, ...mystic, ...umbrella, ...rope }
       input.timeline.effectDefinitions = { ...input.timeline.effectDefinitions, ...mysticBuffs }
-      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      input.timeline.setupEffects = martialArtEffectsForRank(
+        { everspring: martialArtDefinitions.everspring },
+        ["everspring"],
+        13,
+      )
       const measure = (tier: string) => {
-        const effect = gearSets.Starweave.options[tier].effect
+        const effect = weaponSetDefinitions.Starweave.options[tier].effect
         const setupEffects = Array.isArray(effect) ? effect : [effect]
         input.timeline.setupEffects = [
-          ...martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13),
+          ...martialArtEffectsForRank({ everspring: martialArtDefinitions.everspring }, ["everspring"], 13),
           ...setupEffects,
         ]
         input.timeline.innerWayConditions = setupEffects.flatMap(entry =>
@@ -577,7 +606,7 @@ describe("Dust mechanics", () => {
       }
       return measure("4") / measure("2")
     }
-    const rotation = defaultDustRotation as RotationRecord
+    const rotation = rotationRecord
     const collapsed = {
       ...rotation,
       steps: rotation.steps.map(step =>
@@ -626,7 +655,11 @@ describe("Dust mechanics", () => {
 
   it("chains source-faithful Scarlet Spin stages through the queued final throw", () => {
     const input = bundle()
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.rotation.steps = [
       { type: "skill", skill: "ScarletSpin", duration: 12 },
       { type: "skill", skill: "ScarletSpin", duration: 12 },
@@ -702,7 +735,11 @@ describe("Dust mechanics", () => {
   })
   it("applies ping to each queued Scarlet Spin throw", () => {
     const input = bundle()
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.rotation.ping = 40
     input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 12 }]
     const result = calculateRotationBaseline(input)
@@ -725,7 +762,11 @@ describe("Dust mechanics", () => {
   })
   it("caps Flower Burial at twelve seconds while queued throws extend Scarlet Spin", () => {
     const input = bundle()
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 99 }, castStep("Hit")]
     const result = calculateRotationBaseline(input)
     const parent = result.timeline.find(
@@ -854,7 +895,7 @@ describe("Dust mechanics", () => {
   it("requires five Candlelight stacks and distance strictly above eight for the larger T6 bonus", () => {
     const damage = (distance: number, stack: number) => {
       const input = bundle({ LightAnew: 6 })
-      input.timeline.skills.Candle.action[0].stack = stack
+      skillActions(input.timeline.skills.Candle)[0].stack = stack
       input.timeline.rotation.steps = [
         castStep("Candle"),
         { type: "event", event: "Move", before: { action: "start" }, distance },
@@ -869,7 +910,11 @@ describe("Dust mechanics", () => {
   it("converts three timely Perfect Catches into Fragrant Song and caps Delicate at four", () => {
     const run = (rank: number, gap = 0) => {
       const input = bundle({ PhantomRally: 1 })
-      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], rank)
+      input.timeline.setupEffects = martialArtEffectsForRank(
+        { everspring: martialArtDefinitions.everspring },
+        ["everspring"],
+        rank,
+      )
       input.timeline.rotation.steps = Array.from({ length: 15 }, () => [castStep("Catch"), delayStep(gap)]).flat()
       input.timeline.rotation.steps.push(castStep("Hit"))
       return calculateRotationBaseline(input).timeline.find(
@@ -884,7 +929,11 @@ describe("Dust mechanics", () => {
   })
   it("expires Falling Blossoms after five seconds and both Fragrant Song buffs after ten", () => {
     const input = bundle({ PhantomRally: 1 })
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.rotation.steps = [
       castStep("Catch"),
       castStep("Hit"),
@@ -914,7 +963,11 @@ describe("Dust confirmed damage and cooldown rules", () => {
     const input = bundle()
     input.timeline.rotation.ping = 0
     input.timeline.cooldownPolicy = "wait"
-    input.timeline.setupEffects = martialArtEffectsForRank({ unfettered: ropeArt }, ["unfettered"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { unfettered: martialArtDefinitions.unfettered },
+      ["unfettered"],
+      13,
+    )
     // Synthetic damage verifies the rule without inventing the real damage mapping or timing.
     input.timeline.skills.PiercingDart = {
       ...rope.PiercingDart,
@@ -952,7 +1005,7 @@ it.each([15, 16])("Towline T6 refreshes target Soulbreak within 15m: distance %s
   ]
   // The finger snap lands mid-cast, so the refresh it causes is offset by its hit
   // time. Out of range nothing is refreshed and the original expiry stands.
-  const snap = rope.BurnAndBury.action.find((action: EditableObject) => action.type === "damage")!.time as number
+  const snap = skillActions(rope.BurnAndBury).find(action => action.type === "damage")!.time as number
   const inRange = distance === 15
   const result = calculateRotationBaseline(input)
   const payouts = result.baseline.filter(entry => entry.replay)
@@ -988,7 +1041,11 @@ describe("Phantom Umbrella summons and Resonance", () => {
   const run = (tier: number, steps: RotationStep[]) => {
     const selection = [{ innerWay: "PhantomRally", tier: `T${tier}` as const }]
     const input = bundle()
-    input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
     input.timeline.innerWayRules = innerWayEffectRulesFor(selection, 19, "bamboocutDust")
     input.timeline.innerWayConditions = [...innerWayConditionsFor(selection, undefined, "bamboocutDust")]
     input.timeline.rotation.steps = steps
@@ -1053,7 +1110,11 @@ describe("Phantom Umbrella summons and Resonance", () => {
     const sites = result.timeline.filter(isThrow).flatMap(row =>
       row.actions
         .filter(action => action.type === "trigger")
-        .filter(action => ["EverspringPerfectCatch", "PhantomUmbrellaSummon"].includes(action.value ?? ""))
+        .filter(
+          action =>
+            typeof action.value === "string" &&
+            ["EverspringPerfectCatch", "PhantomUmbrellaSummon"].includes(action.value),
+        )
         .map(action => {
           const at = row.startTime + Number(action.time)
           const spawned = result.timeline.filter(
@@ -1107,7 +1168,11 @@ describe("Phantom Umbrella summons and Resonance", () => {
     // one without the other.
     const spin = (ping: number) => {
       const input = bundle()
-      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      input.timeline.setupEffects = martialArtEffectsForRank(
+        { everspring: martialArtDefinitions.everspring },
+        ["everspring"],
+        13,
+      )
       input.timeline.innerWayConditions = ["PhantomRallyT3"]
       input.timeline.innerWayRules = []
       input.timeline.rotation.ping = ping
@@ -1233,14 +1298,27 @@ describe("Phantom Umbrella summons and Resonance", () => {
   })
   it("charges Dreamwrought Bubbles for 0.743s and Delicate removes the charge", () => {
     const release = umbrella.DreamwroughtBubblesRelease
-    const markers = release.action.filter(action => action.type === "damage").map(action => action.time)
+    const releaseCastTime = release.castTime
+    assert(typeof releaseCastTime === "number", "The release must declare a fixed cast time.")
+    const markers = skillActions(release)
+      .filter(action => action.type === "damage")
+      .map(action => action.time)
+    assert(
+      markers.every(time => typeof time === "number"),
+      "Every release damage action must carry a numeric time.",
+    )
+    const markerTimes = markers as number[]
     // Both collider markers must land inside the release, which ends at the source
     // interrupt, or the actions would be scheduled as inactive.
-    expect(release.castTime).toBe(1.2)
-    expect(markers.every(time => time < release.castTime)).toBe(true)
+    expect(releaseCastTime).toBe(1.2)
+    expect(markerTimes.every(time => time < releaseCastTime)).toBe(true)
     const bubbles = (stacks: number, ping = 0) => {
       const input = bundle()
-      input.timeline.setupEffects = martialArtEffectsForRank({ everspring: umbrellaArt }, ["everspring"], 13)
+      input.timeline.setupEffects = martialArtEffectsForRank(
+        { everspring: martialArtDefinitions.everspring },
+        ["everspring"],
+        13,
+      )
       input.timeline.innerWayConditions = ["PhantomRallyT3"]
       input.timeline.innerWayRules = []
       input.timeline.rotation.ping = ping
