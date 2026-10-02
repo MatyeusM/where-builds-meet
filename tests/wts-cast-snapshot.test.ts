@@ -3,9 +3,10 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import { weaponSetDefinitions } from "@/gear"
 
-import type { RotationSimulationBaseline } from "../src/calculations/rotationCalculator.ts"
-import type { EditableObject, RotationStep } from "../src/calculations/rotationTimeline.ts"
+import type { RotationSimulationBaseline, RotationSimulationBundle } from "../src/calculations/rotationCalculator.ts"
+import type { EditableObject, EffectDefinition, RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-wts-cast-snapshot.mjs.
@@ -18,7 +19,6 @@ describe("wts-cast-snapshot", () => {
     const mysticBuffs = (await import("../data/buff/mystic.json")).default
     const general = (await import("../data/buff/general.json")).default
     const kite = (await import("../data/buff/bamboocut-kite.json")).default
-    const sets = (await import("../data/gear-set.json")).default
     const stats = {
       ...emptyStats,
       minPhys: 100,
@@ -55,7 +55,7 @@ describe("wts-cast-snapshot", () => {
         },
       ],
     }
-    const base = {
+    const base: RotationSimulationBundle = {
       stats,
       enemy,
       weapons: ["panaceaFan", "soulshadeUmbrella"],
@@ -113,10 +113,15 @@ describe("wts-cast-snapshot", () => {
       ...base,
       timeline: { ...base.timeline, rotation: { ...base.timeline.rotation, steps }, setupEffects },
     })
+    /** The accumulator threshold each Observe row recorded, in cast order. */
     const observed = (result: RotationSimulationBaseline) =>
       result.timeline
         .filter(row => row.step.skill === "Observe")
-        .map(row => row.buffs.get("WorldToSword")?.accumulatorThreshold)
+        .map((row, index) => {
+          const threshold = row.buffs.get("WorldToSword")?.accumulatorThreshold
+          assert(typeof threshold === "number", `The Observe row at ${index} must record its WTS threshold.`)
+          return threshold
+        })
     const near = (actual: number, expected: number, message: string) =>
       assert.ok(Math.abs(actual - expected) < 1e-7, `${message}: ${actual} vs ${expected}`)
     const noAdjacentDamage = calculateRotationBaseline(fixture([castStep("WorldToSword"), castStep("Observe")]))
@@ -162,12 +167,21 @@ describe("wts-cast-snapshot", () => {
       fixture([castStep("WorldToSword"), castStep("Observe")], [{ effectiveStat: { minPhys: 10, maxPhys: 20 } }]),
     )
     near(observed(food)[0], 2280, "Food belongs in the effective attack snapshot")
-    const hawk = { trigger: sets.Hawkwing.options["4"].effect.trigger }
-    const ew = { trigger: sets.Etherwrath.options["4"].effect.trigger }
+    // A four-piece set's option carries its proc trigger; the effect is read as-is.
+    const setTrigger = (id: string): EditableObject => {
+      const option = weaponSetDefinitions[id as keyof typeof weaponSetDefinitions]?.options["4"]
+      const effect = option?.effect
+      const list = Array.isArray(effect) ? effect[0] : effect
+      const trigger = (list as { trigger?: EditableObject } | undefined)?.trigger
+      assert(trigger, `Expected the four-piece ${id} option to carry its proc trigger.`)
+      return { trigger }
+    }
+    const hawk = setTrigger("Hawkwing")
+    const ew = setTrigger("Etherwrath")
     for (const [label, setup, bonus] of [
       ["Hawkwing", hawk, 24],
       ["Etherwrath", ew, 25.2],
-    ]) {
+    ] as Array<[string, EditableObject, number]>) {
       const before = calculateRotationBaseline(
         fixture([castStep("Hit"), castStep("WorldToSword"), castStep("Observe")], [setup]),
       )
@@ -197,10 +211,14 @@ describe("wts-cast-snapshot", () => {
       const heal = sampled.resolvedSequence.find(
         ({ entry }) => entry.context.skillTags.includes("Heal") && entry.action.phyCoef === 1,
       )
-      const wts = heal.entry.context.buffs.includes("WorldToSword")
-      assert.ok(wts)
+      assert(
+        heal?.entry.context.buffs.includes("WorldToSword"),
+        "The sampled Heal must run with World to Sword active.",
+      )
+      const sampledHealing = heal?.breakdown.healing
+      assert(sampledHealing, "A healing action must report its healing breakdown.")
       near(
-        heal.breakdown.healing.total,
+        sampledHealing.total,
         label === "Hawkwing" ? 102 : 101.2,
         "Sampled healing includes the attack proc from the earlier Qi Blade",
       )
@@ -208,7 +226,7 @@ describe("wts-cast-snapshot", () => {
     for (const [steps, blades] of [
       [[castStep("Boost"), castStep("WorldToSword"), castStep("Heal"), delayStep(0.5)], 0],
       [[castStep("WorldToSword"), castStep("Boost"), castStep("Heal"), delayStep(0.5)], 1],
-    ]) {
+    ] as Array<[RotationStep[], number]>) {
       const sampledFixture = fixture(steps)
       sampledFixture.timeline.effectDefinitions = {
         ...base.timeline.effectDefinitions,
@@ -256,9 +274,8 @@ describe("wts-cast-snapshot", () => {
         name: "HOT",
         duration: 3,
         maxStack: 1,
-        tags: ["Heal"],
         periodic: { interval: 1, firstTick: 1, action: [{ type: "heal", phyBonus: 2200, time: 0 }] },
-      },
+      } satisfies EffectDefinition,
     }
     const periodic = calculateRotationBaseline(periodicFixture)
     assert.equal(
