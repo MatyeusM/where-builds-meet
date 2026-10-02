@@ -7,11 +7,12 @@ import type { RotationStep, TimelineBuildInput, TimelineRow } from "@/calculatio
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { asSkillRecords, rankTalentEffects } from "./helpers/shippedData"
 
 // Ported from script/probe/check-skill-charges.mjs.
 describe("skill-charges", () => {
   it("Independent charge recovery, partial/full resets, shared groups, readiness, triggered casts, talent cooldown, and editor waits passed", async () => {
-    const clear = charges => ({
+    const clear = (charges?: number) => ({
       type: "clearCD",
       value: "AddledMind",
       ...(charges === undefined ? {} : { charges }),
@@ -24,13 +25,13 @@ describe("skill-charges", () => {
     const talent = JSON.parse(await readFile("data/martial-art/infernal-twinblades.json", "utf8"))
     // Isolate cooldown scheduling from the skill's attack duration and hit events.
     const charged = {
-      ...JSON.parse(await readFile("data/skill/infernal-twinblades.json", "utf8")).AddledMind,
+      ...asSkillRecords(JSON.parse(await readFile("data/skill/infernal-twinblades.json", "utf8"))).AddledMind,
       castTime: 0,
       action: [],
       modifier: [],
     }
     const skills = {
-      ...general,
+      ...asSkillRecords(general),
       AddledMind: charged,
       RestoreOne: { castTime: 0, action: [clear(1)] },
       RestoreAll: { castTime: 0, action: [clear()] },
@@ -60,8 +61,11 @@ describe("skill-charges", () => {
       weapons: [],
       ...extra,
     })
-    const build = (steps: RotationStep[], extra?: Partial<TimelineBuildInput>): TimelineRow[] =>
-      buildRotationTimeline(input(steps, extra))
+    const build = (
+      steps: RotationStep[],
+      extra?: Partial<TimelineBuildInput>,
+      procRoll?: () => number,
+    ): TimelineRow[] => buildRotationTimeline(input(steps, extra), procRoll)
     const times = (rows: TimelineRow[]) =>
       rows.filter(row => row.step.skill === "AddledMind" && !row.skipped).map(row => row.startTime)
     const staggered = [
@@ -140,12 +144,12 @@ describe("skill-charges", () => {
       { skills: grouped },
     )
     assert.deepEqual(
-      groupedRows.filter(row => ["AddledMind", "Variant"].includes(row.step.skill)).map(row => row.startTime),
+      groupedRows.filter(row => ["AddledMind", "Variant"].includes(row.step.skill ?? "")).map(row => row.startTime),
       [0, 2, 4, 5, 17],
       "Variants share charges and restore by the same cooldown group",
     )
 
-    const trigger = time => ({ type: "trigger", value: "AddledMind", time })
+    const trigger = (time: number) => ({ type: "trigger", value: "AddledMind", time })
     const triggeredRows = build([castStep("Driver")], {
       skills: {
         ...skills,
@@ -187,9 +191,9 @@ describe("skill-charges", () => {
       "A partial reset wakes one waiting cast without duplicating it or restoring a second charge",
     )
     const skipped = build([...more, castStep("AddledMind")], { cooldownPolicy: "skip" })
-    assert.equal(skipped.at(-1).skipped, true, "Skip policy remains available for depleted charges")
+    assert.equal(skipped.at(-1)?.skipped, true, "Skip policy remains available for depleted charges")
 
-    const talentEffects = talent.talent[13].flatMap(entry => entry.effect ?? [])
+    const talentEffects = rankTalentEffects(talent.talent[13])
     const dodgeSteps = [
       ...more,
       castStep("PerfectDodgeCancel"),
@@ -207,7 +211,7 @@ describe("skill-charges", () => {
     ]
     for (const procRoll of [undefined, () => 0.2]) {
       assert.deepEqual(
-        times(build(dodgeSteps, { setupEffects: talentEffects, procRoll })),
+        times(build(dodgeSteps, { setupEffects: talentEffects }, procRoll)),
         [0, 0, 0, 0, 15, 30, 30, 30, 30, 45],
         "Actual talent restores exactly one charge with its shared 30-second cooldown in expected and sampled timelines",
       )
