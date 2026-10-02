@@ -8,6 +8,7 @@ import { calculateDamageBreakdown } from "../src/calculations/damage"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowCasting } from "./helpers/timelineRows"
 it.each([
   ["Avalanche", 1.85, 1.545, [0.318, 1]],
@@ -26,12 +27,12 @@ it.each([
           { type: "skill", skill: "Observe" },
         ],
       },
-      skills: {
+      skills: asSkillRecords({
         ...skills,
         Prepare: { castTime: 0, action: [{ type: "apply", target: "self", value: "Riposte", time: 0 }] },
         Observe: { castTime: 0, action: [] },
-      },
-      effectDefinitions: buffs,
+      }),
+      effectDefinitions: asEffectDefinitions(buffs),
       eventDefinitions: {},
       dots: {},
       weapons: ["thundercry"],
