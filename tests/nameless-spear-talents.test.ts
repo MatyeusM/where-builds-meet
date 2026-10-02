@@ -1,3 +1,5 @@
+import assert from "node:assert/strict"
+
 import { describe, it } from "vitest"
 
 import { martialArtDefinitions } from "@/application/gameData/martialArts"
@@ -6,14 +8,11 @@ import type { DamageContext } from "@/calculations/damage"
 import type { CharacterStats } from "@/types"
 
 import { effectState } from "../src/calculations/trackedEffectState"
-import { assertClose } from "./helpers/floatEquality"
+import { isClose } from "./helpers/floatEquality"
 import { rankTalentEffects } from "./helpers/shippedData"
 
 // Ported from script/probe/check-nameless-spear-talents.mjs.
 describe("nameless-spear-talents", () => {
-  // Every float check below asserts through the shared assertClose helper, which the
-  // rule cannot see from outside this callback.
-  // oxlint-disable-next-line vitest/expect-expect
   it("Nameless Spear talent calculation checks passed", async () => {
     const namelessSpear = (await import("../data/martial-art/nameless-spear.json")).default
     const { calculateStatsWithEffects } = await import("../src/calculations/statEffects.ts")
@@ -23,6 +22,14 @@ describe("nameless-spear-talents", () => {
     const { martialArtEffectsForRank } = await import("../src/data/martialArtTalents.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
+    /**
+     * Rank 13's authored numbers are whole values reached through float maths, so
+     * compare them at float precision. `isClose` owns the comparison, so the
+     * tolerance and its "an absent value never agrees" rule stay in one place.
+     */
+    const close = (actual: number | undefined, expected: number, message: string) =>
+      assert.ok(isClose(actual, expected, 1e-9), `${message}: ${actual} != ${expected}`)
+
     // Rank 13's effects, tagged as a talent stage so their formulas resolve against the raw
     // sheet rather than the action sheet, which is what the shipped builder's rank read does.
     const effects = martialArtEffectsForRank(martialArtDefinitions, ["namelessSpear"], 13)
@@ -31,19 +38,17 @@ describe("nameless-spear-talents", () => {
       effects,
       0,
     )
-    assertClose(statResult.stats.affinity, 0.3, 1e-9, "Momentum scaling must grant at most 4.256% Affinity Rate.")
-    assertClose(
+    close(statResult.stats.affinity, 0.3, "Momentum scaling must grant at most 4.256% Affinity Rate.")
+    close(
       statResult.stats.maxEndurance,
       17,
-      1e-9,
       "Max Endurance Up must use raw Affinity before the talent's Affinity conversion.",
     )
-    assertClose(statResult.stats.minBellstrike, 98, 1e-9, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
-    assertClose(statResult.stats.maxBellstrike, 655, 1e-9, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
-    assertClose(
+    close(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
+    close(statResult.stats.maxBellstrike, 655, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
+    close(
       statResult.stats.bellstrikeDmgBonus,
       0.11,
-      1e-9,
       "Bellstrike DMG Bonus must reach its cap at 655 Max Bellstrike Attack.",
     )
 
@@ -103,10 +108,9 @@ describe("nameless-spear-talents", () => {
       { phyCoef: 1, attrCoef: 1 },
       { ...context, effects: [affinityRule.effect] },
     )
-    assertClose(
+    close(
       enhanced.physical / baseline.physical,
       1 + (baseline.outcomeRates?.affinity ?? 0) * 0.18,
-      1e-9,
       "Affinity DMG Up must cap at 18% above 30% Affinity Rate.",
     )
   })

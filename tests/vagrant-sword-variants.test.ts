@@ -7,7 +7,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"
-import { assertClose } from "./helpers/floatEquality"
+import { isClose } from "./helpers/floatEquality"
 
 const weaponIds = ["namelessSword", "namelessSpear"] as never[]
 
@@ -127,9 +127,6 @@ describe("vagrant-sword-charge-variants", () => {
     )
   })
 
-  // Every float check below asserts through the shared assertClose helper, which the
-  // rule cannot see from outside this callback.
-  // oxlint-disable-next-line vitest/expect-expect
   it("drains and regenates Endurance across the authored charge phases", async () => {
     const { defaultSkillMaps, defaultEditorMaps } = await import("../src/application/gameData/skills")
     const endurance = (tiers: string[], shielded: boolean) => {
@@ -178,8 +175,9 @@ describe("vagrant-sword-charge-variants", () => {
       })
       return { end: result.timeline[0].timelineResourceSummary?.Endurance }
     }
+    /** The authored charge phases land on half-second boundaries, so a tenth is enough slack. */
     const close = (actual: number | undefined, expected: number, message: string) =>
-      assertClose(actual, expected, 0.05, message)
+      assert.ok(isClose(actual, expected, 0.05), `${message}: ${actual} != ${expected}`)
 
     // Only the charging phase drains, at 20/s for its 1.0s cast. Nothing else
     // spends Endurance, so the meter refills at the base 10/s from 2.05s.

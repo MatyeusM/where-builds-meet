@@ -1,3 +1,5 @@
+import assert from "node:assert/strict"
+
 import { describe, it } from "vitest"
 
 import { martialArtDefinitions } from "@/application/gameData/martialArts"
@@ -6,14 +8,11 @@ import type { DamageContext } from "@/calculations/damage"
 import type { CharacterStats } from "@/types"
 
 import { effectState } from "../src/calculations/trackedEffectState"
-import { assertClose } from "./helpers/floatEquality"
+import { isClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-nameless-sword-talents.mjs.
 describe("nameless-sword-talents", () => {
-  // Every float check below asserts through the shared assertClose helper, which the
-  // rule cannot see from outside this callback.
-  // oxlint-disable-next-line vitest/expect-expect
   it("Nameless Sword talent calculation checks passed", async () => {
     const namelessSword = (await import("../data/martial-art/nameless-sword.json")).default
     const { calculateStatsWithEffects, resolveRawStatFormulas } = await probeLoad<
@@ -24,23 +23,25 @@ describe("nameless-sword-talents", () => {
     const { requirementsPass } = await import("../src/calculations/rotationTimeline.ts")
     const { emptyStats } = await import("../src/data/statDefinitions.ts")
 
+    /**
+     * Rank 13's authored numbers are whole values reached through float maths, so
+     * compare them at float precision. `isClose` owns the comparison, so the
+     * tolerance and its "an absent value never agrees" rule stay in one place.
+     */
+    const close = (actual: number | undefined, expected: number, message: string) =>
+      assert.ok(isClose(actual, expected, 1e-9), `${message}: ${actual} != ${expected}`)
+
     const statResult = calculateStatsWithEffects(
       { ...emptyStats, momentum: 280, maxBellstrike: 459 },
       martialArtDefinitions.namelessSword.talent[13].flatMap(talent => talent.effect ?? []),
       0,
     )
-    assertClose(
-      statResult.stats.maxPhys,
-      73.92,
-      1e-9,
-      "Momentum scaling must grant the capped Max Physical Attack bonus.",
-    )
-    assertClose(statResult.stats.minBellstrike, 98, 1e-9, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
-    assertClose(statResult.stats.maxBellstrike, 655, 1e-9, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
-    assertClose(
+    close(statResult.stats.maxPhys, 73.92, "Momentum scaling must grant the capped Max Physical Attack bonus.")
+    close(statResult.stats.minBellstrike, 98, "Bellstrike Attribute Up must grant Min Bellstrike Attack.")
+    close(statResult.stats.maxBellstrike, 655, "Bellstrike Attribute Up must grant Max Bellstrike Attack.")
+    close(
       statResult.stats.bellstrikePenetration,
       22,
-      1e-9,
       "Bellstrike penetration must reach its cap at 655 Max Bellstrike Attack.",
     )
 
@@ -123,11 +124,10 @@ describe("nameless-sword-talents", () => {
       { phyCoef: 1, attrCoef: 1 },
       { ...context, effects: [affinityRule.effect] },
     )
-    assertClose(hpEnhanced.physical / baseline.physical, 1.2, 1e-9, "Sword Energy HP damage must cap at 20%.")
-    assertClose(
+    close(hpEnhanced.physical / baseline.physical, 1.2, "Sword Energy HP damage must cap at 20%.")
+    close(
       affinityEnhanced.physical / baseline.physical,
       1 + (baseline.outcomeRates?.affinity ?? 0) * 0.18,
-      1e-9,
       "Sword Energy Affinity damage must cap at 18% at 1500 Max Physical Attack.",
     )
   })
