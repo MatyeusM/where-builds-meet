@@ -1,8 +1,20 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { HawkwingEffect } from "@/calculations/hawkwing"
+import type { EditableObject, TimelineBuildInput } from "@/calculations/rotationTimeline"
+import type { EffectiveStatEffectContainer, StatEffectContainer } from "@/calculations/statEffects"
 
 import { assertClose } from "./helpers/floatEquality"
+
+/**
+ * A setup effect as both readers of it want it.
+ *
+ * The timeline takes any untyped object; the stat pipeline takes a stat sheet.
+ * A setup effect that carries neither is inert for the stat pipeline, so both
+ * readings are named here rather than casting at each call.
+ */
+type SetupEffect = EditableObject & StatEffectContainer & EffectiveStatEffectContainer
 
 // Ported from script/probe/check-hawkwing.mjs.
 describe("hawkwing", () => {
@@ -41,7 +53,14 @@ describe("hawkwing", () => {
       refresh: true,
       stackEffects: Array.from({ length: 5 }, (_, index) => [{ effect: { physicalAttackBonus: (index + 1) * 0.02 } }]),
     }
-    const timeline = {
+    const affinityTrigger: SetupEffect = {
+      trigger: {
+        event: "damageOutcome",
+        outcome: "affinity",
+        action: { type: "apply", target: "self", value: "Hawkwing", stack: 1, reapply: true },
+      },
+    }
+    const timeline: TimelineBuildInput = {
       rotation: { name: "Hawkwing probe", steps: [{ type: "skill", skill: "Probe" }] },
       skills: { Probe: skill },
       eventDefinitions: {},
@@ -49,15 +68,7 @@ describe("hawkwing", () => {
       effectDefinitions: { Hawkwing: hawkwingDefinition },
       innerWayConditions: [],
       innerWayRules: [],
-      setupEffects: [
-        {
-          trigger: {
-            event: "damageOutcome",
-            outcome: "affinity",
-            action: { type: "apply", target: "self", value: "Hawkwing", stack: 1, reapply: true },
-          },
-        },
-      ],
+      setupEffects: [affinityTrigger],
       weapons: [],
     }
     const result = calculateRotationBaseline({
@@ -73,14 +84,14 @@ describe("hawkwing", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const scheduledStacks = result.baseline.map(entry => result.expectedOutcomeBuffSchedule[entry.id]?.Hawkwing)
+    const scheduledStacks = result.baseline.map(entry => scheduleFor(result, entry.id))
     closeTo(scheduledStacks[0], 0, "The first hit must occur before Hawkwing can proc")
     closeTo(scheduledStacks[1], 0.2, "The second hit must use the first hit's Affinity probability")
     closeTo(scheduledStacks[2], 0.4, "Probability branches must merge into the third hit's expected stack")
     closeTo(result.metrics.expectedHawkwingStacks, 0.2, "The displayed stack metric must average the per-hit values")
     result.baseline.forEach((entry, index) =>
       closeTo(
-        result.actionBreakdowns[entry.id]?.expectedBuffStacks?.Hawkwing,
+        result.actionBreakdowns[rowIdOf(entry.id)]?.expectedBuffStacks?.Hawkwing,
         scheduledStacks[index],
         `Action ${index + 1} must expose its expected Hawkwing stack for the timeline buff plate`,
       ),
@@ -125,7 +136,7 @@ describe("hawkwing", () => {
     )
 
     const tracker = new ExpectedHawkwingTracker()
-    const buff = {
+    const buff: HawkwingEffect = {
       name: "Hawkwing",
       outcome: "affinity",
       durationTicks: outcomeBuffTick(5),
@@ -136,6 +147,15 @@ describe("hawkwing", () => {
     closeTo(tracker.expectedStack(buff, outcomeBuffTick(4.9999)), 1, "A stack must remain active before expiry")
     closeTo(tracker.expectedStack(buff, outcomeBuffTick(5)), 0, "A stack must expire exactly at its 0.1 ms tick")
     assert(result.metrics.totalDamage > 300, "Expected Hawkwing stacks must increase later physical hits.")
+
+    /** The stack the simulation scheduled for the damage entry on `rowId`. */
+    function scheduleFor(baseline: typeof result, rowId: string | undefined) {
+      return baseline.expectedOutcomeBuffSchedule[rowIdOf(rowId)]?.Hawkwing
+    }
+    function rowIdOf(rowId: string | undefined) {
+      assert(rowId, "Every simulated damage entry must carry the timeline row it was dealt on.")
+      return rowId
+    }
 
     const guaranteedAffinityStats = { ...stats, directAffinity: 1 }
     const guaranteedAffinityResult = calculateRotationBaseline({
@@ -159,9 +179,11 @@ describe("hawkwing", () => {
       `Simulation must advance concrete Hawkwing stacks after sampled Affinity hits; received ${simulatedStacks}.`,
     )
 
-    const momentumAffinityEffect = { stat: { affinity: { formula: { source: "momentum", multiplier: 0.001 } } } }
+    const momentumAffinityEffect: SetupEffect = {
+      stat: { affinity: { formula: { source: "momentum", multiplier: 0.001 } } },
+    }
     const rawFormulaStats = { ...emptyStats, minPhys: 100, maxPhys: 100, precision: 1 }
-    const formulaSetupEffects = [momentumAffinityEffect, timeline.setupEffects[0]]
+    const formulaSetupEffects: SetupEffect[] = [momentumAffinityEffect, affinityTrigger]
     const formulaTimeline = { ...timeline, setupEffects: formulaSetupEffects }
     const formulaState = calculateStatsWithEffects(rawFormulaStats, formulaSetupEffects, 0)
     const formulaBundle = {
@@ -178,7 +200,7 @@ describe("hawkwing", () => {
       setupComparisons: {},
     }
     const formulaBaseline = calculateRotationBaseline(formulaBundle)
-    const momentumSetupEffects = [...formulaSetupEffects, { stat: { momentum: 200 } }]
+    const momentumSetupEffects: SetupEffect[] = [...formulaSetupEffects, { stat: { momentum: 200 } }]
     const comparisonMetrics = calculateRotationComparisons(
       {
         ...formulaBundle,

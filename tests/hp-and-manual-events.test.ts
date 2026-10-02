@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationRecord, SkillRecord, TimelineBuildInput } from "@/calculations/rotationTimeline"
 
 import { isClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-hp-and-manual-events.mjs.
@@ -19,13 +21,13 @@ describe("hp-and-manual-events", () => {
     const mysticBuffs = (await import("../data/buff/mystic.json")).default
     const generalDebuffs = (await import("../data/debuff/general.json")).default
     const scripts = (await import("../data/script.json")).default
-    const generalSkills = (await import("../data/skill/general.json")).default
+    const rawGeneralSkills = (await import("../data/skill/general.json")).default
     expect(
       mysticBuffs.DragonHeadTide.global === true,
       "Dragon Head - Tide must remain an always-active rule from the Mystic buff definitions.",
     ).toBeTruthy()
     const closeTo = (actual: number, expected: number) => isClose(actual, expected, 1e-9)
-    const eventDefinitions = {
+    const eventDefinitions: TimelineBuildInput["eventDefinitions"] = {
       SelfHP: { name: "Self HP", castTime: 0, action: [{ type: "setHP", time: 0 }], tags: ["Event"] },
       TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }], tags: ["Event"] },
       HP: { name: "HP", castTime: 0, action: [{ type: "setTargetHP", time: 0 }], tags: ["Event"] },
@@ -53,17 +55,18 @@ describe("hp-and-manual-events", () => {
         tags: ["Event"],
       },
     }
-    const baseInput = {
+    const generalSkills = asSkillRecords(rawGeneralSkills)
+    const baseInput: Omit<TimelineBuildInput, "rotation" | "skills"> = {
       eventDefinitions,
       dots: {},
-      effectDefinitions: { ...generalBuffs, ...mysticBuffs, ...generalDebuffs },
+      effectDefinitions: asEffectDefinitions({ ...generalBuffs, ...mysticBuffs, ...generalDebuffs }),
       innerWayConditions: [],
       innerWayRules: [],
       setupEffects: [],
       weapons: [],
     }
 
-    const hit = {
+    const hit: SkillRecord = {
       name: "Hit",
       castTime: 2,
       action: [
@@ -73,14 +76,14 @@ describe("hp-and-manual-events", () => {
       modifier: [],
       tags: ["DragonHeadTide", "HP"],
     }
-    const noDamage = {
+    const noDamage: SkillRecord = {
       name: "No Damage",
       castTime: 1,
       action: [{ type: "move", distance: 1, time: 0.5 }],
       modifier: [],
       tags: [],
     }
-    const hpRotation = {
+    const hpRotation: RotationRecord = {
       name: "HP probe",
       steps: [
         { type: "event", event: "SelfHP", before: { action: 1 }, currentHPRatio: 0.8 },
