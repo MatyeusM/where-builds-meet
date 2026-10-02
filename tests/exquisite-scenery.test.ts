@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { InnerWayEffectRule } from "@/calculations/rotationTimeline"
 
 import { effectState } from "../src/calculations/trackedEffectState"
 
@@ -14,15 +15,11 @@ describe("exquisite-scenery", () => {
     const exquisiteScenery = (await import("../data/innerway/exquisite-scenery.json")).default
 
     const sceneryT6 = exquisiteScenery.effect.ExquisiteSceneryT6.effect[0]
-    const sceneryT6Applies = tags =>
-      requirementsPass(
-        sceneryT6.requirement,
-        effectState([]),
-        effectState([]),
-        tags,
-        ["ExquisiteSceneryT6"],
-        ["thundercry", "stormbreaker"],
-      )
+    const sceneryT6Applies = (tags: string[]) =>
+      requirementsPass(sceneryT6.requirement, effectState([]), effectState([]), tags, new Set(["ExquisiteSceneryT6"]), [
+        "thundercry",
+        "stormbreaker",
+      ])
     expect(
       [
         ["Light", "Charged"],
@@ -50,7 +47,7 @@ describe("exquisite-scenery", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const sceneryDamage = (tags, innerWayRules) =>
+    const sceneryDamage = (tags: string[], innerWayRules: InnerWayEffectRule[]) =>
       calculateRotationBaseline({
         timeline: {
           rotation: { name: "Scenery T6 probe", steps: [{ type: "skill", skill: "Hit" }] },
