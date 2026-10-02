@@ -1,3 +1,5 @@
+import assert from "node:assert/strict"
+
 import { describe, expect, it } from "vitest"
 
 import windBuffs from "../data/buff/bamboocut-wind.json"
@@ -225,9 +227,11 @@ describe("Wind dummy preset", () => {
       },
     }
     const result = calculateRotationBaseline(bundle)
-    const row = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "Observation")!
-    const damage = [0, 1, 2, 3].map(index => result.actionBreakdowns[row.id + ":" + index])
-    expect(damage.map(hit => hit.outcomeRates.critical)).toEqual([0, 0.1, 0.1, 0])
+    const row = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "Observation")
+    assert(row, "The wind probe must schedule its Observation skill.")
+    const damage = [0, 1, 2, 3].map(index => result.actionBreakdowns[`${row?.id ?? ""}:${index}`])
+    const criticalRateOf = (index: number) => damage[index]?.outcomeRates?.critical
+    expect([0, 1, 2, 3].map(criticalRateOf)).toEqual([0, 0.1, 0.1, 0])
     expect(damage[1].total / damage[0].total).toBeCloseTo(1.07)
     expect(damage[2].total).toBeCloseTo(damage[1].total)
     expect(damage[3].total).toBeCloseTo(damage[0].total)
