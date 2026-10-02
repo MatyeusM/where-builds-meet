@@ -86,13 +86,10 @@ describe("stat-conversion", () => {
         effects: [t4Rule.effect],
       },
     )
-    assertClose(
-      breakdown.outcomeRates.affinity,
-      0.1,
-      1e-9,
-      "T4 must leave Affinity that cannot fit under the Direct Critical cap.",
-    )
-    assertClose(breakdown.outcomeRates.critical, 0.6, 1e-9, "T4 must stop converted Direct Critical at 20%.")
-    assertClose(breakdown.outcomeRates.normal, 0.3, 1e-9, "T4 must preserve the remaining outcome probability.")
+    const rates = breakdown.outcomeRates
+    assert(rates, "The converted hit must resolve its outcome rates.")
+    assertClose(rates.affinity, 0.1, 1e-9, "T4 must leave Affinity that cannot fit under the Direct Critical cap.")
+    assertClose(rates.critical, 0.6, 1e-9, "T4 must stop converted Direct Critical at 20%.")
+    assertClose(rates.normal, 0.3, 1e-9, "T4 must preserve the remaining outcome probability.")
   })
 })
