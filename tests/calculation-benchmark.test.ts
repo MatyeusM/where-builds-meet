@@ -14,12 +14,14 @@ describe("calculation-benchmark", () => {
         typeof import("../src/calculations/calculationBenchmark")
       >("/src/calculations/calculationBenchmark.ts")
       let groupLabel = ""
-      let rows = []
+      // The table the benchmark prints: one row per reported phase.
+      let rows: Array<{ scope: string; phase: string; milliseconds: number; percent: number; calls: number | string }> =
+        []
       console.groupCollapsed = label => {
         groupLabel = String(label)
       }
       console.table = value => {
-        rows = value
+        rows = value as typeof rows
       }
       console.groupEnd = () => {}
 
