@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises"
 
 import { assert, describe, it } from "vitest"
 
+import type { RotationStep } from "@/calculations/rotationTimeline"
+
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-martial-art-state.mjs.
@@ -45,7 +47,12 @@ describe("martial-art-state", () => {
           { type: "skill", skill: "PerfectDodge" },
           { type: "event", event: "MartialArt", before: { action: "start" }, martialArt: "snowparting" },
           { type: "skill", skill: "PerfectDodge" },
-          ...[0.4, 0.9, 1.4].map(startTime => ({ type: "event", event: "TakeDamage", startTime, damage: 1 })),
+          ...[0.4, 0.9, 1.4].map((startTime): RotationStep => ({
+            type: "event",
+            event: "TakeDamage",
+            startTime,
+            damage: 1,
+          })),
         ],
       },
       skills,
@@ -62,7 +69,9 @@ describe("martial-art-state", () => {
     const triggeredSkills = timeline
       .filter(
         row =>
-          row.kind === "trigger" && row.step.type === "skill" && row.step.skill.startsWith("GhostlyStepsUmbraDodge"),
+          row.kind === "trigger" &&
+          row.step.type === "skill" &&
+          (row.step.skill ?? "").startsWith("GhostlyStepsUmbraDodge"),
       )
       .map(row => row.step.skill)
 
