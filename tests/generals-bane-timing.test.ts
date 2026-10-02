@@ -74,7 +74,7 @@ it("migrates stored and imported Slide openers without moving their event or bat
   ])
   expect(migrated.start).toEqual(legacy.start)
   expect(migrated.steps[2]).toEqual(legacy.steps[2])
-  expect(migrated.steps[3].causesBreak).toBe(true)
+  expect(migrated.steps[3]?.type === "skill" && migrated.steps[3].causesBreak).toBe(true)
   expect(legacy.steps[0].skill).toBe("SnowpartingQSlide")
   expect(migrateGeneralsBaneSlides(migrated)).toBe(migrated)
   const imported = mergeImportedRotationEntries([], {
