@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { DamageContext } from "@/calculations/damage"
+import type { RotationSimulationBaseline, RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { TimelineBuildInput } from "@/calculations/rotationTimeline"
 
 import mysticBuffs from "../data/buff/mystic.json"
 import delugeBuffs from "../data/buff/silkbind-deluge.json"
@@ -52,7 +55,7 @@ describe("healing", () => {
     const derivedStats = calculateDerivedStats(stats, 0)
     const martialStats = { ...stats, allMartialArts: 0.05, fanDmgBoost: 0.06, umbrellaDmgBoost: 0.07 }
     const action = { type: "heal", phyCoef: 1, silkbindCoef: 1, phyBonus: 10, attrBonus: 20 }
-    const context = {
+    const context: DamageContext = {
       stats: martialStats,
       derivedStats: calculateDerivedStats(martialStats, 0),
       enemy,
@@ -60,7 +63,7 @@ describe("healing", () => {
       skillTags: ["Heal", "Heavy", "MartialArts", "Fan", "PanaceaFan"],
       buffs: [],
       effects: [{ physicalPenetration: 10 }, { healingBonus: 0.1 }, { criticalHealingBonus: 0.2 }],
-      attunement: { physicalPenetration: 20, panaceaMartialHealingBoost: 0.1 },
+      attunement: { ...emptyAttunementStats, physicalPenetration: 20, panaceaMartialHealingBoost: 0.1 },
     }
     const healing = calculateHealingBreakdown(action, context)
     const physicalOnlyHealing = calculateHealingBreakdown({ type: "heal", phyCoef: 1 }, context)
@@ -110,7 +113,7 @@ describe("healing", () => {
     const soulshadeSpecialAttunement = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Umbrella", "SoulshadeUmbrella"],
-      attunement: { soulshadeSpecialHealingBoost: 0.06 },
+      attunement: { ...emptyAttunementStats, soulshadeSpecialHealingBoost: 0.06 },
     })
     expect(
       closeTo(soulshadeSpecialAttunement.total / soulshadeSpecialBaseline.total, 1.28 / 1.22),
@@ -153,7 +156,7 @@ describe("healing", () => {
       "Healing must resolve only Normal and Critical outcomes using Critical Rate times Effective Precision.",
     ).toBeTruthy()
 
-    const healingTimeline = {
+    const healingTimeline: TimelineBuildInput = {
       rotation: {
         name: "Healing timeline probe",
         steps: [
@@ -185,7 +188,7 @@ describe("healing", () => {
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     }
-    const baselineInput = {
+    const baselineInput: RotationSimulationBundle = {
       timeline: healingTimeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
@@ -232,7 +235,7 @@ describe("healing", () => {
       result.metrics.breakdown.healingCasts.map(row => row.skillId).join(",") === "LargerHeal,SmallerHeal",
       "Healing casts must be grouped and sorted independently by average HPS.",
     ).toBeTruthy()
-    const healingBySkill = (calculation, skillId) =>
+    const healingBySkill = (calculation: RotationSimulationBaseline, skillId: string) =>
       calculation.metrics.breakdown.healingSkills.find(row => row.id === skillId)?.healing ?? 0
     expect(
       closeTo(healingBySkill(royalRemedyResult, "SmallerHeal"), healingBySkill(result, "SmallerHeal") * 1.1) &&
@@ -258,8 +261,14 @@ describe("healing", () => {
     const attunementPriorityResult = calculateRotationSimulation({
       ...baselineInput,
       attunementPriority: [
-        { label: "Smaller healing attunement", attunement: { panaceaMartialHealingBoost: 0.05 } },
-        { label: "Larger healing attunement", attunement: { panaceaMartialHealingBoost: 0.1 } },
+        {
+          label: "Smaller healing attunement",
+          attunement: { ...emptyAttunementStats, panaceaMartialHealingBoost: 0.05 },
+        },
+        {
+          label: "Larger healing attunement",
+          attunement: { ...emptyAttunementStats, panaceaMartialHealingBoost: 0.1 },
+        },
       ],
     })
     expect(
@@ -272,7 +281,11 @@ describe("healing", () => {
     ).toBeTruthy()
     const setupComparisonResult = calculateRotationSimulation({
       ...baselineInput,
-      setupComparisons: { healingSetup: [{ label: "Healing setup", attunement: { panaceaMartialHealingBoost: 0.1 } }] },
+      setupComparisons: {
+        healingSetup: [
+          { label: "Healing setup", attunement: { ...emptyAttunementStats, panaceaMartialHealingBoost: 0.1 } },
+        ],
+      },
     })
     const healingSetup = setupComparisonResult.metrics.setupComparisons.healingSetup[0]
     expect(
@@ -616,7 +629,7 @@ describe("healing", () => {
       attrBonus: 0,
       time: 0.1,
     }
-    const groupHealingBundle = groupSize => ({
+    const groupHealingBundle = (groupSize: number): RotationSimulationBundle => ({
       ...worldToSwordBundle,
       timeline: {
         ...worldToSwordBundle.timeline,
