@@ -9,7 +9,11 @@ import { withExpectedDebuffPlates } from "../src/application/gameData/skills"
 import { calculateDamageBreakdown } from "../src/calculations/damage"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { ExpectedPeriodicTracker } from "../src/calculations/outcomeTriggeredBuffs"
-import { calculateRotationBaseline, calculateSimulatedRotationRun } from "../src/calculations/rotationCalculator"
+import {
+  calculateRotationBaseline,
+  calculateSimulatedRotationRun,
+  type RotationSimulationBundle,
+} from "../src/calculations/rotationCalculator"
 import {
   buildRotationTimeline,
   effectsForTrackedEffect,
@@ -18,6 +22,7 @@ import {
 } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { defaultGlobalDebuffs, globalDebuffTimelineEffects } from "../src/globalDebuffs"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 function inputFor(times: number[], tier = 0): TimelineBuildInput {
@@ -36,8 +41,8 @@ function inputFor(times: number[], tier = 0): TimelineBuildInput {
         action: times.map(time => ({ type: "damage", phyCoef: 1, time })),
       },
     },
-    dots,
-    effectDefinitions: { ...dots, ...debuffs },
+    dots: asSkillRecords(dots),
+    effectDefinitions: asEffectDefinitions({ ...dots, ...debuffs }),
     eventDefinitions: {},
     innerWayConditions: conditions,
     innerWayRules: rules,
@@ -57,7 +62,7 @@ const enemy = {
   bamboocutResistance: 0,
   judgementResistance: 0,
 }
-function bundleFor(input: TimelineBuildInput) {
+function bundleFor(input: TimelineBuildInput): RotationSimulationBundle {
   return {
     timeline: input,
     startAnchor: { rowId: "rotation-0" },
@@ -270,8 +275,8 @@ describe("Bitter Seasons", () => {
     // The exact-cadence diagnostic remains an oracle for the shared probability transitions.
     const exactDots = structuredClone(dots)
     delete (exactDots.QingyisPoison.periodic as { expectedTickAlignment?: string }).expectedTickAlignment
-    input.dots = exactDots
-    input.effectDefinitions = { ...exactDots, ...debuffs }
+    input.dots = asSkillRecords(exactDots)
+    input.effectDefinitions = asEffectDefinitions({ ...exactDots, ...debuffs })
     const bundle = bundleFor(input)
     const chance = tier >= 4 ? 0.15 : 0.1
     let oracle = 0
@@ -296,7 +301,7 @@ describe("Bitter Seasons", () => {
               damage +
               calculateDamageBreakdown(action, {
                 stats,
-                derivedStats: bundle.derivedStats,
+                derivedStats: bundle.derivedStats ?? calculateDerivedStats(stats, 0),
                 attunement: emptyAttunementStats,
                 enemy,
                 weapons: [],
