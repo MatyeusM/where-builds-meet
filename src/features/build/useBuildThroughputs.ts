@@ -11,6 +11,56 @@ export type ThroughputTarget = { key: string; build: BuildEntry | undefined }
 
 type Measured = { key: string; cacheKey?: string; bundle?: ReturnType<typeof buildMeasurement>["bundle"] }
 
+/** What a target measured to, and the exact inputs it was measured from. */
+type Resolved = {
+  build: BuildEntry
+  gearItems: GearItem[]
+  rotation: RotationRecord
+  cacheKey: string
+  bundle: ReturnType<typeof buildMeasurement>["bundle"]
+}
+
+/**
+ * Bundles already built for a given sheet, per target key.
+ *
+ * A measurement cannot be requested until its key exists, and the key is the bundle's own
+ * fingerprint, so building the bundle is the whole cost of asking. Which targets are asked for
+ * changes as the gear inventory scrolls, but what any one of them measures to does not, so without
+ * this a card arriving rebuilds every candidate already on screen, once per frame of the scroll.
+ *
+ * Keyed on the context weakly, so a bundle is dropped with the sheet it was resolved from rather
+ * than outliving it, and every entry is checked against the inputs it was built from, so a reused
+ * bundle is one the current render would have produced itself.
+ */
+const bundlesByContext = new WeakMap<MeasurementContext, Map<string, Resolved>>()
+
+function measurementFor(input: {
+  key: string
+  build: BuildEntry
+  gearItems: GearItem[]
+  context: MeasurementContext
+  rotation: RotationRecord
+}): Pick<Measured, "cacheKey" | "bundle"> {
+  const held = bundlesByContext.get(input.context) ?? new Map<string, Resolved>()
+  bundlesByContext.set(input.context, held)
+  const previous = held.get(input.key)
+  if (
+    previous &&
+    previous.build === input.build &&
+    previous.gearItems === input.gearItems &&
+    previous.rotation === input.rotation
+  )
+    return { cacheKey: previous.cacheKey, bundle: previous.bundle }
+  const { bundle, cacheKey } = buildMeasurement({
+    build: input.build,
+    gearItems: input.gearItems,
+    context: input.context,
+    rotation: input.rotation,
+  })
+  held.set(input.key, { build: input.build, gearItems: input.gearItems, rotation: input.rotation, cacheKey, bundle })
+  return { cacheKey, bundle }
+}
+
 /**
  * The throughput of several builds at once, each under a key the caller chose.
  *
@@ -39,8 +89,10 @@ export function useBuildThroughputs(input: {
     () =>
       targets.map(target => {
         if (!target.build || !rotation) return { key: target.key }
-        const { bundle, cacheKey } = buildMeasurement({ build: target.build, gearItems, context, rotation })
-        return { key: target.key, cacheKey, bundle }
+        return {
+          key: target.key,
+          ...measurementFor({ key: target.key, build: target.build, gearItems, context, rotation }),
+        }
       }),
     [targets, gearItems, context, rotation],
   )

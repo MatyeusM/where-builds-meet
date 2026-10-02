@@ -40,6 +40,30 @@ function buildWithSwappedItem(build: BuildEntry, slot: GearSlot, item: GearItem)
 }
 
 /**
+ * A swap that is written once and handed back unchanged until something it was built from moves.
+ *
+ * `measurementFor` recognises a bundle it already holds by comparing the build it was given, so a
+ * caller that rebuilt the swap on every render would make every candidate look new and no bundle
+ * would ever be reused. That is exactly what a scroll does: the cards on screen change, and with
+ * them every swap. Held per item, the swap for a card still on screen survives the cards around it
+ * appearing and leaving, so the one that arrives is the only thing that costs a bundle.
+ *
+ * Keyed on the build weakly, so the swaps are dropped with the build they were made from, and
+ * checked against the slot, since a swap is a function of both.
+ */
+const swapsByBuild = new WeakMap<BuildEntry, Map<string, { slot: GearSlot; build: BuildEntry }>>()
+
+function swappedBuild(build: BuildEntry, slot: GearSlot, item: GearItem): BuildEntry {
+  const held = swapsByBuild.get(build) ?? new Map()
+  swapsByBuild.set(build, held)
+  const previous = held.get(item.id)
+  if (previous && previous.slot === slot) return previous.build
+  const swapped = buildWithSwappedItem(build, slot, item)
+  held.set(item.id, { slot, build: swapped })
+  return swapped
+}
+
+/**
  * The candidates in one slot that are on screen, measured against the item it has equipped.
  *
  * A reading is a whole rotation, so this is bounded by what the reader can see rather than by the
@@ -70,7 +94,7 @@ export function useGearComparison(input: {
       { key: equippedKey, build },
       ...candidates
         .filter(item => item.id !== equippedId && visibleItemIds.has(item.id))
-        .map(item => ({ key: item.id, build: buildWithSwappedItem(build, slot, item) })),
+        .map(item => ({ key: item.id, build: swappedBuild(build, slot, item) })),
     ]
   }, [build, slot, candidates, equippedId, visibleItemIds])
 

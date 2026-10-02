@@ -1616,6 +1616,19 @@ reading something else is waiting for. Readings are held in the dozens, which is
 a slot's candidates and the builds the list shows, and which the bound evicts in insertion order
 once a reader has moved on.
 
+Asking is the expensive half and the reader is what causes it, so the two are kept apart. Which
+candidates a slot asks about changes on every scroll, but what any one of them measures to does
+not, since a candidate's sheet is a function of the build, the slot, the item, the environment and
+the rotation. Rebuilding a bundle is not free even where the reading is already held, because a
+reading cannot be requested until its key exists and that key is the bundle's own fingerprint. So
+the bundle behind each key is kept while the inputs it was resolved from are the same objects, and
+a card arriving costs one bundle rather than one per card on screen. The swap a candidate is
+measured as is kept the same way, since a swap rebuilt on every render would make every candidate
+look new and no bundle would ever be reused. Both are keyed weakly, on the sheet and on the build
+respectively, so what they hold is dropped with what it was resolved from rather than outliving it.
+A different build, sheet, item list or rotation invalidates all of them, which is right: the
+reference moved, so every candidate's number against it is stale.
+
 A reading names the baseline whose key it shares, so it is routed to the worker
 already holding that baseline and answered from it without running anything. That
 is what makes reading the active build free: its baseline is already calculated
