@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-smolder-poet-rotation.mjs.
 describe("smolder-poet-rotation", () => {
   it("Final composite hit snapshots and consumes stacks without transferring its bonus to triggered explosions", async () => {
@@ -91,7 +93,7 @@ describe("smolder-poet-rotation", () => {
     const directAction = poet5Row?.actions[poet5DamageIndex ?? -1]
     const directContext = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: poet5Row?.actionSkillTags?.[poet5DamageIndex ?? -1] ?? [],
       weapons: [],
       buffs: [],

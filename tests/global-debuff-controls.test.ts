@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-global-debuff-controls.mjs.
@@ -92,7 +94,7 @@ describe("global-debuff-controls", () => {
         },
         startAnchor: { rowId: "rotation-0" },
         stats: nextStats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(nextStats, 0),
         weapons: [],

@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import fluteDefinitions from "../data/buff/mystic.json" with { type: "json" }
 import { isClose } from "./helpers/floatEquality"
 
@@ -157,7 +159,7 @@ describe("distance-flute", () => {
     }
     const baseContext = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: [],
       weapons: [],
       buffs: ["Flute"],
@@ -272,7 +274,7 @@ describe("distance-flute", () => {
       timeline: integratedTimeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

@@ -1,5 +1,7 @@
 import { assert, describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-battle-end.mjs.
 describe("battle-end", () => {
   it("Fight-relative event timing, Battle End cutoff checks passed", async () => {
@@ -65,7 +67,7 @@ describe("battle-end", () => {
       },
       startAnchor: { rowId: "rotation-1", actionIndex: 0 },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
       weapons: ["snowparting", "phalanxbane"],

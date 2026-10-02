@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"
@@ -65,7 +67,7 @@ describe("HP-conditional effects", () => {
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
-      attunement: {},
+      attunement: emptyAttunementStats,
       statPriority: [],
       attunementPriority: [],
       innerWayPriority: [],

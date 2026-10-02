@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-snowbreak-hit-effect.mjs.
@@ -56,7 +58,7 @@ describe("snowbreak-hit-effect", () => {
         },
         startAnchor: { rowId: "rotation-0" },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, 0),
         weapons: [],

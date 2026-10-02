@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
@@ -268,7 +270,7 @@ describe("infernal-twinblades-talents", () => {
         stats,
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
-        attunement: {},
+        attunement: emptyAttunementStats,
         weapons: ["infernalTwinblades"],
         statPriority: [],
         attunementPriority: [],
@@ -347,7 +349,7 @@ describe("infernal-twinblades-talents", () => {
         stats: attributeStats,
         derivedStats: calculateDerivedStats(attributeStats, 0, {}, ["infernalTwinblades"]),
         enemy,
-        attunement: {},
+        attunement: emptyAttunementStats,
         skillTags: ["MartialArts", "InfernalTwinblades"],
         weapons: ["infernalTwinblades"],
         buffs: [],

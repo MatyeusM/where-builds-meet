@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -73,7 +75,7 @@ describe("stat-conversion", () => {
       { phyCoef: 0, attrCoef: 0, phyBonus: 0, attrBonus: 0 },
       {
         stats: emptyStats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         skillTags: ["VileCondemned"],
         weapons: ["heavenwill", "skygrasp"],
         buffs: [],

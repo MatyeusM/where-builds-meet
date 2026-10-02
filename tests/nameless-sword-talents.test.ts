@@ -1,5 +1,7 @@
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
@@ -83,7 +85,7 @@ describe("nameless-sword-talents", () => {
     }
     const context = {
       stats: damageStats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: ["SwordEnergy"],
       weapons: ["namelessSword", "namelessSpear"],
       buffs: [],

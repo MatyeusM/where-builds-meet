@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-simulation.mjs.
@@ -28,7 +30,7 @@ describe("simulation", () => {
     }
     const context = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: [],
       weapons: [],
       buffs: [],
@@ -74,7 +76,7 @@ describe("simulation", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: context.derivedStats,
       weapons: [],

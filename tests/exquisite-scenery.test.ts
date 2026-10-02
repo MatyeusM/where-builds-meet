@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 
 // Ported from script/probe/check-exquisite-scenery.mjs.
@@ -71,7 +73,7 @@ describe("exquisite-scenery", () => {
         },
         startAnchor: { rowId: "rotation-0", actionIndex: 0 },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
         weapons: ["thundercry", "stormbreaker"],

@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-damage-replay.mjs.
@@ -98,7 +100,7 @@ describe("damage-replay", () => {
         timeline,
         startAnchor: { rowId: withHeavensMight ? "rotation-0" : "rotation-0" },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, 0),
         weapons: [],

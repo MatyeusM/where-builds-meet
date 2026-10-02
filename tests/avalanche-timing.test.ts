@@ -1,5 +1,7 @@
 import { expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import buffs from "../data/buff/stonesplit-strength.json"
 import skills from "../data/skill/thundercry-blade.json"
 import { calculateDamageBreakdown } from "../src/calculations/damage"
@@ -56,7 +58,7 @@ it("resolves Avalanche hit damage from the corrected datamined coefficients and 
   const stats = { ...emptyStats, minPhys: 1000, maxPhys: 1000, minStonesplit: 1000, maxStonesplit: 1000, precision: 1 }
   const context = {
     stats,
-    attunement: {},
+    attunement: emptyAttunementStats,
     weapons: ["thundercry" as const],
     skillTags: skills.Avalanche.tags,
     buffs: [],

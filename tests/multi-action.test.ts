@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import phalanxbaneSkills from "../data/skill/phalanxbane-blade.json" with { type: "json" }
 import { isClose } from "./helpers/floatEquality"
 
@@ -37,7 +39,7 @@ describe("multi-action", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-default-rotation.mjs.
 describe("default-rotation", () => {
   it("Infinite Vitality default rotation sequence and calculation checks passed", async () => {
@@ -57,7 +59,7 @@ describe("default-rotation", () => {
       },
       startAnchor: { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
       weapons: ["snowparting", "phalanxbane"],

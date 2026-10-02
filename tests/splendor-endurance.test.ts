@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import battleAnthem from "../data/innerway/battle-anthem.json"
 import namelessSpear from "../data/martial-art/nameless-spear.json"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
@@ -83,7 +85,7 @@ describe("splendor-endurance", () => {
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
         weapons: weaponIds,
-        attunement: {},
+        attunement: emptyAttunementStats,
         startAnchor: { rowId: "rotation-0" },
         statPriority: [],
         attunementPriority: [],

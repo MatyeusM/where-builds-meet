@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import buffs from "../data/buff/bamboocut-wind.json"
 import debuffs from "../data/debuff/bamboocut-wind.json"
 import echoes from "../data/innerway/echoes-of-oblivion.json"
@@ -67,7 +69,7 @@ function entry(tier: number, resistance: number, karma = true, tags = ["DirectDa
     derivedStats: calculateDerivedStats(stats, enemy.judgementResistance, weapons),
     enemy: { ...enemy, bamboocutResistance: resistance },
     weapons,
-    attunement: {},
+    attunement: emptyAttunementStats,
     startAnchor: { rowId: "rotation-0" },
     statPriority: [],
     attunementPriority: [],

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import buffs from "../data/buff/bamboocut-dust.json"
 import mysticBuffs from "../data/buff/mystic.json"
 import debuffs from "../data/debuff/bamboocut-dust.json"
@@ -127,7 +129,7 @@ function bundle(selected: Partial<Record<keyof typeof catalogs, number>> = {}): 
       judgementResistance: 0,
     },
     weapons: ["everspring", "unfettered"],
-    attunement: {},
+    attunement: emptyAttunementStats,
     statPriority: [],
     attunementPriority: [],
     innerWayPriority: [],

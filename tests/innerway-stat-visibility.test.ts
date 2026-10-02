@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises"
 
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-innerway-stat-visibility.mjs.
@@ -31,7 +33,7 @@ describe("innerway-stat-visibility", () => {
         { type: calculate === calculateHealingBreakdown ? "heal" : "damage", phyCoef: 1, attrCoef: 1 },
         {
           stats,
-          attunement: {},
+          attunement: emptyAttunementStats,
           skillTags: [],
           weapons: [],
           buffs: [],

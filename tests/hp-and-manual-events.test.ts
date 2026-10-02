@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { isClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -106,7 +108,7 @@ describe("hp-and-manual-events", () => {
       },
       startAnchor: { rowId: "rotation-1" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -137,7 +139,7 @@ describe("hp-and-manual-events", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

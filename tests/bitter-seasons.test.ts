@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import debuffs from "../data/debuff/innerway.json"
 import dots from "../data/dot/innerway.json"
 import way from "../data/innerway/bitter-seasons.json"
@@ -59,7 +61,7 @@ function bundleFor(input: TimelineBuildInput) {
     timeline: input,
     startAnchor: { rowId: "rotation-0" },
     stats,
-    attunement: {},
+    attunement: emptyAttunementStats,
     enemy,
     derivedStats: calculateDerivedStats(stats, 0),
     weapons: [],
@@ -294,7 +296,7 @@ describe("Bitter Seasons", () => {
               calculateDamageBreakdown(action, {
                 stats,
                 derivedStats: bundle.derivedStats,
-                attunement: {},
+                attunement: emptyAttunementStats,
                 enemy,
                 weapons: [],
                 buffs: [],

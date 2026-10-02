@@ -1,5 +1,7 @@
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -129,7 +131,7 @@ describe("seasonal-edge", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -195,7 +197,7 @@ describe("seasonal-edge", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

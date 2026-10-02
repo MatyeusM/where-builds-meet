@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-rain-whisper.mjs.
 describe("rain-whisper", () => {
   it("Rain Whisper Shield-dependent Critical DMG check passed", async () => {
@@ -58,7 +60,7 @@ describe("rain-whisper", () => {
         },
         startAnchor: { rowId: `rotation-${hitIndex}`, actionIndex: 0 },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
         weapons: ["thundercry", "stormbreaker"],

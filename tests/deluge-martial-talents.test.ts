@@ -1,5 +1,7 @@
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
@@ -82,7 +84,7 @@ describe("deluge-martial-talents", () => {
           stats,
           derivedStats: calculateDerivedStats(stats, 0),
           enemy,
-          attunement: {},
+          attunement: emptyAttunementStats,
           weapons,
           skillTags: tags,
           buffs: [],

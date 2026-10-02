@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
@@ -204,7 +206,7 @@ describe("rodent-rampage", () => {
     const context = {
       stats,
       derivedStats: calculateDerivedStats(stats, 0),
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: mortal.Rodent.tags,
       weapons: ["infernalTwinblades", "mortalRopeDart"],
       buffs: [],
@@ -237,7 +239,7 @@ describe("rodent-rampage", () => {
       stats,
       derivedStats: context.derivedStats,
       enemy,
-      attunement: {},
+      attunement: emptyAttunementStats,
       weapons: context.weapons,
       statPriority: [],
       attunementPriority: [],

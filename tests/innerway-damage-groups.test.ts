@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-innerway-damage-groups.mjs.
@@ -56,7 +58,7 @@ describe("innerway-damage-groups", () => {
     const bundle = {
       timeline,
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy: {
         name: "Probe",
         level: 96,

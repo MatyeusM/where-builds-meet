@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -96,7 +98,7 @@ describe("mistwing", () => {
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
         weapons,
-        attunement: {},
+        attunement: emptyAttunementStats,
         statPriority: [],
         attunementPriority: [],
         innerWayPriority: [],

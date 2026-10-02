@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import mysticBuffs from "../data/buff/mystic.json"
 import delugeBuffs from "../data/buff/silkbind-deluge.json"
 import royalRemedy from "../data/innerway/royal-remedy.json"
@@ -103,7 +105,7 @@ describe("healing", () => {
     const soulshadeSpecialBaseline = calculateHealingBreakdown(action, {
       ...context,
       skillTags: ["Heal", "MartialArts", "Special", "Umbrella", "SoulshadeUmbrella"],
-      attunement: {},
+      attunement: emptyAttunementStats,
     })
     const soulshadeSpecialAttunement = calculateHealingBreakdown(action, {
       ...context,
@@ -187,7 +189,7 @@ describe("healing", () => {
       timeline: healingTimeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats,
       weapons: ["panaceaFan", "soulshadeUmbrella"],
@@ -490,7 +492,7 @@ describe("healing", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats,
       weapons: ["panaceaFan", "soulshadeUmbrella"],
@@ -579,7 +581,7 @@ describe("healing", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats,
       weapons: ["panaceaFan", "soulshadeUmbrella"],
@@ -596,7 +598,7 @@ describe("healing", () => {
       skillTags: ["Heal"],
       buffs: [],
       effects: [],
-      attunement: {},
+      attunement: emptyAttunementStats,
     }
     const groupHealingThreshold = (() => {
       const snapshot = calculateHealingAttackSnapshot(groupHealingContext)

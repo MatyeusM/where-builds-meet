@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -138,7 +140,7 @@ describe("script", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy: {
         name: "Probe",
         level: 96,

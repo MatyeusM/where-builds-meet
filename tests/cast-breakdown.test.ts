@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-cast-breakdown.mjs.
 describe("cast-breakdown", () => {
   it("Per-cast buff attribution, Deflect timing, and zero-damage filtering checks passed", async () => {
@@ -82,7 +84,7 @@ describe("cast-breakdown", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -178,7 +180,7 @@ describe("cast-breakdown", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -265,7 +267,7 @@ describe("cast-breakdown", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

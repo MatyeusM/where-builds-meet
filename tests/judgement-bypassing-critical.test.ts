@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import windBuffs from "../data/buff/bamboocut-wind.json"
 import sets from "../data/gear-set.json"
 import infernal from "../data/skill/infernal-twinblades.json"
@@ -39,7 +41,7 @@ function bundle(judgementResistance: number): RotationSimulationBundle {
       judgementResistance,
     },
     weapons: ["infernalTwinblades", "mortalRopeDart"],
-    attunement: {},
+    attunement: emptyAttunementStats,
     statPriority: [],
     attunementPriority: [],
     innerWayPriority: [],

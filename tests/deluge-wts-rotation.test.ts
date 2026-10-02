@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-deluge-wts-rotation.mjs.
 describe("deluge-wts-rotation", () => {
   it("Deluge WTS sequence and standard dummy-attack schedule verified", async () => {
@@ -110,7 +112,7 @@ describe("deluge-wts-rotation", () => {
       timeline: timelineBundle,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy: {
         name: "Probe",
         level: 96,
@@ -136,7 +138,7 @@ describe("deluge-wts-rotation", () => {
         timeline: { ...timelineBundle, rotation: { ...rotation, groupSize } },
         startAnchor: { rowId: "rotation-0" },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy: {
           name: "Probe",
           level: 96,

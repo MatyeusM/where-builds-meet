@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-skill-static-effect-aggregation.mjs.
 describe("skill-static-effect-aggregation", () => {
   it("Skill-static effect aggregation checks passed", async () => {
@@ -71,7 +73,7 @@ describe("skill-static-effect-aggregation", () => {
         },
         startAnchor: { rowId: "rotation-0" },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, 0),
         weapons: [],

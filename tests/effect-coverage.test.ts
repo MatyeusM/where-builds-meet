@@ -1,5 +1,7 @@
 import { assert, describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import dustDebuffs from "../data/debuff/bamboocut-dust.json"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
 
@@ -121,7 +123,7 @@ describe("effect-coverage", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

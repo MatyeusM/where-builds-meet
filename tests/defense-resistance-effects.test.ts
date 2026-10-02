@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { isClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-defense-resistance-effects.mjs.
@@ -24,7 +26,7 @@ describe("defense-resistance-effects", () => {
     }
     const baseContext = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: [],
       weapons: [],
       buffs: [],

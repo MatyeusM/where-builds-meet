@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import divinecraftDots from "../data/dot/divinecraft.json"
 import { divinecraftEffectFor, typedDivinecraftDefinitions } from "../src/application/gameData/setup"
 import { effectDefinitions, defaultSkillMaps, dotDefinitions } from "../src/application/gameData/skills"
@@ -39,7 +41,7 @@ const flatEnemy = {
 }
 const baseContext = {
   stats: rangedStats,
-  attunement: {},
+  attunement: emptyAttunementStats,
   skillTags: [],
   weapons: [],
   buffs: [],

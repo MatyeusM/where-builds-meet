@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -142,7 +144,7 @@ describe("insightful-strike", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -167,7 +169,7 @@ describe("insightful-strike", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats: probabilisticStats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(probabilisticStats, 0),
       weapons: [],
@@ -184,7 +186,7 @@ describe("insightful-strike", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats: probabilisticStats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(probabilisticStats, 0),
       weapons: [],

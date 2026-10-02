@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { probeLoad } from "./helpers/probe-loader.js"
 
 // Ported from script/probe/check-stat-stages.mjs.
@@ -148,7 +150,7 @@ describe("stat-stages", () => {
       derivedStats: plainSheet.stats,
       enemy,
       weapons: [],
-      attunement: {},
+      attunement: emptyAttunementStats,
       startAnchor: { rowId: "rotation-0" },
       statPriority: [],
       attunementPriority: [],

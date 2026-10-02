@@ -10,6 +10,7 @@ import {
   mergeComparisonCategory,
 } from "@/application/comparison"
 import { resolveComparisonCategory, resolveComparisonMetrics } from "@/application/resolveRotationMetrics"
+import { emptyAttunementStats } from "@/calculations/attunementStats"
 import type { RotationSimulationBundle, RotationSimulationVariant } from "@/calculations/rotationCalculator"
 import type { RotationMetrics } from "@/calculations/rotationMetrics"
 import { emptyRotationBreakdown } from "@/calculations/rotationMetrics"
@@ -49,7 +50,7 @@ const bundle = {
   timeline: { rotation: {} },
   startAnchor: { rowId: "r0" },
   stats: {},
-  attunement: {},
+  attunement: emptyAttunementStats,
   enemy: {},
   statPriority: statVariants,
   attunementPriority: [],

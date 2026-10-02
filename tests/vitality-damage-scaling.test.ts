@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-vitality-damage-scaling.mjs.
@@ -63,7 +65,7 @@ describe("vitality-damage-scaling", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -118,7 +120,7 @@ describe("vitality-damage-scaling", () => {
       timeline: { ...timeline, rotation: { ...timeline.rotation, infiniteVitality: true } },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -160,7 +162,7 @@ describe("vitality-damage-scaling", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

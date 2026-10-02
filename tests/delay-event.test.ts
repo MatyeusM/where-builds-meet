@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-delay-event.mjs.
 describe("delay-event", () => {
   it("Sequential Delay timing, modifier shifting, and trailing duration checks passed", async () => {
@@ -76,7 +78,7 @@ describe("delay-event", () => {
       timeline: { ...timelineInput, rotation: trailingRotation },
       startAnchor: { rowId: "rotation-0", actionIndex: 0 },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],

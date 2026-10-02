@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
 
@@ -52,7 +54,7 @@ describe("innerway-catalog", () => {
       effects: [],
       buffs: [],
       skillTags: [],
-      attunement: {},
+      attunement: emptyAttunementStats,
     })
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const boosted = calculateStatsWithEffects(
@@ -162,7 +164,7 @@ describe("innerway-catalog", () => {
         derivedStats: calculateDerivedStats(stats, 0),
         enemy: { ...enemy, defense: enemyDefense },
         weapons: [],
-        attunement: {},
+        attunement: emptyAttunementStats,
         startAnchor: { rowId: "rotation-0" },
         statPriority: [],
         attunementPriority: [],

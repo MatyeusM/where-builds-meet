@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import mechanismBuffs from "../data/buff/mechanism.json"
 import mechanismSkills from "../data/skill/mechanism.json"
 import { buildRotationTimeline, type RotationStep } from "../src/calculations/rotationTimeline"
@@ -69,7 +71,7 @@ describe("Summon Lightning", () => {
         ),
         startAnchor: { rowId: `rotation-${lead.length}` },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(stats, 0),
         weapons: [],

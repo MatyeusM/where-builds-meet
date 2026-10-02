@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-wts-cast-snapshot.mjs.
@@ -55,7 +57,7 @@ describe("wts-cast-snapshot", () => {
       stats,
       enemy,
       weapons: ["panaceaFan", "soulshadeUmbrella"],
-      attunement: {},
+      attunement: emptyAttunementStats,
       startAnchor: { rowId: "rotation-0" },
       statPriority: [],
       attunementPriority: [],

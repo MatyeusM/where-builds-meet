@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-single-damage-resolution.mjs.
 describe("single-damage-resolution", () => {
   it("Single deterministic damage-resolution checks passed", async () => {
@@ -59,7 +61,7 @@ describe("single-damage-resolution", () => {
         timeline,
         startAnchor: { rowId: "rotation-0" },
         stats,
-        attunement: {},
+        attunement: emptyAttunementStats,
         enemy,
         derivedStats: calculateDerivedStats(rawStats, 0),
         weapons: [],

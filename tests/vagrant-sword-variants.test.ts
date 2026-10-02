@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { emptyStats } from "../src/data/statDefinitions"
@@ -65,7 +67,7 @@ describe("vagrant-sword-charge-variants", () => {
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
         weapons: weaponIds,
-        attunement: {},
+        attunement: emptyAttunementStats,
         startAnchor: { rowId: "rotation-0" },
         statPriority: [],
         attunementPriority: [],
@@ -164,7 +166,7 @@ describe("vagrant-sword-charge-variants", () => {
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
         weapons: weaponIds,
-        attunement: {},
+        attunement: emptyAttunementStats,
         startAnchor: { rowId: "rotation-0" },
         statPriority: [],
         attunementPriority: [],

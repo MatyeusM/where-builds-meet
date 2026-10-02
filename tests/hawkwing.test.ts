@@ -1,5 +1,7 @@
 import { assert, describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-hawkwing.mjs.
@@ -62,7 +64,7 @@ describe("hawkwing", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -107,7 +109,7 @@ describe("hawkwing", () => {
       },
       startAnchor: { rowId: "rotation-0" },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, 0),
       weapons: [],
@@ -140,7 +142,7 @@ describe("hawkwing", () => {
       timeline,
       startAnchor: { rowId: "rotation-0" },
       stats: guaranteedAffinityStats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(guaranteedAffinityStats, 0),
       weapons: [],
@@ -166,7 +168,7 @@ describe("hawkwing", () => {
       timeline: formulaTimeline,
       startAnchor: { rowId: "rotation-0" },
       stats: rawFormulaStats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: formulaState.derivedStats,
       weapons: [],

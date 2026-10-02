@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
 import { buildRotationTimeline } from "../src/calculations/rotationTimeline"
@@ -100,7 +102,7 @@ describe("effect lifecycle", () => {
         enemy,
         derivedStats: calculateDerivedStats(stats, 0),
         weapons: [],
-        attunement: {},
+        attunement: emptyAttunementStats,
         statPriority: [],
         attunementPriority: [],
         innerWayPriority: [],

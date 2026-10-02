@@ -3,6 +3,8 @@ import { readFile, readdir } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
@@ -142,7 +144,7 @@ describe("martial-art-talents", () => {
         stats,
         derivedStats: calculateDerivedStats(stats, 0),
         enemy: { ...enemy, ...options.enemy },
-        attunement: {},
+        attunement: emptyAttunementStats,
         weapons: [weapon],
         statPriority: [],
         attunementPriority: [],

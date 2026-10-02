@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { effectState } from "../src/calculations/trackedEffectState"
 import { isClose } from "./helpers/floatEquality"
 
@@ -27,7 +29,7 @@ describe("dot-damage", () => {
     }
     const baseContext = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: [],
       weapons: [],
       buffs: [],
@@ -126,7 +128,7 @@ describe("dot-damage", () => {
     const stats = { ...emptyStats, minPhys: 100, maxPhys: 100, minBellstrike: 100, maxBellstrike: 100, precision: 1 }
     const context = {
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       skillTags: [],
       weapons: ["strategicSword"],
       buffs: [],

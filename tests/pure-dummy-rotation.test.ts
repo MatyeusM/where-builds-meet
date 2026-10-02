@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-pure-dummy-rotation.mjs.
 describe("pure-dummy-rotation", () => {
   it("Pure Dummy 1 min calculation checks passed", async () => {
@@ -68,7 +70,7 @@ describe("pure-dummy-rotation", () => {
       },
       startAnchor: { rowId: `rotation-${rotation.start.step}`, actionIndex: rotation.start.action },
       stats,
-      attunement: {},
+      attunement: emptyAttunementStats,
       enemy,
       derivedStats: calculateDerivedStats(stats, enemy.judgementResistance),
       weapons: ["snowparting", "phalanxbane"],

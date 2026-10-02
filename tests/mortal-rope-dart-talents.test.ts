@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
@@ -95,7 +97,7 @@ describe("mortal-rope-dart-talents", () => {
           bamboocutResistance: 0,
           judgementResistance: 0,
         },
-        attunement: {},
+        attunement: emptyAttunementStats,
         weapons: selectedWeapons,
         statPriority: [],
         attunementPriority: [],
