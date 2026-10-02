@@ -154,8 +154,8 @@ describe("insightful-strike", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const concentrations = result.baseline.map(
-      (entry: RotationDamageEntry) => result.expectedOutcomeBuffSchedule[entry.id]?.Concentration,
+    const concentrations = result.baseline.map((entry: RotationDamageEntry) =>
+      entry.id ? result.expectedOutcomeBuffSchedule[entry.id]?.Concentration : undefined,
     )
     assert(
       JSON.stringify(concentrations) === JSON.stringify([0, 0, 0, 0, 1]),

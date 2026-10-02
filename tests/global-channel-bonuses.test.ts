@@ -1,6 +1,7 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { CharacterStats } from "@/types"
 
 import { isClose } from "./helpers/floatEquality"
 
