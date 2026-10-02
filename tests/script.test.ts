@@ -4,6 +4,7 @@ import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import { effectState } from "../src/calculations/trackedEffectState"
 import { probeLoad } from "./helpers/probe-loader.js"
+import { asEffectDefinitions } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-script.mjs.
@@ -90,7 +91,7 @@ describe("script", () => {
         TakeDamage: { name: "Take Damage", castTime: 0, action: [{ type: "takeDamage", time: 0 }], tags: ["Event"] },
       },
       dots: {},
-      effectDefinitions: generalBuffs,
+      effectDefinitions: asEffectDefinitions(generalBuffs),
       innerWayConditions: [],
       innerWayRules: [],
       setupEffects: [scripts.Revelry.effect],
@@ -134,7 +135,7 @@ describe("script", () => {
         },
         eventDefinitions: {},
         dots: {},
-        effectDefinitions: generalBuffs,
+        effectDefinitions: asEffectDefinitions(generalBuffs),
         innerWayConditions: [],
         innerWayRules: [],
         setupEffects: [scripts.Insight.effect],
