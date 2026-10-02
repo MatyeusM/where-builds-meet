@@ -1,6 +1,8 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { DamageAction, DamageContext } from "@/calculations/damage"
+import type { TimelineBuildInput } from "@/calculations/rotationTimeline"
 
 import fluteDefinitions from "../data/buff/mystic.json" with { type: "json" }
 import { isClose } from "./helpers/floatEquality"
@@ -171,7 +173,7 @@ describe("distance-flute", () => {
     const action = { type: "damage", phyCoef: 1, attrCoef: 1 }
     const baseline = calculateDamageBreakdown(action, baseContext).total
     const fluteEffect = fluteDefinitions.Flute.effect[0].effect
-    const damageAt = distance =>
+    const damageAt = (distance: number) =>
       calculateDamageBreakdown(action, { ...baseContext, distance, effects: [fluteEffect] }).total
     assert(closeTo(damageAt(1) / baseline, 1.02), "Flute must grant 2% at 1m.")
     assert(closeTo(damageAt(5) / baseline, 1.08), "Flute must grant 8% at 5m.")
@@ -220,7 +222,7 @@ describe("distance-flute", () => {
         const numericAction = { type: "damage", [field]: expected }
         for (const calculate of [
           calculateDamageBreakdown,
-          (a, c) => calculateSimulatedDamageBreakdown(a, c, () => 0.5),
+          (a: DamageAction, c: DamageContext) => calculateSimulatedDamageBreakdown(a, c, () => 0.5),
         ]) {
           const reference = calculate(numericAction, context).total
           assert(reference > 0, field + " must contribute damage in this probe.")
@@ -232,7 +234,7 @@ describe("distance-flute", () => {
       }
     }
 
-    const integratedTimeline = {
+    const integratedTimeline: TimelineBuildInput = {
       rotation: {
         name: "Integrated Flute probe",
         eventTimeReference: "battleStart",
