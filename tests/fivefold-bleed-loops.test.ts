@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import type { TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-fivefold-bleed-loops.mjs.
@@ -23,7 +24,7 @@ describe("fivefold-bleed-loops", () => {
             (definition.trigger ?? []).map(trigger => ({ trigger, effect: {}, source: "FivefoldBleed", tier: index })),
           )
       }).flat()
-    const inputFor = (times, end = 12, tier = 6) => ({
+    const inputFor = (times: number[], end = 12, tier = 6): TimelineBuildInput => ({
       rotation: {
         name: "Feedback",
         steps: [
@@ -49,7 +50,7 @@ describe("fivefold-bleed-loops", () => {
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     })
     const tickRows = rows => rows.filter(row => row.kind === "dot")
-    const bursts = rows => rows.filter(row => row.step.skill === "PiercingDamage")
+    const bursts = (rows: TimelineRow[]) => rows.filter(row => row.step.skill === "PiercingDamage")
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
     const input = inputFor(Array(5).fill(0))
     const allSuccess = buildRotationTimeline(input, () => 0)

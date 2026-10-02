@@ -4,6 +4,7 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type { TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -37,7 +38,7 @@ describe("fivefold-bleed-tiers", () => {
             (definition.trigger ?? []).map(trigger => ({ trigger, effect: {}, source: "FivefoldBleed", tier: index })),
           )
       }).flat()
-    const inputFor = (tier, times = [0]) => ({
+    const inputFor = (tier: number, times: number[] = [0]): TimelineBuildInput => ({
       rotation: { name: "Tier probe", steps: [{ type: "skill", skill: "Hits" }] },
       skills: {
         PiercingDamage,
@@ -82,7 +83,7 @@ describe("fivefold-bleed-tiers", () => {
       setupComparisons: {},
     })
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
-    const bursts = rows => rows.filter(row => row.step.skill === "PiercingDamage")
+    const bursts = (rows: TimelineRow[]) => rows.filter(row => row.step.skill === "PiercingDamage")
     const criticalStats = { ...stats, crit: 0.4, critDmgBonus: 0.5 }
     const criticalBaseline = tier =>
       calculateRotationBaseline({

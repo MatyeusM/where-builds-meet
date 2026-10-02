@@ -4,6 +4,12 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type {
+  EffectDefinition,
+  SkillRecord,
+  TimelineBuildInput,
+  TimelineRow,
+} from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -22,7 +28,9 @@ describe("fivefold-bleed", () => {
     const way = innerWayDefinitionForSoloLevel((await import("../data/innerway/fivefold-bleed.json")).default, 17)
     const dots = (await import("../data/dot/innerway.json")).default
     // Retain exact-cadence regression coverage; the battle-grid probe tests the authored approximation.
-    const exactDots = structuredClone(dots)
+    // One table serves as both the DOT definitions and the effect definitions here, so it is
+    // narrowed to what each of those reads.
+    const exactDots = structuredClone(dots) as Record<string, SkillRecord & EffectDefinition>
     delete exactDots.WeepingBlood.periodic.expectedTickAlignment
     const { PiercingDamage: piercingDefinition } = (await import("../data/skill/general.json")).default
     // Isolate independent application histories; the full feedback chain is tested
@@ -33,7 +41,7 @@ describe("fivefold-bleed", () => {
     }
     const rule = { source: "FivefoldBleed", tier: 0, effect: {}, trigger: way.effect.FivefoldBleedT0.trigger[0] }
     const close = (actual: number, expected: number, message: string) => assertClose(actual, expected, 1e-8, message)
-    const inputFor = (times, tags = ["DirectDamage"]) => ({
+    const inputFor = (times: number[], tags: string[] = ["DirectDamage"]): TimelineBuildInput => ({
       rotation: { name: "Bleed probe", steps: [{ type: "skill", skill: "Hits" }] },
       skills: {
         PiercingDamage,
@@ -52,7 +60,7 @@ describe("fivefold-bleed", () => {
       setupEffects: [],
       weapons: ["panaceaFan", "soulshadeUmbrella"],
     })
-    const ticks = rows => rows.filter(row => row.kind === "dot")
+    const ticks = (rows: TimelineRow[]) => rows.filter(row => row.kind === "dot")
     const times = rows => ticks(rows).map(row => Math.round(row.startTime * 100) / 100)
     const single = buildRotationTimeline(inputFor([0]), () => 0)
     assert.deepEqual(times(single), [1.01, 2.01, 3.01, 4.01])

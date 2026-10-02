@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import type { TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 
 // Ported from script/probe/check-fivefold-bleed-grid.mjs.
@@ -30,7 +31,7 @@ describe("fivefold-bleed-grid", () => {
               })),
             ),
         )
-    const inputFor = (times, end = 11, tier = 0) => ({
+    const inputFor = (times: number[], end = 11, tier = 0): TimelineBuildInput => ({
       rotation: {
         name: "Battle grid",
         eventTimeReference: "battleStart",
@@ -56,7 +57,7 @@ describe("fivefold-bleed-grid", () => {
       setupEffects: [],
       weapons: [],
     })
-    const ticks = rows => rows.filter(row => row.kind === "dot")
+    const ticks = (rows: TimelineRow[]) => rows.filter(row => row.kind === "dot")
     const close = (a: number | undefined, b: number) => assertClose(a, b, 1e-9)
     const shared = new ExpectedPeriodicTracker(1, 1.01, 0)
     shared.apply(0.2, 0.4, 5, 5, 1, "first")
