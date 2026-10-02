@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-editor-timeline-worker.mjs.
@@ -109,7 +111,7 @@ describe("editor-timeline-worker", () => {
         stats,
         derivedStats: calculateDerivedStats(stats, 0),
         enemy,
-        attunement: { physicalPenetration: 0, formlessPenetration: 0 },
+        attunement: emptyAttunementStats,
         weapons: [],
         statPriority: [],
         attunementPriority: [],

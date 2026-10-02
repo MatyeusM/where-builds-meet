@@ -75,7 +75,7 @@ describe("innerway-catalog", () => {
       const result = calculateDamageBreakdown({ type: "damage", phyCoef: 1, attrCoef: 1 }, context(boosted, weapons))
       const attuned = calculateDamageBreakdown(
         { type: "damage", phyCoef: 1, attrCoef: 1 },
-        { ...context(stats, weapons), attunement: { formlessPenetration: 6 } },
+        { ...context(stats, weapons), attunement: { ...emptyAttunementStats, formlessPenetration: 6 } },
       )
       close(result.total, attuned.total, `${channel} raw Formless Penetration must match attunement penetration`)
       assert.ok(result.total > base.total, `${channel} Formless Penetration must improve output`)

@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { defaultGlobalDebuffs } from "@/globalDebuffs"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -104,7 +106,7 @@ describe("innerway-solo-level", () => {
           food: "None",
           divinecraft: "None",
           script: "None",
-          globalDebuffs: {},
+          globalDebuffs: defaultGlobalDebuffs,
           skillOverrides: {},
           previewId: null,
         },

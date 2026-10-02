@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
 
@@ -97,7 +99,7 @@ describe("draught-innerways", () => {
       }
     }
     const attunement = resolveAttunementStats(
-      { formlessPenetration: 0 },
+      { ...emptyAttunementStats },
       { formlessPenetration: 10 },
       { formlessPenetration: 20 },
       { formlessPenetration: penetration },

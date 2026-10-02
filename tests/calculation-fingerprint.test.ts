@@ -1,5 +1,10 @@
 import { assert, describe, it } from "vitest"
 
+import type { RotationSimulationBundle } from "@/calculations/rotationCalculator"
+import type { WeaponId } from "@/types"
+
+import { castStep } from "./helpers/rotationSteps"
+
 // Ported from script/probe/check-calculation-fingerprint-cache.mjs.
 describe("calculation-fingerprint", () => {
   it("Fingerprint probe passed", async () => {
@@ -11,8 +16,13 @@ describe("calculation-fingerprint", () => {
 
     assert(new Set([setupA, setupB, setupC]).size === 3, "Distinct setup inputs produced duplicate fingerprints.")
 
-    const namedRotationBundle = (name, skill, weapons = ["snowparting", "phalanxbane"]) => ({
-      timeline: { rotation: { name, steps: [{ type: "skill", skill }] } },
+    const namedRotationBundle = (
+      name: string,
+      skill: string,
+      weapons: WeaponId[] = ["snowparting", "phalanxbane"],
+    ): RotationSimulationBundle => ({
+      timeline: { rotation: { name, steps: [castStep(skill)] } },
+      startAnchor: { rowId: "rotation-0" },
       weapons,
     })
     const rotationA = rotationBundleFingerprint(namedRotationBundle("First name", "SkillA"))

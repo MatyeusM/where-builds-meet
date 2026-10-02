@@ -3,6 +3,8 @@ import { readFile, readdir } from "node:fs/promises"
 
 import { describe, it } from "vitest"
 
+import { emptyAttunementStats } from "@/calculations/attunementStats"
+
 // Ported from script/probe/check-martial-art-talent-ranks.mjs.
 describe("martial-art-talent-ranks", () => {
   it("Talent ranks: configured data coverage, independent selection, deduplication, raw-stat formulas, worker damage, and timeline changes passed", async () => {
@@ -94,7 +96,7 @@ describe("martial-art-talent-ranks", () => {
           bamboocutResistance: 0,
           judgementResistance: 0,
         },
-        attunement: { physicalPenetration: 0, formlessPenetration: 0 },
+        attunement: emptyAttunementStats,
         weapons: [],
         statPriority: [],
         attunementPriority: [],
