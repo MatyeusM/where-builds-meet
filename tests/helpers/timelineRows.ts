@@ -43,3 +43,15 @@ export function actionNumber(row: TimelineRow, key: string): number {
   assert(typeof value === "number", `Expected the action at ${row.startTime} to carry a numeric ${key}.`)
   return value
 }
+
+/**
+ * The state the row carries after its action at `index`.
+ *
+ * Action states are keyed by index and the key is only present once the builder
+ * has resolved that action, so a spec reading one named which action it meant.
+ */
+export function actionStateAt(row: TimelineRow, index: number) {
+  const state = row.actionStates[index]
+  assert(state, `Expected the row at ${row.startTime} to resolve a state after its action ${index}.`)
+  return state
+}
