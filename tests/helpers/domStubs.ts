@@ -50,6 +50,27 @@ export function readOnlyStorage(read: (key: string) => string | null): Storage {
   return { ...inert, getItem: read } as Storage
 }
 
+/**
+ * Storage backed by a map, for a spec that seeds, rewrites and removes keys.
+ *
+ * A spec that walks a value through several migrations has to write it, remove it
+ * again to prove a later read misses, and write a different value in its place, so
+ * this keeps the whole `Storage` surface rather than only the reads.
+ */
+export function writableStorage(): Storage {
+  const values = new Map<string, string>()
+  return {
+    get length() {
+      return values.size
+    },
+    key: index => [...values.keys()][index] ?? null,
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => void values.set(key, String(value)),
+    removeItem: key => values.delete(key),
+    clear: () => values.clear(),
+  }
+}
+
 /** The URL a `fetch` or `Request` input names, however it was spelled. */
 export function urlOf(input: RequestInfo | URL): string {
   if (input instanceof URL) return input.href
