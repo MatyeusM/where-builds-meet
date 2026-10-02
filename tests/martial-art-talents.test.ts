@@ -5,6 +5,14 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type {
+  EditableObject,
+  SkillRecord,
+  TimelineBuildInput,
+  TimelineRow,
+  RotationStep,
+} from "../src/calculations/rotationTimeline.ts"
+import type { WeaponId } from "../src/types.ts"
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
@@ -103,7 +111,7 @@ describe("martial-art-talents", () => {
         }
       }
     }
-    const talentEffects = (weapon, name) =>
+    const talentEffects = (weapon: WeaponId, name: string) =>
       martialArtEffectsForRank(
         {
           [weapon]: {
@@ -260,7 +268,12 @@ describe("martial-art-talents", () => {
       1000,
       "Iron Guard absence removes bonus",
     )
-    const timeline = (setupEffects, steps, skills, extra = {}) =>
+    const timeline = (
+      setupEffects: EditableObject[],
+      steps: RotationStep[],
+      skills: Record<string, SkillRecord>,
+      extra: Partial<TimelineBuildInput> = {},
+    ): TimelineRow[] =>
       buildRotationTimeline({
         rotation: { name: "Talent triggers", steps },
         skills: withImmediateAttacks(skills),

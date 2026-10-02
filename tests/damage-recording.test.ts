@@ -4,6 +4,12 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type {
+  RotationDamageEntry,
+  RotationSimulationBaseline,
+  RotationSimulationBundle,
+} from "../src/calculations/rotationCalculator.ts"
+import type { RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
@@ -32,7 +38,7 @@ describe("damage-recording", () => {
       criticalRate: 0.4,
     }
     const weapons = ["mortalRopeDart", "infernalTwinblades"]
-    const bundle = steps => ({
+    const bundle = (steps: RotationStep[]): RotationSimulationBundle => ({
       timeline: {
         rotation: { name: "Rodent Hunt probe", targetHP: 100000, steps },
         skills: {
@@ -77,15 +83,17 @@ describe("damage-recording", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const payouts = result => result.baseline.filter(entry => entry.replay)
-    const rodents = result => result.baseline.filter(entry => entry.context.skillTags.includes("Rodent"))
-    const damage = (result, entries) => entries.reduce((sum, entry) => sum + result.actionBreakdowns[entry.id].total, 0)
-    const recordedHits = (result, payout) => {
+    const payouts = (result: RotationSimulationBaseline) => result.baseline.filter(entry => entry.replay)
+    const rodents = (result: RotationSimulationBaseline) =>
+      result.baseline.filter(entry => entry.context.skillTags.includes("Rodent"))
+    const damage = (result: RotationSimulationBaseline, entries: RotationDamageEntry[]) =>
+      entries.reduce((sum, entry) => sum + result.actionBreakdowns[entry.id].total, 0)
+    const recordedHits = (result: RotationSimulationBaseline, payout: RotationDamageEntry) => {
       const index = payouts(result).indexOf(payout)
       const start = index > 0 ? payouts(result)[index - 1].timelineTime : -Infinity
       return rodents(result).filter(hit => hit.timelineTime >= start && hit.timelineTime < payout.timelineTime)
     }
-    const checkPayouts = result => {
+    const checkPayouts = (result: RotationSimulationBaseline) => {
       for (const entry of payouts(result)) {
         const expected = damage(result, recordedHits(result, entry)) * 0.3
         close(result.actionBreakdowns[entry.id].total, expected, "Payout copies the final damage of recorded hits")
