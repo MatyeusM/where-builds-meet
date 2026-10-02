@@ -5,6 +5,7 @@ import { describe, it } from "vitest"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import type { RotationSimulationBaseline } from "../src/calculations/rotationCalculator.ts"
+import type { EditableObject, RotationStep } from "../src/calculations/rotationTimeline.ts"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-wts-cast-snapshot.mjs.
@@ -108,7 +109,7 @@ describe("wts-cast-snapshot", () => {
         maxHP: 1000,
       },
     }
-    const fixture = (steps, setupEffects = []) => ({
+    const fixture = (steps: RotationStep[], setupEffects: EditableObject[] = []): RotationSimulationBundle => ({
       ...base,
       timeline: { ...base.timeline, rotation: { ...base.timeline.rotation, steps }, setupEffects },
     })
