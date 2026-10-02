@@ -73,7 +73,7 @@ describe("infernal-twinblades-talents", () => {
       EmptyDodge: { castTime: 0, tags: ["PerfectDodge"], action: [] },
     }
     const setupEffects = martialArtEffectsForRank({ infernalTwinblades: talent }, ["infernalTwinblades"], 13)
-    const build = (steps, extra = {}) =>
+    const build = (steps, extra = {}): TimelineRow[] =>
       buildRotationTimeline({
         rotation: { name: "Infernal Twinblades talent probe", steps },
         skills: withImmediateAttacks(skills),

@@ -8,7 +8,7 @@ describe("skill-cooldowns", () => {
     const { default: snowpartingSkills } = await import("../data/skill/snowparting-blade.json")
     const { default: phalanxbaneSkills } = await import("../data/skill/phalanxbane-blade.json")
     const { default: mysticSkills } = await import("../data/skill/mystic.json")
-    const build = (rotation, skills, innerWayConditions = [], overrides = {}) =>
+    const build = (rotation, skills, innerWayConditions = [], overrides = {}): TimelineRow[] =>
       buildRotationTimeline({
         rotation,
         skills,

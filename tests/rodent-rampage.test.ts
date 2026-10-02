@@ -4,6 +4,8 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type { RotationSimulationBundle } from "../src/calculations/rotationCalculator.ts"
+import type { RotationStep, TimelineBuildInput, TimelineRow } from "../src/calculations/rotationTimeline.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
@@ -30,7 +32,7 @@ describe("rodent-rampage", () => {
         { type: "damage", time: 0.2, phyCoef: 1 },
       ],
     }
-    const input = (steps, extra = {}) => ({
+    const input = (steps: RotationStep[], extra: Partial<TimelineBuildInput> = {}): TimelineBuildInput => ({
       rotation: { name: "Rodent stages", steps },
       skills: {
         ...infernal,
@@ -64,8 +66,12 @@ describe("rodent-rampage", () => {
       initialBuffs: [{ name: "Flamelash", stack: 1 }],
       ...extra,
     })
-    const rodentRows = rows => rows.filter(row => row.step.skill === "Rodent")
-    const build = (steps, extra = {}, roll) => buildRotationTimeline(input(steps, extra), roll)
+    const rodentRows = (rows: TimelineRow[]) => rows.filter(row => row.step.skill === "Rodent")
+    const build = (
+      steps: RotationStep[],
+      extra: Partial<TimelineBuildInput> = {},
+      roll?: (key: string) => number,
+    ): TimelineRow[] => buildRotationTimeline(input(steps, extra), roll)
     for (const id of Object.keys(infernal).filter(id => id.endsWith("Rodent"))) {
       const active = build([castStep("RodentRampage"), castStep(id)])
       assert.equal(rodentRows(active).length, 1, `${id} launches one Rodent before its light attack hits`)
@@ -231,7 +237,7 @@ describe("rodent-rampage", () => {
         )
       }
     }
-    const bundle = conditions => ({
+    const bundle = (conditions: string[]): RotationSimulationBundle => ({
       timeline: input([castStep("RodentRampage"), castStep("InfernalFlamelashLight5")], {
         innerWayConditions: conditions,
       }),

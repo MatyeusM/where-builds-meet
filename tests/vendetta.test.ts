@@ -4,6 +4,7 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type { RotationSimulationBaseline } from "../src/calculations/rotationCalculator.ts"
 import { assertClose } from "./helpers/floatEquality"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 import { rowCasting } from "./helpers/timelineRows"
@@ -17,7 +18,7 @@ describe("vendetta", () => {
     const mortal = await import("../data/skill/mortal-rope-dart.json")
     const infernal = await import("../data/skill/infernal-twinblades.json")
     const { buildRotationTimeline } = await import("../src/calculations/rotationTimeline.ts")
-    const build = (tier, steps, roll) =>
+    const build = (tier, steps, roll): TimelineRow[] =>
       buildRotationTimeline(
         {
           rotation: { name: "Vendetta lifetime", steps },
@@ -104,7 +105,7 @@ describe("vendetta", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const damageRun = (withToken, t6 = false, setupEffects = []) =>
+    const damageRun = (withToken, t6 = false, setupEffects = []): RotationSimulationBaseline =>
       calculateRotationBaseline({
         timeline: {
           rotation: {

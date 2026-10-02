@@ -4,6 +4,7 @@ import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
+import type { RotationSimulationBaseline } from "../src/calculations/rotationCalculator.ts"
 import { castStep, delayStep } from "./helpers/rotationSteps"
 
 // Ported from script/probe/check-wts-cast-snapshot.mjs.
@@ -111,11 +112,11 @@ describe("wts-cast-snapshot", () => {
       ...base,
       timeline: { ...base.timeline, rotation: { ...base.timeline.rotation, steps }, setupEffects },
     })
-    const observed = result =>
+    const observed = (result: RotationSimulationBaseline) =>
       result.timeline
         .filter(row => row.step.skill === "Observe")
         .map(row => row.buffs.get("WorldToSword")?.accumulatorThreshold)
-    const near = (actual, expected, message) =>
+    const near = (actual: number, expected: number, message: string) =>
       assert.ok(Math.abs(actual - expected) < 1e-7, `${message}: ${actual} vs ${expected}`)
     const noAdjacentDamage = calculateRotationBaseline(fixture([castStep("WorldToSword"), castStep("Observe")]))
     near(observed(noAdjacentDamage)[0], 2100, "A cast without nearby damage/healing still gets a threshold")
