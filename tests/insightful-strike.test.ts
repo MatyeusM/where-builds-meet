@@ -1,10 +1,18 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
-import type { RotationDamageEntry } from "@/calculations/rotationCalculator"
+import type { RotationDamageEntry, RotationSimulationBaseline } from "@/calculations/rotationCalculator"
+import type { TimelineBuildInput } from "@/calculations/rotationTimeline"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
+
+/** The Affinity rate the fifth hit resolved, named when it resolved none. */
+function affinityOnFifthHit(baseline: RotationSimulationBaseline) {
+  const rates = baseline.actionBreakdowns["rotation-0:4"].outcomeRates
+  assert(rates, "The fifth Insightful Strike hit must resolve its outcome rates.")
+  return rates.affinity
+}
 
 // Ported from script/probe/check-insightful-strike.mjs.
 describe("insightful-strike", () => {
@@ -118,7 +126,7 @@ describe("insightful-strike", () => {
       bamboocutResistance: 0,
       judgementResistance: 0,
     }
-    const timeline = {
+    const timeline: TimelineBuildInput = {
       rotation: { name: "Insightful Strike probe", steps: [{ type: "skill", skill: "Probe" }] },
       skills: {
         Probe: {
@@ -198,8 +206,8 @@ describe("insightful-strike", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const t0FifthAffinity = probabilisticT0.actionBreakdowns["rotation-0:4"].outcomeRates.affinity
-    const t3FifthAffinity = probabilisticT3.actionBreakdowns["rotation-0:4"].outcomeRates.affinity
+    const t0FifthAffinity = affinityOnFifthHit(probabilisticT0)
+    const t3FifthAffinity = affinityOnFifthHit(probabilisticT3)
     closeTo(
       t3FifthAffinity - t0FifthAffinity,
       0.001875,
