@@ -1,4 +1,4 @@
-import type { EffectDefinition, SkillRecord } from "@/calculations/rotationTimeline"
+import type { EditableObject, EffectDefinition, SkillRecord } from "@/calculations/rotationTimeline"
 
 /**
  * Narrow a shipped data file to the type the calculation takes.
@@ -16,4 +16,15 @@ export function asSkillRecords(file: unknown): Record<string, SkillRecord> {
 
 export function asEffectDefinitions(file: unknown): Record<string, EffectDefinition> {
   return file as Record<string, EffectDefinition>
+}
+
+/**
+ * A skill record's action list, which the record carries untyped.
+ *
+ * `SkillRecord.action` is `unknown[]`, because a skill's actions are read by
+ * several different consumers that each want their own shape. Specs that index
+ * an action's fields read them through this instead.
+ */
+export function skillActions(record: SkillRecord): EditableObject[] {
+  return (record.action ?? []) as EditableObject[]
 }
