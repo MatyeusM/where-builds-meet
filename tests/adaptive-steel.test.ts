@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
+import { defaultSkillMaps } from "@/application/gameData/skills"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 
 import buffs from "../data/buff/stonesplit-strength.json"
-import general from "../data/skill/general.json"
+
+const general = defaultSkillMaps.General
 import snowparting from "../data/skill/snowparting-blade.json"
 import { calculateDamageBreakdown } from "../src/calculations/damage"
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"

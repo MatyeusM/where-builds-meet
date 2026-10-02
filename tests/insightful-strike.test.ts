@@ -1,6 +1,7 @@
 import { assert, describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { RotationDamageEntry } from "@/calculations/rotationCalculator"
 
 import { assertClose } from "./helpers/floatEquality"
 import { probeLoad } from "./helpers/probe-loader.js"
@@ -153,7 +154,9 @@ describe("insightful-strike", () => {
       innerWayPriority: [],
       setupComparisons: {},
     })
-    const concentrations = result.baseline.map(entry => result.expectedOutcomeBuffSchedule[entry.id]?.Concentration)
+    const concentrations = result.baseline.map(
+      (entry: RotationDamageEntry) => result.expectedOutcomeBuffSchedule[entry.id]?.Concentration,
+    )
     assert(
       JSON.stringify(concentrations) === JSON.stringify([0, 0, 0, 0, 1]),
       `Concentration must begin after the fourth hit and affect the fifth; received ${concentrations}.`,

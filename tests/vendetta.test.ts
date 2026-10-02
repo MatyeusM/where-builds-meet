@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { TimelineRow } from "@/calculations/rotationTimeline"
 
 import type { RotationSimulationBaseline } from "../src/calculations/rotationCalculator.ts"
 import { assertClose } from "./helpers/floatEquality"
@@ -86,7 +87,7 @@ describe("vendetta", () => {
     )
     assert.equal(refreshed.length, 1, "Refresh still produces one buff")
     assert.ok(
-      Math.abs(refreshed[0].expiresAt - 30.082) < 1e-9,
+      Math.abs(refreshed[0]!.expiresAt - 30.082) < 1e-9,
       "Refresh expiration is measured from the new application",
     )
     const { calculateRotationBaseline } = await import("../src/calculations/rotationCalculator.ts")
@@ -200,8 +201,9 @@ describe("vendetta", () => {
           !hit.actionStates[0].debuffs.has("VendettaToken"),
           "Token expires at its exact tier-adjusted boundary",
         )
-        const before = build(tier, [castStep("BladeboundThreadCancel"), castStep("InfernalLight1")], roll).find(
-          row => row.step.skill === "InfernalLight1",
+        const before = rowCasting(
+          build(tier, [castStep("BladeboundThreadCancel"), castStep("InfernalLight1")], roll),
+          "InfernalLight1",
         )
         close(
           before.actionStates[0].debuffs.get("VendettaToken").expiresAt,

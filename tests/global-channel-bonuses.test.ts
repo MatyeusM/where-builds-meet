@@ -42,7 +42,7 @@ describe("global-channel-bonuses", () => {
       derivedStats: calculateDerivedStats(stats, 0),
       effects: [],
     }
-    const damage = (effects, nextStats = stats) =>
+    const damage = (effects: Record<string, unknown>[], nextStats: CharacterStats = stats) =>
       calculateDamageBreakdown(
         { phyCoef: 1, attrCoef: 1 },
         { ...baseContext, stats: nextStats, derivedStats: calculateDerivedStats(nextStats, 0), effects },

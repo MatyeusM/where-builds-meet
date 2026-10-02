@@ -34,7 +34,7 @@ describe("defense-resistance-effects", () => {
       derivedStats: calculateDerivedStats(stats, 0),
       effects: [],
     }
-    const damage = effects =>
+    const damage = (effects: Record<string, unknown>[]) =>
       calculateDamageBreakdown({ phyCoef: 1, attrCoef: 1 }, { ...baseContext, effects }).physical
     const baseline = damage([])
     const reducedDefense = damage([{ defenseBonus: -0.06 }])

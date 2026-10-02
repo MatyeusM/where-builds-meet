@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import type { TimelineRow } from "@/calculations/rotationTimeline"
+
 // Ported from script/probe/check-skill-cooldowns.mjs.
 describe("skill-cooldowns", () => {
   it("Skill and group cooldown windows, multiple uses, editor waits, and cooldown modifiers passed", async () => {

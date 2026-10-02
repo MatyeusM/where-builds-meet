@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises"
 import { describe, it } from "vitest"
 
 import { emptyAttunementStats } from "@/calculations/attunementStats"
+import type { TimelineRow } from "@/calculations/rotationTimeline"
 
 import { withImmediateAttacks } from "./helpers/attack-response-fixtures"
 import { assertClose } from "./helpers/floatEquality"

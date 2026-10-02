@@ -164,7 +164,7 @@ describe("resource-requirement", () => {
       "Heaven's Will must not regenerate during prepull time and must begin regenerating at fight start.",
     ).toBeTruthy()
 
-    const buildMandateTimeline = withUnity =>
+    const buildMandateTimeline = (withUnity: boolean) =>
       buildRotationTimeline({
         rotation: {
           name: `Celestial Mandate ${withUnity ? "with" : "without"} Heaven's Unity`,
