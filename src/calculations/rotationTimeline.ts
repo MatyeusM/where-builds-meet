@@ -141,7 +141,7 @@ type RotationEventStep =
   | { event: "Move"; startTime: number; distance: number }
   | { event: "Hellfire"; before: AttachedEventTarget; amount: number; startTime?: number }
 export type RotationStep =
-  | { type: "skill"; skill?: string; duration?: number; causesBreak?: boolean; condition?: string }
+  | { type: "skill"; skill?: string; event?: undefined; duration?: number; causesBreak?: boolean; condition?: string }
   | ({ type: "event"; skill?: undefined } & RotationEventStep)
 
 export function isFixedTimeEvent(

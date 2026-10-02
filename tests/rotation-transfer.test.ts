@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import type { RotationEntry } from "../src/rotationTransfer.ts"
+
 // Ported from script/probe/check-rotation-transfer.mjs.
 describe("rotation-transfer", () => {
   it("Rotation export and import checks passed", async () => {
@@ -14,13 +16,13 @@ describe("rotation-transfer", () => {
       "A universal martial-art list saved before Draught must expand to include the new pair.",
     ).toBeTruthy()
 
-    const defaultEntry = {
+    const defaultEntry: RotationEntry = {
       id: "dummy-1-min",
       isDefault: true,
       martialArts: ["snowparting", "phalanxbane"],
       rotation: { name: "Default", steps: [{ type: "skill", skill: "SnowpartingQStab" }] },
     }
-    const customEntry = {
+    const customEntry: RotationEntry = {
       id: "custom-rotation",
       martialArts: ["snowparting", "phalanxbane"],
       rotation: {
@@ -44,7 +46,7 @@ describe("rotation-transfer", () => {
         start: { step: 8, action: 1 },
       },
     }
-    const current = [defaultEntry, customEntry]
+    const current: RotationEntry[] = [defaultEntry, customEntry]
     const serialized = JSON.parse(transfer.serializeRotationEntries(current))
     expect(
       serialized.length === 1 && serialized[0].id === customEntry.id && !("isDefault" in serialized[0]),
