@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest"
 import { emptyAttunementStats } from "@/calculations/attunementStats"
 import { defaultGlobalDebuffs } from "@/globalDebuffs"
 
-import buffs from "../data/buff/bamboocut-dust.json"
-import mysticBuffs from "../data/buff/mystic.json"
-import debuffs from "../data/debuff/bamboocut-dust.json"
+import buffsJson from "../data/buff/bamboocut-dust.json"
+const buffs = asEffectDefinitions(buffsJson)
+import mysticBuffsJson from "../data/buff/mystic.json"
+const mysticBuffs = asEffectDefinitions(mysticBuffsJson)
+import debuffsJson from "../data/debuff/bamboocut-dust.json"
+const debuffs = asEffectDefinitions(debuffsJson)
 import gearSets from "../data/gear-set.json"
 import light from "../data/innerway/light-anew.json"
 import phantom from "../data/innerway/phantom-rally.json"
@@ -16,10 +19,14 @@ import ropeArt from "../data/martial-art/unfettered-rope-dart.json"
 import pathData from "../data/path.json"
 import dustPhantomChimeRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min-100pc.json"
 import defaultDustRotation from "../data/rotation/bamboocut-dust/dust-dummy-1-min.json"
-import umbrella from "../data/skill/everspring-umbrella.json"
-import general from "../data/skill/general.json"
-import mystic from "../data/skill/mystic.json"
-import rope from "../data/skill/unfettered-rope-dart.json"
+import umbrellaJson from "../data/skill/everspring-umbrella.json"
+const umbrella = asSkillRecords(umbrellaJson)
+import generalJson from "../data/skill/general.json"
+const general = asSkillRecords(generalJson)
+import mysticJson from "../data/skill/mystic.json"
+const mystic = asSkillRecords(mysticJson)
+import ropeJson from "../data/skill/unfettered-rope-dart.json"
+const rope = asSkillRecords(ropeJson)
 import { innerWayConditionsFor, innerWayEffectRulesFor } from "../src/application/characterComposition"
 import { buildPresetRotationBundle } from "../src/application/graduation"
 import { calculateRotationBaseline, type RotationSimulationBundle } from "../src/calculations/rotationCalculator"
@@ -33,6 +40,7 @@ import type { RotationRecord, RotationStep, TimelineRow } from "../src/calculati
 import { martialArtEffectsForRank } from "../src/data/martialArtTalents"
 import { emptyStats } from "../src/data/statDefinitions"
 import { castStep, delayStep } from "./helpers/rotationSteps"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 // Select the stage rows separately from their Resonance attacks.
 const isThrow = (row: TimelineRow) => /^ScarletSpinStage\d$/.test(row.step.skill ?? "")
 const isCatch = (row: TimelineRow) => row.step.skill === "EverspringPerfectCatch"
@@ -48,7 +56,7 @@ const stateAfterEffect = (
   effect: string,
 ) => {
   const index = umbrella[skill as keyof typeof umbrella].action.findIndex(
-    action => action.value === effect && action.type !== "consume",
+    (action: EditableObject) => action.value === effect && action.type !== "consume",
   )
   expect(index).toBeGreaterThanOrEqual(0)
   return row.actionStates?.[index + 1]
@@ -944,7 +952,7 @@ it.each([15, 16])("Towline T6 refreshes target Soulbreak within 15m: distance %s
   ]
   // The finger snap lands mid-cast, so the refresh it causes is offset by its hit
   // time. Out of range nothing is refreshed and the original expiry stands.
-  const snap = rope.BurnAndBury.action.find(action => action.type === "damage")!.time as number
+  const snap = rope.BurnAndBury.action.find((action: EditableObject) => action.type === "damage")!.time as number
   const inRange = distance === 15
   const result = calculateRotationBaseline(input)
   const payouts = result.baseline.filter(entry => entry.replay)

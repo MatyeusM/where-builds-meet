@@ -5,12 +5,17 @@ import type { DamageContext } from "@/calculations/damage"
 import type { RotationSimulationBaseline, RotationSimulationBundle } from "@/calculations/rotationCalculator"
 import type { TimelineBuildInput } from "@/calculations/rotationTimeline"
 
-import mysticBuffs from "../data/buff/mystic.json"
-import delugeBuffs from "../data/buff/silkbind-deluge.json"
+import mysticBuffsJson from "../data/buff/mystic.json"
+const mysticBuffs = asEffectDefinitions(mysticBuffsJson)
+import delugeBuffsJson from "../data/buff/silkbind-deluge.json"
+const delugeBuffs = asEffectDefinitions(delugeBuffsJson)
 import royalRemedy from "../data/innerway/royal-remedy.json"
-import mysticSkills from "../data/skill/mystic.json"
-import panaceaFanSkills from "../data/skill/panacea-fan.json"
-import soulshadeUmbrellaSkills from "../data/skill/soulshade-umbrella.json"
+import mysticSkillsJson from "../data/skill/mystic.json"
+const mysticSkills = asSkillRecords(mysticSkillsJson)
+import panaceaFanSkillsJson from "../data/skill/panacea-fan.json"
+const panaceaFanSkills = asSkillRecords(panaceaFanSkillsJson)
+import soulshadeUmbrellaSkillsJson from "../data/skill/soulshade-umbrella.json"
+const soulshadeUmbrellaSkills = asSkillRecords(soulshadeUmbrellaSkillsJson)
 import { calculateDerivedStats } from "../src/calculations/effectiveStats"
 import { calculateHealingAttackSnapshot, calculateHealingBreakdown } from "../src/calculations/healing"
 import {
@@ -21,6 +26,7 @@ import {
 import { buildRotationTimeline, mergeCalculatedTimelineState } from "../src/calculations/rotationTimeline"
 import { emptyStats } from "../src/data/statDefinitions"
 import { isClose } from "./helpers/floatEquality"
+import { asEffectDefinitions, asSkillRecords } from "./helpers/shippedData"
 import { rowWithId } from "./helpers/timelineRows"
 
 // Ported from script/probe/check-healing.mjs. The probe stops at the first
