@@ -81,7 +81,11 @@ describe("held Defense", () => {
     const data = input([cast(1.1), attack(1), attack(1), end(3 * cooldown + 2)])
     if (tier4) {
       data.innerWayConditions.push("ExquisiteSceneryT4")
-      data.innerWayRules = [{ source: "ExquisiteScenery", tier: 4, target: "Riposte", modify: { cooldown: 5 } }]
+      data.innerWayRules = [
+        // The tier only lowers Riposte's cooldown, so it carries a modify rule and the
+        // empty effect sheet the app's own inner-way builder gives a rule without one.
+        { source: "ExquisiteScenery", tier: 4, target: "Riposte", modify: { cooldown: 5 }, effect: {} },
+      ]
     }
     const rows = buildRotationTimeline(data)
     expect(skillRows(rows, "RiposteTrigger").map(row => row.startTime)).toEqual(tier4 ? [1, 6, 11] : [1, 11])
