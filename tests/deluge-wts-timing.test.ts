@@ -12,7 +12,7 @@ it("preserves WTS proc counts and downstream timing after the Floating Grace int
       entry.fixture.build === "deluge-fully-relayed-max-hw",
   )
   expect(cases).toHaveLength(4)
-  for (const { id, pathId, rotation, fixture } of cases) {
+  for (const { pathId, rotation, fixture } of cases) {
     const bundle = buildPresetRotationBundle(
       { pathId, ...fixture, rotation: { ...rotation, ping: fixture.ping }, skillOverrides: {}, previewId: null },
       fixture.build,
@@ -33,12 +33,12 @@ it("preserves WTS proc counts and downstream timing after the Floating Grace int
       result.metrics.breakdown.skills.map(skill => [skill.id, skill.hits]).sort()
     const casts = (result: typeof after) =>
       result.timeline.filter(row => row.kind === "rotation" && row.step.type === "skill")
-    expect(hitCounts(after), id).toEqual(hitCounts(before))
-    expect(after.metrics.dps, id).toBeCloseTo(before.metrics.dps, 8)
+    expect(hitCounts(after)).toEqual(hitCounts(before))
+    expect(after.metrics.dps).toBeCloseTo(before.metrics.dps, 8)
     const previousCasts = casts(before)
     for (const [index, row] of casts(after).entries()) {
-      expect(row.step.skill, id).toBe(previousCasts[index].step.skill)
-      expect(row.startTime - after.anchorTime, id).toBeCloseTo(previousCasts[index].startTime - before.anchorTime, 8)
+      expect(row.step.skill).toBe(previousCasts[index].step.skill)
+      expect(row.startTime - after.anchorTime).toBeCloseTo(previousCasts[index].startTime - before.anchorTime, 8)
     }
   }
 })
