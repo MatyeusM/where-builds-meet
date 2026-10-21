@@ -134,8 +134,10 @@ not a second catalog of current values:
   uses a plain `cooldown` because it is currently the only Mystic carrying the
   Break Defense tag; add a `cooldownGroup` when a second one appears.
 - Summon Lightning (`75120051`) applies Thunder Summoning at 0.403 seconds and
-  ends at 1.591 seconds. Both values come from the export route rather than a
-  measured schedule, and the export carries no cooldown or resource cost. Its
+  permits an ordinary equal/lower-priority follow-up at 1.179 seconds; its animation
+  ends at 1.591 seconds. The cast duration uses the follow-up boundary, not animation
+  end. These values come from the export route rather than a measured schedule.
+  No cooldown or resource cost is authored. Its
   30% is the source's independent DMG Bonus (`calc_cause_change` cause 50), so
   it belongs to the Mechanism damage category and not to DMG Bonus Category 1.
   The export's `buffremove_add_buff` grant of `1500232` is a client-side usage
@@ -748,6 +750,23 @@ below keeps cross-cutting blockers and outstanding skill evidence.
   Tenacity grant have no representation. Do not attach them to the base hits.
 
 ### Timing and source validation
+
+The 2026-10-21 16:50 export supplies normal-route hit clocks for Fleeting Trace,
+All Under Justice, Wicked Defiance, and Storm Roar. Fleeting Trace retains its
+authored cast-end buffs and cast duration because its route has no interrupt
+clock. Wicked Defiance's Heaven's Will gain follows its second hit. Storm Roar's
+Drumbeat follows its hit. Floating Grace uses the cast-timeline healing request
+at one second for both healing and its associated buff; its animation interrupt
+is the next-cast boundary. Thunder Shock imports its ordinary interrupt without
+inventing missing hit clocks or changing the one-hit cancel. Animation-relative
+clocks remain provisional. Alternate routes, collider markers that do not identify
+projectile contact, and documented charge/request clocks are not interchangeable.
+
+The solo and team Deluge WTS presets wait 0.05 seconds after each Floating Grace
+to preserve their downstream cast schedule after its ordinary interrupt changed
+from 1.15 to 1.10 seconds. The healing request remains at one second. This explicit
+rotation delay preserves Qi Blade and Solid Foundation proc alignment without
+overriding the shared skill timing.
 
 - User-confirmed Deflect timing is 0.3s for all weapons, except Heng Blade at
   0.25s. Both ordinary and successful variants resolve this from `currentWeapon`;
@@ -1509,6 +1528,7 @@ Charged light
 0.135 hits and one 0.19 final hit, following the explicit damage table rather
 than the conflicting maximum-eight-hit tooltip. Its user-confirmed time to connect to VC
 is 2.033 seconds: 0.2 seconds of pre-charge plus 1.833 seconds after pre-charge.
+Flat attribute bonuses use the unscaled level-100 source values (39.15 for each small hit and 55.1 for the final hit); the shared primary-attribute multiplier applies once, including to these flat terms.
 Individual hit clocks remain zero because they are unresolved. It carries both `Light` and
 `Charged` tags.
 
