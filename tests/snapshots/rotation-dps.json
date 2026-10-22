@@ -595,6 +595,276 @@
       "totalDamage": 4383428.134906257,
       "duration": 60
     },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-full-min-bp/18": {
+      "fixture": {
+        "build": "kite-full-min-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "18",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 82197.51968020303,
+      "totalDamage": 4931851.180812182,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-full-min-bp/19": {
+      "fixture": {
+        "build": "kite-full-min-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "19",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 85960.74806206171,
+      "totalDamage": 5157644.883723703,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max-bp/18": {
+      "fixture": {
+        "build": "kite-fully-relayed-max-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "18",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 76134.13693992818,
+      "totalDamage": 4568048.216395691,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max-bp/19": {
+      "fixture": {
+        "build": "kite-fully-relayed-max-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "19",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 80193.4509149416,
+      "totalDamage": 4811607.054896496,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max/18": {
+      "fixture": {
+        "build": "kite-fully-relayed-max",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "18",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 72245.09599214101,
+      "totalDamage": 4334705.759528461,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max/19": {
+      "fixture": {
+        "build": "kite-fully-relayed-max",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "19",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 76473.70757399994,
+      "totalDamage": 4588422.454439997,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min-bp/18": {
+      "fixture": {
+        "build": "kite-fully-relayed-min-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "18",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 79254.00654687747,
+      "totalDamage": 4755240.392812648,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min-bp/19": {
+      "fixture": {
+        "build": "kite-fully-relayed-min-bp",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "19",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 83138.63044461497,
+      "totalDamage": 4988317.826676899,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min/18": {
+      "fixture": {
+        "build": "kite-fully-relayed-min",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "18",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 76088.91419768459,
+      "totalDamage": 4565334.8518610755,
+      "duration": 60
+    },
+    "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min/19": {
+      "fixture": {
+        "build": "kite-fully-relayed-min",
+        "rotation": "dummy-1-min-iv-bp-dh",
+        "martialArts": ["heavenwill", "skygrasp"],
+        "breakthrough": "19",
+        "ping": 40,
+        "food": "SimmeringFishSlices",
+        "divinecraft": "Fire",
+        "script": "None",
+        "globalDebuffs": {
+          "bossTalent": 0,
+          "draught": "none",
+          "phantomChime": false,
+          "qiImbalance": false,
+          "soulShaken": false,
+          "vulnerable": false,
+          "fearfulBlade": false,
+          "qingyisCharm": "none",
+          "floatingGrace": "none",
+          "silkbindWings": "none"
+        }
+      },
+      "dps": 79790.2406789982,
+      "totalDamage": 4787414.440739892,
+      "duration": 60
+    },
     "bamboocutKite/dummy-1-min-iv-bp/kite-full-min-bp/18": {
       "fixture": {
         "build": "kite-full-min-bp",
@@ -618,8 +888,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 77954.1727425522,
-      "totalDamage": 4677250.364553132,
+      "dps": 78890.98413333335,
+      "totalDamage": 4733459.048,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-full-min-bp/19": {
@@ -645,8 +915,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 81548.44027870403,
-      "totalDamage": 4892906.416722242,
+      "dps": 82532.0983196015,
+      "totalDamage": 4951925.89917609,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max-bp/18": {
@@ -672,8 +942,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 72292.57139724177,
-      "totalDamage": 4337554.283834507,
+      "dps": 73110.49883514205,
+      "totalDamage": 4386629.930108523,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max-bp/19": {
@@ -699,8 +969,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 76166.19135103865,
-      "totalDamage": 4569971.481062319,
+      "dps": 77032.68428369486,
+      "totalDamage": 4621961.057021691,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max/18": {
@@ -726,8 +996,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 68551.95767338722,
-      "totalDamage": 4113117.4604032333,
+      "dps": 69475.63367974196,
+      "totalDamage": 4168538.0207845178,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max/19": {
@@ -753,8 +1023,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 72583.0076796327,
-      "totalDamage": 4354980.460777963,
+      "dps": 73564.66784250317,
+      "totalDamage": 4413880.07055019,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min-bp/18": {
@@ -780,8 +1050,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 75173.98480041238,
-      "totalDamage": 4510439.088024743,
+      "dps": 76078.12616062301,
+      "totalDamage": 4564687.569637381,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min-bp/19": {
@@ -807,8 +1077,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 78884.19443715914,
-      "totalDamage": 4733051.666229548,
+      "dps": 79836.34235770653,
+      "totalDamage": 4790180.541462392,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min/18": {
@@ -834,8 +1104,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 72231.69324560127,
-      "totalDamage": 4333901.594736076,
+      "dps": 73198.41737827405,
+      "totalDamage": 4391905.042696443,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min/19": {
@@ -861,8 +1131,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 75764.46010981083,
-      "totalDamage": 4545867.60658865,
+      "dps": 76781.99297995266,
+      "totalDamage": 4606919.57879716,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-full-min/18": {
