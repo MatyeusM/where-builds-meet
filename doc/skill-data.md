@@ -45,6 +45,9 @@ resolved total rather than offering an editable wrapper-duration field. Stored
 step duration overrides remain intact; wrapper editing stays in the Skills editor.
 Base totals exclude ping.
 
+Boss Talent is a permanent global buff selected at 0% or 15%. Its `dmgBonus`
+adds to the existing general damage bonus category; it has no target-type condition.
+
 ## Datamine interpretation
 
 Local references are under `local/datamine/`: `wwm-skills-normal-all.json`,
