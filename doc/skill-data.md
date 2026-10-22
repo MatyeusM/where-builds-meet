@@ -1767,6 +1767,29 @@ Momentum, three Affinity, one Max Void Attack, and no All Mystic additional
 rolls. Comparison uses breakthrough 18, Clay Oven Flatbread, Fire, no script,
 default global buffs, and the preset ping; other affixes and setup stay fixed.
 
+### Kite combo stage indicators
+
+Heavenwill uses separate hidden `HeavenwillLightCombo` and
+`HeavenwillHeavyCombo` next-stage indicators. Like Wind's markers, applications
+replace the count at cast start and do not restrict skill selection. These
+indicators track stage only: expiry, input windows, and interruption admission
+are not modeled here. They must not be used as proof that a delayed follow-up
+is legal. Existing attack timings and A4's separate fast-A5 marker are unchanged.
+
+The normal skill export's six-stage Righteous Reign sequence advances A1–A5
+to A2–A6; its description and explicit action shortcut loop A6 back to A2,
+including the Cancel variant. Virtuous Enthroned's source stages
+20901006/7/8/9 map to the persisted H1/H2/H3 IDs and the added H4 ID:
+H1/H2 select A3, H3/H4 select A5, H1–H3 select the next heavy, and H4 clears
+the heavy indicator. Existing persisted heavy IDs retain their meaning.
+
+All Under Justice selects A5 unconditionally. Soaring High T1 enables the
+Wicked Defiance and Celestial Mandate A5 shortcuts, confirmed by Inner Way
+601 tier-one text and buff 10260120. The selecting Q2 action is 20901102;
+the normal tooltip's reference to 20901101 is not an additional Q1 shortcut.
+Shortcut selection does not apply A4's animation marker, so A5 retains its
+ordinary timing unless that separate marker is already present.
+
 ### Wind combo windows
 
 Ordinary Infernal light attacks track the next stage in hidden `InfernalLightCombo`:
