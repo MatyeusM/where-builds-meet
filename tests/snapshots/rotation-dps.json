@@ -26,6 +26,8 @@
       },
       "dps": 77305.3868340634,
       "totalDamage": 4638323.210043805,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min-100pc/dust-full-min/19": {
@@ -53,6 +55,8 @@
       },
       "dps": 81119.84030432547,
       "totalDamage": 4867190.4182595275,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min-100pc/dust-fully-relayed-max/18": {
@@ -80,6 +84,8 @@
       },
       "dps": 73156.42294133201,
       "totalDamage": 4389385.376479921,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min-100pc/dust-fully-relayed-max/19": {
@@ -107,6 +113,8 @@
       },
       "dps": 77054.66009997776,
       "totalDamage": 4623279.605998665,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min-100pc/dust-fully-relayed-min/18": {
@@ -134,6 +142,8 @@
       },
       "dps": 75052.69588297587,
       "totalDamage": 4503161.752978552,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min-100pc/dust-fully-relayed-min/19": {
@@ -161,6 +171,8 @@
       },
       "dps": 78440.19900757818,
       "totalDamage": 4706411.940454691,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-full-min/18": {
@@ -188,6 +200,8 @@
       },
       "dps": 77588.88247245115,
       "totalDamage": 4655332.948347069,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-full-min/19": {
@@ -215,6 +229,8 @@
       },
       "dps": 81419.2773617976,
       "totalDamage": 4885156.641707856,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-fully-relayed-max/18": {
@@ -242,6 +258,8 @@
       },
       "dps": 73319.79848869996,
       "totalDamage": 4399187.909321997,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-fully-relayed-max/19": {
@@ -269,6 +287,8 @@
       },
       "dps": 77227.28372145865,
       "totalDamage": 4633637.023287519,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-fully-relayed-min/18": {
@@ -296,6 +316,8 @@
       },
       "dps": 75218.61406855253,
       "totalDamage": 4513116.844113152,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutDust/dust-dummy-1-min/dust-fully-relayed-min/19": {
@@ -323,6 +345,8 @@
       },
       "dps": 78613.83531516723,
       "totalDamage": 4716830.118910034,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-full-min-bp/18": {
@@ -350,6 +374,8 @@
       },
       "dps": 69668.00942968958,
       "totalDamage": 4180080.565781375,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-full-min-bp/19": {
@@ -377,6 +403,8 @@
       },
       "dps": 72889.47003688583,
       "totalDamage": 4373368.2022131495,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-max-bp/18": {
@@ -404,6 +432,8 @@
       },
       "dps": 64571.26290519248,
       "totalDamage": 3874275.774311549,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-max-bp/19": {
@@ -431,6 +461,8 @@
       },
       "dps": 68052.03604372221,
       "totalDamage": 4083122.162623333,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-max/18": {
@@ -458,6 +490,8 @@
       },
       "dps": 66127.38843227792,
       "totalDamage": 3967643.3059366755,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-max/19": {
@@ -485,6 +519,8 @@
       },
       "dps": 70015.19548534701,
       "totalDamage": 4200911.729120821,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-min-bp/18": {
@@ -512,6 +548,8 @@
       },
       "dps": 67166.97850305583,
       "totalDamage": 4030018.7101833494,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-min-bp/19": {
@@ -539,6 +577,8 @@
       },
       "dps": 70481.93661921477,
       "totalDamage": 4228916.197152887,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-min/18": {
@@ -566,6 +606,8 @@
       },
       "dps": 69650.88805462306,
       "totalDamage": 4179053.283277384,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-infinite-vitality/kite-fully-relayed-min/19": {
@@ -593,6 +635,8 @@
       },
       "dps": 73057.13558177094,
       "totalDamage": 4383428.134906257,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-full-min-bp/18": {
@@ -620,6 +664,8 @@
       },
       "dps": 82197.51968020303,
       "totalDamage": 4931851.180812182,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-full-min-bp/19": {
@@ -647,6 +693,8 @@
       },
       "dps": 85960.74806206171,
       "totalDamage": 5157644.883723703,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max-bp/18": {
@@ -674,6 +722,8 @@
       },
       "dps": 76134.13693992818,
       "totalDamage": 4568048.216395691,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max-bp/19": {
@@ -701,6 +751,8 @@
       },
       "dps": 80193.4509149416,
       "totalDamage": 4811607.054896496,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max/18": {
@@ -728,6 +780,8 @@
       },
       "dps": 72245.09599214101,
       "totalDamage": 4334705.759528461,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-max/19": {
@@ -755,6 +809,8 @@
       },
       "dps": 76473.70757399994,
       "totalDamage": 4588422.454439997,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min-bp/18": {
@@ -782,6 +838,8 @@
       },
       "dps": 79254.00654687747,
       "totalDamage": 4755240.392812648,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min-bp/19": {
@@ -809,6 +867,8 @@
       },
       "dps": 83138.63044461497,
       "totalDamage": 4988317.826676899,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min/18": {
@@ -836,6 +896,8 @@
       },
       "dps": 76088.91419768459,
       "totalDamage": 4565334.8518610755,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp-dh/kite-fully-relayed-min/19": {
@@ -863,6 +925,8 @@
       },
       "dps": 79790.2406789982,
       "totalDamage": 4787414.440739892,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-full-min-bp/18": {
@@ -890,6 +954,8 @@
       },
       "dps": 78890.98413333335,
       "totalDamage": 4733459.048,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-full-min-bp/19": {
@@ -917,6 +983,8 @@
       },
       "dps": 82532.0983196015,
       "totalDamage": 4951925.89917609,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max-bp/18": {
@@ -944,6 +1012,8 @@
       },
       "dps": 73110.49883514205,
       "totalDamage": 4386629.930108523,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max-bp/19": {
@@ -971,6 +1041,8 @@
       },
       "dps": 77032.68428369486,
       "totalDamage": 4621961.057021691,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max/18": {
@@ -998,6 +1070,8 @@
       },
       "dps": 69475.63367974196,
       "totalDamage": 4168538.0207845178,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-max/19": {
@@ -1025,6 +1099,8 @@
       },
       "dps": 73564.66784250317,
       "totalDamage": 4413880.07055019,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min-bp/18": {
@@ -1052,6 +1128,8 @@
       },
       "dps": 76078.12616062301,
       "totalDamage": 4564687.569637381,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min-bp/19": {
@@ -1079,6 +1157,8 @@
       },
       "dps": 79836.34235770653,
       "totalDamage": 4790180.541462392,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min/18": {
@@ -1106,6 +1186,8 @@
       },
       "dps": 73198.41737827405,
       "totalDamage": 4391905.042696443,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutKite/dummy-1-min-iv-bp/kite-fully-relayed-min/19": {
@@ -1133,6 +1215,8 @@
       },
       "dps": 76781.99297995266,
       "totalDamage": 4606919.57879716,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-full-min/18": {
@@ -1160,6 +1244,8 @@
       },
       "dps": 88395.35272399802,
       "totalDamage": 5303721.163439881,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-full-min/19": {
@@ -1187,6 +1273,8 @@
       },
       "dps": 92623.02954561597,
       "totalDamage": 5557381.772736958,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-fully-relayed-max/18": {
@@ -1214,6 +1302,8 @@
       },
       "dps": 83585.29886028716,
       "totalDamage": 5015117.93161723,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-fully-relayed-max/19": {
@@ -1241,6 +1331,8 @@
       },
       "dps": 88653.73265152026,
       "totalDamage": 5319223.959091215,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-fully-relayed-min/18": {
@@ -1268,6 +1360,8 @@
       },
       "dps": 85580.76324582617,
       "totalDamage": 5134845.79474957,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-infinite-vitality/wind-fully-relayed-min/19": {
@@ -1295,6 +1389,8 @@
       },
       "dps": 89947.37704512538,
       "totalDamage": 5396842.6227075225,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-full-min/18": {
@@ -1322,6 +1418,8 @@
       },
       "dps": 76179.43247706551,
       "totalDamage": 4570765.94862393,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-full-min/19": {
@@ -1349,6 +1447,8 @@
       },
       "dps": 79850.28046949873,
       "totalDamage": 4791016.828169923,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-fully-relayed-max/18": {
@@ -1376,6 +1476,8 @@
       },
       "dps": 71953.97304547108,
       "totalDamage": 4317238.382728265,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-fully-relayed-max/19": {
@@ -1403,6 +1505,8 @@
       },
       "dps": 76329.7070190385,
       "totalDamage": 4579782.42114231,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-fully-relayed-min/18": {
@@ -1430,6 +1534,8 @@
       },
       "dps": 73754.41635800806,
       "totalDamage": 4425264.981480484,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bamboocutWind/wind-dummy-1-min-iv-no-dodge/wind-fully-relayed-min/19": {
@@ -1457,6 +1563,8 @@
       },
       "dps": 77538.16898667735,
       "totalDamage": 4652290.139200641,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeSplendor/dummy-1-min-81-waves/splendor-full/18": {
@@ -1484,6 +1592,8 @@
       },
       "dps": 80929.2396104889,
       "totalDamage": 4855754.376629334,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeSplendor/dummy-1-min-81-waves/splendor-full/19": {
@@ -1511,6 +1621,8 @@
       },
       "dps": 84792.56209631287,
       "totalDamage": 5087553.7257787725,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeSplendor/dummy-1-min-81-waves/splendor-fully-relayed/18": {
@@ -1538,6 +1650,8 @@
       },
       "dps": 78248.0673418079,
       "totalDamage": 4694884.040508473,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeSplendor/dummy-1-min-81-waves/splendor-fully-relayed/19": {
@@ -1565,6 +1679,8 @@
       },
       "dps": 82084.26235745398,
       "totalDamage": 4925055.741447238,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-37-bb-dh/umbra-full/18": {
@@ -1592,6 +1708,8 @@
       },
       "dps": 91974.89335942702,
       "totalDamage": 5518493.601565621,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-37-bb-dh/umbra-full/19": {
@@ -1619,6 +1737,8 @@
       },
       "dps": 96624.33911549249,
       "totalDamage": 5797460.346929549,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-37-bb-dh/umbra-fully-relayed/18": {
@@ -1646,6 +1766,8 @@
       },
       "dps": 89702.39142504496,
       "totalDamage": 5382143.4855026975,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-37-bb-dh/umbra-fully-relayed/19": {
@@ -1673,6 +1795,8 @@
       },
       "dps": 94326.03108977214,
       "totalDamage": 5659561.865386328,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-38-bb/umbra-full/18": {
@@ -1700,6 +1824,8 @@
       },
       "dps": 89812.47340628994,
       "totalDamage": 5388748.404377396,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-38-bb/umbra-full/19": {
@@ -1727,6 +1853,8 @@
       },
       "dps": 94394.88858258513,
       "totalDamage": 5663693.314955108,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-38-bb/umbra-fully-relayed/18": {
@@ -1754,6 +1882,8 @@
       },
       "dps": 87569.14402156408,
       "totalDamage": 5254148.641293844,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "bellstrikeUmbra/dummy-1-min-38-bb/umbra-fully-relayed/19": {
@@ -1781,6 +1911,8 @@
       },
       "dps": 92124.45752802271,
       "totalDamage": 5527467.451681362,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-full-max-ib/18": {
@@ -1808,6 +1940,8 @@
       },
       "dps": 35590.52194663151,
       "totalDamage": 2135431.3167978907,
+      "hps": 7659.916047988512,
+      "totalHealing": 459594.9628793107,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-full-max-ib/19": {
@@ -1835,6 +1969,8 @@
       },
       "dps": 37583.1666487481,
       "totalDamage": 2254989.998924886,
+      "hps": 7945.644250186615,
+      "totalHealing": 476738.6550111969,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-affinity/18": {
@@ -1862,6 +1998,8 @@
       },
       "dps": 36739.07081535754,
       "totalDamage": 2204344.2489214526,
+      "hps": 6076.417151348006,
+      "totalHealing": 364585.02908088034,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-affinity/19": {
@@ -1889,6 +2027,8 @@
       },
       "dps": 38730.6856601369,
       "totalDamage": 2323841.139608214,
+      "hps": 6345.442446041153,
+      "totalHealing": 380726.54676246917,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-hw/18": {
@@ -1916,6 +2056,8 @@
       },
       "dps": 35897.44450829582,
       "totalDamage": 2153846.670497749,
+      "hps": 6544.638745949983,
+      "totalHealing": 392678.324756999,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-hw/19": {
@@ -1943,6 +2085,8 @@
       },
       "dps": 37815.37577387327,
       "totalDamage": 2268922.546432396,
+      "hps": 6834.948382036851,
+      "totalHealing": 410096.9029222111,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-ib/18": {
@@ -1970,6 +2114,8 @@
       },
       "dps": 34429.17417217587,
       "totalDamage": 2065750.4503305524,
+      "hps": 7506.250235401015,
+      "totalHealing": 450375.01412406086,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-max-ib/19": {
@@ -1997,6 +2143,8 @@
       },
       "dps": 36404.93136899379,
       "totalDamage": 2184295.8821396274,
+      "hps": 7796.820971388451,
+      "totalHealing": 467809.258283307,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-min-ew/18": {
@@ -2024,6 +2172,8 @@
       },
       "dps": 35271.87196526711,
       "totalDamage": 2116312.317916027,
+      "hps": 7259.708384228061,
+      "totalHealing": 435582.5030536837,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-min-ew/19": {
@@ -2051,6 +2201,8 @@
       },
       "dps": 36904.59228808732,
       "totalDamage": 2214275.537285239,
+      "hps": 7488.834916561537,
+      "totalHealing": 449330.09499369224,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-min-ib/18": {
@@ -2076,8 +2228,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 34304.38754679745,
-      "totalDamage": 2058263.2528078472,
+      "dps": 34051.407454544,
+      "totalDamage": 2043084.4472726402,
+      "hps": 7470.948217440251,
+      "totalHealing": 448256.89304641506,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-regular-fire/deluge-fully-relayed-min-ib/19": {
@@ -2103,8 +2257,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 36009.997346885,
-      "totalDamage": 2160599.8408131,
+      "dps": 35753.677879496565,
+      "totalDamage": 2145220.672769794,
+      "hps": 7711.869344083116,
+      "totalHealing": 462712.16064498696,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-full-max-ib/18": {
@@ -2132,6 +2288,8 @@
       },
       "dps": 45224.86922397504,
       "totalDamage": 2713492.1534385025,
+      "hps": 10359.65774346554,
+      "totalHealing": 621579.4646079324,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-full-max-ib/19": {
@@ -2159,6 +2317,8 @@
       },
       "dps": 47678.25431174056,
       "totalDamage": 2860695.2587044337,
+      "hps": 10747.482512122217,
+      "totalHealing": 644848.950727333,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-affinity/18": {
@@ -2186,6 +2346,8 @@
       },
       "dps": 45186.25084771314,
       "totalDamage": 2711175.0508627887,
+      "hps": 8250.437104779026,
+      "totalHealing": 495026.22628674156,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-affinity/19": {
@@ -2213,6 +2375,8 @@
       },
       "dps": 47639.631064678695,
       "totalDamage": 2858377.863880722,
+      "hps": 8615.52204469621,
+      "totalHealing": 516931.3226817726,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-hw/18": {
@@ -2240,6 +2404,8 @@
       },
       "dps": 43997.07970598522,
       "totalDamage": 2639824.782359113,
+      "hps": 8890.360778618813,
+      "totalHealing": 533421.6467171288,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-hw/19": {
@@ -2267,6 +2433,8 @@
       },
       "dps": 46359.983090876915,
       "totalDamage": 2781598.9854526147,
+      "hps": 9284.320106685911,
+      "totalHealing": 557059.2064011546,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-ib/18": {
@@ -2294,6 +2462,8 @@
       },
       "dps": 43851.99106885483,
       "totalDamage": 2631119.46413129,
+      "hps": 10148.2393363069,
+      "totalHealing": 608894.360178414,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-max-ib/19": {
@@ -2321,6 +2491,8 @@
       },
       "dps": 46303.60469233399,
       "totalDamage": 2778216.2815400395,
+      "hps": 10542.259321976193,
+      "totalHealing": 632535.5593185716,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-min-ew/18": {
@@ -2348,6 +2520,8 @@
       },
       "dps": 43397.02484759898,
       "totalDamage": 2603821.4908559388,
+      "hps": 9867.42321340849,
+      "totalHealing": 592045.3928045094,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-min-ew/19": {
@@ -2375,6 +2549,8 @@
       },
       "dps": 45410.04635039792,
       "totalDamage": 2724602.7810238753,
+      "hps": 10178.782323643063,
+      "totalHealing": 610726.9394185838,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-min-ib/18": {
@@ -2400,8 +2576,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 43747.261708696555,
-      "totalDamage": 2624835.702521793,
+      "dps": 43420.64972513026,
+      "totalDamage": 2605238.9835078153,
+      "hps": 10099.512426953152,
+      "totalHealing": 605970.7456171891,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-smolder/deluge-fully-relayed-min-ib/19": {
@@ -2427,8 +2605,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 45843.77011014264,
-      "totalDamage": 2750626.2066085585,
+      "dps": 45513.31312467336,
+      "totalDamage": 2730798.787480402,
+      "hps": 10426.544003670255,
+      "totalHealing": 625592.6402202153,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-full-max-ib/18": {
@@ -2456,6 +2636,8 @@
       },
       "dps": 50846.62536288101,
       "totalDamage": 3050797.5217728605,
+      "hps": 108110.48926221201,
+      "totalHealing": 6486629.35573272,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-full-max-ib/19": {
@@ -2483,6 +2665,8 @@
       },
       "dps": 53575.12321277954,
       "totalDamage": 3214507.3927667723,
+      "hps": 112108.63681116965,
+      "totalHealing": 6726518.208670179,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-affinity/18": {
@@ -2510,6 +2694,8 @@
       },
       "dps": 47054.853468286085,
       "totalDamage": 2823291.208097165,
+      "hps": 85706.52777144985,
+      "totalHealing": 5142391.666286991,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-affinity/19": {
@@ -2537,6 +2723,8 @@
       },
       "dps": 49613.12662176657,
       "totalDamage": 2976787.597305994,
+      "hps": 89531.50260253195,
+      "totalHealing": 5371890.156151917,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-hw/18": {
@@ -2564,6 +2752,8 @@
       },
       "dps": 46208.22916611652,
       "totalDamage": 2772493.749966991,
+      "hps": 92781.19995568639,
+      "totalHealing": 5566871.997341183,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-hw/19": {
@@ -2591,6 +2781,8 @@
       },
       "dps": 48693.43369678208,
       "totalDamage": 2921606.0218069246,
+      "hps": 96927.93281100011,
+      "totalHealing": 5815675.968660006,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-ib/18": {
@@ -2618,6 +2810,8 @@
       },
       "dps": 49329.92090940716,
       "totalDamage": 2959795.2545644296,
+      "hps": 105982.14054889858,
+      "totalHealing": 6358928.4329339145,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-max-ib/19": {
@@ -2645,6 +2839,8 @@
       },
       "dps": 52064.013335385906,
       "totalDamage": 3123840.800123154,
+      "hps": 110058.92219754434,
+      "totalHealing": 6603535.3318526605,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-min-ew/18": {
@@ -2672,6 +2868,8 @@
       },
       "dps": 46476.13223593908,
       "totalDamage": 2788567.934156345,
+      "hps": 102899.42830973951,
+      "totalHealing": 6173965.69858437,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-min-ew/19": {
@@ -2699,6 +2897,8 @@
       },
       "dps": 48638.04878106904,
       "totalDamage": 2918282.9268641425,
+      "hps": 106146.86088323625,
+      "totalHealing": 6368811.652994175,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-min-ib/18": {
@@ -2724,8 +2924,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 48796.443586937865,
-      "totalDamage": 2927786.615216272,
+      "dps": 48863.64507338762,
+      "totalDamage": 2931818.704403257,
+      "hps": 105434.89774866814,
+      "totalHealing": 6326093.864920088,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts-team/deluge-fully-relayed-min-ib/19": {
@@ -2751,8 +2953,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 50190.359205044726,
-      "totalDamage": 3011421.5523026837,
+      "dps": 51189.392401727724,
+      "totalDamage": 3071363.5441036634,
+      "hps": 108800.82165446026,
+      "totalHealing": 6528049.299267616,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-full-max-ib/18": {
@@ -2780,6 +2984,8 @@
       },
       "dps": 45895.805907391026,
       "totalDamage": 2753748.3544434616,
+      "hps": 36615.75678817916,
+      "totalHealing": 2196945.4072907497,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-full-max-ib/19": {
@@ -2807,6 +3013,8 @@
       },
       "dps": 48355.18176183105,
       "totalDamage": 2901310.905709863,
+      "hps": 37972.01818741863,
+      "totalHealing": 2278321.091245118,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-affinity/18": {
@@ -2834,6 +3042,8 @@
       },
       "dps": 42111.09818624161,
       "totalDamage": 2526665.8911744966,
+      "hps": 29016.285531915142,
+      "totalHealing": 1740977.1319149085,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-affinity/19": {
@@ -2861,6 +3071,8 @@
       },
       "dps": 44398.61492218092,
       "totalDamage": 2663916.895330855,
+      "hps": 30328.48013348582,
+      "totalHealing": 1819708.8080091493,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-hw/18": {
@@ -2888,6 +3100,8 @@
       },
       "dps": 42276.64214021848,
       "totalDamage": 2536598.5284131086,
+      "hps": 31636.62214811267,
+      "totalHealing": 1898197.3288867602,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-hw/19": {
@@ -2915,6 +3129,8 @@
       },
       "dps": 44549.972669497045,
       "totalDamage": 2672998.360169823,
+      "hps": 33067.007371244836,
+      "totalHealing": 1984020.4422746901,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-ib/18": {
@@ -2942,6 +3158,8 @@
       },
       "dps": 44530.50935802874,
       "totalDamage": 2671830.5614817245,
+      "hps": 35904.440829339655,
+      "totalHealing": 2154266.4497603793,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-max-ib/19": {
@@ -2969,6 +3187,8 @@
       },
       "dps": 46995.08816085507,
       "totalDamage": 2819705.289651304,
+      "hps": 37289.293702666684,
+      "totalHealing": 2237357.622160001,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-min-ew/18": {
@@ -2996,6 +3216,8 @@
       },
       "dps": 42626.229420205746,
       "totalDamage": 2557573.765212345,
+      "hps": 34973.55221672258,
+      "totalHealing": 2098413.1330033545,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-min-ew/19": {
@@ -3023,6 +3245,8 @@
       },
       "dps": 44606.31190784117,
       "totalDamage": 2676378.7144704703,
+      "hps": 36078.929603732526,
+      "totalHealing": 2164735.7762239515,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-min-ib/18": {
@@ -3048,8 +3272,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 43564.682531917424,
-      "totalDamage": 2613880.9519150453,
+      "dps": 43248.847511312524,
+      "totalDamage": 2594930.8506787512,
+      "hps": 35719.87782855832,
+      "totalHealing": 2143192.669713499,
       "duration": 60
     },
     "silkbindDeluge/dummy-1-min-wts/deluge-fully-relayed-min-ib/19": {
@@ -3075,8 +3301,10 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 45622.98038788135,
-      "totalDamage": 2737378.8232728806,
+      "dps": 45303.655572911885,
+      "totalDamage": 2718219.3343747132,
+      "hps": 36862.00033911305,
+      "totalHealing": 2211720.020346783,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/18": {
@@ -3104,6 +3332,8 @@
       },
       "dps": 42922.12592820504,
       "totalDamage": 2575327.555692302,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/19": {
@@ -3131,6 +3361,8 @@
       },
       "dps": 45027.68836560631,
       "totalDamage": 2701661.3019363782,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/18": {
@@ -3158,6 +3390,8 @@
       },
       "dps": 41885.46020720736,
       "totalDamage": 2513127.6124324417,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/19": {
@@ -3185,6 +3419,8 @@
       },
       "dps": 44179.03716069148,
       "totalDamage": 2650742.2296414888,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/18": {
@@ -3212,6 +3448,8 @@
       },
       "dps": 43977.495233684975,
       "totalDamage": 2638649.7140210983,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/19": {
@@ -3239,6 +3477,8 @@
       },
       "dps": 46034.37102098257,
       "totalDamage": 2762062.261258954,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-graduate/18": {
@@ -3266,6 +3506,8 @@
       },
       "dps": 45527.11256148341,
       "totalDamage": 2731626.7536890046,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-graduate/19": {
@@ -3293,6 +3535,8 @@
       },
       "dps": 47837.512664338035,
       "totalDamage": 2870250.7598602823,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-max/18": {
@@ -3320,6 +3564,8 @@
       },
       "dps": 42733.918924009784,
       "totalDamage": 2564035.135440587,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-dawnsun/wings-max/19": {
@@ -3347,6 +3593,8 @@
       },
       "dps": 44992.82032840773,
       "totalDamage": 2699569.219704464,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/18": {
@@ -3374,6 +3622,8 @@
       },
       "dps": 58054.79298562109,
       "totalDamage": 3483287.579137265,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/19": {
@@ -3401,6 +3651,8 @@
       },
       "dps": 60958.36357481277,
       "totalDamage": 3657501.8144887662,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/18": {
@@ -3428,6 +3680,8 @@
       },
       "dps": 56741.62240906376,
       "totalDamage": 3404497.344543826,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/19": {
@@ -3455,6 +3709,8 @@
       },
       "dps": 59889.75799172588,
       "totalDamage": 3593385.4795035524,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/18": {
@@ -3482,6 +3738,8 @@
       },
       "dps": 59631.270792308605,
       "totalDamage": 3577876.2475385163,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/19": {
@@ -3509,6 +3767,8 @@
       },
       "dps": 62462.147083776756,
       "totalDamage": 3747728.8250266053,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-graduate/18": {
@@ -3536,6 +3796,8 @@
       },
       "dps": 61657.82380126239,
       "totalDamage": 3699469.4280757434,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-graduate/19": {
@@ -3563,6 +3825,8 @@
       },
       "dps": 64857.98495411758,
       "totalDamage": 3891479.097247055,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-max/18": {
@@ -3590,6 +3854,8 @@
       },
       "dps": 57871.38433073897,
       "totalDamage": 3472283.0598443383,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "silkbindWing/wings-dummy-1-min-jadebreaker/wings-max/19": {
@@ -3617,6 +3883,8 @@
       },
       "dps": 60957.846538768885,
       "totalDamage": 3657470.792326133,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min/might-full-max/18": {
@@ -3644,6 +3912,8 @@
       },
       "dps": 97489.05541713296,
       "totalDamage": 5849343.325027977,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min/might-full-max/19": {
@@ -3671,6 +3941,8 @@
       },
       "dps": 102984.18949757682,
       "totalDamage": 6179051.3698546095,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min/might-fully-relayed-max/18": {
@@ -3698,6 +3970,8 @@
       },
       "dps": 94833.51884322167,
       "totalDamage": 5690011.1305933,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitMight/dummy-1-min/might-fully-relayed-max/19": {
@@ -3725,6 +3999,8 @@
       },
       "dps": 100190.82379965615,
       "totalDamage": 6011449.427979369,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-full-min/18": {
@@ -3752,6 +4028,8 @@
       },
       "dps": 82810.64338264748,
       "totalDamage": 4968638.602958849,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-full-min/19": {
@@ -3779,6 +4057,8 @@
       },
       "dps": 86847.15082300674,
       "totalDamage": 5210829.049380404,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-double-min/18": {
@@ -3806,6 +4086,8 @@
       },
       "dps": 79873.65100102122,
       "totalDamage": 4792419.060061273,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-double-min/19": {
@@ -3833,6 +4115,8 @@
       },
       "dps": 83533.32443217133,
       "totalDamage": 5011999.465930279,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-max/18": {
@@ -3860,6 +4144,8 @@
       },
       "dps": 76713.87314494269,
       "totalDamage": 4602832.388696561,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-max/19": {
@@ -3887,6 +4173,8 @@
       },
       "dps": 81058.62671654452,
       "totalDamage": 4863517.602992671,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-min/18": {
@@ -3914,6 +4202,8 @@
       },
       "dps": 79742.56500341001,
       "totalDamage": 4784553.9002046,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/mixed-fully-relayed-min/19": {
@@ -3941,6 +4231,8 @@
       },
       "dps": 83717.84986911903,
       "totalDamage": 5023070.992147141,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-full-min/18": {
@@ -3968,6 +4260,8 @@
       },
       "dps": 54703.38992770774,
       "totalDamage": 3282203.395662464,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-full-min/19": {
@@ -3995,6 +4289,8 @@
       },
       "dps": 57132.31999533198,
       "totalDamage": 3427939.1997199184,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-fully-relayed-max/18": {
@@ -4022,6 +4318,8 @@
       },
       "dps": 51148.546840734336,
       "totalDamage": 3068912.81044406,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-fully-relayed-max/19": {
@@ -4049,6 +4347,8 @@
       },
       "dps": 54261.13997388491,
       "totalDamage": 3255668.398433094,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-fully-relayed-min/18": {
@@ -4076,6 +4376,8 @@
       },
       "dps": 52600.09199302393,
       "totalDamage": 3156005.5195814357,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min-double-stab/pure-fully-relayed-min/19": {
@@ -4103,6 +4405,8 @@
       },
       "dps": 55387.117302187005,
       "totalDamage": 3323227.03813122,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-full-min/18": {
@@ -4130,6 +4434,8 @@
       },
       "dps": 83603.73949081561,
       "totalDamage": 5016224.369448937,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-full-min/19": {
@@ -4157,6 +4463,8 @@
       },
       "dps": 87681.1597907847,
       "totalDamage": 5260869.587447082,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-double-min/18": {
@@ -4184,6 +4492,8 @@
       },
       "dps": 80631.20207967037,
       "totalDamage": 4837872.124780222,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-double-min/19": {
@@ -4211,6 +4521,8 @@
       },
       "dps": 84325.71800299501,
       "totalDamage": 5059543.0801797,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-max/18": {
@@ -4238,6 +4550,8 @@
       },
       "dps": 77460.09968414159,
       "totalDamage": 4647605.981048495,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-max/19": {
@@ -4265,6 +4579,8 @@
       },
       "dps": 81849.55874570986,
       "totalDamage": 4910973.524742591,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-min/18": {
@@ -4292,6 +4608,8 @@
       },
       "dps": 80498.08447698246,
       "totalDamage": 4829885.068618947,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/mixed-fully-relayed-min/19": {
@@ -4319,6 +4637,8 @@
       },
       "dps": 84513.19486606293,
       "totalDamage": 5070791.691963775,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-full-min/18": {
@@ -4346,6 +4666,8 @@
       },
       "dps": 55774.021649523194,
       "totalDamage": 3346441.2989713913,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-full-min/19": {
@@ -4373,6 +4695,8 @@
       },
       "dps": 58243.91657009246,
       "totalDamage": 3494634.994205547,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-fully-relayed-max/18": {
@@ -4400,6 +4724,8 @@
       },
       "dps": 52160.86005412638,
       "totalDamage": 3129651.6032475824,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-fully-relayed-max/19": {
@@ -4427,6 +4753,8 @@
       },
       "dps": 55330.82779341758,
       "totalDamage": 3319849.667605054,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-fully-relayed-min/18": {
@@ -4454,6 +4782,8 @@
       },
       "dps": 53619.674387538565,
       "totalDamage": 3217180.4632523134,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-1-min/pure-fully-relayed-min/19": {
@@ -4481,6 +4811,8 @@
       },
       "dps": 56456.42723992045,
       "totalDamage": 3387385.6343952264,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 59.99999999999999
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-full-min/18": {
@@ -4508,6 +4840,8 @@
       },
       "dps": 84048.69147286253,
       "totalDamage": 5042921.488371751,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-full-min/19": {
@@ -4535,6 +4869,8 @@
       },
       "dps": 88127.03194417695,
       "totalDamage": 5287621.9166506175,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-double-min/18": {
@@ -4562,6 +4898,8 @@
       },
       "dps": 81061.83060630776,
       "totalDamage": 4863709.836378465,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-double-min/19": {
@@ -4589,6 +4927,8 @@
       },
       "dps": 84753.14624110029,
       "totalDamage": 5085188.774466017,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-max/18": {
@@ -4616,6 +4956,8 @@
       },
       "dps": 77852.21768680395,
       "totalDamage": 4671133.061208237,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-max/19": {
@@ -4643,6 +4985,8 @@
       },
       "dps": 82246.67711512097,
       "totalDamage": 4934800.626907258,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-min/18": {
@@ -4670,6 +5014,8 @@
       },
       "dps": 80930.56409151429,
       "totalDamage": 4855833.845490857,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/mixed-fully-relayed-min/19": {
@@ -4697,6 +5043,8 @@
       },
       "dps": 84947.05397583853,
       "totalDamage": 5096823.238550312,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-full-min/18": {
@@ -4724,6 +5072,8 @@
       },
       "dps": 55307.842178923005,
       "totalDamage": 3318470.5307353805,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-full-min/19": {
@@ -4751,6 +5101,8 @@
       },
       "dps": 57726.87018306311,
       "totalDamage": 3463612.2109837867,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-fully-relayed-max/18": {
@@ -4778,6 +5130,8 @@
       },
       "dps": 51737.99085746297,
       "totalDamage": 3104279.4514477784,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-fully-relayed-max/19": {
@@ -4805,6 +5159,8 @@
       },
       "dps": 54860.91837765647,
       "totalDamage": 3291655.102659388,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-fully-relayed-min/18": {
@@ -4832,6 +5188,8 @@
       },
       "dps": 53181.059968836526,
       "totalDamage": 3190863.5981301917,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-infinite-vitality-1-min/pure-fully-relayed-min/19": {
@@ -4859,6 +5217,8 @@
       },
       "dps": 55970.414642845746,
       "totalDamage": 3358224.878570745,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-full-min/18": {
@@ -4886,6 +5246,8 @@
       },
       "dps": 84250.12277615834,
       "totalDamage": 5055007.366569501,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-full-min/19": {
@@ -4913,6 +5275,8 @@
       },
       "dps": 88269.43676284686,
       "totalDamage": 5296166.205770812,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-double-min/18": {
@@ -4940,6 +5304,8 @@
       },
       "dps": 81310.44375666637,
       "totalDamage": 4878626.625399983,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-double-min/19": {
@@ -4967,6 +5333,8 @@
       },
       "dps": 84971.47085158882,
       "totalDamage": 5098288.251095329,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-max/18": {
@@ -4994,6 +5362,8 @@
       },
       "dps": 78065.90657274057,
       "totalDamage": 4683954.394364434,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-max/19": {
@@ -5021,6 +5391,8 @@
       },
       "dps": 82405.72502866272,
       "totalDamage": 4944343.501719764,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-min/18": {
@@ -5048,6 +5420,8 @@
       },
       "dps": 81180.07901313071,
       "totalDamage": 4870804.740787843,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/mixed-fully-relayed-min/19": {
@@ -5075,6 +5449,8 @@
       },
       "dps": 85142.83837002002,
       "totalDamage": 5108570.302201202,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-full-min/18": {
@@ -5102,6 +5478,8 @@
       },
       "dps": 52893.83387715929,
       "totalDamage": 3173630.032629558,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-full-min/19": {
@@ -5129,6 +5507,8 @@
       },
       "dps": 55197.15848770061,
       "totalDamage": 3311829.509262037,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-fully-relayed-max/18": {
@@ -5156,6 +5536,8 @@
       },
       "dps": 49481.41384190644,
       "totalDamage": 2968884.8305143868,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-fully-relayed-max/19": {
@@ -5183,6 +5565,8 @@
       },
       "dps": 52446.12616296689,
       "totalDamage": 3146767.5697780135,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-fully-relayed-min/18": {
@@ -5210,6 +5594,8 @@
       },
       "dps": 50881.6594649401,
       "totalDamage": 3052899.5678964066,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/mixed-dummy-smolder-poet-1-min/pure-fully-relayed-min/19": {
@@ -5237,6 +5623,8 @@
       },
       "dps": 53527.77475922132,
       "totalDamage": 3211666.4855532795,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60.00000000000001
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-full-min/18": {
@@ -5264,6 +5652,8 @@
       },
       "dps": 64080.77348945815,
       "totalDamage": 3844846.409367489,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-full-min/19": {
@@ -5291,6 +5681,8 @@
       },
       "dps": 67587.3511434598,
       "totalDamage": 4055241.068607588,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-double-min/18": {
@@ -5318,6 +5710,8 @@
       },
       "dps": 61308.75533887586,
       "totalDamage": 3678525.320332552,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-double-min/19": {
@@ -5345,6 +5739,8 @@
       },
       "dps": 64222.21492273243,
       "totalDamage": 3853332.895363946,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-max/18": {
@@ -5372,6 +5768,8 @@
       },
       "dps": 59192.02137678601,
       "totalDamage": 3551521.2826071605,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-max/19": {
@@ -5399,6 +5797,8 @@
       },
       "dps": 62944.24232186656,
       "totalDamage": 3776654.5393119934,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-min/18": {
@@ -5426,6 +5826,8 @@
       },
       "dps": 61249.00961715225,
       "totalDamage": 3674940.577029135,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/mixed-fully-relayed-min/19": {
@@ -5453,6 +5855,8 @@
       },
       "dps": 64670.48831924888,
       "totalDamage": 3880229.2991549326,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-full-min/18": {
@@ -5480,6 +5884,8 @@
       },
       "dps": 80297.59425480218,
       "totalDamage": 4817855.655288131,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-full-min/19": {
@@ -5507,6 +5913,8 @@
       },
       "dps": 83772.15127503383,
       "totalDamage": 5026329.07650203,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-fully-relayed-max/18": {
@@ -5534,6 +5942,8 @@
       },
       "dps": 74956.03642540998,
       "totalDamage": 4497362.185524599,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-fully-relayed-max/19": {
@@ -5561,6 +5971,8 @@
       },
       "dps": 79444.59295286496,
       "totalDamage": 4766675.5771718975,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-fully-relayed-min/18": {
@@ -5588,6 +6000,8 @@
       },
       "dps": 77108.46466050534,
       "totalDamage": 4626507.879630321,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min-infinite-vitality/pure-fully-relayed-min/19": {
@@ -5615,6 +6029,8 @@
       },
       "dps": 81114.42675461237,
       "totalDamage": 4866865.605276742,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-full-min/18": {
@@ -5642,6 +6058,8 @@
       },
       "dps": 59995.70443841368,
       "totalDamage": 3599742.266304821,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-full-min/19": {
@@ -5669,6 +6087,8 @@
       },
       "dps": 63329.224223348116,
       "totalDamage": 3799753.453400887,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-double-min/18": {
@@ -5696,6 +6116,8 @@
       },
       "dps": 57368.03292768822,
       "totalDamage": 3442081.975661293,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-double-min/19": {
@@ -5723,6 +6145,8 @@
       },
       "dps": 60130.739373684395,
       "totalDamage": 3607844.3624210637,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-max/18": {
@@ -5750,6 +6174,8 @@
       },
       "dps": 55447.84103012285,
       "totalDamage": 3326870.461807371,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-max/19": {
@@ -5777,6 +6203,8 @@
       },
       "dps": 59009.45091091061,
       "totalDamage": 3540567.0546546364,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-min/18": {
@@ -5804,6 +6232,8 @@
       },
       "dps": 57313.70508960865,
       "totalDamage": 3438822.305376519,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/mixed-fully-relayed-min/19": {
@@ -5831,6 +6261,8 @@
       },
       "dps": 60564.31834016732,
       "totalDamage": 3633859.1004100395,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-full-min/18": {
@@ -5858,6 +6290,8 @@
       },
       "dps": 76848.50435090609,
       "totalDamage": 4610910.261054366,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-full-min/19": {
@@ -5885,6 +6319,8 @@
       },
       "dps": 80198.34604724248,
       "totalDamage": 4811900.762834549,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-fully-relayed-max/18": {
@@ -5912,6 +6348,8 @@
       },
       "dps": 71754.53036966387,
       "totalDamage": 4305271.8221798325,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-fully-relayed-max/19": {
@@ -5939,6 +6377,8 @@
       },
       "dps": 76071.81107117455,
       "totalDamage": 4564308.664270474,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-fully-relayed-min/18": {
@@ -5966,6 +6406,8 @@
       },
       "dps": 73777.0541480739,
       "totalDamage": 4426623.248884434,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     },
     "stonesplitStrength/pure-dummy-1-min/pure-fully-relayed-min/19": {
@@ -5993,6 +6435,8 @@
       },
       "dps": 77633.42009238493,
       "totalDamage": 4658005.205543095,
+      "hps": 0,
+      "totalHealing": 0,
       "duration": 60
     }
   }

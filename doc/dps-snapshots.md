@@ -55,13 +55,16 @@ Endurance recovery before combat, and the approved Splendor Qi and Might Defense
 alignment repairs. The snapshot JSON records the exact accepted values.
 
 Schema version 2 replaces the old one-case-per-path file. Each case records its
-fixture, DPS, total damage, and duration. The gate fails on:
+fixture, DPS, total damage, HPS, total healing, and duration. HPS and total
+healing come directly from the production calculation metrics. Cases without
+healing record zero for both fields. The gate fails on:
 
-- Any change beyond 4 units in the last place in DPS, total damage, or duration,
+- Any change beyond 4 units in the last place in DPS, total damage, HPS, total healing, or duration,
   independently for each rotation and in either direction.
 - Missing or removed rotation coverage.
 - A changed build, rotation, martial-art pair, or fixed environment.
 - Non-finite, zero, or negative DPS, damage, or duration.
+- Missing, non-finite, or negative HPS or total healing.
 
 The budget is counted in ULPs rather than a percentage because the damage
 pipeline is bit-deterministic: it uses only exactly specified IEEE-754
@@ -70,7 +73,7 @@ locale-, time-, or random-dependent input. The same inputs must therefore
 reproduce the same bits. Four ULPs absorbs a single-representation shift from a
 summation reassociation or an engine change and rejects every real change; a 1%
 band was roughly 8x10^11 ULPs wide and silently accepted unreviewed edits. All
-three stored numbers are compared, and changes accumulate against the last
+five stored numbers are compared, and changes accumulate against the last
 accepted value, not the previous test run.
 
 At the user's request, expanded non-Deluge baselines preserve the values from
