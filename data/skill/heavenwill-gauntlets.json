@@ -2,6 +2,7 @@
   "HeavenwillDeclared": {
     "name": "Heavenwill Declared",
     "shortName": "Gauntlet Q1",
+    "cooldown": 15,
     "castTime": 0.625,
     "action": [
       {
@@ -29,6 +30,7 @@
   "CelestialMandate": {
     "name": "Celestial Mandate",
     "shortName": "Gauntlet Q2",
+    "cooldown": 2,
     "castTime": 1.4,
     "action": [
       {
@@ -370,6 +372,7 @@
   "AllUnderJustice": {
     "name": "All Under Justice",
     "shortName": "Gauntlet Special",
+    "cooldown": 6,
     "castTime": 1.0181818181818183,
     "action": [
       {

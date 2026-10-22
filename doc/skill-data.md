@@ -1767,6 +1767,31 @@ Momentum, three Affinity, one Max Void Attack, and no All Mystic additional
 rolls. Comparison uses breakthrough 18, Clay Oven Flatbread, Fire, no script,
 default global buffs, and the preset ping; other affixes and setup stay fixed.
 
+### Kite skill cooldowns and DH finisher
+
+Normal skill-export cooldowns are authored on the castable records:
+Heavenwill Declared (Q1) 15 seconds, Celestial Mandate (Q2) 2 seconds,
+All Under Justice 6 seconds, Sky Grasped 18 seconds, and Snaring Lash
+15 seconds. Q1 owns the main gauntlet Q cooldown; Q2's short follow-up
+cooldown is independent, so Q1 does not block its continuation.
+Snaring Lash and its Cancel variant share the `SnaringLash` cooldown group.
+Ordinary light/heavy attacks and Wicked Defiance have zero exported cooldown;
+Vile Condemned End retains its existing resettable 18-second effect marker.
+
+The DH preset dodges the 41.5-second attack and uses Soaring Spin's first hit
+to trigger the authored Qi break, matching the BP preset. Dragon Head follows
+Soaring directly, then the third four-HW End. Both hit during Exhausted with
+five Disintegration stacks on BP builds. Q1/Q2, A5/A6, and the legal
+Snaring Lash / Deflect / Sky Grasped sequence follow that End.
+
+The preset intentionally does not reset End again during Exhausted. Its final
+ordinary Vile Condemned falls back to the two-HW hit while End cooldown remains
+active. The four charged casts spend 4 / 4 / 4 / 2 HW. At 40ms ping, the Qi
+break is at 41.909697 seconds, Dragon Head hits at 47.877429 seconds, and the
+third End hits at 51.654929 seconds, before Exhausted expires at 51.909697.
+The final weak hit lands at 59.955429 seconds; the 60-second cutoff leaves
+little timing margin. Dragon Head already had five stacks in the old preset.
+
 ### Kite combo stage indicators
 
 Heavenwill uses separate hidden `HeavenwillLightCombo` and
