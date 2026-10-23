@@ -6,6 +6,7 @@ import type { CharacterStats, EnemyProfile, WeaponId } from "@/types"
 
 export type CalculatorSettings = { weapons: [WeaponId, WeaponId]; breakthrough: string; ping: number }
 export type LayoutMode = "pc" | "mobile"
+export type DisplaySizing = "default" | "screen" | "window"
 export type PathId =
   | "mixed"
   | "bellstrikeSplendor"

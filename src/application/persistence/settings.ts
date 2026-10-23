@@ -1,6 +1,6 @@
 import defaultSetup from "@gamedata/default-setup.json"
 
-import type { CalculatorSettings, LayoutMode, PathId } from "@/application/contracts"
+import type { CalculatorSettings, DisplaySizing, LayoutMode, PathId } from "@/application/contracts"
 import { isWeaponId } from "@/application/gameData/martialArts"
 import { pathRequiresDev, typedPathDefinitions } from "@/application/gameData/paths"
 import {
@@ -17,6 +17,7 @@ import { settingsSchema } from "@/schemas/storage"
 
 import {
   developmentModeStorageKey,
+  displaySizingStorageKey,
   gearSearchMinutesStorageKey,
   divinecraftStorageKey,
   foodStorageKey,
@@ -29,6 +30,21 @@ import {
 
 export function loadDevMode() {
   return getPersistentItem(developmentModeStorageKey) === "true"
+}
+
+export function loadDisplaySizing(): DisplaySizing {
+  switch (getPersistentItem(displaySizingStorageKey)) {
+    case "screen":
+      return "screen"
+    case "window":
+    case "fit": // Preserve the earlier two-option selector's saved choice.
+      return "window"
+    case "default":
+    case "browser":
+      return "default"
+    default:
+      return "default"
+  }
 }
 
 export const compactLayoutQuery = "(max-width: 48em)"

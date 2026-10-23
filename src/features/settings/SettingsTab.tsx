@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 
-import type { CalculatorSettings, LayoutMode, PathId } from "@/application/contracts"
+import type { CalculatorSettings, DisplaySizing, LayoutMode, PathId } from "@/application/contracts"
 import { martialArtDefinitions, weaponFamilyNames } from "@/application/gameData/martialArts"
 import { productionWeaponIds, typedPathDefinitions } from "@/application/gameData/paths"
 import { previewCatalog, type PreviewId } from "@/application/gameData/previews"
@@ -126,6 +126,8 @@ export function SettingsTab({
 }) {
   const gearSearchMinutes = useSettingsStore(state => state.gearSearchMinutes)
   const setGearSearchMinutes = useSettingsStore(state => state.setGearSearchMinutes)
+  const displaySizing = useSettingsStore(state => state.displaySizing)
+  const setDisplaySizing = useSettingsStore(state => state.setDisplaySizing)
   const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons)
 
   return (
@@ -205,7 +207,7 @@ export function SettingsTab({
             </select>
           </label>
         </div>
-        <div className="settings-layout-row">
+        <div className="settings-layout-row settings-display-row">
           <label className="editor-field">
             <span>{t("ui.app.layout")}</span>
             <select
@@ -217,6 +219,16 @@ export function SettingsTab({
               <option value="mobile">{t("ui.app.mobile")}</option>
             </select>
           </label>
+          {layoutMode === "pc" && (
+            <label className="editor-field">
+              <span>{t("ui.app.displaySizing")}</span>
+              <select value={displaySizing} onChange={event => setDisplaySizing(event.target.value as DisplaySizing)}>
+                <option value="default">{t("ui.app.defaultSizing")}</option>
+                <option value="screen">{t("ui.app.fitToScreen")}</option>
+                <option value="window">{t("ui.app.fitToWindow")}</option>
+              </select>
+            </label>
+          )}
         </div>
       </div>
     </Panel>

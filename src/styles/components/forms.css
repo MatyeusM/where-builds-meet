@@ -1,18 +1,18 @@
 @layer components {
   .field {
-    --stat-value-padding-inline-start: 7px;
+    --stat-value-padding-inline-start: var(--desktop-space-0-5, 7px);
 
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 112px;
-    grid-template-rows: minmax(28px, auto) auto;
-    gap: 2px 6px;
+    grid-template-columns: minmax(0, 1fr) var(--desktop-size-7, 112px);
+    grid-template-rows: minmax(var(--desktop-size-1-75, 28px), auto) auto;
+    gap: var(--desktop-space-0-125, 2px) var(--desktop-space-0-25, 6px);
     min-inline-size: 0;
     align-content: start;
     color: var(--text-muted);
   }
 
   .field.compact-field {
-    grid-template-rows: 30px;
+    grid-template-rows: var(--desktop-size-2, 30px);
   }
 
   .field.compact-field .derived-spacer {
@@ -23,7 +23,7 @@
     display: flex;
     align-self: center;
     align-items: center;
-    gap: 5px;
+    gap: var(--desktop-space-0-25, 5px);
     min-inline-size: 0;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -37,7 +37,7 @@
   .input-wrap {
     position: relative;
     grid-column: 2;
-    inline-size: 112px;
+    inline-size: var(--desktop-size-7, 112px);
     max-inline-size: 100%;
     min-inline-size: 0;
   }
@@ -47,11 +47,11 @@
     min-inline-size: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding-block: 5px;
-    padding-inline: var(--stat-value-padding-inline-start) 24px;
+    padding-block: var(--desktop-space-0-25, 5px);
+    padding-inline: var(--stat-value-padding-inline-start) var(--desktop-space-1-5, 24px);
     background: var(--surface-alt);
     color: var(--text);
-    line-height: 20px;
+    line-height: var(--desktop-size-1-25, 20px);
     appearance: textfield;
   }
 
@@ -63,7 +63,7 @@
   .input-unit {
     position: absolute;
     inset-block-start: 50%;
-    inset-inline-end: 8px;
+    inset-inline-end: var(--desktop-space-0-5, 8px);
     transform: translateY(-50%);
     color: var(--text-muted);
     pointer-events: none;
@@ -79,15 +79,15 @@
   }
 
   .full-row .field {
-    inline-size: calc(50% - 6px);
+    inline-size: calc(50% - var(--desktop-size-0-5, 6px));
   }
 
   .checkbox-field {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: var(--desktop-space-0-5, 7px);
     align-self: end;
-    min-block-size: 30px;
+    min-block-size: var(--desktop-size-2, 30px);
     color: var(--text-muted);
   }
 
@@ -98,7 +98,7 @@
   .editor-field,
   .json-editor-field {
     display: grid;
-    gap: 6px;
+    gap: var(--desktop-space-0-25, 6px);
     color: var(--text-muted);
     font-weight: 700;
   }
@@ -128,7 +128,7 @@
 
   .editor-field input,
   .editor-field select {
-    padding: 8px 9px;
+    padding: var(--desktop-space-0-5, 8px) var(--desktop-space-0-5, 9px);
   }
 
   .editor-field input:focus-visible,
@@ -139,13 +139,13 @@
   }
 
   .editor-error {
-    margin: 14px 0 0;
+    margin: var(--desktop-space-0-75, 14px) 0 0;
     color: var(--error);
   }
 
   @media (max-width: 37.5em) {
     .field {
-      grid-template-columns: minmax(0, 1fr) 112px;
+      grid-template-columns: minmax(0, 1fr) var(--desktop-size-7, 112px);
     }
   }
 

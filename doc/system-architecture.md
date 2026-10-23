@@ -17,20 +17,73 @@ is a multiple of `0.25rem`, so a token and a bare multiple of that unit always
 agree, and the two can be adopted independently. `AGENTS.md` requires new values to
 come from this scale.
 
-**The scale is barely adopted.** Measured across the fifteen stylesheets, six
-declarations reference a `--space-*` token against roughly 314 spacing declarations
-written as bare lengths. The rhythm is not absent, it is just not on the scale: the
-commonest values are `8px`, `12px`, `16px`, and `4px`, which are the tokens
-`--space-sm`, `--space-sm`, `--space-md`, and `--space-2xs`. Alongside those sits a
-regular `4n + 2` sub-grid — `6px`, `10px`, `14px`, `18px`, `22px` — and then values
-with no pattern at all: `5px`, `7px`, `9px`, `13px`, `23px`, `37px`. That mixture,
-rather than any single wrong number, is what makes the interface read as uneven.
+Desktop sizing is calibrated to a **2310 × 1323 CSS-pixel content viewport**
+(2560 × 1440 monitor, 100% Windows scaling and browser zoom, maximized Firefox
+with tabs on the left). Settings exposes **Display sizing** beside Layout.
+`settingsStore` persists `default`, `screen`, or `window` under
+`wwm-display-sizing-v1`; `App` exposes the choice as `data-display-sizing` on the
+page shell. Missing or invalid settings use **Default**. The loader preserves
+the earlier two-option selector's saved values: `browser` becomes `default`
+and `fit` becomes `window`. Subsequent selections save the current values.
+The selector is omitted in mobile mode, which retains the saved desktop
+preference for the next desktop visit.
 
-Two conversions are different in kind and should not be bundled. Substituting a token
-for an equal raw length (`8px` to `var(--space-sm)`) cannot change layout, so it is
-mechanical and safe to do everywhere. Rounding an off-scale value to its nearest step
-does change layout, has no automated check — `test:dps` is bit-deterministic for damage
-and blind to pixels — and is verified by looking at it.
+**Default** uses the original presentation from before the sizing conversion:
+the root font remains `100%` and all desktop compatibility aliases are absent.
+Every converted declaration therefore uses its original fallback, including
+fixed pixel dimensions and the original title sizing. This mode honors the
+browser's preferred font size and normal zoom behavior.
+
+**Fit to screen** uses `16 × screen.width / 2560` CSS pixels for the root font.
+`useScreenSizing` supplies `--desktop-screen-font-size` on the document root
+before paint, refreshes it on window resize, focus, and screen orientation
+changes, and removes it when leaving this mode or entering mobile layout.
+Resizing a window on the same screen keeps text and icons steady. The main
+page's columns wrap at their actual rem widths in this mode, so large-screen
+text does not overflow a narrow window at the old fixed viewport breakpoints.
+Other responsive layouts retain their existing rules. Screen width is reported in
+CSS pixels; this does not infer the monitor's physical size in inches.
+
+In **Fit to window** mode, `base.css` adjusts the root font only while
+`.layout-pc[data-display-sizing="window"]` is present.
+The root font is `16 × viewport width / 2310` CSS pixels, expressed
+as `calc(100vw / 144.375)`. It is 16px at the reference width, about 8.87px at
+1280px, 13.30px at 1920px, and 26.60px at 3840px. These are page widths, not
+monitor resolutions: browser sidebars and window size affect the available area.
+There is deliberately no fixed contribution, minimum, or maximum: text and icons
+keep the same proportion of the page across desktop resolutions. Consequently,
+desktop text can be small in CSS pixels on narrow windows, and viewport-based
+sizing can counteract browser zoom. This presentation prioritizes proportional
+desktop density as requested; it does not infer a monitor's physical dimensions.
+Both fit modes activate the desktop rem-based tokens, so icons, spacing, and
+panel sizes follow the chosen root font. Changing this presentation setting
+does not alter calculation inputs.
+The viewport height continues to constrain the Build and Rotation workspaces;
+short windows scroll their content rather than shrinking the text further.
+Existing responsive layout breakpoints remain in effect.
+
+`tokens.css` defines `--desktop-space-*`, `--desktop-size-*`, and
+`--desktop-font-*` compatibility aliases only for desktop `screen` and `window`
+sizing modes.
+Their numeric suffix is the value in rem, with a hyphen as the decimal separator.
+Desktop spacing aliases use the shared spacing tokens where available; sizes use
+quarter-rem steps and fonts use eighth-rem steps. Legacy off-scale desktop values
+were rounded to this scale as part of the desktop conversion. Text, image icons,
+panel widths, and spacing therefore follow the same root sizing mechanism.
+The main title also follows this scale instead of independently tracking `vw`.
+Physical border strokes and the visually-hidden clip remain fixed pixels.
+
+Shared declarations retain the original length as a fallback, for example
+`padding: var(--desktop-space-0-5, 9px)`. The fallback is a compatibility boundary
+for Default and the existing mobile presentation, not a second scale for new
+styles. Mobile has no desktop aliases and keeps its 100% root font, so these
+fallbacks preserve its existing dimensions, including the developer's mobile preview.
+Portalled tooltips inherit the desktop aliases from the document root even
+though they render outside the page shell. `mobile.css` remains unchanged.
+New styles should use the regular spacing tokens and rem scale directly;
+extend these compatibility aliases only when preserving another existing
+mobile measurement requires it. Browser layout checks, rather than DPS
+snapshots, verify sizing and mobile compatibility.
 
 ## Typography and resilient layout
 

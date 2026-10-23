@@ -1,12 +1,18 @@
 import { create } from "zustand"
 
-import type { LayoutMode } from "@/application/contracts"
+import type { DisplaySizing, LayoutMode } from "@/application/contracts"
 import {
   developmentModeStorageKey,
+  displaySizingStorageKey,
   gearSearchMinutesStorageKey,
   layoutPreviewStorageKey,
 } from "@/application/persistence/keys"
-import { loadDevMode, loadGearSearchMinutes, loadLayoutPreview } from "@/application/persistence/settings"
+import {
+  loadDevMode,
+  loadDisplaySizing,
+  loadGearSearchMinutes,
+  loadLayoutPreview,
+} from "@/application/persistence/settings"
 import { setPersistentItem } from "@/persistentStorage"
 
 /**
@@ -29,6 +35,8 @@ export type SettingsStore = {
   /** The chosen layout while `devMode` is on. The effective layout is derived in `App`, because
    *  it also depends on the live viewport, which is not a stored value. */
   layoutPreview: LayoutMode
+  displaySizing: DisplaySizing
+  setDisplaySizing: (mode: DisplaySizing) => void
 
   /**
    * Reads the stored application settings.
@@ -56,11 +64,13 @@ export const useSettingsStore = create<SettingsStore>()(set => ({
   },
   devMode: false,
   layoutPreview: "pc",
+  displaySizing: "default",
 
   initialise: compactViewport =>
     set({
       devMode: loadDevMode(),
       layoutPreview: loadLayoutPreview(compactViewport),
+      displaySizing: loadDisplaySizing(),
       gearSearchMinutes: loadGearSearchMinutes(),
     }),
 
@@ -72,5 +82,10 @@ export const useSettingsStore = create<SettingsStore>()(set => ({
   setLayoutPreview: mode => {
     setPersistentItem(layoutPreviewStorageKey, mode)
     set({ layoutPreview: mode })
+  },
+
+  setDisplaySizing: mode => {
+    setPersistentItem(displaySizingStorageKey, mode)
+    set({ displaySizing: mode })
   },
 }))

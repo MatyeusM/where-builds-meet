@@ -12,10 +12,10 @@
   .icon-button {
     display: inline-grid;
     place-items: center;
-    margin-inline-start: 8px;
+    margin-inline-start: var(--desktop-space-0-5, 8px);
     border: 0;
     border-radius: var(--radius-2xs);
-    padding: 2px 5px;
+    padding: var(--desktop-space-0-125, 2px) var(--desktop-space-0-25, 5px);
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -30,8 +30,8 @@
 
   .stat-reset-button {
     display: inline-grid;
-    inline-size: 19px;
-    block-size: 19px;
+    inline-size: var(--desktop-size-1-25, 19px);
+    block-size: var(--desktop-size-1-25, 19px);
     flex: 0 0 auto;
     place-items: center;
     border: 0;
@@ -55,14 +55,14 @@
   }
 
   .start-marker {
-    inline-size: 26px;
-    block-size: 26px;
+    inline-size: var(--desktop-size-1-75, 26px);
+    block-size: var(--desktop-size-1-75, 26px);
     border: 0;
     padding: 0;
     background: transparent;
     color: oklch(from var(--text-muted) l c h / 0.32);
     cursor: pointer;
-    line-height: 26px;
+    line-height: var(--desktop-size-1-75, 26px);
   }
 
   .start-marker:hover,
