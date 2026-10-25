@@ -1955,3 +1955,11 @@ through the final hit for the two additional Echoes Rodents.
 The preset ends its authored skill sequence on the final in-battle FA4.
 The post-battle RD Q / Deflect / RD Special refresh and its expiry wait are
 omitted; the fixed Battle End event still closes the measurement at 60 seconds.
+
+### Might and Wings encounter alignment
+
+Might's first Defense hold includes the 0.1 seconds saved by Leaping Toad's
+user-confirmed cancel so it still covers the intended dummy attack pair. Wings'
+fixed Qi thresholds retain proportional depletion around the second Drum
+Special break and its recovery; changes to that break's time require recomputing
+both cycles of fixed thresholds.

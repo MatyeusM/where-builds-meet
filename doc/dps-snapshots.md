@@ -762,3 +762,21 @@ Repeated LC/VC filler alternatives, including redistribution toward Exhausted,
 did not improve on the accepted Double Stab Mystic sequence while preserving all
 fifteen Mo Blade charged casts. The accepted first filler retains Mo QQ/Tab/VC
 before Bursting Nine 2 Shots [7 hits], Leaping Toad, and Deflect.
+
+## Might and Wings timing repair acceptance (October 25, 2026)
+
+The user approved restoring the first Might Defense hold from 0.260075 to
+0.360075 seconds after the shorter Toad cancel. Defense again covers the
+intended dummy attack pair. The four Might snapshots are accepted:
+
+| Build                   | Solo |       Previous DPS |       Accepted DPS |
+| ----------------------- | ---: | -----------------: | -----------------: |
+| might-full-max          |   18 |  97412.27314402927 |  97489.05541713296 |
+| might-fully-relayed-max |   18 |  94758.28707058546 |  94833.51884322167 |
+| might-full-max          |   19 | 102902.85267662379 | 102984.18949757682 |
+| might-fully-relayed-max |   19 | 100111.18345810732 | 100190.82379965615 |
+
+Both Wings presets move their four fixed Qi threshold times earlier by 0.04,
+0.06, 0.14, and 0.16 seconds to retain proportional depletion around the earlier
+break and recovery. Wings DPS and all other snapshots are unchanged. These
+repairs resolve the three alignment failures noted in the earlier acceptance.
