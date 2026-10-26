@@ -6,20 +6,32 @@ Blood Burst is direct damage tagged `HighBleed` and `Bleed`. The latter selects
 Bleeding attunements and talents; it does not grant DOT bonuses. Its `Sword`
 and `MartialArts` tags enable Art of Sword and All Martial Arts in the standard
 shared additive bonus bucket. Soul-Shaken's
-`highBleedDamage` applies only to `HighBleed` hits (10% per stack, up to 50%)
-in the existing multiplicative damage bucket. Its ordinary `dotDamage` bonuses
-apply only to periodic DOT damage and exclude High Bleed. BB does not receive
+`dmgBonus` joins Category 1, gated to `HighBleed` hits (10% per stack, up to 50%)
+or ordinary `DOT` ticks excluding High Bleed. Ordinary ticks receive 5% per stack,
+plus another 5% for the current Strategic Sword or Heavenquaker Spear art. BB does not receive
 Insightful Strike's DOT-only T6 bonus; its normal direct-hit triggers remain active.
 
 Enemy defense, level, path resistances, Judgement Resistance, and level-derived
 character bonuses come from the selected entry in `data/breakthrough.json`.
 Breakthrough 17 uses 408 enemy defense, zero base resistance, 65% Judgement
 Resistance, 16.5% level Precision, and 150 of each base attribute. Breakthrough
-18 uses 446 enemy defense, zero base resistance, 85% Judgement Resistance,
+18 uses 500 enemy defense, zero base resistance, 85% Judgement Resistance,
 17.8% level Precision, and 164 of each base attribute. Enemy level remains 96
 for both profiles; it is not imported from the Solo Level datamine.
+Breakthroughs 18 and 19 use the progression-specific enemy defense from the
+October 26, 2026 export (500, previously 446). This update does not import
+enemy HP or change enemy level or Judgement Resistance.
 Breakthrough 17 selects martial-art talent rank 13 and breakthrough 18 selects
 rank 14 through `martialArtTalentRank`.
+Breakthrough 19 selects Solo Level 19 and martial-art rank 15, with 19.2%
+level Precision and 178 of each base attribute. It retains breakthrough 18's
+enemy profile (including level 96) and equipment tier 100. Its Enhancement
+totals are 46,223 HP, 276–552 Physical Attack, and 138 Physical Defense.
+Character talent totals use the grey variant's cumulative Solo Level 19 rewards.
+Rank 15 raises the base-attribute conversion cap to 325, adds 114–228 attribute
+attack, and raises attribute penetration/damage caps to 25.2/12.6%. Its
+martial-art Bonus Attack increase is 15%, with a 1.5% coefficient increase for
+the supported effects without Bonus Attack.
 Each equipped martial art contributes only its `talent[rank]` effects; ranks are
 not cumulative. Infernal Twinblades' rank-13 conversions use the interpreted
 datamine rates: 0.264 Min Physical Attack per Agility (capped at 73.92), and
@@ -128,6 +140,13 @@ Expected and sampled damage share this resolution, including static aggregates.
 
 ## Stat resolution
 
+Everspring's channel-damage talent requires originating Martial Art class 108
+and the Everspring art context. Scarlet Spin and its ordinary Resonance qualify;
+Dreamwrought Bubbles and its Resonance are class 104 and do not. Passive
+`31220311` grants each of Physical and Bamboocut damage scales
+`min(floor(raw Min Physical Attack / 62.5) * 0.01, 0.12)`.
+The channel bonuses are separate from Bubble's innate non-player target correction.
+
 Rank 13 uses the interpreted conversion rates, including
 `0.264` Physical Attack per base-attribute point (cap `73.92`), `0.000304`
 Critical Rate (cap `0.08512`), and `0.000152` Affinity Rate (cap `0.04256`).
@@ -140,9 +159,23 @@ The higher-of-Body-or-Power conversions remain deferred rather than using Power
 alone. See the [rank-13 audit](martial-art-talent-audit.md) for conditional
 effects, existing shared behavior, and all unresolved talent portions.
 
-Each of the five arsenals grants 148 minimum and 297 maximum raw attack in its channel (Physical for General; the named attribute for the other four).
+Each Arsenal resolves its raw attack and HP from the selected Solo Level through
+the shared `bySoloLevel` resolver. Solo 17 grants 131 minimum and 263 maximum
+attack plus 27,300 HP; Solo 18 grants 148 minimum and 297 maximum attack plus
+31,700 HP. The attack channel is Physical for General and the named attribute
+for the other four. Enhancement uses the same resolver on cumulative exported
+totals: Solo 17 grants 240–480 Physical Attack, 40,070 HP, and 120 Physical
+Defense; Solo 18 grants 258–516 Physical Attack, 43,147 HP, and 130 Physical
+Defense. These totals replace the former fixed per-slot Enhancement entries.
 
 The simulation input starts from zero, then the calculator applies innate character stats, the selected breakthrough's level bonuses, Enhancement bonuses, the selected Solo Level's cumulative character talent stats, regional Oddity totals eligible for the selected breakthrough (Qingzhou from breakthrough 18), attribute conversions, equipped gear, selected Inner Ways, martial-art talents, the active build's arsenal, bow/ring set, weapon set, and armor set (with any Main-tab overrides), food, and the selected Divinecraft through these stages. Set options may also contribute named timeline conditions; these use the common requirement pipeline for non-stat mechanics such as Formbend extending Shield and Breakthrough:
+
+Breakthrough level bonuses include the normal-variant flat player rewards from
+`local/datamine/wwm-solo-levels.json`, separately from Enhancement and character
+talents. The selected profile supplies its complete reward, not a sum of earlier
+profiles: breakthrough 18 grants 14–28 Physical Attack, 3,500 HP, and 7 Physical
+Defense; breakthrough 19 grants 30–60 Physical Attack, 7,400 HP, and 15 Physical
+Defense. These permanent raw stats also feed raw-sourced talent formulas.
 
 Inner Way stat tables resolve using the selected breakthrough's `soloLevel`,
 independently of `martialArtTalentRank`, before these stages. A table contributes
@@ -297,6 +330,12 @@ multiply an action's flat physical or attribute bonus. Etherwrath uses separate
 receives the same per-stack increase without changing displayed character
 stats. Effect-supplied penetration is likewise resolved independently for all
 five damage channels.
+
+These bonuses apply after Void/Formless Attack is converted into the equipped
+primary attribute. Tailwind's unpaired 3%, paired Fan talent's 6%, and Zephyr
+Whispers T6's additional 6% use the same attack-value bonus fields as Hawkwing.
+Native attribute and converted Void Attack therefore receive the same increase;
+the paired Tailwind bonuses add to 12% at T6 rather than compounding.
 
 Hawkwing is an outcome-triggered attack bonus. Deterministic calculations carry
 an expiry-sorted active-state array and scalar inactive probability,
@@ -823,9 +862,26 @@ DOT Multiplier = 1 + sum(active dotDamage effects)
 
 `dotDamage` values add together within this category and then multiply physical
 and every attribute component of the DOT. They do not affect ordinary damage
-actions, even when the casting skill applies or extends a DOT. Soul-Shaken uses
-this field for its general DOT vulnerability and its additional Umbra-source
-vulnerability.
+actions, even when the casting skill applies or extends a DOT. Soul-Shaken does
+not use this standalone multiplier: its eligible DOT and High Bleed bonuses
+join Category 1 via conditional `dmgBonus` entries. The authored definition
+retains the upgraded recipe; base versus upgraded granting routes remain unaudited.
+
+Candlelight also joins Category 1 (selector 10), adding 2% per stack up to 10%,
+with an authored carrier lifetime of 3.1 seconds. It does not join Mechanism.
+
+Cloudshear: Wings adds 6% to each applicable channel's DMG Bonus stat, additive
+with that channel's art talent and Strayhunt. Ordinary ally Cloudshear in the
+Wings support presets adds 2% to those same channel pools. Each channel receives
+one contribution, while the healing bonus remains separate.
+
+Blade of Grass also joins Category 1 for the existing Light/Heavy plus
+VariedCombo predicates, including its separate T6 bonus. The calculator models
+PvE targets without an additional non-player condition; exact source hit-tag
+1112 membership beyond these predicates remains unverified.
+
+End of Gale's T3 bonus adds 20% to Category 1 for that skill; it does not
+modify the base damage ratio.
 
 Vendetta Token uses `dmgBonus: 0.5` for Rodent-tagged attacks, following the
 confirmed general-damage behavior. Vendetta T6 adds `dmgBonus: 0.3` for those attacks
@@ -837,11 +893,32 @@ Other attacks receive neither bonus. No Category 2 multiplier is introduced.
 
 ```text
 Abrasion or Normal = 1
-Critical = 1 + Effective Critical DMG Bonus + active critDmgBonus effects
-Affinity = 1 + Affinity DMG Bonus
+Critical = clamp(1 + Effective Critical DMG Bonus + active critDmgBonus effects, 1.35, 2.50)
+Affinity = clamp(1 + Affinity DMG Bonus + active affinityDmgBonus effects, 1.20, 2.30)
 ```
 
 Critical and affinity bonuses multiply physical and every attribute component.
+The limits follow the audited current Global `ZD_QX_DMG.lua` consumer and apply
+after adding eligible event bonuses, in expected, sampled, and prepared damage
+paths. Target outcome-damage reductions are not modeled by this clamp-only correction.
+
+Base Yi River adds its damage bonus to Category 1 for every eligible channel
+at all tiers. T1 adds Physical Penetration; it does not change the damage pool.
+The T3 controlled-target damage/healing increase remains separate.
+
+Vulnerable uses Normal layer 0: 8% HP damage plus 10% for the eligible Might
+arts, additive in Category 1. By the selected PvE policy it contributes no Qi
+damage, including its conditional entry.
+
+Museflow's early Drum Series critical talents cap the evaluated formula at 10%
+for rank indices 2–5 and 20% for 6–7. Later ranks retain their 30% cap. The
+continuous conversion is retained pending the separate D09 stepped-talent change.
+
+Ripple's 30% target correction applies on every supported PvE target. The
+Tailwind/Radiant Drum talent adds 40 percentage points to the same correction,
+producing 70%, rather than multiplying by 1.4. Other base-ratio adjustments
+still share `baseDMGBonus`; separating target corrections from that pool remains
+a distinct representation change.
 Rain Whisper four-piece contributes 10% `critDmgBonus` as an unconditional
 compute-time effect, so it does not alter the displayed character Critical DMG
 stat. It adds a separate 15% `critDmgBonus` to damage actions whose hit-time
@@ -1176,3 +1253,36 @@ Set base-stat bonuses resolve from the selected breakthrough's equipment tier
 before stat aggregation. Breakthrough 18 uses tier-100 weapon, armor, and
 bow/ring bonuses for both two-piece and four-piece selections; four-piece
 combat mechanics retain their authored behavior.
+
+Tier-100 All Mystic Skill DMG Boost adds to the Mystic damage bonus for all
+Mystic skills, including both area and single-target skills. It does not affect
+martial arts. The exported affixes are 100931001 and 100941001, property 476
+(`ALL_SKILL_QS_ADD`), with rolls from 0.057 to 0.114. Their display names are
+missing in the export; the application labels them All Mystic Skill DMG Boost.
+
+### Ivorybloom critical-heal retention
+
+Ivorybloom grants its four-piece critical-rate, critical-damage, and critical-healing
+bonuses at full HP or for three seconds after any recipient receives a critical
+heal. Every qualifying heal refreshes the deadline, including teammate heals and
+heals performed at full HP. The triggering heal uses its pre-event bonuses.
+The two activation routes grant the same bonus once.
+
+The setup effect's `retainAfterCriticalHealing` metadata names the retained effect
+and supplies its duration; its existing `requirement` remains the ordinary full-HP
+activation route. The combat resolver applies the same nested effect below full HP
+while retained, through the shared action-stat pipeline.
+
+Expected calculations retain probability mass by expiration time. For each heal,
+inactive branches refresh with their unbuffed critical chance and active branches
+with their buffed chance. A group heal's conditional refresh chance is one minus
+the product of each recipient's noncritical chance. Damage and healing are evaluated
+in both states and weighted, rather than multiplying the bonus stats by uptime.
+Sampled runs use the actual independent recipient outcomes and one concrete deadline.
+Expiration occurs at the three-second boundary; another critical heal can start a
+new window at that timestamp. Healing rotations rebuild for comparison variants,
+so changed critical rates, healing, HP, and overheal collectors are resolved again.
+
+Source: normal/layer-zero set 29 in the 2026-10-21 16:50 local datamine export.
+The grey variant retains older full-HP-only wording. Refresh and teammate eligibility
+are confirmed game behavior supplied by the user.

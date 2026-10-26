@@ -1,8 +1,18 @@
 import { create } from "zustand"
 
-import type { LayoutMode } from "@/application/contracts"
-import { developmentModeStorageKey, layoutPreviewStorageKey } from "@/application/persistence/keys"
-import { loadDevMode, loadLayoutPreview } from "@/application/persistence/settings"
+import type { DisplaySizing, LayoutMode } from "@/application/contracts"
+import {
+  developmentModeStorageKey,
+  displaySizingStorageKey,
+  gearSearchMinutesStorageKey,
+  layoutPreviewStorageKey,
+} from "@/application/persistence/keys"
+import {
+  loadDevMode,
+  loadDisplaySizing,
+  loadGearSearchMinutes,
+  loadLayoutPreview,
+} from "@/application/persistence/settings"
 import { setPersistentItem } from "@/persistentStorage"
 
 /**
@@ -19,10 +29,14 @@ import { setPersistentItem } from "@/persistentStorage"
  */
 export type SettingsStore = {
   /** Gates the work-in-progress paths, the test-preset builds, and the unreleased locales. */
+  gearSearchMinutes: number
+  setGearSearchMinutes: (minutes: number) => void
   devMode: boolean
   /** The chosen layout while `devMode` is on. The effective layout is derived in `App`, because
    *  it also depends on the live viewport, which is not a stored value. */
   layoutPreview: LayoutMode
+  displaySizing: DisplaySizing
+  setDisplaySizing: (mode: DisplaySizing) => void
 
   /**
    * Reads the stored application settings.
@@ -42,10 +56,23 @@ export type SettingsStore = {
 }
 
 export const useSettingsStore = create<SettingsStore>()(set => ({
+  gearSearchMinutes: 2,
+  setGearSearchMinutes: minutes => {
+    if (!Number.isFinite(minutes) || minutes < 0) return
+    setPersistentItem(gearSearchMinutesStorageKey, String(minutes))
+    set({ gearSearchMinutes: minutes })
+  },
   devMode: false,
   layoutPreview: "pc",
+  displaySizing: "default",
 
-  initialise: compactViewport => set({ devMode: loadDevMode(), layoutPreview: loadLayoutPreview(compactViewport) }),
+  initialise: compactViewport =>
+    set({
+      devMode: loadDevMode(),
+      layoutPreview: loadLayoutPreview(compactViewport),
+      displaySizing: loadDisplaySizing(),
+      gearSearchMinutes: loadGearSearchMinutes(),
+    }),
 
   setDevMode: enabled => {
     setPersistentItem(developmentModeStorageKey, String(enabled))
@@ -55,5 +82,10 @@ export const useSettingsStore = create<SettingsStore>()(set => ({
   setLayoutPreview: mode => {
     setPersistentItem(layoutPreviewStorageKey, mode)
     set({ layoutPreview: mode })
+  },
+
+  setDisplaySizing: mode => {
+    setPersistentItem(displaySizingStorageKey, mode)
+    set({ displaySizing: mode })
   },
 }))

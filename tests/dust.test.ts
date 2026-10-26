@@ -98,7 +98,7 @@ function bundle(selected: Partial<Record<keyof typeof catalogs, number>> = {}): 
         Hit: {
           name: "Hit",
           castTime: 1,
-          tags: ["MartialArts", "DirectDamage"],
+          tags: ["MartialArts", "MartialArt", "DirectDamage"],
           action: [{ type: "damage", time: 0, phyCoef: 1, attrCoef: 0 }],
         },
         Mark: {
@@ -162,6 +162,68 @@ function stacks(result: ReturnType<typeof calculateRotationBaseline>, name: stri
 }
 
 describe("Dust mechanics", () => {
+  it.each([13, 14, 15])("limits rank %s umbrella channel scaling to Martial Art contexts in whole steps", rank => {
+    const rules = martialArtEffectsForRank(martialArtDefinitions, ["everspring"], rank).filter(rule => {
+      const effect = (rule as EditableObject).effect as EditableObject | undefined
+      return (effect?.stat as EditableObject | undefined)?.physDmgBonus !== undefined
+    })
+    expect(rules).toHaveLength(1)
+    for (const [skill, qualifies] of [
+      ["ScarletSpinStage1", true],
+      ["Resonance", true],
+      ["DreamwroughtBubbles", false],
+      ["BubblesResonance", false],
+    ] as const) {
+      for (const [attack, expected] of [
+        [62.499, 0],
+        [62.5, 0.01],
+        [124.999, 0.01],
+        [125, 0.02],
+        [749.999, 0.11],
+        [750, 0.12],
+        [1000, 0.12],
+      ]) {
+        const calculate = (enabled: boolean) => {
+          const input = bundle()
+          input.stats.minPhys = attack
+          input.stats.maxPhys = attack
+          input.timeline.setupEffects = enabled ? rules : []
+          input.timeline.rotation.steps = [castStep(skill), delayStep(3)]
+          return calculateRotationBaseline(input)
+        }
+        const base = calculate(false)
+        const boosted = calculate(true)
+        expect(boosted.baseline.length).toBeGreaterThan(0)
+        for (const entry of boosted.baseline) {
+          const bonus = qualifies ? expected : 0
+          expect(entry.context.stats.physDmgBonus).toBeCloseTo(bonus, 12)
+          expect(entry.context.stats.bamboocutDmgBonus).toBeCloseTo(bonus, 12)
+          expect(boosted.actionBreakdowns[entry.id!].total / base.actionBreakdowns[entry.id!].total).toBeCloseTo(
+            1 + bonus,
+            10,
+          )
+        }
+      }
+    }
+  })
+  it("applies Bubbles' non-player target correction to both release hits independently of Category 1", () => {
+    const calculate = (withoutBonus: boolean) => {
+      const input = bundle()
+      input.stats.allMartialArts = 0.2
+      input.timeline.skills = structuredClone(input.timeline.skills)
+      if (withoutBonus) input.timeline.skills.DreamwroughtBubblesRelease.modifier = []
+      input.timeline.rotation.steps = [castStep("DreamwroughtBubbles"), delayStep(1)]
+      const result = calculateRotationBaseline(input)
+      return result.baseline
+        .filter(entry => entry.action.type === "damage")
+        .map(entry => result.actionBreakdowns[entry.id!].total)
+    }
+    const base = calculate(true)
+    const boosted = calculate(false)
+    expect(base).toHaveLength(2)
+    expect(boosted).toHaveLength(2)
+    boosted.forEach((damage, index) => expect(damage / base[index]).toBeCloseTo(1.2, 10))
+  })
   it.each([
     { tier: 0, count: undefined, active: false },
     { tier: 0, count: 2, active: false },
@@ -195,6 +257,27 @@ describe("Dust mechanics", () => {
     expect(hits.map(row => row.actionStates[0].debuffs.get("Candlelight")?.stack ?? 0)).toEqual([
       0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 0,
     ])
+  })
+  it("adds Candlelight to Category 1 and retains it between 3 and 3.1 seconds", () => {
+    const input = bundle()
+    input.stats.allMartialArts = 0.2
+    input.timeline.skills.Hit.tags = ["MartialArts", "DirectDamage"]
+    input.timeline.skills.Hit.castTime = 0
+    input.timeline.rotation.steps = [
+      castStep("Hit"),
+      castStep("Candle"),
+      delayStep(3.05),
+      castStep("Hit"),
+      delayStep(0.1),
+      castStep("Hit"),
+    ]
+    const result = calculateRotationBaseline(input)
+    const hits = result.timeline.filter(row => row.step.skill === "Hit")
+    const amounts = hits.map(row => result.actionBreakdowns[`${row.id}:0`].total)
+    expect(hits[1].actionStates[0].debuffs.has("Candlelight")).toBe(true)
+    expect(hits[2].actionStates[0].debuffs.has("Candlelight")).toBe(false)
+    expect(amounts[1] / amounts[0]).toBeCloseTo(1.3 / 1.2, 10)
+    expect(amounts[2]).toBeCloseTo(amounts[0], 10)
   })
   it.each([
     { tier: 3, count: 2, expected: [0, 1, 1, 2, 2, 3] },
@@ -418,6 +501,30 @@ describe("Dust mechanics", () => {
       expect(row.actionStates[3].distance).toBe(1)
     }
   })
+  it.each(["18", "19"])("resolves 87 Resonances in the 100%% PC preset at breakthrough %s", breakthrough => {
+    const path = typedPathDefinitions.bamboocutDust
+    const input = buildPresetRotationBundle(
+      {
+        pathId: "bamboocutDust",
+        martialArts: path.lockedWeapons!,
+        rotation: dustPhantomChimeRotation as RotationRecord,
+        breakthrough,
+        food: "SimmeringFishSlices",
+        divinecraft: "Fire",
+        script: "None",
+        skillOverrides: {},
+        previewId: null,
+        globalDebuffs: { ...defaultGlobalDebuffs },
+      },
+      path.defaultBuild,
+    )!
+    const result = calculateRotationBaseline(input)
+    const rows = result.metrics.breakdown.groupedSkills
+    expect(rows.find(row => row.name === "Scarlet Spin")!.hits).toBe(84)
+    expect(rows.find(row => row.name === "Resonance")!.hits).toBe(87)
+    expect(result.duration).toBe(60)
+  })
+
   it("preserves every Burn and Bury connection and lands the closing hit before Battle End", () => {
     const path = typedPathDefinitions.bamboocutDust
     const input = buildPresetRotationBundle(
@@ -527,7 +634,7 @@ describe("Dust mechanics", () => {
 
   it("registers the Dust 100% Phantom Chime rotation as the path default", () => {
     expect(pathData.bamboocutDust.defaultRotation).toBe("dust-dummy-1-min-100pc")
-    expect(dustPhantomChimeRotation.name).toBe("Dummy 1 min 100% PC")
+    expect(dustPhantomChimeRotation.name).toBe("Dummy 1 Min 100% PC")
     expect(dustPhantomChimeRotation.martialArts).toEqual(["everspring", "unfettered"])
     expect(dustPhantomChimeRotation.ping).toBe(40)
     expect(dustPhantomChimeRotation.steps.at(-1)).toEqual({ type: "event", event: "BattleEnd", startTime: 60 })
@@ -873,6 +980,55 @@ describe("Dust mechanics", () => {
     expect(run("SoulLoss")).toBeGreaterThan(0)
     expect(run("Soulbreak") / run("SoulLoss")).toBeCloseTo((1.3 / 0.78) * 1.05)
   })
+  it("adds Soulbreak to general damage bonus for martial arts and mystics", () => {
+    for (const tags of [["MartialArts"], ["Mystic"]]) {
+      const input = bundle()
+      input.stats.vsBossDmg = 0.2
+      input.timeline.skills.Hit.tags = tags
+      input.timeline.rotation.steps = [castStep("Hit")]
+      const base = calculateRotationBaseline(input).metrics.totalDamage
+      input.timeline.initialDebuffs = [{ name: "Soulbreak", stack: 1 }]
+      expect(calculateRotationBaseline(input).metrics.totalDamage / base).toBeCloseTo(1.25 / 1.2)
+    }
+  })
+  it("adds Fragrant Song damage to its guaranteed-critical Resonance only while marked", () => {
+    const input = bundle()
+    input.timeline.skills.Resonance = umbrella.Resonance
+    input.timeline.rotation.steps = [castStep("Resonance")]
+    input.stats.vsBossDmg = 0.2
+    input.stats.crit = 0
+    const ordinary = calculateRotationBaseline(input).metrics.totalDamage
+    input.timeline.initialBuffs = [{ name: "FragrantSongResonance", stack: 1 }]
+    const marked = calculateRotationBaseline(input).metrics.totalDamage
+    expect(marked / ordinary).toBeCloseTo(1.5 * (1.4 / 1.2))
+    input.timeline.initialBuffs = []
+    input.timeline.skills.MarkSong = {
+      name: "Mark Song",
+      castTime: 0,
+      action: [{ type: "apply", target: "self", value: "FragrantSongResonance", time: 0 }],
+    }
+    input.timeline.rotation.steps = [castStep("MarkSong"), delayStep(3), castStep("Resonance")]
+    expect(calculateRotationBaseline(input).metrics.totalDamage).toBeCloseTo(ordinary)
+  })
+  it("limits Tang Melody to direct martial-art-skill contexts, including Scarlet Spin Resonance", () => {
+    for (const [skill, tags, eligible] of [
+      ["Probe", ["MartialArts", "MartialArt", "DirectDamage"], true],
+      ["Probe", ["MartialArts", "Light", "DirectDamage"], false],
+      ["Probe", ["MartialArts", "MartialArt", "DOT"], false],
+      ["Resonance", umbrella.Resonance.tags!, true],
+      ["DreamwroughtBubbles", umbrella.DreamwroughtBubbles.tags!, false],
+    ] as const) {
+      const input = bundle()
+      input.timeline.skills.Probe = { castTime: 1, tags: [...tags], action: [{ type: "damage", phyCoef: 1, time: 0 }] }
+      input.timeline.setupEffects.push({ effect: { GuaranteedCrit: true } })
+      input.timeline.rotation.steps = [castStep("Probe")]
+      input.timeline.rotation.name = skill
+      const plain = calculateRotationBaseline(input).metrics.totalDamage
+      input.timeline.initialBuffs = [{ name: "TangMelody", stack: 5 }]
+      const boosted = calculateRotationBaseline(input).metrics.totalDamage
+      expect(boosted / plain).toBeCloseTo(eligible ? 1.6 / 1.5 : 1, 10)
+    }
+  })
   it("applies Tang Melody after hits, rate limits it, caps it, and expires it", () => {
     const input = bundle({ SongOfTang: 0 })
     input.timeline.skills.Hit.castTime = 0.5
@@ -891,7 +1047,7 @@ describe("Dust mechanics", () => {
     ]
     expect(stacks(calculateRotationBaseline(enhanced), "TangMelody")).toEqual([0, 1, 2, 3, 4, 5, 5])
   })
-  it("restricts Tang Melody critical damage by HP until T6 and to martial arts", () => {
+  it("restricts Tang Melody critical damage by HP until T5 and to direct martial-art-skill contexts", () => {
     const damage = (tier: number, hp: number, martial = true) => {
       const input = bundle({ SongOfTang: tier })
       input.timeline.rotation.steps = [
@@ -906,6 +1062,12 @@ describe("Dust mechanics", () => {
     expect(damage(0, 100)).toBeCloseTo(1.52 / 1.5)
     expect(damage(0, 50)).toBe(1)
     expect(damage(0, 25)).toBe(1)
+    for (const tier of [3, 4]) {
+      expect(damage(tier, 50)).toBe(1)
+      expect(damage(tier, 51)).toBeGreaterThan(1)
+    }
+    expect(damage(5, 25)).toBeGreaterThan(1)
+    expect(damage(5, 25, false)).toBe(1)
     expect(damage(6, 25)).toBeGreaterThan(1)
     expect(damage(6, 25, false)).toBe(1)
   })
@@ -1038,7 +1200,7 @@ describe("Dust confirmed damage and cooldown rules", () => {
     const sweep = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "SoulSweep")!
     expect(sweep.startTime).toBeCloseTo(ready)
   })
-  it("Burn and Bury adds its bonus to vs Boss instead of multiplying it", () => {
+  it("Burn and Bury multiplies base damage separately from vs Boss", () => {
     const input = bundle()
     input.stats.vsBossDmg = 0.2
     input.timeline.rotation.steps = [castStep("Mark"), castStep("BurnAndBury")]
@@ -1049,7 +1211,7 @@ describe("Dust confirmed damage and cooldown rules", () => {
       const row = result.timeline.find(row => row.step.type === "skill" && row.step.skill === "BurnAndBury")!
       return result.actionBreakdowns[`${row.id}:1`].total
     }
-    expect(damage(boosted) / damage(base)).toBeCloseTo(1.5 / 1.2)
+    expect(damage(boosted) / damage(base)).toBeCloseTo(1.3)
   })
 })
 
@@ -1159,53 +1321,60 @@ describe("Phantom Umbrella summons and Resonance", () => {
   })
 
   it("crits both of a Fragrant Song throw's Resonances and only those", () => {
-    // A throw spends Fragrant Song at its own start and the next throw starts on the same
-    // instant its catch fires, so neither "Fragrant Song is up" nor "the newest throw" can
-    // say which throw a Resonance belongs to. Each throw's own trigger times do: a throw
-    // has two Resonance sites, the returning umbrella and its catch, and a site that
-    // spawns nothing (the closing throw of a cast) must not be counted.
+    // Catch pulses now resolve inside their owning throw, before the next stage.
+    // Creation and deferred catch pulses may share a timestamp; classify each
+    // actual pulse by its throw rather than by the helper that spawned it.
     const result = run(6, [{ type: "skill", skill: "ScarletSpin", duration: 12 }])
     const guaranteedCrit = (row: TimelineRow | undefined) =>
       (row?.modifierEffects ?? []).some(effect => effect?.GuaranteedCrit === true)
-    const sites = result.timeline.filter(isThrow).flatMap(row =>
-      row.actions
-        .filter(action => action.type === "trigger")
-        .filter(
-          action =>
-            typeof action.value === "string" &&
-            ["EverspringPerfectCatch", "PhantomUmbrellaSummon"].includes(action.value),
-        )
-        .map(action => {
-          const at = row.startTime + Number(action.time)
-          const spawned = result.timeline.filter(
-            candidate =>
-              candidate.step.skill === "Resonance" && Math.abs(candidate.startTime - at) < TIMELINE_TIME_EPSILON,
-          )
-          return { throwSpentSong: guaranteedCrit(row), spawned }
-        }),
-    )
-    const spawned = sites.filter(site => site.spawned.length > 0)
-    const songSites = spawned.filter(site => site.throwSpentSong)
-    const plainSites = spawned.filter(site => !site.throwSpentSong)
-    // Both states occur in one cast, so the comparison is not vacuous.
-    expect(songSites.length).toBeGreaterThan(0)
-    expect(plainSites.length).toBeGreaterThan(0)
-    // A Fragrant Song throw's sites both crit, and no other throw's site does.
-    for (const site of songSites) expect(site.spawned.map(row => guaranteedCrit(row))).toEqual([true])
-    for (const site of plainSites) expect(site.spawned.map(row => guaranteedCrit(row))).toEqual([false])
-    // Every critting Resonance belongs to a Fragrant Song site, so none leaked.
-    const crittedIds = new Set(songSites.flatMap(site => site.spawned.map(row => row.id)))
-    const actuallyCritted = result.timeline
-      .filter(row => row.step.skill === "Resonance" && guaranteedCrit(row))
-      .map(row => row.id)
-    expect(actuallyCritted).toHaveLength(crittedIds.size)
-    expect(new Set(actuallyCritted)).toEqual(crittedIds)
+    const throws = result.timeline.filter(isThrow).sort((a, b) => a.startTime - b.startTime)
+    const pulses = result.timeline.filter(row => row.step.skill === "Resonance")
+    expect(pulses.some(guaranteedCrit)).toBe(true)
+    expect(pulses.some(row => !guaranteedCrit(row))).toBe(true)
+    for (const pulse of pulses) {
+      const owner = throws.findLast(row => row.startTime <= pulse.startTime + TIMELINE_TIME_EPSILON)
+      expect(owner).toBeDefined()
+      expect(guaranteedCrit(pulse)).toBe(guaranteedCrit(owner))
+    }
     // A critting Resonance really does out-damage an uncritted one.
     const average = (critted: boolean) => {
       const group = result.timeline.filter(row => row.step.skill === "Resonance" && guaranteedCrit(row) === critted)
       return group.reduce((sum, row) => sum + result.actionBreakdowns[`${row.id}:0`].total, 0) / group.length
     }
     expect(average(true)).toBeGreaterThan(average(false))
+  })
+
+  it("creates the first phantom before its returning hit and defers the early catch pulse", () => {
+    const result = run(6, [{ type: "skill", skill: "ScarletSpin", duration: 2 }])
+    const first = result.timeline.find(isThrow)!
+    const catchRow = result.timeline.find(isCatch)!
+    const summon = result.timeline.find(row => row.step.skill === "PhantomUmbrellaSummon")!
+    const returning = first.actions.findLast(action => action.type === "damage")!
+    expect(catchRow.startTime - first.startTime).toBeCloseTo(0.6153846153846154, 10)
+    expect(summon.startTime - first.startTime).toBeCloseTo(0.7461538461538461, 10)
+    expect(summon.startTime).toBeLessThan(first.startTime + Number(returning.time))
+    const firstPulses = resonances(result).filter(row => row.startTime < first.startTime + 1.0769230769230769)
+    expect(firstPulses).toHaveLength(2)
+    expect(firstPulses.map(row => row.startTime - first.startTime)).toEqual([
+      expect.closeTo(0.9769230769230769, 10),
+      expect.closeTo(0.9769230769230769, 10),
+    ])
+  })
+
+  it("uses the enhanced catch opening while retaining the continuation gate", () => {
+    const input = bundle({ PhantomRally: 6 })
+    input.timeline.setupEffects = martialArtEffectsForRank(
+      { everspring: martialArtDefinitions.everspring },
+      ["everspring"],
+      13,
+    )
+    input.timeline.initialBuffs = [{ name: "FragrantSong", stack: 1 }]
+    input.timeline.rotation.steps = [{ type: "skill", skill: "ScarletSpin", duration: 2 }]
+    const result = calculateRotationBaseline(input)
+    const throws = result.timeline.filter(isThrow).sort((a, b) => a.startTime - b.startTime)
+    const caught = result.timeline.find(isCatch)!
+    expect(caught.startTime - throws[0].startTime).toBeCloseTo(0.2958579881656805, 10)
+    expect(throws[1].startTime - throws[0].startTime).toBeCloseTo(0.8284023668639053, 10)
   })
 
   it("groups both Resonance routes while preserving their individual damage totals", () => {
@@ -1221,11 +1390,9 @@ describe("Phantom Umbrella summons and Resonance", () => {
     expect(group.hits).toBe(flat.reduce((sum, row) => sum + row.hits, 0))
   })
 
-  it("seeds every throw after the first with a Perfect Catch, at any ping", () => {
-    // A throw is scheduled by the catch that precedes it, so a cast can never resolve
-    // a throw without its catch. The catch is queued with the throw it seeds, so both
-    // clear the Flower Burial window at the same moment and a higher ping cannot drop
-    // one without the other.
+  it("catches each admitted throw, including the final one after Flower Burial ends", () => {
+    // An admitted throw finishes its catch independently of Flower Burial. The
+    // continuation remains gated, so that final catch does not launch another throw.
     const spin = (ping: number) => {
       const input = bundle()
       input.timeline.setupEffects = martialArtEffectsForRank(
@@ -1245,7 +1412,9 @@ describe("Phantom Umbrella summons and Resonance", () => {
       const throws = rows.filter(row => row.kind === "trigger" && row.sourceRowId === parent.id && isThrow(row))
       const catches = rows.filter(isCatch)
       expect(throws.length).toBeGreaterThan(1)
-      expect(catches).toHaveLength(throws.length - 1)
+      expect(catches).toHaveLength(throws.length)
+      expect(catches.at(-1)!.startTime).toBeGreaterThan(parent.startTime + 12)
+      expect(throws).toHaveLength(14)
     }
   })
   it("does not let a raised skill satisfy its parent's start-of-cast trigger", () => {
@@ -1346,10 +1515,17 @@ describe("Phantom Umbrella summons and Resonance", () => {
     expect(chime(2)).toBe(0)
     // Tiers are cumulative, so Tier 4 is compared against Tier 3 to isolate the
     // damage bonus from the Tier 3 resistance shred that both share.
-    const base = resonanceDamage(run(3, spin))
-    const upgraded = resonanceDamage(run(4, spin))
-    expect(base).toBeGreaterThan(0)
-    expect(upgraded / base).toBeCloseTo(1.2, 6)
+    const base = run(3, spin)
+    const upgraded = run(4, spin)
+    expect(resonanceDamage(base)).toBeGreaterThan(0)
+    for (const row of resonances(base)) {
+      const song = row.modifierEffects?.some(effect => effect.GuaranteedCrit === true)
+      const id = `${row.id}:0`
+      expect(upgraded.actionBreakdowns[id].total / base.actionBreakdowns[id].total).toBeCloseTo(
+        song ? 1.4 / 1.2 : 1.2,
+        6,
+      )
+    }
   })
   it("resonates Dreamwrought Bubbles on return at Tier 6 only", () => {
     const steps = [castStep("DreamwroughtBubbles")] as RotationStep[]

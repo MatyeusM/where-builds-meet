@@ -10,16 +10,10 @@
           { "operator": "not", "operand": [{ "target": "equippedMartialArt", "value": "museflowWaistDrum" }] }
         ],
         "effect": {
-          "stat": {
-            "minBellstrike": { "formula": { "source": "minBellstrike", "multiplier": 0.03 } },
-            "maxBellstrike": { "formula": { "source": "maxBellstrike", "multiplier": 0.03 } },
-            "minStonesplit": { "formula": { "source": "minStonesplit", "multiplier": 0.03 } },
-            "maxStonesplit": { "formula": { "source": "maxStonesplit", "multiplier": 0.03 } },
-            "minSilkbind": { "formula": { "source": "minSilkbind", "multiplier": 0.03 } },
-            "maxSilkbind": { "formula": { "source": "maxSilkbind", "multiplier": 0.03 } },
-            "minBamboocut": { "formula": { "source": "minBamboocut", "multiplier": 0.03 } },
-            "maxBamboocut": { "formula": { "source": "maxBamboocut", "multiplier": 0.03 } }
-          }
+          "bellstrikeAttackBonus": 0.03,
+          "stonesplitAttackBonus": 0.03,
+          "silkbindAttackBonus": 0.03,
+          "bamboocutAttackBonus": 0.03
         }
       }
     ],
@@ -52,7 +46,20 @@
     "duration": 15,
     "maxStack": 1,
     "refresh": true,
-    "effect": [{ "effect": { "dmgBonus": 0.06, "healingBonus": 0.06 } }],
+    "effect": [
+      {
+        "effect": {
+          "healingBonus": 0.06,
+          "stat": {
+            "physDmgBonus": 0.06,
+            "bellstrikeDmgBonus": 0.06,
+            "stonesplitDmgBonus": 0.06,
+            "silkbindDmgBonus": 0.06,
+            "bamboocutDmgBonus": 0.06
+          }
+        }
+      }
+    ],
     "showCoverage": true
   },
   "FlowingWind": {
@@ -107,7 +114,14 @@
       }
     ]
   },
-  "WarriorEscape": { "name": "Escape From Cage", "duration": 5, "maxStack": 1, "refresh": true, "effect": [] },
+  "WarriorEscape": {
+    "name": "Escape From Cage",
+    "hidden": true,
+    "duration": 5,
+    "maxStack": 1,
+    "refresh": true,
+    "effect": []
+  },
   "WingsSupportYellow": {
     "name": "Silkbind - Wings (Yellow)",
     "duration": 0,
@@ -119,13 +133,19 @@
           { "operator": "not", "operand": [{ "target": "equippedMartialArt", "value": "museflowWaistDrum" }] }
         ],
         "effect": {
-          "dmgBonus": 0.06,
-          "healingBonus": 0.06,
-          "physicalAttackBonus": 0.0195,
-          "bellstrikeAttackBonus": 0.03975,
-          "stonesplitAttackBonus": 0.03975,
-          "silkbindAttackBonus": 0.03975,
-          "bamboocutAttackBonus": 0.03975
+          "healingBonus": 0.02,
+          "physicalAttackBonus": 0.039,
+          "bellstrikeAttackBonus": 0.05925,
+          "stonesplitAttackBonus": 0.05925,
+          "silkbindAttackBonus": 0.05925,
+          "bamboocutAttackBonus": 0.05925,
+          "stat": {
+            "physDmgBonus": 0.02,
+            "bellstrikeDmgBonus": 0.02,
+            "stonesplitDmgBonus": 0.02,
+            "silkbindDmgBonus": 0.02,
+            "bamboocutDmgBonus": 0.02
+          }
         }
       }
     ]
@@ -141,13 +161,19 @@
           { "operator": "not", "operand": [{ "target": "equippedMartialArt", "value": "museflowWaistDrum" }] }
         ],
         "effect": {
-          "dmgBonus": 0.06,
-          "healingBonus": 0.06,
-          "physicalAttackBonus": 0.0315,
-          "bellstrikeAttackBonus": 0.04575,
-          "stonesplitAttackBonus": 0.04575,
-          "silkbindAttackBonus": 0.04575,
-          "bamboocutAttackBonus": 0.04575
+          "healingBonus": 0.02,
+          "physicalAttackBonus": 0.063,
+          "bellstrikeAttackBonus": 0.07725,
+          "stonesplitAttackBonus": 0.07725,
+          "silkbindAttackBonus": 0.07725,
+          "bamboocutAttackBonus": 0.07725,
+          "stat": {
+            "physDmgBonus": 0.02,
+            "bellstrikeDmgBonus": 0.02,
+            "stonesplitDmgBonus": 0.02,
+            "silkbindDmgBonus": 0.02,
+            "bamboocutDmgBonus": 0.02
+          }
         }
       }
     ]
@@ -163,13 +189,19 @@
           { "operator": "not", "operand": [{ "target": "equippedMartialArt", "value": "museflowWaistDrum" }] }
         ],
         "effect": {
-          "dmgBonus": 0.06,
-          "healingBonus": 0.06,
-          "physicalAttackBonus": 0.06,
-          "bellstrikeAttackBonus": 0.06,
-          "stonesplitAttackBonus": 0.06,
-          "silkbindAttackBonus": 0.06,
-          "bamboocutAttackBonus": 0.06
+          "healingBonus": 0.02,
+          "physicalAttackBonus": 0.12,
+          "bellstrikeAttackBonus": 0.12,
+          "stonesplitAttackBonus": 0.12,
+          "silkbindAttackBonus": 0.12,
+          "bamboocutAttackBonus": 0.12,
+          "stat": {
+            "physDmgBonus": 0.02,
+            "bellstrikeDmgBonus": 0.02,
+            "stonesplitDmgBonus": 0.02,
+            "silkbindDmgBonus": 0.02,
+            "bamboocutDmgBonus": 0.02
+          }
         }
       }
     ]

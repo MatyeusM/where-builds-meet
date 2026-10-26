@@ -8,10 +8,10 @@
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-2xl);
-    padding: 20px;
+    padding: var(--desktop-space-1, 20px);
     background: var(--surface);
     color: var(--text);
-    box-shadow: 0 24px 70px var(--shadow-strong);
+    box-shadow: 0 var(--desktop-size-1-5, 24px) var(--desktop-size-4-5, 70px) var(--shadow-strong);
   }
 
   .gear-ocr-dialog {
@@ -35,7 +35,7 @@
   .gear-ocr-dialog::backdrop,
   .rotation-readable-dialog::backdrop {
     background: var(--backdrop);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(var(--desktop-size-0-25, 2px));
   }
 
   .character-profile-dialog-heading,
@@ -46,35 +46,35 @@
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--desktop-space-1, 16px);
   }
 
   .character-profile-dialog-heading h2,
   .gear-ocr-heading h2,
   .rotation-readable-heading h3 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: var(--desktop-font-1-375, 1.35rem);
   }
 
   .character-profile-dialog-heading p,
   .character-profile-hint,
   .gear-ocr-heading p,
   .rotation-readable-dialog > p {
-    margin: 5px 0 0;
+    margin: var(--desktop-space-0-25, 5px) 0 0;
     color: var(--text-muted);
   }
 
   .character-profile-dialog-heading .icon-button,
   .rotation-readable-heading .icon-button {
-    margin: -4px -4px 0 0;
-    font-size: 1.35rem;
+    margin: calc(-1 * var(--desktop-space-0-25, 4px)) calc(-1 * var(--desktop-space-0-25, 4px)) 0 0;
+    font-size: var(--desktop-font-1-375, 1.35rem);
   }
 
   .character-profile-create {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(min-content, auto);
-    gap: 8px;
-    margin-block-start: 18px;
+    gap: var(--desktop-space-0-5, 8px);
+    margin-block-start: var(--desktop-space-1, 18px);
   }
 
   .character-profile-create input,
@@ -82,7 +82,7 @@
     min-inline-size: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 8px 10px;
+    padding: var(--desktop-space-0-5, 8px) var(--desktop-space-0-5, 10px);
     background: var(--surface-sunken);
     color: var(--text);
     font: inherit;
@@ -95,23 +95,23 @@
   }
 
   .character-profile-hint {
-    margin-block-start: 7px;
+    margin-block-start: var(--desktop-space-0-5, 7px);
   }
 
   .character-profile-list {
     display: grid;
-    gap: 7px;
-    margin-block-start: 16px;
+    gap: var(--desktop-space-0-5, 7px);
+    margin-block-start: var(--desktop-space-1, 16px);
   }
 
   .character-profile-row {
     display: grid;
-    grid-template-columns: minmax(9.375rem, 1fr) minmax(min-content, auto);
+    grid-template-columns: minmax(var(--desktop-size-9-5, 9.375rem), 1fr) minmax(min-content, auto);
     align-items: center;
-    gap: 8px;
+    gap: var(--desktop-space-0-5, 8px);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 8px;
+    padding: var(--desktop-space-0-5, 8px);
     background: var(--surface-alt);
   }
 
@@ -123,27 +123,27 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 5px;
+    gap: var(--desktop-space-0-25, 5px);
   }
 
   .calculated-profile-row > strong {
-    padding-inline-start: 3px;
+    padding-inline-start: var(--desktop-space-0-125, 3px);
   }
 
   .character-profile-transfer {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(min-content, auto);
     align-items: center;
-    gap: 10px;
-    margin-block-start: 16px;
+    gap: var(--desktop-space-0-5, 10px);
+    margin-block-start: var(--desktop-space-1, 16px);
     border-block-start: 1px solid var(--border);
-    padding-block-start: 14px;
+    padding-block-start: var(--desktop-space-0-75, 14px);
   }
 
   .character-profile-transfer > div {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: var(--desktop-space-0-5, 7px);
   }
 
   .character-profile-transfer p {
@@ -160,12 +160,12 @@
   .rotation-readable-dialog textarea {
     display: block;
     inline-size: 100%;
-    min-block-size: 210px;
+    min-block-size: var(--desktop-size-13-25, 210px);
     max-block-size: 50dvh;
     resize: vertical;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 12px;
+    padding: var(--desktop-space-0-75, 12px);
     background: var(--surface-sunken);
     color: var(--text);
     font-family: var(--font-mono);
@@ -183,8 +183,8 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
-    margin-block-start: 14px;
+    gap: var(--desktop-space-0-5, 8px);
+    margin-block-start: var(--desktop-space-0-75, 14px);
   }
 
   .rotation-readable-actions > span {
@@ -198,10 +198,10 @@
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-2xl);
-    padding: 20px;
+    padding: var(--desktop-space-1, 20px);
     background: var(--surface-sunken);
     color: var(--text);
-    box-shadow: 0 24px 70px var(--shadow-strong);
+    box-shadow: 0 var(--desktop-size-1-5, 24px) var(--desktop-size-4-5, 70px) var(--shadow-strong);
   }
 
   .official-import-dialog::backdrop {
@@ -214,22 +214,22 @@
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--desktop-space-1, 16px);
   }
 
   .official-import-heading h2 {
-    margin: 3px 0 0;
+    margin: var(--desktop-space-0-125, 3px) 0 0;
   }
 
   .official-import-steps {
     display: grid;
-    gap: 12px;
-    margin: 20px 0;
-    padding-inline-start: 24px;
+    gap: var(--desktop-space-0-75, 12px);
+    margin: var(--desktop-space-1, 20px) 0;
+    padding-inline-start: var(--desktop-space-1-5, 24px);
   }
 
   .official-import-steps li {
-    padding-inline-start: 5px;
+    padding-inline-start: var(--desktop-space-0-25, 5px);
   }
 
   .official-import-steps a {
@@ -238,7 +238,7 @@
 
   .official-bookmarklet {
     display: inline-block;
-    margin: 0 4px;
+    margin: 0 var(--desktop-space-0-25, 4px);
     cursor: grab;
     font-weight: 650;
     text-underline-offset: 0.15em;
@@ -247,11 +247,11 @@
   .official-import-dialog textarea {
     display: block;
     inline-size: 100%;
-    min-block-size: 180px;
+    min-block-size: var(--desktop-size-11-25, 180px);
     resize: vertical;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 10px;
+    padding: var(--desktop-space-0-5, 10px);
     background: var(--surface-alt);
     color: var(--text);
     font-family: var(--font-mono);
@@ -267,12 +267,12 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 8px;
-    margin-block-start: 16px;
+    gap: var(--desktop-space-0-5, 8px);
+    margin-block-start: var(--desktop-space-1, 16px);
   }
 
   .official-import-privacy {
-    margin: 12px 0 0;
+    margin: var(--desktop-space-0-75, 12px) 0 0;
     color: var(--text-muted);
   }
 }

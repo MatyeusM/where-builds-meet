@@ -1,13 +1,13 @@
 @layer ui {
   .button {
     /* The block size an icon-only button of this size takes. See `.icon-only`. */
-    --button-block-size: calc(1.2em + 20px);
+    --button-block-size: calc(1.2em + var(--desktop-size-1-25, 20px));
 
     max-inline-size: 100%;
     min-inline-size: 0;
     border: 1px solid transparent;
     border-radius: var(--radius-lg);
-    padding: 10px 15px;
+    padding: var(--desktop-space-0-5, 10px) var(--desktop-space-1, 15px);
     background: transparent;
     color: inherit;
     cursor: pointer;
@@ -29,9 +29,9 @@
   }
 
   .small {
-    --button-block-size: calc(1.2em + 10px);
+    --button-block-size: calc(1.2em + var(--desktop-size-0-75, 10px));
 
-    padding: 5px 9px;
+    padding: var(--desktop-space-0-25, 5px) var(--desktop-space-0-5, 9px);
     border-color: var(--border);
     background: var(--surface-alt);
     color: var(--text);

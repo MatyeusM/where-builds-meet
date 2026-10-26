@@ -171,7 +171,9 @@ Mo Blade screenshot is displayed only as a composition example.
 
 OCR supplies the definition, tier, fixed base stats, relaying marker, affix rows,
 attunement, and their displayed values. Rarity is inferred by matching the fixed
-base stats against the selected gear tier; image color is not inspected. Labels
+base stats against the selected gear tier when the title's rarity color cannot
+be read. A focused pixel scan beside the first title word recognizes Gold and
+Purple markers; attribute colors farther down the page do not determine rarity. Labels
 are normalized to the existing IDs in `data/gear.json` and
 `data/attunement.json`; percentage points are converted to decimal ratios at
 this UI boundary. Sparse-layout recognition is preferred; if it misses a row,
@@ -181,6 +183,21 @@ or missing affix and attunement rows remain empty for manual correction instead
 of rejecting the entire image. The current editor slot supplies the gear type
 when its label is unreadable. A successful import fills the ordinary gear draft
 and still requires the user to review it and press Save.
+
+The progression detail page is also supported: its values follow each label
+inline rather than aligning at the right edge. Adjacent numeric OCR fragments
+are joined before parsing, including split decimals. If the tier is missed,
+a focused line scan reads the banner above the first attribute. These pages
+show an item name instead of a gear type. `data/ocr-item-names.json` maps
+unambiguous item names from the local Tier 91, Tier 96, and Tier 100 catalogs to existing
+gear definitions, using equipment slots and explicit weapon types. Ambiguous
+names and weapon types are excluded. Recognized item names take priority over
+the editor slot; the modal still rejects gear belonging to a different slot.
+The Tier 91 catalog identifies Vanguard Ward as a Pendant. Unknown names retain
+the editor-slot fallback. With no readable title marker or fixed base stats,
+rarity defaults to Gold. Existing gear
+eligibility still applies; unsupported defensive attunements such as Physical
+Resistance remain empty for manual correction.
 
 ## Export and import
 
@@ -221,6 +238,15 @@ directly to this project's canonical stat or attunement key. Base signatures
 remain in `data/official/import-map.json`. Maintain these checked-in mappings
 using this project's datamine source in `local/datamine/`; the legacy extractor
 based on the reference site has been retired.
+
+Tier 100 dashboard affix IDs are mapped from the interpreted initial affixes,
+tuning affixes, and nested attunement entries in
+`local/datamine/wwm-items-tier-100.json`. Named entries reuse the canonical
+keys established by identically named Tier 96 entries, including defensive
+stats and PvE armor attunements. Tuning metadata, PvP-only mechanics, and
+unnamed entries without an independently confirmed mapping remain unsupported;
+ID prefixes alone do not establish meaning. Imports preserve the reported roll
+values and use the existing percentage conversion and slot validation.
 
 The Tier 96 Kite armor-attunement family uses IDs `279751` through `279755` in
 charged/martial/third-type order for Heavenwill Gauntlets, followed by Heavy and
@@ -365,6 +391,34 @@ defensive and excluded from offensive character/priority controls because it
 does not affect outgoing damage.
 
 ## Default build presets
+
+Deluge's fully relayed Ivorybloom min/max presets replace the Rainwhisper
+presets at gear tiers 96 and 100. They retain Moonflare, the original Inner Ways,
+and their min/agility or max/power attack focus. Legal maximum relayed affix
+swaps were scored through the production calculation bundle on the solo WTS
+rotation with Simmering Fish Slices, Fire Divinecraft, no Script, and default
+global effects. The search preserves the primary attack and attribute affixes;
+it does not claim an exhaustive optimum over every possible loadout.
+
+The minimum Ivorybloom build now replaces the fan's Max Silkbind Attack roll
+with Art of Fan at both gear tiers, as requested. This trades solo-rotation DPS
+for Fan martial-art healing and improves team WTS DPS. The accepted rotation
+snapshots also record HPS and total healing to cover this tradeoff.
+
+Effective Precision reaches 100% at breakthroughs 17–19. Effective Critical
+reaches 80% with Ivorybloom's full-HP bonus, except the max build at breakthrough
+18, which reaches about 79.81%. At breakthrough 19 the solo WTS results are
+45,295.03 DPS (min) and 46,668.00 DPS (max), versus 44,606.16 for the existing
+Etherwrath min preset under the same environment. Ivorybloom improves Smolder
+and WTS in these checks but loses on regular-fire; Etherwrath remains the default.
+Stored Rainwhisper preset selections and local preset names migrate to the
+corresponding Ivorybloom preset on load. Custom builds and shared gear are retained.
+
+Deluge's graduate benchmark is Full Max Build Ivorybloom. It uses the fully
+relayed max preset's setup and affix choices with each base and additional affix
+raised to its tier's full, non-relayed maximum. Attunements retain their existing
+maximum values. The retired Full Min Build Etherwrath selection migrates to this
+graduate preset, preserving local names and custom builds.
 
 Default builds live in path-grouped `data/build/**/*.json` files. Vite eagerly discovers every JSON
 file beneath that root, so adding a preset does not require a TypeScript import. Presets

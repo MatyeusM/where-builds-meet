@@ -13,18 +13,18 @@
     position: fixed;
     z-index: 40;
     inline-size: max-content;
-    max-inline-size: min(28rem, calc(100vw - 16px));
-    padding: 9px 11px;
+    max-inline-size: min(28rem, calc(100vw - var(--desktop-size-1, 16px)));
+    padding: var(--desktop-space-0-5, 9px) var(--desktop-space-0-75, 11px);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--text);
-    box-shadow: 0 8px 22px var(--shadow-color);
+    box-shadow: 0 var(--desktop-size-0-5, 8px) var(--desktop-size-1-5, 22px) var(--shadow-color);
     animation: tooltip-reveal var(--transition-fast) ease-out;
   }
 
   .align-end {
-    max-inline-size: min(360px, calc(100vw - 16px));
+    max-inline-size: min(var(--desktop-size-22-5, 360px), calc(100vw - var(--desktop-size-1, 16px)));
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -36,7 +36,7 @@
   @keyframes tooltip-reveal {
     from {
       opacity: 0;
-      transform: translateY(3px);
+      transform: translateY(var(--desktop-size-0-25, 3px));
     }
 
     to {

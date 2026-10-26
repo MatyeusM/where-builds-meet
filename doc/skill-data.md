@@ -45,10 +45,29 @@ resolved total rather than offering an editable wrapper-duration field. Stored
 step duration overrides remain intact; wrapper editing stays in the Skills editor.
 Base totals exclude ping.
 
+Boss Talent is a permanent global buff selected at 0% or 15%. Its `dmgBonus`
+adds to the existing general damage bonus category; it has no target-type condition.
+
 ## Datamine interpretation
 
+### Strength mixed preset fillers
+
+The ordinary Mixed, Double Stab, and Infinite Vitality one-minute presets retain
+fifteen Burning Heart charged casts. Snowbreak Spring (VC) must immediately follow
+Snowparting Conversion (Tab) or Grave Frost (LC), ignoring attached events. Tab
+must immediately follow a Mo Blade ability.
+
+Ordinary Mixed replaces the earlier second Tab/VC pair with Leaping Toad/Deflect
+and the final LC/VC pair with seven-arrow Bursting Nine 2 Shots. Double Stab
+replaces the first filler LC/VC pair with seven-arrow Bursting Nine 2 Shots,
+Leaping Toad, and Deflect. Infinite Vitality retains Mo QQ/Tab and replaces the
+following VC/LC/VC with that same Mystic sequence. Existing charge movement
+attachments and Qi anchors remain attached to their original surviving skills.
+
+### Export interpretation
+
 Local references are under `local/datamine/`: `wwm-skills-normal-all.json`,
-`wwm-skills-mystic-skills-offensive.json`, `wwm-skills-mechanism-all.json`,
+`wwm-skills-mystic-skills-all.json`, `wwm-skills-mechanism-all.json`,
 `wwm-inner-way-normal.json`, and
 `wwm-martial-arts-normal.json`. Prefer interpreted normal-variant fields;
 ignore `versions` subtrees. Do not infer missing timing, route selection,
@@ -56,8 +75,15 @@ resource units, or mode-specific behavior from a damage baseline alone.
 
 - Skill `byLevel` arrays use **level minus one**, including leading nulls.
   `aggregated` contains level-independent values. Implemented offensive
-  Mystics use level 71; Smolder, Dragon Head - Tide, and Ghostly Step - Umbra
-  use `enlightenmentCurves`. Martial-art coefficients resolve from the normal
+  Mystics use **level 76** (array index 75). Smolder, Dragon Head - Tide,
+  and Ghostly Steps - Umbra use their established enlightenment baseline,
+  not the regular curve. In the current schema-2 Mystic export, those known
+  baselines are normal-variant `unassignedLevels` rows 171 at level 71 and
+  176 at level 76. Row 171 reproduces the confirmed prior values before
+  importing row 176; this is a narrow exception to ignoring `versions`, not
+  a generic fallback for unidentified source routes. Ghostly Steps has the
+  same values at both levels. Preserve each authored hit multiplier when
+  replacing coefficients and flat bonuses. Martial-art coefficients resolve from the normal
   curve's `SKILL_POWER_PRO_ATK` / `SKILL_POWER_PRO_HEAL`, with
   `SKILL_ADD_W_ATK` as `phyBonus` and `SKILL_ADD_WX_PRO_ATK` as `attrBonus`,
   read at **level 100** (array index 99) unless the value is `aggregated`.
@@ -90,10 +116,14 @@ not a second catalog of current values:
 - Smolder's tick factor remains **0.0532**, confirmed by observed damage;
   the exported **0.045** conflicts with that evidence. DOT flat bonuses remain
   inactive under the current damage formula.
-- Dragon Head - Tide uses the confirmed pre-multiplier physical/attribute
-  coefficient **16.3591422641509** and physical bonus **2483.50943396226**,
-  followed by its upgrade/enlightenment factors. Do not replace that baseline
-  with a conflicting export without new evidence.
+- Dragon Head - Tide retains its confirmed enlightenment route. Its level-76
+  pre-multiplier physical/attribute coefficient is **16.3600856603774** and
+  physical bonus is **2596.71698113208**, followed by the existing upgrade/
+  enlightenment factors. The source's level-71 row reproduces the previously
+  confirmed 16.3591422641509 / 2483.50943396226 baseline; the regular curve
+  is a different route and must not replace it.
+  Its unconditional `NoAbrasion` modifier prevents Abrasion on every combat path,
+  independently of Deluge's Mystic Precision talent.
 - Panacea's extra **Mystic Precision Enhancement** talent is intentional despite
   its absence from the rank-13 source list; see the talent audit.
 - Echoes of Oblivion's Karma reduction is **10 flat Bamboocut Resistance** at
@@ -125,8 +155,10 @@ not a second catalog of current values:
   uses a plain `cooldown` because it is currently the only Mystic carrying the
   Break Defense tag; add a `cooldownGroup` when a second one appears.
 - Summon Lightning (`75120051`) applies Thunder Summoning at 0.403 seconds and
-  ends at 1.591 seconds. Both values come from the export route rather than a
-  measured schedule, and the export carries no cooldown or resource cost. Its
+  permits an ordinary equal/lower-priority follow-up at 1.179 seconds; its animation
+  ends at 1.591 seconds. The cast duration uses the follow-up boundary, not animation
+  end. These values come from the export route rather than a measured schedule.
+  No cooldown or resource cost is authored. Its
   30% is the source's independent DMG Bonus (`calc_cause_change` cause 50), so
   it belongs to the Mechanism damage category and not to DMG Bonus Category 1.
   The export's `buffremove_add_buff` grant of `1500232` is a client-side usage
@@ -147,7 +179,10 @@ percentage points. Keep IDs stable and references resolvable.
    changes, so on-hit applications affect later hits, not the triggering hit.
 3. Buff/debuff effects and ordinary requirements inspect action-time state.
    A requirement `{ "resolveAt": "skillStart", "operand": [...] }` instead
-   freezes its result at the owning component's start.
+   freezes its result at the owning component's start. Individual self/target
+   effect conditions in an action requirement array may also use
+   `resolveAt: "skillStart"`; those read the owning row’s starting buff/debuff
+   state while unmarked conditions still inspect action-time state.
 
 Normal action `time` is seconds from cast start. Keep action arrays in
 nondecreasing time order; array order resolves ties. Actions may occur after
@@ -157,6 +192,9 @@ old expiry actions, and consumption does not count as natural expiration.
 Cast time excludes ping. `ignorePing: true` suppresses latency for that skill.
 All Mystic skills, including their composite components, and both castable
 Deflect variants ignore ping.
+Leaping Toad uses the user-confirmed 1.15-second lunge-hit cancel before
+Deflect. Keep this cancel boundary distinct from the export's contact-dependent
+recovery clocks.
 `triggerPing: true` opts a triggered skill into paying the rotation ping when
 it is dispatched; ordinary triggered effects remain latency-free unless they
 declare it. Composite parents and components must declare exemptions
@@ -737,6 +775,23 @@ below keeps cross-cutting blockers and outstanding skill evidence.
 
 ### Timing and source validation
 
+The 2026-10-21 16:50 export supplies normal-route hit clocks for Fleeting Trace,
+All Under Justice, Wicked Defiance, and Storm Roar. Fleeting Trace retains its
+authored cast-end buffs and cast duration because its route has no interrupt
+clock. Wicked Defiance's Heaven's Will gain follows its second hit. Storm Roar's
+Drumbeat follows its hit. Floating Grace uses the cast-timeline healing request
+at one second for both healing and its associated buff; its animation interrupt
+is the next-cast boundary. Thunder Shock imports its ordinary interrupt without
+inventing missing hit clocks or changing the one-hit cancel. Animation-relative
+clocks remain provisional. Alternate routes, collider markers that do not identify
+projectile contact, and documented charge/request clocks are not interchangeable.
+
+The solo and team Deluge WTS presets wait 0.05 seconds after each Floating Grace
+to preserve their downstream cast schedule after its ordinary interrupt changed
+from 1.15 to 1.10 seconds. The healing request remains at one second. This explicit
+rotation delay preserves Qi Blade and Solid Foundation proc alignment without
+overriding the shared skill timing.
+
 - User-confirmed Deflect timing is 0.3s for all weapons, except Heng Blade at
   0.25s. Both ordinary and successful variants resolve this from `currentWeapon`;
   unknown weapons use the 0.3s fallback.
@@ -987,6 +1042,57 @@ continue with the actual buff state. Do not restore Flamelash or extend its
 duration to cover those hits. A new Blade of Heaven's Wrath cast starting
 without Flamelash remains an invalid state to investigate.
 
+The 2026-10-20 timing export supplies normal animation-route interrupt boundaries
+of 0.466s, 2/3s, and 0.866s for FA2, FA3, and FA4. Hit clocks are unchanged;
+FA5’s two Echoes T6 bonus Rodents launch on its final blade hit at 1.023s
+(full and Cancel variants); the ordinary coordinated Rodent launches on its first hit.
+The Flamelash requirement for those two bonus Rodents uses resolveAt: skillStart:
+it must be active when FA5 starts, and may expire before the final hit. Rampage,
+Echoes T6, and distance requirements still resolve when the final hit triggers.
+FA5 Rodent retains only its single immediate Rodent.
+
+FA1 remains 0.357s and full FA5 remains 1.401s. The preset uses FA5 Cancel's
+1.023s last-hit boundary followed by World to Sword on the first cycle and
+Addled Mind on subsequent cycles while Flamelash remains active. The FA5 that
+ends the first Flamelash window uses Deflect instead because Flamelash expires
+during that cast. The next enhanced cycle restarts at FA1. Across
+a dodge, it retries the stage replaced by a Rodent-only cast. It preserves the
+dummy's incoming attack schedule, with earlier dodge starts aligned to their
+authored attacks. If an attack cannot finish and leave the 40ms dodge input latency,
+it uses the zero-duration Rodent-only variant and discards all blade hits,
+including otherwise reachable partial hits. FA5 reserves enough time for the following
+Addled Mind to finish before the dodge as well. FA3 now has that same existing
+Rodent-only mechanism. Ordinary attacks restart at A1 after Flamelash expires.
+Every Bladebound Thread Cancel is immediately followed by Deflect, including
+the opening cast and the later Rodent Rampage refresh sequences. The ordinary
+light-attack sequence after the first in-combat Rampage refresh starts only
+after Bladebound Thread Cancel, Deflect, and Rodent Rampage, so utility casts do not split LA1
+from LA2/LA3.
+
+The manually authored second window restarts at FA1 after its first dodge.
+Perfect Dodge itself preserves the combo; this restart is retained by user request.
+A 0.066s Delay before the late second-window FA4 lets it start with Flamelash
+active and continue after Hellfire depletion. Its remaining hits regenerate
+Hellfire, followed by the normal LA1–LA4, Flute Cancel / Deflect, and LA1 refill
+sequence. The next Flamelash starts at 80 Hellfire without changing the drain
+cadence or forcing a resource value.
+
+Hellfire remains governed by its accelerating 0.132s drain and Echoes'
+Samsara hit recovery; no duration override or resource refill is authored.
+New enhanced casts must start with Flamelash active; an accepted cast can
+finish after depletion. Qi markers follow the damage-based break anchor.
+
+The in-combat refresh blocks use Bladebound Thread Cancel / Deflect, then
+Rodent Rampage. After the third activation, full FA1 and FA2 precede that
+block so the existing Rampage can launch its coordinated attacks before refresh. Its later cycle
+continues FA1–FA5 instead of reverting to normal attacks while Flamelash is active.
+When that FA5 exhausts Hellfire, Deflect precedes normal LA1–LA4 loops. The fourth
+activation waits until Hellfire is 80, then resumes FA1–FA5 with Addled Mind after
+FA5. The late 53.475s and 59.475s dodges are omitted while Breaking Point
+Cooldown is active and no Mystery buff remains. Full LA1 completes the refill,
+and full FA2 connects directly into FA3 instead of using Rodent-only casts and
+dodge resets.
+
 ### Bamboocut Dust definitions
 
 Dust implements only the skills its rotations cast. The rotations live at
@@ -1007,9 +1113,51 @@ Loss, which is applied immediately after its corresponding hit.
 | Scarlet Spin         | Four source stage markers; duration input controls the chain    | User-entered, capped at 12 s                                |
 | Dreamwrought Bubbles | Charge and release split into sub-actions                       | 0.743 s charge + 1.2 s release; Delicate removes the charge |
 
-The 0.743 s Bubbles charge is a user-supplied value, not a measurement: the
-datamine explicitly excludes charge timing. Soul Sweep Cancel at 0 and Piercing
+The 0.743 s Bubbles charge is a retained user-supplied value, not a measurement
+replaced by the October 23 export's separate charge-opening/threshold fields. Soul Sweep Cancel at 0 and Piercing
 Dart Charge at 1.5 s are user-confirmed rather than timing gaps.
+
+#### Scarlet Spin opening-catch timing (October 23, 2026)
+
+The selected catch policy accepts input at the exported window opening. A catch
+does not itself start the next throw: the continuation starts at the exported
+gate and is admitted only while the owning Flower Burial application is active.
+An admitted throw still completes its catch after Flower Burial expires; that
+catch cannot admit an additional throw. This retains fourteen throws and 84
+direct hits across the three batches. The 100% PC preset now resolves 87
+Resonances, including three from Bubbles; the regular preset resolves 89,
+including five from Bubbles. These counts arise from events, not a hit-count
+override. Battle End still filters damage at 60 seconds.
+
+Normal stage clocks from `20603202`–`20603205` in the October 23 export are:
+
+| Stage | Catch opening  | Phantom creation | Creation Resonance request | Next throw     |
+| ----- | -------------- | ---------------- | -------------------------- | -------------- |
+| 1     | 0.615384615385 | 0.746153846154   | 0.976923076923             | 1.076923076923 |
+| 2     | 0.416666666667 | 0.583333333333   | 0.833333333333             | 0.958333333333 |
+| 3     | 0.545454545455 | 0.727272727273   | 1.000000000000             | 1.090909090909 |
+| 4     | 0.454545454545 | 0.609090909091   | 0.881818181818             | 1.000000000000 |
+
+Direct-hit, creation, request, and continuation clocks scale by `1 / 1.3` on
+a Fragrant Song throw. Enhanced catch openings have their own source values:
+0.295857988166 / 0.252564102564 / 0.349650349650 / 0.279720279720 seconds.
+Normal and enhanced continuation admission use the corresponding openings.
+
+`PhantomUmbrellaSummon` now only replaces the Phantom and marks its creation
+for the current throw. Each stage requests its Creation Resonance separately
+when that throw actually summoned. A catch with no available Phantom sets
+`PendingCatchResonance`; the later request resolves that pending catch once if
+a Phantom exists. An immediate catch pulse never also sets the pending flag.
+Both hidden flags clear at the next throw's start, and pending catch clears
+after its request check. Lower-tier every-third-throw summon cadence is retained.
+
+`FragrantSongResonance` remains the owning throw's marker. An early catch can
+ready Fragrant Song for the following throw without granting its bonus to the
+current ordinary throw. The source's unconnected request is not counted as an
+extra guaranteed pulse. Separate readiness/damage cleanup at interruptions and
+projectile contact latency are not added by this timing update. Direct-hit and
+next-throw timestamps are unchanged, so the existing authored Qi anchors are
+retained rather than recalibrated solely for the shifted supporting events.
 
 Qi is authored as absolute-time `Qi` steps on the rotation. A rotation cannot
 attach one beyond a Scarlet Spin throw's first, because an attachment's `trigger`
@@ -1074,8 +1222,21 @@ deliberately equal; the ramp is 0.334122, 0.334122, 0.445496, 0.313564, 0.470346
 0.689664, 1.034496. The per-hit `multiplier` is already folded into these
 coefficients, so it is not applied again.
 
-Dreamwrought Bubbles is split into a charge and a release sub-action. Actions
-scheduled past a skill's cast time are inactive, and action times are absolute from
+Dreamwrought Bubbles is split into a charge and a release sub-action.
+The Normal description's 20% non-player HP damage bonus belongs to the release
+sub-action so both outbound and returning hits receive it. Parent modifiers do
+not propagate to sub-action damage. Normal calcpoints `2060320101` and
+`2060320102`, layer 1, carry `target_tag_correct: [[8, 0.2]]`; layer 0 omits it.
+This is a target correction, represented by `baseDMGBonus` for the supported PvE
+targets, not Category 1 `hpDMGBonus`. The October 21 bonus coverage ledger left
+this occurrence uncertified, and the October 23 coefficient audit did not verify
+its runtime application. Neither audit established complete Bubble bonus parity.
+The separate Everspring channel-damage talent is restricted by passive
+`31220311` to originating class 108/current art 20603. Bubble's class 104
+context, including its Resonance, does not receive that talent; the broad
+`ReturningUmbrella` tag is not its eligibility test.
+
+Actions scheduled past a skill's cast time are inactive, and action times are absolute from
 the skill's start, so a charge that Fragrant Song - Delicate skips cannot be
 expressed inside the release skill. As sub-actions the 0.743 s charge delays the
 release, and skipping it slides the two collider markers back to their raw
@@ -1137,7 +1298,19 @@ outgoing/returning damage actions.
 The draft has no accepted DPS snapshot and must not be treated as a validated
 build or rotation recommendation.
 
-Burn and Bury includes `dmgBonus: 0.3`, additive in the same category as vs Boss.
+Soulbreak's 5% applier damage bonus uses general `dmgBonus` (Category 1).
+Burn and Bury uses `baseDMGBonus: 0.3`, multiplying its direct base hit separately
+from Category 1; settlement does not receive this multiplier again. Towline T6
+retains its 12% replay and the shared Wildstride/Strayhunt replay adjustment.
+Tang Melody requires HP above 50% through T4; T5 removes that restriction.
+Its critical bonus requires both singular `MartialArt` and `DirectDamage`,
+matching the modeled originating class-108 skill contexts. The broad
+`MartialArts` tag alone is insufficient. Scarlet Spin Resonance retains its
+`MartialArt` context, while Dreamwrought Bubbles and ordinary light/heavy
+attacks do not gain the bonus. This does not change the stack-application triggers.
+Fragrant Song's throw-scoped Resonance marker grants both guaranteed critical
+and 20% Category 1 HP damage while active, using the existing throw ownership
+and expiry rules. Current encounters are non-player targets.
 Light Anew T3 immobilization/lockouts, Candlelight slow, Phantom Rally pull,
 and Burn and Bury slow/Breath-hold are intentionally ignored by user instruction.
 
@@ -1169,9 +1342,11 @@ Wolfchaser's Art at T6. `dummy-1-min-38-bb` is registered as a draft, with the
 requested ordered sequence and Battle End at battle-relative 60 seconds. BB
 means Blood Burst; 38 is the intended trigger count, not a validated result.
 The first four-hit sword charge's first damage marker anchors battle start.
-The preset applies five Zenith stacks before the opening drink, representing
-Spirit prepared before the fight. Its first Blood Burst therefore starts at full
-Zenith, guaranteeing affinity and extending active Smolder through Sword Horizon T3.
+Zenith is a resource starting at 40, capped at 100 (20 per former stack).
+The preset has no opening Zenith buff. Smolder follows the first Sweep All,
+allowing the next full-Zenith burst to extend it through Sword Horizon T3.
+The wait before the second Sweep All is 0.2 seconds, preserving River Flow,
+its 12-second burst cooldown, and all 38 Blood Bursts.
 
 Umbra variants share `skillBreakdownCategory` by skill family: Inner Track
 Slash, Inner Balance Strike, Second Track Slash, Sober Sorrow, Sweep All, and
@@ -1201,8 +1376,11 @@ cancel timing remains unmeasured. The first-stage special imports all four
 hits and its 1.4s interrupt boundary. Sober Sorrow now uses all six exported
 hit markers and the 1.996s full-cast interrupt boundary. Its five-hit cancel
 uses a temporary boundary at the fifth hit (1.374300296s); actual cancel timing
-remains unmeasured. Sweep All uses the user-selected 0.304s first-hit and one-hit cancel boundary
-for all buff variants. Its exported animation route mapping remains unresolved.
+remains unmeasured. Sweep All retains its 0.304s one-hit cancel duration. The
+2026-10-21 14:51 export supplies first-hit markers at 0.26737638636363636s for
+basic/Water Drop and 0.30375544363636364s for Spring Surge/River Flow; the user
+confirmed this buff mapping. Damage and hit-attached effects use these markers
+without shortening casts.
 These remaining placeholders cannot validate the proposed sequence within 60s,
 cooldown readiness, effect coverage, or its named 38 BB count.
 
@@ -1222,6 +1400,13 @@ semantics are user-confirmed from combat comparison, rather than explicit
 tooltip ordering. Charged follow-ups expose one-hit and two-hit
 cancel variants; the rotation uses the one-hit variant. Their temporary cancel
 boundaries equal their last retained hit marker (0.22504647s or 0.68347914s).
+
+The 2026-10-21 14:51 export also moves Second Track Slash release's first hit
+to 0.094987652s and Inner Balance Strike III's follow-up hit to 0.095032667s.
+Their hit-attached Bleed and burst checks follow the corrected markers; existing
+cancel durations and combo transitions are preserved. The 38-BB preset's authored
+Qi thresholds retain their proportional placement against the corrected final-hit
+break anchor.
 
 Damage coverage and remaining omissions:
 
@@ -1247,7 +1432,7 @@ Damage coverage and remaining omissions:
 Sword Blood Burst clears all Bleed stacks, then T6 reapplies two while Zenith
 exists after the burst's Spirit grant, including the first burst as observed
 in the user's confirmed special sequence. Raw Horizon passive `102154301` grants 20 Sword Spirit per burst,
-represented by one of five Zenith stacks. At 100 Spirit the next burst forces
+stored as 20 units of the Zenith resource. At 100 Spirit the next burst forces
 Affinity; T6 retains 20 and then credits that burst's ordinary 20 gain.
 The T4 bonus and T1 follow-up Endurance restore are implemented. T3's full-Zenith
 burst extends Bleeding, Smolder, Qingyi's Poison, and Weeping Blood by ten seconds,
@@ -1422,6 +1607,7 @@ Charged light
 0.135 hits and one 0.19 final hit, following the explicit damage table rather
 than the conflicting maximum-eight-hit tooltip. Its user-confirmed time to connect to VC
 is 2.033 seconds: 0.2 seconds of pre-charge plus 1.833 seconds after pre-charge.
+Flat attribute bonuses use the unscaled level-100 source values (39.15 for each small hit and 55.1 for the final hit); the shared primary-attribute multiplier applies once, including to these flat terms.
 Individual hit clocks remain zero because they are unresolved. It carries both `Light` and
 `Charged` tags.
 
@@ -1489,7 +1675,8 @@ affix availability pending a dedicated equipment export.
 
 Cloudshear and Etherwrath are available for Wings. Cloudshear retains the
 77.8 minimum Physical Attack two-piece bonus at four pieces. Its self buff,
-裁雲·翊 (`buff.json` 109804), grants 6% all-type damage and healing for 15 seconds, capped at
+裁雲·翊 (`buff.json` 109804), grants 6% to each applicable channel's damage-scale
+pool and 6% healing for 15 seconds, capped at
 one stack and refreshing its duration on reapplication, when Fan Q applies
 扶風 or Drum Special applies 爍鼓. The automatic 扶風 application when 爍鼓
 expires does not trigger Cloudshear. Ally application is not part of the dummy presets.
@@ -1574,8 +1761,9 @@ remaining mechanisms and draft Flourishing Notes timing limits.
 ### Global Wings support
 
 The Global Buffs Wings selector uses permanent expected bonuses for other paths:
-Cloudshear contributes 6% damage and healing; Yellow weights Tailwind's 3%
-attribute attack bonus by 13.5/20 and Radiant Drum's 6% Physical/all-attribute
+Support assumes Harmony Song T6. Ally Cloudshear contributes 2% to each
+applicable channel's damage-scale pool and 2% healing; Yellow weights Tailwind's 3%
+attribute attack bonus by 13.5/20 and Radiant Drum's 12% Physical/all-attribute
 attack bonus by 6.5/20. Blue uses 9.5/20 and 10.5/20 respectively. Full uses
 Cloudshear and Radiant Drum at full coverage. These weighted effects do not
 activate local Tailwind/Radiant Drum states or grant Wings talent bonuses.
@@ -1609,7 +1797,7 @@ expiring does not start cooldown. The CN preview uses the same rules.
 
 Hawkwing uses 1.8% Physical and Bellstrike Attack per tracked stack, matching normal buff 107031. Adaptive Steel unlocks its 3% Bellstrike damage stat at T5, not T4. Seasonal Edge T0 lasts ten seconds; T1 remains twelve. By explicit user decision, retain the existing T6 one/two/three-effect probabilities and unconditional Winter exclusion despite the export’s different wording. See [datamine-balance-audit.md](datamine-balance-audit.md) for other pending differences.
 
-Bursting Nine’s second volley retains its 50% strength while using the same 30% then 20% repeated-arrow decay as the first volley. Rank-14 Phalanxbane Blade and Mortal Rope Dart use the existing no-flat-attack coefficient exception at 0.725%, scoped to their own martial-art tags. Anxi Soldier variants owned by Snowparting Blade do not inherit Phalanxbane’s talent.
+Bursting Nine’s second volley retains its 50% strength while using the same 30% then 20% repeated-arrow decay as the first volley. The seven-hit variants retain the first seven arrows of each volley, totaling 230% of the first arrow per volley before the second-volley multiplier. They share the original timing, resource costs, and cooldown group; the two-shot variant lands fourteen arrows in total. Rank-14 Phalanxbane Blade and Mortal Rope Dart use the existing no-flat-attack coefficient exception at 0.725%, scoped to their own martial-art tags. Anxi Soldier variants owned by Snowparting Blade do not inherit Phalanxbane’s talent.
 
 The attack-food key `SimmeringFishSlices` is retained for saved selections and now represents Clay Oven Flatbread (缸爐燒餅). It replaces the previous food rather than adding a second option. Older benchmark notes naming Simmering Fish Slices describe their original setup.
 
@@ -1629,3 +1817,149 @@ Values come from normal item-set two-piece curves in
 curves and use the shared minimum Physical Attack curve matching their
 existing 77.8 bonus (90.6 at tier 100); Brimflow likewise uses the shared
 Physical Defense curve (39 to 45.4).
+
+## Enhancement and Arsenal Solo Level progression
+
+`data/system.json` stores cumulative Enhancement totals as one authored effect;
+`data/arsenal.json` stores attack in each Arsenal’s channel plus its HP bonus.
+Both use the shared `bySoloLevel` tables and `effectForSoloLevel` resolver before
+the character sheet and worker bundle consume them. Values are the normal
+variant from `local/datamine/wwm-solo-levels.json`, including the exported HP
+that was missing from Arsenal and understated in the old Enhancement slot list.
+The supported Solo Levels are 17 and 18; no interpolation or fallback is used.
+
+Tier-100 Wings and Kite presets use All Mystic on helmet and chest,
+replacing their previous Silkbind/Bamboocut or Power rolls. Kite Max moves
+helmet Critical to the left weapon in place of Power before replacing that
+helmet Power with All Mystic, preserving its Max Physical rolls. Tier 96 stays
+unchanged. These tier-100 choices supersede the earlier fixed attack-roll
+counts for Wings Double Min.
+
+Tier-100 Fully Relayed Umbra uses Momentum on greaves and Max Void Attack
+on the left weapon; tier-100 left-weapon attribute rolls must use Void. Among legal replacements of its additional Momentum
+rolls with Affinity or Max Bellstrike, including optional helmet/chest All
+Mystic replacements, the highest 38-Blood-Burst preset DPS uses seven
+Momentum, three Affinity, one Max Void Attack, and no All Mystic additional
+rolls. Comparison uses breakthrough 18, Clay Oven Flatbread, Fire, no script,
+default global buffs, and the preset ping; other affixes and setup stay fixed.
+
+### Kite skill cooldowns and DH finisher
+
+Normal skill-export cooldowns are authored on the castable records:
+Heavenwill Declared (Q1) 15 seconds, Celestial Mandate (Q2) 2 seconds,
+All Under Justice 6 seconds, Sky Grasped 18 seconds, and Snaring Lash
+15 seconds. Q1 owns the main gauntlet Q cooldown; Q2's short follow-up
+cooldown is independent, so Q1 does not block its continuation.
+Snaring Lash and its Cancel variant share the `SnaringLash` cooldown group.
+Ordinary light/heavy attacks and Wicked Defiance have zero exported cooldown;
+Vile Condemned End retains its existing resettable 18-second effect marker.
+
+The DH preset dodges the 41.5-second attack and uses Soaring Spin's first hit
+to trigger the authored Qi break, matching the BP preset. Dragon Head follows
+Soaring directly, then the third four-HW End. Both hit during Exhausted with
+five Disintegration stacks on BP builds. Q1/Q2, A5/A6, and the legal
+Snaring Lash / Deflect / Sky Grasped sequence follow that End.
+
+The preset intentionally does not reset End again during Exhausted. Its final
+ordinary Vile Condemned falls back to the two-HW hit while End cooldown remains
+active. The four charged casts spend 4 / 4 / 4 / 2 HW. At 40ms ping, the Qi
+break is at 41.909697 seconds, Dragon Head hits at 47.877429 seconds, and the
+third End hits at 51.654929 seconds, before Exhausted expires at 51.909697.
+The final weak hit lands at 59.955429 seconds; the 60-second cutoff leaves
+little timing margin. Dragon Head already had five stacks in the old preset.
+
+### Kite combo stage indicators
+
+Heavenwill uses separate hidden `HeavenwillLightCombo` and
+`HeavenwillHeavyCombo` next-stage indicators. Like Wind's markers, applications
+replace the count at cast start and do not restrict skill selection. These
+indicators track stage only: expiry, input windows, and interruption admission
+are not modeled here. They must not be used as proof that a delayed follow-up
+is legal. Existing attack timings and A4's separate fast-A5 marker are unchanged.
+
+The normal skill export's six-stage Righteous Reign sequence advances A1–A5
+to A2–A6; its description and explicit action shortcut loop A6 back to A2,
+including the Cancel variant. Virtuous Enthroned's source stages
+20901006/7/8/9 map to the persisted H1/H2/H3 IDs and the added H4 ID:
+H1/H2 select A3, H3/H4 select A5, H1–H3 select the next heavy, and H4 clears
+the heavy indicator. Existing persisted heavy IDs retain their meaning.
+
+All Under Justice selects A5 unconditionally. Soaring High T1 enables the
+Wicked Defiance and Celestial Mandate A5 shortcuts, confirmed by Inner Way
+601 tier-one text and buff 10260120. The selecting Q2 action is 20901102;
+the normal tooltip's reference to 20901101 is not an additional Q1 shortcut.
+Shortcut selection does not apply A4's animation marker, so A5 retains its
+ordinary timing unless that separate marker is already present.
+
+### Wind combo windows
+
+Ordinary Infernal light attacks track the next stage in hidden `InfernalLightCombo`:
+A1 sets 2 for 0.794s, A2 sets 3 for 0.797s, A3 sets 4 for 1.059s, and A4 clears it.
+Blade of Heaven's Wrath uses separate hidden `InfernalFlamelashCombo`: FA1 sets 2
+for 0.571s, FA2 sets 3 for 0.750s, FA3 sets 4 for 1.000s, FA4 sets 5 for 1.100s,
+and FA5 clears it. Each cast replaces the previous count at cast start, including
+Cancel, Rodent, and Combo variants. These markers do not restrict skill selection.
+Dodge does not clear them; expiry remains relative to the attack's start.
+
+`[Combo]` variants end at the window's opening: A1/A2/A3 at
+0.230/0.230/0.260s and FA1/FA2/FA3/FA4 at 0.186/0.260/0.217/0.260s.
+Only actions at or before that boundary survive; later blade hits and their
+Hellfire gains are omitted. The two FA4 / Perfect Dodge / FA5 connections in
+the Wind preset use FA4 Combo. Retry, restart, and utility dodge sequences keep
+their existing Rodent variants. No FA5 Combo exists because FA5 ends the chain.
+
+The Wind preset uses 30ms ping. FA5 Rodent / Dodge / FA5 is not a valid
+continuation and its Rodent-only entry is removed. Only the last attack before dodge may use Combo; preceding attacks must complete.
+The late sequence removes the FA2 before Bladebound Thread Cancel and uses full
+FA1 / FA2 / FA3 / FA4 Combo after the Rampage refresh. The pre-Flamelash Cancel variants and 0.066s delay preserve the 80-Hellfire
+refill and the 41.475s dodge at 30ms ping. At millisecond precision, 0.065s
+refills only to 74.5. A 40ms trial could not satisfy both constraints: its
+minimum delay for 80 Hellfire was 0.132s, which ended FA4 Combo at 41.521333s
+and missed the incoming attack. The preset therefore retains 30ms.
+
+Ordinary Infernal A1–A4 can cancel into Flamelash after their final hit. Their
+Cancel variants retain every hit, Hellfire gain, and combo-state action, with
+cast times 0.339/0.343/0.419/0.167s respectively. The Wind preset uses these
+variants whenever an ordinary light attack is immediately followed by Flamelash.
+
+The opening Flamelash window fits full FA1 / FA2 before FA3 Rodent and the
+first Perfect Dodge at 5.475s; the dodge is followed by the selected FA1 restart.
+
+### Wind no-dodge dummy rotation
+
+`wind-dummy-1-min-iv-no-dodge` is the separate **Dummy 1 Min IV No Dodge**
+preset: non-attacking Dummy, infinite Vitality, 30ms ping, and a 60-second
+battle cutoff. It retains the charged Rampage preparation and RD Q damage
+battle-start anchor. Ghostly Step - Umbra cancels the first A4; World to Sword
+cancels the first FA5. Subsequent completed FA5 casts use Addled Mind while
+Flamelash remains active, or Deflect at the depletion transition.
+
+Light attacks use full A1–A4 or FA1–FA5 sequences until Flamelash depletion
+or an RD refresh interrupts them. RD Q / Deflect / RD Special refresh together
+after Rampage expires, at the next completed-attack boundary; short waits let
+the outgoing Rampage expire instead of refreshing it early. Every light attack
+launches its coordinated Rodent, and FA5 keeps its two final-hit Echoes Rodents.
+No dodge, Rodent-only light variant, or Combo shortcut is authored.
+Flute is used outside Flamelash. New Flamelash casts start at 80 Hellfire;
+a 0.021s wait after one A1 Cancel lets an already-launched Rodent complete
+that refill. The shared authored Qi markers are retained, with the break
+attached to the second Flamelash window’s first FA1.
+
+Before the third Rampage activation, full FA3 follows FA2: its first hit launches
+the coordinated Rodent before the outgoing Rampage expires, while the rest of
+the cast finishes across expiry. RD Q / Deflect / RD Special follow that full
+FA3 without the previous expiry wait. Rampage need not cover later blade hits
+of a stage once its coordinated Rodent has launched; FA5 still needs Rampage
+through the final hit for the two additional Echoes Rodents.
+
+The preset ends its authored skill sequence on the final in-battle FA4.
+The post-battle RD Q / Deflect / RD Special refresh and its expiry wait are
+omitted; the fixed Battle End event still closes the measurement at 60 seconds.
+
+### Might and Wings encounter alignment
+
+Might's first Defense hold includes the 0.1 seconds saved by Leaping Toad's
+user-confirmed cancel so it still covers the intended dummy attack pair. Wings'
+fixed Qi thresholds retain proportional depletion around the second Drum
+Special break and its recovery; changes to that break's time require recomputing
+both cycles of fixed thresholds.

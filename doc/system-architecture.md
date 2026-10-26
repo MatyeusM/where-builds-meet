@@ -9,6 +9,12 @@ build time. User changes remain in browser storage. Deterministic calculation
 work runs in a persistent Web Worker, while requested Monte Carlo simulations
 run in their own disposable worker.
 
+The Wings path uses `silkbindWings` as its path ID and `SilkbindWings` as its
+eligibility tag. `src/application/persistence/legacy/wingsPath.ts` migrates the
+former `silkbindWing` key in the selected path, active build and rotation maps,
+and path-scoped inventory and build maps before current loaders validate them.
+If both old and new keys exist in a map, the new key takes precedence.
+
 ## Spacing and sizing scale
 
 `src/styles/tokens.css` defines the scale: `--space-3xs` through `--space-xl`, at
@@ -17,20 +23,73 @@ is a multiple of `0.25rem`, so a token and a bare multiple of that unit always
 agree, and the two can be adopted independently. `AGENTS.md` requires new values to
 come from this scale.
 
-**The scale is barely adopted.** Measured across the fifteen stylesheets, six
-declarations reference a `--space-*` token against roughly 314 spacing declarations
-written as bare lengths. The rhythm is not absent, it is just not on the scale: the
-commonest values are `8px`, `12px`, `16px`, and `4px`, which are the tokens
-`--space-sm`, `--space-sm`, `--space-md`, and `--space-2xs`. Alongside those sits a
-regular `4n + 2` sub-grid — `6px`, `10px`, `14px`, `18px`, `22px` — and then values
-with no pattern at all: `5px`, `7px`, `9px`, `13px`, `23px`, `37px`. That mixture,
-rather than any single wrong number, is what makes the interface read as uneven.
+Desktop sizing is calibrated to a **2310 × 1323 CSS-pixel content viewport**
+(2560 × 1440 monitor, 100% Windows scaling and browser zoom, maximized Firefox
+with tabs on the left). Settings exposes **Display sizing** beside Layout.
+`settingsStore` persists `default`, `screen`, or `window` under
+`wwm-display-sizing-v1`; `App` exposes the choice as `data-display-sizing` on the
+page shell. Missing or invalid settings use **Default**. The loader preserves
+the earlier two-option selector's saved values: `browser` becomes `default`
+and `fit` becomes `window`. Subsequent selections save the current values.
+The selector is omitted in mobile mode, which retains the saved desktop
+preference for the next desktop visit.
 
-Two conversions are different in kind and should not be bundled. Substituting a token
-for an equal raw length (`8px` to `var(--space-sm)`) cannot change layout, so it is
-mechanical and safe to do everywhere. Rounding an off-scale value to its nearest step
-does change layout, has no automated check — `test:dps` is bit-deterministic for damage
-and blind to pixels — and is verified by looking at it.
+**Default** uses the original presentation from before the sizing conversion:
+the root font remains `100%` and all desktop compatibility aliases are absent.
+Every converted declaration therefore uses its original fallback, including
+fixed pixel dimensions and the original title sizing. This mode honors the
+browser's preferred font size and normal zoom behavior.
+
+**Fit to screen** uses `16 × screen.width / 2560` CSS pixels for the root font.
+`useScreenSizing` supplies `--desktop-screen-font-size` on the document root
+before paint, refreshes it on window resize, focus, and screen orientation
+changes, and removes it when leaving this mode or entering mobile layout.
+Resizing a window on the same screen keeps text and icons steady. The main
+page's columns wrap at their actual rem widths in this mode, so large-screen
+text does not overflow a narrow window at the old fixed viewport breakpoints.
+Other responsive layouts retain their existing rules. Screen width is reported in
+CSS pixels; this does not infer the monitor's physical size in inches.
+
+In **Fit to window** mode, `base.css` adjusts the root font only while
+`.layout-pc[data-display-sizing="window"]` is present.
+The root font is `16 × viewport width / 2310` CSS pixels, expressed
+as `calc(100vw / 144.375)`. It is 16px at the reference width, about 8.87px at
+1280px, 13.30px at 1920px, and 26.60px at 3840px. These are page widths, not
+monitor resolutions: browser sidebars and window size affect the available area.
+There is deliberately no fixed contribution, minimum, or maximum: text and icons
+keep the same proportion of the page across desktop resolutions. Consequently,
+desktop text can be small in CSS pixels on narrow windows, and viewport-based
+sizing can counteract browser zoom. This presentation prioritizes proportional
+desktop density as requested; it does not infer a monitor's physical dimensions.
+Both fit modes activate the desktop rem-based tokens, so icons, spacing, and
+panel sizes follow the chosen root font. Changing this presentation setting
+does not alter calculation inputs.
+The viewport height continues to constrain the Build and Rotation workspaces;
+short windows scroll their content rather than shrinking the text further.
+Existing responsive layout breakpoints remain in effect.
+
+`tokens.css` defines `--desktop-space-*`, `--desktop-size-*`, and
+`--desktop-font-*` compatibility aliases only for desktop `screen` and `window`
+sizing modes.
+Their numeric suffix is the value in rem, with a hyphen as the decimal separator.
+Desktop spacing aliases use the shared spacing tokens where available; sizes use
+quarter-rem steps and fonts use eighth-rem steps. Legacy off-scale desktop values
+were rounded to this scale as part of the desktop conversion. Text, image icons,
+panel widths, and spacing therefore follow the same root sizing mechanism.
+The main title also follows this scale instead of independently tracking `vw`.
+Physical border strokes and the visually-hidden clip remain fixed pixels.
+
+Shared declarations retain the original length as a fallback, for example
+`padding: var(--desktop-space-0-5, 9px)`. The fallback is a compatibility boundary
+for Default and the existing mobile presentation, not a second scale for new
+styles. Mobile has no desktop aliases and keeps its 100% root font, so these
+fallbacks preserve its existing dimensions, including the developer's mobile preview.
+Portalled tooltips inherit the desktop aliases from the document root even
+though they render outside the page shell. `mobile.css` remains unchanged.
+New styles should use the regular spacing tokens and rem scale directly;
+extend these compatibility aliases only when preserving another existing
+mobile measurement requires it. Browser layout checks, rather than DPS
+snapshots, verify sizing and mobile compatibility.
 
 ## Typography and resilient layout
 
@@ -66,6 +125,52 @@ The long-term product direction is to accept complete character and gear data,
 simulate rotations, compare alternatives, and recommend builds or rotations.
 
 ## Runtime overview
+
+### Gear combination search
+
+Each editable build offers **Find Best Combination** beside **Make Active**.
+One disposable `gearOptimizationWorker` runs at a time, using a structured-cloned
+snapshot of the rotation, environment, visible saved gear, and the build's stored
+setup. Inner Ways, martial arts, weapon and armor sets, bow/ring set, and arsenal
+remain fixed. Unsaved character-sheet setup overrides are not part of that build.
+Default presets must be duplicated before searching.
+
+`calculations/gearOptimization.ts` groups calculation-equivalent items, preserving
+physical weapon multiplicity, and enumerates valid slot assignments. It rejects
+more than 100,000 unique combinations. Empty slots are retained where no eligible
+gear exists. The current equipment is always the initial best result.
+Single-item swap DPS scores order the full search; these scores never prune
+combinations or replace actual damage calculations.
+
+Preflight classifies every assignment against the original baseline's conservative
+timeline signature and samples up to three evaluations per cost class. Pure raw
+stat effects are excluded from the signature because candidate sheets are resolved
+through the shared character pipeline. Resource capacities, HP, setup mechanics,
+and all other timeline inputs remain in the signature. Damage-outcome listeners
+(including Insightful Strike), target-HP cutoffs, resource-regeneration effects,
+and live collectors prevent reuse. The shared rotation variant evaluator resolves
+damage with the complete candidate sheet; other candidates rebuild their baseline.
+The estimate includes preparation and a 50% evaluation-cost margin. Searches whose
+estimated total exceeds the saved Settings time limit (two minutes by default) are rejected;
+zero disables both time guards. Each new search snapshots that limit. An elapsed-time guard also stops
+an underestimated run and retains its latest reported best.
+
+`gearOptimizationStore` holds transient progress and equipment for the Build view.
+Live updates do not write persistent gear or invalidate comparison caches. Normal
+active-rotation calculations, build measurements, and comparisons continue concurrently
+in the existing worker pool; the optimizer uses its own disposable worker. Switching
+builds or rotations updates normal results against stored equipment while the search
+continues against its original snapshot. Only the optimizing build's live preview
+uses the worker's best-so-far reading; it is never used as another build's comparison
+baseline. Per-item comparisons are suppressed only for the optimizing build, so live
+preview updates cannot launch comparison sweeps.
+The searched build and shared inventory are protected against edits, including
+cross-build item mutation. Other builds' setup remains editable. The name in the
+Builds column shows progress; the action becomes Cancel. Completion or cancellation
+terminates the worker and commits the latest reported best equipment once, refreshing
+ordinary measurements for the saved gear. Only completed exhaustive runs guarantee the best
+valid combination; interrupted runs display the best found so far. The run survives
+tab navigation but is intentionally not persisted across reloads.
 
 ```text
 JSON game data ─────────────┐
@@ -975,6 +1080,12 @@ bookmarklet copies role gear JSON from the authenticated official origin, then
 snapshot. That snapshot enters the same validator and collision-safe merge path
 as a file import. The large official ID table is loaded only when the user
 submits the modal, keeping it out of the initial application chunk.
+Official affix mappings also include relay-only records from the normal layer-zero
+`local/datamine/wwm-affixes.json` catalog for tiers 91, 96, and 100. Item roll pools
+omit zero-weight relay affixes, so they are not a complete source for import IDs.
+These IDs use the existing gear eligibility and relay detection mechanisms.
+Tier-100 armor base signatures distinguish Gold and Purple without relying on
+an explicit dashboard rarity field.
 
 Rotation export similarly produces a versioned JSON snapshot of custom rotation
 records. Rotation import validates skill and event step shapes, appends custom
@@ -1931,6 +2042,14 @@ entry keys, while its detail block above Inner Ways shows the level bonus and en
 properties. Breakthrough is transient Main-tab state and is intentionally not
 part of build data, character profiles, or browser storage.
 
+Breakthrough 19 selects Solo Level 19, martial-art talent rank 15, and equipment
+tier 100. Its progression and rank values come from the normal layer-zero Solo
+Level and martial-art exports, with cumulative character talents from the grey
+Solo Level 19 progression. The existing level-96 enemy convention is retained.
+Equipment-derived set and bow/ring bonuses retain their tier-100 values;
+Enhancement and character talent totals advance independently. The default
+selection remains breakthrough 18.
+
 ### Gear definition
 
 Add or update the slot definition, fixed base stats, allowed affixes, and
@@ -2049,8 +2168,8 @@ from data.
   Bamboocut martial arts, but Void/Formless Attack folding currently remains
   Stonesplit-only.
 - DMG Bonus Category 2 is specified but not implemented.
-- Release deployment runs deterministic DPS snapshot checks for every non-empty preset,
-  including WIP paths. Ordinary builds run preset, localization, behavioral-test, type, and
+- Release deployment runs deterministic DPS snapshot checks for every build paired with every
+  non-empty rotation in its path at breakthroughs 18 and 19, including WIP paths. Ordinary builds run preset, localization, behavioral-test, type, and
   production-bundle verification without the accepted-snapshot comparison.
   Any difference beyond 4 ULPs in DPS, total damage, or duration, in either direction, requires review
   before release; see [DPS snapshots](dps-snapshots.md). Focused probes cover individual mechanics.
@@ -2343,3 +2462,10 @@ Tier-100 item bases, affix pools, and maxima come from the interpreted fields in
 `local/datamine/wwm-items-tier-100.json`. Existing relay-only affix eligibility
 and the 0.94 relayed-affix multiplier continue to apply. Presets retain their
 existing affix selections and use the selected tier's maximum rolls.
+
+Tier-100 gear uses `allMysticDmgBoost` instead of area/single-target Mystic
+affixes. Its roll table excludes the two legacy affixes so stat-priority
+comparisons cannot recommend unavailable rolls. Stored inventory parsing
+migrates the old keys at tier 100 while
+preserving roll values; the editor also converts them when changing tier.
+New gear drafts default to tier 100 independently of the selected breakthrough.

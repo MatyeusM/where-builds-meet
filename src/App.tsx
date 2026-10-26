@@ -23,6 +23,7 @@ import { hasSkillOverrides, loadSkillOverrides } from "./application/persistence
 import { rotationAvailableForWeapons } from "./application/rotationCatalog"
 import { FeatureLoadBoundary } from "./application/shell/FeatureLoadBoundary"
 import { NoticeArea } from "./application/shell/NoticeArea"
+import { useScreenSizing } from "./application/shell/useScreenSizing"
 import { BreakdownTab } from "./features/analysis/BreakdownTab"
 import { StatsTab } from "./features/character/StatsTab"
 import { SettingsTab } from "./features/settings/SettingsTab"
@@ -117,6 +118,7 @@ export default function App() {
   }
   const devMode = useSettingsStore(state => state.devMode)
   const layoutPreview = useSettingsStore(state => state.layoutPreview)
+  const displaySizing = useSettingsStore(state => state.displaySizing)
   const pathId = useLoadoutStore(state => state.pathId)
   const settings = useLoadoutStore(state => state.settings)
   const setupSelections = useLoadoutStore(state => state.setupSelections)
@@ -124,6 +126,7 @@ export default function App() {
   const statOverrides = useOverrideStore(state => state.statOverrides)
   const attunementOverrides = useOverrideStore(state => state.attunementOverrides)
   const layoutMode: LayoutMode = devMode ? layoutPreview : compactViewport ? "mobile" : "pc"
+  useScreenSizing(layoutMode === "pc" && displaySizing === "screen")
   const [workspaceStoresRead, markWorkspaceStoresRead] = useState(false)
   if (!workspaceStoresRead) {
     markWorkspaceStoresRead(true)
@@ -401,6 +404,7 @@ export default function App() {
     <main
       className={`page-shell layout-${layoutMode} ${layoutMode === "pc" && (activeTab === "build" || activeTab === "rotations") ? "viewport-page-shell" : ""}`}
       data-layout={layoutMode}
+      data-display-sizing={displaySizing}
     >
       <div className="page-content">
         <header className="page-header">

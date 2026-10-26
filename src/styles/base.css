@@ -4,6 +4,19 @@
     font-size: 100%;
   }
 
+  /* 2310px is the reference page width after Firefox's left tabs take their space.
+     2310 / 16 = 144.375: keep text, icons, spacing, and panels proportional to
+     that width, without a minimum or maximum that changes their relative size.
+     Height controls scrolling rather than independently scaling the interface.
+     Default sizing and mobile retain the browser's 100% root font. */
+  html:has(.layout-pc[data-display-sizing="window"]) {
+    font-size: calc(100vw / 144.375);
+  }
+
+  html:has(.layout-pc[data-display-sizing="screen"]) {
+    font-size: var(--desktop-screen-font-size);
+  }
+
   *,
   *::before,
   *::after {
@@ -59,7 +72,7 @@
   h1 {
     margin-block-end: var(--space-xs);
     font-family: var(--font-display);
-    font-size: clamp(1.75rem, 5vw, 2.625rem);
+    font-size: clamp(1.75rem, var(--desktop-title-size, 5vw), 2.625rem);
     letter-spacing: -0.03em;
   }
 

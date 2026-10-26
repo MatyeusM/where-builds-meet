@@ -15,9 +15,9 @@ import { buildEntryAvailableForMartialArts, defaultBuildPresets, gearDefinitionF
 import { normalizeStoredWeaponIds, weaponIds } from "@/types"
 
 describe("Wings integration", () => {
-  it("allows Wings without Dev mode and labels it as Preview", () => {
+  it("allows Wings without Dev mode and without a preview label", () => {
     expect(pathRequiresDev(typedPathDefinitions.silkbindWings)).toBe(false)
-    expect(pathStatusLabel(typedPathDefinitions.silkbindWings)).not.toBe("")
+    expect(pathStatusLabel(typedPathDefinitions.silkbindWings)).toBe("")
     for (const weapon of typedPathDefinitions.silkbindWings.lockedWeapons!)
       expect(productionWeaponIds.has(weapon)).toBe(true)
   })

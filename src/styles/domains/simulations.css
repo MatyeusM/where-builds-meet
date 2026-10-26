@@ -7,8 +7,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: end;
-    gap: 10px;
-    max-inline-size: 420px;
+    gap: var(--desktop-space-0-5, 10px);
+    max-inline-size: var(--desktop-size-26-25, 420px);
   }
 
   .simulation-controls .editor-field {
@@ -27,15 +27,15 @@
 
   .simulation-controls [data-button] {
     min-inline-size: min(100%, 6.25rem);
-    min-block-size: 37px;
+    min-block-size: var(--desktop-size-2-25, 37px);
   }
 
   .simulation-percentile-settings {
     display: grid;
-    gap: 8px;
-    max-inline-size: 520px;
-    margin-block-start: 16px;
-    padding-block-start: 14px;
+    gap: var(--desktop-space-0-5, 8px);
+    max-inline-size: var(--desktop-size-32-5, 520px);
+    margin-block-start: var(--desktop-space-1, 16px);
+    padding-block-start: var(--desktop-space-0-75, 14px);
     border-block-start: 1px solid var(--border);
   }
 
@@ -45,21 +45,22 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--desktop-space-0-75, 12px);
     color: var(--text-muted);
   }
 
   .simulation-percentile-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--desktop-space-0-25, 6px);
   }
 
   .simulation-percentile-chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 5px 3px 9px;
+    gap: var(--desktop-space-0-25, 5px);
+    padding: var(--desktop-space-0-125, 3px) var(--desktop-space-0-25, 5px) var(--desktop-space-0-125, 3px)
+      var(--desktop-space-0-5, 9px);
     border-color: oklch(from var(--primary) l c h / 0.42);
     background: oklch(from var(--primary) l c h / 0.1);
     color: var(--text);
@@ -67,8 +68,8 @@
   }
 
   .simulation-percentile-chip button {
-    inline-size: 20px;
-    block-size: 20px;
+    inline-size: var(--desktop-size-1-25, 20px);
+    block-size: var(--desktop-size-1-25, 20px);
     border: 0;
     border-radius: 50%;
     background: transparent;
@@ -91,7 +92,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 7px;
+    gap: var(--desktop-space-0-5, 7px);
   }
 
   .simulation-percentile-add label {
@@ -106,14 +107,15 @@
   }
 
   .simulation-percentile-add label span {
-    padding-inline-start: 9px;
+    padding-inline-start: var(--desktop-space-0-5, 9px);
   }
 
   .simulation-percentile-add input {
     inline-size: 100%;
     min-inline-size: 0;
     border: 0;
-    padding: 7px 8px 7px 3px;
+    padding: var(--desktop-space-0-5, 7px) var(--desktop-space-0-5, 8px) var(--desktop-space-0-5, 7px)
+      var(--desktop-space-0-125, 3px);
     background: transparent;
     color: var(--text);
     font: inherit;
@@ -121,7 +123,7 @@
   }
 
   .simulation-percentile-add input:focus-visible {
-    outline-offset: -0.125rem;
+    outline-offset: calc(-1 * var(--desktop-size-0-25, 0.125rem));
   }
 
   .simulation-percentile-add input::-webkit-outer-spin-button,
@@ -139,26 +141,26 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
-    margin-block-start: 18px;
+    gap: var(--desktop-space-0-75, 12px);
+    margin-block-start: var(--desktop-space-1, 18px);
     color: var(--text-muted);
   }
 
   .simulation-progress progress {
     inline-size: 100%;
-    block-size: 12px;
+    block-size: var(--desktop-size-0-75, 12px);
     accent-color: var(--primary);
   }
 
   .simulation-history {
     display: grid;
-    gap: 22px;
-    margin-block-start: 22px;
+    gap: var(--desktop-space-1-5, 22px);
+    margin-block-start: var(--desktop-space-1-5, 22px);
   }
 
   .simulation-record {
     min-inline-size: 0;
-    padding: 14px;
+    padding: var(--desktop-space-0-75, 14px);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface-alt);
@@ -168,7 +170,7 @@
       min-inline-size: 0;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
+      gap: var(--desktop-space-0-75, 12px);
     }
 
     & .simulation-record-heading p {
@@ -177,7 +179,7 @@
       flex: 1;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px 10px;
+      gap: var(--desktop-space-0-25, 6px) var(--desktop-space-0-5, 10px);
       margin: 0;
       color: var(--text-muted);
     }
@@ -190,8 +192,8 @@
     & .simulation-record-delete {
       display: grid;
       flex: 0 0 auto;
-      inline-size: 44px;
-      block-size: 44px;
+      inline-size: var(--desktop-size-2-75, 44px);
+      block-size: var(--desktop-size-2-75, 44px);
       place-items: center;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
@@ -207,21 +209,21 @@
     }
 
     & .simulation-results {
-      margin-block-start: 12px;
+      margin-block-start: var(--desktop-space-0-75, 12px);
     }
   }
 
   .simulation-results {
-    margin-block-start: 22px;
+    margin-block-start: var(--desktop-space-1-5, 22px);
     overflow-x: auto;
   }
 
   .simulation-table {
     display: grid;
     grid-template-columns: minmax(5rem, max-content) repeat(6, max-content);
-    column-gap: 12px;
+    column-gap: var(--desktop-space-0-75, 12px);
     inline-size: max-content;
-    min-inline-size: 800px;
+    min-inline-size: var(--desktop-size-50, 800px);
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -229,7 +231,7 @@
 
   .simulation-table.with-healing {
     grid-template-columns: minmax(5rem, max-content) repeat(9, max-content);
-    min-inline-size: 1080px;
+    min-inline-size: var(--desktop-size-67-5, 1080px);
   }
 
   .simulation-table > tbody {
@@ -241,8 +243,8 @@
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
     align-items: center;
-    min-block-size: 42px;
-    padding: 9px 12px;
+    min-block-size: var(--desktop-size-2-75, 42px);
+    padding: var(--desktop-space-0-5, 9px) var(--desktop-space-0-75, 12px);
     border-block-start: 1px solid var(--border-muted);
   }
 
@@ -276,8 +278,8 @@
 
   :is(.simulation-current, .simulation-outdated) {
     display: inline-block;
-    margin-inline-start: 7px;
-    padding: 2px 6px;
+    margin-inline-start: var(--desktop-space-0-5, 7px);
+    padding: var(--desktop-space-0-125, 2px) var(--desktop-space-0-25, 6px);
     font-size: 0.75rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;

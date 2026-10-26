@@ -6,15 +6,16 @@ import { fileURLToPath } from "node:url"
 
 import { assert, describe, it } from "vitest"
 
-import { buildPresetRotationBundle } from "../src/application/graduation"
-import { calculateRotationBaseline } from "../src/calculations/rotationCalculator"
-import { loadDpsSnapshotFixtures, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures"
+import { buildPresetRotationBundle } from "@/application/graduation"
+import { calculateRotationBaseline } from "@/calculations/rotationCalculator"
+
+import { loadDpsSnapshotCases, selectDpsSnapshotUpdates } from "./helpers/dps-snapshot-fixtures"
 import { compareDpsSnapshots, dpsSnapshotUlpBudget } from "./helpers/dps-snapshot-guard.mjs"
 
 describe("dps-snapshots", () => {
   it("compares every preset rotation against its accepted DPS snapshot", async () => {
     const snapshotFile = new URL("./snapshots/rotation-dps.json", import.meta.url)
-    const cases = await loadDpsSnapshotFixtures()
+    const cases = await loadDpsSnapshotCases()
     const rawUpdateIds = (process.env.DPS_UPDATE_IDS ?? "").trim()
     const updateIds = selectDpsSnapshotUpdates(
       rawUpdateIds,
@@ -36,7 +37,14 @@ describe("dps-snapshots", () => {
     }
     const actual: Record<
       string,
-      { fixture: (typeof cases)[number]["fixture"]; dps: number; totalDamage: number; duration: number }
+      {
+        fixture: (typeof cases)[number]["fixture"]
+        dps: number
+        totalDamage: number
+        hps: number
+        totalHealing: number
+        duration: number
+      }
     > = {}
     for (const { id, pathId, rotation, fixture } of cases) {
       const bundle = buildPresetRotationBundle(
@@ -45,7 +53,14 @@ describe("dps-snapshots", () => {
       )
       assert(bundle, id + ": failed to build the production calculation bundle.")
       const { metrics, duration } = calculateRotationBaseline(bundle)
-      actual[id] = { fixture, dps: metrics.dps, totalDamage: metrics.totalDamage, duration }
+      actual[id] = {
+        fixture,
+        dps: metrics.dps,
+        totalDamage: metrics.totalDamage,
+        hps: metrics.hps,
+        totalHealing: metrics.totalHealing,
+        duration,
+      }
       const previous = snapshot.cases[id]?.dps
       console.log(
         id +

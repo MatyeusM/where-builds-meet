@@ -89,6 +89,34 @@ const hit = (time: number) => ({ type: "damage", phyCoef: 1, attrCoef: 1, time }
 const grant = (value: string) => ({ type: "apply", target: "self", value, time: 0 })
 
 describe("Wings supported Inner Way effects", () => {
+  it.each([undefined, 0])("applies Tailwind attack bonuses additively after Void conversion at Fan rank %s", rank => {
+    const innerWays = [{ innerWay: "ZephyrWhispers", tier: "T6" }]
+    const options = { rank, stats: { minSilkbind: 0, maxSilkbind: 0, minVoidAttack: 100, maxVoidAttack: 100 } }
+    const action = { type: "damage", phyCoef: 0, attrCoef: 1, time: 1 }
+    const plain = calculate(innerWays, [action], options).metrics.totalDamage
+    const boosted = calculate(innerWays, [grant("Tailwind"), action], options).metrics.totalDamage
+    expect(boosted / plain).toBeCloseTo(rank === undefined ? 1.06 : 1.12, 12)
+  })
+
+  it.each([undefined, 0])("buffs converted Void and native Silkbind equally with Fan rank %s", rank => {
+    for (const tier of ["T5", "T6"] as const) {
+      const innerWays = [{ innerWay: "ZephyrWhispers", tier }]
+      const native = calculate(innerWays, [grant("Tailwind"), hit(1)], { rank }).metrics.totalDamage
+      for (const voidAttack of [50, 100]) {
+        const converted = calculate(innerWays, [grant("Tailwind"), hit(1)], {
+          rank,
+          stats: {
+            minSilkbind: 100 - voidAttack,
+            maxSilkbind: 100 - voidAttack,
+            minVoidAttack: voidAttack,
+            maxVoidAttack: voidAttack,
+          },
+        }).metrics.totalDamage
+        expect(converted).toBeCloseTo(native, 9)
+      }
+    }
+  })
+
   it.each([1, 2, 4])("applies Ink Rhyme after the final hit with %s targets", enemyCount => {
     const result = calculate([{ innerWay: "ZephyrWhispers", tier: "T4" }], [], {
       rotation: { name: "Ink timing", enemyCount, ping: 0, steps: [{ type: "skill", skill: "EndOfGale" }] },
@@ -181,6 +209,54 @@ describe("Wings supported Inner Way effects", () => {
     const boosted = calculate([], [grant("Cloudshear"), ...actions])
     expect(boosted.metrics.totalDamage / plain.metrics.totalDamage).toBeCloseTo(1.06)
   })
+  it("adds Cloudshear to each channel scale alongside existing channel bonuses", () => {
+    const actions = [{ type: "damage", phyCoef: 1, attrCoef: 1, phyBonus: 100, attrBonus: 50, time: 1 }]
+    const stats = { physDmgBonus: 0.2, silkbindDmgBonus: 0.2, allMartialArts: 0.3 }
+    const options = { stats, tags: ["MartialArts", "DirectDamage"] }
+    const plain = calculate([], actions, options)
+    const boosted = calculate([], [grant("Cloudshear"), ...actions], options)
+    expect(boosted.metrics.totalDamage / plain.metrics.totalDamage).toBeCloseTo(1.26 / 1.2, 10)
+  })
+  it("adds End of Gale T3 to Category 1 rather than its base ratio", () => {
+    const rotation: RotationRecord = { name: "End of Gale", ping: 0, steps: [{ type: "skill", skill: "EndOfGale" }] }
+    const stats = { allMartialArts: 0.2 }
+    const plain = calculate([{ innerWay: "ZephyrWhispers", tier: "T2" }], [], { rotation, stats })
+    const boosted = calculate([{ innerWay: "ZephyrWhispers", tier: "T3" }], [], { rotation, stats })
+    expect(boosted.metrics.totalDamage / plain.metrics.totalDamage).toBeCloseTo(1.4 / 1.2, 10)
+  })
+  it.each(["T0", "T3", "T6"])("adds Blade of Grass to Category 1 at %s with existing hit eligibility", tier => {
+    for (const [tags, eligible] of [
+      [["Light", "VariedCombo", "DrumSeries"], true],
+      [["Heavy", "VariedCombo", "DrumSeries"], true],
+      [["Light", "DrumSeries"], false],
+      [["VariedCombo", "DrumSeries"], false],
+    ] as const) {
+      const options = { tags: ["MartialArts", ...tags], stats: { allMartialArts: 0.2 } }
+      const innerWays = [{ innerWay: "BladesWill", tier }]
+      const actions = [{ type: "damage", phyCoef: 1, attrCoef: 1, time: 1 }]
+      const plain = calculate(innerWays, actions, options)
+      const boosted = calculate(
+        innerWays,
+        [{ type: "apply", target: "target", value: "Cuncao", stack: 5, time: 0 }, ...actions],
+        options,
+      )
+      let bonus = tier === "T6" ? 0.05 : 0
+      if (eligible) {
+        switch (tier) {
+          case "T0":
+            bonus = 0.1
+            break
+          case "T3":
+            bonus = 0.2
+            break
+          case "T6":
+            bonus = 0.25
+            break
+        }
+      }
+      expect(boosted.metrics.totalDamage / plain.metrics.totalDamage).toBeCloseTo((1.2 + bonus) / 1.2, 10)
+    }
+  })
   it("reduces incoming damage against an Ink Rhyme target at T4", () => {
     const result = calculate(
       [{ innerWay: "ZephyrWhispers", tier: "T4" }],
@@ -215,6 +291,29 @@ describe("Wings supported Inner Way effects", () => {
       calculate([{ innerWay: "MoraleChant", tier: "T0" }], stacked).metrics.totalDamage,
     )
   })
+  it("adds base Yi River to Category 1 for both physical and attribute damage before T1", () => {
+    for (const action of [{ phyCoef: 1 }, { attrCoef: 1 }]) {
+      const actions = [{ type: "damage", time: 1, ...action }]
+      const options = { tags: ["MartialArts", "DirectDamage"], stats: { allMartialArts: 0.2 } }
+      const plain = calculate([{ innerWay: "MoraleChant", tier: "T0" }], actions, options)
+      const boosted = calculate([{ innerWay: "MoraleChant", tier: "T0" }], [grant("YiRiver"), ...actions], options)
+      expect(boosted.metrics.totalDamage / plain.metrics.totalDamage).toBeCloseTo(1.21 / 1.2, 10)
+    }
+  })
+  it.each(["RippleJadebreaker", "RippleDawnsun", "RippleFlourishingNotes"])(
+    "applies %s equally on every supported PvE target",
+    skill => {
+      const damage = (["Dummy", "DummyAttack", "Boss"] as const).map(
+        targetType =>
+          calculate([], [], {
+            rotation: { name: "PvE correction", targetType, ping: 0, steps: [{ type: "skill", skill }] },
+          }).metrics.totalDamage,
+      )
+      expect(damage[0]).toBeGreaterThan(0)
+      expect(damage[1]).toBeCloseTo(damage[0], 10)
+      expect(damage[2]).toBeCloseTo(damage[0], 10)
+    },
+  )
   it("applies Harmony's cast reduction and Dawnsun shield state using existing effects", () => {
     const result = calculate(
       [{ innerWay: "HarmonySong", tier: "T6" }],

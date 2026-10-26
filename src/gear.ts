@@ -67,6 +67,17 @@ export type GearItem = {
   attunement?: GearValue
 }
 
+export function gearAffixKeyForLevel(key: string, level: GearLevel) {
+  if (level !== 100) return key
+  switch (key) {
+    case "singleTargetMysticDmgBoost":
+    case "areaMysticDmgBoost":
+      return "allMysticDmgBoost"
+    default:
+      return key
+  }
+}
+
 export type GearInventory = { items: GearItem[]; equipped: Partial<Record<GearSlot, string>> }
 
 export type GearAffixCount = { key: string; count: number }
@@ -475,6 +486,12 @@ function parseGearItem(value: unknown): GearItem | undefined {
   const validated = validateUnknown(gearItemInputSchema, value)
   if (!validated.success) return undefined
   const candidate = validated.output as Partial<GearItem>
+  if (isGearLevel(candidate.level) && candidate.additionalAffixes) {
+    candidate.additionalAffixes = candidate.additionalAffixes.map(affix => ({
+      ...affix,
+      key: gearAffixKeyForLevel(affix.key, candidate.level!),
+    }))
+  }
   if (typeof candidate.id !== "string" || !candidate.id) return undefined
   if (typeof candidate.definitionId !== "string") return undefined
   const definition = gearData.gear[candidate.definitionId]
@@ -937,6 +954,19 @@ export function mergeImportedBuildState(
   }
 }
 
+function currentPresetId(id: string) {
+  switch (id) {
+    case "deluge-full-min-ew":
+      return "deluge-full-max-ib"
+    case "deluge-fully-relayed-min-rw":
+      return "deluge-fully-relayed-min-ib"
+    case "deluge-fully-relayed-max-rw":
+      return "deluge-fully-relayed-max-ib"
+    default:
+      return id
+  }
+}
+
 export function loadBuildState(): BuildState {
   try {
     const savedValue = getPersistentItem(buildListStorageKey)
@@ -946,7 +976,12 @@ export function loadBuildState(): BuildState {
         ? validateUnknown(storedBuildStateSchema, saved)
         : undefined
     const savedRecord = validatedRecord?.success ? (saved as { entries?: unknown; gearItems?: unknown }) : undefined
-    const savedEntries = Array.isArray(saved) ? saved : Array.isArray(savedRecord?.entries) ? savedRecord.entries : []
+    const savedEntries = (
+      Array.isArray(saved) ? saved : Array.isArray(savedRecord?.entries) ? savedRecord.entries : []
+    ).map(entry => {
+      if (!entry || typeof entry !== "object" || typeof entry.id !== "string") return entry
+      return Object.assign({}, entry, { id: currentPresetId(entry.id) })
+    })
     const sharedItems = savedRecord ? parseGearItems(savedRecord.gearItems) : []
     const legacySetup = normalizeBuildSetup(readLegacyBuildSetup())
     const defaultIds = new Set(defaultBuildPresets.map(preset => preset.id))
@@ -1009,7 +1044,8 @@ export function loadBuildState(): BuildState {
         })
       }
     }
-    const requestedActiveId = getPersistentItem(activeBuildStorageKey)
+    const savedActiveId = getPersistentItem(activeBuildStorageKey)
+    const requestedActiveId = savedActiveId ? currentPresetId(savedActiveId) : savedActiveId
     const fallbackActiveId =
       savedValue === null && entries.some(entry => entry.id === "migrated-build") ? "migrated-build" : defaults[0]?.id
     const activeBuildId =

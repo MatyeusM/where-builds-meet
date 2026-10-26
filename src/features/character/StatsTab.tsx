@@ -723,6 +723,16 @@ export function StatsTab({
               </StatPair>
               <StatPair>
                 <CalculatedStatField
+                  definition={statDefinition("allMysticDmgBoost")}
+                  compact
+                  stats={stats}
+                  statOverrides={statOverrides}
+                  onStatChange={onStatChange}
+                  onStatReset={onStatReset}
+                />
+              </StatPair>
+              <StatPair>
+                <CalculatedStatField
                   definition={statDefinition("singleTargetMysticDmgBoost")}
                   compact
                   stats={stats}
@@ -950,6 +960,24 @@ export function StatsTab({
                           onClick={() => updateGlobalDebuff("qingyisCharm", value)}
                         >
                           {setupStatus("debuff:qingyisCharm", value, active)}
+                        </ButtonGroupOption>
+                      )
+                    })}
+                  </ButtonGroup>
+                </div>
+                <div className="setup-category-row">
+                  <span>{t("ui.app.bossTalent")}</span>
+                  <ButtonGroup columns={2}>
+                    {([0, 0.15] as const).map(value => {
+                      const active = globalDebuffs.bossTalent === value
+                      return (
+                        <ButtonGroupOption
+                          key={value}
+                          label={`${value * 100}%`}
+                          selected={active}
+                          onClick={() => updateGlobalDebuff("bossTalent", value)}
+                        >
+                          {setupStatus("buff:bossTalent", String(value), active)}
                         </ButtonGroupOption>
                       )
                     })}

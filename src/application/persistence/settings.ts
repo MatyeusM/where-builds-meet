@@ -1,6 +1,6 @@
 import defaultSetup from "@gamedata/default-setup.json"
 
-import type { CalculatorSettings, LayoutMode, PathId } from "@/application/contracts"
+import type { CalculatorSettings, DisplaySizing, LayoutMode, PathId } from "@/application/contracts"
 import { isWeaponId } from "@/application/gameData/martialArts"
 import { pathRequiresDev, typedPathDefinitions } from "@/application/gameData/paths"
 import {
@@ -17,6 +17,8 @@ import { settingsSchema } from "@/schemas/storage"
 
 import {
   developmentModeStorageKey,
+  displaySizingStorageKey,
+  gearSearchMinutesStorageKey,
   divinecraftStorageKey,
   foodStorageKey,
   enduranceFoodStorageKey,
@@ -25,9 +27,25 @@ import {
   scriptStorageKey,
   settingsStorageKey,
 } from "./keys"
+import { migrateWingsPathId } from "./legacy/wingsPath"
 
 export function loadDevMode() {
   return getPersistentItem(developmentModeStorageKey) === "true"
+}
+
+export function loadDisplaySizing(): DisplaySizing {
+  switch (getPersistentItem(displaySizingStorageKey)) {
+    case "screen":
+      return "screen"
+    case "window":
+    case "fit": // Preserve the earlier two-option selector's saved choice.
+      return "window"
+    case "default":
+    case "browser":
+      return "default"
+    default:
+      return "default"
+  }
 }
 
 export const compactLayoutQuery = "(max-width: 48em)"
@@ -48,6 +66,7 @@ export function loadLayoutPreview(compact: boolean): LayoutMode {
 }
 
 export function loadSelectedPath(devMode = loadDevMode()): PathId {
+  migrateWingsPathId()
   const saved = getPersistentItem(pathStorageKey)
   const definition = saved ? typedPathDefinitions[saved as PathId] : undefined
   return definition && (!pathRequiresDev(definition) || devMode) ? (saved as PathId) : "stonesplitStrength"
@@ -89,4 +108,10 @@ export function loadSettings(): CalculatorSettings {
     breakthrough: defaultBreakthrough,
     ping: resolvePing(saved.ping),
   }
+}
+
+export function loadGearSearchMinutes() {
+  const saved = getPersistentItem(gearSearchMinutesStorageKey)
+  const minutes = saved === null ? 2 : Number(saved)
+  return Number.isFinite(minutes) && minutes >= 0 ? minutes : 2
 }

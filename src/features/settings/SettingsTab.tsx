@@ -1,12 +1,13 @@
 import { useState, type Dispatch, type ReactNode, type SetStateAction } from "react"
 
-import type { CalculatorSettings, LayoutMode, PathId } from "@/application/contracts"
+import type { CalculatorSettings, DisplaySizing, LayoutMode, PathId } from "@/application/contracts"
 import { martialArtDefinitions, weaponFamilyNames } from "@/application/gameData/martialArts"
 import { productionWeaponIds, typedPathDefinitions } from "@/application/gameData/paths"
 import { previewCatalog, type PreviewId } from "@/application/gameData/previews"
 import type { ScopeTarget } from "@/application/gearScope"
 import { gameText, t } from "@/i18n"
 import { useGearStore } from "@/stores/gearStore"
+import { useSettingsStore } from "@/stores/settingsStore"
 import { type WeaponId } from "@/types"
 import { Button } from "@/ui/Button"
 import { Dialog } from "@/ui/Dialog"
@@ -123,6 +124,10 @@ export function SettingsTab({
   onLayoutChange: (layout: LayoutMode) => void
   onPreviewChange: (preview: PreviewId | null) => void
 }) {
+  const gearSearchMinutes = useSettingsStore(state => state.gearSearchMinutes)
+  const setGearSearchMinutes = useSettingsStore(state => state.setGearSearchMinutes)
+  const displaySizing = useSettingsStore(state => state.displaySizing)
+  const setDisplaySizing = useSettingsStore(state => state.setDisplaySizing)
   const weaponsLocked = Boolean(typedPathDefinitions[pathId].lockedWeapons)
 
   return (
@@ -161,7 +166,7 @@ export function SettingsTab({
             </label>
           ))}
         </div>
-        <label className="editor-field ping-field">
+        <label className="editor-field ping-field settings-number-field">
           <span>{t("ui.app.ping")}</span>
           <NumberInput
             value={settings.ping}
@@ -170,6 +175,15 @@ export function SettingsTab({
             step={1}
             inputMode="numeric"
             onCommit={ping => onSettingsChange(current => ({ ...current, ping: ping ?? 0 }))}
+          />
+        </label>
+        <label className="editor-field settings-number-field">
+          <span>{t("ui.app.gearSearchMinutes")}</span>
+          <NumberInput
+            value={gearSearchMinutes}
+            min={0}
+            step={1}
+            onCommit={minutes => setGearSearchMinutes(minutes ?? 2)}
           />
         </label>
         <div className="settings-share-row">
@@ -193,7 +207,7 @@ export function SettingsTab({
             </select>
           </label>
         </div>
-        <div className="settings-layout-row">
+        <div className="settings-layout-row settings-display-row">
           <label className="editor-field">
             <span>{t("ui.app.layout")}</span>
             <select
@@ -205,6 +219,16 @@ export function SettingsTab({
               <option value="mobile">{t("ui.app.mobile")}</option>
             </select>
           </label>
+          {layoutMode === "pc" && (
+            <label className="editor-field">
+              <span>{t("ui.app.displaySizing")}</span>
+              <select value={displaySizing} onChange={event => setDisplaySizing(event.target.value as DisplaySizing)}>
+                <option value="default">{t("ui.app.defaultSizing")}</option>
+                <option value="screen">{t("ui.app.fitToScreen")}</option>
+                <option value="window">{t("ui.app.fitToWindow")}</option>
+              </select>
+            </label>
+          )}
         </div>
       </div>
     </Panel>

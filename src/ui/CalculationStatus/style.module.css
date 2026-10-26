@@ -4,16 +4,16 @@
 
     inline-size: fit-content;
     min-block-size: 1.4em;
-    margin-block-start: 0.2rem;
-    border-radius: 0.35rem;
-    padding-inline: 0.45rem;
+    margin-block-start: var(--desktop-space-0-25, 0.2rem);
+    border-radius: var(--desktop-size-0-25, 0.35rem);
+    padding-inline: var(--desktop-space-0-5, 0.45rem);
     background: linear-gradient(
       90deg,
       color-mix(in oklab, var(--primary) 24%, transparent) 0 var(--calculation-progress),
       transparent var(--calculation-progress) 100%
     );
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: var(--desktop-font-0-875, 0.9rem);
     font-weight: 700;
     line-height: 1.4;
     letter-spacing: 0.02em;
@@ -24,8 +24,8 @@
   .indeterminate {
     background: repeating-linear-gradient(
       115deg,
-      color-mix(in oklab, var(--primary) 24%, transparent) 0 8px,
-      transparent 8px 16px
+      color-mix(in oklab, var(--primary) 24%, transparent) 0 var(--desktop-size-0-5, 8px),
+      transparent var(--desktop-size-0-5, 8px) var(--desktop-size-1, 16px)
     );
   }
 

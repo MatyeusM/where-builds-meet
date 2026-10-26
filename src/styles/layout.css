@@ -13,7 +13,7 @@
   .page-shell {
     /* The page's horizontal inset, named once and used by both the content below and the footer
        at the foot of the shell. */
-    --shell-gutter: 14px;
+    --shell-gutter: var(--desktop-size-1, 14px);
 
     display: flex;
     flex-direction: column;
@@ -23,7 +23,7 @@
     /* No bottom padding: the footer carries the space below it, inside its own background, so the
        bar meets the bottom edge instead of stopping short of it with a strip of bare gradient
        below. The footer's own padding is what stands the page off the window. */
-    padding: 28px 0 0;
+    padding: var(--desktop-space-1-5, 28px) 0 0;
   }
 
   /*
@@ -59,12 +59,12 @@
 
   .viewport-page-shell .page-header {
     flex: 0 0 auto;
-    margin-block-end: 16px;
+    margin-block-end: var(--desktop-space-1, 16px);
   }
 
   .viewport-page-shell .main-tabs {
     flex: 0 0 auto;
-    margin-block-end: 12px;
+    margin-block-end: var(--desktop-space-0-75, 12px);
   }
 
   .viewport-tab-content {
@@ -92,18 +92,18 @@
   .viewport-page-shell .page-footer {
     flex: 0 0 auto;
     flex-wrap: wrap;
-    margin-block-start: 12px;
+    margin-block-start: var(--desktop-space-0-75, 12px);
 
     /* Same reason the base rule's bottom padding is inside its background: the bar has to reach
        the bottom edge. The top is tighter here because these two tabs fill the window and have no
        slack to absorb. */
-    padding-block: 10px 32px;
+    padding-block: var(--desktop-space-0-5, 10px) var(--desktop-space-2, 32px);
   }
 
   .main-tabs {
     display: flex;
-    gap: 4px;
-    margin-block-end: 22px;
+    gap: var(--desktop-space-0-25, 4px);
+    margin-block-end: var(--desktop-space-1-5, 22px);
     border-block-end: 1px solid var(--border);
     overflow-x: auto;
   }
@@ -112,7 +112,7 @@
     min-inline-size: max-content;
     border: 0;
     border-block-end: 2px solid transparent;
-    padding: 10px 16px;
+    padding: var(--desktop-space-0-5, 10px) var(--desktop-space-1, 16px);
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -133,23 +133,23 @@
 
   /* The path switcher follows the title block; its buttons wrap within the column. */
   .path-selector {
-    margin-block-start: 10px;
+    margin-block-start: var(--desktop-space-0-5, 10px);
   }
 
   .path-selector-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: var(--desktop-space-0-5, 7px);
   }
 
   .path-selector-options button {
     display: flex;
-    min-block-size: 42px;
+    min-block-size: var(--desktop-size-2-75, 42px);
     align-items: center;
-    gap: 8px;
+    gap: var(--desktop-space-0-5, 8px);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 5px 12px;
+    padding: var(--desktop-space-0-25, 5px) var(--desktop-space-0-75, 12px);
     background: oklch(from var(--surface-alt) l c h / 0.82);
     color: var(--text-muted);
     cursor: pointer;
@@ -176,14 +176,14 @@
   }
 
   .path-selector-options img {
-    inline-size: 30px;
-    block-size: 30px;
+    inline-size: var(--desktop-size-2, 30px);
+    block-size: var(--desktop-size-2, 30px);
     border-radius: var(--radius-xs);
     object-fit: contain;
   }
 
   .path-status-badge {
-    padding: 1px 6px;
+    padding: 1px var(--desktop-space-0-25, 6px);
     border-color: oklch(from var(--primary) l c h / 0.55);
     color: var(--primary);
     font-size: 0.75rem;
@@ -195,8 +195,8 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 24px;
-    margin-block-end: 16px;
+    gap: var(--desktop-space-1-5, 24px);
+    margin-block-end: var(--desktop-space-1, 16px);
 
     /* Title block owns the remaining width so the path switcher wraps, not the controls. */
     .page-header-start {
@@ -209,11 +209,11 @@
       flex: 0 1 auto;
       flex-direction: column;
       align-items: flex-end;
-      gap: 12px;
+      gap: var(--desktop-space-0-75, 12px);
     }
 
     .dev-mode-button {
-      min-block-size: 44px;
+      min-block-size: var(--desktop-size-2-75, 44px);
       min-inline-size: 4.5rem;
       flex: 0 0 auto;
     }
@@ -225,22 +225,22 @@
       align-items: end;
       flex-wrap: wrap;
       justify-content: end;
-      gap: 12px;
+      gap: var(--desktop-space-0-75, 12px);
     }
 
     .project-links {
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 16px;
-      min-block-size: 44px;
+      gap: var(--desktop-space-1, 16px);
+      min-block-size: var(--desktop-size-2-75, 44px);
     }
 
     .project-links a {
       display: inline-flex;
-      min-block-size: 44px;
+      min-block-size: var(--desktop-size-2-75, 44px);
       align-items: center;
-      gap: 6px;
+      gap: var(--desktop-space-0-25, 6px);
       color: var(--primary);
       font-weight: 700;
       text-decoration: none;
@@ -252,7 +252,7 @@
 
     .locale-selector {
       display: grid;
-      gap: 4px;
+      gap: var(--desktop-space-0-25, 4px);
 
       span {
         color: var(--text-muted);
@@ -260,7 +260,7 @@
       }
 
       select {
-        min-block-size: 44px;
+        min-block-size: var(--desktop-size-2-75, 44px);
       }
     }
   }
@@ -272,7 +272,7 @@
   }
 
   .eyebrow {
-    margin: 0 0 6px;
+    margin: 0 0 var(--desktop-space-0-25, 6px);
     color: var(--primary);
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -280,7 +280,7 @@
   }
 
   .intro {
-    max-inline-size: 620px;
+    max-inline-size: var(--desktop-size-38-75, 620px);
     margin-block-end: 0;
     color: var(--text-muted);
   }
@@ -290,7 +290,7 @@
     grid-template-columns: 44rem 30rem minmax(22rem, 44rem);
     align-items: start;
     justify-content: start;
-    gap: 16px;
+    gap: var(--desktop-space-1, 16px);
   }
 
   .app-layout:has(.results-column-with-healing) {
@@ -309,7 +309,33 @@
     display: grid;
     inline-size: 100%;
     max-inline-size: 30rem;
-    gap: 12px;
+    gap: var(--desktop-space-0-75, 12px);
+  }
+
+  /* Screen-sized text stays large in a smaller window. Wrap these columns at
+     their actual rem widths rather than the viewport breakpoints below. */
+  .layout-pc[data-display-sizing="screen"] .app-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    .character-stats-column {
+      flex: 0 1 44rem;
+    }
+
+    .middle-stats-column {
+      flex: 0 1 30rem;
+    }
+
+    .results-column {
+      flex: 1 1 22rem;
+      max-inline-size: 44rem;
+    }
+
+    .results-column-with-healing {
+      flex-basis: 45.25rem;
+      max-inline-size: 45.25rem;
+    }
   }
 
   /*
@@ -341,9 +367,9 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--desktop-space-1, 16px);
     margin-block-start: auto;
-    padding: 24px var(--shell-gutter) 32px;
+    padding: var(--desktop-space-1-5, 24px) var(--shell-gutter) var(--desktop-space-2, 32px);
     border-block-start: 1px solid var(--border);
     background: oklch(from var(--surface) l c h / 0.5);
     color: var(--text-muted);
@@ -420,13 +446,13 @@
 
   @media (max-width: 37.5em) {
     .page-shell {
-      --shell-gutter: 10px;
+      --shell-gutter: var(--desktop-size-0-75, 10px);
 
-      padding-block-start: 22px;
+      padding-block-start: var(--desktop-space-1-5, 22px);
     }
 
     .page-content {
-      max-inline-size: calc(1100px + var(--shell-gutter) * 2);
+      max-inline-size: calc(var(--desktop-size-68-75, 1100px) + var(--shell-gutter) * 2);
     }
 
     .page-header {
@@ -435,7 +461,7 @@
 
     .page-header-controls {
       justify-content: start;
-      margin-block-start: 18px;
+      margin-block-start: var(--desktop-space-1, 18px);
     }
 
     .main-tabs {

@@ -5,6 +5,7 @@ import {
   attunementData,
   clampGearRoll,
   gearData,
+  gearAffixKeyForLevel,
   gearLevels,
   maxGearRoll,
   type GearDefinition,
@@ -39,7 +40,7 @@ export type GearDraft = {
 }
 
 export const blankValue = (): GearValueDraft => ({ key: "", value: "" })
-export const newDraft = (level: GearLevel = 96): GearDraft => ({
+export const newDraft = (level: GearLevel = 100): GearDraft => ({
   level,
   rarity: "Gold",
   relayed: false,
@@ -95,7 +96,16 @@ export function capAndFilterGearDraft(
   definition: GearDefinition | undefined,
   relayed = draft.relayed,
 ): GearDraft {
-  const capped = capGearDraft(draft, relayed)
+  const capped = capGearDraft(
+    {
+      ...draft,
+      additionalAffixes: draft.additionalAffixes.map(affix => ({
+        ...affix,
+        key: gearAffixKeyForLevel(affix.key, draft.level),
+      })),
+    },
+    relayed,
+  )
   if (!definition) return capped
   const allowedBase = affixOptionsForGearDefinition(definition, "baseAffixes", capped.level, capped.relayed)
   const allowedAdditional = affixOptionsForGearDefinition(definition, "additionalAffixes", capped.level, capped.relayed)
@@ -227,6 +237,7 @@ export function GearEditor({
   attunementOptions,
   selectedAdditionalKeys,
   onDraftChange,
+  onImportSlot,
   onLevelChange,
   onRelayedChange,
   onCancel,
@@ -243,6 +254,7 @@ export function GearEditor({
   attunementOptions: string[]
   selectedAdditionalKeys: Set<string>
   onDraftChange: Dispatch<SetStateAction<GearDraft>>
+  onImportSlot: (definitionId: string) => void
   onLevelChange: (level: GearLevel) => void
   onRelayedChange: (relayed: boolean) => void
   onCancel: () => void
@@ -251,6 +263,7 @@ export function GearEditor({
   const [ocrOpen, setOcrOpen] = useState(false)
 
   const importOcrResult = (result: GearOcrResult) => {
+    onImportSlot(result.definitionId)
     const importedAdditional = result.additionalAffixes
       .slice(0, 4)
       .map(affix => savedValueToDraft(affix, gearData.affixes))
