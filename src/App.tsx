@@ -386,9 +386,14 @@ export default function App() {
     setPreviewId(nextPreview)
     persistPreviewSelection(nextPreview)
   }
-  // A shared build arrives in the URL fragment. The recipient decides whether to import it, so
-  // the fragment is read when the app starts and cleared once they answer.
+  // A shared build arrives in the URL fragment. The recipient decides whether to import it.
+  // A fragment-only navigation keeps this component mounted, so watch for later links too.
   const [sharedBuildOffered, setSharedBuildOffered] = useState(hasSharedBuild)
+  useEffect(() => {
+    const offerSharedBuild = () => setSharedBuildOffered(hasSharedBuild())
+    window.addEventListener("hashchange", offerSharedBuild)
+    return () => window.removeEventListener("hashchange", offerSharedBuild)
+  }, [])
   const dismissSharedBuild = () => {
     clearSharedBuild()
     setSharedBuildOffered(false)
