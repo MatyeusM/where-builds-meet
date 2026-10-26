@@ -42,6 +42,13 @@ snapshot environment.
 
 ## Accepted values and review gate
 
+On October 26, 2026, the user accepted the defense correction from 446 to 500
+for breakthroughs 18 and 19 and approved refreshing all 222 preset baselines.
+The higher enemy defense lowers DPS and total damage by 0.95–1.50%, with no
+duration changes. For example, `bamboocutDust/dust-dummy-1-min-100pc/dust-full-min/18`
+changes from 78,106.31550827304 to 77,037.10483776833 DPS. Enemy level,
+Judgement Resistance, and HP are unchanged by this correction.
+
 The current baseline set replaces the twenty breakthrough-17 cases with forty
 cases at breakthroughs 18 and 19, as requested. These use the corrected flat
 breakthrough rewards as well as each level's gear, Enhancement, Arsenal, sets,
