@@ -66,7 +66,7 @@ describe("preset Qi event attachments", () => {
     expect(doubleStab).toHaveLength(4)
     for (const index of [0, 1, 3]) expect(mixed[index]).toBeCloseTo(doubleStab[index], 8)
     expect(mixed[2]).toBeCloseTo(32.168817261190455, 8)
-    expect(doubleStab[2]).toBeCloseTo(31.64881726119046, 8)
+    expect(doubleStab[2]).toBeCloseTo(33.7908172611905, 8)
   })
 
   it.each(["mixed-dummy-1-min", "mixed-dummy-1-min-double-stab"])(

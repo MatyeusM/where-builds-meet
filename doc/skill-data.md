@@ -10,13 +10,14 @@ short explanation only when it prevents a likely misinterpretation.
 
 Strength's ordinary Mixed and Mixed Double Stab presets exhaust on the third
 Mo charged strike of round two. Their break times differ: about 32.169 and
-31.649 seconds respectively at 40 ms ping. Their other authored Qi markers
+33.791 seconds respectively at 40 ms ping. Their other authored Qi markers
 remain aligned. Ordinary Mixed places Mo QQ before its first Tab/VC/LC/VC
-filler, then uses Leaping Toad/Deflect/Bursting Nine before round two. It ends
-Tab/VC/Mo QQ so the final linked VC hit lands inside the minute. Double Stab's
-second Flute follows two charged casts; its final filler is Tab/VC/LC/VC. It
-omits two intermediate Deflect waits and the late Mo QQ to keep the final
-linked VC hits by 59.5 seconds with Mixed Full Min at Solo 18 or 19.
+filler, then uses Leaping Toad/Deflect/Bursting Nine before round two. It
+ends Tab/VC/Mo QQ so the final linked VC hit lands inside the minute. Double
+Stab retains the Heng Q immediately before its late Heng Special and places
+its second Flute after two charged casts. Its first filler is Tab/VC/LC/VC,
+Toad/Deflect/Bursting Nine; it ends Tab/VC/LC. At 40 ms ping, the last direct
+hit lands at about 59.851 seconds in Mixed Full Min at Solo 18 or 19.
 
 | Information                                           | Location                         |
 | ----------------------------------------------------- | -------------------------------- |
@@ -69,8 +70,8 @@ must immediately follow a Mo Blade ability.
 
 Ordinary Mixed uses Leaping Toad/Deflect followed by seven-arrow Bursting Nine
 2 Shots before the second-round Snowparting Q, and omits the former final
-Bursting Nine. Double Stab replaces the first filler LC/VC pair with Leaping
-Toad followed by seven-arrow Bursting Nine 2 Shots. Infinite Vitality retains
+Bursting Nine. Double Stab retains its first filler LC/VC pair before Leaping
+Toad/Deflect and seven-arrow Bursting Nine 2 Shots. Infinite Vitality retains
 Mo QQ/Tab and replaces the following VC/LC/VC with Leaping Toad/Deflect followed
 by seven-arrow Bursting Nine 2 Shots. Existing charge movement
 attachments and Qi anchors remain attached to their original surviving skills.

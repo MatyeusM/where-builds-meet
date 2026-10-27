@@ -810,3 +810,20 @@ after the second charge so the last VC's linked hits land by 59.5 seconds.
 The table uses Mixed Full Min; the accepted snapshot matrix also includes the
 pure-build combinations. Every reviewed case retains a sixty-second duration,
 and no other preset snapshot changes.
+
+## Strength Mixed Double Stab follow-up (October 27, 2026)
+
+The user accepted the Double Stab sequence with Leaping Toad/Deflect/Bursting
+Nine, LC/VC after the first Tab/VC, Heng Q before the late Heng Special, and a
+final Tab/VC/LC. It retains fifteen charged casts and exhausts on the third
+second-round strike at about 33.791 seconds. The last direct hit lands at about
+59.851 seconds with Mixed Full Min at Solo 18 and 19.
+
+| Solo |      Previous DPS |      Accepted DPS |
+| ---: | ----------------: | ----------------: |
+|   18 | 83330.54058106004 | 83664.47808757986 |
+|   19 | 87388.11644673634 | 87742.55442362059 |
+
+The Double Stab snapshots for its mixed and pure build combinations change
+because the extra Deflect and revised filler order alter timing and damage.
+Other preset rotations retain their previous snapshots.

@@ -30,22 +30,8 @@ it.each(rotationIds)("%s preserves charged hits and legal follow-ups with Mystic
       expect(bundle.timeline.skills[previous.step.skill!].tags).toContain("MoBlade")
     }
     for (const { row, next } of neighbors.filter(({ row }) => row.step.skill === "LeapingToad")) {
-      let expectedNextSkills: string[]
-      switch (rotationId) {
-        case "mixed-dummy-1-min-double-stab":
-          expectedNextSkills = ["BurstingNine2Shots7Hits"]
-          break
-        case "mixed-dummy-1-min":
-          expectedNextSkills = ["Deflect"]
-          break
-        default:
-          expectedNextSkills = ["Deflect"]
-      }
-      expect(expectedNextSkills).toContain(next?.step.skill)
-      expect(
-        rotationId === "mixed-dummy-1-min-double-stab" ||
-          Math.abs(next.startTime - row.startTime - row.effectiveCastTime) < 1e-9,
-      ).toBe(true)
+      expect(next?.step.skill).toBe("Deflect")
+      expect(Math.abs(next.startTime - row.startTime - row.effectiveCastTime)).toBeLessThan(1e-9)
       expect(row.actions.filter(action => action.type === "damage")).toHaveLength(2)
     }
     const toadDeflectBurstingNine = casts.some(
@@ -54,7 +40,7 @@ it.each(rotationIds)("%s preserves charged hits and legal follow-ups with Mystic
         casts[index + 1]?.step.skill === "Deflect" &&
         casts[index + 2]?.step.skill === "BurstingNine2Shots7Hits",
     )
-    expect(toadDeflectBurstingNine).toBe(rotationId !== "mixed-dummy-1-min-double-stab")
+    expect(toadDeflectBurstingNine).toBe(true)
     const charges = casts.filter(row => row.step.skill === "PhalanxbaneHeavyCharged3")
     expect(charges).toHaveLength(15)
     expect(result.baseline.filter(hit => hit.context.skillTags.includes("BurningHeart"))).toHaveLength(30)
@@ -113,7 +99,7 @@ it("Main Mixed ends Tab, VC, Mo QQ with the final linked VC hit before 60 second
   expect(Math.max(...linkedVcHits.map(hit => hit.timelineTime! - result.anchorTime))).toBeLessThan(60)
 })
 
-it("Double Stab's final VC and linked direct hits land by 59.5 seconds", async () => {
+it("Double Stab's final Tab VC LC lands its direct hits before 59.9 seconds", async () => {
   const entry = (await loadDpsSnapshotCases()).find(
     candidate =>
       candidate.pathId === "stonesplitStrength" &&
@@ -128,8 +114,14 @@ it("Double Stab's final VC and linked direct hits land by 59.5 seconds", async (
   const result = calculateRotationBaseline(bundle)
   const casts = result.timeline.filter(row => row.kind === "rotation" && row.step.type === "skill" && !row.skipped)
   expect(casts.filter(row => row.step.skill === "FluteOfTheTidesCancel")).toHaveLength(2)
-  expect(result.metrics.breakdown.skills.find(skill => skill.id === "SnowpartingLightCharged")?.hits).toBe(4)
+  expect(result.metrics.breakdown.skills.find(skill => skill.id === "SnowpartingLightCharged")?.casts).toBe(2)
+  expect(result.metrics.breakdown.skills.find(skill => skill.id === "SnowpartingLightCharged")?.hits).toBe(7)
   expect(result.metrics.breakdown.skills.find(skill => skill.id === "SnowpartingHeavyVC")?.casts).toBe(3)
+  expect(casts.slice(-3).map(row => row.step.skill)).toEqual([
+    "SnowpartingConversion",
+    "SnowpartingHeavyVC",
+    "SnowpartingLightCharged",
+  ])
   const finalVc = casts.findLast(row => row.step.skill === "SnowpartingHeavyVC")!
   const vcHit = finalVc.actions.find(action => action.type === "damage")!
   expect(finalVc.startTime + Number(vcHit.time) - result.anchorTime).toBeLessThanOrEqual(59.5)
@@ -138,5 +130,5 @@ it("Double Stab's final VC and linked direct hits land by 59.5 seconds", async (
       .filter(entry => !entry.context.skillTags.includes("DOT"))
       .map(entry => entry.timelineTime! - result.anchorTime),
   )
-  expect(lastDirectHit).toBeLessThanOrEqual(59.5)
+  expect(lastDirectHit).toBeLessThanOrEqual(59.9)
 })
