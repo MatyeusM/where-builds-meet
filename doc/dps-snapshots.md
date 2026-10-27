@@ -827,3 +827,14 @@ second-round strike at about 33.791 seconds. The last direct hit lands at about
 The Double Stab snapshots for its mixed and pure build combinations change
 because the extra Deflect and revised filler order alter timing and damage.
 Other preset rotations retain their previous snapshots.
+
+## Dust final catch correction (October 27, 2026)
+
+The user approved removing the Perfect Catch and its Resonance from the final
+queued throw of each Scarlet Spin. Each cast retains fourteen throws and 28
+direct hits. The three-cast 100% PC preset now has 84 Resonances, and the
+regular preset has 86, including their Bubbles Resonances. The twelve Dust
+snapshots for both rotations, three builds, and breakthroughs 18 and 19 were
+updated after review. At breakthrough 18 with Dust Full Min, 100% PC changes
+from 77037.10483776833 to 76324.02843243226 DPS and regular changes from
+77418.34869882601 to 76699.5753785789 DPS. Duration remains 60 seconds.

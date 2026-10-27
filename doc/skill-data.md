@@ -1136,12 +1136,12 @@ Dart Charge at 1.5 s are user-confirmed rather than timing gaps.
 The selected catch policy accepts input at the exported window opening. A catch
 does not itself start the next throw: the continuation starts at the exported
 gate and is admitted only while the owning Flower Burial application is active.
-An admitted throw still completes its catch after Flower Burial expires; that
-catch cannot admit an additional throw. This retains fourteen throws and 84
-direct hits across the three batches. The 100% PC preset now resolves 87
-Resonances, including three from Bubbles; the regular preset resolves 89,
-including five from Bubbles. These counts arise from events, not a hit-count
-override. Battle End still filters damage at 60 seconds.
+The queued final throw lands after Flower Burial expires, without a Perfect
+Catch or its Resonance. This retains fourteen throws and 84 direct hits across
+the three batches. The 100% PC preset resolves 84 Resonances, including three
+from Bubbles; the regular preset resolves 86, including five from Bubbles.
+These counts arise from events, not a hit-count override. Battle End still
+filters damage at 60 seconds.
 
 Normal stage clocks from `20603202`–`20603205` in the October 23 export are:
 
