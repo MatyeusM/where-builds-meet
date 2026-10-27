@@ -787,3 +787,26 @@ Both Wings presets move their four fixed Qi threshold times earlier by 0.04,
 0.06, 0.14, and 0.16 seconds to retain proportional depletion around the earlier
 break and recovery. Wings DPS and all other snapshots are unchanged. These
 repairs resolve the three alignment failures noted in the earlier acceptance.
+
+## Strength Mixed rotation acceptance (October 27, 2026)
+
+The user accepted the revised ordinary Mixed, Double Stab, and Infinite Vitality
+rotations and their 42 build/rotation/breakthrough snapshots. Ordinary Mixed and
+Infinite Vitality place Leaping Toad, Deflect, then seven-arrow Bursting Nine in
+that order. Ordinary Mixed's third second-round charged strike now exhausts the
+boss at about 32.169 seconds. Double Stab also exhausts on its third
+second-round charged strike, at about 31.649 seconds; its second Flute stays
+after the second charge so the last VC's linked hits land by 59.5 seconds.
+
+| Rotation          | Solo |      Previous DPS |      Accepted DPS |
+| ----------------- | ---: | ----------------: | ----------------: |
+| Ordinary Mixed    |   18 | 83050.72376735933 | 83456.22794182469 |
+| Ordinary Mixed    |   19 | 87135.74937051283 | 87516.29149668838 |
+| Double Stab       |   18 | 83385.74968058772 | 83330.54058106004 |
+| Double Stab       |   19 | 87493.15847002153 | 87388.11644673634 |
+| Infinite Vitality |   18 |  83553.5962516165 | 83496.96156463119 |
+| Infinite Vitality |   19 |  87640.3186069428 | 87580.53906814677 |
+
+The table uses Mixed Full Min; the accepted snapshot matrix also includes the
+pure-build combinations. Every reviewed case retains a sixty-second duration,
+and no other preset snapshot changes.

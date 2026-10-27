@@ -8,6 +8,16 @@ short explanation only when it prevents a likely misinterpretation.
 
 ## Source of truth
 
+Strength's ordinary Mixed and Mixed Double Stab presets exhaust on the third
+Mo charged strike of round two. Their break times differ: about 32.169 and
+31.649 seconds respectively at 40 ms ping. Their other authored Qi markers
+remain aligned. Ordinary Mixed places Mo QQ before its first Tab/VC/LC/VC
+filler, then uses Leaping Toad/Deflect/Bursting Nine before round two. It ends
+Tab/VC/Mo QQ so the final linked VC hit lands inside the minute. Double Stab's
+second Flute follows two charged casts; its final filler is Tab/VC/LC/VC. It
+omits two intermediate Deflect waits and the late Mo QQ to keep the final
+linked VC hits by 59.5 seconds with Mixed Full Min at Solo 18 or 19.
+
 | Information                                           | Location                         |
 | ----------------------------------------------------- | -------------------------------- |
 | Castable, component, and triggered skills             | `data/skill/`                    |
@@ -57,12 +67,15 @@ fifteen Burning Heart charged casts. Snowbreak Spring (VC) must immediately foll
 Snowparting Conversion (Tab) or Grave Frost (LC), ignoring attached events. Tab
 must immediately follow a Mo Blade ability.
 
-Ordinary Mixed replaces the earlier second Tab/VC pair with Leaping Toad/Deflect
-and the final LC/VC pair with seven-arrow Bursting Nine 2 Shots. Double Stab
-replaces the first filler LC/VC pair with seven-arrow Bursting Nine 2 Shots,
-Leaping Toad, and Deflect. Infinite Vitality retains Mo QQ/Tab and replaces the
-following VC/LC/VC with that same Mystic sequence. Existing charge movement
+Ordinary Mixed uses Leaping Toad/Deflect followed by seven-arrow Bursting Nine
+2 Shots before the second-round Snowparting Q, and omits the former final
+Bursting Nine. Double Stab replaces the first filler LC/VC pair with Leaping
+Toad followed by seven-arrow Bursting Nine 2 Shots. Infinite Vitality retains
+Mo QQ/Tab and replaces the following VC/LC/VC with Leaping Toad/Deflect followed
+by seven-arrow Bursting Nine 2 Shots. Existing charge movement
 attachments and Qi anchors remain attached to their original surviving skills.
+All fourteen hits of Ordinary Mixed's earlier Bursting Nine land under Iron
+Guard in the Mixed Full Min baseline.
 
 ### Export interpretation
 
