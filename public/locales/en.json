@@ -1673,6 +1673,7 @@
   "ui.buildTab.shared": "Shared",
   "ui.buildTab.sharedBuildImported": "Imported “{name}”.",
   "ui.buildTab.sharedBuildPrompt": "Import this build from the link? Its equipped gear comes with it.",
+  "ui.buildTab.sharedBuildRequiresDevMode": "This build requires Dev mode. Turn it on to retry this link.",
   "ui.buildTab.shareLinkCopied": "Share link copied.",
   "ui.buildTab.shareLinkError": "Could not create a share link.",
   "ui.buildTab.shareLinkInvalid": "This link does not contain a valid build.",

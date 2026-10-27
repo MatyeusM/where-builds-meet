@@ -4,7 +4,12 @@ import { createRoot } from "react-dom/client"
 import { expect, it, vi } from "vitest"
 
 import App from "@/App"
+import { buildShareLink } from "@/application/buildShare"
+import { exportSharedBuild } from "@/gear"
 import { initializeI18n } from "@/i18n"
+import { getNotices } from "@/notices"
+import { useGearStore } from "@/stores/gearStore"
+import { useLoadoutStore } from "@/stores/loadoutStore"
 
 import english from "../public/locales/en.json"
 
@@ -15,7 +20,7 @@ vi.mock("@/stores/dpsStore", async () => {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-it("offers a shared build after fragment navigation in an open app tab", async () => {
+it("offers links in an open tab and waits for Dev mode before importing a dev-path build", async () => {
   localStorage.clear()
   sessionStorage.clear()
   history.replaceState(null, "", location.pathname + location.search)
@@ -51,6 +56,43 @@ it("offers a shared build after fragment navigation in an open app tab", async (
 
     await act(async () => dialog.querySelector<HTMLButtonElement>(".dialog-actions button")!.click())
     expect(dialog.open).toBe(false)
+    expect(location.hash).toBe("")
+
+    const before = useGearStore.getState().buildState
+    const pathBefore = useLoadoutStore.getState().pathId
+    const exported = exportSharedBuild(
+      { id: "shared-jade", name: "Jade build", martialArts: ["vernalUmbrella", "inkwellFan"] },
+      { items: [], equipped: {} },
+      "Jade build",
+    )
+    const link = new URL(await buildShareLink(exported))
+    await act(async () => {
+      history.pushState(null, "", link.hash)
+      window.dispatchEvent(new HashChangeEvent("hashchange"))
+    })
+    expect(dialog.open).toBe(true)
+
+    await act(async () => {
+      dialog.querySelector<HTMLButtonElement>(".dialog-actions button:last-child")!.click()
+      await vi.waitFor(() => expect(getNotices().some(notice => notice.id === "build-share")).toBe(true))
+    })
+    expect(dialog.open).toBe(false)
+    expect(useGearStore.getState().buildState.entries).toEqual(before.entries)
+    expect(useGearStore.getState().buildState.gearItems).toEqual(before.gearItems)
+    expect(useLoadoutStore.getState().pathId).toBe(pathBefore)
+    expect(location.hash).toBe(link.hash)
+    expect(container.textContent).toContain("This build requires Dev mode")
+
+    await act(async () => container.querySelector<HTMLButtonElement>(".dev-mode-button")!.click())
+    expect(dialog.open).toBe(true)
+    await act(async () => {
+      dialog.querySelector<HTMLButtonElement>(".dialog-actions button:last-child")!.click()
+      await vi.waitFor(() =>
+        expect(useGearStore.getState().buildState.entries.some(entry => entry.name === "Jade build")).toBe(true),
+      )
+    })
+    expect(useGearStore.getState().buildState.entries.some(entry => entry.name === "Jade build")).toBe(true)
+    expect(useLoadoutStore.getState().pathId).toBe("silkbindJade")
     expect(location.hash).toBe("")
   } finally {
     await act(async () => root.unmount())

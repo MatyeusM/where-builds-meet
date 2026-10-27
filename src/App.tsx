@@ -368,6 +368,7 @@ export default function App() {
   const toggleDevMode = () => {
     const nextDevMode = !devMode
     useSettingsStore.getState().setDevMode(nextDevMode)
+    if (nextDevMode && hasSharedBuild()) setSharedBuildOffered(true)
     if (!nextDevMode && pathRequiresDev(typedPathDefinitions[pathId])) selectPath("stonesplitStrength")
     if (!nextDevMode && isLocaleWip(locale)) void changeLocale("en")
   }
@@ -400,6 +401,7 @@ export default function App() {
   }
   const importSharedBuild = async () => {
     setSharedBuildOffered(false)
+    let keepLinkForRetry = false
     try {
       const payload = await readSharedBuild()
       const result = mergeImportedBuildState(useGearStore.getState().buildState, payload, { reuseIdenticalGear: true })
@@ -410,8 +412,12 @@ export default function App() {
       if (
         martialArts.length === 2 &&
         !buildEntryAvailableForMartialArts(entry, useLoadoutStore.getState().settings.weapons)
-      )
-        selectBuildWeapons([martialArts[0], martialArts[1]])
+      ) {
+        if (!selectBuildWeapons([martialArts[0], martialArts[1]])) {
+          keepLinkForRetry = true
+          throw new Error(t("ui.buildTab.sharedBuildRequiresDevMode"))
+        }
+      }
       const targetPath = useLoadoutStore.getState().pathId
       useGearStore.getState().updateBuildState(targetPath, () => result.state)
       useGearStore.getState().selectBuildForPath(entry.id, targetPath)
@@ -424,7 +430,7 @@ export default function App() {
         message: error instanceof Error ? error.message : t("ui.buildTab.shareLinkInvalid"),
       })
     } finally {
-      clearSharedBuild()
+      if (!keepLinkForRetry) clearSharedBuild()
     }
   }
 

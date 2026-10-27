@@ -1070,9 +1070,11 @@ remapping colliding gear and build IDs without replacing existing data or
 duplicating bundled default presets.
 A share link carries the same snapshot for one build and only the gear that build equips,
 deflated into the URL fragment so it never reaches the host and stays short enough to paste.
-Opening one offers an import confirmation; accepting runs the same merge path, switches the
-workspace to the build's martial arts when needed, and clears the fragment. The fragment is
-also cleared on dismissal, so a reload does not ask again.
+Opening one offers an import confirmation, including after fragment navigation in an open tab.
+Accepting runs the same merge path, switches the workspace to the build's martial arts when
+needed, and clears the fragment after a successful import. If the required path is unavailable
+without Dev mode, the import writes nothing and keeps the fragment for a retry after Dev mode
+is enabled. Dismissal clears the fragment so a reload does not ask again.
 The official-dashboard import is a separate boundary adapter: a user-installed
 bookmarklet copies role gear JSON from the authenticated official origin, then
 `officialGearImport.ts` maps official slots and stat IDs into a normal build
