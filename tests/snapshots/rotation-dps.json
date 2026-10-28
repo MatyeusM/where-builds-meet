@@ -3307,7 +3307,7 @@
       "totalHealing": 2211720.020346783,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/18": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/18": {
       "fixture": {
         "build": "wings-fully-relayed-double-min",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3336,7 +3336,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/19": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-double-min/19": {
       "fixture": {
         "build": "wings-fully-relayed-double-min",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3365,7 +3365,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/18": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/18": {
       "fixture": {
         "build": "wings-fully-relayed-min-attribute",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3394,7 +3394,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/19": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-min-attribute/19": {
       "fixture": {
         "build": "wings-fully-relayed-min-attribute",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3423,7 +3423,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/18": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/18": {
       "fixture": {
         "build": "wings-fully-relayed-min",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3452,7 +3452,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/19": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-fully-relayed-min/19": {
       "fixture": {
         "build": "wings-fully-relayed-min",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3481,7 +3481,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-graduate/18": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-graduate/18": {
       "fixture": {
         "build": "wings-graduate",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3510,7 +3510,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-graduate/19": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-graduate/19": {
       "fixture": {
         "build": "wings-graduate",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3539,7 +3539,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-max/18": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-max/18": {
       "fixture": {
         "build": "wings-max",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3568,7 +3568,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-dawnsun/wings-max/19": {
+    "silkbindWings/wings-dummy-1-min-dawnsun/wings-max/19": {
       "fixture": {
         "build": "wings-max",
         "rotation": "wings-dummy-1-min-dawnsun",
@@ -3597,7 +3597,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/18": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/18": {
       "fixture": {
         "build": "wings-fully-relayed-double-min",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3626,7 +3626,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/19": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-double-min/19": {
       "fixture": {
         "build": "wings-fully-relayed-double-min",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3655,7 +3655,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/18": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/18": {
       "fixture": {
         "build": "wings-fully-relayed-min-attribute",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3684,7 +3684,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/19": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min-attribute/19": {
       "fixture": {
         "build": "wings-fully-relayed-min-attribute",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3713,7 +3713,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/18": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/18": {
       "fixture": {
         "build": "wings-fully-relayed-min",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3742,7 +3742,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/19": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-fully-relayed-min/19": {
       "fixture": {
         "build": "wings-fully-relayed-min",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3771,7 +3771,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-graduate/18": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-graduate/18": {
       "fixture": {
         "build": "wings-graduate",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3800,7 +3800,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-graduate/19": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-graduate/19": {
       "fixture": {
         "build": "wings-graduate",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3829,7 +3829,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-max/18": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-max/18": {
       "fixture": {
         "build": "wings-max",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -3858,7 +3858,7 @@
       "totalHealing": 0,
       "duration": 60
     },
-    "silkbindWing/wings-dummy-1-min-jadebreaker/wings-max/19": {
+    "silkbindWings/wings-dummy-1-min-jadebreaker/wings-max/19": {
       "fixture": {
         "build": "wings-max",
         "rotation": "wings-dummy-1-min-jadebreaker",
@@ -4026,8 +4026,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 83385.74968058772,
-      "totalDamage": 5003144.980835263,
+      "dps": 83664.47808757986,
+      "totalDamage": 5019868.685254791,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4055,8 +4055,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 87493.15847002153,
-      "totalDamage": 5249589.508201291,
+      "dps": 87742.55442362059,
+      "totalDamage": 5264553.265417235,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4084,8 +4084,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 80386.0344666179,
-      "totalDamage": 4823162.067997074,
+      "dps": 80703.23534731155,
+      "totalDamage": 4842194.120838692,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4113,8 +4113,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 84101.88773743816,
-      "totalDamage": 5046113.264246289,
+      "dps": 84414.50562866207,
+      "totalDamage": 5064870.337719724,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4142,8 +4142,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 77162.59901416913,
-      "totalDamage": 4629755.940850147,
+      "dps": 77449.19259892861,
+      "totalDamage": 4646951.555935716,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4171,8 +4171,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 81586.28916697604,
-      "totalDamage": 4895177.350018562,
+      "dps": 81845.77784611443,
+      "totalDamage": 4910746.670766866,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4200,8 +4200,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 80256.95388104738,
-      "totalDamage": 4815417.232862842,
+      "dps": 80571.11744072077,
+      "totalDamage": 4834267.046443245,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4229,8 +4229,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 84301.50876778342,
-      "totalDamage": 5058090.526067005,
+      "dps": 84590.2699693785,
+      "totalDamage": 5075416.198162709,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4258,8 +4258,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 54580.15343697034,
-      "totalDamage": 3274809.20621822,
+      "dps": 55087.46534592272,
+      "totalDamage": 3305247.9207553626,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4287,8 +4287,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 57016.88490551986,
-      "totalDamage": 3421013.094331191,
+      "dps": 57545.17117602738,
+      "totalDamage": 3452710.2705616425,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4316,8 +4316,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 50996.93111714713,
-      "totalDamage": 3059815.8670288273,
+      "dps": 51467.48930510697,
+      "totalDamage": 3088049.3583064177,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4345,8 +4345,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 54120.79501921961,
-      "totalDamage": 3247247.701153176,
+      "dps": 54618.71443405813,
+      "totalDamage": 3277122.8660434876,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4374,8 +4374,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 52473.19068162866,
-      "totalDamage": 3148391.440897719,
+      "dps": 52955.960021453415,
+      "totalDamage": 3177357.6012872043,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999
@@ -4403,8 +4403,8 @@
           "silkbindWings": "none"
         }
       },
-      "dps": 55267.201443616876,
-      "totalDamage": 3316032.086617012,
+      "dps": 55773.98355583432,
+      "totalDamage": 3346439.013350059,
       "hps": 0,
       "totalHealing": 0,
       "duration": 59.99999999999999

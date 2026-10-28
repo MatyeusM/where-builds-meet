@@ -9,6 +9,12 @@ build time. User changes remain in browser storage. Deterministic calculation
 work runs in a persistent Web Worker, while requested Monte Carlo simulations
 run in their own disposable worker.
 
+The Wings path uses `silkbindWings` as its path ID and `SilkbindWings` as its
+eligibility tag. `src/application/persistence/legacy/wingsPath.ts` migrates the
+former `silkbindWing` key in the selected path, active build and rotation maps,
+and path-scoped inventory and build maps before current loaders validate them.
+If both old and new keys exist in a map, the new key takes precedence.
+
 ## Spacing and sizing scale
 
 `src/styles/tokens.css` defines the scale: `--space-3xs` through `--space-xl`, at
@@ -1453,6 +1459,14 @@ resolve when it starts after the latency gap. Skipped components consume no ping
 Composite row duration includes component gaps and pushes later components and
 ordered skills accordingly. Triggered skills, DOTs, periodic actions, and explicit
 Delay events do not pay input latency.
+
+Hit-based `leech` is resolved in the shared damage-entry resolver and returned
+through `selfRecovery` to the chronological timeline. Ordinary setup, skill,
+Inner Way, and tracked effects use the same path as Concentration's conditional
+recovery. Expected branches weight damage and recovery together; sampled runs
+use their rolled damage. HP is clamped before the following action resolves.
+Leech-bearing calculation inputs require live comparison resolution because
+changing attack damage can change subsequent HP conditions.
 
 ## Damage calculation
 

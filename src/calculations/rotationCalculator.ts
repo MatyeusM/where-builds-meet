@@ -119,6 +119,8 @@ export type RotationDamageEntry = {
 }
 
 export type RotationActionBreakdown = DamageBreakdown & {
+  /** HP recovered from the resolved hit, before the timeline clamps to maximum HP. */
+  selfRecovery?: number
   healing?: HealingBreakdown
   recipientHealing?: HealingBreakdown[]
   buffedDamageBySource?: Record<string, number>
@@ -300,6 +302,13 @@ function calculateRotationDamageEntry(
           preparedDamage ??
           (entry.attributionContexts?.length ? calculateDamageWithAdditiveResponse : calculateDamageBreakdown)
         )(entry.action, context)
+    if (entry.action.type === "damage") {
+      const leech = context.effects.reduce(
+        (total, effect) => total + (typeof effect.leech === "number" ? effect.leech : 0),
+        context.unconditionalDamageEffects?.leech ?? 0,
+      )
+      if (leech > 0 && breakdown.total > 0) breakdown = { ...breakdown, selfRecovery: leech * breakdown.total }
+    }
     if (import.meta.env.DEV) finishCalculationPhase("damageCalculation", damageStartedAt)
   }
   return breakdown
@@ -339,6 +348,12 @@ function blendDamageBreakdowns(
   })
   return {
     ...(recipientHealing ? { recipientHealing, healing: combineHealingBreakdowns(recipientHealing) } : {}),
+    ...(inactive.selfRecovery || active.selfRecovery
+      ? {
+          selfRecovery:
+            (inactive.selfRecovery ?? 0) * inactiveProbability + (active.selfRecovery ?? 0) * activeProbability,
+        }
+      : {}),
     physical: weighted("physical"),
     bellstrike: weighted("bellstrike"),
     stonesplit: weighted("stonesplit"),
@@ -451,6 +466,15 @@ function createRotationDamageResolver(
       expectedBuffStacks.Concentration = concentrationProbability
       concentrationEffects = {
         affinityDmgBonus: entry.insightfulStrike.affinityDamageBonus,
+        leech: insightfulStrikeConditionalBonus(
+          entry.insightfulStrike,
+          {
+            selfHPPercentage: (entry.context.currentHPRatio ?? 1) * 100,
+            targetHPPercentage: (entry.context.targetHPRatio ?? DEFAULT_TARGET_HP_RATIO) * 100,
+          },
+          entry.context.skillTags,
+          "leechRules",
+        ),
         dmgBonus: insightfulStrikeConditionalBonus(
           entry.insightfulStrike,
           {
@@ -626,19 +650,7 @@ function createRotationDamageResolver(
           )
       }
     }
-    const leech =
-      entry.insightfulStrike && entry.action.type === "damage" && !entry.replay
-        ? insightfulStrikeConditionalBonus(
-            entry.insightfulStrike,
-            {
-              selfHPPercentage: (entry.context.currentHPRatio ?? 1) * 100,
-              targetHPPercentage: (entry.context.targetHPRatio ?? DEFAULT_TARGET_HP_RATIO) * 100,
-            },
-            entry.context.skillTags,
-            "leechRules",
-          )
-        : 0
-    const selfRecovery = leech * (concentrationProbability ?? 0) * (activeBreakdown ?? breakdown).total
+    const selfRecovery = breakdown.selfRecovery ?? 0
     return {
       entry,
       breakdown,
@@ -2550,9 +2562,17 @@ function requiresLiveCollectors(timeline: TimelineRow[], input: TimelineBuildInp
   })
 }
 
+function containsLeech(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false
+  if ("leech" in value && typeof value.leech === "number" && value.leech > 0) return true
+  return Object.values(value).some(containsLeech)
+}
+
 function requiresLiveRotationResolution(input: TimelineBuildInput, liveCollectors: boolean) {
   return (
     Boolean(input.rotation.targetHP) ||
+    // Damage changes leech recovery, which can change later HP requirements and events.
+    containsLeech([input.setupEffects, input.innerWayRules, input.effectDefinitions, input.skills]) ||
     // Outcome-triggered resource gains can change later spending and combat events.
     input.innerWayRules.some(rule => rule.listen?.event === "damage" || rule.trigger?.event === "damageOutcome") ||
     input.setupEffects.some(effect => effect.resourceRegenerationBonus) ||
