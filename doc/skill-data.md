@@ -470,6 +470,16 @@ use [damage-formula.md](damage-formula.md) for their order and scope.
 
 ### Triggers, accumulators, and recording
 
+`skillEnd` triggers on setup effects, Inner Ways, and tracked self buffs run at
+the existing cast-completion event. They inspect live completion-time state and
+the completing skill's own tags, reuse ordinary trigger actions and cooldowns,
+and run after the cast's same-time final actions but before the next ordered
+cast. Composite casts dispatch once at their resolved end; timing changes and
+queued continuations move that event. Silent components and casts cut off by
+Battle End do not dispatch completion effects. No displayed action is added.
+Seasonal Edge retains its specialized `onCastEnd` callback and its original
+priority; ordinary `skillEnd` dispatch follows it at the same timestamp.
+
 Ordinary Inner Way triggers default to `damage`; supported event-specific setup
 rules include `heal`, `takeDamage`, `skillStart`, and `attackResponse`.
 Skill-start triggers run after cast acceptance but before timed actions, including
@@ -659,6 +669,24 @@ consumption are separate rates held over cast-relative windows, and a direct
 spend suppresses regeneration for `system.json.resourceSpendRegenDelay`. See
 [Endurance rates](#endurance-rates).
 
+Tracked self buffs can supply `resourceRates`: an array of `{ resource,
+regeneration?, consumption?, requirement?, onDepleted? }`. These use the same
+rate integration as cast-scoped Endurance, but remain active across subsequent
+casts until the owning buff is removed or expires. The last active regeneration
+override replaces ordinary recovery; consumption rates add together. Requirements
+are evaluated against live self/target state, including target debuff expiry.
+Use these requirements for state conditions, not resource thresholds within a
+continuous span. Infinite resources ignore these rates and depletion callbacks.
+
+`onDepleted` contains ordinary effect actions whose times are relative to the
+exact zero-resource instant. A mode should consume its own buff at time zero;
+that cancels pending periodic hits through the existing removal path. Delayed
+refund actions can follow. The callback runs once per tracked application and
+is distinct from natural expiry or explicit early removal. Those exit paths
+must author their own refunds if required. The scheduler inserts clock boundaries
+for rate changes and depletion; it does not approximate continuous drain with
+projectile ticks. Buff-owned resource rates require live variant simulation.
+
 `enduranceLost` is a net measure, not an accumulator. Cumulative spending has no
 general parameter: `row.resourceConsumption` is per-cast, and the final
 `timelineResourceSummary` carries gross totals. A mechanic that needs its own
@@ -827,12 +855,47 @@ overriding the shared skill timing.
 
 ### Silkbind Jade starter work
 
-Jade is marked `wip`, with no combat rotation enabled, pending measured
-timings. The user explicitly chose to wait instead of accepting provisional
-timings for Colorful Phoenix (Umbrella light Varied Combo), Forsaken Fame
-(Fan charged light), Spring Sorrow's projectile impact, and Unfading Flower's
-projectile cadence. The normal export still lacks usable timings for these
-routes. Do not substitute animation recovery boundaries for missing impacts.
+Jade is marked `wip`, with no combat rotation enabled. The user has resolved the
+previous timing blockers with the accepted inputs below; combat implementation
+remains pending.
+
+The October 28 08:11 export replaces Colorful Phoenix's candidate hit route
+with `colorfulPhoenixCollisions` and an empty `routes` array. The female clip's
+C2 window opens at 0.3251136346310377s; the first C1 window opens at
+0.4441558117121458s. Each channel has a 0.3s same-target hit interval. The four
+C1 windows therefore allow at most two hits on one target, and C2 allows one:
+three hits total is an upper bound, not five guaranteed hits. Each landed hit
+grants four Blossoms. Both C1 (`2060110101`) and C2 (`2060110102`) use a 0.33
+multiplier of skill `20601101`'s damage baseline, confirmed by the normal
+`hitCoefficients` export and the user. Exported per-hit coefficient curves
+already include that multiplier; do not multiply those curves by 0.33 again.
+The user confirmed the simulation's cast-relative schedule:
+C2 at 0.3251s, first C1 at 0.4442s, and second C1 at 0.7442s. Use these exact
+accepted values, with the second C1 respecting the 0.3s same-target interval,
+rather than treating each exported window opening as a separate hit.
+
+By user instruction, the starter rotation must stop Colorful Phoenix as soon
+as Blossoms reaches 100, including immediately after C2 or after the first C1
+hit when sufficient. Do not require the full sequence or award later hits after
+that interruption. The accepted partial sequences therefore end at 0.3251s,
+0.4442s, or 0.7442s from cast start and grant 4, 8, or 12 Blossoms respectively
+before the resource cap and any other resource effects.
+
+The user accepted the following timings from
+`local/datamine/2026-10-28_06-39-41-598_+0000-OjDtw0/wwm-skills-normal-all.json`:
+
+- Forsaken Fame (Fan charged light) is final despite its exported provisional
+  label: ordinary attack at 1.19s and interrupt at 1.63s from cast start;
+  with buff `10230141`, attack at 1.00s and interrupt at 1.44s.
+- Spring Sorrow (Umbrella Q) uses its projectile request time as impact time:
+  0.7779487179487179s with Blossom Barrage, or 1.0066666666666666s without it,
+  from cast start. No additional projectile travel delay is modeled.
+- Normal Unfading Flower (`20601103`, buff `200112`) applies its mode at 0.6s
+  and uses projectile callbacks as impacts: first at 1.15s from cast start,
+  then every 0.5s while active. No additional projectile travel delay is modeled.
+
+These are accepted implementation inputs; the combat skills and rotation remain
+pending. Do not substitute animation recovery boundaries for missing impacts.
 
 `jade-fully-relayed-min` and `jade-fully-relayed-max` copy Strength's Pure Fully
 Relayed Min/Max layouts at tiers 96 and 100, change the weapons to Vernal

@@ -2576,6 +2576,8 @@ function requiresLiveRotationResolution(input: TimelineBuildInput, liveCollector
     // Outcome-triggered resource gains can change later spending and combat events.
     input.innerWayRules.some(rule => rule.listen?.event === "damage" || rule.trigger?.event === "damageOutcome") ||
     input.setupEffects.some(effect => effect.resourceRegenerationBonus) ||
+    // Buff-owned rates and depletion actions can alter future combat events.
+    Object.values(input.effectDefinitions).some(definition => definition.resourceRates?.length) ||
     liveCollectors
   )
 }

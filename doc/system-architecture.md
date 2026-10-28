@@ -1329,6 +1329,17 @@ The timeline owns mutable simulation state while it is being built:
 - skill, action, and effect cooldowns
 - action-time state snapshots
 
+Cast-scoped Endurance and buff-owned `resourceRates` share continuous resource
+integration. Buff rates can override passive regeneration and add consumption
+while other skills are casting. Live state requirements are re-evaluated at
+events and relevant target/self expiry boundaries. A resource-depletion clock
+event runs authored `onDepleted` effect actions at the exact zero crossing;
+ordinary consume actions remove the mode and cancel its remaining periodic
+events. Refund actions retain their authored delay and original cast source.
+No separate projectile-based drain loop is used. Variant calculations with
+these definitions rebuild their timeline so changing resources or state cannot
+reuse stale depletion times.
+
 The editor and calculator share the timeline's skill-cooldown state. An
 unavailable explicit cast waits for its ready time, and a live cooldown reset can
 wake it earlier. Before-cast attachments resolve only once the cast is ready.
@@ -1361,6 +1372,15 @@ ownership and damage tags, allowing duration bonuses to follow nested triggers
 even when a triggered skill changes its damage group. These rules execute within
 the shared worker timeline; comparisons that change them require a rebuilt
 timeline rather than reusing baseline effect snapshots.
+
+The existing `castEnd` event also dispatches data-driven `skillEnd` triggers for
+setup effects, Inner Ways, and tracked buffs through the ordinary action
+executor. Seasonal Edge's specialized callback keeps its original priority.
+The shared dispatch follows the ending cast's same-time actions and precedes
+the next ordered cast, so a completion-granted buff does not boost its own
+final hit. It uses live state and the completing skill's own tags. Composite
+and queued-cast timing adjustments move the same completion event; no separate
+completion clock or displayed action is introduced.
 
 Direct incoming damage reductions reuse setup/innerway requirements and tracked
 self-effect definitions in the timeline. They read pre-hit HP and stacks before
