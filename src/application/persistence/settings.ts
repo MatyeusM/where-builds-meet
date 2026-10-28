@@ -27,6 +27,7 @@ import {
   scriptStorageKey,
   settingsStorageKey,
 } from "./keys"
+import { migrateWingsPathId } from "./legacy/wingsPath"
 
 export function loadDevMode() {
   return getPersistentItem(developmentModeStorageKey) === "true"
@@ -65,6 +66,7 @@ export function loadLayoutPreview(compact: boolean): LayoutMode {
 }
 
 export function loadSelectedPath(devMode = loadDevMode()): PathId {
+  migrateWingsPathId()
   const saved = getPersistentItem(pathStorageKey)
   const definition = saved ? typedPathDefinitions[saved as PathId] : undefined
   return definition && (!pathRequiresDev(definition) || devMode) ? (saved as PathId) : "stonesplitStrength"
