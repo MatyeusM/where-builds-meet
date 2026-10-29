@@ -2568,7 +2568,7 @@ function containsLeech(value: unknown): boolean {
   return Object.values(value).some(containsLeech)
 }
 
-function requiresLiveRotationResolution(input: TimelineBuildInput, liveCollectors: boolean) {
+function requiresLiveRotationResolution(input: TimelineBuildInput, liveCollectors: boolean, timeline: TimelineRow[]) {
   return (
     Boolean(input.rotation.targetHP) ||
     // Damage changes leech recovery, which can change later HP requirements and events.
@@ -2576,8 +2576,18 @@ function requiresLiveRotationResolution(input: TimelineBuildInput, liveCollector
     // Outcome-triggered resource gains can change later spending and combat events.
     input.innerWayRules.some(rule => rule.listen?.event === "damage" || rule.trigger?.event === "damageOutcome") ||
     input.setupEffects.some(effect => effect.resourceRegenerationBonus) ||
-    // Buff-owned rates and depletion actions can alter future combat events.
-    Object.values(input.effectDefinitions).some(definition => definition.resourceRates?.length) ||
+    // Catalogs include every path. Only rates encountered by this baseline can
+    // invalidate its reuse; changed setup/timeline variants rebuild separately.
+    Object.entries(input.effectDefinitions).some(
+      ([name, definition]) =>
+        definition.resourceRates?.length &&
+        timeline.some(
+          row =>
+            row.buffs.has(name) ||
+            row.actions.some(action => action.type === "apply" && action.value === name) ||
+            Object.values(row.actionStates).some(state => state.buffs.has(name)),
+        ),
+    ) ||
     liveCollectors
   )
 }
@@ -2620,7 +2630,7 @@ function createRotationVariantCalculator(
         variant.innerWayRules ||
         variant.innerWayConditions ||
         baselineResult.compactedInnerWayResults,
-      ) || requiresLiveRotationResolution(timelineInput, liveCollectors)
+      ) || requiresLiveRotationResolution(timelineInput, liveCollectors, baselineResult.timeline)
     if (!requiresLiveResolution && variant.attunement && !variant.stats) {
       const changed = (Object.keys(bundle.attunement) as Array<keyof AttunementStats>).filter(
         key => variant.attunement![key] !== bundle.attunement[key],
@@ -2793,7 +2803,7 @@ export function rotationGearTimelineKey(bundle: RotationSimulationBundle, baseli
   const input = bundle.timeline
   if (
     baseline.compactedInnerWayResults ||
-    requiresLiveRotationResolution(input, requiresLiveCollectors(baseline.timeline, input))
+    requiresLiveRotationResolution(input, requiresLiveCollectors(baseline.timeline, input), baseline.timeline)
   )
     return undefined
   return JSON.stringify({

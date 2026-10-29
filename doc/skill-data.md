@@ -382,6 +382,10 @@ within one window. `"independent"` gives each spent charge its own recovery.
 Shared definitions must agree on capacity and recovery mode. Modifier changes
 do not move already-pending recoveries. Explicit casts wait; unavailable triggers
 are rejected. Generated waits are output only, not saved rotation steps.
+Skill modifiers can override `cooldownUses`, using the same last-matching-rule
+precedence as cooldown duration. Spring Sorrow uses this for Blossom Barrage's
+two- and three-charge tiers; readiness and cooldown reductions resolve the same
+capacity without replacing pending recovery timestamps.
 
 `subAction` is an ordered list of `{ value, requirement?, fallback? }` references.
 The parent runs first. Each component spends cast time but retains parent
@@ -855,9 +859,36 @@ overriding the shared skill timing.
 
 ### Silkbind Jade starter work
 
-Jade is marked `wip`, with no combat rotation enabled. The user has resolved the
-previous timing blockers with the accepted inputs below; combat implementation
-remains pending.
+Jade remains `wip`. Its 60-second dummy preset uses the accepted timings
+below, the starter builds, and charged Fan light attacks as fillers. The
+opener uses Flute of the Tides Cancel before Fan Q; battle still starts on the
+first Umbrella Q impact. Jade's timeline displays Blossoms in place of Endurance.
+The target breaks at the third Unfading Flower activation. The dedicated Inner Ways and
+Blossom income, drain, and exhausted-target refunds are implemented. Combat ends
+exactly 60 seconds after the opening Umbrella Q impact. The preset fits seven
+Unfading Flower activations, with the target breaking at the third.
+Later rounds refill with Spring Sorrow / Heavy / Colorful Phoenix and activate
+Unfading Flower immediately after Phoenix reaches the cap, with only normal
+ping between casts. No maintenance cast or filler intervenes at 100 Blossoms.
+Fan Q refreshes and Fan charged-light fillers occur during Unfading Flower.
+Short Fan Q cooldown waits also occur only while Unfading Flower is spending
+Blossoms; after the current action completes and the mode ends, refill starts.
+Lingering Bone is maintained by projectile refreshes as well as Fan charged
+light. All Unfading Flower activations start with Jadebreak and Combo.
+The preset retains its original
+`jade-three-rounds` ID to preserve saved selections.
+
+Each Unfading Flower projectile refreshes an existing Lingering Bone mark to
+five seconds remaining, as confirmed by the user. It does not apply a missing
+mark or add five seconds to its remaining duration. Fan Special and pursuit
+are not part of this initial filler route.
+
+The manual Blossoms event uses the same signed resource-change semantics as
+Hellfire: positive amounts add, negative amounts subtract, and the resource
+stays between zero and its cap. It supports timed and before-hit attachments,
+including prepull timestamps. The resource and Jade preset start at zero.
+The first Umbrella Q grants 20 and the second grants 45 against Combo.
+Heavy adds 5; one Colorful Phoenix fills the remaining Blossoms.
 
 The October 28 08:11 export replaces Colorful Phoenix's candidate hit route
 with `colorfulPhoenixCollisions` and an empty `routes` array. The female clip's
@@ -877,9 +908,16 @@ rather than treating each exported window opening as a separate hit.
 By user instruction, the starter rotation must stop Colorful Phoenix as soon
 as Blossoms reaches 100, including immediately after C2 or after the first C1
 hit when sufficient. Do not require the full sequence or award later hits after
-that interruption. The accepted partial sequences therefore end at 0.3251s,
-0.4442s, or 0.7442s from cast start and grant 4, 8, or 12 Blossoms respectively
-before the resource cap and any other resource effects.
+that interruption. The October 29 00:55 export and corrected
+`reports/jade-blossoms.md` establish an additional sequential target-check
+chain: seven grants of 4 at 0.03, 0.13, 0.23, 0.33, 0.43, 0.53, and 0.63s
+on the Normal timeline. These are additive to hit income, not damage events.
+The simulated target is present and combat active; failed target checks and
+the out-of-combat dungeon gate are outside this stationary combat route.
+Existing conditional subactions interleave grants and hits and stop at the
+first cap-filling event, including a non-hit grant. Cancellation discards
+later grants and hits. A complete uncapped cast gains 40 Blossoms; the
+zero-start preset cancels at 0.53s after two damage hits.
 
 The user accepted the following timings from
 `local/datamine/2026-10-28_06-39-41-598_+0000-OjDtw0/wwm-skills-normal-all.json`:
@@ -894,8 +932,8 @@ The user accepted the following timings from
   and uses projectile callbacks as impacts: first at 1.15s from cast start,
   then every 0.5s while active. No additional projectile travel delay is modeled.
 
-These are accepted implementation inputs; the combat skills and rotation remain
-pending. Do not substitute animation recovery boundaries for missing impacts.
+These are accepted implementation inputs. Do not substitute animation recovery
+boundaries for projectile impacts.
 
 `jade-fully-relayed-min` and `jade-fully-relayed-max` copy Strength's Pure Fully
 Relayed Min/Max layouts at tiers 96 and 100, change the weapons to Vernal
@@ -905,7 +943,11 @@ Reacher, and Thunderous Bloom at T6, Mistwillow four-piece, and the Silkbind
 arsenal. With Clay Oven Flatbread and the normal breakthrough 17/18 targets,
 Min reaches 80% effective crit at both tiers; Max reaches 80% at tier 96 and
 79.7524% at tier 100. These are starter equipment layouts, not DPS-optimized
-builds. Jade's three dedicated Inner Ways still await their combat implementation.
+builds.
+
+Jade defaults to `jade-fully-relayed-max`. Its graduation reference,
+`jade-graduate`, retains that Max layout and setup with non-relayed maximum
+affix rolls at both gear tiers. Existing saved build selections remain unchanged.
 
 Mistwillow four-piece is implemented using existing ordered damage triggers.
 Heavy hits grant Graceful Willow, boosting Light/Ballistic Physical and Silkbind
@@ -931,7 +973,7 @@ Confirmed resource data is in `blossoms` on the October 28 01:03 skill export,
 with supporting analysis in `where-datas-mine-internal/reports/jade-blossoms.md`.
 Resource 30 starts at zero, caps at 100, and ordinarily recovers 0.3/s in combat.
 Light stages grant 4/3/5; Heavy stages 5/3/6/6; Dash and switch attack 4;
-Colorful Phoenix and Apricot Heaven 4 per hit; Bamboo Breeze 3 per hit;
+Colorful Phoenix 4 per hit plus up to seven independent 4-point target-check grants; Apricot Heaven 4 per hit; Bamboo Breeze 3 per hit;
 Cloud Reverie 6 per hit; Spring Away 3.4 per projectile hit; Spring Sorrow 20
 per successful attack result, plus Blossom Barrage's conditional 25 once per cast.
 These are authored hit/branch grants, not guaranteed per-button totals.
@@ -942,8 +984,8 @@ Bone and 15/s for Airborne; dummy/boss targets use Lingering Bone and cannot
 be knocked airborne. The normal mode returns 15 Blossoms after ending, with a
 0.2-second restoration delay. Its talent refunds 3 per qualifying hit against
 an exhausted boss or an immobilized/airborne non-boss. Do not add duplicate
-graph and resource-table grants. These resource behaviors remain to be wired
-with the measured combat timings.
+graph and resource-table grants. The initial preset models boss/dummy targets;
+it does not author Airborne applications.
 
 ### Bellstrike Splendor
 

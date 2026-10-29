@@ -3,8 +3,22 @@
   "altersTimeline": true,
   "tags": ["SilkbindJade"],
   "effect": {
-    "StarReacherT0": {},
-    "StarReacherT1": {},
+    "StarReacherT0": {
+      "trigger": [
+        {
+          "requirement": [{ "target": "skillTag", "value": "AppliesLingeringBone" }],
+          "action": [{ "type": "trigger", "value": "StarReacherGrant" }]
+        }
+      ]
+    },
+    "StarReacherT1": {
+      "effect": [
+        {
+          "target": "StarReacherBone",
+          "modify": { "effect": [{ "requirement": [], "effect": { "physicalAttackBonus": 0.075 } }] }
+        }
+      ]
+    },
     "StarReacherT2": {
       "effect": [
         {
@@ -66,8 +80,42 @@
       ]
     },
     "StarReacherT3": {},
-    "StarReacherT4": {},
+    "StarReacherT4": {
+      "effect": [
+        { "target": "StarReacherBone", "modify": { "duration": 12 } },
+        { "target": "StarReacherBoneEnhanced", "modify": { "duration": 12 } }
+      ]
+    },
     "StarReacherT5": { "effect": [{ "rawStat": { "physicalPenetration": 5.1 } }] },
-    "StarReacherT6": {}
+    "StarReacherT6": {
+      "effect": [
+        {
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "target", "value": "LingeringBone" },
+                { "target": "target", "value": "Airborne" }
+              ]
+            },
+            { "target": "selfHPPercentage", "comparison": ">", "amount": 75 }
+          ],
+          "effect": { "hpDMGBonus": 0.03 }
+        },
+        {
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "target", "value": "LingeringBone" },
+                { "target": "target", "value": "Airborne" }
+              ]
+            },
+            { "target": "selfHPPercentage", "comparison": "<=", "amount": 75 }
+          ],
+          "effect": { "leech": 0.1 }
+        }
+      ]
+    }
   }
 }

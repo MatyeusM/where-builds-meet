@@ -1,0 +1,80 @@
+{
+  "EmeraldBarrier": {
+    "name": "Emerald Barrier",
+    "shortName": "Inkwell Fan Q",
+    "castTime": 1.02,
+    "action": [
+      { "type": "apply", "target": "self", "value": "Jadebreak", "time": 0 },
+      { "type": "damage", "phyCoef": 0.92712, "attrCoef": 0.92712, "phyBonus": 257, "attrBonus": 140, "time": 0.15006 },
+      { "type": "apply", "target": "self", "value": "Windrider", "time": 1.02 }
+    ],
+    "modifier": [],
+    "tags": ["MartialArts", "DirectDamage", "Fan", "InkwellFan", "MartialArt"],
+    "martialArt": "inkwellFan",
+    "weapon": "Fan",
+    "cooldown": 15
+  },
+  "ForsakenFame": {
+    "name": "Forsaken Fame",
+    "shortName": "Inkwell Fan Light Charged",
+    "castTime": 1.63,
+    "action": [
+      { "type": "damage", "phyCoef": 1.9044, "attrCoef": 1.9044, "phyBonus": 527, "attrBonus": 287, "time": 1.19 },
+      { "type": "apply", "target": "target", "value": "LingeringBone", "time": 1.19 },
+      { "type": "addResource", "value": "Endurance", "amount": 10, "time": 1.19 }
+    ],
+    "modifier": [{ "effect": { "hpDMGBonus": 0.45 } }],
+    "tags": ["MartialArts", "DirectDamage", "Fan", "InkwellFan", "Light", "Charged", "AppliesLingeringBone"],
+    "martialArt": "inkwellFan",
+    "weapon": "Fan"
+  },
+  "StarReacherGrant": {
+    "name": "Star Reacher",
+    "castTime": 0,
+    "cooldown": 1,
+    "tags": ["Triggered"],
+    "action": [
+      { "type": "consume", "target": "self", "value": "StarReacherBone", "stack": "all" },
+      { "type": "consume", "target": "self", "value": "StarReacherBoneEnhanced", "stack": "all" },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "StarReacherBone",
+        "time": 0,
+        "requirement": [
+          {
+            "operator": "not",
+            "operand": [
+              [
+                { "target": "self", "value": "StarReacherT3" },
+                {
+                  "operator": "or",
+                  "operand": [
+                    { "target": "target", "value": "Exhausted" },
+                    { "target": "targetQiPercentage", "comparison": "<", "amount": 30 }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "type": "apply",
+        "target": "self",
+        "value": "StarReacherBoneEnhanced",
+        "time": 0,
+        "requirement": [
+          { "target": "self", "value": "StarReacherT3" },
+          {
+            "operator": "or",
+            "operand": [
+              { "target": "target", "value": "Exhausted" },
+              { "target": "targetQiPercentage", "comparison": "<", "amount": 30 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

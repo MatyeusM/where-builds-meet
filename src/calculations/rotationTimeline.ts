@@ -130,7 +130,7 @@ type RotationEventStep =
   | { event: "SelfHP"; startTime: number; currentHP: number; currentHPRatio?: number }
   | { event: "SelfHP"; startTime: number; currentHPRatio: number; currentHP?: number }
   | { event: "TakeDamage"; startTime: number; damage: number; automatic?: "targetAttack" }
-  | { event: "Hellfire"; startTime: number; amount: number }
+  | { event: "Hellfire" | "Blossoms"; startTime: number; amount: number }
   // Accepted only at persistence/import boundaries and migrated to startTime.
   | { event: "TakeDamage"; before: AttachedEventTarget; damage: number; startTime?: number }
   | { event: "HP"; before: AttachedEventTarget; targetHPRatio: number; startTime?: number }
@@ -154,7 +154,7 @@ type RotationEventStep =
   | { event: "Controlled" | "BattleEnd" | "ShieldBroken"; startTime: number; duration?: number }
   | { event: "Exhausted"; startTime: number; duration?: number }
   | { event: "Move"; startTime: number; distance: number }
-  | { event: "Hellfire"; before: AttachedEventTarget; amount: number; startTime?: number }
+  | { event: "Hellfire" | "Blossoms"; before: AttachedEventTarget; amount: number; startTime?: number }
 export type RotationStep =
   | { type: "skill"; skill?: string; event?: undefined; duration?: number; causesBreak?: boolean; condition?: string }
   | ({ type: "event"; skill?: undefined } & RotationEventStep)
@@ -1242,7 +1242,9 @@ export function buildRotationTimeline(
         step.type === "event" && step.event === "TakeDamage" && action.type === "takeDamage"
           ? { damage: step.damage }
           : {},
-        step.type === "event" && step.event === "Hellfire" && action.type === "addResource"
+        step.type === "event" &&
+          (step.event === "Hellfire" || step.event === "Blossoms") &&
+          action.type === "addResource"
           ? { type: step.amount < 0 ? "consumeResource" : "addResource", amount: Math.abs(step.amount) }
           : {},
         step.type === "event" && step.event === "HP" && action.type === "setTargetHP"
@@ -2190,6 +2192,14 @@ export function buildRotationTimeline(
     }
     return skill.cooldown
   }
+  const skillCooldownUses = (skill: SkillRecord | undefined, time = currentTimelineTime) => {
+    const modifiers = modifiersFor(skill, time)
+    for (let index = modifiers.length - 1; index >= 0; index -= 1) {
+      const uses = modifiers[index]?.cooldownUses
+      if (typeof uses === "number") return Math.max(1, Math.floor(uses))
+    }
+    return Math.max(1, Math.floor(skill?.cooldownUses ?? 1))
+  }
   const skillCooldownReadyAt = (key: string, time: number, uses: number) => {
     const state = skillCooldownStates[key]
     if (!state) return time
@@ -2260,7 +2270,7 @@ export function buildRotationTimeline(
           break
       }
     }
-    const readyAt = skillCooldownReadyAt(key, time, Math.max(1, Math.floor(skills[skillId]?.cooldownUses ?? 1)))
+    const readyAt = skillCooldownReadyAt(key, time, skillCooldownUses(skills[skillId], time))
     cooldowns[key] = readyAt
     if (
       waitingCast &&
@@ -3300,7 +3310,7 @@ export function buildRotationTimeline(
           ? skillCooldownReadyAt(
               skillCooldownKey(skillId, row.skill),
               event.time,
-              Math.max(1, Math.floor(row.skill?.cooldownUses ?? 1)),
+              skillCooldownUses(row.skill, event.time),
             )
           : event.time
       if (compareTimelineTime(readyAt, event.time) > 0) {
@@ -3577,12 +3587,14 @@ export function buildRotationTimeline(
           ? { ...selectedAction, time: segmentStartOffset + segment.localActionTimes[localIndex] }
           : { type: "inactive", time: segmentStartOffset + segment.baseCastTime }
       })
-      if (selectedId && typeof selectedSkill?.cooldown === "number")
+      // The parent charge is already spent by the cast-start event. Only
+      // subsequent components can spend an additional skill cooldown.
+      if ((event.subActionIndex ?? 0) > 0 && selectedId && typeof selectedSkill?.cooldown === "number")
         recordSkillCooldownCast(
           skillCooldownKey(selectedId, selectedSkill),
           event.time,
           selectedSkill.cooldown,
-          Math.max(1, Math.floor(selectedSkill.cooldownUses ?? 1)),
+          skillCooldownUses(selectedSkill, event.time),
           selectedSkill.cooldownRecovery,
         )
       const inactiveActionIndexes = new Set(segment.actionIndexes.slice(selectedActions.length))
@@ -3644,7 +3656,7 @@ export function buildRotationTimeline(
       if (!multiActionSegments.has(event.row.id))
         registerEnduranceRates(event.row.skill, event.time, resolveSkillCastTime(event.row.skill))
       const cooldownDuration = event.row.skill ? skillCooldownDuration(event.row.skill, skillModifiers) : undefined
-      const cooldownUses = Math.max(1, Math.floor(event.row.skill?.cooldownUses ?? 1))
+      const cooldownUses = skillCooldownUses(event.row.skill, event.time)
       const cooldownKey = skillCooldownKey(skillId, event.row.skill)
       resolvedRows.add(event.row)
       if (waitingCast?.row === event.row) waitingCast = undefined
@@ -3916,7 +3928,7 @@ export function buildRotationTimeline(
       if (triggeredSkill) sourceRowId = damageSource(triggeredSkill, sourceRowId ?? event.row.id)
       const key = skillCooldownKey(skillId, triggeredSkill)
       if (!triggeredSkill) return false
-      const uses = Math.max(1, Math.floor(triggeredSkill.cooldownUses ?? 1))
+      const uses = skillCooldownUses(triggeredSkill, event.time)
       if (compareTimelineTime(skillCooldownReadyAt(key, event.time, uses), event.time) > 0) return false
       const actions = Array.isArray(triggeredSkill.action) ? (triggeredSkill.action as EditableObject[]) : []
       const triggeredStartTime = event.time + (triggeredSkill.triggerPing ? skillPing(triggeredSkill) : 0)

@@ -804,3 +804,34 @@ second-round strike at about 33.791 seconds. The last direct hit lands at about
 The Double Stab snapshots for its mixed and pure build combinations change
 because the extra Deflect and revised filler order alter timing and damage.
 Other preset rotations retain their previous release snapshots.
+
+## Local snapshot reconciliation (October 28, 2026)
+
+The user accepted the 40 outstanding local Dust and Strength Mixed cases:
+both Dust presets (12 build/level combinations), Ordinary Mixed (14), and
+Mixed Infinite Vitality (14). These account for the Flower Burial catch and
+Resonance cleanup, Ordinary Mixed filler/Qi alignment, and Infinite Vitality's
+Toad/Deflect/Bursting Nine ordering described in the skill-data reference.
+
+All 40 regenerated records exactly match the already-released snapshots at
+`3da8c84`. Strength's acceptance was committed remotely in `dc310e3`, and Dust's
+final-catch acceptance in `3da8c84`. The local branch had the combat changes but
+retained older snapshots. GitHub deployment run `40541053926` passed its release
+DPS snapshot check on October 27; this reconciliation fixes local divergence,
+not a bypass of the deployment gate. The Jade resource-rate and shared cast-end
+extensions leave all 222 preset DPS results unchanged.
+
+## Jade initial release baselines (October 29, 2026)
+
+The reviewed 60-second Jade rotation spends Blossoms with Unfading Flower and
+refills to 100 before its next activation. The user selected Fully Relayed Max
+as the default and requested a matching non-relayed Graduate build for release.
+These six cases are new coverage; all existing accepted cases are unchanged.
+
+| Build             | Breakthrough 18 DPS | Breakthrough 19 DPS |
+| ----------------- | ------------------: | ------------------: |
+| Fully Relayed Min |  53510.384995774904 |  56014.237630177675 |
+| Fully Relayed Max |   54469.20256012464 |   57452.54104213089 |
+| Graduate          |  55823.534181683666 |   58770.95973991257 |
+
+Each duration is 60 seconds; total damage is DPS multiplied by 60.
