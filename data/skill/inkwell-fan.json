@@ -12,7 +12,9 @@
     "tags": ["MartialArts", "DirectDamage", "Fan", "InkwellFan", "MartialArt"],
     "martialArt": "inkwellFan",
     "weapon": "Fan",
-    "cooldown": 15
+    "cooldown": 15,
+    "cooldownUses": 2,
+    "cooldownRecovery": "independent"
   },
   "ForsakenFame": {
     "name": "Forsaken Fame",

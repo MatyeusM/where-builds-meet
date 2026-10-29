@@ -5,14 +5,13 @@
     "castTime": 0,
     "action": [],
     "modifier": [
-      { "requirement": [{ "target": "self", "value": "BlossomBarrageT0" }], "effect": { "cooldownUses": 2 } },
-      { "requirement": [{ "target": "self", "value": "BlossomBarrageT6" }], "effect": { "cooldownUses": 3 } }
+      { "requirement": [{ "target": "self", "value": "BlossomBarrageT0" }], "effect": { "cooldownUses": 3 } }
     ],
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "MartialArt", "Ballistic", "SpringSorrow"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
     "cooldown": 15,
-    "cooldownUses": 1,
+    "cooldownUses": 2,
     "cooldownRecovery": "independent",
     "subAction": [
       {
@@ -242,6 +241,7 @@
       "VernalUmbrella",
       "Ballistic",
       "UnfadingFlowerProjectile",
+      "FrequentProjectile",
       "Triggered"
     ],
     "martialArt": "vernalUmbrella",

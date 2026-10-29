@@ -6,7 +6,18 @@
     "StarReacherT0": {
       "trigger": [
         {
-          "requirement": [{ "target": "skillTag", "value": "AppliesLingeringBone" }],
+          "requirement": [
+            {
+              "operator": "or",
+              "operand": [
+                { "target": "skillTag", "value": "AppliesLingeringBone" },
+                [
+                  { "target": "skillTag", "value": "UnfadingFlowerProjectile" },
+                  { "target": "target", "value": "LingeringBone" }
+                ]
+              ]
+            }
+          ],
           "action": [{ "type": "trigger", "value": "StarReacherGrant" }]
         }
       ]

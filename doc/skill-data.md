@@ -383,8 +383,8 @@ Shared definitions must agree on capacity and recovery mode. Modifier changes
 do not move already-pending recoveries. Explicit casts wait; unavailable triggers
 are rejected. Generated waits are output only, not saved rotation steps.
 Skill modifiers can override `cooldownUses`, using the same last-matching-rule
-precedence as cooldown duration. Spring Sorrow uses this for Blossom Barrage's
-two- and three-charge tiers; readiness and cooldown reductions resolve the same
+precedence as cooldown duration. Spring Sorrow has two charges, increased to
+three by Blossom Barrage T0; readiness and cooldown reductions resolve the same
 capacity without replacing pending recovery timestamps.
 
 `subAction` is an ordered list of `{ value, requirement?, fallback? }` references.
@@ -860,19 +860,20 @@ overriding the shared skill timing.
 ### Silkbind Jade starter work
 
 Jade remains `wip`. Its 60-second dummy preset uses the accepted timings
-below, the starter builds, and charged Fan light attacks as fillers. The
+below, the starter builds, and Mystic/charged Fan light attacks as fillers. The
 opener uses Flute of the Tides Cancel before Fan Q; battle still starts on the
 first Umbrella Q impact. Jade's timeline displays Blossoms in place of Endurance.
 The target breaks at the third Unfading Flower activation. The dedicated Inner Ways and
 Blossom income, drain, and exhausted-target refunds are implemented. Combat ends
 exactly 60 seconds after the opening Umbrella Q impact. The preset fits seven
 Unfading Flower activations, with the target breaking at the third.
-Later rounds refill with Spring Sorrow / Heavy / Colorful Phoenix and activate
-Unfading Flower immediately after Phoenix reaches the cap, with only normal
-ping between casts. No maintenance cast or filler intervenes at 100 Blossoms.
-Fan Q refreshes and Fan charged-light fillers occur during Unfading Flower.
-Short Fan Q cooldown waits also occur only while Unfading Flower is spending
-Blossoms; after the current action completes and the mode ends, refill starts.
+The opener retains Spring Sorrow twice, Heavy, and Colorful Phoenix to establish
+Mistwillow. Later rounds refill with Spring Sorrow twice. Both routes activate
+Unfading Flower immediately at 100 Blossoms, with only normal ping between casts.
+No maintenance cast or filler intervenes at the cap. Fan Q refreshes use its
+spare charge during Unfading Flower, before Jadebreak expires; the preset has no
+Jadebreak gaps or cooldown waits. Refilling starts after the current action
+completes and Flower ends.
 Lingering Bone is maintained by projectile refreshes as well as Fan charged
 light. All Unfading Flower activations start with Jadebreak and Combo.
 The preset retains its original
@@ -881,7 +882,25 @@ The preset retains its original
 Each Unfading Flower projectile refreshes an existing Lingering Bone mark to
 five seconds remaining, as confirmed by the user. It does not apply a missing
 mark or add five seconds to its remaining duration. Fan Special and pursuit
-are not part of this initial filler route.
+are not part of this filler route. Its Mystic candidates were compared through
+the production timeline and damage pipeline: the selected sequence uses Flute
+Cancel, Leaping Toad/Deflect, Bursting Nine, Soaring Spin, Smolder, and Drunken
+Poet. Yaksha Rush was also considered but was not selected. Fan pursuit remains
+excluded until its complete cast/cancel timing is confirmed; the local export
+provides hit requests but no complete cast boundary. This is a constrained
+sequence search, not a claim of a global optimum.
+
+Refreshing an existing Lingering Bone with an Unfading Flower projectile also
+triggers Star Reacher, sharing the one-second `StarReacherGrant` cooldown with
+Fan charged light. An unmarked projectile grants neither Lingering Bone nor
+Star Reacher. The grant resolves the ordinary or exhausted/low-Qi bonus from
+the live target state, so Flower can refresh it throughout the spending phase.
+
+Fan Q has two independently recovering 15-second charges. Its spare charge
+allows Jadebreak to be refreshed before its 15-second duration expires.
+Umbrella Q also has two base charges, or three with Blossom Barrage, with
+independent recovery. These charge capacities are user-confirmed; the raw
+15-second cooldown alone does not describe skill availability.
 
 The manual Blossoms event uses the same signed resource-change semantics as
 Hellfire: positive amounts add, negative amounts subtract, and the resource

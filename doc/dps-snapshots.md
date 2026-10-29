@@ -869,3 +869,34 @@ These six cases are new coverage; all existing accepted cases are unchanged.
 | Graduate          |  55823.534181683666 |   58770.95973991257 |
 
 Each duration is 60 seconds; total damage is DPS multiplied by 60.
+
+## Jade projectile attunement acceptance (October 29, 2026)
+
+The user approved replacing the inherited Snowparting armor attunements on all
+Jade builds with Vernal Umbrella Frequent Projectile and tagging Unfading Flower
+projectiles for that bonus. The six accepted DPS values below retain the
+60-second rotation; other paths are unchanged.
+
+| Build             | Breakthrough 18 DPS | Breakthrough 19 DPS |
+| ----------------- | ------------------: | ------------------: |
+| Fully Relayed Min |   61702.41845532281 |  64592.436968280206 |
+| Fully Relayed Max |  62790.019462148346 |   66232.75025976947 |
+| Graduate          |   64350.09308954911 |   67750.33082174494 |
+
+## Jade charge-aware rotation acceptance (October 29, 2026)
+
+The user approved the corrected Fan Q two-charge and Umbrella Q two-charge
+(three with Blossom Barrage) capacities, Star Reacher refreshes from Flower's
+Lingering Bone refresh, and the optimized Mystic filler sequence. Jadebreak
+has full coverage. The opener establishes Mistwillow with Heavy/Light VC;
+subsequent refills use Umbrella QQ and immediately activate Flower at 100 Blossoms.
+
+| Build             | Breakthrough 18 DPS | Breakthrough 19 DPS |
+| ----------------- | ------------------: | ------------------: |
+| Fully Relayed Min |   78972.27981860402 |   82575.79698052563 |
+| Fully Relayed Max |   80388.34332468435 |   84709.45536687472 |
+| Graduate          |   82377.87206481808 |   86643.52449195577 |
+
+All six cases remain 60 seconds; total damage is DPS multiplied by 60.
+Other paths retain their accepted snapshots. Fan pursuit is excluded pending
+confirmed complete cast/cancel timing.
