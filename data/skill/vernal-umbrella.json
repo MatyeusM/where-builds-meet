@@ -1,7 +1,7 @@
 {
   "SpringSorrow": {
     "name": "Spring Sorrow",
-    "shortName": "Vernal Umbrella Q",
+    "shortName": "Umbrella Q",
     "castTime": 0,
     "action": [],
     "modifier": [
@@ -12,7 +12,7 @@
     "weapon": "Umbrella",
     "cooldown": 15,
     "cooldownUses": 2,
-    "cooldownRecovery": "independent",
+    "cooldownRecovery": "sequential",
     "subAction": [
       {
         "value": "SpringSorrowBarrage",
@@ -23,7 +23,7 @@
   },
   "VernalHeavy": {
     "name": "Vernal Umbrella Heavy",
-    "shortName": "Vernal Umbrella Heavy",
+    "shortName": "Umbrella Heavy",
     "castTime": 0.4592,
     "action": [
       {
@@ -41,124 +41,9 @@
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella"
   },
-  "ColorfulPhoenix": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "castTime": 0,
-    "action": [],
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "subAction": [
-      {
-        "value": "ColorfulPhoenixGrant1",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant2",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant3",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixC2",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant4",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant5",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixC1",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant6",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixGrant7",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      },
-      {
-        "value": "ColorfulPhoenixC1Repeat",
-        "requirement": [{ "target": "resource", "value": "Blossoms", "comparison": "<", "amount": 100 }]
-      }
-    ]
-  },
-  "ColorfulPhoenixC2": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "castTime": 0.0951,
-    "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.382932,
-        "attrCoef": 0.382932,
-        "phyBonus": 106.26,
-        "attrBonus": 57.75,
-        "time": 0.0951
-      },
-      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.0951 }
-    ],
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "ignorePing": true
-  },
-  "ColorfulPhoenixC1": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "castTime": 0.0142,
-    "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.382932,
-        "attrCoef": 0.382932,
-        "phyBonus": 106.26,
-        "attrBonus": 57.75,
-        "time": 0.0142
-      },
-      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.0142 }
-    ],
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "ignorePing": true
-  },
-  "ColorfulPhoenixC1Repeat": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "castTime": 0.1142,
-    "action": [
-      {
-        "type": "damage",
-        "phyCoef": 0.382932,
-        "attrCoef": 0.382932,
-        "phyBonus": 106.26,
-        "attrBonus": 57.75,
-        "time": 0.1142
-      },
-      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.1142 }
-    ],
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "ignorePing": true
-  },
   "UnfadingFlower": {
     "name": "Unfading Flower",
-    "shortName": "Vernal Umbrella Special",
+    "shortName": "UF",
     "castTime": 0,
     "modifier": [],
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Special"],
@@ -174,11 +59,12 @@
         ]
       }
     ],
-    "silent": true
+    "silent": true,
+    "skillBreakdownCategory": "Unfading Flower"
   },
   "UnfadingFlowerProjectile": {
     "name": "Unfading Flower",
-    "shortName": "Unfading Flower Projectile",
+    "shortName": "UF",
     "castTime": 0,
     "action": [
       {
@@ -245,11 +131,12 @@
       "Triggered"
     ],
     "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella"
+    "weapon": "Umbrella",
+    "skillBreakdownCategory": "Unfading Flower"
   },
   "UnfadingFlowerRelease": {
     "name": "Unfading Flower",
-    "shortName": "Vernal Umbrella Special",
+    "shortName": "UF",
     "castTime": 1.093,
     "action": [
       {
@@ -266,7 +153,8 @@
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Special"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
-    "ignorePing": true
+    "ignorePing": true,
+    "skillBreakdownCategory": "Unfading Flower"
   },
   "JadeComboExtension": {
     "name": "Combo Extension",
@@ -276,7 +164,7 @@
   },
   "SpringSorrowNormal": {
     "name": "Spring Sorrow",
-    "shortName": "Vernal Umbrella Q",
+    "shortName": "Umbrella Q",
     "castTime": 1.4583333333333335,
     "ignorePing": true,
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "MartialArt", "Ballistic", "SpringSorrow"],
@@ -324,7 +212,7 @@
   },
   "SpringSorrowBarrage": {
     "name": "Spring Sorrow",
-    "shortName": "Vernal Umbrella Q",
+    "shortName": "Umbrella Q",
     "castTime": 1.1217948717948718,
     "ignorePing": true,
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "MartialArt", "Ballistic", "SpringSorrow"],
@@ -370,81 +258,153 @@
       }
     ]
   },
-  "ColorfulPhoenixGrant1": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
+  "colorfulphoenix1": {
+    "name": "Colorful Phoenix [1 hits]",
+    "shortName": "Colorful Phoenix [1 hits]",
+    "castTime": 0.3251,
+    "action": [
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.03 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.13 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.23 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.3251
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.3251 }
+    ],
     "modifier": [],
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.03,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.03 }]
+    "skillBreakdownCategory": "Colorful Phoenix"
   },
-  "ColorfulPhoenixGrant2": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
+  "colorfulphoenix2": {
+    "name": "Colorful Phoenix [2 hits]",
+    "shortName": "Colorful Phoenix [2 hits]",
+    "castTime": 0.53,
+    "action": [
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.03 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.13 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.23 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.3251
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.3251 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.33 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.43 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.4442
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.4442 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.53 }
+    ],
     "modifier": [],
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.1,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.1 }]
+    "skillBreakdownCategory": "Colorful Phoenix"
   },
-  "ColorfulPhoenixGrant3": {
+  "ColorfulPhoenix": {
     "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
+    "shortName": "Colorful Phoenix",
+    "castTime": 0.7442,
+    "action": [
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.03 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.13 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.23 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.3251
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.3251 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.33 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.43 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.4442
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.4442 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.53 },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.63 },
+      {
+        "type": "damage",
+        "phyCoef": 0.382932,
+        "attrCoef": 0.382932,
+        "phyBonus": 106.26,
+        "attrBonus": 57.75,
+        "time": 0.7442
+      },
+      { "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.7442 }
+    ],
     "modifier": [],
     "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.1,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.1 }]
+    "skillBreakdownCategory": "Colorful Phoenix"
   },
-  "ColorfulPhoenixGrant4": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
+  "UnfadingFlowerCancel": {
+    "name": "Unfading Flower [Cancel]",
+    "shortName": "UF [Cancel]",
+    "castTime": 0,
     "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
+    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Special"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.0049,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.0049 }]
+    "subAction": [
+      {
+        "value": "UnfadingFlowerReleaseCancel",
+        "waitForRequirement": true,
+        "requirement": [
+          { "target": "resource", "value": "Blossoms", "comparison": ">=", "amount": 50 },
+          { "operator": "not", "operand": [{ "target": "self", "value": "UnfadingFlowerMode" }] }
+        ]
+      }
+    ],
+    "silent": true,
+    "skillBreakdownCategory": "Unfading Flower"
   },
-  "ColorfulPhoenixGrant5": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
+  "UnfadingFlowerReleaseCancel": {
+    "name": "Unfading Flower [Cancel]",
+    "shortName": "UF [Cancel]",
+    "castTime": 0.6,
+    "action": [
+      {
+        "type": "damage",
+        "phyCoef": 0.539718,
+        "attrCoef": 0.539718,
+        "phyBonus": 149.4,
+        "attrBonus": 81.4,
+        "time": 0.5963992753846155
+      },
+      { "type": "apply", "target": "self", "value": "UnfadingFlowerMode", "time": 0.6 }
+    ],
     "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
+    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Special"],
     "martialArt": "vernalUmbrella",
     "weapon": "Umbrella",
     "ignorePing": true,
-    "castTime": 0.1,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.1 }]
-  },
-  "ColorfulPhoenixGrant6": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.0858,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.0858 }]
-  },
-  "ColorfulPhoenixGrant7": {
-    "name": "Colorful Phoenix",
-    "shortName": "Vernal Umbrella Light VC",
-    "modifier": [],
-    "tags": ["MartialArts", "DirectDamage", "Umbrella", "VernalUmbrella", "Light", "VariedCombo"],
-    "martialArt": "vernalUmbrella",
-    "weapon": "Umbrella",
-    "ignorePing": true,
-    "castTime": 0.1,
-    "action": [{ "type": "addResource", "value": "Blossoms", "amount": 4, "time": 0.1 }]
+    "skillBreakdownCategory": "Unfading Flower"
   }
 }

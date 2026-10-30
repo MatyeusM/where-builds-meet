@@ -107,7 +107,7 @@ export type SkillRecord = {
   cooldown?: number
   cooldownGroup?: string
   cooldownUses?: number
-  cooldownRecovery?: "window" | "independent"
+  cooldownRecovery?: "window" | "independent" | "sequential"
   duration?: number
   collectBoostDamage?: string
   subAction?: Array<string | SubActionReference>
@@ -517,6 +517,8 @@ export function mergeCalculatedTimelineState(structuralTimeline: TimelineRow[], 
 }
 
 export type EffectDefinition = {
+  /** Prevent ordered skills with any matching tag from starting while this buff is active. */
+  blocksSkillTags?: string[]
   badgeColor?: "red"
   damageGroup?: { id: string; name: string }
   onMaxStack?: MaxStackAction
@@ -2022,7 +2024,8 @@ export function buildRotationTimeline(
   const listenerCooldowns = new Map<InnerWayEffectRule, number>()
   const skillCooldownStates: Record<
     string,
-    { recovery: "window"; expiresAt: number; uses: number } | { recovery: "independent"; readyTimes: number[] }
+    | { recovery: "window"; expiresAt: number; uses: number }
+    | { recovery: "independent" | "sequential"; readyTimes: number[] }
   > = {}
   const effectTriggerCooldowns = new Map<number, number>()
   const buffDurationRules = setupEffects.filter(effect => typeof effect.buffDurationBonus === "number")
@@ -2207,6 +2210,7 @@ export function buildRotationTimeline(
       case "window":
         if (compareTimelineTime(time, state.expiresAt) >= 0 || state.uses < uses) return time
         return state.expiresAt
+      case "sequential":
       case "independent": {
         const pending = state.readyTimes.filter(readyAt => compareTimelineTime(readyAt, time) > 0)
         return pending.length < uses ? time : pending[0]
@@ -2237,6 +2241,14 @@ export function buildRotationTimeline(
         }
         break
       }
+      case "sequential": {
+        const pending =
+          state?.recovery === "sequential"
+            ? state.readyTimes.filter(readyAt => compareTimelineTime(readyAt, time) > 0)
+            : []
+        skillCooldownStates[key] = { recovery, readyTimes: [...pending, (pending.at(-1) ?? time) + duration] }
+        break
+      }
     }
     cooldowns[key] = skillCooldownReadyAt(key, time, uses)
   }
@@ -2254,6 +2266,14 @@ export function buildRotationTimeline(
           case "independent":
             state.readyTimes = state.readyTimes.map(readyAt => Math.max(time, readyAt - seconds))
             break
+          case "sequential": {
+            const pending = state.readyTimes.filter(readyAt => compareTimelineTime(readyAt, time) > 0)
+            // Only the active recharge is reduced. Later charges start earlier,
+            // but each still takes its full duration; excess reduction is discarded.
+            const reduction = Math.min(seconds, Math.max(0, (pending[0] ?? time) - time))
+            state.readyTimes = pending.map(readyAt => readyAt - reduction)
+            break
+          }
         }
       }
     } else if (charges === undefined) delete skillCooldownStates[key]
@@ -2268,6 +2288,13 @@ export function buildRotationTimeline(
           // Restore the next recovering charge; all other recovery timestamps stay intact.
           state.readyTimes = state.readyTimes.filter(readyAt => compareTimelineTime(readyAt, time) > 0).slice(restored)
           break
+        case "sequential": {
+          const pending = state.readyTimes.filter(readyAt => compareTimelineTime(readyAt, time) > 0)
+          const removed = Math.min(restored, pending.length)
+          const shift = removed > 0 ? pending[removed - 1] - time : 0
+          state.readyTimes = pending.slice(removed).map(readyAt => readyAt - shift)
+          break
+        }
       }
     }
     const readyAt = skillCooldownReadyAt(key, time, skillCooldownUses(skills[skillId], time))
@@ -3204,6 +3231,17 @@ export function buildRotationTimeline(
   }
   while ((events.length || timedCursor < timed.length || pendingCharge) && processedEvents < 5000) {
     responseContext = undefined
+    if (
+      waitingCast?.delay.reason === "requirement" &&
+      ![...prune(buffs, currentTimelineTime).values()].some(active =>
+        effectDefinitions[active.name]?.blocksSkillTags?.some(tag => waitingCast!.row.skill?.tags?.includes(tag)),
+      )
+    ) {
+      const waitingRow = waitingCast.row
+      events.mutate(queued => {
+        if (queued.kind === "orderedReady" && queued.row === waitingRow) queued.time = currentTimelineTime
+      })
+    }
     queueResourceBoundary(Math.min(events.peek()?.time ?? Infinity, nextTimedEvent()?.time ?? Infinity))
     const anchorEvent = events.peek()
     if (
@@ -3304,6 +3342,20 @@ export function buildRotationTimeline(
     }
     if (event.kind === "orderedReady") {
       const row = event.row
+      const blockingBuffs = [...prune(buffs, event.time).values()].filter(active =>
+        effectDefinitions[active.name]?.blocksSkillTags?.some(tag => row.skill?.tags?.includes(tag)),
+      )
+      if (row.step.type === "skill" && blockingBuffs.length) {
+        const retryAt = Math.min(
+          events.peek()?.time ?? Infinity,
+          nextTimedEvent()?.time ?? Infinity,
+          ...blockingBuffs.map(active => active.expiresAt ?? Infinity),
+        )
+        // Resolve all actions at the boundary before retrying, including depletion,
+        // refunds and periodic follow-ups. Triggered skills bypass ordered readiness.
+        waitForOrdered({ ...event, sortOrder: [Infinity] }, retryAt, "requirement")
+        continue
+      }
       const skillId = row.step.type === "skill" ? (row.step.skill ?? "") : ""
       const readyAt =
         row.step.type === "skill"

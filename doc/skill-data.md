@@ -868,27 +868,92 @@ Blossom income, drain, and exhausted-target refunds are implemented. Combat ends
 exactly 60 seconds after the opening Umbrella Q impact. The preset fits seven
 Unfading Flower activations, with the target breaking at the third.
 The opener retains Spring Sorrow twice, Heavy, and Colorful Phoenix to establish
-Mistwillow. Later rounds refill with Spring Sorrow twice. Both routes activate
+Mistwillow. Later rounds refill with Spring Sorrow, Heavy, and full Colorful
+Phoenix because charges recover sequentially. Both routes activate
 Unfading Flower immediately at 100 Blossoms, with only normal ping between casts.
 No maintenance cast or filler intervenes at the cap. Fan Q refreshes use its
 spare charge during Unfading Flower, before Jadebreak expires; the preset has no
-Jadebreak gaps or cooldown waits. Refilling starts after the current action
+Jadebreak gaps or Fan Q charge waits. Refilling starts after the current action
 completes and Flower ends.
 Lingering Bone is maintained by projectile refreshes as well as Fan charged
 light. All Unfading Flower activations start with Jadebreak and Combo.
 The preset retains its original
 `jade-three-rounds` ID to preserve saved selections.
 
+The filler sequence uses three Flute cancels. The first Bursting Nine uses one
+seven-hit volley; the second uses two. Smolder one-hit and Poet five-hit cancel
+require Deflect or Fan Q immediately afterward in the authored preset. Smolder
+can lead directly into Fan Q to avoid a separate Deflect. Fan heavy pursuit
+is another user-confirmed cancel follow-up, but its complete cast duration
+remains unconfirmed and unmodeled. Emerald Barrier applies Jadebreak at
+0.167s and Windrider at 1.02s. Its cancel variant ends at 0.167s, retains
+the hit at 0.15006s, and does not grant Windrider. Both variants share their
+charge pool and breakdown category. The cancel variant requires Fan heavy
+pursuit next. The optimizer compares this pair with full Fan Q and with
+Deflect after the supported Mystic cancels.
+
+Inkwash and Dear Sword were also compared using the October 30 nominal
+first-cast timelines from the new-mystic-timings export. Inkwash uses the
+ordinary two-stage route through its 4.096742424242423s movement gate. Dear
+Sword uses the four-stage solo route through 8.002653846153846s, omitting
+markers after each earliest transition. Even with a generous 2.4 multiplier
+on all final-stage Dear Sword hits (NPC enhancement and Sword Essence),
+neither displaced the selected fillers in the tested sequences. These
+comparison candidates are not registered runtime skills; contact/startup
+uncertainty remains as described by the export.
+
+The preset uses Unfading Flower [Cancel] followed by Deflect for each activation.
+Cancel ends at mode application (0.6s); Deflect adds 0.3s, saving 0.193s
+against the normal 1.093s release without removing the hit or ongoing mode.
+Both variants and their projectiles share the Unfading Flower breakdown category.
+Unfading Flower mode blocks ordered Umbrella-tagged skills through the shared
+automatic readiness wait. Resource depletion removes the mode immediately;
+the delayed Blossom return does not restore it. Triggered projectiles remain
+active during the wait, and manual refill delays are unnecessary.
+
 Each Unfading Flower projectile refreshes an existing Lingering Bone mark to
 five seconds remaining, as confirmed by the user. It does not apply a missing
-mark or add five seconds to its remaining duration. Fan Special and pursuit
-are not part of this filler route. Its Mystic candidates were compared through
+mark or add five seconds to its remaining duration. Its filler candidates were compared through
 the production timeline and damage pipeline: the selected sequence uses Flute
 Cancel, Leaping Toad/Deflect, Bursting Nine, Soaring Spin, Smolder, and Drunken
-Poet. Yaksha Rush was also considered but was not selected. Fan pursuit remains
-excluded until its complete cast/cancel timing is confirmed; the local export
-provides hit requests but no complete cast boundary. This is a constrained
+Poet. Yaksha Rush was also considered but was not selected. This is a constrained
 sequence search, not a claim of a global optimum.
+
+Moon Shatter Spring uses the October 30 13:05 event-clock-migration export's
+current action 20302105, including its recovered startup and landing phases.
+The ordinary three-hit route reaches its interruption boundary at 1.557s;
+Windrider selects the five-hit route and its 2.433s boundary. These are nominal
+earliest interruption times, not animation-end times. The old numerical-owner
+20302103 action is not a separate cast or an extra hit sequence. The shared
+six-second cooldown begins at cast start, and pursuit requires LB or Airborne.
+Windrider selects the route at cast start and is not consumed by the cast.
+NPC hit coefficients already include the 45% bonus; it must not be added twice.
+Each hit grants Startling Spring (export buff 200177), up to five stacks for
+15 seconds. Each stack adds 4% charged-skill damage and Endurance cost, scoped
+to Charged-tagged skills rather than all damage. Enhanced pursuit uses the
+export's distinct second-hit timing against Airborne targets.
+The route is selected once: Windrider expiring during an enhanced cast must not
+append the ordinary route. Internal dispatch and attack components ignore
+additional ping; the ordered pursuit pays input latency once. The current
+preset replaces two consecutive Fan charged lights after the fourth Flower
+with Peak cancel followed by the enhanced pursuit. All six Jade build/tier
+combinations improve; Max BT19 rises from 81,053.74333518809 to
+81,455.47574941137 DPS. The search compares replacements of up to four
+consecutive fillers while preserving required follow-ups, seven full-Blossom
+Flower casts, and JB/LB/SR coverage. This is a constrained local search, not
+a claim of an exhaustive global optimum.
+
+Peak's Springless Silence uses the October 30 13:23 export's resolved action 20302101. The full variant uses its 1.1133333333333333s interruption boundary;
+Cancel ends at the 0.557581475s main contact/Windrider application and must be
+followed immediately by Moon Shatter Spring. Both share the same category and
+12-second cooldown. Its separate 0.35s preliminary hit contributes 0.5% of base
+damage only when distance is strictly below 2.5m and the target lacks Airborne.
+The main hit contributes the other 99.5%. Existing LB or Airborne enables the
+three-second Windrider grant; an unmarked target receives LB but no guaranteed
+Windrider from that same contact. The contact also refreshes SR through its
+shared grant cooldown. These are nominal immediate-contact timings; travel,
+whiffs, and hit-reaction motion are not simulated. Thunder Enlightenment - Jade
+and Gourd Toss variants are outside this implementation.
 
 Refreshing an existing Lingering Bone with an Unfading Flower projectile also
 triggers Star Reacher, sharing the one-second `StarReacherGrant` cooldown with
@@ -896,10 +961,13 @@ Fan charged light. An unmarked projectile grants neither Lingering Bone nor
 Star Reacher. The grant resolves the ordinary or exhausted/low-Qi bonus from
 the live target state, so Flower can refresh it throughout the spending phase.
 
-Fan Q has two independently recovering 15-second charges. Its spare charge
+Fan Q has two sequentially recovering 15-second charges. Its spare charge
 allows Jadebreak to be refreshed before its 15-second duration expires.
 Umbrella Q also has two base charges, or three with Blossom Barrage, with
-independent recovery. These charge capacities are user-confirmed; the raw
+sequential recovery. Only one recharge timer runs at a time. Blossom Barrage
+reduces the active recharge by five seconds; later queued charges still take
+their full duration, and excess reduction does not spill into the next timer.
+These charge capacities are user-confirmed; the raw
 15-second cooldown alone does not describe skill availability.
 
 The manual Blossoms event uses the same signed resource-change semantics as
@@ -924,19 +992,16 @@ C2 at 0.3251s, first C1 at 0.4442s, and second C1 at 0.7442s. Use these exact
 accepted values, with the second C1 respecting the 0.3s same-target interval,
 rather than treating each exported window opening as a separate hit.
 
-By user instruction, the starter rotation must stop Colorful Phoenix as soon
-as Blossoms reaches 100, including immediately after C2 or after the first C1
-hit when sufficient. Do not require the full sequence or award later hits after
-that interruption. The October 29 00:55 export and corrected
-`reports/jade-blossoms.md` establish an additional sequential target-check
-chain: seven grants of 4 at 0.03, 0.13, 0.23, 0.33, 0.43, 0.53, and 0.63s
-on the Normal timeline. These are additive to hit income, not damage events.
-The simulated target is present and combat active; failed target checks and
-the out-of-combat dungeon gate are outside this stationary combat route.
-Existing conditional subactions interleave grants and hits and stop at the
-first cap-filling event, including a non-hit grant. Cancellation discards
-later grants and hits. A complete uncapped cast gains 40 Blossoms; the
-zero-start preset cancels at 0.53s after two damage hits.
+Colorful Phoenix uses explicit one-, two-, and three-hit flat attacks, with
+no resource-based cancellation or component subactions. Their cast times are
+0.3251, 0.53, and 0.7442 seconds. The two-hit route retains the accepted
+0.53-second preset cancellation, including the target-check grant at that time.
+Seven independent four-Blossom target-check grants occur at 0.03, 0.13,
+0.23, 0.33, 0.43, 0.53, and 0.63 seconds. These are resource events, not
+damage hits. Each route includes only events through its cast end, earning
+16, 32, or 40 Blossoms before the cap. Reaching 100 does not cancel hits.
+The Jade preset uses colorfulphoenix2. The full three-hit variant uses
+ColorfulPhoenix; saved colorfulphoenix3 selections migrate to that ID.
 
 The user accepted the following timings from
 `local/datamine/2026-10-28_06-39-41-598_+0000-OjDtw0/wwm-skills-normal-all.json`:

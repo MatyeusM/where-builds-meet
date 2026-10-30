@@ -476,7 +476,8 @@
         "requirement": [{ "target": "skillTag", "value": "Heavy" }],
         "effect": { "stat": { "physDmgBonus": 0.1, "silkbindDmgBonus": 0.1 } }
       }
-    ]
+    ],
+    "shortName": "DS"
   },
   "Mistwillow": {
     "name": "Mistwillow",
@@ -505,6 +506,7 @@
         ],
         "effect": { "stat": { "physDmgBonus": 0.1, "silkbindDmgBonus": 0.1 } }
       }
-    ]
+    ],
+    "shortName": "MW"
   }
 }
